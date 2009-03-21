@@ -1,7 +1,7 @@
 
 inherit multilib flag-o-matic
 
-IUSE="${IUSE} +custom-optimization debug sse moznosystem"
+IUSE="${IUSE} +custom-optimization debug moznosystem"
 
 RDEPEND="!moznosystem? ( >=sys-libs/zlib-1.1.4 )"
 
@@ -113,8 +113,6 @@ mozconfig_init() {
 		;;
 
 	amd64)
-		# most stable
-		${SM} && regparm 4
 		# Historically we have needed to add this manually for 64-bit
 		append-flags -fPIC
 		;;
@@ -136,7 +134,6 @@ mozconfig_init() {
 		;;
 
 	x86)
-		use sse && append-flags -msse -msseregparm
 		if [[ $(gcc-major-version) -eq 3 ]]; then
 			# gcc-3 prior to 3.2.3 doesn't work well for pentium4
 			# see bug 25332
@@ -212,19 +209,6 @@ mozconfig_init() {
 
 	# jemalloc won't build with older glibc
 	! has_version ">=sys-libs/glibc-2.4" && mozconfig_annotate "we have old glibc" --disable-jemalloc
-}
-
-regparm(){
-	use custom-optimization || return
-	# -mregparm was under development, then exclude unsure gcc versions
-	[[ $(gcc-major-version) < 4 ]] && return
-	if [[ $(gcc-major-version) == 4 ]]; then
-		[[ $(gcc-minor-version) < 3 ]] && return
-		[[ $(gcc-minor-version) == 3 && $(gcc-micro-version) < 3 ]] && return
-	fi
-	# space horror
-	append-flags -mregparm=$1 -freg-struct-return
-	use sse && append-flags -msse -msseregparm
 }
 
 # Simulate the silly csh makemake script
