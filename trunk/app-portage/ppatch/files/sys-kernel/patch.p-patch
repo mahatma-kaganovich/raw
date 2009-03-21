@@ -1,0 +1,4 @@
+for(<$ENV{PPATCH}/*.patch>) {
+print "Applying patch: $_\n";
+print `patch -p1 -tNi $_  -d $ENV{S}`;
+}

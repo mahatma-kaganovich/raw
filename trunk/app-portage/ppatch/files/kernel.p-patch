@@ -1,0 +1,59 @@
+## old, unusable ;)
+
+$CFLAGS||=$ENV{CFLAGS};
+$CFLAGS.=" -fno-exceptions -fprefetch-loop-arrays";
+%CFLAGS_LOCAL=('i386'=>'-ftree-vectorize');
+#%CFLAGS_LOCAL=('i386'=>'-malign-double -ftree-vectorize');
+$CFLAGS_DENY="-malign-double -ftree-vectorize";
+$kc||="$ENV{S}/.config";
+$kflags||='';
+
+for(split(/ /,$CFLAGS_DENY)){$CFLAGS=~s/[ 	]$i[ 	]/ /g}
+
+if(defined($kflags)){
+`gzip -cd /proc/config.gz >$kc` if(! -e $kc);
+file($kc);
+for my $i (keys %kflags){
+my $x=($kflags{$i} eq '-')?"# $i is not set":"$i=$kflags{$i}";
+$f{$kc}=~s/\n[ \#]{0,}$i[ =]{1}(.*?)\n/\n$x\n/g;
+}
+}
+
+file(my $rtl="$ENV{S}/drivers/net/8139too.c");
+file(my $via="$ENV{S}/drivers/net/via-rhine.c");
+file(my $vortex="$ENV{S}/drivers/net/3c59x.c");
+file(my $make="$ENV{S}/Makefile");
+
+$f{$rtl}=~s/static int full_duplex\[MAX_UNITS\] = \{-1/static int full_duplex[MAX_UNITS] = {1/g;
+$f{$rtl}=~s/#undef RTL8139_NDEBUG/#define RTL8139_NDEBUG 1/g;
+$f{$via}=~s/#define TX_TIMEOUT	\(2\*HZ\)/#define TX_TIMEOUT	(10*HZ)/g;
+$f{$via}=~s/static int debug = 1/static int debug = 0/g;
+$f{$vortex}=~s/\n#define tx_interrupt_mitigation 1/\n#define VORTEX_DEBUG 0\n\/\/#define tx_interrupt_mitigation 1/g;
+$f{$vortex}=~s/static int options\[MAX_UNITS\] = \{ \[0 \.\.\. MAX_UNITS-1\] = -1 \}/static int options\[MAX_UNITS\] = \{ \[0 \.\.\. MAX_UNITS-1\] = 1 \}/g;
+$f{$vortex}=~s/static int full_duplex\[MAX_UNITS\] = \{\[0 \.\.\. MAX_UNITS-1\] = -1 \}/static int full_duplex\[MAX_UNITS\] = \{\[0 \.\.\. MAX_UNITS-1\] = 1 \}/g;
+$f{$vortex}=~s/static int hw_checksums\[MAX_UNITS\] = \{\[0 \.\.\. MAX_UNITS-1\] = -1 \}/static int hw_checksums\[MAX_UNITS\] = \{\[0 \.\.\. MAX_UNITS-1\] = 1 \}/g;
+$f{$vortex}=~s/static int flow_ctrl\[MAX_UNITS\] = \{\[0 \.\.\. MAX_UNITS-1\] = -1 \}/static int flow_ctrl\[MAX_UNITS\] = \{\[0 \.\.\. MAX_UNITS-1\] = 1 \}/g;
+$f{$vortex}=~s/static int use_mmio\[MAX_UNITS\] = \{\[0 \.\.\. MAX_UNITS-1\] = -1 \}/static int use_mmio\[MAX_UNITS\] = \{\[0 \.\.\. MAX_UNITS-1\] = 1 \}/g;
+
+for("$ENV{S}/arch/i386/Makefile.cpu","$ENV{S}/arch/i386/Makefile"){
+next if(!-e $_);
+file($_);
+$f{$_}=~s/march\=i686 \$\(call tune\,(.*?)\)/march=$1/gs;
+$f{$_}=~s/(PENTIUMM\)[ 	]?\+\=[ 	]\-march\=)(.*?)\n/$1pentium-m\n/gs;
+};
+
+$f{$make}=~s/(HOSTCFLAGS[ 	]{0,}=[ 	]{0,}-Wall -Wstrict-prototypes[ 	])(.*?)\n/$1$CFLAGS\n/gs;
+$f{$make}=~s/(HOSTCXXFLAGS[ 	]{0,}=)[ 	]{0,}(.*?)\n/$1$CFLAGS\n/gs;
+$f{$make}=~s/(ifdef CONFIG_CC_OPTIMIZE_FOR_SIZE)(.*?)(else\nCFLAGS[ 	]{0,}\+=)[ 	]{0,}(.*?)\n/$1$2$3$CFLAGS\n/gs;
+
+for my $a (keys %CFLAGS_LOCAL){
+#for("net"){
+for("net","crypto","drivers","ipc","kernel","mm","fs","lib","security","sound","usr","block","init"){
+ for(wild("$ENV{S}/$_",'Makefile')){
+  my $x=substr($_,length($ENV{S})+1);
+  substr($x,-8)='CFLAGS';
+  $x=~s/\//_/g;
+  addon($_,'#','kernel.p-patch',"ifeq (\$(ARCH),$a)\nexport $x\n$x := $CFLAGS_LOCAL{$a}\nEXTRA_CFLAGS += \$($x)\nendif",0)
+ }
+}
+}	

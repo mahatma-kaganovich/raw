@@ -1,0 +1,6 @@
+$CFLAGS=" -O3 -floop-optimize -funroll-loops -maccumulate-outgoing-args -minline-all-stringops -fivopts -fno-exceptions -ftree-vectorize -ftracer";
+
+file(my $make="$ENV{S}/Makefile");
+$f{$make}=~s/\-O2/$CFLAGS/gs;
+
+&flush;
