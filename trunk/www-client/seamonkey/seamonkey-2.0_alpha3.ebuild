@@ -10,7 +10,7 @@ EMVER="0.95.7"
 EMPATCH="enigmail-${EMVER}-cvs-20090317"
 LANGS="en ca cs de es_AR es_ES fr lt nb_NO nl pl pt_BR ru sk"
 
-#RESTRICT="nomirror"
+RESTRICT="nomirror"
 
 DESCRIPTION="Mozilla Application Suite - web browser, email, HTML editor, IRC"
 HOMEPAGE="http://www.seamonkey-project.org/"
