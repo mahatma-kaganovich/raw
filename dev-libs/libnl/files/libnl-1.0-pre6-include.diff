@@ -1,0 +1,10 @@
+--- libnl-1.0-pre6.orig/include/netlink/route/tc.h
++++ libnl-1.0-pre6/include/netlink/route/tc.h
+@@ -17,2 +17,7 @@
+ #include <netlink/data.h>
++#include <linux/pkt_sched.h>
++ 
++#define TCA_HAS_HANDLE    0x001
++#define TCA_HAS_PARENT    0x002
++   
+ 

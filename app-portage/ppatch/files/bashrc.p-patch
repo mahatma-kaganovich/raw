@@ -1,0 +1,6 @@
+$etc||="$ENV{SS}/etc";
+$rc="$etc/portage/bashrc";
+wf(">$rc",'') if(!-e $rc);
+addon($rc,'#',"ppatch auto",qq(PPATCHDIR="\$ROOT/usr/ppatch"
+PPATCH="\$PPATCHDIR/\$CATEGORY/\$PN/\$EBUILD_PHASE/"
+if [[ "\$EBUILD_PHASE" && -e "\$PPATCH" ]] ; then export PPATCH PPATCHDIR S ; `p-patch \$PPATCH` ; fi),0);

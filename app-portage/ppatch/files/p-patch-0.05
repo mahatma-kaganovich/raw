@@ -1,0 +1,191 @@
+#! /usr/bin/perl
+# p-patch v0.05, by mahatma
+
+my $s;
+my %f;
+
+sub ev($){ref($_[0]) eq 'CODE'?&{$_[0]}:eval($_[0])}
+
+sub touch{wf(-e $_[0]?">>$_[0]":">$_[0]");$_[0]}
+
+# file1[,file2]
+sub file{
+my $n=$_[1]||$_[0];
+$f{$n}=rf("<$_[0]") if(!exists($f{$n}));
+$n
+}
+
+# file
+sub flush1($){
+wf(">$_[0]",$f{$_[0]}) if((stat($_[0]))[7]!=length($f{$_[0]}) || rf($_[0]) ne $f{$_[0]});
+delete $f{$_[0]}
+}
+
+sub flush{for(keys %f){flush1($_)}}
+
+# src,dst,patch[,check1[,check2]]
+sub pp{
+my $name=file($_[0],$_[1]);
+my $chk1=$_[3];
+my $chk2=$_[4]||$chk1;
+my $s0;
+$chk1||='1';
+$s=$f{$name};
+if(!defined($chk2)){
+    $chk2='$s ne $s0';
+    $s0=$s;
+}
+return 1 if(ev($chk1));
+ev($_[2]);
+return 0 if(!ev($chk2));
+$f{$name}=$s;
+1
+}
+
+# file,name,val
+sub conf{
+my ($n,$v,$s)=(@_);
+my $r=defined($s)?'':'#';
+$s="$s";
+file($n);
+$f{$n}="\n$f{$n}\n";
+if(!(conf1($n,'[ 	]{0,}',$v,'"','"',$s,$r)||
+conf1($n,'[ 	]{0,}',$v,"'","'",$s,$r)||
+conf1($n,'[ 	]{0,}',$v,'','[ 	]{0,}\n',$s,$r)||
+conf1($n,'#[ 	]{0,}',$v,'"','"',$s,$r)||
+conf1($n,'#[ 	]{0,}',$v,"'","'",$s,$r)||
+conf1($n,'#[ 	]{0,}',$v,'','[ 	]{0,}\n',$s,$r)))
+{
+ $f{$n}.="$v=\"$s\"\n\n"
+}
+substr($f{$n},0,1,'');
+substr($f{$n},-1,1,'')
+}
+
+sub conf1{
+my ($n,$r,$v,$c1,$c2,$s,$r1)=(@_);
+my $x;
+$f{$n}=~s/(\n)$r([ 	]{0,}$v[ 	]{0,}=[ 	]{0,}$c1)(.*?)($c2)/$1."$r1".$2.($x=defined($r1)&&$s eq ''?$3:"$s").$4/gse;
+defined($x)
+}
+
+sub conf2{
+my $n=shift;
+for my $v (@_){
+ my $x=ev("\$$v");
+ conf($n,"$v",$x) if(defined($x))
+}
+}
+  
+
+# file,rem,label,string,[pos]
+sub addon{
+file($_[0]);
+my $r="$_[1]$_[1]$_[1] ";
+my $s="$r\+$_[2]\n$_[3]\n$r\-$_[2]\n";
+my $x;
+$f{$_[0]}=~s/$r\+$_[2](.*?)$r\-$_[2]\n/ss($1)/gse;
+substr($f{$_[0]},defined($_[4])?$_[4]:length($f{$_[0]}),0,$s) if(!$x);
+sub ss{$x=1;$s}
+$x
+}
+
+sub isflag{my $fl=" $_[0] ";$fl=~s/	/ /g;index($fl," $_[1] ")>=0}
+
+sub addflags{
+my $flags=shift;
+for my $i (@_){for my $fl (split(/ /,$i)){$flags.=" $fl" if("$fl" ne '' && !isflag($flags,$fl))}}
+substr($flags,0,1,'') if(substr($flags,0,1) eq ' ');
+$flags
+}
+
+sub delflags{
+my $flags=shift;
+$flags=" $flags ";
+for my $i (@_){for my $fl (split(/ /,$i)){$flags=~s/ $fl / /g}}
+substr($flags,0,1,'');
+substr($flags,-1,1,'')  if(substr($flags,-1) eq ' ');
+$flags
+}
+
+sub rf{
+my ($ss,$s);
+open FH,$_[0] or err("'$_[0]' read");
+$ss.=$s while(read(FH,$s,1024));
+close FH;
+$ss
+}
+
+sub wf{
+open(FH,$_[0]) &&
+print(FH $_[1]) &&
+close(FH) ||
+err("'$_[0]' write")
+}
+
+sub rdir{
+my @d;
+for(sort <$_[0]>){
+push @d,rf("<$_")
+}
+@d
+}
+
+sub wordcomp{
+my $bidirect=shift;
+my ($d,@s,@s0,@s1);
+for((@s[0],@s0)=@_;defined(@s[0]);@s[0]=pop @s0){
+for((@s[1],@s1)=@s0;defined(@s[1]);@s[1]=pop @s1){
+for my $x(0..$bidirect){
+for(my $i=length(@s[$x])-2;$i>=0;$i--){
+ my $c=substr(@s[$x],$i,2);
+ @s[$x]=~s/$c/$d++;$c/ge;
+ @s[1-$x]=~s/$c/$d--;$c/ge;
+}}}}
+$d
+}
+
+my %wild;
+   
+sub wild{
+my $p=shift;
+my @x=();
+$p.='/' if(substr($p,-1) ne '/');
+my $k=readlink(substr($p,0,-1))||$p;
+return if($wild{$k}++);
+opendir DH,$p;
+my @d=readdir DH;
+close DH;
+for (@d){
+ for my $i(@_) {if($_ eq $i || m/^$i$/){push @x,"$p$_"; last}}
+ push @x,wild("$p$_/",@_) if($_ ne '.' && $_ ne '..' && -d "$p$_");
+}
+delete($wild{$k});
+@x
+}
+
+sub err{
+wlog("Error: $_[0]: '$!'");
+exit -1
+}
+sub wlog{print "$_[0]\n"}
+
+sub p_patch{
+for(@_){
+ev($_);
+if($@){
+ err($@);
+ undef $@;
+}
+flush();
+}
+}
+
+open STDERR,">&2";
+select(STDERR);
+$|=1;
+my $ok=1;
+local %ENV0=%ENV;
+for(@ARGV){p_patch(substr($_,0,2) eq '--'?substr($_,2):-d $_?rdir("$_/*.p-patch"):rf("<$_")||($ok=0))}
+while(my ($k,$v)=each %ENV){print STDOUT "eval $k=".quotemeta($v)."\n" if($v ne $ENV0{$k})}
+$ok

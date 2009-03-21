@@ -1,0 +1,81 @@
+diff -pruN a/net/netfilter/Kconfig b/net/netfilter/Kconfig
+--- a/net/netfilter/Kconfig	2008-10-29 17:59:36.000000000 +0200
++++ b/net/netfilter/Kconfig	2008-11-01 13:28:19.000000000 +0200
+@@ -406,6 +406,12 @@ config NETFILTER_XT_TARGET_NOTRACK
+ 	  If you want to compile it as a module, say M here and read
+ 	  <file:Documentation/kbuild/modules.txt>.  If unsure, say `N'.
+ 
++config NETFILTER_XT_TARGET_NOTRACK_NEW
++	bool "NOTRACK safe (only new)"
++	depends on NETFILTER_XT_TARGET_NOTRACK
++	help
++	  Slow but safe way to NOTRACK only new/untracked connections.
++
+ config NETFILTER_XT_TARGET_RATEEST
+ 	tristate '"RATEEST" target support'
+ 	depends on NETFILTER_ADVANCED
+diff -pruN a/net/netfilter/nf_conntrack_core.c b/net/netfilter/nf_conntrack_core.c
+--- a/net/netfilter/nf_conntrack_core.c	2008-10-29 17:59:37.000000000 +0200
++++ b/net/netfilter/nf_conntrack_core.c	2008-11-01 13:33:27.000000000 +0200
+@@ -629,6 +629,9 @@ resolve_normal_ct(struct net *net,
+ 	struct nf_conntrack_tuple tuple;
+ 	struct nf_conntrack_tuple_hash *h;
+ 	struct nf_conn *ct;
++#ifdef CONFIG_NETFILTER_XT_TARGET_NOTRACK_NEW
++	struct nf_conntrack_expect *exp;
++#endif
+ 
+ 	if (!nf_ct_get_tuple(skb, skb_network_offset(skb),
+ 			     dataoff, l3num, protonum, &tuple, l3proto,
+@@ -640,6 +643,17 @@ resolve_normal_ct(struct net *net,
+ 	/* look for tuple match */
+ 	h = nf_conntrack_find_get(net, &tuple);
+ 	if (!h) {
++#ifdef CONFIG_NETFILTER_XT_TARGET_NOTRACK_NEW
++		if(skb->nfctinfo == IP_CT_NEW) {
++			exp = nf_ct_expect_find_get(net, &tuple);
++			if (!exp) {
++				skb->nfct = &nf_conntrack_untracked.ct_general;
++				nf_conntrack_get(skb->nfct);
++				return NULL;
++			}
++			nf_ct_expect_put(exp);
++		}
++#endif
+ 		h = init_conntrack(net, &tuple, l3proto, l4proto, skb, dataoff);
+ 		if (!h)
+ 			return NULL;
+@@ -720,6 +734,12 @@ nf_conntrack_in(struct net *net, u_int8_
+ 	ct = resolve_normal_ct(net, skb, dataoff, pf, protonum,
+ 			       l3proto, l4proto, &set_reply, &ctinfo);
+ 	if (!ct) {
++#ifdef CONFIG_NETFILTER_XT_TARGET_NOTRACK_NEW
++		if(skb->nfct == &nf_conntrack_untracked.ct_general){
++		    NF_CT_STAT_INC_ATOMIC(net, ignore);
++		    return NF_ACCEPT;
++		}
++#endif
+ 		/* Not valid part of a connection */
+ 		NF_CT_STAT_INC_ATOMIC(net, invalid);
+ 		return NF_ACCEPT;
+diff -pruN a/net/netfilter/xt_NOTRACK.c b/net/netfilter/xt_NOTRACK.c
+--- a/net/netfilter/xt_NOTRACK.c	2008-10-29 17:59:37.000000000 +0200
++++ b/net/netfilter/xt_NOTRACK.c	2008-11-01 13:28:19.000000000 +0200
+@@ -19,6 +19,9 @@ notrack_tg(struct sk_buff *skb, const st
+ 	if (skb->nfct != NULL)
+ 		return XT_CONTINUE;
+ 
++#ifdef CONFIG_NETFILTER_XT_TARGET_NOTRACK_NEW
++	skb->nfctinfo = IP_CT_NEW;
++#else
+ 	/* Attach fake conntrack entry.
+ 	   If there is a real ct entry correspondig to this packet,
+ 	   it'll hang aroun till timing out. We don't deal with it
+@@ -26,6 +29,7 @@ notrack_tg(struct sk_buff *skb, const st
+ 	skb->nfct = &nf_conntrack_untracked.ct_general;
+ 	skb->nfctinfo = IP_CT_NEW;
+ 	nf_conntrack_get(skb->nfct);
++#endif
+ 
+ 	return XT_CONTINUE;
+ }
