@@ -5,7 +5,7 @@ inherit eutils subversion
 MY_PV=cvs
 DESCRIPTION="PSPacer is a precise software pacer of IP traffic for Linux"
 #HOMEPAGE="http://www.gridmpi.org/gridtcp.en.jsp"
-HOMEPAGE="http://code.google.com/p/ticpp/"
+HOMEPAGE="http://code.google.com/p/pspacer/"
 SRC_URI=""
 LICENSE="GPL-2"
 SLOT="0"
