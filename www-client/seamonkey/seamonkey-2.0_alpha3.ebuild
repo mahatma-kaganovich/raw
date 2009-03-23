@@ -134,7 +134,7 @@ src_compile() {
 			eerror "Please add 'directfb' to your USE flags, and re-emerge cairo."
 			die "Cairo needs directfb"
 		fi
-	elif ! built_with_use x11-libs/cairo directfb; then
+	elif built_with_use x11-libs/cairo directfb; then
 		ewarn "Cairo built with 'directfb' useflag, but seamonkey with '-directfb':"
 		ewarn "using built-in Cairo instead..."
 		rmopt -system-cairo

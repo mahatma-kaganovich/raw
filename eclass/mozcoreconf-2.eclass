@@ -96,7 +96,7 @@ mozconfig_init() {
 	# compile string
 	filter-flags '-O*'
 
-#	strip-flags
+	strip-flags
 
 	# Additional ARCH support
 	case "${ARCH}" in
