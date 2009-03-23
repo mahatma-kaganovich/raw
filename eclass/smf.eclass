@@ -2,7 +2,7 @@ inherit eutils
 
 MY_PN=${MY_PN:=${PN}}
 MY_P=${MY_P:=${P}}
-DIRS=${DIRS:=/var/smfs}
+DIRS=${DIRS:=/var/run/smfs}
 
 RESTRICT="nomirror"
 LICENSE="GPL-2"
@@ -11,8 +11,7 @@ KEYWORDS="~x86 ~amd64"
 HOMEPAGE="http://smfs.sourceforge.net/${MY_PN}.html"
 SRC_URI="mirror://sourceforge/smfs/${MY_P}.tar.gz"
 DEPEND="mail-filter/smf-common
-	mail-mta/sendmail
-	app-portage/ppatch"
+	mail-mta/sendmail"
 
 S="${WORKDIR}/${MY_P}"
 
