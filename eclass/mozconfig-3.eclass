@@ -6,6 +6,7 @@ IUSE="gnome dbus startup-notification moznosystem"
 RDEPEND=" !moznosystem? (
 		>=media-libs/jpeg-6b
 		app-arch/zip
+		app-arch/bzip2
 		app-arch/unzip
 		>=x11-libs/cairo-1.6.0
 	)
