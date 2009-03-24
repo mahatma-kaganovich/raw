@@ -1,8 +1,0 @@
---- /libnl-1.0_pre6.orig/include/netlink-local.h
-+++ /libnl-1.0_pre6/include/netlink-local.h
-@@ -36,3 +36,4 @@
- typedef int32_t		__s32;
--typedef uint64_t	__u64;
-+typedef unsigned long long __u64;
-+
- 
