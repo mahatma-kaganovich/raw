@@ -179,7 +179,7 @@ mozconfig_init() {
 		--enable-system-cairo \
 		--with-distribution-id=org.gentoo
 
-	if use custom-optimization; then
+	if ! use custom-optimization; then
 		mozconfig_annotate -custom-optimization \
 			--disable-strip \
 			--disable-strip-libs \
