@@ -33,6 +33,7 @@ RDEPEND="java? ( virtual/jre )
 		>=dev-libs/nss-3.11.5
 		>=dev-libs/nspr-4.6.5-r1
 		app-text/hunspell
+		dev-db/sqlite
 		>=media-libs/lcms-1.17 )
 	directfb? ( dev-libs/DirectFB )
 	gnome? ( >=gnome-base/gnome-vfs-2.3.5
@@ -147,6 +148,7 @@ src_compile() {
 		--with-system-nss \
 		--enable-image-encoder=all \
 		--enable-system-lcms \
+		--enable-system-sqlite \
 		--with-default-mozilla-five-home=${MOZILLA_FIVE_HOME} \
 		--with-user-appdir=.mozilla \
 		--enable-system-hunspell \
