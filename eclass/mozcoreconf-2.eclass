@@ -115,6 +115,7 @@ mozconfig_init() {
 		;;
 
 	amd64)
+		use debug || append-flags -fomit-frame-pointer
 		# Historically we have needed to add this manually for 64-bit
 		append-flags -fPIC
 		;;
@@ -136,6 +137,7 @@ mozconfig_init() {
 		;;
 
 	x86)
+		use debug || append-flags -fomit-frame-pointer
 		if [[ $(gcc-major-version) -eq 3 ]]; then
 			# gcc-3 prior to 3.2.3 doesn't work well for pentium4
 			# see bug 25332
@@ -279,6 +281,7 @@ mozconfig_use_extension() {
 # with reasons, then clean up extensions list
 mozconfig_final() {
 	declare ac opt hash reason
+	use moznosystem && sed -i -e 's/--enable-system-/--disable-system-/g' -e 's/--with-system-/--without-system-/g' .mozconfig
 	echo
 	echo "=========================================================="
 	echo "Building ${PF} with the following configuration"
@@ -295,5 +298,4 @@ mozconfig_final() {
 		.mozconfig | xargs)
 	sed -i '/^ac_add_options --enable-extensions/d' .mozconfig
 	echo "ac_add_options --enable-extensions=${exts// /,}" >> .mozconfig
-	use moznosystem && sed -i -e 's/--enable-system-/--disable-system-/g' -e 's/--with-system-/--without-system-/g' .mozconfig
 }
