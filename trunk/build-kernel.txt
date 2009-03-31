@@ -1,0 +1,48 @@
+This overlay installing overlayed kernel-2.eclass with useflag
+"build-kernel" to automated kernel make on emerge time. It must work
+with any "sys-kernel/*-sources" package, using kernel-2.eclass.
+
+=== Configuring kernel.
+
+Configuration starting by "make defconfig", then going optional kernel
+config fixes and "make oldconfig" (after each fix). Last - "genkernel ramdisk"
+to gentoo initrd behaviour (todo: make own ramdisk).
+
+=== Config options.
+
+There are two variables (with current defaults):
+KERNEL_MODULES="drivers fs sound"
+KERNEL_CONFIG="DMA_ENGINE USB_STORAGE_\w+ NET_RADIO PNP PNP_ACPI \
+	PARPORT_PC_FIFO PARPORT_1284 NFTL_RW PMC551_BUGFIX CISS_SCSI_TAPE \
+	CDROM_PKTCDVD_WCACHE SCSI_SCAN_ASYNC IOSCHED_DEADLINE \
+	DEFAULT_DEADLINE SND_SEQUENCER_OSS SND_FM801_TEA575X_BOOL \
+	SND_AC97_POWER_SAVE SCSI_PROC_FS \
+	-ARCNET -IDE -SMB_FS -DEFAULT_CFQ -SOUND_PRIME -KVM"
+
+KERNEL_MODULES contains directory list to wildcard modules enable.
+
+KERNEL_CONFIG contains kernel configuration options, prefixed by
+none ("y"), "-" ("-"), "+" ("m"), "~" (remove/oldconfig-default).
+Also perl regular expressions (for "grep -P") may be used.
+
+First reading "/etc/make.conf" values. If empty - using defaults. Then
+trying "/etc/kernels/kernel.conf".
+
+Default config trying to be kernel default + maximum hardware & filesystems.
+To use pure kernel defaults add to "/etc/make.conf":
+KERNEL_MODULES="vanilla"
+KERNEL_CONFIG="vanilla"
+(or other unused keyword)
+
+Present behaviour IMHO must be most simple and configurable.
+
+Current defaults checked by kernel 2.6.20 (kerrighed-sources).
+
+=== Compiling.
+
+Compiling must be usual "make all" + "genkernel ramdisk",
+installing into /boot and /lib/modules. No /boot mounting checks right now.
+Just copy into mounted /boot by hand (subject to self-check too).
+
+P.S. Defaults are subject to change.
+.
