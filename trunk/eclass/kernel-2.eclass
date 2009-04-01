@@ -1,13 +1,11 @@
 inherit raw-mod
 source "${PORTDIR}/eclass/kernel-2.eclass"
-IUSE="${IUSE} build-kernel debug custom-cflags +cramfs"
+IUSE="${IUSE} build-kernel debug custom-cflags cramfs"
 DEPEND="${DEPEND}
 	build-kernel? (
 		sys-kernel/genkernel
 		cramfs? ( sys-fs/cramfs )
 	) "
-
-INITRD="initrd-${KV}.img"
 
 [[ "${KERNEL_CONFIG}" == "" ]] &&
     KERNEL_CONFIG="-CC_OPTIMIZE_FOR_SIZE DMA_ENGINE USB_STORAGE_\w+ NET_RADIO PNP PNP_ACPI PARPORT_PC_FIFO PARPORT_1284 NFTL_RW PMC551_BUGFIX CISS_SCSI_TAPE CDROM_PKTCDVD_WCACHE SCSI_SCAN_ASYNC IOSCHED_DEADLINE DEFAULT_DEADLINE SND_SEQUENCER_OSS SND_FM801_TEA575X_BOOL SND_AC97_POWER_SAVE SCSI_PROC_FS  -ARCNET -IDE -SMB_FS -DEFAULT_CFQ -SOUND_PRIME -KVM"
@@ -27,25 +25,27 @@ kernel-2_src_compile() {
 	mmake
 	genkernel ramdisk --kerneldir="${S}" --logfile=/dev/null --bootdir="${S}" --no-mountboot
 	local r=`ls initramfs*-${KV}`
-	rename "${r}" "${INITRD}" "${r}" || die "initramfs rename failed"
+	rename "${r}" "initrd-${KV}.img" "${r}" || die "initramfs rename failed"
 	use cramfs || return
 	einfo "Converting initramfs to cramfs"
 	local tmp="${TMPDIR}/ramfstmp"
 	mkdir "${tmp}"
 	cd "${tmp}" || die "cd failed"
-	gzip p -dc "${S}/${INITRD}" | cpio -i
+	gzip p -dc "${S}/initrd-${KV}.img" | cpio -i
 	sed -i -e 's/ext2/cramfs/g' etc/fstab
 	cd "${S}" || die
-	mkcramfs "${tmp}" "${S}/${INITRD}"
+	mkcramfs "${tmp}" "initrd-${KV}.img" || die
 	rm "${tmp}" -Rf
+	gzip -9 "initrd-${KV}.img" || die
+	rename .gz "" "initrd-${KV}.img.gz" || die
 }
 
 
 kernel-2_src_install() {
-	cd "${S}"
+	cd "${S}" || die
 	if [[ ${ETYPE} == sources ]] && use build-kernel; then
 		insinto "/boot"
-		doins "${S}/${INITRD}"
+		doins "initrd-${KV}.img"
 		mmake INSTALL_PATH="${D}/boot" INSTALL_MOD_PATH="${D}" install modules_install
 		ewarn "If your /boot is not mounted, copy next files by hands:"
 		ewarn `ls "${D}/boot"`
