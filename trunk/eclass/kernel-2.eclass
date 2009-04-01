@@ -1,8 +1,13 @@
 inherit raw-mod
 source "${PORTDIR}/eclass/kernel-2.eclass"
-IUSE="${IUSE} build-kernel debug custom-cflags"
+IUSE="${IUSE} build-kernel debug custom-cflags +cramfs"
 DEPEND="${DEPEND}
-	build-kernel? ( sys-kernel/genkernel ) "
+	build-kernel? (
+		sys-kernel/genkernel
+		cramfs? ( sys-fs/cramfs )
+	) "
+
+INITRD="initrd-${KV}.img"
 
 [[ "${KERNEL_CONFIG}" == "" ]] &&
     KERNEL_CONFIG="-CC_OPTIMIZE_FOR_SIZE DMA_ENGINE USB_STORAGE_\w+ NET_RADIO PNP PNP_ACPI PARPORT_PC_FIFO PARPORT_1284 NFTL_RW PMC551_BUGFIX CISS_SCSI_TAPE CDROM_PKTCDVD_WCACHE SCSI_SCAN_ASYNC IOSCHED_DEADLINE DEFAULT_DEADLINE SND_SEQUENCER_OSS SND_FM801_TEA575X_BOOL SND_AC97_POWER_SAVE SCSI_PROC_FS  -ARCNET -IDE -SMB_FS -DEFAULT_CFQ -SOUND_PRIME -KVM"
@@ -11,29 +16,43 @@ DEPEND="${DEPEND}
 
 [[ -e "${CONFIG_ROOT}/etc/kernels/kernel.conf" ]] && source "${CONFIG_ROOT}/etc/kernels/kernel.conf"
 
+
 kernel-2_src_compile() {
 	cd "${S}"
 	[[ ${ETYPE} == headers ]] && compile_headers
+	[[ ${ETYPE} == sources ]] || return
 	use custom-cflags && sed -i -e "s/-O2/${CFLAGS}/g" Makefile
 	use build-kernel || return
 	config_defaults
-	mmake V=1
-#	genkernel all --kernel-config="${S}/.config" --kerneldir="${S}" --logfile=/dev/null --no-install --integrated-initramfs
+	mmake
+	genkernel ramdisk --kerneldir="${S}" --logfile=/dev/null --bootdir="${S}" --no-mountboot
+	local r=`ls initramfs*-${KV}`
+	rename "${r}" "${INITRD}" "${r}" || die "initramfs rename failed"
+	use cramfs || return
+	einfo "Converting initramfs to cramfs"
+	local tmp="${TMPDIR}/ramfstmp"
+	mkdir "${tmp}"
+	cd "${tmp}" || die "cd failed"
+	gzip p -dc "${S}/${INITRD}" | cpio -i
+	sed -i -e 's/ext2/cramfs/g' etc/fstab
+	cd "${S}" || die
+	mkcramfs "${tmp}" "${S}/${INITRD}"
+	rm "${tmp}" -Rf
 }
 
+
 kernel-2_src_install() {
-	if use build-kernel; then
-		mkdir "${D}/boot"
-		genkernel ramdisk --kerneldir="${S}" --logfile=/dev/null --bootdir="${D}/boot"
+	cd "${S}"
+	if [[ ${ETYPE} == sources ]] && use build-kernel; then
+		insinto "/boot"
+		doins "${S}/${INITRD}"
+		mmake INSTALL_PATH="${D}/boot" INSTALL_MOD_PATH="${D}" install modules_install
+		ewarn "If your /boot is not mounted, copy next files by hands:"
+		ewarn `ls "${D}/boot"`
 	fi
 	install_universal
 	[[ ${ETYPE} == headers ]] && install_headers
 	[[ ${ETYPE} == sources ]] && install_sources
-	use build-kernel || return
-	mmake INSTALL_PATH="${D}/boot" INSTALL_MOD_PATH="${D}" install modules_install
-	local ff=`ls "${D}/boot"`
-	ewarn "If your /boot is not mounted, copy next files by hands:"
-	ewarn "${ff}"
 }
 
 cfg(){
@@ -81,6 +100,11 @@ config_defaults(){
 	setconfig
 	setconfig
 	setconfig
+	if use cramfs; then
+		cfg y CRAMFS
+	else
+		cfg y EXT2_FS
+	fi
 	use debug || sed -i -e 's/^CONFIG.*_DEBUG=.*//' .config
 	yes '' 2>/dev/null | mmake oldconfig >/dev/null
 }
