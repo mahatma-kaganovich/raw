@@ -23,21 +23,7 @@ kernel-2_src_compile() {
 	use build-kernel || return
 	config_defaults
 	mmake
-	genkernel ramdisk --kerneldir="${S}" --logfile=/dev/null --bootdir="${S}" --no-mountboot
-	local r=`ls initramfs*-${KV}`
-	rename "${r}" "initrd-${KV}.img" "${r}" || die "initramfs rename failed"
-	use cramfs || return
-	einfo "Converting initramfs to cramfs"
-	local tmp="${TMPDIR}/ramfstmp"
-	mkdir "${tmp}"
-	cd "${tmp}" || die "cd failed"
-	gzip p -dc "${S}/initrd-${KV}.img" | cpio -i
-	sed -i -e 's/ext2/cramfs/g' etc/fstab
-	cd "${S}" || die
-	mkcramfs "${tmp}" "initrd-${KV}.img" || die
-	rm "${tmp}" -Rf
-	gzip -9 "initrd-${KV}.img" || die
-	rename .gz "" "initrd-${KV}.img.gz" || die
+	initrd
 }
 
 
@@ -53,6 +39,24 @@ kernel-2_src_install() {
 	install_universal
 	[[ ${ETYPE} == headers ]] && install_headers
 	[[ ${ETYPE} == sources ]] && install_sources
+}
+
+initrd(){
+	LDFLAGS="" genkernel ramdisk --kerneldir="${S}" --logfile="${TMPDIR}/genkernel.log" --bootdir="${S}" --no-mountboot --cachedir="${TMPDIR}/genkernel-cache" --tempdir="${TMPDIR}/genkernel" --postclear #  --all-ramdisk-modules
+	local r=`ls initramfs*-${KV}`
+	rename "${r}" "initrd-${KV}.img" "${r}" || die "initramfs rename failed"
+	use cramfs || return
+	einfo "Converting initramfs to cramfs"
+	local tmp="${TMPDIR}/ramfstmp"
+	mkdir "${tmp}"
+	cd "${tmp}" || die "cd failed"
+	gzip p -dc "${S}/initrd-${KV}.img" | cpio -i
+	sed -i -e 's/ext2/cramfs/g' etc/fstab
+	cd "${S}" || die
+	mkcramfs "${tmp}" "initrd-${KV}.img" || die
+	rm "${tmp}" -Rf
+	gzip -9 "initrd-${KV}.img" || die
+	rename .gz "" "initrd-${KV}.img.gz" || die
 }
 
 cfg(){
