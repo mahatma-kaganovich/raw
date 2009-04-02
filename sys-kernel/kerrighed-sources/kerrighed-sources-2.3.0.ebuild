@@ -14,7 +14,8 @@ HOMEPAGE="http://www.kerrighed.org/"
 DESCRIPTION="Kerrighed SSI cluster kernel"
 SRC_URI="${KERNEL_URI} http://gforge.inria.fr/frs/download.php/4491/kerrighed-${PV}.tar.gz"
 KEYWORDS="-* ~amd64 ~x86"
-IUSE=""
+# default: building default kernel, including all modules compressed in initrd
+IUSE="+kernel-build +compress"
 
 S="${WORKDIR}/linux-${KV}"
 S1="${WORKDIR}/kerrighed-${PV}"
