@@ -37,6 +37,7 @@ kernel-2_src_install() {
 		insinto "/boot"
 		doins "initrd-${KV}.img"
 		mmake INSTALL_PATH="${D}/boot" INSTALL_MOD_PATH="${D}" install modules_install
+		rm "${D}"/boot/vmlinuz
 		ewarn "If your /boot is not mounted, copy next files by hands:"
 		ewarn `ls "${D}/boot"`
 	fi
