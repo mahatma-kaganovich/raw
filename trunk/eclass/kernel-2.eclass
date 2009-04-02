@@ -1,14 +1,18 @@
 inherit raw-mod
 source "${PORTDIR}/eclass/kernel-2.eclass"
-IUSE="${IUSE} build-kernel debug custom-cflags cramfs"
+IUSE="${IUSE} build-kernel debug custom-cflags compress"
 DEPEND="${DEPEND}
 	build-kernel? (
 		sys-kernel/genkernel
-		cramfs? ( sys-fs/cramfs )
+		compress? (
+			sys-fs/squashfs-tools
+			sys-fs/cramfs
+		)
 	) "
+# cramfs = compat
 
 [[ "${KERNEL_CONFIG}" == "" ]] &&
-    KERNEL_CONFIG="-CC_OPTIMIZE_FOR_SIZE DMA_ENGINE USB_STORAGE_\w+ NET_RADIO PNP PNP_ACPI PARPORT_PC_FIFO PARPORT_1284 NFTL_RW PMC551_BUGFIX CISS_SCSI_TAPE CDROM_PKTCDVD_WCACHE SCSI_SCAN_ASYNC IOSCHED_DEADLINE DEFAULT_DEADLINE SND_SEQUENCER_OSS SND_FM801_TEA575X_BOOL SND_AC97_POWER_SAVE SCSI_PROC_FS  -ARCNET -IDE -SMB_FS -DEFAULT_CFQ -SOUND_PRIME -KVM"
+    KERNEL_CONFIG="-CC_OPTIMIZE_FOR_SIZE DMA_ENGINE USB_STORAGE_\S+ NET_RADIO PNP PNP_ACPI PARPORT_PC_FIFO PARPORT_1284 NFTL_RW PMC551_BUGFIX CISS_SCSI_TAPE CDROM_PKTCDVD_WCACHE SCSI_SCAN_ASYNC IOSCHED_DEADLINE DEFAULT_DEADLINE SND_SEQUENCER_OSS SND_FM801_TEA575X_BOOL SND_AC97_POWER_SAVE SCSI_PROC_FS  -ARCNET -IDE -SMB_FS -DEFAULT_CFQ -SOUND_PRIME -KVM"
 [[ "${KERNEL_MODULES}" == "" ]] &&
     KERNEL_MODULES="drivers fs sound"
 
@@ -42,10 +46,18 @@ kernel-2_src_install() {
 }
 
 initrd(){
-	LDFLAGS="" genkernel ramdisk --kerneldir="${S}" --logfile="${TMPDIR}/genkernel.log" --bootdir="${S}" --no-mountboot --cachedir="${TMPDIR}/genkernel-cache" --tempdir="${TMPDIR}/genkernel" --postclear #  --all-ramdisk-modules
+	cp "${ROOT}/var/cache/genkernel" "${TMPDIR}/genkernel-cache" -r
+	local p=""
+	use compress && p="${p} --all-ramdisk-modules"
+	LDFLAGS="" genkernel ramdisk --kerneldir="${S}" --logfile="${TMPDIR}/genkernel.log" --bootdir="${S}" --no-mountboot --cachedir="${TMPDIR}/genkernel-cache" --tempdir="${TMPDIR}/genkernel" --postclear ${p}
 	local r=`ls initramfs*-${KV}`
 	rename "${r}" "initrd-${KV}.img" "${r}" || die "initramfs rename failed"
-	use cramfs || return
+	use compress && fs_compat
+#	use cramfs && cramfs
+}
+
+# incompatible with 2.6.20
+cramfs(){
 	einfo "Converting initramfs to cramfs"
 	local tmp="${TMPDIR}/ramfstmp"
 	mkdir "${tmp}"
@@ -54,6 +66,37 @@ initrd(){
 	sed -i -e 's/ext2/cramfs/g' etc/fstab
 	cd "${S}" || die
 	mkcramfs "${tmp}" "initrd-${KV}.img" || die
+	rm "${tmp}" -Rf
+	gzip -9 "initrd-${KV}.img" || die
+	rename .gz "" "initrd-${KV}.img.gz" || die
+}
+
+squashfs_enabled(){
+	[[ -e "${S}/fs/squashfs" ]] && return 0
+	return 1
+}
+
+# compressed /lib loopback only, compat
+fs_compat(){
+	einfo "Including $1 into initramfs"
+	local tmp="${TMPDIR}/ramfstmp"
+	mkdir "${tmp}"
+	cd "${tmp}" || die "cd failed"
+	gzip p -dc "${S}/initrd-${KV}.img" | cpio -i
+	if squashfs_enabled; then
+		mksquashfs "lib" "lib.loopfs" -all-root -no-recovery || die
+	else
+		mkcramfs "lib" "lib.loopfs" || die
+	fi
+	sed -i -e 's%\(#!/bin/sh\)%\1\n\n/bin/mount /lib.loopfs /lib -o loop%' \
+		-e 's%\(umount /sys\)%umount /lib\n\1%' \
+		init
+	rm ${tmp}/lib/* -Rf || die
+	# todo: cramfs/squashfs modules preserve
+#	cd lib/modules
+#	depmod -b ../.. *
+	find . -print | cpio --quiet -o -H newc -F "${S}/initrd-${KV}.img"
+	cd "${S}" || die
 	rm "${tmp}" -Rf
 	gzip -9 "initrd-${KV}.img" || die
 	rename .gz "" "initrd-${KV}.img.gz" || die
@@ -104,10 +147,12 @@ config_defaults(){
 	setconfig
 	setconfig
 	setconfig
-	if use cramfs; then
-		cfg y CRAMFS
-	else
-		cfg y EXT2_FS
+	cfg y EXT2_FS
+	if use compress; then
+		cfg y SQUASHFS
+		squashfs_enabled || cfg y CRAMFS
+		cfg y BLK_DEV_LOOP
+		cfg y BLK_DEV_CRYPTOLOOP
 	fi
 	use debug || sed -i -e 's/^CONFIG.*_DEBUG=.*//' .config
 	yes '' 2>/dev/null | mmake oldconfig >/dev/null
