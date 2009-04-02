@@ -1,5 +1,8 @@
 inherit raw-mod
 source "${PORTDIR}/eclass/kernel-2.eclass"
+
+if [[ ${ETYPE} == sources ]]; then
+
 IUSE="${IUSE} build-kernel debug custom-cflags compress integrated ipv6"
 DEPEND="${DEPEND}
 	build-kernel? (
@@ -12,12 +15,21 @@ DEPEND="${DEPEND}
 # cramfs = compat
 
 [[ "${KERNEL_CONFIG}" == "" ]] &&
-    KERNEL_CONFIG="-CC_OPTIMIZE_FOR_SIZE DMA_ENGINE USB_STORAGE_[^\s\n=]+ USB_LIBUSUAL -BLK_DEV_UB NET_RADIO PNP PNP_ACPI PARPORT_PC_FIFO PARPORT_1284 NFTL_RW PMC551_BUGFIX CISS_SCSI_TAPE CDROM_PKTCDVD_WCACHE SCSI_SCAN_ASYNC IOSCHED_DEADLINE DEFAULT_DEADLINE SND_SEQUENCER_OSS SND_FM801_TEA575X_BOOL SND_AC97_POWER_SAVE SCSI_PROC_FS  -ARCNET -IDE -SMB_FS -DEFAULT_CFQ -SOUND_PRIME -KVM"
+    KERNEL_CONFIG="-CC_OPTIMIZE_FOR_SIZE DMA_ENGINE USB_STORAGE_[^\s\n=]+
+	USB_LIBUSUAL -BLK_DEV_UB NET_RADIO PNP PNP_ACPI PARPORT_PC_FIFO
+	PARPORT_1284 NFTL_RW PMC551_BUGFIX CISS_SCSI_TAPE CDROM_PKTCDVD_WCACHE
+	SCSI_SCAN_ASYNC IOSCHED_DEADLINE DEFAULT_DEADLINE SND_SEQUENCER_OSS
+	SND_FM801_TEA575X_BOOL SND_AC97_POWER_SAVE SCSI_PROC_FS 
+	-ARCNET -IDE -SMB_FS -DEFAULT_CFQ -SOUND_PRIME -KVM
+	    TR HOSTAP_FIRMWARE NET_PCMCIA WAN DCC4_PSISYNC FDDI HIPPI
+	    VT_HW_CONSOLE_BINDING SERIAL_NONSTANDARD SERIAL_8250_EXTENDED
+	    SPI"
 [[ "${KERNEL_MODULES}" == "" ]] &&
     KERNEL_MODULES="drivers fs sound"
 
 [[ -e "${CONFIG_ROOT}/etc/kernels/kernel.conf" ]] && source "${CONFIG_ROOT}/etc/kernels/kernel.conf"
 
+fi
 
 kernel-2_src_compile() {
 	cd "${S}"
@@ -33,7 +45,7 @@ kernel-2_src_compile() {
 	cp "${ROOT}/var/cache/genkernel" "${TMPDIR}/genkernel-cache" -r
 	local p=""
 	use compress && p="${p} --all-ramdisk-modules"
-	LDFLAGS="" genkernel ramdisk --kerneldir="${S}" --logfile="${TMPDIR}/genkernel.log" --bootdir="${S}" --no-mountboot --cachedir="${TMPDIR}/genkernel-cache" --tempdir="${TMPDIR}/genkernel" --postclear ${p} || die
+	run_genkernel ramdisk --kerneldir="${S}" --logfile="${TMPDIR}/genkernel.log" --bootdir="${S}" --no-mountboot --cachedir="${TMPDIR}/genkernel-cache" --tempdir="${TMPDIR}/genkernel" ${p}
 	local r=`ls initramfs*-${KV}`
 	rename "${r}" "initrd-${KV}.img" "${r}" || die "initramfs rename failed"
 	use compress && fs_compat
@@ -50,7 +62,6 @@ kernel-2_src_compile() {
 	fi
 }
 
-
 kernel-2_src_install() {
 	cd "${S}" || die
 	if [[ ${ETYPE} == sources ]] && use build-kernel; then
@@ -60,13 +71,21 @@ kernel-2_src_install() {
 			doins "initrd-${KV}.img"
 		fi
 		mmake INSTALL_PATH="${D}/boot" INSTALL_MOD_PATH="${D}" install modules_install
-		use symlink || rm "${D}"/boot/vmlinuz
+		use symlink || rm "${D}"/boot/vmlinuz &>/dev/null
 		ewarn "If your /boot is not mounted, copy next files by hands:"
 		ewarn `ls "${D}/boot"`
 	fi
 	install_universal
 	[[ ${ETYPE} == headers ]] && install_headers
 	[[ ${ETYPE} == sources ]] && install_sources
+}
+
+run_genkernel(){
+	# cpio works fine without loopback
+	cp /usr/bin/genkernel "${S}" || die
+	sed -i -e 's/has_loop/true/' "${S}/genkernel"
+	LDFLAGS="" "${S}/genkernel" $* || die "genkernel failed"
+	rm "${S}/genkernel"
 }
 
 # incompatible with 2.6.20
@@ -178,7 +197,7 @@ config_defaults(){
 		cfg y BLK_DEV_LOOP
 		cfg y BLK_DEV_CRYPTOLOOP
 	fi
-	use debug || sed -i -e 's/^CONFIG.*_DEBUG=.*//' .config
+	cfg_use debug "(?:[^\n]*_)?DEBUG(?:_[^\n]*)?"
 	cfg_use ipv6 IPV6
 	yes '' 2>/dev/null | mmake oldconfig >/dev/null
 }
