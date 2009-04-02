@@ -6,14 +6,17 @@ with any "sys-kernel/*-sources" package, using kernel-2.eclass.
 
 Configuration starting by "make defconfig", then going optional kernel
 config fixes and "make oldconfig" (after each fix). Last - "genkernel ramdisk"
-to gentoo initrd behaviour (todo: make own ramdisk).
+to gentoo initrd behaviour (todo: make own ramdisk). If useflag "compress"
+given - all modules will be included, compressed by squashfs (or cramfs on
+old kernels) in compatibility mode (compressed loopbacked "/lib" inside of
+standard initrd).
 
 === Config options.
 
 There are two variables (with current defaults):
 KERNEL_MODULES="drivers fs sound"
 KERNEL_CONFIG="-CC_OPTIMIZE_FOR_SIZE \
-	DMA_ENGINE USB_STORAGE_\w+ NET_RADIO PNP PNP_ACPI \
+	DMA_ENGINE USB_STORAGE_\S+ NET_RADIO PNP PNP_ACPI \
 	PARPORT_PC_FIFO PARPORT_1284 NFTL_RW PMC551_BUGFIX CISS_SCSI_TAPE \
 	CDROM_PKTCDVD_WCACHE SCSI_SCAN_ASYNC IOSCHED_DEADLINE \
 	DEFAULT_DEADLINE SND_SEQUENCER_OSS SND_FM801_TEA575X_BOOL \
@@ -23,7 +26,7 @@ KERNEL_CONFIG="-CC_OPTIMIZE_FOR_SIZE \
 KERNEL_MODULES contains directory list to wildcard modules enable.
 
 KERNEL_CONFIG contains kernel configuration options, prefixed by
-none ("y"), "-" ("-"), "+" ("m"), "~" (remove/oldconfig-default).
+none ("y"), "-" ("n"), "+" ("m"), "~" (remove/oldconfig-default).
 Also perl regular expressions (for "grep -P") may be used.
 
 First reading "/etc/make.conf" values. If empty - using defaults. Then
