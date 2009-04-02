@@ -1,6 +1,6 @@
 inherit raw-mod
 source "${PORTDIR}/eclass/kernel-2.eclass"
-IUSE="${IUSE} build-kernel debug custom-cflags compress"
+IUSE="${IUSE} build-kernel debug custom-cflags compress integrated ipv6"
 DEPEND="${DEPEND}
 	build-kernel? (
 		sys-kernel/genkernel
@@ -23,38 +23,50 @@ kernel-2_src_compile() {
 	cd "${S}"
 	[[ ${ETYPE} == headers ]] && compile_headers
 	[[ ${ETYPE} == sources ]] || return
-	use custom-cflags && sed -i -e "s/-O2/${CFLAGS}/g" Makefile
+	if use custom-cflags; then
+#		filter-flags -march=* -msse* -mmmx -m3dnow
+		sed -i -e "s/-O2/${CFLAGS}/g" Makefile
+	fi
 	use build-kernel || return
 	config_defaults
 	mmake
-	initrd
+	cp "${ROOT}/var/cache/genkernel" "${TMPDIR}/genkernel-cache" -r
+	local p=""
+	use compress && p="${p} --all-ramdisk-modules"
+	LDFLAGS="" genkernel ramdisk --kerneldir="${S}" --logfile="${TMPDIR}/genkernel.log" --bootdir="${S}" --no-mountboot --cachedir="${TMPDIR}/genkernel-cache" --tempdir="${TMPDIR}/genkernel" --postclear ${p} || die
+	local r=`ls initramfs*-${KV}`
+	rename "${r}" "initrd-${KV}.img" "${r}" || die "initramfs rename failed"
+	use compress && fs_compat
+#	use cramfs && cramfs
+	if use integrated; then
+		cfg - CONFIG_INITRAMFS_SOURCE
+		cfg - CONFIG_INITRAMFS_ROOT_UID
+		cfg - CONFIG_INITRAMFS_ROOT_GID
+		gzip -dc  "initrd-${KV}.img" >"initrd-${KV}.cpio" || die
+		rm "initrd-${KV}.img"
+		echo "CONFIG_INITRAMFS_SOURCE=\"${S}/initrd-${KV}.cpio\"\nCONFIG_INITRAMFS_ROOT_UID=0\nCONFIG_INITRAMFS_ROOT_GID=0" >>.config
+		yes '' 2>/dev/null | mmake oldconfig &>/dev/null
+		mmake
+	fi
 }
 
 
 kernel-2_src_install() {
 	cd "${S}" || die
 	if [[ ${ETYPE} == sources ]] && use build-kernel; then
-		insinto "/boot"
-		doins "initrd-${KV}.img"
+		mkdir "${D}/boot"
+		if ! use integrated; then
+			insinto "/boot"
+			doins "initrd-${KV}.img"
+		fi
 		mmake INSTALL_PATH="${D}/boot" INSTALL_MOD_PATH="${D}" install modules_install
-		rm "${D}"/boot/vmlinuz
+		use symlink || rm "${D}"/boot/vmlinuz
 		ewarn "If your /boot is not mounted, copy next files by hands:"
 		ewarn `ls "${D}/boot"`
 	fi
 	install_universal
 	[[ ${ETYPE} == headers ]] && install_headers
 	[[ ${ETYPE} == sources ]] && install_sources
-}
-
-initrd(){
-	cp "${ROOT}/var/cache/genkernel" "${TMPDIR}/genkernel-cache" -r
-	local p=""
-	use compress && p="${p} --all-ramdisk-modules"
-	LDFLAGS="" genkernel ramdisk --kerneldir="${S}" --logfile="${TMPDIR}/genkernel.log" --bootdir="${S}" --no-mountboot --cachedir="${TMPDIR}/genkernel-cache" --tempdir="${TMPDIR}/genkernel" --postclear ${p}
-	local r=`ls initramfs*-${KV}`
-	rename "${r}" "initrd-${KV}.img" "${r}" || die "initramfs rename failed"
-	use compress && fs_compat
-#	use cramfs && cramfs
 }
 
 # incompatible with 2.6.20
@@ -120,6 +132,14 @@ cfg(){
 	done
 }
 
+cfg_use(){
+	if use $1; then
+		cfg y $2
+	else
+		cfg n $2
+	fi
+}
+
 setconfig(){
 	local i o
 	for i in ${KERNEL_CONFIG}; do
@@ -150,11 +170,15 @@ config_defaults(){
 	setconfig
 	cfg y EXT2_FS
 	if use compress; then
-		cfg y SQUASHFS
-		squashfs_enabled || cfg y CRAMFS
+		if squashfs_enabled; then
+			cfg y SQUASHFS
+		else
+			cfg y CRAMFS
+		fi
 		cfg y BLK_DEV_LOOP
 		cfg y BLK_DEV_CRYPTOLOOP
 	fi
 	use debug || sed -i -e 's/^CONFIG.*_DEBUG=.*//' .config
+	cfg_use ipv6 IPV6
 	yes '' 2>/dev/null | mmake oldconfig >/dev/null
 }
