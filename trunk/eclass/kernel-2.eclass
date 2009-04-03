@@ -1,9 +1,8 @@
-inherit raw-mod
 source "${PORTDIR}/eclass/kernel-2.eclass"
 
 if [[ ${ETYPE} == sources ]]; then
 
-IUSE="${IUSE} build-kernel debug custom-cflags compress integrated ipv6"
+IUSE="${IUSE} build-kernel debug custom-cflags compress integrated ipv6 netboot"
 DEPEND="${DEPEND}
 	build-kernel? (
 		sys-kernel/genkernel
@@ -15,17 +14,23 @@ DEPEND="${DEPEND}
 # cramfs = compat
 
 [[ "${KERNEL_CONFIG}" == "" ]] &&
-    KERNEL_CONFIG="-CC_OPTIMIZE_FOR_SIZE DMA_ENGINE USB_STORAGE_[^\s\n=]+
-	USB_LIBUSUAL -BLK_DEV_UB NET_RADIO PNP PNP_ACPI PARPORT_PC_FIFO
-	PARPORT_1284 NFTL_RW PMC551_BUGFIX CISS_SCSI_TAPE CDROM_PKTCDVD_WCACHE
+    KERNEL_CONFIG="KALLSYMS_EXTRA_PASS DMA_ENGINE USB_STORAGE_[\w\d]+
+	USB_LIBUSUAL -BLK_DEV_UB
+	NET_RADIO PNP PNP_ACPI PARPORT_PC_FIFO PARPORT_1284 NFTL_RW
+	PMC551_BUGFIX CISS_SCSI_TAPE CDROM_PKTCDVD_WCACHE
 	SCSI_SCAN_ASYNC IOSCHED_DEADLINE DEFAULT_DEADLINE SND_SEQUENCER_OSS
-	SND_FM801_TEA575X_BOOL SND_AC97_POWER_SAVE SCSI_PROC_FS 
-	-ARCNET -IDE -SMB_FS -DEFAULT_CFQ -SOUND_PRIME -KVM
-	    TR HOSTAP_FIRMWARE NET_PCMCIA WAN DCC4_PSISYNC FDDI HIPPI
-	    VT_HW_CONSOLE_BINDING SERIAL_NONSTANDARD SERIAL_8250_EXTENDED
-	    SPI"
+	SND_FM801_TEA575X_BOOL SND_AC97_POWER_SAVE SCSI_PROC_FS
+	NET_VENDOR_3COM
+	-CC_OPTIMIZE_FOR_SIZE
+	-ARCNET -IDE -SMB_FS -DEFAULT_CFQ -DEFAULT_AS -DEFAULT_NOOP
+	-SOUND_PRIME -KVM
+	    -TR HOSTAP_FIRMWARE NET_PCMCIA WAN DCC4_PSISYNC
+	    FDDI HIPPI VT_HW_CONSOLE_BINDING SERIAL_NONSTANDARD
+	    SERIAL_8250_EXTENDED SPI"
 [[ "${KERNEL_MODULES}" == "" ]] &&
-    KERNEL_MODULES="drivers fs sound"
+    KERNEL_MODULES="drivers +fs +sound +drivers/net"
+	# todo: fix genkernel default modules
+#	+drivers/scsi +drivers/ata"
 
 [[ -e "${CONFIG_ROOT}/etc/kernels/kernel.conf" ]] && source "${CONFIG_ROOT}/etc/kernels/kernel.conf"
 
@@ -42,10 +47,11 @@ kernel-2_src_compile() {
 	use build-kernel || return
 	config_defaults
 	mmake
-	cp "${ROOT}/var/cache/genkernel" "${TMPDIR}/genkernel-cache" -r
 	local p=""
 	use compress && p="${p} --all-ramdisk-modules"
-	run_genkernel ramdisk --kerneldir="${S}" --logfile="${TMPDIR}/genkernel.log" --bootdir="${S}" --no-mountboot --cachedir="${TMPDIR}/genkernel-cache" --tempdir="${TMPDIR}/genkernel" ${p}
+	use netboot && p="${p} --netboot"
+	[[ -e "${ROOT}/lib/firmware" ]] && einfo "Found /lib/firmware" && p="${p} --firmware --firmware-dir=${ROOT}/lib/firmware"
+	run_genkernel ramdisk --kerneldir="${S}" --bootdir="${S}" --no-mountboot ${p}
 	local r=`ls initramfs*-${KV}`
 	rename "${r}" "initrd-${KV}.img" "${r}" || die "initramfs rename failed"
 	use compress && fs_compat
@@ -81,10 +87,11 @@ kernel-2_src_install() {
 }
 
 run_genkernel(){
+	[[ ! -e "${TMPDIR}/genkernel-cache" ]] && cp "${ROOT}/var/cache/genkernel" "${TMPDIR}/genkernel-cache" -r
 	# cpio works fine without loopback
 	cp /usr/bin/genkernel "${S}" || die
 	sed -i -e 's/has_loop/true/' "${S}/genkernel"
-	LDFLAGS="" "${S}/genkernel" $* || die "genkernel failed"
+	LDFLAGS="" "${S}/genkernel" --cachedir="${TMPDIR}/genkernel-cache" --tempdir="${TMPDIR}/genkernel" --logfile="${TMPDIR}/genkernel.log" $* || die "genkernel failed"
 	rm "${S}/genkernel"
 }
 
@@ -94,7 +101,7 @@ cramfs(){
 	local tmp="${TMPDIR}/ramfstmp"
 	mkdir "${tmp}"
 	cd "${tmp}" || die "cd failed"
-	gzip p -dc "${S}/initrd-${KV}.img" | cpio -i
+	gzip -dc "${S}/initrd-${KV}.img" | cpio -i
 	sed -i -e 's/ext2/cramfs/g' etc/fstab
 	cd "${S}" || die
 	mkcramfs "${tmp}" "initrd-${KV}.img" || die
@@ -114,16 +121,20 @@ fs_compat(){
 	local tmp="${TMPDIR}/ramfstmp"
 	mkdir "${tmp}"
 	cd "${tmp}" || die "cd failed"
-	gzip p -dc "${S}/initrd-${KV}.img" | cpio -i
+	gzip -dc "${S}/initrd-${KV}.img" | cpio -i
 	if squashfs_enabled; then
 		mksquashfs "lib" "lib.loopfs" -all-root -no-recovery || die
 	else
 		mkcramfs "lib" "lib.loopfs" || die
 	fi
-	sed -i -e 's%\(#!/bin/sh\)%\1\n\n/bin/mount /lib.loopfs /lib -o loop%' \
+	sed -i -e 's%^\(mount.* / .*\)$%\1\nmount /lib.loopfs /lib -o loop%' \
 		-e 's%\(umount /sys\)%umount /lib\n\1%' \
 		init
 	rm ${tmp}/lib/* -Rf || die
+	local i
+	for i in 0 1 2 3; do
+		mknod -m 660 "${tmp}/dev/loop${i}" b 7 ${i}
+	done
 	# todo: cramfs/squashfs modules preserve
 #	cd lib/modules
 #	depmod -b ../.. *
@@ -136,19 +147,23 @@ fs_compat(){
 
 cfg(){
 	local r="$1"
-	shift
-	local o="$*"
-	for i in `grep -P "^(?:\# )?CONFIG_${o}(?:=.*| is not set)$" .config || echo "${o}"` ; do
+	local o="$2"
+	local i
+	( grep -P "^(?:\# )?CONFIG_${o}(?:=.*| is not set)\$" .config || echo "${o}" ) >"${TMPDIR}/cfg.tmp"
+	while read i ; do
+		[[ "$3" == "-"  && "${i/=}" != "${i}" ]] && continue
 		i=${i#\# }
 		i=${i#CONFIG_}
 		i=${i/=*/}
+		i=${i/ is not set/}
 		sed -i -e "s/^# CONFIG_${i} is not set//" -e "s/^CONFIG_${i}=.*//" .config
 		if [[ "${r}" == "n" ]]; then
 			echo "# CONFIG_${i} is not set" >>.config
 		elif [[ "${r}" != "-" ]]; then
 			echo "CONFIG_${i}=${r}" >>.config
 		fi
-	done
+	done <"${TMPDIR}/cfg.tmp"
+	rm "${TMPDIR}/cfg.tmp"
 }
 
 cfg_use(){
@@ -172,16 +187,17 @@ setconfig(){
 }
 
 config_defaults(){
-	local i i1 o
+	local i i1 o m
 	einfo "Configuring kernel"
 	mmake defconfig >/dev/null
 	for i in ${KERNEL_MODULES}; do
-		for i1 in ${i}{,/*,/*/*,/*/*/*,*/*/*/*}/Kconfig{,.*} ; do
-			[[ -e ${i1} ]] || continue
-			echo "	${i1}"
-			for o in `grep -P "^\s*(?:menu)?config\s.*\n(?:[^\n]+\n)*\s*tristate" ${i1} 2>/dev/null  | grep -P "^config"` ; do
-				[[ "${o}" == "config" ]] || cfg m ${o}
-			done
+		einfo "Searching modules: ${i}"
+		m="-"
+		i1="${i}"
+		i="${i#+}"
+		[[ "${i1}" == "${i}" ]] || m=""
+		for o in `grep -Prh "^\s*(?:menu)?config\s.*\n(?:[^\n]+\n)*\s*tristate" ${i} --include="Kconfig*" 2>/dev/null  | grep -P "^config"` ; do
+			[[ "${o}" == "config" ]] || cfg m "${o}" "${m}"
 		done
 	done
 	setconfig
@@ -195,9 +211,12 @@ config_defaults(){
 			cfg y CRAMFS
 		fi
 		cfg y BLK_DEV_LOOP
-		cfg y BLK_DEV_CRYPTOLOOP
 	fi
 	cfg_use debug "(?:[^\n]*_)?DEBUG(?:_[^\n]*)?"
 	cfg_use ipv6 IPV6
 	yes '' 2>/dev/null | mmake oldconfig >/dev/null
+}
+
+mmake(){
+	emake DESTDIR="${D}" ARCH=$(tc-arch-kernel) ABI=${KERNEL_ABI} $* || die
 }

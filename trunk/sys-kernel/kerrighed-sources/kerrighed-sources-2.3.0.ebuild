@@ -30,6 +30,6 @@ src_unpack(){
 	sed -i -e 's/_proxy_pda = 0/_proxy_pda = 1/g' arch/*/kernel/vmlinux.lds.S
 	[[ -e arch/x86_64/kernel/x8664_ksyms.c ]] && grep -q "_proxy_pda" arch/x86_64/kernel/x8664_ksyms.c || echo "EXPORT_SYMBOL(_proxy_pda);" >>arch/x86_64/kernel/x8664_ksyms.c
 	cd "${S1}"
-	econf --with-kernel="${S}" --disable-service
+	econf --with-kernel="${S}" --disable-service --disable-man
 	emake patch
 }
