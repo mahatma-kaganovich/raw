@@ -6,24 +6,30 @@ with any "sys-kernel/*-sources" package, using kernel-2.eclass.
 
 Configuration starting by "make defconfig", then going optional kernel
 config fixes and "make oldconfig" (after each fix). Last - "genkernel ramdisk"
-to gentoo initrd behaviour (todo: make own ramdisk). If useflag "compress"
-given - all modules will be included, compressed by squashfs (or cramfs on
-old kernels) in compatibility mode (compressed loopbacked "/lib" inside of
-standard initrd).
+to gentoo initrd behaviour (todo: make own ramdisk?) with optional fixes.
 
 === Config options.
 
 There are two variables (with current defaults):
-KERNEL_MODULES="drivers fs sound"
-KERNEL_CONFIG="-CC_OPTIMIZE_FOR_SIZE \
-	DMA_ENGINE USB_STORAGE_\S+ NET_RADIO PNP PNP_ACPI \
-	PARPORT_PC_FIFO PARPORT_1284 NFTL_RW PMC551_BUGFIX CISS_SCSI_TAPE \
-	CDROM_PKTCDVD_WCACHE SCSI_SCAN_ASYNC IOSCHED_DEADLINE \
-	DEFAULT_DEADLINE SND_SEQUENCER_OSS SND_FM801_TEA575X_BOOL \
-	SND_AC97_POWER_SAVE SCSI_PROC_FS \
-	-ARCNET -IDE -SMB_FS -DEFAULT_CFQ -SOUND_PRIME -KVM"
+KERNEL_MODULES="drivers +fs +sound +drivers/net"
+KERNEL_CONFIG="KALLSYMS_EXTRA_PASS DMA_ENGINE USB_STORAGE_[\w\d]+
+	USB_LIBUSUAL -BLK_DEV_UB
+	NET_RADIO PNP PNP_ACPI PARPORT_PC_FIFO PARPORT_1284 NFTL_RW
+	PMC551_BUGFIX CISS_SCSI_TAPE CDROM_PKTCDVD_WCACHE
+	SCSI_SCAN_ASYNC IOSCHED_DEADLINE DEFAULT_DEADLINE SND_SEQUENCER_OSS
+	SND_FM801_TEA575X_BOOL SND_AC97_POWER_SAVE SCSI_PROC_FS
+	NET_VENDOR_3COM
+	-CC_OPTIMIZE_FOR_SIZE
+	-ARCNET -IDE -SMB_FS -DEFAULT_CFQ -DEFAULT_AS -DEFAULT_NOOP
+	-SOUND_PRIME -KVM
+	    -TR HOSTAP_FIRMWARE NET_PCMCIA WAN DCC4_PSISYNC
+	    FDDI HIPPI VT_HW_CONSOLE_BINDING SERIAL_NONSTANDARD
+	    SERIAL_8250_EXTENDED SPI"
 
 KERNEL_MODULES contains directory list to wildcard modules enable.
+If "+" prefix given - modules will be forced, else - only unset
+will be modules (this path is around incomplete current modules lists in
+genkernel, some of default built-in modules needs to still built-in).
 
 KERNEL_CONFIG contains kernel configuration options, prefixed by
 none ("y"), "-" ("n"), "+" ("m"), "~" (remove/oldconfig-default).
@@ -47,6 +53,21 @@ Current defaults checked by kernel 2.6.20 (kerrighed-sources).
 Compiling must be usual "make all" + "genkernel ramdisk",
 installing into /boot and /lib/modules. No /boot mounting checks right now.
 Just copy into mounted /boot by hand (subject to self-check too).
+
+=== Addons.
+
+Useflag "integrated" make initrd image to built-in into kernel.
+
+Useflag "compress" will force all kernel modules to include into initrd,
+compressed by "cramfs" or "squashfs" (related of kernel version).
+Since only new kernels support compressed initrd - implemented
+only universal mode - compressed "/lib" directory inside uncompressed
+initrd and mounted runtime by script. I see no sence to do extra path
+to compress all initrd (little extra kilobytes).
+
+Useflag "netboot" make Gentoo's netboot image (not yet verifyed,
+todo: include Kerrighed modules and tools too, but tools must be
+static).
 
 P.S. Defaults are subject to change.
 .
