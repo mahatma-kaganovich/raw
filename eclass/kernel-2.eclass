@@ -21,6 +21,7 @@ DEPEND="${DEPEND}
 	SCSI_SCAN_ASYNC IOSCHED_DEADLINE DEFAULT_DEADLINE SND_SEQUENCER_OSS
 	SND_FM801_TEA575X_BOOL SND_AC97_POWER_SAVE SCSI_PROC_FS
 	NET_VENDOR_3COM
+	SYN_COOKIES [\w\d_]*_NAPI
 	-CC_OPTIMIZE_FOR_SIZE
 	-ARCNET -IDE -SMB_FS -DEFAULT_CFQ -DEFAULT_AS -DEFAULT_NOOP
 	-SOUND_PRIME -KVM
@@ -51,8 +52,12 @@ kernel-2_src_compile() {
 	use compress && p="${p} --all-ramdisk-modules"
 	use netboot && p="${p} --netboot"
 	[[ -e "${ROOT}/lib/firmware" ]] && einfo "Found /lib/firmware" && p="${p} --firmware --firmware-dir=${ROOT}/lib/firmware"
-	run_genkernel ramdisk --kerneldir="${S}" --bootdir="${S}" --no-mountboot ${p}
-	local r=`ls initramfs*-${KV}`
+	local r="${TMPDIR}/tmproot"
+	mkdir "${r}"
+	mmake INSTALL_MOD_PATH="${r}" modules_install
+	run_genkernel ramdisk --kerneldir="${S}" --bootdir="${S}" --module-prefix="${r}" --no-mountboot ${p}
+	rm "${r}" -Rf
+	r=`ls initramfs*-${KV}`
 	rename "${r}" "initrd-${KV}.img" "${r}" || die "initramfs rename failed"
 	use compress && fs_compat
 #	use cramfs && cramfs
@@ -123,7 +128,7 @@ fs_compat(){
 	cd "${tmp}" || die "cd failed"
 	gzip -dc "${S}/initrd-${KV}.img" | cpio -i
 	if squashfs_enabled; then
-		mksquashfs "lib" "lib.loopfs" -all-root -no-recovery || die
+		mksquashfs "lib" "lib.loopfs" -all-root -no-recovery -no-progress || die
 	else
 		mkcramfs "lib" "lib.loopfs" || die
 	fi
@@ -196,8 +201,8 @@ config_defaults(){
 		i1="${i}"
 		i="${i#+}"
 		[[ "${i1}" == "${i}" ]] || m=""
-		for o in `grep -Prh "^\s*(?:menu)?config\s.*\n(?:[^\n]+\n)*\s*tristate" ${i} --include="Kconfig*" 2>/dev/null  | grep -P "^config"` ; do
-			[[ "${o}" == "config" ]] || cfg m "${o}" "${m}"
+		for o in `grep -Prh "^\s*(?:menu)?config\s+.*?\n(?:[^\n]+\n)*\s*tristate" ${i} --include="Kconfig*" 2>/dev/null  | grep -P "^\s*(?:menu)?config"` ; do
+			[[ "${o}" == "config" || "${o}" == "menuconfig" ]] || cfg m "${o}" "${m}"
 		done
 	done
 	setconfig
