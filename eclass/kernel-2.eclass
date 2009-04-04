@@ -37,6 +37,8 @@ DEPEND="${DEPEND}
 
 fi
 
+BDIR="${WORKDIR}/build"
+
 kernel-2_src_compile() {
 	cd "${S}"
 	[[ ${ETYPE} == headers ]] && compile_headers
@@ -48,17 +50,25 @@ kernel-2_src_compile() {
 	use build-kernel || return
 	config_defaults
 	einfo "Compiling kernel"
-	kmake modules
+	kmake all
 	local p=""
 	use netboot && p="${p} --netboot"
-	local r="${TMPDIR}/tmproot"
-	mkdir "${r}"
-	kmake INSTALL_MOD_PATH="${r}" modules_install
+	[[ -e "${BDIR}" ]] || mkdir "${BDIR}"
+	kmake INSTALL_MOD_PATH="${BDIR}" modules_install
+	local r="${BDIR}/lib/modules/${KV}"
+	rm "${r}"/build "${r}"/source
+	cd "${WORKDIR}"
+	local i
+	for i in linux*${KV} ; do
+		ln -s "/usr/src/${i}" "${r}"/build
+		ln -s "/usr/src/${i}" "${r}"/source
+	done
+	cd "${S}"
 	if use compress; then
 		p="${p} --all-ramdisk-modules"
-		[[ -e "${r}/lib/firmware" ]] && p="${p} --firmware --firmware-dir=\"${r}/lib/firmware\""
+		[[ -e "${BDIR}/lib/firmware" ]] && p="${p} --firmware --firmware-dir=\"${BDIR}/lib/firmware\""
 	fi
-	run_genkernel ramdisk --kerneldir="${S}" --bootdir="${S}" --module-prefix="${r}" --no-mountboot ${p}
+	run_genkernel ramdisk "--kerneldir=\"${S}\" --bootdir=\"${S}\" --module-prefix=\"${BDIR}\" --no-mountboot ${p}"
 	r=`ls initramfs*-${KV}`
 	rename "${r}" "initrd-${KV}.img" "${r}" || die "initramfs rename failed"
 	use compress && fs_compat
@@ -71,8 +81,8 @@ kernel-2_src_compile() {
 		rm "initrd-${KV}.img"
 		echo "CONFIG_INITRAMFS_SOURCE=\"${S}/initrd-${KV}.cpio\"\nCONFIG_INITRAMFS_ROOT_UID=0\nCONFIG_INITRAMFS_ROOT_GID=0" >>.config
 		yes '' 2>/dev/null | kmake oldconfig &>/dev/null
+		kmake bzImage
 	fi
-	kmake bzImage
 }
 
 kernel-2_src_install() {
@@ -84,7 +94,7 @@ kernel-2_src_install() {
 			doins "initrd-${KV}.img"
 		fi
 		local f
-		for f in "${TMPDIR}"/tmproot/* ; do
+		for f in "${BDIR}"/* ; do
 			mv "${f}" "${D}/" || die
 		done
 		kmake INSTALL_PATH="${D}/boot" install
