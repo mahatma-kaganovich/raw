@@ -47,16 +47,18 @@ kernel-2_src_compile() {
 	fi
 	use build-kernel || return
 	config_defaults
-	mmake
+	einfo "Compiling kernel"
+	kmake modules
 	local p=""
-	use compress && p="${p} --all-ramdisk-modules"
 	use netboot && p="${p} --netboot"
-	[[ -e "${ROOT}/lib/firmware" ]] && einfo "Found /lib/firmware" && p="${p} --firmware --firmware-dir=${ROOT}/lib/firmware"
 	local r="${TMPDIR}/tmproot"
 	mkdir "${r}"
-	mmake INSTALL_MOD_PATH="${r}" modules_install
+	kmake INSTALL_MOD_PATH="${r}" modules_install
+	if use compress; then
+		p="${p} --all-ramdisk-modules"
+		[[ -e "${r}/lib/firmware" ]] && p="${p} --firmware --firmware-dir=\"${r}/lib/firmware\""
+	fi
 	run_genkernel ramdisk --kerneldir="${S}" --bootdir="${S}" --module-prefix="${r}" --no-mountboot ${p}
-	rm "${r}" -Rf
 	r=`ls initramfs*-${KV}`
 	rename "${r}" "initrd-${KV}.img" "${r}" || die "initramfs rename failed"
 	use compress && fs_compat
@@ -68,9 +70,9 @@ kernel-2_src_compile() {
 		gzip -dc  "initrd-${KV}.img" >"initrd-${KV}.cpio" || die
 		rm "initrd-${KV}.img"
 		echo "CONFIG_INITRAMFS_SOURCE=\"${S}/initrd-${KV}.cpio\"\nCONFIG_INITRAMFS_ROOT_UID=0\nCONFIG_INITRAMFS_ROOT_GID=0" >>.config
-		yes '' 2>/dev/null | mmake oldconfig &>/dev/null
-		mmake
+		yes '' 2>/dev/null | kmake oldconfig &>/dev/null
 	fi
+	kmake bzImage
 }
 
 kernel-2_src_install() {
@@ -81,7 +83,11 @@ kernel-2_src_install() {
 			insinto "/boot"
 			doins "initrd-${KV}.img"
 		fi
-		mmake INSTALL_PATH="${D}/boot" INSTALL_MOD_PATH="${D}" install modules_install
+		local f
+		for f in "${TMPDIR}"/tmproot/* ; do
+			mv "${f}" "${D}/" || die
+		done
+		kmake INSTALL_PATH="${D}/boot" install
 		use symlink || rm "${D}"/boot/vmlinuz &>/dev/null
 		ewarn "If your /boot is not mounted, copy next files by hands:"
 		ewarn `ls "${D}/boot"`
@@ -188,13 +194,13 @@ setconfig(){
 		o="${o/y ~/- }"
 		cfg ${o}
 	done
-	yes '' 2>/dev/null | mmake oldconfig &>/dev/null
+	yes '' 2>/dev/null | kmake oldconfig &>/dev/null
 }
 
 config_defaults(){
 	local i i1 o m
 	einfo "Configuring kernel"
-	mmake defconfig >/dev/null
+	kmake defconfig >/dev/null
 	for i in ${KERNEL_MODULES}; do
 		einfo "Searching modules: ${i}"
 		m="-"
@@ -219,9 +225,10 @@ config_defaults(){
 	fi
 	cfg_use debug "(?:[^\n]*_)?DEBUG(?:_[^\n]*)?"
 	cfg_use ipv6 IPV6
-	yes '' 2>/dev/null | mmake oldconfig >/dev/null
+	yes '' 2>/dev/null | kmake oldconfig >/dev/null
 }
 
-mmake(){
-	emake DESTDIR="${D}" ARCH=$(tc-arch-kernel) ABI=${KERNEL_ABI} $* || die
+kmake(){
+	# DESTDIR="${D}"
+	emake ARCH=$(tc-arch-kernel) ABI=${KERNEL_ABI} $* || die
 }
