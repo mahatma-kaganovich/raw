@@ -1,0 +1,24 @@
+--- a/init	2009-04-02 20:37:59.000000000 +0300
++++ b/init	2009-04-11 15:14:24.000000000 +0300
+@@ -4,2 +4,3 @@
+ . /etc/initrd.scripts
++. /etc/syspnp
+ 
+@@ -28,2 +29,9 @@
+ 
++if [[ -f /lib.loopfs ]]; then
++	modprobe loop >/dev/null 2>&1
++	modprobe cramfs >/dev/null 2>&1
++	modprobe squashfs >/dev/null 2>&1
++	mount /lib.loopfs /lib -o loop
++fi
++
+ if [ "$0" = '/init' ]
+@@ -243,2 +251,3 @@
+ 	then
++		syspnp
+ 		for modules in ${MY_HWOPTS}
+@@ -696,2 +705,3 @@
+ echo -ne "${BOLD}.${NORMAL}"
++umount /lib
+ umount /sys || echo '*: Failed to unmount the ramdisk /sys!'

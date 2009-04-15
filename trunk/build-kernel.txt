@@ -10,21 +10,8 @@ to gentoo initrd behaviour (todo: make own ramdisk?) with optional fixes.
 
 === Config options.
 
-There are two variables (with current defaults):
-KERNEL_MODULES="drivers +fs +sound +drivers/net"
-KERNEL_CONFIG="KALLSYMS_EXTRA_PASS DMA_ENGINE USB_STORAGE_[\w\d]+
-	USB_LIBUSUAL -BLK_DEV_UB
-	NET_RADIO PNP PNP_ACPI PARPORT_PC_FIFO PARPORT_1284 NFTL_RW
-	PMC551_BUGFIX CISS_SCSI_TAPE CDROM_PKTCDVD_WCACHE
-	SCSI_SCAN_ASYNC IOSCHED_DEADLINE DEFAULT_DEADLINE SND_SEQUENCER_OSS
-	SND_FM801_TEA575X_BOOL SND_AC97_POWER_SAVE SCSI_PROC_FS
-	NET_VENDOR_3COM
-	-CC_OPTIMIZE_FOR_SIZE
-	-ARCNET -IDE -SMB_FS -DEFAULT_CFQ -DEFAULT_AS -DEFAULT_NOOP
-	-SOUND_PRIME -KVM
-	    -TR HOSTAP_FIRMWARE NET_PCMCIA WAN DCC4_PSISYNC
-	    FDDI HIPPI VT_HW_CONSOLE_BINDING SERIAL_NONSTANDARD
-	    SERIAL_8250_EXTENDED SPI"
+There are two variables: KERNEL_MODULES, KERNEL_CONFIG.
+(see defaults in my "kernel-2.eclass").
 
 KERNEL_MODULES contains directory list to wildcard modules enable.
 If "+" prefix given - modules will be forced, else - only unset
@@ -58,7 +45,9 @@ Just copy into mounted /boot by hand (subject to self-check too).
 
 Useflag "integrated" make initrd image to built-in into kernel.
 
-Useflag "compress" will force all kernel modules to include into initrd,
+Useflag "pnp" add pnp/pci/etc. module bootloader, based only on
+prepared kernel modules info (no external hardware data).
+"pnp" will force all kernel modules to include into initrd,
 compressed by "cramfs" or "squashfs" (related of kernel version).
 Since only new kernels support compressed initrd - implemented
 only universal mode - compressed "/lib" directory inside uncompressed

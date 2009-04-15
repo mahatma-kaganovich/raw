@@ -2,26 +2,27 @@ source "${PORTDIR}/eclass/kernel-2.eclass"
 
 if [[ ${ETYPE} == sources ]]; then
 
-IUSE="${IUSE} build-kernel debug custom-cflags compress integrated ipv6 netboot"
+IUSE="${IUSE} build-kernel debug custom-cflags pnp integrated ipv6 netboot"
 DEPEND="${DEPEND}
 	build-kernel? (
-		sys-kernel/genkernel
-		compress? (
-			sys-fs/squashfs-tools
-			sys-fs/cramfs
-		)
+		pnp? ( sys-kernel/genpnprd )
 	) "
 # cramfs = compat
 
 [[ "${KERNEL_CONFIG}" == "" ]] &&
     KERNEL_CONFIG="KALLSYMS_EXTRA_PASS DMA_ENGINE USB_STORAGE_[\w\d]+
 	USB_LIBUSUAL -BLK_DEV_UB
+	KEYBOARD_ATKBD
+	IKCONFIG_PROC IKCONFIG EXPERIMENTAL
 	NET_RADIO PNP PNP_ACPI PARPORT_PC_FIFO PARPORT_1284 NFTL_RW
 	PMC551_BUGFIX CISS_SCSI_TAPE CDROM_PKTCDVD_WCACHE
 	SCSI_SCAN_ASYNC IOSCHED_DEADLINE DEFAULT_DEADLINE SND_SEQUENCER_OSS
 	SND_FM801_TEA575X_BOOL SND_AC97_POWER_SAVE SCSI_PROC_FS
 	NET_VENDOR_3COM
 	SYN_COOKIES [\w\d_]*_NAPI
+	[\w\d_]*_EDID FB_[\w\d_]*_I2C FB_MATROX_[\w\d_]* FB_ATY_[\w\d_]*
+	FB_[\w\d_]*_ACCEL -FB_HGA_ACCEL FB_SIS_300 FB_SIS_315 FB_GEOGE
+	FB_MB862XX_PCI_GDC
 	-CC_OPTIMIZE_FOR_SIZE
 	-ARCNET -IDE -SMB_FS -DEFAULT_CFQ -DEFAULT_AS -DEFAULT_NOOP
 	-SOUND_PRIME -KVM
@@ -29,9 +30,9 @@ DEPEND="${DEPEND}
 	    FDDI HIPPI VT_HW_CONSOLE_BINDING SERIAL_NONSTANDARD
 	    SERIAL_8250_EXTENDED SPI"
 [[ "${KERNEL_MODULES}" == "" ]] &&
-    KERNEL_MODULES="drivers +fs +sound +drivers/net"
-	# todo: fix genkernel default modules
-#	+drivers/scsi +drivers/ata"
+    KERNEL_MODULES="+drivers +fs +sound +crypt"
+#    KERNEL_MODULES="drivers +fs +sound +drivers/net +crypt"
+#    KERNEL_MODULES=". +drivers +fs +sound +crypt"
 
 [[ -e "${CONFIG_ROOT}/etc/kernels/kernel.conf" ]] && source "${CONFIG_ROOT}/etc/kernels/kernel.conf"
 
@@ -41,6 +42,7 @@ BDIR="${WORKDIR}/build"
 
 kernel-2_src_compile() {
 	cd "${S}"
+	fixes
 	[[ ${ETYPE} == headers ]] && compile_headers
 	[[ ${ETYPE} == sources ]] || return
 	if use custom-cflags; then
@@ -60,18 +62,20 @@ kernel-2_src_compile() {
 	cd "${WORKDIR}"
 	local i
 	for i in linux*${KV} ; do
-		ln -s "/usr/src/${i}" "${r}"/build
-		ln -s "/usr/src/${i}" "${r}"/source
+#		ln -s "/usr/src/${i}" "${r}"/build
+#		ln -s "/usr/src/${i}" "${r}"/source
+		ln -s "../../../usr/src/${i}" "${r}"/build
+		ln -s "../../../usr/src/${i}" "${r}"/source
 	done
 	cd "${S}"
-	if use compress; then
+	if use pnp; then
 		p="${p} --all-ramdisk-modules"
 		[[ -e "${BDIR}/lib/firmware" ]] && p="${p} --firmware --firmware-dir=\"${BDIR}/lib/firmware\""
 	fi
 	run_genkernel ramdisk "--kerneldir=\"${S}\" --bootdir=\"${S}\" --module-prefix=\"${BDIR}\" --no-mountboot ${p}"
 	r=`ls initramfs*-${KV}`
 	rename "${r}" "initrd-${KV}.img" "${r}" || die "initramfs rename failed"
-	use compress && fs_compat
+	use pnp && sh "${ROOT}/usr/share/genpnprd/genpnprd" "${S}/initrd-${KV}.img"
 #	use cramfs && cramfs
 	if use integrated; then
 		cfg - CONFIG_INITRAMFS_SOURCE
@@ -112,7 +116,9 @@ run_genkernel(){
 	# cpio works fine without loopback
 	cp /usr/bin/genkernel "${S}" || die
 	sed -i -e 's/has_loop/true/' "${S}/genkernel"
-	LDFLAGS="" "${S}/genkernel" --cachedir="${TMPDIR}/genkernel-cache" --tempdir="${TMPDIR}/genkernel" --logfile="${TMPDIR}/genkernel.log" $* || die "genkernel failed"
+	local arch="$(tc-arch-kernel)"
+	[[ "$arch" == "i386" ]] && arch="x86"
+	LDFLAGS="" ARCH="$(tc-arch-kernel)" ABI="${KERNEL_ABI}" "${S}/genkernel" --cachedir="${TMPDIR}/genkernel-cache" --tempdir="${TMPDIR}/genkernel" --logfile="${TMPDIR}/genkernel.log" --utils-arch=${arch} --arch-override=${arch} --postclear $* || die "genkernel failed"
 	rm "${S}/genkernel"
 }
 
@@ -126,41 +132,6 @@ cramfs(){
 	sed -i -e 's/ext2/cramfs/g' etc/fstab
 	cd "${S}" || die
 	mkcramfs "${tmp}" "initrd-${KV}.img" || die
-	rm "${tmp}" -Rf
-	gzip -9 "initrd-${KV}.img" || die
-	rename .gz "" "initrd-${KV}.img.gz" || die
-}
-
-squashfs_enabled(){
-	[[ -e "${S}/fs/squashfs" ]] && return 0
-	return 1
-}
-
-# compressed /lib loopback only, compat
-fs_compat(){
-	einfo "Including $1 into initramfs"
-	local tmp="${TMPDIR}/ramfstmp"
-	mkdir "${tmp}"
-	cd "${tmp}" || die "cd failed"
-	gzip -dc "${S}/initrd-${KV}.img" | cpio -i
-	if squashfs_enabled; then
-		mksquashfs "lib" "lib.loopfs" -all-root -no-recovery -no-progress || die
-	else
-		mkcramfs "lib" "lib.loopfs" || die
-	fi
-	sed -i -e 's%^\(mount.* / .*\)$%\1\nmount /lib.loopfs /lib -o loop%' \
-		-e 's%\(umount /sys\)%umount /lib\n\1%' \
-		init
-	rm ${tmp}/lib/* -Rf || die
-	local i
-	for i in 0 1 2 3; do
-		mknod -m 660 "${tmp}/dev/loop${i}" b 7 ${i}
-	done
-	# todo: cramfs/squashfs modules preserve
-#	cd lib/modules
-#	depmod -b ../.. *
-	find . -print | cpio --quiet -o -H newc -F "${S}/initrd-${KV}.img"
-	cd "${S}" || die
 	rm "${tmp}" -Rf
 	gzip -9 "initrd-${KV}.img" || die
 	rename .gz "" "initrd-${KV}.img.gz" || die
@@ -225,13 +196,10 @@ config_defaults(){
 	setconfig
 	setconfig
 	cfg y EXT2_FS
-	if use compress; then
-		if squashfs_enabled; then
-			cfg y SQUASHFS
-		else
-			cfg y CRAMFS
-		fi
-		cfg y BLK_DEV_LOOP
+	if use pnp; then
+		cfg m SQUASHFS
+		cfg m CRAMFS
+		cfg m BLK_DEV_LOOP
 	fi
 	cfg_use debug "(?:[^\n]*_)?DEBUG(?:_[^\n]*)?"
 	cfg_use ipv6 IPV6
@@ -241,4 +209,17 @@ config_defaults(){
 kmake(){
 	# DESTDIR="${D}"
 	emake ARCH=$(tc-arch-kernel) ABI=${KERNEL_ABI} $* || die
+}
+
+fixes(){
+	local i
+	einfo "Fixing compats"
+	# glibc 2.8+
+	for i in "${S}/scripts/mod/sumversion.c" ; do
+		[[ -e "${i}" ]] || continue
+		grep -q "<limits.h>" "${i}" || sed -i -e 's/#include <string.h>/\n#include <string.h>\n#include <limits.h>/' "${i}"
+	done
+	# gcc 4.2+
+	sed -i -e 's/_proxy_pda = 0/_proxy_pda = 1/g' "${S}"/arch/*/kernel/vmlinux.lds.S
+	[[ -e "${S}"arch/x86_64/kernel/x8664_ksyms.c ]] && grep -q "_proxy_pda" "${S}"arch/x86_64/kernel/x8664_ksyms.c || echo "EXPORT_SYMBOL(_proxy_pda);" >>arch/x86_64/kernel/x8664_ksyms.c
 }
