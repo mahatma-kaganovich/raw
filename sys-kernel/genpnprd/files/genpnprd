@@ -1,0 +1,105 @@
+#!/bin/sh
+## fix genkernel initrd
+## adding PNP
+## (c) Denis Kaganovich
+## under Anarchy license
+## Usage: genpnprd <image>
+
+DATA="/usr/share/genpnprd"
+
+die(){
+	echo "Error $*"
+	exit 1
+}
+
+
+preserve_start(){
+	local m
+	rm $tmp/modules.dep -f &>/dev/null
+	for m in $* ; do
+		grep "/$m\..*:" $rcdir/lib/modules/${KV}/modules.dep >>$tmp/modules.lst
+	done
+	cd $rcdir || die
+	mkdir $tmp/preserve || die
+	for m in `cat $tmp/modules.lst` ; do
+		m="${m%:}"
+		cp lib/modules/$KV/$m $tmp/preserve --parents
+		grep "^$m:" $rcdir/lib/modules/${KV}/modules.dep >>$tmp/preserve/lib/modules/${KV}/modules.dep
+	done
+}
+
+preserve_end(){
+	mv $tmp/preserve/* $rcdir -f &>/dev/null
+}
+
+squashfs_enabled(){
+	[[ -e "$rcdir/lib/modules/$KV/kernel/fs/squashfs" ]] && return 0
+	return 1
+}
+
+SQUASH=false
+tmp="${TMPDIR:=$ROOT/var/tmp}/genpnprd"
+[[ -e "$tmp" ]] && rm "$tmp" -Rf
+mkdir $tmp || die
+
+rcfile="$1"
+if [[ -f "$rcfile" ]]; then
+	rcdir="$tmp/rc"
+	[[ -e "$rcdir" ]] && rm "$tmp" -Rf
+	mkdir "$rcdir" || die
+	cd "$rcdir" || die
+	echo $rcdir
+	gzip -dc $rcfile | cpio -i || die "must be gzipped cpio file"
+else
+#	rcdir="$rcfile"
+	die "must be gzipped cpio file"
+fi
+
+if [[ -e "$rcdir/lib.loopfs" ]]; then
+	mkdir $tmp/loop
+	mount "$rcdir/lib.loopfs" $tmp/loop -o loop || die "$rcdir/lib.loopfs mount"
+	cp $tmp/loop/* $rcdir/lib/ -Pr
+	umount $tmp/loop
+fi
+
+KV=`ls $rcdir/lib/modules`
+
+if squashfs_enabled; then
+	SQUASH=true
+fi
+
+#cp $ROOT/usr/share/hwdata/pcitable $tmp
+#patch -p1 -fstd $tmp <$DATA/pcitable.patch
+#mv $tmp/pcitable $rcdir/lib/
+#cp $ROOT/usr/share/hwdata/blacklist $rcdir/lib/
+cd $rcdir || die
+/usr/bin/perl ${ROOT}/usr/share/genpnprd/mod2sh.pl $rcdir/lib/modules/* || die
+cp $DATA/syspnp $rcdir/etc
+cp $ROOT/etc/modprobe.d/pnp-aliases $rcdir/etc/modprobe.conf
+patch -p1 -std $rcdir <$DATA/linuxrc.patch
+rm $rcdir/init.{rej,orig} -f &>/dev/null
+
+rm "$rcdir/lib.loopfs"
+if $SQUASH ; then
+	preserve_start loop squashfs
+	mksquashfs "$rcdir/lib" "$rcdir/lib.loopfs" -all-root -no-recovery -no-progress || die "mksquashfs"
+else
+	preserve_start loop cramfs
+	mkcramfs "$rcdir/lib" "$rcdir/lib.loopfs" || die "mkcramfs"
+fi
+rm $rcdir/lib/* -Rf
+preserve_end
+
+for i in 0 1 2 3; do
+	mknod -m 660 "$rcdir/dev/loop${i}" b 7 ${i}
+done
+
+cd $rcdir || die
+find . -print | cpio --quiet -o -H newc -F "$tmp/initrd-${KV}.cpio" || die
+cd $tmp || die
+rm $rcdir -Rf
+gzip -c9 "$tmp/initrd-${KV}.cpio" >"$1" || die
+rm "$tmp" -Rf
+echo "inirc cussessfully updated."
+
+exit 0

@@ -6,7 +6,7 @@ mmake(){
 
 kern_prepare(){
 	local k="${WORKDIR}/raw-kernel"
-	cp "${KERNEL_DIR}" "${k}" -Rp
+	cp "${KERNEL_DIR}" "${k}" -LRp
 	KERNEL_DIR="${k}"
 }
 
