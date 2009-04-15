@@ -16,7 +16,7 @@
  if [ "$0" = '/init' ]
 @@ -243,2 +251,3 @@
  	then
-+		syspnp
++		[[ -e "/lib/modules/$KV/modules.alias.sh" ]] && syspnp
  		for modules in ${MY_HWOPTS}
 @@ -696,2 +705,3 @@
  echo -ne "${BOLD}.${NORMAL}"

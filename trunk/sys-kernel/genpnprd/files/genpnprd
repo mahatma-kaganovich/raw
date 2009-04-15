@@ -73,9 +73,8 @@ fi
 #mv $tmp/pcitable $rcdir/lib/
 #cp $ROOT/usr/share/hwdata/blacklist $rcdir/lib/
 cd $rcdir || die
-/usr/bin/perl ${ROOT}/usr/share/genpnprd/mod2sh.pl $rcdir/lib/modules/* || die
+[[ "$2" != "nopnp" ]] && /usr/bin/perl ${ROOT}/usr/share/genpnprd/mod2sh.pl $rcdir/lib/modules/* || die
 cp $DATA/syspnp $rcdir/etc
-cp $ROOT/etc/modprobe.d/pnp-aliases $rcdir/etc/modprobe.conf
 patch -p1 -std $rcdir <$DATA/linuxrc.patch
 rm $rcdir/init.{rej,orig} -f &>/dev/null
 

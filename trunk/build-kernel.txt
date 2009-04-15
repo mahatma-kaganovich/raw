@@ -47,8 +47,9 @@ Useflag "integrated" make initrd image to built-in into kernel.
 
 Useflag "pnp" add pnp/pci/etc. module bootloader, based only on
 prepared kernel modules info (no external hardware data).
-"pnp" will force all kernel modules to include into initrd,
-compressed by "cramfs" or "squashfs" (related of kernel version).
+
+Useflags "pnp" and "compressed" will force all kernel modules to include
+into initrd, compressed by "cramfs" or "squashfs" (related of kernel version).
 Since only new kernels support compressed initrd - implemented
 only universal mode - compressed "/lib" directory inside uncompressed
 initrd and mounted runtime by script. I see no sence to do extra path
@@ -57,6 +58,8 @@ to compress all initrd (little extra kilobytes).
 Useflag "netboot" make Gentoo's netboot image (not yet verifyed,
 todo: include Kerrighed modules and tools too, but tools must be
 static).
+
+Kernel cmdline option: "nopnp".
 
 P.S. Defaults are subject to change.
 .

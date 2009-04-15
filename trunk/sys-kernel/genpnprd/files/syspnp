@@ -3,17 +3,20 @@
 ## (c) Denis Kaganovich, under Anarchy license
 ## consume preprocessed /lib/modules/$KV/modules.alias
 
-MYLOAD=true
 TRY2=true
 PARA=0
 [[ -z "$TMPDIR" ]] && [[ -e /temp ]] && TMPDIR="/temp"
 PNP_TMP="${TMPDIR}/pnp.found"
 NOTLOADED=""
-#PNP_BLACKLIST="/usr/share/hwdata/blacklist"
-
 [[ -z "$KV" ]] && KV=`uname -r`
+NOFB=false
+NOPNP=false
+QUIET=false
 
-# 0 - probed, 1 - loaded, 2 - failed
+msg1(){
+	good_msg "$*"
+#	$QUIET || echo " * $*"
+}
 
 single(){
 	grep -q "^$1\$" "${PNP_TMP}.$2" && return 1
@@ -28,11 +31,7 @@ mod1(){
 		alias2 "$m"
 		for m1 in $ALIAS ; do
 			single "$m1" 2 || continue
-			if $MYLOAD ; then
-				insmod "/lib/modules/$KV/$m1" >/dev/null 2>&1
-			else
-				MDOLIST="$MDOLIST $m"
-			fi
+			insmod "/lib/modules/$KV/$m1" >/dev/null 2>&1
 		done
 	done
 }
@@ -59,17 +58,17 @@ refresh(){
 	pid=""
 	npid=0
 	lsmod >"${PNP_TMP}".9
-	l=" :: Loaded:"
+	l="${BOLD}   ::${NORMAL}Loaded:"
 	while read i j; do
 		[[ "$i" == "Module" ]] && continue
 		single "$i" 1 || continue
-		echo -n "$l $i"
+		$QUIET || echo -ne "$l $i"
 		l=""
 	done <"${PNP_TMP}".9
 	cat "${PNP_TMP}".1 >"${PNP_TMP}".0
 	echo "" >"${PNP_TMP}".2
 	[[ -z "$l" ]] || return 1
-	echo ""
+	$QUIET || echo ""
 	return 0
 }
 
@@ -95,7 +94,7 @@ probe_root(){
 	local i l
 	l=""
 	if [[ -n "$REAL_ROOT" ]]; then
-		echo " * Removing unlocked modules"
+		msg1 "Removing unlocked modules"
 		while read i; do
 			l="$i $l"
 		done </nopnp.lst
@@ -105,35 +104,44 @@ probe_root(){
 	fi
 }
 
-syspnp(){
-	local mod=""
-	local i i1 id id1
-	local p="^	"
-	local p1="^	"
-	local ids=" "
-	[[ "$PARA" == "0" ]] || echo " * -= Parallel PNP module loader =-"
-	temp
+pnp_options(){
+	local i
+	for i in `cat /proc/cmdline` ; do
+	case "$i" in
+	quiet) good_msg "PNP: quiet mode"; eval 'good_msg(){ return; }'; QUIET=true ;;
+	nofb) NOFB=true ;;
+	nopnp) NOPNP=true ;;
+	esac
+	done
+}
 
+ifmod(){
+	local i
+	for i in $* ; do
+		grep -q "^${i}$" "${PNP_TMP}".0 || return 1
+	done
+	return 0
+}
+
+syspnp(){
+	[[ -e "/lib/modules/${KV}/modules.alias.sh" ]] || return
+	pnp_options
+	$NOPNP && return
+	local i i1
+	[[ "$PARA" == "0" ]] || msg1 " -= Parallel PNP module loader =-"
+	msg1 "Searching pnp"
+	temp
 	pid=""
 	npid=0
 	refresh
+	. "/lib/modules/${KV}/modules.alias.sh"
 
-	echo " * Searching pnp"
-
-	local aliases=false
-	if [[ -e "/lib/modules/${KV}/modules.alias.sh" ]] ; then
-		echo " * Scanning /lib/modules/${KV}/modules.alias.sh "
-		. "/lib/modules/${KV}/modules.alias.sh"
-		aliases=true
-	fi
-
-	$aliases && load_aliases
-
-	[[ -z "${NOTLOADED}" ]] || echo " * Not loaded:$NOTLOADED"
-
+	load_aliases
+	$NOFB || mod fbcon
+	ifmod usual_tables && mod usb_storage
 	# filtering modules for gentoo init
 	if [[ -n "${MY_HWOPTS}" ]] ; then
-		echo " * Filtering pnp modules"
+		msg1 "Filtering pnp modules"
 #		cat "${PNP_TMP}.0" >>$PNP_MODULES
 		echo -n "" >"${PNP_TMP}".3
 		while true; do
@@ -144,16 +152,17 @@ syspnp(){
 				done
 			done
 			refresh || break
-			$aliases && load_aliases
+			load_aliases
 		done
 		MY_HWOPTS=""
 		mv "${PNP_TMP}".3 /nopnp.lst
 	fi
 
+	[[ -z "${NOTLOADED}" ]] || msg1 "Not loaded:$NOTLOADED"
 	# try again
 	$TRY2 && MDOLIST="$MDOLIST $NOTLOADED"
-#	echo " * To load: $MDOLIST"
+#	msg1 "To load: $MDOLIST"
 	rm "${PNP_TMP}".?
 }
 
-[[ "$1" == "init" ]] && MYLOAD=true && syspnp $* # debug
+[[ "$1" == "init" ]] && syspnp $* # debug
