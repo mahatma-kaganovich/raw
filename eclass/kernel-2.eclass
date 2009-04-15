@@ -2,16 +2,17 @@ source "${PORTDIR}/eclass/kernel-2.eclass"
 
 if [[ ${ETYPE} == sources ]]; then
 
-IUSE="${IUSE} build-kernel debug custom-cflags pnp integrated ipv6 netboot"
+IUSE="${IUSE} build-kernel debug custom-cflags pnp compressed integrated ipv6 netboot"
 DEPEND="${DEPEND}
 	build-kernel? (
 		pnp? ( sys-kernel/genpnprd )
+		compressed? ( sys-kernel/genpnprd )
 	) "
 # cramfs = compat
 
 [[ "${KERNEL_CONFIG}" == "" ]] &&
     KERNEL_CONFIG="KALLSYMS_EXTRA_PASS DMA_ENGINE USB_STORAGE_[\w\d]+
-	USB_LIBUSUAL -BLK_DEV_UB
+	USB_LIBUSUAL -BLK_DEV_UB USB_EHCI_ROOT_HUB_TT USB_EHCI_TT_NEWSCHED USB_SISUSBVGA_CON
 	KEYBOARD_ATKBD
 	IKCONFIG_PROC IKCONFIG EXPERIMENTAL
 	NET_RADIO PNP PNP_ACPI PARPORT_PC_FIFO PARPORT_1284 NFTL_RW
@@ -68,14 +69,18 @@ kernel-2_src_compile() {
 		ln -s "../../../usr/src/${i}" "${r}"/source
 	done
 	cd "${S}"
-	if use pnp; then
+	if use pnp || use compressed; then
 		p="${p} --all-ramdisk-modules"
 		[[ -e "${BDIR}/lib/firmware" ]] && p="${p} --firmware --firmware-dir=\"${BDIR}/lib/firmware\""
 	fi
 	run_genkernel ramdisk "--kerneldir=\"${S}\" --bootdir=\"${S}\" --module-prefix=\"${BDIR}\" --no-mountboot ${p}"
 	r=`ls initramfs*-${KV}`
 	rename "${r}" "initrd-${KV}.img" "${r}" || die "initramfs rename failed"
-	use pnp && sh "${ROOT}/usr/share/genpnprd/genpnprd" "${S}/initrd-${KV}.img"
+	if use pnp; then
+		sh "${ROOT}/usr/share/genpnprd/genpnprd" "${S}/initrd-${KV}.img"
+	elif use compressed; then
+		sh "${ROOT}/usr/share/genpnprd/genpnprd" "${S}/initrd-${KV}.img" nopnp
+	fi
 #	use cramfs && cramfs
 	if use integrated; then
 		cfg - CONFIG_INITRAMFS_SOURCE
@@ -196,7 +201,7 @@ config_defaults(){
 	setconfig
 	setconfig
 	cfg y EXT2_FS
-	if use pnp; then
+	if use pnp || use compressed; then
 		cfg m SQUASHFS
 		cfg m CRAMFS
 		cfg m BLK_DEV_LOOP

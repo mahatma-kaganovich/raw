@@ -4,8 +4,8 @@
 # (c) Denis Kaganovich
 # under Anarchy license
 
-my %alias=();
-my %dep=();
+my %alias;
+my %dep;
 
 sub read_aliases{
 	my $s;
@@ -101,6 +101,8 @@ if($#ARGV<0){
 	print "Usage: $0 {[path]/lib/modules/<version>}\n"
 }
 for my $MOD (@ARGV){
+	%alias=();
+	%dep=();
 	print "mod2sh: $MOD ";
 	read_aliases("<$MOD/modules.alias");
 	read_deps("<$MOD/modules.dep");
