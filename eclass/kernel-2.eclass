@@ -232,6 +232,6 @@ fixes(){
 	sed -i -e 's/_proxy_pda = 0/_proxy_pda = 1/g' "${S}"/arch/*/kernel/vmlinux.lds.S
 	[[ -e "${S}"arch/x86_64/kernel/x8664_ksyms.c ]] && grep -q "_proxy_pda" "${S}"arch/x86_64/kernel/x8664_ksyms.c || echo "EXPORT_SYMBOL(_proxy_pda);" >>arch/x86_64/kernel/x8664_ksyms.c
 	use pnp || return
-	einfo "Fixing modules hardware info exports"
-	sh "${ROOT}/usr/share/genpnprd/modulesfix" "${S}"
+	einfo "Fixing modules hardware info exports (forced mode, waiting for bugs!)"
+	sh "${ROOT}/usr/share/genpnprd/modulesfix" "${S}" f
 }
