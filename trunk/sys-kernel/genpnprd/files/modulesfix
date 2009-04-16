@@ -1,4 +1,5 @@
 #!/bin/sh
+## (c) Denis Kaganovich
 
 #BUS="pci"
 BUS="\w+"
