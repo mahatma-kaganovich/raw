@@ -25,11 +25,14 @@ single(){
 }
 
 mod1(){
-	local m m1
+	local m m1 m2
 	for m in $* ; do
 		single "$m" 0 || continue
 		alias2 "$m"
 		for m1 in $ALIAS ; do
+			m2="${m1##*/}"
+			m2="${m2%.??}"
+			[[ "$m" == "$m2" ]] || single "$m2" 0 || continue
 			single "$m1" 2 || continue
 			insmod "/lib/modules/$KV/$m1" >/dev/null 2>&1
 		done
@@ -136,9 +139,11 @@ syspnp(){
 	refresh
 	. "/lib/modules/${KV}/modules.alias.sh"
 
+	single usb-storage 0
 	load_aliases
 	$NOFB || mod fbcon
-	ifmod usual_tables && mod usb_storage
+	ifmod usbcore && mod usb_storage # user-frendly
+#	ifmod usual_tables && mod usb_storage # on demand
 	# filtering modules for gentoo init
 	if [[ -n "${MY_HWOPTS}" ]] ; then
 		msg1 "Filtering pnp modules"

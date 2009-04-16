@@ -14,6 +14,7 @@ DEPEND="${DEPEND}
     KERNEL_CONFIG="KALLSYMS_EXTRA_PASS DMA_ENGINE USB_STORAGE_[\w\d]+
 	USB_LIBUSUAL -BLK_DEV_UB USB_EHCI_ROOT_HUB_TT USB_EHCI_TT_NEWSCHED USB_SISUSBVGA_CON
 	KEYBOARD_ATKBD
+	-VGACON_SOFT_SCROLLBACK -DRM FB_BOOT_VESA_SUPPORT FRAMEBUFFER_CONSOLE_ROTATION
 	IKCONFIG_PROC IKCONFIG EXPERIMENTAL
 	NET_RADIO PNP PNP_ACPI PARPORT_PC_FIFO PARPORT_1284 NFTL_RW
 	PMC551_BUGFIX CISS_SCSI_TAPE CDROM_PKTCDVD_WCACHE
@@ -145,22 +146,23 @@ cramfs(){
 cfg(){
 	local r="$1"
 	local o="$2"
-	local i
-	( grep -P "^(?:\# )?CONFIG_${o}(?:=.*| is not set)\$" .config || echo "${o}" ) >"${TMPDIR}/cfg.tmp"
+	local i i1
+	( grep -P "^(?:\# )?CONFIG_${o}(?:=.*| is not set)\$" .config || echo "${o}" ) >"${TMPDIR}"/pnp.tmp
 	while read i ; do
-		[[ "$3" == "-"  && "${i/=}" != "${i}" ]] && continue
+		i1="${i}"
 		i=${i#\# }
 		i=${i#CONFIG_}
 		i=${i/=*/}
 		i=${i/ is not set/}
-		sed -i -e "s/^# CONFIG_${i} is not set//" -e "s/^CONFIG_${i}=.*//" .config
+		sed -i -e "/^# CONFIG_${i} is not set/d" -e "/^CONFIG_${i}=.*/d" .config
+		[[ "$3" == "-"  && "${i1/=}" != "${i1}" ]] && continue
 		if [[ "${r}" == "n" ]]; then
 			echo "# CONFIG_${i} is not set" >>.config
 		elif [[ "${r}" != "-" ]]; then
 			echo "CONFIG_${i}=${r}" >>.config
 		fi
-	done <"${TMPDIR}/cfg.tmp"
-	rm "${TMPDIR}/cfg.tmp"
+	done <"${TMPDIR}"/pnp.tmp
+	rm "${TMPDIR}"/pnp.tmp
 }
 
 cfg_use(){
@@ -184,7 +186,7 @@ setconfig(){
 }
 
 config_defaults(){
-	local i i1 o m
+	local i i1 o m xx
 	einfo "Configuring kernel"
 	kmake defconfig >/dev/null
 	for i in ${KERNEL_MODULES}; do
@@ -193,11 +195,13 @@ config_defaults(){
 		i1="${i}"
 		i="${i#+}"
 		[[ "${i1}" == "${i}" ]] || m=""
-		for o in `grep -Prh "^\s*(?:menu)?config\s+.*?\n(?:[^\n]+\n)*\s*tristate" ${i} --include="Kconfig*" 2>/dev/null  | grep -P "^\s*(?:menu)?config"` ; do
-			[[ "${o}" == "config" || "${o}" == "menuconfig" ]] || cfg m "${o}" "${m}"
+		for xx in 1 $m ; do
+			for o in `grep -Prh "^\s*(?:menu)?config\s+.*?\n(?:[^\n]+\n)*\s*tristate" ${i} --include="Kconfig*" 2>/dev/null  | grep -P "^\s*(?:menu)?config"` ; do
+				[[ "${o}" == "config" || "${o}" == "menuconfig" ]] || cfg m "${o}" "${m}"
+			done
+			yes '' 2>/dev/null | kmake oldconfig &>/dev/null
 		done
 	done
-	setconfig
 	setconfig
 	setconfig
 	cfg y EXT2_FS
@@ -227,4 +231,7 @@ fixes(){
 	# gcc 4.2+
 	sed -i -e 's/_proxy_pda = 0/_proxy_pda = 1/g' "${S}"/arch/*/kernel/vmlinux.lds.S
 	[[ -e "${S}"arch/x86_64/kernel/x8664_ksyms.c ]] && grep -q "_proxy_pda" "${S}"arch/x86_64/kernel/x8664_ksyms.c || echo "EXPORT_SYMBOL(_proxy_pda);" >>arch/x86_64/kernel/x8664_ksyms.c
+	use pnp || return
+	einfo "Fixing modules hardware info exports"
+	sh "${ROOT}/usr/share/genpnprd/modulesfix" "${S}"
 }

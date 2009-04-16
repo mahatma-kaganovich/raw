@@ -1,0 +1,31 @@
+#!/bin/sh
+
+#BUS="pci"
+BUS="\w+"
+
+FORCE=false
+
+STR="^(?:static\s+)?(?:const\s+)?struct\s+"
+
+fnd(){
+grep -Prhl "${STR}${BUS}_device_id\s+" $1 --include=*.c | while read i ; do
+	local bus=`grep -Prho "${STR}${BUS}_device_id.*\s+" $i`
+	bus="${bus#*struct }"
+	local n="${bus%%[*}"
+	n="${n%%=*}"
+	n="${n##*device_id }"
+	n="${n// }"
+	bus="${bus%%_device_id*}"
+	grep -Pq "^module_init\s*\(" $i || continue
+	grep -Pq "${STR}${bus}_driver\s+" $i || continue
+	grep -q "MODULE_DEVICE_TABLE" $i && continue
+	bus="${bus%%_*}"
+	$FORCE || grep -Pqr "MODULE_DEVICE_TABLE\($bus" $1 --include=*.c || ( echo "UNKNOWN BUS: $bus ($i)" ; continue )
+	echo "Fixing: $bus: ($n) $i"
+	sed -i -e 's/^\(module_init.*\)$/\nMODULE_DEVICE_TABLE('"$bus, $n"');\n\n\1/' $i
+done
+}
+
+[[ -z "$1" ]] && echo "$0 <path_to_kernel>" && exit 1
+
+fnd $1
