@@ -58,7 +58,7 @@ RDEPEND="app-admin/eselect-opengl
 	x11-libs/libXi
 	x11-libs/libXmu
 	x11-libs/libXdamage
-	>=x11-libs/libdrm-2.4.3
+	x11-libs/libdrm
 	x11-libs/libICE
 	motif? ( x11-libs/openmotif )
 	doc? ( app-doc/opengl-manpages )

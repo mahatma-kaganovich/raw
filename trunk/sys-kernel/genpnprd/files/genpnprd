@@ -99,6 +99,6 @@ cd $tmp || die
 rm $rcdir -Rf
 gzip -c9 "$tmp/initrd-${KV}.cpio" >"$1" || die
 rm "$tmp" -Rf
-echo "inirc cussessfully updated."
+echo "inirc updated."
 
 exit 0
