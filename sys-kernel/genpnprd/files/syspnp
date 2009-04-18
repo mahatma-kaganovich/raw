@@ -33,7 +33,7 @@ mod1(){
 			m2="${m1##*/}"
 			m2="${m2%.??}"
 			[[ "$m" == "$m2" ]] || single "$m2" 0 || continue
-			single "$m1" 2 || continue
+#			single "$m1" 2 || continue
 			insmod "/lib/modules/$KV/$m1" >/dev/null 2>&1
 		done
 	done
@@ -69,7 +69,7 @@ refresh(){
 		l=""
 	done <"${PNP_TMP}".9
 	cat "${PNP_TMP}".1 >"${PNP_TMP}".0
-	echo "" >"${PNP_TMP}".2
+#	echo "" >"${PNP_TMP}".2
 	[[ -z "$l" ]] || return 1
 	$QUIET || echo ""
 	return 0
