@@ -298,9 +298,9 @@ src_install() {
 
 	if [[ -n ${LANG} && ${LANG} != "en" ]]; then
 		elog "Setting default locale to ${LANG}"
-		dosed -e "s:general.useragent.locale\", \"en-US\":general.useragent.locale\", \"${LANG}\":" \
-		    "${MOZILLA_FIVE_HOME}"/defaults/pref*/*.js ||
-		    die "sed failed to change locale"
+		dosed -e "s:\"en-US\":\"${LANG}\":g" \
+			"${MOZILLA_FIVE_HOME}"/defaults/pref/suite-l10n.js ||
+			die "sed failed to change locale"
 	fi
 
 	# Create directory structure to support portage-installed extensions.
