@@ -2,6 +2,22 @@ This overlay installing overlayed kernel-2.eclass with useflag
 "build-kernel" to automated kernel make on emerge time. It must work
 with any "sys-kernel/*-sources" package, using kernel-2.eclass.
 
+To use this "kernel-2.eclass" for Gentoo mainstream kernels and latest
+portage (2.2_rc30+) you need /etc/portage/repos.conf file with something like
+this:
+
+[gentoo]
+eclass-overrides = raw
+
+or
+
+[DEFAULT]
+eclass-overrides = raw
+
+Then say "emerge -pv gentoo-sources" and look for "pnp" useflag. If it not
+visible - try "emerge --regen", remove FEATURES="metadata-transfer",
+edit /usr/portage/metadata/layout.conf, erase metadata, or something else.
+
 === Configuring kernel.
 
 Configuration starting by "make defconfig", then going optional kernel
@@ -17,6 +33,7 @@ KERNEL_MODULES contains directory list to wildcard modules enable.
 If "+" prefix given - modules will be forced, else - only unset
 will be modules (this path is around incomplete current modules lists in
 genkernel, some of default built-in modules needs to still built-in).
+Radical solution: KERNEL_MODULES="+."
 
 KERNEL_CONFIG contains kernel configuration options, prefixed by
 none ("y"), "-" ("n"), "+" ("m"), "~" (remove/oldconfig-default).
@@ -35,6 +52,12 @@ Present behaviour IMHO must be most simple and configurable.
 
 Current defaults checked by kernel 2.6.20 (kerrighed-sources).
 
+Known problem: when frambuffer devices and/or fbcon are modules - tty1
+(and console 1) is "dumb terminal" (but ALT-F2 is OK).
+
+Currently "usb-storage" forced to loading after other hardware (to prevent
+flashes to boot device substitution).
+
 === Compiling.
 
 Compiling must be usual "make all" + "genkernel ramdisk",
@@ -46,7 +69,10 @@ Just copy into mounted /boot by hand (subject to self-check too).
 Useflag "integrated" make initrd image to built-in into kernel.
 
 Useflag "pnp" add pnp/pci/etc. module bootloader, based only on
-prepared kernel modules info (no external hardware data).
+prepared kernel modules info (no external hardware data). Also used
+experimental patch for kernel to force modules info exporting (not
+all modules do it, found after "ioatdma"), but "modulesfix" with
+"f" parameter may brake builds for exotic arches.
 
 Useflags "pnp" and "compressed" will force all kernel modules to include
 into initrd, compressed by "cramfs" or "squashfs" (related of kernel version).
