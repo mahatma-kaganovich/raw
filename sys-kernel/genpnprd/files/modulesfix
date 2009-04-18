@@ -19,7 +19,7 @@ grep -Prhl "${STR}${BUS}_device_id\s+" $1 --include="*.c" | while read i ; do
 	grep -Pq "${STR}${bus}_driver\s+" $i || continue
 	grep -q "MODULE_DEVICE_TABLE" $i && continue
 	bus="${bus%%_*}"
-	if [[ "$2" != "f" ]] && ! grep -Pqr "MODULE_DEVICE_TABLE\($bus" $1 --include="*.c" ; then
+	if [[ "$2" != "f" ]] && ! grep -Pqr "MODULE_DEVICE_TABLE\($bus," $1 --include="*.c" ; then
 		echo "UNKNOWN BUS: $bus ($i)"
 	else
 		echo "Fixing: $bus: ($n) $i"
