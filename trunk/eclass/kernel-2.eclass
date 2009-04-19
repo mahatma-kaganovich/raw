@@ -196,10 +196,11 @@ config_defaults(){
 		i="${i#+}"
 		[[ "${i1}" == "${i}" ]] || m=""
 		for xx in 1 $m ; do
+			setconfig
 			for o in `grep -Prh "^\s*(?:menu)?config\s+.*?\n(?:[^\n]+\n)*\s*tristate" ${i} --include="Kconfig*" 2>/dev/null  | grep -P "^\s*(?:menu)?config"` ; do
 				[[ "${o}" == "config" || "${o}" == "menuconfig" ]] || cfg m "${o}" "${m}"
 			done
-			yes '' 2>/dev/null | kmake oldconfig &>/dev/null
+#			yes '' 2>/dev/null | kmake oldconfig &>/dev/null
 		done
 	done
 	setconfig
