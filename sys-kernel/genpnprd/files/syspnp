@@ -3,7 +3,6 @@
 ## (c) Denis Kaganovich, under Anarchy license
 ## consume preprocessed /lib/modules/$KV/modules.alias
 
-TRY2=true
 PARA=0
 [[ -z "$TMPDIR" ]] && [[ -e /temp ]] && TMPDIR="/temp"
 PNP_TMP="${TMPDIR}/pnp.found"
@@ -12,11 +11,7 @@ NOTLOADED=""
 NOFB=false
 NOPNP=false
 QUIET=false
-
-msg1(){
-	good_msg "$*"
-#	$QUIET || echo " * $*"
-}
+MODUNLOAD=false
 
 single(){
 	grep -q "^$1\$" "${PNP_TMP}.$2" && return 1
@@ -33,7 +28,6 @@ mod1(){
 			m2="${m1##*/}"
 			m2="${m2%.??}"
 			[[ "$m" == "$m2" ]] || single "$m2" 0 || continue
-#			single "$m1" 2 || continue
 			insmod "/lib/modules/$KV/$m1" >/dev/null 2>&1
 		done
 	done
@@ -60,16 +54,13 @@ refresh(){
 	done
 	pid=""
 	npid=0
-	lsmod >"${PNP_TMP}".9
 	l="${BOLD}   ::${NORMAL}Loaded:"
 	while read i j; do
-		[[ "$i" == "Module" ]] && continue
 		single "$i" 1 || continue
 		$QUIET || echo -ne "$l $i"
 		l=""
-	done <"${PNP_TMP}".9
+	done </proc/modules
 	cat "${PNP_TMP}".1 >"${PNP_TMP}".0
-#	echo "" >"${PNP_TMP}".2
 	[[ -z "$l" ]] || return 1
 	$QUIET || echo ""
 	return 0
@@ -93,11 +84,11 @@ load_aliases(){
 	done
 }
 
-probe_root(){
+mod_unload(){
 	local i l
 	l=""
-	if [[ -n "$REAL_ROOT" ]]; then
-		msg1 "Removing unlocked modules"
+	if [[ $MODUNLOAD && -n "$REAL_ROOT" && -e "/nopnp.lst" ]]; then
+		good_msg "Removing unlocked modules"
 		while read i; do
 			l="$i $l"
 		done </nopnp.lst
@@ -114,6 +105,7 @@ pnp_options(){
 	quiet) good_msg "PNP: quiet mode"; eval 'good_msg(){ return; }'; QUIET=true ;;
 	nofb) NOFB=true ;;
 	nopnp) NOPNP=true ;;
+	unload) MODUNLOAD=true ;;
 	esac
 	done
 }
@@ -131,42 +123,49 @@ syspnp(){
 	pnp_options
 	$NOPNP && return
 	local i i1
-	[[ "$PARA" == "0" ]] || msg1 " -= Parallel PNP module loader =-"
-	msg1 "Searching pnp"
+	[[ "$PARA" == "0" ]] || good_msg " -= Parallel PNP module loader =-"
+	good_msg "Searching pnp"
 	temp
 	pid=""
 	npid=0
 	refresh
 	. "/lib/modules/${KV}/modules.alias.sh"
 
+	if [[ -n "$MDOLIST" ]]; then
+		mod $MDOLIST
+		refresh
+	fi
 	single usb-storage 0
 	load_aliases
 	$NOFB || mod fbcon
 	ifmod usbcore && mod usb_storage # user-frendly
 #	ifmod usual_tables && mod usb_storage # on demand
 	# filtering modules for gentoo init
-	if [[ -n "${MY_HWOPTS}" ]] ; then
-		msg1 "Filtering pnp modules"
-#		cat "${PNP_TMP}.0" >>$PNP_MODULES
-		echo -n "" >"${PNP_TMP}".3
-		while true; do
-			for i1 in ${MY_HWOPTS} ; do
-				[[ -e "/etc/modules/$i1" ]] && for i in `cat /etc/modules/${i1}` ; do
-					grep -q "^${i}\$" "/lib/modules/$KV/modules.pnp" && continue
-					mod "$i"
-				done
+	good_msg "Filtering pnp modules"
+	echo -n "" >"${PNP_TMP}".3
+	while true; do
+		# NODETECT: old behaviour
+		[[ "${NODETECT}" != '1' ]] && for i1 in ${MY_HWOPTS} ; do
+			[[ -e "/etc/modules/$i1" ]] && for i in `cat /etc/modules/${i1}` ; do
+				grep -q "^${i}\$" "/lib/modules/$KV/modules.pnp" && continue
+				mod "$i"
 			done
-			refresh || break
-			load_aliases
 		done
-		MY_HWOPTS=""
-		mv "${PNP_TMP}".3 /nopnp.lst
-	fi
+		mod $MDOLIST
+		refresh || break
+		# minimal
+		[[ -n "$SDELAY" ]] && sleep "$SDELAY"
+		load_aliases
+	done
+	MY_HWOPTS=""
+	MDOLIST=""
+	mv "${PNP_TMP}".3 /nopnp.lst
 
-	[[ -z "${NOTLOADED}" ]] || msg1 "Not loaded:$NOTLOADED"
-	# try again
-	$TRY2 && MDOLIST="$MDOLIST $NOTLOADED"
-#	msg1 "To load: $MDOLIST"
+	if [[ -n "${NOTLOADED}" ]] ; then
+		good_msg "Not loaded:$NOTLOADED"
+		# try again
+		MDOLIST="$NOTLOADED"
+	fi
 	rm "${PNP_TMP}".?
 }
 
