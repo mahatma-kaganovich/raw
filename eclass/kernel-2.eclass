@@ -12,6 +12,7 @@ DEPEND="${DEPEND}
 
 [[ "${KERNEL_CONFIG}" == "" ]] &&
     KERNEL_CONFIG="KALLSYMS_EXTRA_PASS DMA_ENGINE USB_STORAGE_[\w\d]+
+	X86_BIGSMP X86_32_NON_STANDARD
 	USB_LIBUSUAL -BLK_DEV_UB USB_EHCI_ROOT_HUB_TT USB_EHCI_TT_NEWSCHED USB_SISUSBVGA_CON
 	KEYBOARD_ATKBD
 	-VGACON_SOFT_SCROLLBACK -DRM FB_BOOT_VESA_SUPPORT FRAMEBUFFER_CONSOLE_ROTATION
@@ -28,13 +29,15 @@ DEPEND="${DEPEND}
 	-CC_OPTIMIZE_FOR_SIZE
 	-ARCNET -IDE -SMB_FS -DEFAULT_CFQ -DEFAULT_AS -DEFAULT_NOOP
 	-SOUND_PRIME -KVM
+	NET_SCHED +TCP_CONG_[\w\d_]+ TCP_CONG_ADVANCED
+	BT_RFCOMM_TTY BT_HCIUART_H4 BT_HCIUART_BCSP BT_HCIUART_LL
+	IRDA_ULTRA IRDA_CACHE_LAST_LSAP IRDA_FAST_RR DONGLE
 	    -TR HOSTAP_FIRMWARE NET_PCMCIA WAN DCC4_PSISYNC
 	    FDDI HIPPI VT_HW_CONSOLE_BINDING SERIAL_NONSTANDARD
 	    SERIAL_8250_EXTENDED SPI"
 [[ "${KERNEL_MODULES}" == "" ]] &&
-    KERNEL_MODULES="+drivers +fs +sound +crypt"
-#    KERNEL_MODULES="drivers +fs +sound +drivers/net +crypt"
-#    KERNEL_MODULES=". +drivers +fs +sound +crypt"
+    KERNEL_MODULES="+drivers +fs +sound +crypt +arch +net/bluetooth +net/irda +net/sched"
+#    KERNEL_MODULES="+."
 
 [[ -e "${CONFIG_ROOT}/etc/kernels/kernel.conf" ]] && source "${CONFIG_ROOT}/etc/kernels/kernel.conf"
 
@@ -189,21 +192,20 @@ config_defaults(){
 	local i i1 o m xx
 	einfo "Configuring kernel"
 	kmake defconfig >/dev/null
+	for xx in 1 2 ; do
+	setconfig
 	for i in ${KERNEL_MODULES}; do
-		einfo "Searching modules: ${i}"
 		m="-"
 		i1="${i}"
 		i="${i#+}"
 		[[ "${i1}" == "${i}" ]] || m=""
-		for xx in 1 $m ; do
-			setconfig
-			for o in `grep -Prh "^\s*(?:menu)?config\s+.*?\n(?:[^\n]+\n)*\s*tristate" ${i} --include="Kconfig*" 2>/dev/null  | grep -P "^\s*(?:menu)?config"` ; do
-				[[ "${o}" == "config" || "${o}" == "menuconfig" ]] || cfg m "${o}" "${m}"
-			done
-#			yes '' 2>/dev/null | kmake oldconfig &>/dev/null
+		[[ "$m" != "+" && "$xx" == "2" ]] && continue
+		einfo "Searching modules: ${i}"
+		for o in `grep -Prh "^\s*(?:menu)?config\s+.*?\n(?:[^\n]+\n)*\s*tristate" ${i} --include="Kconfig*" 2>/dev/null  | grep -P "^\s*(?:menu)?config"` ; do
+			[[ "${o}" == "config" || "${o}" == "menuconfig" ]] || cfg m "${o}" "${m}"
 		done
 	done
-	setconfig
+	done
 	setconfig
 	cfg y EXT2_FS
 	if use pnp || use compressed; then

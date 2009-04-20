@@ -57,6 +57,7 @@ refresh(){
 	l="${BOLD}   ::${NORMAL}Loaded:"
 	while read i j; do
 		single "$i" 1 || continue
+		[[ "$1" == "n" ]] && echo "$i" >>/nopnp.lst
 		$QUIET || echo -ne "$l $i"
 		l=""
 	done </proc/modules
@@ -64,12 +65,6 @@ refresh(){
 	[[ -z "$l" ]] || return 1
 	$QUIET || echo ""
 	return 0
-}
-
-temp(){
-	for i in 0 1 2 3 4 5 6 7 8 9; do
-		echo -n "" >"${PNP_TMP}.$i"
-	done
 }
 
 load_aliases(){
@@ -122,13 +117,14 @@ syspnp(){
 	local i i1
 	[[ "$PARA" == "0" ]] || good_msg " -= Parallel PNP module loader =-"
 	good_msg "Searching pnp"
-	temp
+	for i in 0 1 ; do
+		echo -n "" >"${PNP_TMP}.$i"
+	done
 	pid=""
 	npid=0
-	refresh
+	refresh n
 	. "/lib/modules/${KV}/modules.alias.sh"
 
-	cp "${PNP_TMP}".0 "${PNP_TMP}".3
 	if [[ -n "$MDOLIST" ]]; then
 		mod $MDOLIST
 		refresh
@@ -138,26 +134,24 @@ syspnp(){
 	$NOFB || mod fbcon
 	ifmod usbcore && mod usb_storage # user-frendly
 #	ifmod usual_tables && mod usb_storage # on demand
-	# filtering modules for gentoo init
+	refresh
 	good_msg "Filtering pnp modules"
 	while true; do
 		# NODETECT: old behaviour
 		[[ "${NODETECT}" != '1' ]] && for i1 in ${MY_HWOPTS} ; do
 			[[ -e "/etc/modules/$i1" ]] && for i in `cat /etc/modules/${i1}` ; do
-				grep -q "^${i}\$" "/lib/modules/$KV/modules.pnp" "${PNP_TMP}".0 && continue
-				echo "$i" >>"${PNP_TMP}".3
+				grep -q "^${i}\$" "/lib/modules/$KV/modules.pnp" && continue
 				mod "$i"
 			done
 		done
-		mod $MDOLIST
-		refresh || break
+		refresh n || break
 		# minimal
 		[[ -n "$SDELAY" ]] && sleep "$SDELAY"
+		mod $MDOLIST
 		load_aliases
 	done
 	MY_HWOPTS=""
 	MDOLIST=""
-	mv "${PNP_TMP}".3 /nopnp.lst
 
 	if [[ -n "${NOTLOADED}" ]] ; then
 		good_msg "Not loaded:$NOTLOADED"
