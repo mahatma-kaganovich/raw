@@ -87,15 +87,12 @@ load_aliases(){
 mod_unload(){
 	local i l
 	l=""
-	if [[ $MODUNLOAD && -n "$REAL_ROOT" && -e "/nopnp.lst" ]]; then
-		good_msg "Removing unlocked modules"
-		while read i; do
-			l="$i $l"
-		done </nopnp.lst
-		for i in $l ; do
-			rmmod $i >/dev/null 2>&1
-		done
-	fi
+	( $MODUNLOAD && [[ -n "$REAL_ROOT" ]] && [[ -e "/nopnp.lst" ]] ) || return
+	echo -n "(removing unlocked modules)"
+	while read i; do
+		l="$i $l"
+	done </nopnp.lst
+	rmmod $l >/dev/null 2>&1
 }
 
 pnp_options(){
@@ -131,6 +128,7 @@ syspnp(){
 	refresh
 	. "/lib/modules/${KV}/modules.alias.sh"
 
+	cp "${PNP_TMP}".0 "${PNP_TMP}".3
 	if [[ -n "$MDOLIST" ]]; then
 		mod $MDOLIST
 		refresh
@@ -142,12 +140,12 @@ syspnp(){
 #	ifmod usual_tables && mod usb_storage # on demand
 	# filtering modules for gentoo init
 	good_msg "Filtering pnp modules"
-	echo -n "" >"${PNP_TMP}".3
 	while true; do
 		# NODETECT: old behaviour
 		[[ "${NODETECT}" != '1' ]] && for i1 in ${MY_HWOPTS} ; do
 			[[ -e "/etc/modules/$i1" ]] && for i in `cat /etc/modules/${i1}` ; do
-				grep -q "^${i}\$" "/lib/modules/$KV/modules.pnp" && continue
+				grep -q "^${i}\$" "/lib/modules/$KV/modules.pnp" "${PNP_TMP}".0 && continue
+				echo "$i" >>"${PNP_TMP}".3
 				mod "$i"
 			done
 		done
