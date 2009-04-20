@@ -56,7 +56,8 @@ Known problem: when frambuffer devices and/or fbcon are modules - tty1
 (and console 1) is "dumb terminal" (but ALT-F2 is OK).
 
 Currently "usb-storage" forced to loading after other hardware (to prevent
-flashes to boot device substitution).
+flashes to boot device substitution). For live USB storage add
+"doload=usb-storage" to kernel command line to load this module before others.
 
 === Compiling.
 
@@ -85,7 +86,7 @@ Useflag "netboot" make Gentoo's netboot image (not yet verifyed,
 todo: include Kerrighed modules and tools too, but tools must be
 static).
 
-Kernel cmdline option: "nopnp".
+Kernel cmdline options: "nopnp", "unload" (try to rmmod after mounting root).
 
 P.S. Defaults are subject to change.
 .
