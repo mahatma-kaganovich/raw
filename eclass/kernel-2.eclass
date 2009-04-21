@@ -3,7 +3,7 @@ source "${PORTDIR}/eclass/kernel-2.eclass"
 
 if [[ ${ETYPE} == sources ]]; then
 
-IUSE="${IUSE} build-kernel debug custom-cflags pnp compressed integrated ipv6 netboot unicode"
+IUSE="${IUSE} build-kernel debug custom-cflags pnp compressed integrated ipv6 netboot unicode acl minimal"
 DEPEND="${DEPEND}
 	build-kernel? (
 		pnp? ( sys-kernel/genpnprd )
@@ -13,10 +13,12 @@ DEPEND="${DEPEND}
 
 [[ "${KERNEL_CONFIG}" == "" ]] &&
     KERNEL_CONFIG="KALLSYMS_EXTRA_PASS DMA_ENGINE USB_STORAGE_[\w\d]+
-	-X86_GENERIC MTRR_SANITIZER IA32_EMULATION
+	-X86_GENERIC MTRR_SANITIZER IA32_EMULATION LBD -BLK_DEV_IO_TRACE
+	GFS2_FS_LOCKING_DLM NTFS_RW
 	X86_BIGSMP X86_32_NON_STANDARD
 	USB_LIBUSUAL -BLK_DEV_UB USB_EHCI_ROOT_HUB_TT USB_EHCI_TT_NEWSCHED USB_SISUSBVGA_CON
 	KEYBOARD_ATKBD
+	CRC_T10DIF
 	-VGACON_SOFT_SCROLLBACK -DRM FB_BOOT_VESA_SUPPORT FRAMEBUFFER_CONSOLE_ROTATION
 	IKCONFIG_PROC IKCONFIG EXPERIMENTAL
 	NET_RADIO PNP PNP_ACPI PARPORT_PC_FIFO PARPORT_1284 NFTL_RW
@@ -31,16 +33,19 @@ DEPEND="${DEPEND}
 	-CC_OPTIMIZE_FOR_SIZE
 	-ARCNET -IDE -SMB_FS -DEFAULT_CFQ -DEFAULT_AS -DEFAULT_NOOP
 	-SOUND_PRIME CPIOLIB ISCSI_IBFT_FIND EXT4DEV_COMPAT LDM_PARTITION
-	NET_SCHED +TCP_CONG_[\w\d_]+ TCP_CONG_ADVANCED
+	NET_SCHED GACT_PROB IP_FIB_TRIE
+	+TCP_CONG_[\w\d_]+ TCP_CONG_ADVANCED TCP_CONG_CUBIC TCP_CONG_BIC TCP_CONG_YEAH
 	BT_RFCOMM_TTY BT_HCIUART_H4 BT_HCIUART_BCSP BT_HCIUART_LL
 	IRDA_ULTRA IRDA_CACHE_LAST_LSAP IRDA_FAST_RR DONGLE
 	ISDN
+	-SECURITY_FILE_CAPABILITIES -SECURITY
 	    -TR HOSTAP_FIRMWARE NET_PCMCIA WAN DCC4_PSISYNC
 	    FDDI HIPPI VT_HW_CONSOLE_BINDING SERIAL_NONSTANDARD
-	    SERIAL_8250_EXTENDED SPI"
+	    SERIAL_8250_EXTENDED SPI
+	TIPC_ADVANCED NETFILTER_ADVANCED NET_IPGRE_BROADCAST
+	IP_VS_PROTO_[\d\w_]*"
 [[ "${KERNEL_MODULES}" == "" ]] &&
-    KERNEL_MODULES="+drivers +fs +sound +crypt +arch +net/bluetooth +net/irda +net/sched"
-#    KERNEL_MODULES="+."
+    KERNEL_MODULES="+."
 
 [[ -e "${CONFIG_ROOT}/etc/kernels/kernel.conf" ]] && source "${CONFIG_ROOT}/etc/kernels/kernel.conf"
 
@@ -179,7 +184,8 @@ cfg(){
 		i=${i/=*/}
 		i=${i/ is not set/}
 		sed -i -e "/^# CONFIG_${i} is not set/d" -e "/^CONFIG_${i}=.*/d" .config
-		[[ "$3" == "-"  ]] && grep -Pq "^CONFIG_${i}=" .config.old && continue
+		[[ "$3" == "-"  ]] && grep -P "^CONFIG_${i}=" .config.old >>.config && continue
+		[[ "$3" == "--"  ]] && grep -P "^(?:CONFIG_${i}=)|(?:${i} is not set)" .config.old >>.config && continue
 		if [[ "${r}" == "n" ]]; then
 			echo "# CONFIG_${i} is not set" >>.config
 		elif [[ "${r}" != "-" ]]; then
@@ -203,6 +209,16 @@ cfg_use(){
 
 setconfig(){
 	local i o
+	cfg y EXT2_FS
+	if use pnp || use compressed; then
+		cfg m SQUASHFS
+		cfg m CRAMFS
+		cfg m BLK_DEV_LOOP
+	fi
+	cfg_use debug "(?:[^\n]*_)?DEBUG(?:_[^\n]*)?" FRAME_POINTER OPTIMIZE_INLINING FUNCTION_TRACER OPROFILE KPROBES X86_VERBOSE_BOOTUP PROFILING MARKERS
+	cfg_use ipv6 IPV6
+	cfg_use acl "[\d\w\_]*_ACL"
+	use unicode && cfg y NLS_UTF8
 	for i in ${KERNEL_CONFIG}; do
 		o="y ${i}"
 		o="${o/y +/m }"
@@ -210,12 +226,17 @@ setconfig(){
 		o="${o/y ~/- }"
 		cfg ${o}
 	done
-	yes '' 2>/dev/null | kmake oldconfig &>/dev/null
+#	yes '' 2>/dev/null | kmake config &>/dev/null
+	yes '' 2>/dev/null | kmake oldconfig >/dev/null
 }
 
 config_defaults(){
 	local i i1 o m xx
 	elog "Configuring kernel"
+	if use minimal; then
+		KERNEL_CONFIG="${KERNEL_CONFIG} -IP_ADVANCED_ROUTER -NETFILTER ~IP_FIB_TRIE"
+		KERNEL_MODULES="${KERNEL_MODULES} -net"
+	fi
 	kmake defconfig >/dev/null
 	cp .config .config.old
 #	setconfig
@@ -224,7 +245,12 @@ config_defaults(){
 		m="-"
 		i1="${i}"
 		i="${i#+}"
-		[[ "${i1}" == "${i}" ]] || m=""
+		if [[ "${i1}" == "${i}" ]] ; then
+			i="${i#-}"
+			[[ "${i1}" == "${i}" ]] || m="--"
+		else
+			m=""
+		fi
 		for o in `grep -Prh "^\s*(?:menu)?config\s+.*?\n(?:[^\n]+\n)*\s*tristate" ${i} --include="Kconfig*" 2>/dev/null  | grep -P "^\s*(?:menu)?config"` ; do
 			[[ "${o}" == "config" || "${o}" == "menuconfig" ]] || cfg m "${o}" "${m}"
 		done
@@ -232,17 +258,6 @@ config_defaults(){
 	echo -e "KERNEL_CONFIG=\"${KERNEL_CONFIG}\""
 	setconfig
 	setconfig
-	cfg y EXT2_FS
-	if use pnp || use compressed; then
-		cfg m SQUASHFS
-		cfg m CRAMFS
-		cfg m BLK_DEV_LOOP
-	fi
-	cfg_use debug "(?:[^\n]*_)?DEBUG(?:_[^\n]*)?" FRAME_POINTER OPTIMIZE_INLINING FUNCTION_TRACER OPROFILE KPROBES X86_VERBOSE_BOOTUP
-	cfg_use ipv6 IPV6
-	use unicode && cfg y NLS_UTF8
-	setconfig
-#	yes '' 2>/dev/null | kmake oldconfig >/dev/null
 	rm .config.old
 }
 
