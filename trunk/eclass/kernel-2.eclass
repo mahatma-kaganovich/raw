@@ -1,8 +1,9 @@
+inherit flag-o-matic
 source "${PORTDIR}/eclass/kernel-2.eclass"
 
 if [[ ${ETYPE} == sources ]]; then
 
-IUSE="${IUSE} build-kernel debug custom-cflags pnp compressed integrated ipv6 netboot"
+IUSE="${IUSE} build-kernel debug custom-cflags pnp compressed integrated ipv6 netboot unicode"
 DEPEND="${DEPEND}
 	build-kernel? (
 		pnp? ( sys-kernel/genpnprd )
@@ -12,6 +13,7 @@ DEPEND="${DEPEND}
 
 [[ "${KERNEL_CONFIG}" == "" ]] &&
     KERNEL_CONFIG="KALLSYMS_EXTRA_PASS DMA_ENGINE USB_STORAGE_[\w\d]+
+	-X86_GENERIC MTRR_SANITIZER IA32_EMULATION
 	X86_BIGSMP X86_32_NON_STANDARD
 	USB_LIBUSUAL -BLK_DEV_UB USB_EHCI_ROOT_HUB_TT USB_EHCI_TT_NEWSCHED USB_SISUSBVGA_CON
 	KEYBOARD_ATKBD
@@ -28,10 +30,11 @@ DEPEND="${DEPEND}
 	FB_MB862XX_PCI_GDC
 	-CC_OPTIMIZE_FOR_SIZE
 	-ARCNET -IDE -SMB_FS -DEFAULT_CFQ -DEFAULT_AS -DEFAULT_NOOP
-	-SOUND_PRIME -KVM
+	-SOUND_PRIME CPIOLIB ISCSI_IBFT_FIND EXT4DEV_COMPAT LDM_PARTITION
 	NET_SCHED +TCP_CONG_[\w\d_]+ TCP_CONG_ADVANCED
 	BT_RFCOMM_TTY BT_HCIUART_H4 BT_HCIUART_BCSP BT_HCIUART_LL
 	IRDA_ULTRA IRDA_CACHE_LAST_LSAP IRDA_FAST_RR DONGLE
+	ISDN
 	    -TR HOSTAP_FIRMWARE NET_PCMCIA WAN DCC4_PSISYNC
 	    FDDI HIPPI VT_HW_CONSOLE_BINDING SERIAL_NONSTANDARD
 	    SERIAL_8250_EXTENDED SPI"
@@ -51,12 +54,12 @@ kernel-2_src_compile() {
 	[[ ${ETYPE} == headers ]] && compile_headers
 	[[ ${ETYPE} == sources ]] || return
 	if use custom-cflags; then
-#		filter-flags -march=* -msse* -mmmx -m3dnow
+		filter-flags -march=* -msse* -mmmx -m3dnow
 		sed -i -e "s/-O2/${CFLAGS}/g" Makefile
 	fi
 	use build-kernel || return
 	config_defaults
-	einfo "Compiling kernel"
+	elog "Compiling kernel"
 	kmake all
 	local p=""
 	use netboot && p="${p} --netboot"
@@ -67,8 +70,6 @@ kernel-2_src_compile() {
 	cd "${WORKDIR}"
 	local i
 	for i in linux*${KV} ; do
-#		ln -s "/usr/src/${i}" "${r}"/build
-#		ln -s "/usr/src/${i}" "${r}"/source
 		ln -s "../../../usr/src/${i}" "${r}"/build
 		ln -s "../../../usr/src/${i}" "${r}"/source
 	done
@@ -110,6 +111,10 @@ kernel-2_src_install() {
 		for f in "${BDIR}"/* ; do
 			mv "${f}" "${D}/" || die
 		done
+		if use symlink; then
+			rm ${D}/lib/firmware -Rf
+			dosym ../usr/src/linux/firmware /lib/firmware
+		fi
 		kmake INSTALL_PATH="${D}/boot" install
 		use symlink || rm "${D}"/boot/vmlinuz &>/dev/null
 		ewarn "If your /boot is not mounted, copy next files by hands:"
@@ -118,6 +123,22 @@ kernel-2_src_install() {
 	install_universal
 	[[ ${ETYPE} == headers ]] && install_headers
 	[[ ${ETYPE} == sources ]] && install_sources
+}
+
+kernel-2_pkg_preinst(){
+	[[ ${ETYPE} == headers ]] && preinst_headers
+	# we need to remove firmware collisions
+	if [[ ${ETYPE} == sources ]] && use build-kernel && ! use symlink ; then
+		elog "Removing installed firmare collisions"
+		local i
+		find ${D}/lib/firmware -print | while read i; do
+			[[ -f ${i} ]] || continue
+			i="${i#${D}}"
+			[[ -f "${ROOT}/${i}" ]] || continue
+			elog "	${ROOT}/${i}"
+			rm "${ROOT}/${i}" -f
+		done
+	fi
 }
 
 run_genkernel(){
@@ -133,7 +154,7 @@ run_genkernel(){
 
 # incompatible with 2.6.20
 cramfs(){
-	einfo "Converting initramfs to cramfs"
+	elog "Converting initramfs to cramfs"
 	local tmp="${TMPDIR}/ramfstmp"
 	mkdir "${tmp}"
 	cd "${tmp}" || die "cd failed"
@@ -158,7 +179,7 @@ cfg(){
 		i=${i/=*/}
 		i=${i/ is not set/}
 		sed -i -e "/^# CONFIG_${i} is not set/d" -e "/^CONFIG_${i}=.*/d" .config
-		[[ "$3" == "-"  && "${i1/=}" != "${i1}" ]] && continue
+		[[ "$3" == "-"  ]] && grep -Pq "^CONFIG_${i}=" .config.old && continue
 		if [[ "${r}" == "n" ]]; then
 			echo "# CONFIG_${i} is not set" >>.config
 		elif [[ "${r}" != "-" ]]; then
@@ -169,11 +190,15 @@ cfg(){
 }
 
 cfg_use(){
-	if use $1; then
-		cfg y $2
-	else
-		cfg n $2
-	fi
+	local i u="$1"
+	shift
+	for i in $* ; do
+		if use $u ; then
+			cfg y $i
+		else
+			cfg n $i
+		fi
+	done
 }
 
 setconfig(){
@@ -190,22 +215,22 @@ setconfig(){
 
 config_defaults(){
 	local i i1 o m xx
-	einfo "Configuring kernel"
+	elog "Configuring kernel"
 	kmake defconfig >/dev/null
-	for xx in 1 2 ; do
-	setconfig
+	cp .config .config.old
+#	setconfig
 	for i in ${KERNEL_MODULES}; do
+		elog "Searching modules: ${i}"
 		m="-"
 		i1="${i}"
 		i="${i#+}"
 		[[ "${i1}" == "${i}" ]] || m=""
-		[[ "$m" != "+" && "$xx" == "2" ]] && continue
-		einfo "Searching modules: ${i}"
 		for o in `grep -Prh "^\s*(?:menu)?config\s+.*?\n(?:[^\n]+\n)*\s*tristate" ${i} --include="Kconfig*" 2>/dev/null  | grep -P "^\s*(?:menu)?config"` ; do
 			[[ "${o}" == "config" || "${o}" == "menuconfig" ]] || cfg m "${o}" "${m}"
 		done
 	done
-	done
+	echo -e "KERNEL_CONFIG=\"${KERNEL_CONFIG}\""
+	setconfig
 	setconfig
 	cfg y EXT2_FS
 	if use pnp || use compressed; then
@@ -213,9 +238,12 @@ config_defaults(){
 		cfg m CRAMFS
 		cfg m BLK_DEV_LOOP
 	fi
-	cfg_use debug "(?:[^\n]*_)?DEBUG(?:_[^\n]*)?"
+	cfg_use debug "(?:[^\n]*_)?DEBUG(?:_[^\n]*)?" FRAME_POINTER OPTIMIZE_INLINING FUNCTION_TRACER OPROFILE KPROBES X86_VERBOSE_BOOTUP
 	cfg_use ipv6 IPV6
-	yes '' 2>/dev/null | kmake oldconfig >/dev/null
+	use unicode && cfg y NLS_UTF8
+	setconfig
+#	yes '' 2>/dev/null | kmake oldconfig >/dev/null
+	rm .config.old
 }
 
 kmake(){
@@ -225,7 +253,7 @@ kmake(){
 
 fixes(){
 	local i
-	einfo "Fixing compats"
+	elog "Fixing compats"
 	# glibc 2.8+
 	for i in "${S}/scripts/mod/sumversion.c" ; do
 		[[ -e "${i}" ]] || continue
@@ -234,7 +262,9 @@ fixes(){
 	# gcc 4.2+
 	sed -i -e 's/_proxy_pda = 0/_proxy_pda = 1/g' "${S}"/arch/*/kernel/vmlinux.lds.S
 	[[ -e "${S}"arch/x86_64/kernel/x8664_ksyms.c ]] && grep -q "_proxy_pda" "${S}"arch/x86_64/kernel/x8664_ksyms.c || echo "EXPORT_SYMBOL(_proxy_pda);" >>arch/x86_64/kernel/x8664_ksyms.c
+	use unicode && sed -i -e 's/sbi->options\.utf8/1/g' fs/fat/dir.c
 	use pnp || return
-	einfo "Fixing modules hardware info exports (forced mode, waiting for bugs!)"
+	elog "Fixing modules hardware info exports (forced mode, waiting for bugs!)"
 	sh "${ROOT}/usr/share/genpnprd/modulesfix" "${S}" f
 }
+
