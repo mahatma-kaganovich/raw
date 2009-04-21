@@ -17,7 +17,7 @@ KEYWORDS="-* ~amd64 ~x86"
 
 # for build-kernel feature only
 # default: building default kernel, including all modules compressed in initrd
-IUSE="+build-kernel +pnp"
+IUSE="+build-kernel +pnp +minimal"
 
 KERNEL_CONFIG="${KERNEL_CONFIG} -IPC_NS -PREEMPT[\w\d_]* PREEMPT_NONE -KEYS
 	-IPV6 -NET_IPIP -NET_IPGRE -DUMMY -BONDING -EQUALIZER"
