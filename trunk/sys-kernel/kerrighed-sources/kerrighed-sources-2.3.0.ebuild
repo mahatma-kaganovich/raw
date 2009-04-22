@@ -17,10 +17,11 @@ KEYWORDS="-* ~amd64 ~x86"
 
 # for build-kernel feature only
 # default: building default kernel, including all modules compressed in initrd
-IUSE="+build-kernel +pnp +minimal"
+IUSE="+build-kernel +pnp"
 
 KERNEL_CONFIG="${KERNEL_CONFIG} -IPC_NS -PREEMPT[\w\d_]* PREEMPT_NONE -KEYS
-	-IPV6 -NET_IPIP -NET_IPGRE -DUMMY -BONDING -EQUALIZER  -KVM"
+	-IPV6 -NET_IPIP -NET_IPGRE -DUMMY -BONDING -EQUALIZER
+	-AFS_FS -AF_RXRPC"
 
 S="${WORKDIR}/linux-${KV}"
 S1="${WORKDIR}/kerrighed-${PV}"
