@@ -15,7 +15,7 @@ DEPEND="${DEPEND}
     KERNEL_CONFIG="KALLSYMS_EXTRA_PASS DMA_ENGINE USB_STORAGE_[\w\d]+
 	-X86_GENERIC MTRR_SANITIZER IA32_EMULATION LBD
 	GFS2_FS_LOCKING_DLM NTFS_RW
-	X86_BIGSMP X86_32_NON_STANDARD
+	X86_BIGSMP X86_32_NON_STANDARD X86_X2APIC
 	USB_LIBUSUAL -BLK_DEV_UB USB_EHCI_ROOT_HUB_TT USB_EHCI_TT_NEWSCHED USB_SISUSBVGA_CON
 	KEYBOARD_ATKBD
 	CRC_T10DIF
@@ -43,7 +43,8 @@ DEPEND="${DEPEND}
 	    FDDI HIPPI VT_HW_CONSOLE_BINDING SERIAL_NONSTANDARD
 	    SERIAL_8250_EXTENDED SPI
 	TIPC_ADVANCED NETFILTER_ADVANCED NET_IPGRE_BROADCAST
-	IP_VS_PROTO_[\d\w_]*"
+	IP_VS_PROTO_[\d\w_]*
+	KERNEL_GZIP KERNEL_BZIP2 KERNEL_LZMA"
 [[ "${KERNEL_MODULES}" == "" ]] &&
     KERNEL_MODULES="+."
 
@@ -64,7 +65,7 @@ kernel-2_src_compile() {
 	fi
 	use build-kernel || return
 	config_defaults
-	elog "Compiling kernel"
+	einfo "Compiling kernel"
 	kmake all
 	local p=""
 	use netboot && p="${p} --netboot"
@@ -91,7 +92,6 @@ kernel-2_src_compile() {
 	elif use compressed; then
 		sh "${ROOT}/usr/share/genpnprd/genpnprd" "${S}/initrd-${KV}.img" nopnp
 	fi
-#	use cramfs && cramfs
 	if use integrated; then
 		cfg - CONFIG_INITRAMFS_SOURCE
 		cfg - CONFIG_INITRAMFS_ROOT_UID
@@ -135,7 +135,7 @@ kernel-2_pkg_preinst(){
 	# we need to remove firmware collisions
 	local s=""
 	if [[ ${ETYPE} == sources && ${SLOT} != "0" ]] && use build-kernel && ! use symlink ; then
-		elog "Removing installed firmare collisions"
+		einfo "Removing installed firmare collisions"
 		local i
 		find ${D}/lib/firmware -print | while read i; do
 			[[ -f ${i} ]] || continue
@@ -145,11 +145,10 @@ kernel-2_pkg_preinst(){
 				i1="${i1#/}"
 			done
 			[[ -f "${ROOT}/${i}" ]] || continue
-			elog "	${ROOT}/${i}"
+#			einfo "	${ROOT}/${i}"
 			rm "${ROOT}/${i}" -f
-			s="${s} -e ':^obj /${i} :d'"
+			sed -i -e "/^obj \/${i//\//\\/} /d" "${ROOT}"/var/db/pkg/sys-kernel/*/CONTENTS
 		done
-		[[ -n "${s}" ]] && sed -i ${s} "${ROOT}"/var/db/pkg/sys-kernel/*/CONTENTS
 	fi
 }
 
@@ -164,21 +163,6 @@ run_genkernel(){
 	rm "${S}/genkernel"
 }
 
-# incompatible with 2.6.20
-cramfs(){
-	elog "Converting initramfs to cramfs"
-	local tmp="${TMPDIR}/ramfstmp"
-	mkdir "${tmp}"
-	cd "${tmp}" || die "cd failed"
-	gzip -dc "${S}/initrd-${KV}.img" | cpio -i
-	sed -i -e 's/ext2/cramfs/g' etc/fstab
-	cd "${S}" || die
-	mkcramfs "${tmp}" "initrd-${KV}.img" || die
-	rm "${tmp}" -Rf
-	gzip -9 "initrd-${KV}.img" || die
-	rename .gz "" "initrd-${KV}.img.gz" || die
-}
-
 cfg(){
 	local r="$1"
 	local o="$2"
@@ -188,7 +172,6 @@ cfg(){
 		tmp="${tmp}.1"
 	done
 	( grep -P "^(?:\# )?CONFIG_${o}(?:=.*| is not set)\$" .config || echo "${o}" ) >$tmp
-
 	while read i ; do
 		i1="${i}"
 		i=${i#\# }
@@ -196,7 +179,7 @@ cfg(){
 		i=${i/=*/}
 		i=${i/ is not set/}
 		if [[ "${r}" == "n" ]] && grep -q "^CONFIG_${i}=" .config ; then
-			for i2 in `grep -Prh "^\s*(?:menu)?config\s+.*?\n(?:[^\n]+\n)*\s*select ${i}\n" . --include="Kconfig" 2>/dev/null |grep -P "^\s*(?:menu)?config"` ; do
+			for i2 in `grep -Prh "^\s*(?:menu)?config\s+.*?\n(?:[^\n]+\n)*\s*select ${i}\n" . --include="Kconfig*" 2>/dev/null |grep -P "^\s*(?:menu)?config"` ; do
 				if [[ "${i2}" != "config" && "${i2}" != "menuconfig" ]] ; then
 					einfo "	CONFIG: -$i -> -$i2"
 					cfg $r $i2
@@ -252,7 +235,7 @@ setconfig(){
 
 config_defaults(){
 	local i i1 o m xx
-	elog "Configuring kernel"
+	einfo "Configuring kernel"
 	if use minimal; then
 		KERNEL_CONFIG="${KERNEL_CONFIG} -IP_ADVANCED_ROUTER -NETFILTER ~IP_FIB_TRIE"
 		KERNEL_MODULES="${KERNEL_MODULES} -net"
@@ -261,7 +244,7 @@ config_defaults(){
 	cp .config .config.old
 #	setconfig
 	for i in ${KERNEL_MODULES}; do
-		elog "Searching modules: ${i}"
+		einfo "Searching modules: ${i}"
 		m="-"
 		i1="${i}"
 		i="${i#+}"
@@ -288,7 +271,7 @@ kmake(){
 
 fixes(){
 	local i
-	elog "Fixing compats"
+	einfo "Fixing compats"
 	# glibc 2.8+
 	for i in "${S}/scripts/mod/sumversion.c" ; do
 		[[ -e "${i}" ]] || continue
@@ -299,7 +282,7 @@ fixes(){
 	[[ -e "${S}"arch/x86_64/kernel/x8664_ksyms.c ]] && grep -q "_proxy_pda" "${S}"arch/x86_64/kernel/x8664_ksyms.c || echo "EXPORT_SYMBOL(_proxy_pda);" >>arch/x86_64/kernel/x8664_ksyms.c
 	use unicode && sed -i -e 's/sbi->options\.utf8/1/g' fs/fat/dir.c
 	use pnp || return
-	elog "Fixing modules hardware info exports (forced mode, waiting for bugs!)"
+	einfo "Fixing modules hardware info exports (forced mode, waiting for bugs!)"
 	sh "${ROOT}/usr/share/genpnprd/modulesfix" "${S}" f
 }
 
