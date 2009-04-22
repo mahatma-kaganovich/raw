@@ -3,7 +3,7 @@ source "${PORTDIR}/eclass/kernel-2.eclass"
 
 if [[ ${ETYPE} == sources ]]; then
 
-IUSE="${IUSE} build-kernel debug custom-cflags pnp compressed integrated ipv6 netboot unicode acl minimal"
+IUSE="${IUSE} build-kernel debug custom-cflags pnp compressed integrated ipv6 netboot unicode +acl minimal"
 DEPEND="${DEPEND}
 	build-kernel? (
 		pnp? ( sys-kernel/genpnprd )
@@ -13,7 +13,7 @@ DEPEND="${DEPEND}
 
 [[ "${KERNEL_CONFIG}" == "" ]] &&
     KERNEL_CONFIG="KALLSYMS_EXTRA_PASS DMA_ENGINE USB_STORAGE_[\w\d]+
-	-X86_GENERIC MTRR_SANITIZER IA32_EMULATION LBD -BLK_DEV_IO_TRACE
+	-X86_GENERIC MTRR_SANITIZER IA32_EMULATION LBD
 	GFS2_FS_LOCKING_DLM NTFS_RW
 	X86_BIGSMP X86_32_NON_STANDARD
 	USB_LIBUSUAL -BLK_DEV_UB USB_EHCI_ROOT_HUB_TT USB_EHCI_TT_NEWSCHED USB_SISUSBVGA_CON
@@ -133,16 +133,23 @@ kernel-2_src_install() {
 kernel-2_pkg_preinst(){
 	[[ ${ETYPE} == headers ]] && preinst_headers
 	# we need to remove firmware collisions
-	if [[ ${ETYPE} == sources ]] && use build-kernel && ! use symlink ; then
+	local s=""
+	if [[ ${ETYPE} == sources && ${SLOT} != "0" ]] && use build-kernel && ! use symlink ; then
 		elog "Removing installed firmare collisions"
 		local i
 		find ${D}/lib/firmware -print | while read i; do
 			[[ -f ${i} ]] || continue
-			i="${i#${D}}"
+			local i1="${i#${D}}"
+			while [[ "${i1}" != "${i}" ]] ; do
+				i="${i1}"
+				i1="${i1#/}"
+			done
 			[[ -f "${ROOT}/${i}" ]] || continue
 			elog "	${ROOT}/${i}"
 			rm "${ROOT}/${i}" -f
+			s="${s} -e ':^obj /${i} :d'"
 		done
+		[[ -n "${s}" ]] && sed -i ${s} "${ROOT}"/var/db/pkg/sys-kernel/*/CONTENTS
 	fi
 }
 
@@ -175,14 +182,27 @@ cramfs(){
 cfg(){
 	local r="$1"
 	local o="$2"
-	local i i1
-	( grep -P "^(?:\# )?CONFIG_${o}(?:=.*| is not set)\$" .config || echo "${o}" ) >"${TMPDIR}"/pnp.tmp
+	local i i1 i2
+	local tmp="${TMPDIR}/pnp.tmp"
+	while [[ -e ${tmp} ]] ; do
+		tmp="${tmp}.1"
+	done
+	( grep -P "^(?:\# )?CONFIG_${o}(?:=.*| is not set)\$" .config || echo "${o}" ) >$tmp
+
 	while read i ; do
 		i1="${i}"
 		i=${i#\# }
 		i=${i#CONFIG_}
 		i=${i/=*/}
 		i=${i/ is not set/}
+		if [[ "${r}" == "n" ]] && grep -q "^CONFIG_${i}=" .config ; then
+			for i2 in `grep -Prh "^\s*(?:menu)?config\s+.*?\n(?:[^\n]+\n)*\s*select ${i}\n" . --include="Kconfig" 2>/dev/null |grep -P "^\s*(?:menu)?config"` ; do
+				if [[ "${i2}" != "config" && "${i2}" != "menuconfig" ]] ; then
+					einfo "	CONFIG: -$i -> -$i2"
+					cfg $r $i2
+				fi
+			done
+		fi
 		sed -i -e "/^# CONFIG_${i} is not set/d" -e "/^CONFIG_${i}=.*/d" .config
 		[[ "$3" == "-"  ]] && grep -P "^CONFIG_${i}=" .config.old >>.config && continue
 		[[ "$3" == "--"  ]] && grep -P "^(?:CONFIG_${i}=)|(?:${i} is not set)" .config.old >>.config && continue
@@ -191,8 +211,8 @@ cfg(){
 		elif [[ "${r}" != "-" ]]; then
 			echo "CONFIG_${i}=${r}" >>.config
 		fi
-	done <"${TMPDIR}"/pnp.tmp
-	rm "${TMPDIR}"/pnp.tmp
+	done <$tmp
+	rm $tmp
 }
 
 cfg_use(){
