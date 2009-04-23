@@ -3,7 +3,7 @@ source "${PORTDIR}/eclass/kernel-2.eclass"
 
 if [[ ${ETYPE} == sources ]]; then
 
-IUSE="${IUSE} build-kernel debug custom-cflags pnp compressed integrated ipv6 netboot unicode +acl minimal"
+IUSE="${IUSE} build-kernel debug custom-cflags pnp compressed integrated ipv6 netboot unicode +acl minimal firmware"
 DEPEND="${DEPEND}
 	build-kernel? (
 		pnp? ( sys-kernel/genpnprd )
@@ -16,6 +16,7 @@ DEPEND="${DEPEND}
 	-X86_GENERIC MTRR_SANITIZER IA32_EMULATION LBD
 	GFS2_FS_LOCKING_DLM NTFS_RW
 	X86_BIGSMP X86_32_NON_STANDARD X86_X2APIC
+	CALGARY_IOMMU AMD_IOMMU
 	USB_LIBUSUAL -BLK_DEV_UB USB_EHCI_ROOT_HUB_TT USB_EHCI_TT_NEWSCHED USB_SISUSBVGA_CON
 	KEYBOARD_ATKBD
 	CRC_T10DIF
@@ -116,9 +117,12 @@ kernel-2_src_install() {
 		for f in "${BDIR}"/* ; do
 			mv "${f}" "${D}/" || die
 		done
-		if use symlink; then
+		if [[ ${SLOT} != "0" ]] || ! use firmware ; then
 			rm ${D}/lib/firmware -Rf
-			dosym ../usr/src/linux/firmware /lib/firmware
+			if use firmware && ! [[ -L "${ROOT}/lib/firmware" ]] ; then
+				[[ -e "${ROOT}/lib/firmware" ]] && ewarn "If '/lib/firmware' collisions will breaks build - remove it (USE=firmware)"
+				dosym ../usr/src/linux/firmware /lib/firmware
+			fi
 		fi
 		kmake INSTALL_PATH="${D}/boot" install
 		use symlink || rm "${D}"/boot/vmlinuz &>/dev/null
@@ -128,28 +132,6 @@ kernel-2_src_install() {
 	install_universal
 	[[ ${ETYPE} == headers ]] && install_headers
 	[[ ${ETYPE} == sources ]] && install_sources
-}
-
-kernel-2_pkg_preinst(){
-	[[ ${ETYPE} == headers ]] && preinst_headers
-	# we need to remove firmware collisions
-	local s=""
-	if [[ ${ETYPE} == sources && ${SLOT} != "0" ]] && use build-kernel && ! use symlink ; then
-		einfo "Removing installed firmare collisions"
-		local i
-		find ${D}/lib/firmware -print | while read i; do
-			[[ -f ${i} ]] || continue
-			local i1="${i#${D}}"
-			while [[ "${i1}" != "${i}" ]] ; do
-				i="${i1}"
-				i1="${i1#/}"
-			done
-			[[ -f "${ROOT}/${i}" ]] || continue
-#			einfo "	${ROOT}/${i}"
-			rm "${ROOT}/${i}" -f
-			sed -i -e "/^obj \/${i//\//\\/} /d" "${ROOT}"/var/db/pkg/sys-kernel/*/CONTENTS
-		done
-	fi
 }
 
 run_genkernel(){
@@ -181,7 +163,7 @@ cfg(){
 		if [[ "${r}" == "n" ]] && grep -q "^CONFIG_${i}=" .config ; then
 			for i2 in `grep -Prh "^\s*(?:menu)?config\s+.*?\n(?:[^\n]+\n)*\s*select ${i}\n" . --include="Kconfig*" 2>/dev/null |grep -P "^\s*(?:menu)?config"` ; do
 				if [[ "${i2}" != "config" && "${i2}" != "menuconfig" ]] ; then
-					einfo "	CONFIG: -$i -> -$i2"
+					einfo "CONFIG: -$i -> -$i2"
 					cfg $r $i2
 				fi
 			done
