@@ -1,0 +1,116 @@
+diff -pruN a/include/net/netfilter/nf_conntrack.h b/include/net/netfilter/nf_conntrack.h
+--- a/include/net/netfilter/nf_conntrack.h	2009-04-22 15:09:37.000000000 +0000
++++ b/include/net/netfilter/nf_conntrack.h	2009-04-23 13:35:00.000000000 +0000
+@@ -108,6 +108,9 @@ struct nf_conn {
+ 
+ 	/* Timer function; drops refcnt when it goes off. */
+ 	struct timer_list timeout;
++#ifdef CONFIG_NETFILTER_XT_MATCH_CONNLIMIT_ACTIVE
++	unsigned long use_time;
++#endif
+ 
+ #if defined(CONFIG_NF_CONNTRACK_MARK)
+ 	u_int32_t mark;
+diff -pruN a/net/netfilter/Kconfig b/net/netfilter/Kconfig
+--- a/net/netfilter/Kconfig	2009-04-22 15:09:38.000000000 +0000
++++ b/net/netfilter/Kconfig	2009-04-23 13:35:00.000000000 +0000
+@@ -573,6 +573,15 @@ config NETFILTER_XT_MATCH_CONNLIMIT
+ 	  This match allows you to match against the number of parallel
+ 	  connections to a server per client IP address (or address block).
+ 
++config NETFILTER_XT_MATCH_CONNLIMIT_ACTIVE
++	bool '"connlimit" only active connections'
++	depends on NETFILTER_XT_MATCH_CONNLIMIT
++	help
++	  Skip keepalive and other not closed inactive connections.
++
++	  N to care memory usage,
++	  Y to care channel usage.
++
+ config NETFILTER_XT_MATCH_CONNMARK
+ 	tristate  '"connmark" connection mark match support'
+ 	depends on NF_CONNTRACK
+diff -pruN a/net/netfilter/nf_conntrack_core.c b/net/netfilter/nf_conntrack_core.c
+--- a/net/netfilter/nf_conntrack_core.c	2009-04-22 15:09:38.000000000 +0000
++++ b/net/netfilter/nf_conntrack_core.c	2009-04-23 13:35:00.000000000 +0000
+@@ -389,6 +389,9 @@ __nf_conntrack_confirm(struct sk_buff *s
+ 	/* Timer relative to confirmation time, not original
+ 	   setting time, otherwise we'd get timer wrap in
+ 	   weird delay cases. */
++#ifdef CONFIG_NETFILTER_XT_MATCH_CONNLIMIT_ACTIVE
++	ct->use_time = jiffies;
++#endif
+ 	ct->timeout.expires += jiffies;
+ 	add_timer(&ct->timeout);
+ 	atomic_inc(&ct->ct_general.use);
+@@ -814,6 +817,10 @@ void __nf_ct_refresh_acct(struct nf_conn
+ 
+ 	spin_lock_bh(&nf_conntrack_lock);
+ 
++#ifdef CONFIG_NETFILTER_XT_MATCH_CONNLIMIT_ACTIVE
++	ct->use_time = jiffies;
++#endif
++
+ 	/* Only update if this is not a fixed timeout */
+ 	if (test_bit(IPS_FIXED_TIMEOUT_BIT, &ct->status))
+ 		goto acct;
+diff -pruN a/net/netfilter/xt_connlimit.c b/net/netfilter/xt_connlimit.c
+--- a/net/netfilter/xt_connlimit.c	2009-04-22 15:09:38.000000000 +0000
++++ b/net/netfilter/xt_connlimit.c	2009-04-23 13:37:47.000000000 +0000
+@@ -29,6 +29,11 @@
+ #include <net/netfilter/nf_conntrack_core.h>
+ #include <net/netfilter/nf_conntrack_tuple.h>
+ 
++#ifdef CONFIG_NETFILTER_XT_MATCH_CONNLIMIT_ACTIVE
++/* 10 sec */
++#define CONNLIMIT_TIMEOUT (10*HZ)
++#endif
++
+ /* we will save the tuples of all connections we care about */
+ struct xt_connlimit_conn {
+ 	struct list_head list;
+@@ -103,7 +108,8 @@ static int count_them(struct xt_connlimi
+ 		      const struct nf_conntrack_tuple *tuple,
+ 		      const union nf_inet_addr *addr,
+ 		      const union nf_inet_addr *mask,
+-		      const struct xt_match *match)
++		      const struct xt_match *match,
++		      const struct nf_conn *ct)
+ {
+ 	const struct nf_conntrack_tuple_hash *found;
+ 	struct xt_connlimit_conn *conn;
+@@ -158,9 +164,24 @@ static int count_them(struct xt_connlimi
+ 		}
+ 
+ 		if (same_source_net(addr, mask, &conn->tuple.src.u3,
+-		    match->family))
++		    match->family)) {
++#ifdef CONFIG_NETFILTER_XT_MATCH_CONNLIMIT_ACTIVE
++			if (found_ct != NULL) {
++				/* count only active connections */
++				if (jiffies - found_ct->use_time > CONNLIMIT_TIMEOUT) {
++					nf_ct_put(found_ct);
++					continue;
++				}
++				/* force to first connections to be active */
++				if (found_ct == ct) {
++					nf_ct_put(found_ct);
++					break;
++				}
++			}
++#endif
+ 			/* same source network -> be counted! */
+ 			++matches;
++		}
+ 		nf_ct_put(found_ct);
+ 	}
+ 
+@@ -207,7 +228,7 @@ connlimit_mt(const struct sk_buff *skb, 
+ 
+ 	spin_lock_bh(&info->data->lock);
+ 	connections = count_them(info->data, tuple_ptr, &addr,
+-	                         &info->mask, par->match);
++	                         &info->mask, par->match, ct);
+ 	spin_unlock_bh(&info->data->lock);
+ 
+ 	if (connections < 0) {
