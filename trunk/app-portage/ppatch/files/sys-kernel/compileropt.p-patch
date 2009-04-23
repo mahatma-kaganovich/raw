@@ -1,6 +1,8 @@
-$CFLAGS=" -O3 -floop-optimize -funroll-loops -maccumulate-outgoing-args -minline-all-stringops -fivopts -fno-exceptions -ftree-vectorize -ftracer";
+## use custom-cflags instead
+## next, gcc 4.3.3 + kernel 2.6.29 breaks this
+#$CFLAGS=" -O3 -floop-optimize -funroll-loops -maccumulate-outgoing-args -minline-all-stringops -fivopts -fno-exceptions -ftree-vectorize -ftracer";
 
-file(my $make="$ENV{S}/Makefile");
-$f{$make}=~s/\-O2/$CFLAGS/gs;
+#file(my $make="$ENV{S}/Makefile");
+#$f{$make}=~s/\-O2/$CFLAGS/gs;
 
-&flush;
+#&flush;
