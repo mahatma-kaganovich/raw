@@ -246,10 +246,11 @@ config_defaults(){
 }
 
 arch(){
-	case $ARCH in
+	local arch=$(tc-ninja_magic_to_arch)
+	case ${arch} in
 		amd64) echo "x86_64"
 		;;
-		*) echo "$ARCH"
+		*) echo "${arch}"
 	esac
 }
 
