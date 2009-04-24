@@ -246,9 +246,16 @@ config_defaults(){
 	rm .config.old
 }
 
+arch(){
+	case $ARCH in
+		amd64) echo "x86_64"
+		;;
+		*) echo "$ARCH"
+	esac
+}
+
 kmake(){
-	# DESTDIR="${D}"
-	emake ARCH=$(tc-arch-kernel) ABI=${KERNEL_ABI} $* || die
+	emake ARCH=$(arch) $* || die
 }
 
 fixes(){
