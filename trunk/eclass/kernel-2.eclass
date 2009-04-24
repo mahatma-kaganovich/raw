@@ -139,9 +139,8 @@ run_genkernel(){
 	# cpio works fine without loopback
 	cp /usr/bin/genkernel "${S}" || die
 	sed -i -e 's/has_loop/true/' "${S}/genkernel"
-	local arch="$(tc-arch-kernel)"
-	[[ "$arch" == "i386" ]] && arch="x86"
-	LDFLAGS="" ARCH="$(tc-arch-kernel)" ABI="${KERNEL_ABI}" "${S}/genkernel" --cachedir="${TMPDIR}/genkernel-cache" --tempdir="${TMPDIR}/genkernel" --logfile="${TMPDIR}/genkernel.log" --utils-arch=${arch} --arch-override=${arch} --postclear $* || die "genkernel failed"
+#	LDFLAGS="" ARCH="$(arch)" ABI="${KERNEL_ABI}" "${S}/genkernel" --cachedir="${TMPDIR}/genkernel-cache" --tempdir="${TMPDIR}/genkernel" --logfile="${TMPDIR}/genkernel.log" --utils-arch=$(tc-ninja_magic_to_arch) --arch-override=$(arch) --postclear $* || die "genkernel failed"
+	LDFLAGS="" "${S}/genkernel" --cachedir="${TMPDIR}/genkernel-cache" --tempdir="${TMPDIR}/genkernel" --logfile="${TMPDIR}/genkernel.log" --arch-override=$(arch) --postclear $* || die "genkernel failed"
 	rm "${S}/genkernel"
 }
 
