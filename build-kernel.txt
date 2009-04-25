@@ -86,7 +86,8 @@ Useflag "netboot" make Gentoo's netboot image (not yet verifyed,
 todo: include Kerrighed modules and tools too, but tools must be
 static).
 
-Kernel cmdline options: "nopnp", "unload" (try to rmmod after mounting root).
+Kernel cmdline options: "nopnp", "unload" (try to rmmod after mounting root),
+"loadall" (try to load all possible drivers, slow).
 
 P.S. Defaults are subject to change.
 .

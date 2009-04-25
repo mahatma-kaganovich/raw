@@ -4,6 +4,21 @@
 # (c) Denis Kaganovich
 # under Anarchy license
 
+# kernel/arch/x86/kernel/apm.ko
+# kernel/arch/x86/video/fbdev.ko
+## dirs:
+# [arch/]
+# [drivers/block/]
+# [drivers/char/]
+# [drivers/firmware/]
+# [drivers/hwmon/]
+# drivers/acpi/
+# drivers/md/
+# fs/
+# drivers/scsi/
+# drivers/usb/
+# arch/x86/kernel/cpu/cpufreq/
+
 my %alias;
 my %dep;
 
@@ -16,11 +31,7 @@ sub read_aliases{
 		$s=~s/^alias\s(\S*)\s(\S*)$/$id=$1;$m=$2;""/e;
 		defined($id)||next;
 		push @{$alias{$id}},$m;
-		$s=$id;
-		$s=~s/-/_/g;
-		$alias{$s}=$alias{$id};
-		$s=~s/_/-/g;
-		$alias{$s}=$alias{$id};
+		$alias{$_}=$alias{$id} for (lines($id));
 	}
 	close FA;
 }
@@ -51,33 +62,65 @@ sub read_deps{
 	close FD;
 }
 
+sub lines{
+	my $i=$_[0];
+	my %l;
+	$l{$i}=1;
+	$i=~s/-/_/g;
+	$l{$i}=1;
+	$i=~s/_/-/g;
+	$l{$i}=1;
+	keys %l;
+}
+
+sub mod{
+	my $i=$_[0];
+	$i=~s/^.*\/(.*?)\..*?$/$1/;
+	$i
+}
+
 sub mk_sh{
 	my %res=();
 	my %pnp=();
 	open FS,$_[0];
 	open FP,$_[1];
+	open FO,$_[2];
 	print FS 'alias2(){
 local i="$1"
 case "$i" in
 ';
+
+
 	for (keys %alias) {
 		my @d=();
 		push @d,@{$dep{$_}} for (@{$alias{$_}});
 		if(isPNP($_)){
 			for(@d){
-				my $i=$_;
-				$i=~s/^.*\/(.*?)\..*?$/$1/;
-				$pnp{$i}=1;
-				$i=~s/-/_/g;
-				$pnp{$i}=1;
-				$i=~s/_/-/g;
-				$pnp{$i}=1;
+				$pnp{$_}=1 for (lines(mod($_)));
 			}
 		}
 		my $k=sprintf("%04i",
 		    (index($_,'*')>=0 || index($_,'?')>=0)?9999-length($_):0);
 		$res{$k}.="$_)i=\"".join(' ',@d)."\";;\n";
 	}
+
+
+	# unique
+	my %nopnp;
+	for (keys %alias) {
+		next if(index($_,'_')>=0);
+		if($pnp{$_} || (not exists($dep{$_}))){
+			$nopnp{$_}=2;
+			$nopnp{$_}=2 for(@{$dep{$_}});
+#			print "$_: ",join(",",@{$dep{$_}}),"\n";
+		}else{
+#			$nopnp{mod($_)}++ for(@{$dep{$_}});
+			$nopnp{$_}++ for (@{$dep{$_}});
+		}
+	}
+	for (keys %nopnp){ delete $nopnp{$_} if($nopnp{$_} != 1);}
+	print FO join("\n",sort keys %nopnp,'');
+
 	print FS "$res{$_}" for (sort keys %res);
 	print FS '*)ALIAS=""
 return 1
@@ -88,8 +131,12 @@ return 0
 }
 ';
 	print FP join("\n",keys %pnp);
+	close(FO);
 	close(FP);
 	close(FS);
+#	for (sort keys %nopnp,''){
+#		system("modprobe ".mod($_)) if(index($_,'video')<0);
+#	}
 }
 
 sub isPNP{
@@ -109,6 +156,6 @@ for my $MOD (@ARGV){
 	for(keys %dep){
 		push @{$alias{$_}},$_ if(!exists($alias{$_}))
 	}
-	mk_sh(">$MOD/modules.alias.sh",">$MOD/modules.pnp");
+	mk_sh(">$MOD/modules.alias.sh",">$MOD/modules.pnp",">$MOD/modules.other");
 	print "OK\n";
 }
