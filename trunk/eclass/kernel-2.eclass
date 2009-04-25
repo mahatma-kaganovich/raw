@@ -3,13 +3,12 @@ source "${PORTDIR}/eclass/kernel-2.eclass"
 
 if [[ ${ETYPE} == sources ]]; then
 
-IUSE="${IUSE} build-kernel debug custom-cflags pnp compressed integrated ipv6 netboot unicode +acl minimal firmware"
+IUSE="${IUSE} build-kernel debug custom-cflags pnp compressed integrated ipv6 netboot nls unicode +acl minimal"
 DEPEND="${DEPEND}
 	build-kernel? (
 		pnp? ( sys-kernel/genpnprd )
 		compressed? ( sys-kernel/genpnprd )
 	) "
-# cramfs = compat
 
 [[ "${KERNEL_CONFIG}" == "" ]] &&
     KERNEL_CONFIG="KALLSYMS_EXTRA_PASS DMA_ENGINE USB_STORAGE_[\w\d]+
@@ -114,18 +113,11 @@ kernel-2_src_install() {
 			doins "initrd-${KV}.img"
 		fi
 		local f
-		for f in "${BDIR}"/* ; do
-			mv "${f}" "${D}/" || die
-		done
-		if [[ ${SLOT} != "0" ]] || ! use firmware ; then
-			rm ${D}/lib/firmware -Rf
-			if use firmware && ! [[ -L "${ROOT}/lib/firmware" ]] ; then
-				[[ -e "${ROOT}/lib/firmware" ]] && ewarn "If '/lib/firmware' collisions will breaks build - remove it (USE=firmware)"
-				dosym ../usr/src/linux/firmware /lib/firmware
-			fi
-		fi
+		rm ${BDIR}/lib/firmware -Rf
+		mv "${BDIR}"/* "${D}/" || die
 		kmake INSTALL_PATH="${D}/boot" install
-		use symlink || rm "${D}"/boot/vmlinuz &>/dev/null
+		rm "${D}"/boot/vmlinuz -f &>/dev/null
+		[[ ${SLOT} == 0 ]] && use symlink && dosym vmlinuz-${KV} vmlinuz
 		ewarn "If your /boot is not mounted, copy next files by hands:"
 		ewarn `ls "${D}/boot"`
 	fi
@@ -201,7 +193,8 @@ setconfig(){
 	fi
 	cfg_use debug "(?:[^\n]*_)?DEBUG(?:_[^\n]*)?" FRAME_POINTER OPTIMIZE_INLINING FUNCTION_TRACER OPROFILE KPROBES X86_VERBOSE_BOOTUP PROFILING MARKERS
 	cfg_use ipv6 IPV6
-	cfg_use acl "[\d\w\_]*_ACL"
+	cfg_use acl "[\d\w_]*_ACL"
+	use nls && cfg y "[\d\w_]*_NLS"
 	use unicode && cfg y NLS_UTF8
 	for i in ${KERNEL_CONFIG}; do
 		o="y ${i}"
@@ -210,7 +203,6 @@ setconfig(){
 		o="${o/y ~/- }"
 		cfg ${o}
 	done
-#	yes '' 2>/dev/null | kmake config &>/dev/null
 	yes '' 2>/dev/null | kmake oldconfig >/dev/null
 }
 
@@ -218,8 +210,8 @@ config_defaults(){
 	local i i1 o m xx
 	einfo "Configuring kernel"
 	if use minimal; then
-		KERNEL_CONFIG="${KERNEL_CONFIG} -IP_ADVANCED_ROUTER -NETFILTER ~IP_FIB_TRIE"
-		KERNEL_MODULES="${KERNEL_MODULES} -net"
+		KERNEL_CONFIG="${KERNEL_CONFIG} -IP_ADVANCED_ROUTER -NETFILTER ~IP_FIB_TRIE NET_SCHED"
+		KERNEL_MODULES="${KERNEL_MODULES} -net +net/sched"
 	fi
 	kmake defconfig >/dev/null
 	cp .config .config.old
@@ -251,6 +243,7 @@ arch(){
 		amd64) echo "x86_64"
 		;;
 		*) echo "${arch}"
+		;;
 	esac
 }
 
@@ -274,4 +267,3 @@ fixes(){
 	einfo "Fixing modules hardware info exports (forced mode, waiting for bugs!)"
 	sh "${ROOT}/usr/share/genpnprd/modulesfix" "${S}" f
 }
-

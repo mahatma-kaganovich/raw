@@ -12,10 +12,14 @@ NOFB=false
 NOPNP=false
 QUIET=false
 MODUNLOAD=false
+LOADALL=false
 
 single(){
-	grep -q "^$1\$" "${PNP_TMP}.$2" && return 1
-	echo "$1" >>"${PNP_TMP}.$2"
+	# ash not support ${i//...
+	local i="$1"
+	i=`echo -ne "$i" | sed -e 's/-/_/g'`
+	grep -q "^$i\$" "${PNP_TMP}.$2" && return 1
+	echo "$i" >>"${PNP_TMP}.$2"
 	return 0
 }
 
@@ -28,6 +32,7 @@ mod1(){
 			m2="${m1##*/}"
 			m2="${m2%.??}"
 			[[ "$m" == "$m2" ]] || single "$m2" 0 || continue
+			$QUIET || echo -ne "\033[0G\033[0K$LCOUNT	$m1"
 			insmod "/lib/modules/$KV/$m1" >/dev/null 2>&1
 		done
 	done
@@ -48,13 +53,15 @@ mod(){
 }
 
 refresh(){
+	LCOUNT="${LCOUNT}."
+	echo -ne "\033[0G\033[0K$LCOUNT"
 	local i j l
 	for i in $pid ; do
 		wait $i
 	done
 	pid=""
 	npid=0
-	l="${BOLD}   ::${NORMAL}Loaded:"
+	l="\033[0G\033[0K${BOLD}   ::${NORMAL}Loaded:"
 	while read i j; do
 		single "$i" 1 || continue
 		[[ "$1" == "n" ]] && echo "$i" >>/nopnp.lst
@@ -63,19 +70,21 @@ refresh(){
 	done </proc/modules
 	cat "${PNP_TMP}".1 >"${PNP_TMP}".0
 	[[ -z "$l" ]] || return 1
-	$QUIET || echo ""
+	$QUIET || echo "" 
 	return 0
 }
 
 load_aliases(){
 	local i m
-	while true; do
-		for i in `find /sys -name modalias -print` ; do
+	while [[ "${LCOUNT#..........}" == "${LCOUNT}" ]] ; do
+		for i in `find /sys -name modalias -print 2>/dev/null` ; do
 			if [[ -e "$i" ]] && read m <"$i" ; then
 				mod $m
 			fi
 		done
 		refresh || break
+		mod $MDOLIST
+		[[ -n "$SDELAY" ]] && sleep "$SDELAY"
 	done
 }
 
@@ -88,6 +97,7 @@ mod_unload(){
 		l="$i $l"
 	done </nopnp.lst
 	rmmod $l >/dev/null 2>&1
+	rmmod `cat /nopnp.lst` >/dev/null 2>&1
 }
 
 pnp_options(){
@@ -98,6 +108,7 @@ pnp_options(){
 	nofb) NOFB=true ;;
 	nopnp) NOPNP=true ;;
 	unload) MODUNLOAD=true ;;
+	loadall) LOADALL=true ;;
 	esac
 	done
 }
@@ -108,6 +119,26 @@ ifmod(){
 		grep -q "^${i}$" "${PNP_TMP}".0 || return 1
 	done
 	return 0
+}
+
+load_all(){
+	local i
+	while read i ; do
+		case "$i" in
+		*/media/*) ;;
+		*/sound/*) ;;
+		*/isdn/*) ;;
+		*/microcode.*) ;;
+		# crytical:
+		*/net/*) ;;
+		*/video/*) ;;
+		*)
+			i="${i##*/}"
+			i="${i%.??}"
+			mod $i
+		;;
+		esac
+	done <"/lib/modules/$KV/modules.other"
 }
 
 syspnp(){
@@ -123,6 +154,7 @@ syspnp(){
 	pid=""
 	npid=0
 	refresh n
+	LCOUNT=""
 	. "/lib/modules/${KV}/modules.alias.sh"
 
 	if [[ -n "$MDOLIST" ]]; then
@@ -135,9 +167,14 @@ syspnp(){
 	ifmod usbcore && mod usb_storage # user-frendly
 #	ifmod usual_tables && mod usb_storage # on demand
 	refresh
-	good_msg "Filtering pnp modules"
-	while true; do
-		# NODETECT: old behaviour
+#	good_msg "Filtering pnp modules"
+	while  [[ "${LCOUNT#..........}" == "${LCOUNT}" ]] ; do
+		local NODETECT
+		if $LOADALL ; then
+			load_all
+			NODETECT=1
+		fi
+			# NODETECT: old behaviour
 		[[ "${NODETECT}" != '1' ]] && for i1 in ${MY_HWOPTS} ; do
 			[[ -e "/etc/modules/$i1" ]] && for i in `cat /etc/modules/${i1}` ; do
 				grep -q "^${i}\$" "/lib/modules/$KV/modules.pnp" && continue
@@ -145,13 +182,12 @@ syspnp(){
 			done
 		done
 		refresh n || break
-		# minimal
-		[[ -n "$SDELAY" ]] && sleep "$SDELAY"
 		mod $MDOLIST
 		load_aliases
 	done
 	MY_HWOPTS=""
 	MDOLIST=""
+	echo -ne "\033[0G\033[0K"
 
 	if [[ -n "${NOTLOADED}" ]] ; then
 		good_msg "Not loaded:$NOTLOADED"
