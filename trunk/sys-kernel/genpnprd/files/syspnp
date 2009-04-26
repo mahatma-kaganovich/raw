@@ -31,7 +31,8 @@ mod1(){
 		for m1 in $ALIAS ; do
 			m2="${m1##*/}"
 			m2="${m2%.??}"
-			[[ "$m" == "$m2" ]] || single "$m2" 0 || continue
+#			[[ "$m" == "$m2" ]] || 
+			single "$m2" 0 || continue
 			$QUIET || echo -ne "\033[0G\033[0K$LCOUNT	$m1"
 			insmod "/lib/modules/$KV/$m1" >/dev/null 2>&1
 		done
