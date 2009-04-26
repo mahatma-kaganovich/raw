@@ -26,7 +26,7 @@ single(){
 mod1(){
 	local m m1 m2
 	for m in $* ; do
-		single "$m" 0 || continue
+#		single "$m" 0 || continue
 		alias2 "$m"
 		for m1 in $ALIAS ; do
 			m2="${m1##*/}"
