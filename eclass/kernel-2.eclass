@@ -210,7 +210,7 @@ config_defaults(){
 	local i i1 o m xx
 	einfo "Configuring kernel"
 	if use minimal; then
-		KERNEL_CONFIG="${KERNEL_CONFIG} -IP_ADVANCED_ROUTER -NETFILTER ~IP_FIB_TRIE NET_SCHED"
+		KERNEL_CONFIG="${KERNEL_CONFIG} -IP_ADVANCED_ROUTER -NETFILTER ~IP_FIB_TRIE"
 		KERNEL_MODULES="${KERNEL_MODULES} -net +net/sched"
 	fi
 	kmake defconfig >/dev/null

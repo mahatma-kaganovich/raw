@@ -30,8 +30,7 @@ sub read_aliases{
 		my $id,$m;
 		$s=~s/^alias\s(\S*)\s(\S*)$/$id=$1;$m=$2;""/e;
 		defined($id)||next;
-		push @{$alias{$id}},$m;
-		$alias{$_}=$alias{$id} for (lines($id));
+		push @{$alias{$_}},$m for (lines($id));
 	}
 	close FA;
 }
@@ -41,9 +40,10 @@ sub read_deps{
 	open FD,$_[0];
 	while(defined($s=<FD>)){
 		chomp($s);
-		$id=$s;
+		my $id=$s;
 		$id=~s/.*\/(.*?)\..*?:.*/$1/;
 		$s=~s/://;
+		for $id (lines($id)){
 		for my $i (split(/ /,$s)){
 			for(@{$dep{$id}}){
 				if($_ eq $i){
@@ -53,24 +53,26 @@ sub read_deps{
 			}
 			unshift @{$dep{$id}},$i if($i ne '');
 		}
-		$s=$id;
-		$s=~s/-/_/g;
-		$dep{$s}=$dep{$id};
-		$s=~s/_/-/g;
-		$dep{$s}=$dep{$id};
+		}
 	}
 	close FD;
 }
 
+#sub lines{
+#	my $i=$_[0];
+#	my %l;
+#	$l{$i}=1;
+#	$i=~s/-/_/g;
+#	$l{$i}=1;
+#	$i=~s/_/-/g;
+#	$l{$i}=1;
+#	keys %l;
+#}
+
 sub lines{
 	my $i=$_[0];
-	my %l;
-	$l{$i}=1;
 	$i=~s/-/_/g;
-	$l{$i}=1;
-	$i=~s/_/-/g;
-	$l{$i}=1;
-	keys %l;
+	($i)
 }
 
 sub mod{

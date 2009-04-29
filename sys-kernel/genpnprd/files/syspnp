@@ -3,7 +3,7 @@
 ## (c) Denis Kaganovich, under Anarchy license
 ## consume preprocessed /lib/modules/$KV/modules.alias
 
-PARA=0
+PARA=".."
 [[ -z "$TMPDIR" ]] && [[ -e /temp ]] && TMPDIR="/temp"
 PNP_TMP="${TMPDIR}/pnp.found"
 NOTLOADED=""
@@ -15,24 +15,23 @@ MODUNLOAD=false
 LOADALL=false
 
 single(){
-	# ash not support ${i//...
-	local i="$1"
-	i=`echo -ne "$i" | sed -e 's/-/_/g'`
-	grep -q "^$i\$" "${PNP_TMP}.$2" && return 1
-	echo "$i" >>"${PNP_TMP}.$2"
+	grep -q "^$1\$" "${PNP_TMP}.$2" && return 1
+	echo "$1" >>"${PNP_TMP}.$2"
 	return 0
 }
 
 mod1(){
+	# ash not support ${i//...
 	local m m1 m2
 	for m in $* ; do
-#		single "$m" 0 || continue
+		m=`echo -ne "$m" | sed -e 's/-/_/g'`
+		single "$m" 0 || continue
 		alias2 "$m"
 		for m1 in $ALIAS ; do
 			m2="${m1##*/}"
 			m2="${m2%.??}"
-#			[[ "$m" == "$m2" ]] || 
-			single "$m2" 0 || continue
+			m2=`echo -ne "$m2" | sed -e 's/-/_/g'`
+			[[ "$m" == "$m2" ]] || single "$m2" 0 || continue
 			$QUIET || echo -ne "\033[0G\033[0K$LCOUNT	$m1"
 			insmod "/lib/modules/$KV/$m1" >/dev/null 2>&1
 		done
@@ -40,16 +39,16 @@ mod1(){
 }
 
 mod(){
-	if [[ "$PARA" == "0" ]]  ; then
+	if [[ -z "$PARA" ]]  ; then
 		mod1 $*
 	else
-		if [[ $npid == $PARA ]]; then
+		if [[ -n ${npid#$PARA} ]]; then
 		    wait ${pid%% *}
 		    pid="${pid#* }"
 		fi
 		mod1 $* &
 		pid="$pid$! "
-		npid=$[npid+1]
+		npid="${npid}."
 	fi
 }
 
@@ -147,7 +146,7 @@ syspnp(){
 	pnp_options
 	$NOPNP && return
 	local i i1
-	[[ "$PARA" == "0" ]] || good_msg " -= Parallel PNP module loader =-"
+	[[ -z "$PARA" ]] || good_msg " -= Parallel PNP module loader =-"
 	good_msg "Searching pnp"
 	for i in 0 1 ; do
 		echo -n "" >"${PNP_TMP}.$i"
