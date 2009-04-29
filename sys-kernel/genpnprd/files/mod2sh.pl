@@ -84,9 +84,9 @@ sub mod{
 sub mk_sh{
 	my %res=();
 	my %pnp=();
-	open FS,$_[0];
-	open FP,$_[1];
-	open FO,$_[2];
+	open(FS,$_[0]) || die $!;
+	open(FP,$_[1]) || die $!;
+	open(FO,$_[2]) || die $!;
 	print FS 'alias2(){
 local i="$1"
 case "$i" in
@@ -132,7 +132,12 @@ ALIAS="$i"
 return 0
 }
 ';
-	print FP join("\n",keys %pnp);
+	for (keys %pnp) {
+		print FP "$_\n";
+		my $i=$_;
+		$i=~s/_/-/g;
+		print FP "$i\n" if(not exists($pnp{$i}));
+	}
 	close(FO);
 	close(FP);
 	close(FS);
