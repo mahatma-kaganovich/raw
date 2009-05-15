@@ -86,6 +86,11 @@ src_unpack() {
 			epatch "${WORKDIR}"/patch
 	fi
 
+	[[ -e "${FILESDIR}"/${PV} ]] &&
+	EPATCH_SUFFIX="patch" \
+	EPATCH_FORCE="yes" \
+	epatch "${FILESDIR}"/${PV}
+
 	# Unpack the enigmail plugin
 	if use crypt && ! use moznomail; then
 		cd "${S}"/mailnews/extensions || die
@@ -100,9 +105,10 @@ src_unpack() {
 	sed -i -e '1s,usr/local/bin,usr/bin,' "${S1}"/security/nss/cmd/smimetools/smime
 	eend $? || die "sed failed"
 
+	sed -i -e 's%^#elif$%#elif 1%g' "${S1}"/toolkit/xre/nsAppRunner.cpp
+
 	cd "${S}"
 	eautoreconf
-#	sed -i -e "s%\(VISIBILITY_FLAGS=.*\)'%\1 -I\$(topsrcdir)/gfx/thebes/public'%" "${S1}"/configure*
 }
 
 src_compile() {
