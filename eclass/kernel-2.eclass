@@ -16,6 +16,8 @@ DEPEND="${DEPEND}
 	GFS2_FS_LOCKING_DLM NTFS_RW
 	X86_BIGSMP X86_32_NON_STANDARD X86_X2APIC
 	CALGARY_IOMMU AMD_IOMMU
+	SPARSEMEM_MANUAL MEMTEST [\d\w_]*FS_XATTR
+	PARAVIRT_GUEST VMI KVM_CLOCK KVM_GUEST
 	USB_LIBUSUAL -BLK_DEV_UB USB_EHCI_ROOT_HUB_TT USB_EHCI_TT_NEWSCHED USB_SISUSBVGA_CON
 	KEYBOARD_ATKBD
 	CRC_T10DIF
@@ -59,10 +61,12 @@ kernel-2_src_compile() {
 	fixes
 	[[ ${ETYPE} == headers ]] && compile_headers
 	[[ ${ETYPE} == sources ]] || return
+	local cflags="${KERNEL_CFLAGS}"
 	if use custom-cflags; then
-		filter-flags -march=* -msse* -mmmx -m3dnow
-		sed -i -e "s/-O2/${CFLAGS}/g" Makefile
+		filter-flags "-march=*" "-msse*" -mmmx -m3dnow
+		cflags="${CFLAGS} ${cflags}"
 	fi
+	[[ -n ${cflags} ]] && sed -i -e "s/^\(KBUILD_CFLAGS.*-O2\)/\1 ${cflags}/g" Makefile
 	use build-kernel || return
 	config_defaults
 	einfo "Compiling kernel"
@@ -118,6 +122,7 @@ kernel-2_src_install() {
 		kmake INSTALL_PATH="${D}/boot" install
 		rm "${D}"/boot/vmlinuz -f &>/dev/null
 		[[ ${SLOT} == 0 ]] && use symlink && dosym vmlinuz-${KV} vmlinuz
+		[[ "${SLOT}" != "${PVR}" ]] && dosym vmlinuz-${KV} vmlinuz-${SLOT}
 		ewarn "If your /boot is not mounted, copy next files by hands:"
 		ewarn `ls "${D}/boot"`
 	fi
