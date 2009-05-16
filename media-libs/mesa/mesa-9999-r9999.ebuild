@@ -73,6 +73,7 @@ DEPEND="${RDEPEND}
 	>=x11-proto/dri2proto-1.99.3
 	x11-proto/xf86vidmodeproto
 	>=x11-proto/glproto-1.4.8
+	gallium? ( video_cards_radeonhd? ( x11-libs/libdrm-gem ) )
 	motif? ( x11-proto/printproto )"
 
 S="${WORKDIR}/${MY_P}"
@@ -129,20 +130,19 @@ src_unpack() {
 
 src_compile() {
 	local myconf
-
-	# This is where we might later change to build xlib/osmesa
-	myconf="${myconf} --with-driver=dri"
-
-	# Do we want thread-local storage (TLS)?
-	myconf="${myconf} $(use_enable nptl glx-tls)"
-
+	local drv="dri"
 	# Configurable DRI drivers
 	driver_enable swrast
-	driver_enable video_cards_intel i810 i915 i965
+	if use gallium ; then
+		driver_enable video_cards_intel i810 i965
+	else
+		driver_enable video_cards_radeon radeon r200 r300
+		driver_enable video_cards_intel i810 i915 i965
+#		driver_enable video_cards_nouveau nouveau
+	fi
 	driver_enable video_cards_mach64 mach64
 	driver_enable video_cards_mga mga
 	driver_enable video_cards_r128 r128
-	driver_enable video_cards_radeon radeon r200 r300
 	driver_enable video_cards_radeonhd radeon r200 r300
 	driver_enable video_cards_s3virge s3v
 	driver_enable video_cards_savage savage
@@ -151,38 +151,28 @@ src_compile() {
 	driver_enable video_cards_tdfx tdfx
 	driver_enable video_cards_trident trident
 	driver_enable video_cards_via unichrome
-#	driver_enable video_cards_nouveau nouveau
-
-	# Set drivers to everything on which we ran driver_enable()
-	myconf="${myconf} --with-dri-drivers=${DRI_DRIVERS}"
-
 	if use gallium; then
 		myconf="${myconf} $(use_enable video_cards_nouveau gallium-nouveau)"
-		myconf="${myconf} $(use_enable video_cards_radeonhd gallium-radeon)"
 		myconf="${myconf} $(use_enable video_cards_intel gallium-intel)"
-		myconf="${myconf} --with-state-trackers=dri2,egl,glx"
+		myconf="${myconf} $(use_enable video_cards_radeon gallium-radeon)"
+		myconf="${myconf} --with-state-trackers=dri,egl,glx,xorg"
 	fi
-	myconf="${myconf} $(use_enable gallium gallium)"
-
 	# Deactivate assembly code for pic build
-	use pic && myconf="${myconf} --disable-asm"
-
 	# Sparc assembly code is not working
-	use sparc && myconf="${myconf} --disable-asm"
-
-	myconf="${myconf} --disable-glut"
-
-	myconf="${myconf} --without-demos"
-
-	myconf="${myconf} $(use_enable xcb)"
-
+	( use pic || use sparc ) && myconf="${myconf} --disable-asm"
 	# Get rid of glut includes
 	rm -f "${S}"/include/GL/glut*h
-
-	myconf="${myconf} $(use_enable motif glw)"
-	myconf="${myconf} $(use_enable motif motif)"
-
-	econf ${myconf} || die
+	[[ "${drv}" == "dri" ]] && myconf="${myconf} --with-dri-drivers=${DRI_DRIVERS}"
+	econf ${myconf} \
+		$(use_enable nptl glx-tls) \
+		--with-driver=${drv} \
+		--disable-glut \
+		--without-demos \
+		$(use_enable xcb) \
+		$(use_enable motif glw) \
+		$(use_enable motif) \
+		$(use_enable gallium) \
+		|| die
 	emake || die
 }
 
