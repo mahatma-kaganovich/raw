@@ -9,14 +9,11 @@ DESCRIPTION="X.Org libdrm library"
 HOMEPAGE="http://dri.freedesktop.org/"
 SRC_URI=""
 
-KEYWORDS="~alpha ~amd64 ~arm ~hppa ~ia64 ~mips ~ppc ~ppc64 ~s390 ~sh ~sparc ~x86 ~x86-fbsd"
+KEYWORDS="raw"
 
 IUSE=""
 RDEPEND="dev-libs/libpthread-stubs"
 DEPEND="${RDEPEND}"
-RESTRICT="test" # see bug #236845
-
-PROVIDE="x11-libs/libdrm"
 
 CONFIGURE_OPTIONS="--enable-udev --enable-nouveau-experimental-api"
 
