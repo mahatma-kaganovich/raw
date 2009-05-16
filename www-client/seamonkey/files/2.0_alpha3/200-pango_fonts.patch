@@ -1,0 +1,12 @@
+diff -prN -U 2 a/mozilla/gfx/thebes/src/gfxPangoFonts.cpp b/mozilla/gfx/thebes/src/gfxPangoFonts.cpp
+--- a/mozilla/gfx/thebes/src/gfxPangoFonts.cpp	2009-05-16 18:08:44.000000000 +0300
++++ b/mozilla/gfx/thebes/src/gfxPangoFonts.cpp	2009-05-16 18:09:53.000000000 +0300
+@@ -1831,6 +1831,6 @@ gfx_pango_font_map_class_init(gfxPangoFo
+     // context_substitute and get_font are not likely to be used but
+     //   implemented because the class makes them available.
+-    fcfontmap_class->context_substitute = gfx_pango_font_map_context_substitute;
+-    fcfontmap_class->create_font = gfx_pango_font_map_create_font;
++//    fcfontmap_class->context_substitute = gfx_pango_font_map_context_substitute;
++//    fcfontmap_class->create_font = gfx_pango_font_map_create_font;
+ }
+ 
