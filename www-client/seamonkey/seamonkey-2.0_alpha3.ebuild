@@ -5,7 +5,7 @@ inherit flag-o-matic toolchain-funcs eutils mozcoreconf-2 mozconfig-3 mozilla-la
 
 MY_PV="${PV/_alpha/a}"
 MY_P="${PN}-${MY_PV}"
-PATCH="" # "mozilla-firefox-3.0.7-patches-0.1"
+PATCH="mozilla-firefox-3.0.10-patches-0.1"
 EMVER="0.95.7"
 EMPATCH="enigmail-${EMVER}-cvs-20090317"
 LANGS="en ca cs de es_AR es_ES fr lt nb_NO nl pl pt_BR ru sk"
@@ -33,12 +33,13 @@ RDEPEND="java? ( virtual/jre )
 		>=dev-libs/nss-3.11.5
 		>=dev-libs/nspr-4.6.5-r1
 		app-text/hunspell
-		dev-db/sqlite
 		>=media-libs/lcms-1.17 )
 	directfb? ( dev-libs/DirectFB )
 	gnome? ( >=gnome-base/gnome-vfs-2.3.5
 		>>=gnome-base/libgnomeui-2.2.0 )
 	crypt? ( !moznomail? ( >=app-crypt/gnupg-1.4 ) )"
+# broken
+# 		dev-db/sqlite
 
 DEPEND="${RDEPEND}
 	java? ( >=dev-java/java-config-0.2.0 )
@@ -78,14 +79,15 @@ src_unpack() {
 
 	if [[ "${PATCH}" != "" ]]; then
 		unpack ${PATCH}.tar.bz2
-		rm "${WORKDIR}"/patch/{*noxul,*xulonly,005,030,096,667}*
-		#rm "${WORKDIR}"/patch/{007,009,020,021,064,097,300,030,096,667}*
+		rm "${WORKDIR}"/patch/{*noxul,*xulonly,005,030,096,667,085}*
+		#rm "${WORKDIR}"/patch/{007,009,020,021,064,097,300,030,096,667,085}*
 		cd "${S1}" || die "cd failed"
 		EPATCH_SUFFIX="patch" \
 			EPATCH_FORCE="yes" \
 			epatch "${WORKDIR}"/patch
 	fi
 
+	cd "${S}"
 	[[ -e "${FILESDIR}"/${PV} ]] &&
 	EPATCH_SUFFIX="patch" \
 	EPATCH_FORCE="yes" \
@@ -149,12 +151,13 @@ src_compile() {
 	fi
 
 	mozconfig_annotate 'gentoo' \
+		--enable-calendar \
 		--enable-canvas \
 		--with-system-nspr \
 		--with-system-nss \
 		--enable-image-encoder=all \
 		--enable-system-lcms \
-		--enable-system-sqlite \
+		--disable-system-sqlite \
 		--with-default-mozilla-five-home=${MOZILLA_FIVE_HOME} \
 		--with-user-appdir=.mozilla \
 		--enable-system-hunspell \
@@ -205,7 +208,6 @@ src_compile() {
 	if use minimal; then
 		mozconfig_annotate +minimal \
 			--disable-postscript \
-			--disable-calendar \
 			--disable-help-viewer \
 			--disable-safe-browsing \
 			--disable-url-classifier \
@@ -213,7 +215,6 @@ src_compile() {
 	else
 		mozconfig_annotate -minimal \
 			--enable-postscript \
-			--enable-calendar \
 			--enable-help-viewer \
 			--enable-safe-browsing \
 			--enable-url-classifier \
@@ -228,7 +229,7 @@ src_compile() {
 
 	use moznosystem &&
 	    einfo "USE 'moznosystem' flag - disabling usage system libs" &&
-	    sed -i -e 's/--enable-system-/--disable-system-/g' -e 's/--with-system-/--without-system-/g' "${S}".mozconfig
+	    nosys ""
 
 	# Finalize and report settings
 	mozconfig_final
@@ -286,6 +287,14 @@ src_compile() {
 
 rmopt(){
 	sed -i -e 's%.*'"$*"'.*%%g' "${S}"/.mozconfig
+}
+
+nosys(){
+	local i
+	einfo "disabling system: $*"
+	for i in $* ; do
+		sed -i -e "s/--enable-system-${i}/--disable-system-${i}/g" -e "s/--with-system-${i}/--without-system-${i}/g" "${S}"/.mozconfig
+	done
 }
 
 src_install() {
