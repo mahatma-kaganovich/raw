@@ -5,7 +5,7 @@ inherit flag-o-matic toolchain-funcs eutils mozcoreconf-2 mozconfig-3 mozilla-la
 
 MY_PV="${PV/_alpha/a}"
 MY_P="${PN}-${MY_PV}"
-PATCH="mozilla-firefox-3.0.10-patches-0.1"
+PATCH="" # "mozilla-firefox-3.0.10-patches-0.1"
 EMVER="0.95.7"
 EMPATCH="enigmail-${EMVER}-cvs-20090317"
 LANGS="en ca cs de es_AR es_ES fr lt nb_NO nl pl pt_BR ru sk"
