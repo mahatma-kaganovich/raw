@@ -229,7 +229,7 @@ src_compile() {
 
 	use moznosystem &&
 	    einfo "USE 'moznosystem' flag - disabling usage system libs" &&
-	    nosys ""
+	    sed -i -e 's/--enable-system-/--disable-system-/g' -e 's/--with-system-/--without-system-/g' "${S}"/.mozconfig
 
 	# Finalize and report settings
 	mozconfig_final
@@ -287,14 +287,6 @@ src_compile() {
 
 rmopt(){
 	sed -i -e 's%.*'"$*"'.*%%g' "${S}"/.mozconfig
-}
-
-nosys(){
-	local i
-	einfo "disabling system: $*"
-	for i in $* ; do
-		sed -i -e "s/--enable-system-${i}/--disable-system-${i}/g" -e "s/--with-system-${i}/--without-system-${i}/g" "${S}"/.mozconfig
-	done
 }
 
 src_install() {
