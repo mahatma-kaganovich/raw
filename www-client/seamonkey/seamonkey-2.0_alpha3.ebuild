@@ -5,7 +5,7 @@ inherit flag-o-matic toolchain-funcs eutils mozcoreconf-2 mozconfig-3 mozilla-la
 
 MY_PV="${PV/_alpha/a}"
 MY_P="${PN}-${MY_PV}"
-PATCH="" # "mozilla-firefox-3.0.10-patches-0.1"
+PATCH="mozilla-firefox-3.0.10-patches-0.1"
 EMVER="0.95.7"
 EMPATCH="enigmail-${EMVER}-cvs-20090317"
 LANGS="en ca cs de es_AR es_ES fr lt nb_NO nl pl pt_BR ru sk"
@@ -34,12 +34,11 @@ RDEPEND="java? ( virtual/jre )
 		>=dev-libs/nspr-4.6.5-r1
 		app-text/hunspell
 		>=media-libs/lcms-1.17 )
+ 		dev-db/sqlite
 	directfb? ( dev-libs/DirectFB )
 	gnome? ( >=gnome-base/gnome-vfs-2.3.5
 		>>=gnome-base/libgnomeui-2.2.0 )
 	crypt? ( !moznomail? ( >=app-crypt/gnupg-1.4 ) )"
-# broken
-# 		dev-db/sqlite
 
 DEPEND="${RDEPEND}
 	java? ( >=dev-java/java-config-0.2.0 )
@@ -157,7 +156,7 @@ src_compile() {
 		--with-system-nss \
 		--enable-image-encoder=all \
 		--enable-system-lcms \
-		--disable-system-sqlite \
+		--enable-system-sqlite \
 		--with-default-mozilla-five-home=${MOZILLA_FIVE_HOME} \
 		--with-user-appdir=.mozilla \
 		--enable-system-hunspell \

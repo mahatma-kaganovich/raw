@@ -81,13 +81,10 @@ mozconfig_init() {
 			mozconfig_annotate "from CFLAGS" --enable-optimize=-O1
 		elif is-flag -Os; then
 			mozconfig_annotate "from CFLAGS" --enable-optimize=-Os
-		## onse sqlite starts to fails
-#		elif ${XUL}; then
-#			mozconfig_annotate "xulrunner default" --enable-optimize=-O2
-#		elif use moznosystem; then
-#			mozconfig_annotate "moznosystem" --enable-optimize=-O2
-#		elif is-flag -O3; then
-#			mozconfig_annotate "from CFLAGS" --enable-optimize=-O3
+		elif ${XUL}; then
+			mozconfig_annotate "xulrunner default" --enable-optimize=-O2
+		elif is-flag -O3; then
+			mozconfig_annotate "from CFLAGS" --enable-optimize=-O3
 		else
 			mozconfig_annotate "Gentoo's default optimization" --enable-optimize=-O2
 		fi
