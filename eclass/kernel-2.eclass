@@ -15,6 +15,7 @@ DEPEND="${DEPEND}
 	-X86_GENERIC MTRR_SANITIZER IA32_EMULATION LBD
 	GFS2_FS_LOCKING_DLM NTFS_RW
 	X86_BIGSMP X86_32_NON_STANDARD X86_X2APIC
+	MICROCODE_INTEL MICROCODE_AMD
 	CALGARY_IOMMU AMD_IOMMU
 	SPARSEMEM_MANUAL MEMTEST [\d\w_]*FS_XATTR
 	PARAVIRT_GUEST VMI KVM_CLOCK KVM_GUEST
@@ -122,7 +123,11 @@ kernel-2_src_install() {
 		kmake INSTALL_PATH="${D}/boot" install
 		rm "${D}"/boot/vmlinuz -f &>/dev/null
 		[[ ${SLOT} == 0 ]] && use symlink && dosym vmlinuz-${KV} vmlinuz
-		[[ "${SLOT}" != "${PVR}" ]] && dosym vmlinuz-${KV} vmlinuz-${SLOT}
+		if [[ "${SLOT}" != "${PVR}" ]] ; then
+			dosym vmlinuz-${KV} /boot/vmlinuz-${SLOT}
+			dosym linux-${KV_FULL} /usr/src/linux-${SLOT}
+			use integrated || dosym initrd-${KV}.img /usr/src/initrd-${SLOT}.img
+		fi
 		ewarn "If your /boot is not mounted, copy next files by hands:"
 		ewarn `ls "${D}/boot"`
 	fi

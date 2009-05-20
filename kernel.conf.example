@@ -1,0 +1,18 @@
+## /etc/kernels/kernel.conf
+
+## may be dangerous, I use for gentoo-sources only
+## (and/or git-sources as preview of future release)
+## so, my grub.conf line:
+## kernel /vmlinuz-gentoo root=/dev/ram0 init=/linuxrc ramdisk=8192 real_root=/dev/sda3 nofb quiet unload
+## and "ln -sf linux-gentoo /usr/src/linux"
+## - and do not care about new kernels (while no new upstream bugs)
+
+SLOT="${PN%-sources}"
+
+## uncomment to >4G mem support on x86_32
+
+#KERNEL_CONFIG="${KERNEL_CONFIG} HIGHMEM64G"
+
+## additional CFLAGS may be placed here
+
+#KERNEL_CFLAGS="-mtune=native"
