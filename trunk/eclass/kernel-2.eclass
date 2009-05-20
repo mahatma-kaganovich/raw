@@ -6,6 +6,7 @@ if [[ ${ETYPE} == sources ]]; then
 IUSE="${IUSE} build-kernel debug custom-cflags pnp compressed integrated ipv6 netboot nls unicode +acl minimal"
 DEPEND="${DEPEND}
 	build-kernel? (
+		sys-kernel/genkernel
 		pnp? ( sys-kernel/genpnprd )
 		compressed? ( sys-kernel/genpnprd )
 	) "
