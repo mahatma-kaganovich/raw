@@ -73,7 +73,10 @@ DEPEND="${RDEPEND}
 	>=x11-proto/dri2proto-1.99.3
 	x11-proto/xf86vidmodeproto
 	>=x11-proto/glproto-1.4.8
-	gallium? ( video_cards_radeon? ( =x11-libs/libdrm-9999-r9 ) )
+	gallium? (
+		x11-base/xorg-server
+		video_cards_radeon? ( =x11-libs/libdrm-9999-r9 )
+	)
 	motif? ( x11-proto/printproto )"
 
 S="${WORKDIR}/${MY_P}"
