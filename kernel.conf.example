@@ -10,9 +10,15 @@
 SLOT="${PN%-sources}"
 
 ## uncomment to >4G mem support on x86_32
-
 #KERNEL_CONFIG="${KERNEL_CONFIG} HIGHMEM64G"
+## desktop racers only, not for servers, fatal for drbd
+#KERNEL_CONFIG="${KERNEL_CONFIG} IOSCHED_CFQ DEFAULT_CFQ"
+## less memory for smp
+#KERNEL_CONFIG="${KERNEL_CONFIG} SPARSE_IRQ"
+## application server: 100HZ
+#KERNEL_CONFIG="${KERNEL_CONFIG} HZ_100"
+## top preemption/sensitive
+#KERNEL_CONFIG="${KERNEL_CONFIG} PREEMPT PREEMPT_RCU"
 
 ## additional CFLAGS may be placed here
-
 #KERNEL_CFLAGS="-mtune=native"

@@ -13,6 +13,7 @@ DEPEND="${DEPEND}
 
 [[ "${KERNEL_CONFIG}" == "" ]] &&
     KERNEL_CONFIG="KALLSYMS_EXTRA_PASS DMA_ENGINE USB_STORAGE_[\w\d]+
+	PREEMPT_NONE HZ_1000
 	-X86_GENERIC MTRR_SANITIZER IA32_EMULATION LBD
 	GFS2_FS_LOCKING_DLM NTFS_RW
 	X86_BIGSMP X86_32_NON_STANDARD X86_X2APIC
@@ -270,10 +271,14 @@ fixes(){
 		[[ -e "${i}" ]] || continue
 		grep -q "<limits.h>" "${i}" || sed -i -e 's/#include <string.h>/\n#include <string.h>\n#include <limits.h>/' "${i}"
 	done
+	# glibs 2.10+
+	sed -i -e 's/getline/get_line/g' "${S}"/scripts/unifdef.c
 	# gcc 4.2+
 	sed -i -e 's/_proxy_pda = 0/_proxy_pda = 1/g' "${S}"/arch/*/kernel/vmlinux.lds.S
 	[[ -e "${S}"arch/x86_64/kernel/x8664_ksyms.c ]] && grep -q "_proxy_pda" "${S}"arch/x86_64/kernel/x8664_ksyms.c || echo "EXPORT_SYMBOL(_proxy_pda);" >>arch/x86_64/kernel/x8664_ksyms.c
+	# unicode by default/only for fat
 	use unicode && sed -i -e 's/sbi->options\.utf8/1/g' fs/fat/dir.c
+	# pnp
 	use pnp || return
 	einfo "Fixing modules hardware info exports (forced mode, waiting for bugs!)"
 	sh "${ROOT}/usr/share/genpnprd/modulesfix" "${S}" f
