@@ -205,7 +205,7 @@ setconfig(){
 		cfg m CRAMFS
 		cfg m BLK_DEV_LOOP
 	fi
-	cfg_use debug "(?:[^\n]*_)?DEBUG(?:_[^\n]*)?" FRAME_POINTER OPTIMIZE_INLINING FUNCTION_TRACER OPROFILE KPROBES X86_VERBOSE_BOOTUP PROFILING MARKERS
+	cfg_use debug "(?:[^\n]*_)?DEBUG(?:_[^\n]*)?" FRAME_POINTER OPTIMIZE_INLINING FUNCTION_TRACER OPROFILE KPROBES X86_VERBOSE_BOOTUP PROFILING MARKERS INPUT_EVBUG
 	cfg_use ipv6 IPV6
 	cfg_use acl "[\d\w_]*_ACL"
 	use nls && cfg y "[\d\w_]*_NLS"
