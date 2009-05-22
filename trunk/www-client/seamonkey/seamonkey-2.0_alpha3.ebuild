@@ -25,7 +25,7 @@ SRC_URI="http://releases.mozilla.org/pub/mozilla.org/${PN}/releases/${MY_PV}/sou
 KEYWORDS="amd64 x86 ppc"
 SLOT="0"
 LICENSE="|| ( MPL-1.1 GPL-2 LGPL-2.1 )"
-IUSE="java ldap mozdevelop moznocompose moznoirc moznomail moznoroaming postgres crypt minimal moznopango restrict-javascript directfb moznosystem"
+IUSE="java ldap mozdevelop moznocompose moznoirc moznomail moznoroaming postgres crypt minimal moznopango restrict-javascript directfb moznosystem threads"
 
 RDEPEND="java? ( virtual/jre )
 	!moznosystem? (
@@ -173,6 +173,7 @@ src_compile() {
 	mozconfig_use_enable mozdevelop jsd
 	mozconfig_use_enable mozdevelop xpctools
 	mozconfig_use_extension mozdevelop venkman
+	mozconfig_use_with threads pthreads
 
 	mozconfig_use_enable ldap
 	mozconfig_use_enable ldap ldap-experimental
