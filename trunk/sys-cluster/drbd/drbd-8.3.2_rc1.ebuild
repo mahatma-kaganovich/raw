@@ -7,9 +7,11 @@ inherit eutils versionator
 LICENSE="GPL-2"
 KEYWORDS="~amd64 ~x86"
 
+MY_P="${PN}-${PV/_rc/rc}"
+
 MY_MAJ_PV="$(get_version_component_range 1-2 ${PV})"
 DESCRIPTION="mirror/replicate block-devices across a network-connection"
-SRC_URI="http://oss.linbit.com/drbd/${MY_MAJ_PV}/"${PN}-${PV/_rc/rc}".tar.gz"
+SRC_URI="http://oss.linbit.com/drbd/${MY_MAJ_PV}/"${MY_P}".tar.gz"
 HOMEPAGE="http://www.drbd.org"
 
 IUSE=""
@@ -20,12 +22,14 @@ PDEPEND="~sys-cluster/drbd-kernel-${PV}"
 
 SLOT="0"
 
+S="${WORKDIR}/${MY_P}"
+
 src_compile() {
 	emake -j1 OPTFLAGS="${CFLAGS}" tools || die "compile problem"
 }
 
 src_install() {
-	emake PREFIX="${D}" install-tools || die "install problem"
+	emake -j1 PREFIX="${D}" install-tools || die "install problem"
 
 	# gentoo-ish init-script
 	newinitd "${FILESDIR}"/${PN}-8.0.rc ${PN} || die
