@@ -1,8 +1,9 @@
-# Copyright 1999-2008 Gentoo Foundation
-# Distributed under the terms of the GNU General Public License v2
-# $Header: $
 
-inherit eutils versionator
+# drbd-8.3.9999.ebuild
+GIT=$([[ ${PVR} = *.9999 ]] && echo "git")
+EGIT_REPO_URI="git://git.drbd.org/drbd-${PV%.9999}.git"
+
+inherit eutils versionator ${GIT}
 
 LICENSE="GPL-2"
 KEYWORDS="~amd64 ~x86"
@@ -24,7 +25,21 @@ SLOT="0"
 
 S="${WORKDIR}/${MY_P}"
 
+if [[ "${GIT}" == "git" ]] ; then
+	SRC_URI=""
+#	IUSE="${IUSE} doc"
+	DEPEND="${DEPEND} doc? ( app-text/docbook-sgml-utils ) "
+fi
+
+
 src_compile() {
+	if [[ "${GIT}" == "git" ]] ; then
+		if use doc ; then
+			emake -j1 doc
+		else
+			sed -i -e 's/ documentation / /g' Makefile
+		fi
+	fi
 	emake -j1 OPTFLAGS="${CFLAGS}" tools || die "compile problem"
 }
 
@@ -35,7 +50,7 @@ src_install() {
 	newinitd "${FILESDIR}"/${PN}-8.0.rc ${PN} || die
 
 	# docs
-	dodoc README ChangeLog ROADMAP INSTALL
+	dodoc README ChangeLog ROADMAP
 
 	# we put drbd.conf into docs
 	# it doesnt make sense to install a default conf in /etc
