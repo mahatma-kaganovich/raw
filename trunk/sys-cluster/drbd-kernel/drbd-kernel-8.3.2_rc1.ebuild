@@ -1,8 +1,9 @@
-# Copyright 1999-2008 Gentoo Foundation
-# Distributed under the terms of the GNU General Public License v2
-# $Header: $
 
-inherit eutils versionator linux-mod
+# drbd-kernel-8.3.9999.ebuild
+GIT=$([[ ${PVR} = *.9999 ]] && echo "git")
+EGIT_REPO_URI="git://git.drbd.org/drbd-${PV%.9999}.git"
+
+inherit eutils versionator linux-mod ${GIT}
 
 LICENSE="GPL-2"
 KEYWORDS="~amd64 ~x86"
@@ -23,6 +24,7 @@ SLOT="0"
 
 S="${WORKDIR}/${MY_P}"
 
+[[ "${GIT}" == "git" ]] && SRC_URI=""
 
 pkg_setup() {
 	if ! kernel_is 2 6; then
