@@ -27,19 +27,32 @@ S="${WORKDIR}/${MY_P}"
 
 if [[ "${GIT}" == "git" ]] ; then
 	SRC_URI=""
-#	IUSE="${IUSE} doc"
-	DEPEND="${DEPEND} doc? ( app-text/docbook-sgml-utils ) "
+	IUSE="${IUSE} +doc"
+#	DEPEND="${DEPEND} doc? ( app-text/docbook-sgml-utils ) "
+	DEPEND="${DEPEND} doc? ( app-text/xmlto ) "
 fi
 
-
-src_compile() {
+src_unpack(){
 	if [[ "${GIT}" == "git" ]] ; then
+		git_src_unpack
 		if use doc ; then
-			emake -j1 doc
+			cd "${S}"/documentation || die
+			local i
+			for i in *.sgml ; do
+				sed -i -e 's%\[]>%\n"none">%g' -e 's%<refname>\(.*/\)\(.*\)</refname>%<refname>\2</refname>%g' ${i}
+				/usr/bin/perl "${FILESDIR}"/man-fix.pl <${i} >${i}.1
+				mv ${i}.1 ${i}
+				xmlto man ${i} --skip-validation
+			done
 		else
 			sed -i -e 's/ documentation / /g' Makefile
 		fi
+	else
+		unpack "${A}"
 	fi
+}
+
+src_compile() {
 	emake -j1 OPTFLAGS="${CFLAGS}" tools || die "compile problem"
 }
 
