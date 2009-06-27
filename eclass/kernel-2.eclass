@@ -3,7 +3,7 @@ source "${PORTDIR}/eclass/kernel-2.eclass"
 
 if [[ ${ETYPE} == sources ]]; then
 
-IUSE="${IUSE} build-kernel debug custom-cflags pnp compressed integrated ipv6 netboot nls unicode +acl minimal"
+IUSE="${IUSE} build-kernel debug custom-cflags pnp compressed integrated ipv6 netboot nls unicode +acl minimal selinux"
 DEPEND="${DEPEND}
 	build-kernel? (
 		sys-kernel/genkernel
@@ -18,7 +18,7 @@ DEPEND="${DEPEND}
 	GFS2_FS_LOCKING_DLM NTFS_RW
 	X86_BIGSMP X86_32_NON_STANDARD X86_X2APIC
 	MICROCODE_INTEL MICROCODE_AMD
-	ASYNC_TX_DMA DMAR INTR_REMAP CONFIG_BLK_DEV_INTEGRITY
+	ASYNC_TX_DMA NET_DMA DMAR INTR_REMAP CONFIG_BLK_DEV_INTEGRITY
 	CALGARY_IOMMU AMD_IOMMU
 	SPARSEMEM_MANUAL MEMTEST [\d\w_]*FS_XATTR
 	PARAVIRT_GUEST VMI KVM_CLOCK KVM_GUEST
@@ -45,13 +45,15 @@ DEPEND="${DEPEND}
 	BT_RFCOMM_TTY BT_HCIUART_H4 BT_HCIUART_BCSP BT_HCIUART_LL
 	IRDA_ULTRA IRDA_CACHE_LAST_LSAP IRDA_FAST_RR DONGLE
 	ISDN
-	-SECURITY_FILE_CAPABILITIES -SECURITY
+	-SECURITY_FILE_CAPABILITIES
 	    -TR HOSTAP_FIRMWARE NET_PCMCIA WAN DCC4_PSISYNC
 	    FDDI HIPPI VT_HW_CONSOLE_BINDING SERIAL_NONSTANDARD
 	    SERIAL_8250_EXTENDED SPI
 	TIPC_ADVANCED NETFILTER_ADVANCED NET_IPGRE_BROADCAST
 	IP_VS_PROTO_[\d\w_]*
-	KERNEL_GZIP KERNEL_BZIP2 KERNEL_LZMA"
+	KERNEL_GZIP KERNEL_BZIP2 KERNEL_LZMA
+	ISA PCIEASPM REGULATOR AUXDISPLAY CRYPTO_DEV_HIFN_795X_RNG PERF_COUNTERS
+	X86_SPEEDSTEP_RELAXED_CAP_CHECK"
 [[ "${KERNEL_MODULES}" == "" ]] &&
     KERNEL_MODULES="+."
 
@@ -208,6 +210,7 @@ setconfig(){
 	cfg_use debug "(?:[^\n]*_)?DEBUG(?:_[^\n]*)?" FRAME_POINTER OPTIMIZE_INLINING FUNCTION_TRACER OPROFILE KPROBES X86_VERBOSE_BOOTUP PROFILING MARKERS INPUT_EVBUG
 	cfg_use ipv6 IPV6
 	cfg_use acl "[\d\w_]*_ACL"
+	cfg_use selinux "[\d\w_]*FS_SECURITY SECURITY SECURITY_NETWORK SECURITY_SELINUX SECURITY_SELINUX_BOOTPARAM"
 	use nls && cfg y "[\d\w_]*_NLS"
 	use unicode && cfg y NLS_UTF8
 	for i in ${KERNEL_CONFIG}; do
@@ -218,6 +221,14 @@ setconfig(){
 		cfg ${o}
 	done
 	yes '' 2>/dev/null | kmake oldconfig >/dev/null
+	grep "CONFIG" .config >.config.1
+	if diff -qN .config.{1,2} >/dev/null ; then
+		rm .config.{1,2,old}
+		return 1
+	else
+		cp .config.{1,2}
+		return 0
+	fi
 }
 
 config_defaults(){
@@ -225,7 +236,7 @@ config_defaults(){
 	einfo "Configuring kernel"
 	if use minimal; then
 		KERNEL_CONFIG="${KERNEL_CONFIG} -IP_ADVANCED_ROUTER -NETFILTER ~IP_FIB_TRIE"
-		KERNEL_MODULES="${KERNEL_MODULES} -net +net/sched"
+		KERNEL_MODULES="${KERNEL_MODULES} -net +net/sched +net/irda +net/bluetooth"
 	fi
 	kmake defconfig >/dev/null
 	cp .config .config.old
@@ -246,9 +257,9 @@ config_defaults(){
 		done
 	done
 	echo -e "KERNEL_CONFIG=\"${KERNEL_CONFIG}\""
-	setconfig
-	setconfig
-	rm .config.old
+	while setconfig ; do
+		einfo "Configuration changed. Next pass."
+	done
 }
 
 arch(){
