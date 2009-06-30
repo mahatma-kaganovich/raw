@@ -304,7 +304,7 @@ fixes(){
 	# unicode by default/only for fat
 	use unicode && sed -i -e 's/sbi->options\.utf8/1/g' fs/fat/dir.c
 	# custom-arch
-	use custom-arch && sed -i -e 's/-march=[a-z0-9]*//g' arch/*/Makefile*
+	use custom-arch && sed -i -e 's/-march=[a-z0-9\-]*//g' arch/*/Makefile*
 	# pnp
 	use pnp || return
 	einfo "Fixing modules hardware info exports (forced mode, waiting for bugs!)"
