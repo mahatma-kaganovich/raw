@@ -206,7 +206,19 @@ cfg_use(){
 	done
 }
 
+cfg_loop(){
+	grep "CONFIG" .config >$1
+	if diff -qN $1 $2 >/dev/null ; then
+		rm $1 $2
+		return 1
+	else
+		cp $1 $2
+		return 0
+	fi
+}
+
 setconfig(){
+while cfg_loop .config.{1,2} ; do
 	local i o
 	cfg y EXT2_FS
 	if use pnp || use compressed; then
@@ -230,28 +242,22 @@ setconfig(){
 		cfg ${o}
 	done
 	yes '' 2>/dev/null | kmake oldconfig >/dev/null
-	grep "CONFIG" .config >.config.1
-	if diff -qN .config.{1,2} >/dev/null ; then
-		return 1
-	else
-		cp .config.{1,2}
-		return 0
-	fi
+done
 }
 
 config_defaults(){
 	local i i1 o m xx
 	einfo "Configuring kernel"
+	echo -e "KERNEL_CONFIG=\"${KERNEL_CONFIG}\""
 	if use minimal; then
 		KERNEL_CONFIG="${KERNEL_CONFIG} -IP_ADVANCED_ROUTER -NETFILTER ~IP_FIB_TRIE"
 		KERNEL_MODULES="${KERNEL_MODULES} -net +net/sched +net/irda +net/bluetooth"
 	fi
 	kmake defconfig >/dev/null
 
-    while true ; do
-	while setconfig ; do
-		einfo "Configuration changed. Next pass."
-	done
+	setconfig
+
+    while cfg_loop .config.{3,4} ; do
 	for i in ${KERNEL_MODULES}; do
 		einfo "Searching modules: ${i}"
 		m="-"
@@ -267,11 +273,9 @@ config_defaults(){
 			[[ "${o}" == "config" || "${o}" == "menuconfig" ]] || cfg m "${o}" "${m}"
 		done
 	done
-	echo -e "KERNEL_CONFIG=\"${KERNEL_CONFIG}\""
-	setconfig || break
-	einfo "Configuration changed. Next modules pass."
+	setconfig
     done
-    rm .config.{1,2,old}
+    rm .config.old
 }
 
 arch(){
