@@ -52,10 +52,13 @@ DEPEND="${DEPEND}
 	TIPC_ADVANCED NETFILTER_ADVANCED NET_IPGRE_BROADCAST
 	IP_VS_PROTO_[\d\w_]*
 	KERNEL_GZIP KERNEL_BZIP2 KERNEL_LZMA
-	ISA PCIEASPM REGULATOR AUXDISPLAY CRYPTO_DEV_HIFN_795X_RNG PERF_COUNTERS
+	ISA MCA EISA
+	PCIEASPM REGULATOR AUXDISPLAY CRYPTO_DEV_HIFN_795X_RNG PERF_COUNTERS
 	X86_SPEEDSTEP_RELAXED_CAP_CHECK
 	===bugs:
-	-TR -RADIO_RTRACK"
+	-TR -RADIO_RTRACK
+	===kernel.conf:
+	"
 [[ "${KERNEL_MODULES}" == "" ]] &&
     KERNEL_MODULES="+."
 
@@ -169,6 +172,7 @@ cfg(){
 		i=${i#CONFIG_}
 		i=${i/=*/}
 		i=${i/ is not set/}
+		[ "${cfg_exclude// $i }" == "${cfg_exclude}" ] || continue
 		if [[ "${r}" == "n" ]] && grep -q "^CONFIG_${i}=" .config ; then
 			for i2 in `grep -Prh "^\s*(?:menu)?config\s+.*?\n(?:[^\n]+\n)*\s*select ${i}\n" . --include="Kconfig*" 2>/dev/null |grep -P "^\s*(?:menu)?config"` ; do
 				if [[ "${i2}" != "config" && "${i2}" != "menuconfig" ]] ; then
@@ -209,7 +213,9 @@ setconfig(){
 		cfg m CRAMFS
 		cfg m BLK_DEV_LOOP
 	fi
+	local cfg_exclude=" HAVE_DMA_API_DEBUG "
 	cfg_use debug "(?:[^\n]*_)?DEBUG(?:_[^\n]*)?" FRAME_POINTER OPTIMIZE_INLINING FUNCTION_TRACER OPROFILE KPROBES X86_VERBOSE_BOOTUP PROFILING MARKERS INPUT_EVBUG
+	local cfg_exclude=
 	cfg_use ipv6 IPV6
 	cfg_use acl "[\d\w_]*_ACL"
 	cfg_use selinux "[\d\w_]*FS_SECURITY SECURITY SECURITY_NETWORK SECURITY_SELINUX SECURITY_SELINUX_BOOTPARAM"
@@ -225,7 +231,6 @@ setconfig(){
 	yes '' 2>/dev/null | kmake oldconfig >/dev/null
 	grep "CONFIG" .config >.config.1
 	if diff -qN .config.{1,2} >/dev/null ; then
-		rm .config.{1,2,old}
 		return 1
 	else
 		cp .config.{1,2}
@@ -241,8 +246,11 @@ config_defaults(){
 		KERNEL_MODULES="${KERNEL_MODULES} -net +net/sched +net/irda +net/bluetooth"
 	fi
 	kmake defconfig >/dev/null
-	cp .config .config.old
-#	setconfig
+
+    while true ; do
+	while setconfig ; do
+		einfo "Configuration changed. Next pass."
+	done
 	for i in ${KERNEL_MODULES}; do
 		einfo "Searching modules: ${i}"
 		m="-"
@@ -259,9 +267,10 @@ config_defaults(){
 		done
 	done
 	echo -e "KERNEL_CONFIG=\"${KERNEL_CONFIG}\""
-	while setconfig ; do
-		einfo "Configuration changed. Next pass."
-	done
+	setconfig || break
+	einfo "Configuration changed. Next modules pass."
+    done
+    rm .config.{1,2,old}
 }
 
 arch(){
@@ -275,7 +284,7 @@ arch(){
 }
 
 kmake(){
-	emake ARCH=$(arch) $* || die
+	emake ARCH=$(arch) $* ${KERNEL_MAKEOPT} || die
 }
 
 fixes(){
