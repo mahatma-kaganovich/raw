@@ -3,7 +3,7 @@ source "${PORTDIR}/eclass/kernel-2.eclass"
 
 if [[ ${ETYPE} == sources ]]; then
 
-IUSE="${IUSE} build-kernel debug custom-cflags pnp compressed integrated ipv6 netboot nls unicode +acl minimal selinux"
+IUSE="${IUSE} build-kernel debug custom-cflags pnp compressed integrated ipv6 netboot nls unicode +acl minimal selinux custom-arch"
 DEPEND="${DEPEND}
 	build-kernel? (
 		sys-kernel/genkernel
@@ -16,7 +16,7 @@ DEPEND="${DEPEND}
 	PREEMPT_NONE HZ_1000
 	-X86_GENERIC MTRR_SANITIZER IA32_EMULATION LBD
 	GFS2_FS_LOCKING_DLM NTFS_RW
-	X86_BIGSMP X86_32_NON_STANDARD X86_X2APIC
+	X86_BIGSMP X86_32_NON_STANDARD X86_X2APIC INTR_REMAP
 	MICROCODE_INTEL MICROCODE_AMD
 	ASYNC_TX_DMA NET_DMA DMAR INTR_REMAP CONFIG_BLK_DEV_INTEGRITY
 	CALGARY_IOMMU AMD_IOMMU
@@ -52,7 +52,7 @@ DEPEND="${DEPEND}
 	TIPC_ADVANCED NETFILTER_ADVANCED NET_IPGRE_BROADCAST
 	IP_VS_PROTO_[\d\w_]*
 	KERNEL_GZIP KERNEL_BZIP2 KERNEL_LZMA
-	ISA MCA EISA
+	ISA MCA MCA_LEGACY EISA
 	PCIEASPM REGULATOR AUXDISPLAY CRYPTO_DEV_HIFN_795X_RNG PERF_COUNTERS
 	X86_SPEEDSTEP_RELAXED_CAP_CHECK
 	===bugs:
@@ -75,7 +75,8 @@ kernel-2_src_compile() {
 	[[ ${ETYPE} == sources ]] || return
 	local cflags="${KERNEL_CFLAGS}"
 	if use custom-cflags; then
-		filter-flags "-march=*" "-msse*" -mmmx -m3dnow
+		use custom-arch || filter-flags "-march=*"
+		filter-flags "-msse*" -mmmx -m3dnow
 		cflags="${CFLAGS} ${cflags}"
 	fi
 	[[ -n ${cflags} ]] && sed -i -e "s/^\(KBUILD_CFLAGS.*-O2\)/\1 ${cflags}/g" Makefile
@@ -302,6 +303,8 @@ fixes(){
 	[[ -e "${S}"arch/x86_64/kernel/x8664_ksyms.c ]] && grep -q "_proxy_pda" "${S}"arch/x86_64/kernel/x8664_ksyms.c || echo "EXPORT_SYMBOL(_proxy_pda);" >>arch/x86_64/kernel/x8664_ksyms.c
 	# unicode by default/only for fat
 	use unicode && sed -i -e 's/sbi->options\.utf8/1/g' fs/fat/dir.c
+	# custom-arch
+	use custom-arch && sed -i -e 's/-march=[a-z0-9]*//g' arch/*/Makefile*
 	# pnp
 	use pnp || return
 	einfo "Fixing modules hardware info exports (forced mode, waiting for bugs!)"

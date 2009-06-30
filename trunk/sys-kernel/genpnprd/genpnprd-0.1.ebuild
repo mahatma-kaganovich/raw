@@ -9,4 +9,6 @@ src_install(){
 	cd ${S}
 	insinto /usr/share/genpnprd
 	doins *
+	insinto /etc/kernels
+	doins kernel.conf
 }
