@@ -304,7 +304,7 @@ fixes(){
 	sed -i -e 's/getline/get_line/g' "${S}"/scripts/unifdef.c
 	# gcc 4.2+
 	sed -i -e 's/_proxy_pda = 0/_proxy_pda = 1/g' "${S}"/arch/*/kernel/vmlinux.lds.S
-	[[ -e "${S}"arch/x86_64/kernel/x8664_ksyms.c ]] && grep -q "_proxy_pda" "${S}"arch/x86_64/kernel/x8664_ksyms.c || echo "EXPORT_SYMBOL(_proxy_pda);" >>arch/x86_64/kernel/x8664_ksyms.c
+	[[ -e "${S}"arch/x86_64/kernel/x8664_ksyms.c ]] && ( grep -q "_proxy_pda" "${S}"arch/x86_64/kernel/x8664_ksyms.c || echo "EXPORT_SYMBOL(_proxy_pda);" >>arch/x86_64/kernel/x8664_ksyms.c )
 	# unicode by default/only for fat
 	use unicode && sed -i -e 's/sbi->options\.utf8/1/g' fs/fat/dir.c
 	# custom-arch
