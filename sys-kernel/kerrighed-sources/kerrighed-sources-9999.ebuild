@@ -2,7 +2,9 @@ K_SECURITY_UNSUPPORTED="1"
 ETYPE="sources"
 CKV="2.6.20"
 
-inherit kernel-2
+inherit autotools kernel-2 subversion
+
+ESVN_REPO_URI="svn://scm.gforge.inria.fr/svn/kerrighed/trunk"
 
 EXTRAVERSION="krg"
 OKV="${CKV}"
@@ -11,23 +13,22 @@ KV_FULL="${KV}"
 K_NOSETEXTRAVERSION="1"
 
 HOMEPAGE="http://www.kerrighed.org/"
-DESCRIPTION="Kerrighed SSI cluster kernel"
-SRC_URI="${KERNEL_URI} http://gforge.inria.fr/frs/download.php/4491/kerrighed-${PV}.tar.gz"
+DESCRIPTION="Kerrighed SSI cluster kernel and tools"
+#SRC_URI="${KERNEL_URI}"
 KEYWORDS="-* ~amd64 ~x86"
+DEPEND="dev-libs/libxslt
+	!sys-cluster/kerrighed"
 
-# for build-kernel feature only
-# default: building default kernel, including all modules compressed in initrd
 IUSE="+build-kernel +pnp"
 
 KERNEL_CONFIG="${KERNEL_CONFIG} -IPC_NS -PREEMPT[\w\d_]* PREEMPT_NONE -KEYS
 	-IPV6 -NET_IPIP -NET_IPGRE -DUMMY -BONDING -EQUALIZER"
 
-S="${WORKDIR}/linux-${KV}"
-S1="${WORKDIR}/kerrighed-${PV}"
+S="${WORKDIR}/kernel"
+S1="${WORKDIR}"
 
 src_unpack(){
-	unpack "kerrighed-${PV}.tar.gz"
-	kernel-2_src_unpack
+	S="${S1}" subversion_src_unpack
 	cd "${S}"
 	# glibc 2.8+
 	grep -q "<limits.h>" scripts/mod/sumversion.c || sed -i -e 's/#include <string.h>/\n#include <string.h>\n#include <limits.h>/' scripts/mod/sumversion.c
@@ -35,6 +36,20 @@ src_unpack(){
 	sed -i -e 's/_proxy_pda = 0/_proxy_pda = 1/g' arch/*/kernel/vmlinux.lds.S
 	[[ -e arch/x86_64/kernel/x8664_ksyms.c ]] && ( grep -q "_proxy_pda" arch/x86_64/kernel/x8664_ksyms.c || echo "EXPORT_SYMBOL(_proxy_pda);" >>arch/x86_64/kernel/x8664_ksyms.c )
 	cd "${S1}"
-	econf --with-kernel="${S}" --disable-service --disable-man
-	emake patch
+	eautoreconf
+	econf --disable-service || die
+}
+
+src_compile(){
+	use build-kernel || die '"build-kernel" useflag required!'
+	kernel-2_src_compile
+	cd "${S1}"
+	kmake || die
+}
+
+src_install(){
+	kernel-2_src_install
+	cd "${S1}"
+	kmake DESTDIR="${D}" install
+	rm "${D}"/boot/*.old
 }
