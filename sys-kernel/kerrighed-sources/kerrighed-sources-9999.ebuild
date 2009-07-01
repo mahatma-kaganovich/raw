@@ -52,4 +52,5 @@ src_install(){
 	cd "${S1}"
 	kmake DESTDIR="${D}" install
 	rm "${D}"/boot/*.old
+	mv "${S1}"/kernel "${D}"/linux-${KV}
 }
