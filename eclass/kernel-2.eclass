@@ -68,7 +68,35 @@ fi
 
 BDIR="${WORKDIR}/build"
 
+set_kv(){
+	local v="$1"
+	KV="${v}"
+	EXTRAVERSION="${KV##*-}"
+	CKV="${KV%%-*}"
+	OKV="${CKV}"
+	KV_FULL="${KV}"
+	KV_MAJOR=${v%%.*}
+	v=${v#*.}
+	KV_MINOR=${v%%.*}
+	v=${v#*.}
+	KV_PATCH=${v%%-*}
+	KV_EXTRA=${v#*-}
+}
+
+get_v(){
+	grep -P "^$1\s*=.*$" "${S}"/Makefile | sed -e 's%^.*= *%%'
+}
+
+get_kv(){
+	set_kv $(get_v VERSION).$(get_v PATCHLEVEL).$(get_v SUBLEVEL)$(get_v EXTRAVERSION)
+}
+
+check_kv(){
+	[ -z "${KV}" ] && get_kv
+}
+
 kernel-2_src_compile() {
+	check_kv
 	cd "${S}"
 	fixes
 	[[ ${ETYPE} == headers ]] && compile_headers
@@ -122,6 +150,7 @@ kernel-2_src_compile() {
 }
 
 kernel-2_src_install() {
+	check_kv
 	cd "${S}" || die
 	if [[ ${ETYPE} == sources ]] && use build-kernel; then
 		mkdir "${D}/boot"
@@ -314,3 +343,4 @@ fixes(){
 	einfo "Fixing modules hardware info exports (forced mode, waiting for bugs!)"
 	sh "${ROOT}/usr/share/genpnprd/modulesfix" "${S}" f
 }
+
