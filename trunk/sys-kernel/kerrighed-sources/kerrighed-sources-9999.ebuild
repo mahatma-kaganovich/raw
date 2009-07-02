@@ -1,20 +1,17 @@
 K_SECURITY_UNSUPPORTED="1"
 ETYPE="sources"
-CKV="2.6.20"
 
 inherit autotools kernel-2 subversion
 
 ESVN_REPO_URI="svn://scm.gforge.inria.fr/svn/kerrighed/trunk"
 
-EXTRAVERSION="krg"
-OKV="${CKV}"
-KV="${OKV}-${EXTRAVERSION}"
-KV_FULL="${KV}"
+KV=""
 K_NOSETEXTRAVERSION="1"
+
+#set_kv 2.6.20-krg
 
 HOMEPAGE="http://www.kerrighed.org/"
 DESCRIPTION="Kerrighed SSI cluster kernel and tools"
-#SRC_URI="${KERNEL_URI}"
 KEYWORDS="-* ~amd64 ~x86"
 DEPEND="dev-libs/libxslt
 	!sys-cluster/kerrighed"
@@ -29,6 +26,7 @@ S1="${WORKDIR}"
 
 src_unpack(){
 	S="${S1}" subversion_src_unpack
+	check_kv
 	cd "${S}"
 	# glibc 2.8+
 	grep -q "<limits.h>" scripts/mod/sumversion.c || sed -i -e 's/#include <string.h>/\n#include <string.h>\n#include <limits.h>/' scripts/mod/sumversion.c
@@ -52,5 +50,5 @@ src_install(){
 	cd "${S1}"
 	kmake DESTDIR="${D}" install
 	rm "${D}"/boot/*.old
-	mv "${S1}"/kernel "${D}"/linux-${KV}
+	mv "${S}" "${D}"/usr/src/linux-${KV}
 }
