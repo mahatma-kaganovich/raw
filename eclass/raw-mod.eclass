@@ -6,7 +6,12 @@ mmake(){
 
 kern_prepare(){
 	local k="${WORKDIR}/raw-kernel"
-	cp "${KERNEL_DIR}" "${k}" -LRp
+	local kk="${KERNEL_DIR}"
+	[ -h "${KERNEL_DIR}" ] && kk="$(readlink -f ${KERNEL_DIR})" 
+	cp "${kk}" "${k}" -Ra
+	find "${k}" -name "*.cmd" | while read f ; do
+		sed -i -e 's%'"${kk}"'%'"${k}"'%g' ${f}
+	done
 	KERNEL_DIR="${k}"
 }
 

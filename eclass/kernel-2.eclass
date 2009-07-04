@@ -143,7 +143,7 @@ kernel-2_src_compile() {
 		cfg - CONFIG_INITRAMFS_ROOT_GID
 		gzip -dc  "initrd-${KV}.img" >"initrd-${KV}.cpio" || die
 		rm "initrd-${KV}.img"
-		echo "CONFIG_INITRAMFS_SOURCE=\"${S}/initrd-${KV}.cpio\"\nCONFIG_INITRAMFS_ROOT_UID=0\nCONFIG_INITRAMFS_ROOT_GID=0" >>.config
+		echo "CONFIG_INITRAMFS_SOURCE=\"initrd-${KV}.cpio\"\nCONFIG_INITRAMFS_ROOT_UID=0\nCONFIG_INITRAMFS_ROOT_GID=0" >>.config
 		yes '' 2>/dev/null | kmake oldconfig &>/dev/null
 		kmake bzImage
 	fi
@@ -169,6 +169,9 @@ kernel-2_src_install() {
 			dosym linux-${KV_FULL} /usr/src/linux-${SLOT}
 			use integrated || dosym initrd-${KV}.img /usr/src/initrd-${SLOT}.img
 		fi
+		find "${S}" -name "*.cmd" | while read f ; do
+			sed -i -e 's%'"${S}"'%/usr/src/linux-'"${KV}"'%g' ${f}
+		done
 		ewarn "If your /boot is not mounted, copy next files by hands:"
 		ewarn `ls "${D}/boot"`
 	fi
@@ -256,7 +259,11 @@ while cfg_loop .config.{1,2} ; do
 		cfg m BLK_DEV_LOOP
 	fi
 	local cfg_exclude=" HAVE_DMA_API_DEBUG "
-	cfg_use debug "(?:[^\n]*_)?DEBUG(?:_[^\n]*)?" FRAME_POINTER OPTIMIZE_INLINING FUNCTION_TRACER OPROFILE KPROBES X86_VERBOSE_BOOTUP PROFILING MARKERS INPUT_EVBUG
+	cfg_use debug "(?:[^\n]*_)?DEBUG(?:_[^\n]*)?" FRAME_POINTER OPTIMIZE_INLINING FUNCTION_TRACER OPROFILE KPROBES X86_VERBOSE_BOOTUP PROFILING MARKERS
+	if ! use debug ; then
+		cfg y STRIP_ASM_SYMS
+		cfg n INPUT_EVBUG
+	fi
 	local cfg_exclude=
 	cfg_use ipv6 IPV6
 	cfg_use acl "[\d\w_]*_ACL"
@@ -338,6 +345,8 @@ fixes(){
 	use unicode && sed -i -e 's/sbi->options\.utf8/1/g' fs/fat/dir.c
 	# custom-arch
 	use custom-arch && sed -i -e 's/-march=[a-z0-9\-]*//g' arch/*/Makefile*
+	# prevent to build twice
+#	sed -i -e 's%-I$(srctree)/arch/$(hdr-arch)/include%%' Makefile
 	# pnp
 	use pnp || return
 	einfo "Fixing modules hardware info exports (forced mode, waiting for bugs!)"
