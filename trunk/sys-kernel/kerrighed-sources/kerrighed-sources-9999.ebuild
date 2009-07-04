@@ -27,12 +27,6 @@ S1="${WORKDIR}"
 src_unpack(){
 	S="${S1}" subversion_src_unpack
 	check_kv
-	cd "${S}"
-	# glibc 2.8+
-	grep -q "<limits.h>" scripts/mod/sumversion.c || sed -i -e 's/#include <string.h>/\n#include <string.h>\n#include <limits.h>/' scripts/mod/sumversion.c
-	# gcc 4.2+
-	sed -i -e 's/_proxy_pda = 0/_proxy_pda = 1/g' arch/*/kernel/vmlinux.lds.S
-	[[ -e arch/x86_64/kernel/x8664_ksyms.c ]] && ( grep -q "_proxy_pda" arch/x86_64/kernel/x8664_ksyms.c || echo "EXPORT_SYMBOL(_proxy_pda);" >>arch/x86_64/kernel/x8664_ksyms.c )
 	cd "${S1}"
 	eautoreconf
 	econf --disable-service || die
@@ -51,4 +45,6 @@ src_install(){
 	kmake DESTDIR="${D}" install
 	rm "${D}"/boot/*.old
 	mv "${S}" "${D}"/usr/src/linux-${KV}
+#	newinitd "${FILESDIR}"/kerrighed.init kerrighed
+#	newconfd "${S1}"/scripts/default/all kerrighed
 }

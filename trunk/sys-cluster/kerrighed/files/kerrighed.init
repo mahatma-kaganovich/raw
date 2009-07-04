@@ -1,0 +1,82 @@
+#!/sbin/runscript
+
+set -e
+
+NAME=kerrighed
+DESC="Kerrighed"
+
+KRG_MODULE=$NAME
+
+CFG=/etc/conf.d/$NAME
+SCRIPTNAME=/etc/init.d/$NAME
+
+# Read config file if it is present.
+if [ -r $CFG ]; then
+    . $CFG
+fi
+
+depend() {
+	need netmount
+}
+
+start() {
+    ebegin "Starting $NAME"
+    /sbin/modprobe -q $KRG_MODULE $ARGS
+
+    case "x$LEGACY_SCHED" in
+	xtrue)
+	    d_trigger_krg_legacy_scheduler_start &
+	    ;;
+	xfalse)
+	    ;;
+	*)
+	    eend 1 "Value of LEGACY_SCHED in $CFG must be 'true' or 'false';"
+	    return 1
+	    ;;
+    esac
+    eend 0
+}
+
+#
+# Function that puts a trigger in place so that the krg_legacy_scheduler
+# gets automatically started when the cluster is started.
+#
+d_trigger_krg_legacy_scheduler_start () {
+    # Wait for the cluster to be started.
+    krgadm cluster wait_start >/dev/null 2>&1
+
+    # Only run the scheduler on a single node. Arbitrarily, the first
+    # node (beware, the sort can't be numerical even if -n is passed,
+    # because of the non-numerical prefix, so it's ASCII).
+    self=$(readlink -f /proc/nodes/self)
+    first_ascii=$(ls -1d /proc/nodes/node*|sort|head -1)
+
+    if [ $self = $first_ascii ]; then
+	krg_legacy_scheduler
+    fi
+}
+
+
+stop() {
+    eend 0
+}
+
+#
+# Function that prints if kerrighed is started or not
+#
+status() {
+    if test ! -e /proc/nodes/nrnodes; then
+	eerror "not loaded"
+	return 1
+    else
+	present=`cat /proc/nodes/nrnodes | grep 'PRESENT' | cut -d':' -f2`
+	possible=`cat /proc/nodes/nrnodes | grep 'POSSIBLE' | cut -d':' -f2`
+	if test $possible = 0; then
+	    ebegin "not started ($present nodes available)"
+	else
+	    ebegin "started on $possible nodes ($present nodes available)"
+	fi
+    fi
+    eend 0
+}
+

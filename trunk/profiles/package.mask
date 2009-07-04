@@ -1,3 +1,2 @@
 >=sys-cluster/drbd-8.3.9999
 >=sys-cluster/drbd-kernel-8.3.9999
->=sys-kernel/kerrighed-sources-9999
