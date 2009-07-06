@@ -28,7 +28,7 @@ src_install(){
     cp ${FILESDIR}/p-patch-${PV} ${TMPDIR}/p-patch
     cp ${FILESDIR}/*.p-patch ${D}/usr/ppatch/
     if use extensions; then
-		pp ${FILESDIR}/sys-kernel /usr/ppatch/sys-kernel/{gentoo,cell,sk,git,hardened,hppa,mips,openvz,rsback,sh,sparc,suspend,usermode,vanilla,vserver,xbox,xen}-sources/compile
+		pp ${FILESDIR}/sys-kernel /usr/ppatch/virtual/linux-sources/compile
     fi
     install ${TMPDIR}/p-patch ${D}/usr/sbin
 }
