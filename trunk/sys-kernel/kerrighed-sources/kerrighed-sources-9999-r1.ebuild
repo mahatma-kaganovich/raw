@@ -19,10 +19,9 @@ IUSE="+build-kernel +pnp"
 KERNEL_CONFIG="${KERNEL_CONFIG}
 	===kerrighed:
 	-PREEMPT[\w\d_]* PREEMPT_NONE -KEYS
-	===kerrighed_old_unsure:
-	-NET_IPIP -NET_IPGRE -DUMMY -BONDING -EQUALIZER
 	===
 	"
+#	-NET_IPIP -NET_IPGRE -DUMMY -BONDING -EQUALIZER
 
 S="${WORKDIR}/kernel"
 
