@@ -14,9 +14,19 @@ or
 [DEFAULT]
 eclass-overrides = raw
 
-Then say "emerge -pv gentoo-sources" and look for "pnp" useflag. If it not
-visible - try "emerge --regen", remove FEATURES="metadata-transfer",
-edit /usr/portage/metadata/layout.conf, erase metadata, or something else.
+Currently portage (now: 2.2-rc33) have eclass overlaying bug (Bug #276264).
+To check:
+
+Say "emerge -pv gentoo-sources" and look for "pnp" useflag. Without
+bug flag must be visible.
+
+Workaround:
+1. Add PORTAGE_RSYNC_EXTRA_OPTS="--exclude=/metadata/cache" in make.conf;
+2. say "rm /usr/portage/metadata/cache -Rf"
+
+Then check bug again. If flag not visible - try "emerge --regen",
+remove FEATURES="metadata-transfer", edit /usr/portage/metadata/layout.conf,
+or something else.
 
 === Configuring kernel.
 
