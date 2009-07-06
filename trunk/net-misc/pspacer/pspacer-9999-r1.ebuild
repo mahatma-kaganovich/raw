@@ -37,6 +37,6 @@ p="/usr/ppatch/dev-libs/libnl/compile/"
 mkdir ${D}${p} --parents
 cp ${S}/patch/* ${D}${p} -Rf
 tar -cjf ${D}/usr/ppatch/sys-apps/iproute2/compile/psp.tar.bz2 kernel/sch_psp.h tc/q_psp.c man/man8/tc-psp.8
-tar -cjf ${D}/usr/ppatch/sys-kernel/psp.tar.bz2 kernel/Kconfig kernel/sch_psp.c kernel/sch_psp.h
+tar -cjf ${D}/usr/ppatch/virtual/linux-sources/compile/psp.tar.bz2 kernel/Kconfig kernel/sch_psp.c kernel/sch_psp.h
 tar -cjf ${D}/usr/ppatch/dev-libs/libnl/psp.tar.bz2 pspd/*.c pspd/*.h
 }
