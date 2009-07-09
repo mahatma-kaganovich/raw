@@ -58,7 +58,7 @@ src_install() {
 	newins "${S}"/documentation/samples/cluster.conf cluster.conf
 
 	# vs. keepdir
-	mkdir "${D}"/dlm
+	dodir /dlm
 
 	# FIXME - fix the python lib.
 	# pythonians wouldn't like this probably, but I couldn't find better
