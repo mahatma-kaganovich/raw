@@ -1,5 +1,5 @@
 
-GIT=$([[ ${PV} = 9999* ]] && echo "git")
+GIT=$([[ ${PVR} = *9999* ]] && echo "git")
 EGIT_REPO_URI="git://anongit.freedesktop.org/mesa/mesa"
 
 inherit autotools multilib flag-o-matic ${GIT} portability
@@ -15,12 +15,15 @@ if [[ $PV = *_rc* ]]; then
 	SRC_URI="http://www.mesa3d.org/beta/${MY_SRC_P}.tar.gz"
 elif [[ $PV = 9999 ]]; then
 	SRC_URI=""
+elif [[ $PVR = *-r9999 ]]; then
+	EGIT_BRANCH="${PN}_${PV//./_}_branch"
+	SRC_URI=""
 else
 	SRC_URI="mirror://sourceforge/mesa3d/${MY_SRC_P}.tar.bz2"
 fi
 LICENSE="LGPL-2"
 SLOT="0"
-KEYWORDS="~alpha ~amd64 ~arm ~hppa ~ia64 ~mips ~ppc ~ppc64 ~sh ~sparc ~x86 ~x86-fbsd"
+KEYWORDS="~alpha ~amd64 ~arm ~hppa ~ia64 ~mips ~ppc ~ppc64 ~sh ~sparc ~x86 ~x86-fbsd raw"
 IUSE_VIDEO_CARDS="
 	video_cards_nouveau
 	video_cards_radeonhd
@@ -75,7 +78,7 @@ DEPEND="${RDEPEND}
 	>=x11-proto/glproto-1.4.8
 	gallium? (
 		x11-base/xorg-server
-		video_cards_radeon? ( =x11-libs/libdrm-9999-r9 )
+		x11-libs/libdrm
 	)
 	motif? ( x11-proto/printproto )"
 
@@ -106,7 +109,7 @@ pkg_setup() {
 }
 
 src_unpack() {
-	if [[ $PV = 9999 ]]; then
+	if [[ "${GIT}" = "git" ]]; then
 		git_src_unpack
 	else
 		unpack ${A}

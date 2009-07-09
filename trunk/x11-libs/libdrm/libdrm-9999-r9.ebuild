@@ -1,21 +1,28 @@
 #SNAPSHOT="yes"
 inherit autotools x-modular
 
-EGIT_BRANCH="modesetting-gem"
-EGIT_TREE="modesetting-gem"
 EGIT_REPO_URI="git://anongit.freedesktop.org/git/mesa/drm"
 
 DESCRIPTION="X.Org libdrm library"
 HOMEPAGE="http://dri.freedesktop.org/"
 SRC_URI=""
 
-KEYWORDS="raw"
+KEYWORDS="~alpha ~amd64 ~arm ~hppa ~ia64 ~mips ~ppc ~ppc64 ~s390 ~sh ~sparc ~x86  ~x86-fbsd raw"
 
-IUSE=""
+IUSE="video_cards_radeon"
 RDEPEND="dev-libs/libpthread-stubs"
 DEPEND="${RDEPEND}"
 
-CONFIGURE_OPTIONS="--enable-udev --enable-nouveau-experimental-api"
+CONFIGURE_OPTIONS="--enable-udev --enable-nouveau-experimental-api --enable-radeon-experimental-api"
+
+src_unpack(){
+	if use video_cards_radeon ; then
+		# while so
+		EGIT_BRANCH="modesetting-gem"
+		EGIT_TREE="modesetting-gem"
+	fi
+	x-modular_src_unpack
+}
 
 pkg_postinst() {
 	x-modular_pkg_postinst
