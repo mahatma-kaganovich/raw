@@ -3,12 +3,16 @@ source "${PORTDIR}/eclass/kernel-2.eclass"
 
 if [[ ${ETYPE} == sources ]]; then
 
-IUSE="${IUSE} build-kernel debug custom-cflags pnp compressed integrated ipv6 netboot nls unicode +acl minimal selinux custom-arch"
+IUSE="${IUSE} build-kernel debug custom-cflags pnp compressed integrated ipv6
+	netboot nls unicode +acl minimal selinux custom-arch
+	kernel-drm +kernel-alsa"
 DEPEND="${DEPEND}
 	build-kernel? (
 		sys-kernel/genkernel
 		pnp? ( sys-kernel/genpnprd )
 		compressed? ( sys-kernel/genpnprd )
+		kernel-drm? ( !x11-base/x11-drm )
+		kernel-alsa? ( !media-sound/alsa-driver )
 	) "
 
 [[ "${KERNEL_CONFIG}" == "" ]] &&
@@ -25,7 +29,7 @@ DEPEND="${DEPEND}
 	USB_LIBUSUAL -BLK_DEV_UB USB_EHCI_ROOT_HUB_TT USB_EHCI_TT_NEWSCHED USB_SISUSBVGA_CON
 	KEYBOARD_ATKBD
 	CRC_T10DIF
-	-VGACON_SOFT_SCROLLBACK -DRM FB_BOOT_VESA_SUPPORT FRAMEBUFFER_CONSOLE_ROTATION
+	-VGACON_SOFT_SCROLLBACK FB_BOOT_VESA_SUPPORT FRAMEBUFFER_CONSOLE_ROTATION
 	IKCONFIG_PROC IKCONFIG EXPERIMENTAL
 	NET_RADIO PNP PNP_ACPI PARPORT_PC_FIFO PARPORT_1284 NFTL_RW
 	PMC551_BUGFIX CISS_SCSI_TAPE CDROM_PKTCDVD_WCACHE
@@ -34,11 +38,13 @@ DEPEND="${DEPEND}
 	NET_VENDOR_3COM
 	SYN_COOKIES [\w\d_]*_NAPI
 	[\w\d_]*_EDID FB_[\w\d_]*_I2C FB_MATROX_[\w\d_]* FB_ATY_[\w\d_]*
-	FB_[\w\d_]*_ACCEL -FB_HGA_ACCEL FB_SIS_300 FB_SIS_315 FB_GEOGE
+	FB_[\w\d_]*_ACCEL -FB_HGA_ACCEL FB_SIS_300 FB_SIS_315 FB_GEODE
 	FB_MB862XX_PCI_GDC
 	-CC_OPTIMIZE_FOR_SIZE
 	-ARCNET -IDE -SMB_FS -DEFAULT_CFQ -DEFAULT_AS -DEFAULT_NOOP
 	-SOUND_PRIME GPIO GPIOLIB ISCSI_IBFT_FIND EXT4DEV_COMPAT LDM_PARTITION
+	SCSI_LOWLEVEL[\w\d_]* SCSI_FC_TGT_ATTRS SCSI_SAS_ATA SCSI_SRP_TGT_ATTRS
+	MEGARAID_NEWGEN SCSI_EATA_TAGGED_QUEUE SCSI_EATA_LINKED_COMMANDS
 	FUSION
 	NET_SCHED GACT_PROB IP_FIB_TRIE
 	+TCP_CONG_[\w\d_]+ TCP_CONG_ADVANCED TCP_CONG_CUBIC TCP_CONG_BIC TCP_CONG_YEAH
@@ -270,6 +276,8 @@ while cfg_loop .config.{1,2} ; do
 	cfg_use selinux "[\d\w_]*FS_SECURITY SECURITY SECURITY_NETWORK SECURITY_SELINUX SECURITY_SELINUX_BOOTPARAM"
 	use nls && cfg y "[\d\w_]*_NLS"
 	use unicode && cfg y NLS_UTF8
+	cfg_use kernel-drm DRM
+	cfg_use kernel-alsa SND
 	for i in ${KERNEL_CONFIG}; do
 		o="y ${i}"
 		o="${o/y +/m }"
