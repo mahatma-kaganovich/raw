@@ -3,7 +3,7 @@
 GIT=$([[ ${PVR} = *.9999 ]] && echo "git")
 EGIT_REPO_URI="git://git.drbd.org/drbd-${PV%.9999}.git"
 
-inherit eutils versionator ${GIT}
+inherit eutils versionator linux-info ${GIT}
 
 LICENSE="GPL-2"
 KEYWORDS="~amd64 ~x86"
@@ -53,11 +53,11 @@ src_unpack(){
 }
 
 src_compile() {
-	emake -j1 OPTFLAGS="${CFLAGS}" tools || die "compile problem"
+	emake -j1 OPTFLAGS="${CFLAGS}" KDIR="${KERNEL_DIR}" tools || die "compile problem"
 }
 
 src_install() {
-	emake -j1 PREFIX="${D}" install-tools || die "install problem"
+	emake -j1 PREFIX="${D}" KDIR="${KERNEL_DIR}" install-tools || die "install problem"
 
 	# gentoo-ish init-script
 	newinitd "${FILESDIR}"/${PN}-8.0.rc ${PN} || die
