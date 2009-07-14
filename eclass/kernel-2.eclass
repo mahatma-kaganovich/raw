@@ -17,21 +17,21 @@ DEPEND="${DEPEND}
 
 [[ "${KERNEL_CONFIG}" == "" ]] &&
     KERNEL_CONFIG="KALLSYMS_EXTRA_PASS DMA_ENGINE USB_STORAGE_[\w\d]+
-	PREEMPT_NONE HZ_1000
+	PREEMPT_NONE
 	-X86_GENERIC MTRR_SANITIZER IA32_EMULATION LBD
 	GFS2_FS_LOCKING_DLM NTFS_RW
 	X86_BIGSMP X86_32_NON_STANDARD X86_X2APIC INTR_REMAP
 	MICROCODE_INTEL MICROCODE_AMD
 	ASYNC_TX_DMA NET_DMA DMAR INTR_REMAP CONFIG_BLK_DEV_INTEGRITY
-	CALGARY_IOMMU AMD_IOMMU
+	AMD_IOMMU
 	SPARSEMEM_MANUAL MEMTEST [\d\w_]*FS_XATTR
-	PARAVIRT_GUEST VMI KVM_CLOCK KVM_GUEST
+	VMI KVM_CLOCK KVM_GUEST XEN
 	USB_LIBUSUAL -BLK_DEV_UB USB_EHCI_ROOT_HUB_TT USB_EHCI_TT_NEWSCHED USB_SISUSBVGA_CON
 	KEYBOARD_ATKBD
 	CRC_T10DIF
 	-VGACON_SOFT_SCROLLBACK FB_BOOT_VESA_SUPPORT FRAMEBUFFER_CONSOLE_ROTATION
 	IKCONFIG_PROC IKCONFIG EXPERIMENTAL
-	NET_RADIO PNP PNP_ACPI PARPORT_PC_FIFO PARPORT_1284 NFTL_RW
+	NET_RADIO PNP_ACPI PARPORT_PC_FIFO PARPORT_1284 NFTL_RW
 	PMC551_BUGFIX CISS_SCSI_TAPE CDROM_PKTCDVD_WCACHE
 	SCSI_SCAN_ASYNC IOSCHED_DEADLINE DEFAULT_DEADLINE SND_SEQUENCER_OSS
 	SND_FM801_TEA575X_BOOL SND_AC97_POWER_SAVE SCSI_PROC_FS SCSI_FLASHPOINT
@@ -42,30 +42,28 @@ DEPEND="${DEPEND}
 	FB_MB862XX_PCI_GDC
 	-CC_OPTIMIZE_FOR_SIZE
 	-ARCNET -IDE -SMB_FS -DEFAULT_CFQ -DEFAULT_AS -DEFAULT_NOOP
-	-SOUND_PRIME GPIO GPIOLIB EZX_PCAP MFD_SM501_GPIO SSB_PCMCIAHOST
+	-SOUND_PRIME GPIO EZX_PCAP MFD_SM501_GPIO SSB_PCMCIAHOST
 	ISCSI_IBFT_FIND EXT4DEV_COMPAT LDM_PARTITION
-	SCSI_LOWLEVEL[\w\d_]* SCSI_FC_TGT_ATTRS SCSI_SAS_ATA SCSI_SRP_TGT_ATTRS
+	SCSI_FC_TGT_ATTRS SCSI_SAS_ATA SCSI_SRP_TGT_ATTRS
 	MEGARAID_NEWGEN SCSI_EATA_TAGGED_QUEUE SCSI_EATA_LINKED_COMMANDS
 	SCSI_GENERIC_NCR53C400 IBMMCA_SCSI_ORDER_STANDARD
 	SCSI_U14_34F_TAGGED_QUEUE SCSI_U14_34F_LINKED_COMMANDS
 	SCSI_MULTI_LUN
-	FUSION
-	NET_SCHED GACT_PROB IP_FIB_TRIE
-	+TCP_CONG_[\w\d_]+ TCP_CONG_ADVANCED TCP_CONG_CUBIC TCP_CONG_BIC TCP_CONG_YEAH
+	GACT_PROB IP_FIB_TRIE
+	TCP_CONG_CUBIC TCP_CONG_BIC TCP_CONG_YEAH
 	BT_RFCOMM_TTY BT_HCIUART_H4 BT_HCIUART_BCSP BT_HCIUART_LL
-	IRDA_ULTRA IRDA_CACHE_LAST_LSAP IRDA_FAST_RR DONGLE
-	ISDN
+	IRDA_ULTRA IRDA_FAST_RR DONGLE
 	-SECURITY_FILE_CAPABILITIES
-	    HOSTAP_FIRMWARE NET_PCMCIA WAN DCC4_PSISYNC
+	    HOSTAP_FIRMWARE DCC4_PSISYNC
 	    FDDI HIPPI VT_HW_CONSOLE_BINDING SERIAL_NONSTANDARD
-	    SERIAL_8250_EXTENDED SPI
-	TIPC_ADVANCED NETFILTER_ADVANCED NET_IPGRE_BROADCAST
+	    SERIAL_8250_EXTENDED
+	TIPC_ADVANCED NET_IPGRE_BROADCAST
 	IP_VS_PROTO_[\d\w_]*
-	KERNEL_GZIP KERNEL_BZIP2 KERNEL_LZMA
+	KERNEL_LZMA
 	ISA MCA MCA_LEGACY EISA NET_ISA
-	PCIEASPM REGULATOR AUXDISPLAY CRYPTO_DEV_HIFN_795X_RNG PERF_COUNTERS
+	PCIEASPM CRYPTO_DEV_HIFN_795X_RNG PERF_COUNTERS
 	X86_SPEEDSTEP_RELAXED_CAP_CHECK
-	DEVPTS_MULTIPLE_INSTANCES INPUT_MOUSEDEV_PSAUX SLIP_COMPRESSED
+	DEVPTS_MULTIPLE_INSTANCES SLIP_COMPRESSED
 	SLIP_SMART NET_FC LOGO_LINUX_[\w\d]*
 	===bugs:
 	-TR -RADIO_RTRACK
@@ -119,7 +117,7 @@ kernel-2_src_compile() {
 		filter-flags "-msse*" -mmmx -m3dnow
 		cflags="${CFLAGS} ${cflags}"
 	fi
-	[[ -n ${cflags} ]] && sed -i -e "s/^\(KBUILD_CFLAGS.*-O2\)/\1 ${cflags}/g" Makefile
+	[[ -n ${cflags} ]] && sed -i -e "s/^\(KBUILD_CFLAGS.*-O.\)/\1 ${cflags}/g" Makefile
 	use build-kernel || return
 	config_defaults
 	einfo "Compiling kernel"
@@ -150,9 +148,10 @@ kernel-2_src_compile() {
 		sh "${ROOT}/usr/share/genpnprd/genpnprd" "${S}/initrd-${KV}.img" nopnp
 	fi
 	if use integrated; then
-		cfg - CONFIG_INITRAMFS_SOURCE
-		cfg - CONFIG_INITRAMFS_ROOT_UID
-		cfg - CONFIG_INITRAMFS_ROOT_GID
+		cfg - INITRAMFS_SOURCE
+		cfg - INITRAMFS_ROOT_UID
+		cfg - INITRAMFS_ROOT_GID
+		cfg y INITRAMFS_COMPRESSION_NONE
 		gzip -dc  "initrd-${KV}.img" >"initrd-${KV}.cpio" || die
 		rm "initrd-${KV}.img"
 		echo "CONFIG_INITRAMFS_SOURCE=\"initrd-${KV}.cpio\"\nCONFIG_INITRAMFS_ROOT_UID=0\nCONFIG_INITRAMFS_ROOT_GID=0" >>.config
@@ -262,7 +261,6 @@ cfg_loop(){
 }
 
 setconfig(){
-while cfg_loop .config.{1,2} ; do
 	local i o
 	cfg y EXT2_FS
 	if use pnp || use compressed; then
@@ -295,8 +293,6 @@ while cfg_loop .config.{1,2} ; do
 		o="${o/y ~/- }"
 		cfg ${o}
 	done
-	yes '' 2>/dev/null | kmake oldconfig >/dev/null
-done
 }
 
 config_defaults(){
@@ -309,7 +305,8 @@ config_defaults(){
 	fi
 	kmake defconfig >/dev/null
 
-	setconfig
+	cp .config .config.old
+	setconfig # bit faster
 
     while cfg_loop .config.{3,4} ; do
 	for i in ${KERNEL_MODULES}; do
@@ -323,11 +320,21 @@ config_defaults(){
 		else
 			m=""
 		fi
-		for o in `grep -Prh "^\s*(?:menu)?config\s+.*?\n(?:[^\n]+\n)*\s*tristate" ${i} --include="Kconfig*" 2>/dev/null  | grep -P "^\s*(?:menu)?config"` ; do
-			[[ "${o}" == "config" || "${o}" == "menuconfig" ]] || cfg m "${o}" "${m}"
+#		grep -Prh "^\s*config\s+.*?\n(?:[^\n]+\n)*\s*bool(?:\s[^\n]*)?\n(?:[^\n]+\n)*\s*(?:If unsure, say Y\.|default y)\$" ${i} --include="Kconfig*" 2>/dev/null  | while read i1 o ; do
+		grep -Prh "^\s*config\s+.*?\n(?:[^\n]+\n)*\s*bool(?:\s[^\n]*)?\n(?:[^\n]+\n)*\s*If unsure, say Y\.\$" ${i} --include="Kconfig*" 2>/dev/null  | while read i1 o ; do
+			[[ "${i1}" == "config" ]] && cfg y "${o}" "${m}"
+		done
+		grep -Prh "^\s*menuconfig\s+.*?\n(?:[^\n]+\n)*\s*bool(?:\s.*)?\$" ${i} --include="Kconfig*" 2>/dev/null  | while read i1 o ; do
+			[[ "${i1}" == "menuconfig" ]] && cfg y "${o}" "${m}"
+		done
+		grep -Prh "^\s*(?:menu)?config\s+.*?\n(?:[^\n]+\n)*\s*tristate(?:\s.*)?\$" ${i} --include="Kconfig*" 2>/dev/null  | while read i1 o ; do
+			[[ "${i1#menu}" == "config" ]] && cfg m "${o}" "${m}"
 		done
 	done
-	setconfig
+	while cfg_loop .config.{1,2} ; do
+		setconfig
+		yes '' 2>/dev/null | kmake oldconfig >/dev/null
+	done
     done
     rm .config.old
 }
