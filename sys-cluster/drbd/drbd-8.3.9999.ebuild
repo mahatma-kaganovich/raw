@@ -3,7 +3,9 @@
 GIT=$([[ ${PVR} = *.9999 ]] && echo "git")
 EGIT_REPO_URI="git://git.drbd.org/drbd-${PV%.9999}.git"
 
-inherit eutils versionator linux-info ${GIT}
+KERNEL_DIR=""
+# with empty KERNEL_DIR - using linux-headers instead of kernel
+inherit eutils versionator ${GIT} # linux-info
 
 LICENSE="GPL-2"
 KEYWORDS="~amd64 ~x86"
