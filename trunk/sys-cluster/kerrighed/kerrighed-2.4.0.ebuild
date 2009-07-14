@@ -1,26 +1,18 @@
-inherit eutils autotools git
-
-EGIT_REPO_URI="git://mirrors.git.kernel.org/cluster/kerrighed/tools"
-EGIT_BRANCH="master"
-EGIT_TREE="master"
+inherit eutils linux-mod
 
 SLOT="0"
 DESCRIPTION="Kerrighed is a Single System Image operating system for clusters"
 HOMEPAGE="http://www.kerrighed.org/"
-RDEPEND="=sys-kernel/kerrighed-sources-${PVR}"
-DEPEND="dev-libs/libxslt"
-#	sys-apps/lsb-release
+SRC_URI="http://gforge.inria.fr/frs/download.php/22621/${P}.tar.gz"
+DEPEND="=sys-kernel/kerrighed-sources-${PV}"
+#	sys-apps/lsb-release"
 KEYWORDS="~amd64 ~x86"
 
-S="${WORKDIR}"
-
-src_unpack(){
-	git_src_unpack
-	cd "${S}"
-	eautoreconf
-}
+KV="2.6.20-krg"
+KERNEL_DIR="/usr/src/linux-${KV}"
 
 src_compile(){
+	ln -s "${KERNEL_DIR}" ${S}/kernel
 	econf --disable-service --disable-kernel || die
 	emake
 }
