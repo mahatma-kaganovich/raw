@@ -97,7 +97,8 @@ todo: include Kerrighed modules and tools too, but tools must be
 static).
 
 Kernel cmdline options: "nopnp", "unload" (try to rmmod after mounting root),
-"loadall" (try to load all possible drivers, slow).
+"loadall" (try to load all possible drivers, slow), "slow" (fixed v0.1 mode,
+deprecated, now vs. new bugs).
 
 P.S. Defaults are subject to change.
 .
