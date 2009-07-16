@@ -30,6 +30,7 @@ mod1(){
 		if $FAST ; then
 			cd "/lib/modules/$KV"
 			for m1 in $ALIAS ; do
+				$QUIET || echo -ne "\033[0G\033[0K$LCOUNT	$m1"
 				insmod "$m1" >/dev/null 2>&1
 			done
 		else
