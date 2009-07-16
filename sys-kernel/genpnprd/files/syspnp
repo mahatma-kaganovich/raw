@@ -1,5 +1,5 @@
 #!/bin/sh
-## pnp modules bootloader
+## pnp modules bootloader v0.2
 ## (c) Denis Kaganovich, under Anarchy license
 ## consume preprocessed /lib/modules/$KV/modules.alias
 
@@ -13,10 +13,11 @@ NOPNP=false
 QUIET=false
 MODUNLOAD=false
 LOADALL=false
+FAST=true
 
 single(){
-	grep -q "^$1\$" "${PNP_TMP}.$2" && return 1
-	echo "$1" >>"${PNP_TMP}.$2"
+	grep -qF ">$1<" "${PNP_TMP}.$2" && return 1
+	echo ">$1<" >>"${PNP_TMP}.$2"
 	return 0
 }
 
@@ -24,29 +25,34 @@ mod1(){
 	# ash not support ${i//...
 	local m m1 m2
 	for m in $* ; do
-		m=`echo -ne "$m" | sed -e 's/-/_/g'`
 		single "$m" 0 || continue
 		alias2 "$m"
+		if $FAST ; then
+			cd "/lib/modules/$KV"
+			for m1 in $ALIAS ; do
+				insmod "$m1" >/dev/null 2>&1
+			done
+		else
 		for m1 in $ALIAS ; do
-			m2="${m1##*/}"
-			m2="${m2%.??}"
-			m2=`echo -ne "$m2" | sed -e 's/-/_/g'`
+			m2=`echo -ne "$m1" | sed -e 's:.*/::g' -e 's/-/_/g' -e 's/\...$//'`
 			[[ "$m" == "$m2" ]] || single "$m2" 0 || continue
 			$QUIET || echo -ne "\033[0G\033[0K$LCOUNT	$m1"
 			insmod "/lib/modules/$KV/$m1" >/dev/null 2>&1
 		done
+		fi
 	done
 }
 
 mod(){
+	local m=`echo -ne "$*" | sed -e 's/-/_/g''`
 	if [[ -z "$PARA" ]]  ; then
-		mod1 $*
+		mod1 $m
 	else
 		if [[ -n ${npid#$PARA} ]]; then
 		    wait ${pid%% *}
 		    pid="${pid#* }"
 		fi
-		mod1 $* &
+		mod1 $m &
 		pid="$pid$! "
 		npid="${npid}."
 	fi
@@ -61,6 +67,26 @@ refresh(){
 	done
 	pid=""
 	npid=0
+	
+	if $FAST ; then
+		sed -e 's%^\(.*\)[	 ].*$%>\1<%g' </proc/modules | sort >"${PNP_TMP}".1
+		cat `grep -l "^DRIVER=" $(find /sys -name uevent -print 2>/dev/null) 2>/dev/null` |grep "^DRIVER=\|^MODALIAS="|sort -u|sed -e 's%-%_%g' -e 's%^.*=\(.*\)$%>\1<%g' >>"${PNP_TMP}".1
+		[[ "$(cat ${PNP_TMP}.1)" == "$(cat ${PNP_TMP}.2)" ]] && return 1
+		cp "${PNP_TMP}".1 "${PNP_TMP}".2
+		if [[ "$1" == "n" ]] || ! $QUIET ; then
+			$QUIET || echo -ne "\033[0G\033[0K${BOLD}   ::${NORMAL}Loaded:"
+			sed -i -e 's%^>\(.*\)<$%\1%g' "${PNP_TMP}".1
+			while read i ; do
+				grep -qF ">$i<" "${PNP_TMP}".0 && continue
+				[[ "$1" == "n" ]] && echo "$i" >>/nopnp.lst
+				$QUIET || echo -ne "$i"
+			done <"${PNP_TMP}".1
+			$QUIET || echo ""
+		fi
+		cp "${PNP_TMP}".2 "${PNP_TMP}".0
+		return 0
+	fi
+
 	l="\033[0G\033[0K${BOLD}   ::${NORMAL}Loaded:"
 	while read i j; do
 		single "$i" 1 || continue
@@ -68,7 +94,7 @@ refresh(){
 		$QUIET || echo -ne "$l $i"
 		l=""
 	done </proc/modules
-	cat "${PNP_TMP}".1 >"${PNP_TMP}".0
+	cp "${PNP_TMP}".1 "${PNP_TMP}".0
 	[[ -z "$l" ]] || return 1
 	$QUIET || echo "" 
 	return 0
@@ -77,11 +103,15 @@ refresh(){
 load_aliases(){
 	local i m
 	while [[ "${LCOUNT#..........}" == "${LCOUNT}" ]] ; do
+		if $FAST ; then
+			mod `cat $(find /sys -name modalias -print 2>/dev/null) 2>/dev/null|sort -u`
+		else
 		for i in `find /sys -name modalias -print 2>/dev/null` ; do
 			if [[ -e "$i" ]] && read m <"$i" ; then
 				mod $m
 			fi
 		done
+		fi
 		refresh || break
 		mod $MDOLIST
 		[[ -n "$SDELAY" ]] && sleep "$SDELAY"
@@ -104,11 +134,12 @@ pnp_options(){
 	local i
 	for i in `cat /proc/cmdline` ; do
 	case "$i" in
-	quiet) good_msg "PNP: quiet mode"; eval 'good_msg(){ return; }'; QUIET=true ;;
+	quiet) $FAST || good_msg "PNP: quiet mode"; eval 'good_msg(){ return; }'; QUIET=true ;;
 	nofb) NOFB=true ;;
 	nopnp) NOPNP=true ;;
 	unload) MODUNLOAD=true ;;
 	loadall) LOADALL=true ;;
+	slow) FAST=false ;;
 	esac
 	done
 }
@@ -116,13 +147,16 @@ pnp_options(){
 ifmod(){
 	local i
 	for i in $* ; do
-		grep -q "^${i}$" "${PNP_TMP}".0 || return 1
+		grep -qF ">$i<" "${PNP_TMP}".0 || return 1
 	done
 	return 0
 }
 
 load_all(){
-	local i
+	if $FAST ; then
+		mod `grep -v "/media/\|/sound/\|/microcode\.\|/isdn/\|/net/\|/video/" <"/lib/modules/$KV/modules.other"|sed -e 's:.*/::g' -e 's/\...$//g'`
+	else
+	local i m
 	while read i ; do
 		case "$i" in
 		*/media/*) ;;
@@ -139,6 +173,7 @@ load_all(){
 		;;
 		esac
 	done <"/lib/modules/$KV/modules.other"
+	fi
 }
 
 syspnp(){
@@ -148,8 +183,8 @@ syspnp(){
 	local i i1
 	[[ -z "$PARA" ]] || good_msg " -= Parallel PNP module loader =-"
 	good_msg "Searching pnp"
-	for i in 0 1 ; do
-		echo -n "" >"${PNP_TMP}.$i"
+	for i in 0 1 2 ; do
+		echo -ne "" >"${PNP_TMP}.$i"
 	done
 	pid=""
 	npid=0
@@ -161,7 +196,7 @@ syspnp(){
 		mod $MDOLIST
 		refresh
 	fi
-	single usb-storage 0
+	single usb_storage 0
 	load_aliases
 	$NOFB || mod fbcon
 	ifmod usbcore && mod usb_storage # user-frendly
@@ -177,7 +212,7 @@ syspnp(){
 			# NODETECT: old behaviour
 		[[ "${NODETECT}" != '1' ]] && for i1 in ${MY_HWOPTS} ; do
 			[[ -e "/etc/modules/$i1" ]] && for i in `cat /etc/modules/${i1}` ; do
-				grep -q "^${i}\$" "/lib/modules/$KV/modules.pnp" && continue
+				grep -q "^$i\$" "/lib/modules/$KV/modules.pnp" && continue
 				mod "$i"
 			done
 		done
@@ -188,7 +223,7 @@ syspnp(){
 	MY_HWOPTS=""
 	MDOLIST=""
 	echo -ne "\033[0G\033[0K"
-
+	$QUIET || good_msg "Boot time: $(cat /proc/uptime)"
 	if [[ -n "${NOTLOADED}" ]] ; then
 		good_msg "Not loaded:$NOTLOADED"
 		# try again
