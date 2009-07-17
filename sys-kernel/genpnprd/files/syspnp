@@ -3,7 +3,6 @@
 ## (c) Denis Kaganovich, under Anarchy license
 ## consume preprocessed /lib/modules/$KV/modules.alias
 
-PARA=".."
 [[ -z "$TMPDIR" ]] && [[ -e /temp ]] && TMPDIR="/temp"
 PNP_TMP="${TMPDIR}/pnp.found"
 NOTLOADED=""
@@ -21,17 +20,15 @@ single(){
 	return 0
 }
 
-mod1(){
-	# ash not support ${i//...
+mod(){
 	local m m1 m2
-	for m in $* ; do
+	for m in $(echo -ne "$*" | sed -e 's/-/_/g') ; do
 		single "$m" 0 || continue
 		alias2 "$m"
 		if $FAST ; then
-			cd "/lib/modules/$KV"
 			for m1 in $ALIAS ; do
 				$QUIET || echo -ne "\033[0G\033[0K$LCOUNT	$m1"
-				insmod "$m1" >/dev/null 2>&1
+				insmod "/lib/modules/$KV/$m1" >/dev/null 2>&1
 			done
 		else
 		for m1 in $ALIAS ; do
@@ -44,37 +41,17 @@ mod1(){
 	done
 }
 
-mod(){
-	local m=`echo -ne "$*" | sed -e 's/-/_/g''`
-	if [[ -z "$PARA" ]]  ; then
-		mod1 $m
-	else
-		if [[ -n ${npid#$PARA} ]]; then
-		    wait ${pid%% *}
-		    pid="${pid#* }"
-		fi
-		mod1 $m &
-		pid="$pid$! "
-		npid="${npid}."
-	fi
-}
-
 refresh(){
 	LCOUNT="${LCOUNT}."
 	echo -ne "\033[0G\033[0K$LCOUNT"
 	local i j l
-	for i in $pid ; do
-		wait $i
-	done
-	pid=""
-	npid=0
 	
 	if $FAST ; then
 		sed -e 's%^\(.*\)[	 ].*$%>\1<%g' </proc/modules | sort >"${PNP_TMP}".1
 		cat `grep -l "^DRIVER=" $(find /sys -name uevent -print 2>/dev/null) 2>/dev/null` |grep "^DRIVER=\|^MODALIAS="|sort -u|sed -e 's%-%_%g' -e 's%^.*=\(.*\)$%>\1<%g' >>"${PNP_TMP}".1
 		[[ "$(cat ${PNP_TMP}.1)" == "$(cat ${PNP_TMP}.2)" ]] && return 1
 		cp "${PNP_TMP}".1 "${PNP_TMP}".2
-		if [[ "$1" == "n" ]] || ! $QUIET ; then
+		if ( $MODUNLOAD && [[ "$1" == "n" ]] ) || ! $QUIET ; then
 			$QUIET || echo -ne "\033[0G\033[0K${BOLD}   ::${NORMAL}Loaded:"
 			sed -i -e 's%^>\(.*\)<$%\1%g' "${PNP_TMP}".1
 			while read i ; do
@@ -101,11 +78,17 @@ refresh(){
 	return 0
 }
 
+count(){
+	[[ "${LCOUNT#................}" == "${LCOUNT}" ]] && return 0
+	bad_msg "Deadloop?"
+	return 1
+}
+
 load_aliases(){
 	local i m
-	while [[ "${LCOUNT#..........}" == "${LCOUNT}" ]] ; do
+	while  count ; do
 		if $FAST ; then
-			mod `cat $(find /sys -name modalias -print 2>/dev/null) 2>/dev/null|sort -u`
+			mod `cat $(find /sys -name modalias -print 2>/dev/null) 2>/dev/null|sort -u'`
 		else
 		for i in `find /sys -name modalias -print 2>/dev/null` ; do
 			if [[ -e "$i" ]] && read m <"$i" ; then
@@ -155,7 +138,7 @@ ifmod(){
 
 load_all(){
 	if $FAST ; then
-		mod `grep -v "/media/\|/sound/\|/microcode\.\|/isdn/\|/net/\|/video/" <"/lib/modules/$KV/modules.other"|sed -e 's:.*/::g' -e 's/\...$//g'`
+		mod $(grep -v '/media/\|/sound/\|/microcode\.\|/isdn/\|/net/\|/video/' </lib/modules/$KV/modules.other|sed -e 's:.*/::g' -e 's/\...$//g')
 	else
 	local i m
 	while read i ; do
@@ -182,13 +165,10 @@ syspnp(){
 	pnp_options
 	$NOPNP && return
 	local i i1
-	[[ -z "$PARA" ]] || good_msg " -= Parallel PNP module loader =-"
 	good_msg "Searching pnp"
 	for i in 0 1 2 ; do
 		echo -ne "" >"${PNP_TMP}.$i"
 	done
-	pid=""
-	npid=0
 	refresh n
 	LCOUNT=""
 	. "/lib/modules/${KV}/modules.alias.sh"
@@ -204,7 +184,7 @@ syspnp(){
 #	ifmod usual_tables && mod usb_storage # on demand
 	refresh
 #	good_msg "Filtering pnp modules"
-	while  [[ "${LCOUNT#..........}" == "${LCOUNT}" ]] ; do
+	while count ; do
 		local NODETECT
 		if $LOADALL ; then
 			load_all
