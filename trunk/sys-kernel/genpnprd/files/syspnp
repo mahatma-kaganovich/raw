@@ -1,18 +1,11 @@
 #!/bin/sh
-## pnp modules bootloader v0.2
+## pnp modules bootloader v0.4
 ## (c) Denis Kaganovich, under Anarchy license
 ## consume preprocessed /lib/modules/$KV/modules.alias
 
-[[ -z "$TMPDIR" ]] && [[ -e /temp ]] && TMPDIR="/temp"
-PNP_TMP="${TMPDIR}/pnp.found"
-NOTLOADED=""
-[[ -z "$KV" ]] && KV=`uname -r`
-NOFB=false
-NOPNP=false
-QUIET=false
 MODUNLOAD=false
-LOADALL=false
-FAST=true
+[[ -z "$KV" ]] && KV=`uname -r`
+[[ -z "$TMPDIR" ]] && [[ -e /temp ]] && TMPDIR="/temp"
 
 single(){
 	grep -qF ">$1<" "${PNP_TMP}.$2" && return 1
@@ -24,18 +17,44 @@ mod(){
 	local m m1 m2
 	for m in $(echo -ne "$*" | sed -e 's/-/_/g') ; do
 		single "$m" 0 || continue
-		alias2 "$m"
+		alias2 "$m" || continue
 		if $FAST ; then
+			case $PARALLEL in
+			no) ;;
+			0) ;;
+			2)
+				m2=""
+				for m1 in $ALIAS ; do
+					m2="$m2 insmod "/lib/modules/$KV/$m1" ;"
+				done
+				eval "( ${m2%;} ) >/dev/null 2>&1 &"
+				pids="$pids$! "
+				continue
+			;;
+			*)
+				pids="$pids$pid "
+				pid=""
+			;;
+			esac
+			
 			for m1 in $ALIAS ; do
+				wait $pid
 				$QUIET || echo -ne "\033[0G\033[0K$LCOUNT	$m1"
-				insmod "/lib/modules/$KV/$m1" >/dev/null 2>&1
+				insmod "/lib/modules/$KV/$m1" >/dev/null 2>&1 &
+				pid="$!"
 			done
 		else
+		if ! [[ $PARALLEL == 0 ]] ; then
+			pids="$pids$pid "
+			pid=""
+		fi
 		for m1 in $ALIAS ; do
 			m2=`echo -ne "$m1" | sed -e 's:.*/::g' -e 's/-/_/g' -e 's/\...$//'`
 			[[ "$m" == "$m2" ]] || single "$m2" 0 || continue
+			wait $pid
 			$QUIET || echo -ne "\033[0G\033[0K$LCOUNT	$m1"
-			insmod "/lib/modules/$KV/$m1" >/dev/null 2>&1
+			insmod "/lib/modules/$KV/$m1" >/dev/null 2>&1 &
+			pid="$!"
 		done
 		fi
 	done
@@ -46,6 +65,10 @@ refresh(){
 	echo -ne "\033[0G\033[0K$LCOUNT"
 	local i j l
 	
+	wait $pid $pids
+	pid=""
+	pids=""
+
 	if $FAST ; then
 		sed -e 's%^\(.*\)[	 ].*$%>\1<%g' </proc/modules | sort >"${PNP_TMP}".1
 		cat `grep -l "^DRIVER=" $(find /sys -name uevent -print 2>/dev/null) 2>/dev/null` |grep "^DRIVER=\|^MODALIAS="|sort -u|sed -e 's%-%_%g' -e 's%^.*=\(.*\)$%>\1<%g' >>"${PNP_TMP}".1
@@ -79,7 +102,7 @@ refresh(){
 }
 
 count(){
-	[[ "${LCOUNT#................}" == "${LCOUNT}" ]] && return 0
+	[[ "${LCOUNT#????????????????}" == "${LCOUNT}" ]] && return 0
 	bad_msg "Deadloop?"
 	return 1
 }
@@ -124,6 +147,8 @@ pnp_options(){
 	unload) MODUNLOAD=true ;;
 	loadall) LOADALL=true ;;
 	slow) FAST=false ;;
+	parallel-startup) PARALLEL=1 ;;
+	parallel-startup=*) PARALLEL="${i#*=}" ;;
 	esac
 	done
 }
@@ -161,6 +186,17 @@ load_all(){
 }
 
 syspnp(){
+	local PNP_TMP="${TMPDIR}/pnp.found"
+	local NOTLOADED=""
+	local NOFB=false
+	local NOPNP=false
+	local QUIET=false
+	local LOADALL=false
+	local FAST=true
+	local PARALLEL=0
+	local pid=""
+	local pids=""
+
 	[[ -e "/lib/modules/${KV}/modules.alias.sh" ]] || return
 	pnp_options
 	$NOPNP && return
@@ -205,6 +241,7 @@ syspnp(){
 	MDOLIST=""
 	echo -ne "\033[0G\033[0K"
 	$QUIET || good_msg "Boot time: $(cat /proc/uptime)"
+	echo "$(cat /proc/uptime)"
 	if [[ -n "${NOTLOADED}" ]] ; then
 		good_msg "Not loaded:$NOTLOADED"
 		# try again
