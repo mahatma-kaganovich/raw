@@ -241,7 +241,6 @@ syspnp(){
 	MDOLIST=""
 	echo -ne "\033[0G\033[0K"
 	$QUIET || good_msg "Boot time: $(cat /proc/uptime)"
-	echo "$(cat /proc/uptime)"
 	if [[ -n "${NOTLOADED}" ]] ; then
 		good_msg "Not loaded:$NOTLOADED"
 		# try again
