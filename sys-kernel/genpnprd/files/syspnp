@@ -70,7 +70,7 @@ refresh(){
 	pids=""
 
 	if $FAST ; then
-		sed -e 's%^\(.*\)[	 ].*$%>\1<%g' </proc/modules | sort >"${PNP_TMP}".1
+		sed -e 's%\([^ 	]*\)[	 ]*.*$%>\1<%g' </proc/modules | sort >"${PNP_TMP}".1
 		cat `grep -l "^DRIVER=" $(find /sys -name uevent -print 2>/dev/null) 2>/dev/null` |grep "^DRIVER=\|^MODALIAS="|sort -u|sed -e 's%-%_%g' -e 's%^.*=\(.*\)$%>\1<%g' >>"${PNP_TMP}".1
 		[[ "$(cat ${PNP_TMP}.1)" == "$(cat ${PNP_TMP}.2)" ]] && return 1
 		cp "${PNP_TMP}".1 "${PNP_TMP}".2
@@ -80,7 +80,7 @@ refresh(){
 			while read i ; do
 				grep -qF ">$i<" "${PNP_TMP}".0 && continue
 				[[ "$1" == "n" ]] && echo "$i" >>/nopnp.lst
-				$QUIET || echo -ne "$i"
+				$QUIET || echo -ne " $i"
 			done <"${PNP_TMP}".1
 			$QUIET || echo ""
 		fi
