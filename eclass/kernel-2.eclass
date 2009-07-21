@@ -8,7 +8,7 @@ IUSE="${IUSE} build-kernel debug custom-cflags pnp compressed integrated ipv6
 	kernel-drm +kernel-alsa"
 DEPEND="${DEPEND}
 	build-kernel? (
-		sys-kernel/genkernel
+		>=sys-kernel/genkernel-3.4.10.903
 		pnp? ( sys-kernel/genpnprd )
 		compressed? ( sys-kernel/genpnprd )
 		kernel-drm? ( !x11-base/x11-drm )
