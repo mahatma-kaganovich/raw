@@ -224,9 +224,9 @@ syspnp(){
 	# frost. save your silicon (and power)
 	# doload=p4-clockmod in other cases
 	ifmod thermal_sys && mod fan
-	mod acpi_cpufreq cpufreq_performance
 	i1="ondemand"
 	grep -q "^vendor_id.*AMD" /proc/cpuinfo && i1="conservative"
+	mod acpi_cpufreq cpufreq_performance cpufreq_${i1}
 	for i in /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor ; do
 		echo $i1 >$i
 	done
