@@ -9,7 +9,8 @@ MY_P="${PN}-${MY_PV}"
 #PATCH="mozilla-firefox-3.0.10-patches-0.1"
 EMVER="0.96.0"
 ## lang:enigmail_lang
-LANGS="en be ca:ca-AD cs de:de es_AR es_ES:es-ES fr:fr-FR gl hu:hu-HU lt nb_NO pl:pl-PL pt_PT:pt-PT ru:ru-RU sk tr:tr-TR"
+#LANGS="en be ca:ca-AD cs de:de es_AR es_ES:es-ES fr:fr-FR gl hu:hu-HU lt nb_NO pl:pl-PL pt_PT:pt-PT ru:ru-RU sk tr:tr-TR"
+LANGS="en be ca cs de es_AR es_ES fr gl hu lt nb_NO pl pt_PT ru sk tr"
 
 RESTRICT="nomirror"
 
@@ -90,10 +91,11 @@ src_unpack() {
 
 	for l in ${LINGUAS}; do
 		if use "linguas_${l}" && [[ ${l} != "en" ]] ; then
-			xpi_unpack "${MY_P}.${l/_/-}.langpack.xpi"
-			l="$(l2l $l)"
-			if [[ -n "${l}" ]] && use crypt && ! use moznomail ; then
-				xpi_unpack "enigmail-${l}-${EMVER}.xpi"
+			local l2="$(l2l $l)"
+			l=${l/_/-}
+			xpi_unpack "${MY_P}.${l}.langpack.xpi"
+			if [[ -n "${l2}" ]] && use crypt && ! use moznomail ; then
+				xpi_unpack "enigmail-${l2}-${EMVER}.xpi"
 			fi
 		fi
 	done
@@ -199,6 +201,7 @@ src_compile() {
 	mozconfig_use_enable mozdevelop jsd
 	mozconfig_use_enable mozdevelop xpctools
 	mozconfig_use_extension mozdevelop venkman
+	mozconfig_use_extension !minimal jssh
 	mozconfig_use_with threads pthreads
 
 	mozconfig_use_enable ldap
@@ -321,9 +324,10 @@ src_install() {
 	local LANG=""
 	for l in ${LINGUAS}; do
 		use "linguas_${l}" || continue
-		LANG=${LANG:=${l}}
-		[[ ${l} != "en" ]] || continue
-		xpi_install "${WORKDIR}/${MY_P}.${l/_/-}.langpack"
+		local ll=${l/_/-}
+		LANG=${LANG:=${ll}}
+		[[ ${l} == "en" ]] && continue
+		xpi_install "${WORKDIR}/${MY_P}.${ll}.langpack"
 		! use crypt && continue
 		use moznomail && continue
 		l="$(l2l $l)"
