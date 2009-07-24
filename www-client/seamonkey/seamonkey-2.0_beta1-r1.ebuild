@@ -32,6 +32,7 @@ RDEPEND="java? ( virtual/jre )
 		>=app-text/hunspell-1.2
 		>=dev-db/sqlite-3.6.7
 		>=media-libs/lcms-1.17
+		app-arch/bzip2
 	)
 	directfb? ( dev-libs/DirectFB )
 	gnome? ( >=gnome-base/gnome-vfs-2.3.5
