@@ -200,7 +200,7 @@ syspnp(){
 	[[ -e "/lib/modules/${KV}/modules.alias.sh" ]] || return
 	pnp_options
 	$NOPNP && return
-	local i i1
+	local i i1 i2
 	good_msg "Searching pnp"
 	for i in 0 1 2 ; do
 		echo -ne "" >"${PNP_TMP}.$i"
@@ -224,11 +224,28 @@ syspnp(){
 	# frost. save your silicon (and power)
 	# doload=p4-clockmod in other cases
 	ifmod thermal_sys && mod fan
-	i1="ondemand"
-	grep -q "^vendor_id.*AMD" /proc/cpuinfo && i1="conservative"
-	mod acpi_cpufreq cpufreq_performance cpufreq_${i1}
-	for i in /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor ; do
-		echo $i1 >$i
+	mod acpi_cpufreq
+	local gov="ondemand conservative"
+	grep -q "^vendor_id.*AMD" /proc/cpuinfo && gov="conservative ondemand"
+#	wait $pid $pids
+#	pid=""
+#	pids=""
+	for i1 in $gov ; do
+		mod cpufreq_${i1}
+		wait $pid $pids
+		pid=""
+		pids=""
+		for i in /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor ; do
+			echo $i1 >"$i" 2>/dev/null
+		done
+		i2=""
+		for i in /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor ; do
+			[[ -e "$i" ]] || continue
+			read i2 <"$i"
+			[[ "$i1" == "$i2" ]] && break
+		done
+		[[ "$i1" == "$i2" ]] && break
+		rmmod cpufreq_${i1} >/dev/null 2>&1
 	done
 
 	refresh
