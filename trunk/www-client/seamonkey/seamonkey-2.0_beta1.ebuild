@@ -201,7 +201,7 @@ src_compile() {
 	mozconfig_use_enable mozdevelop jsd
 	mozconfig_use_enable mozdevelop xpctools
 	mozconfig_use_extension mozdevelop venkman
-	mozconfig_use_extension !minimal jssh
+#	mozconfig_use_extension !minimal jssh
 	mozconfig_use_with threads pthreads
 
 	mozconfig_use_enable ldap
