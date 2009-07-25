@@ -1,7 +1,7 @@
 
 WANT_AUTOCONF="2.1"
 
-inherit flag-o-matic toolchain-funcs eutils mozconfig-3 makeedit multilib autotools mozextension
+inherit flag-o-matic toolchain-funcs eutils mozcoreconf-2 mozconfig-3 makeedit multilib autotools
 
 MY_PV="${PV/_beta/b}"
 MY_P="${PN}-${MY_PV}"
@@ -22,7 +22,7 @@ SRC_URI="http://releases.mozilla.org/pub/mozilla.org/${PN}/releases/${MY_PV}/sou
 KEYWORDS="~amd64 ~x86"
 SLOT="0"
 LICENSE="|| ( MPL-1.1 GPL-2 LGPL-2.1 )"
-IUSE="java ldap mozdevelop moznocompose moznoirc moznomail moznoroaming postgres crypt minimal moznopango restrict-javascript directfb moznosystem threads"
+IUSE="java ldap mozdevelop moznocompose moznoirc moznomail moznoroaming postgres crypt minimal restrict-javascript directfb moznosystem threads"
 
 RDEPEND="java? ( virtual/jre )
 	>=sys-devel/binutils-2.16.1
@@ -65,10 +65,6 @@ export MOZ_CO_PROJECT=suite
 export BUILD_OFFICIAL=1
 export MOZILLA_OFFICIAL=1
 export PERL="/usr/bin/perl"
-
-pkg_setup() {
-	use moznopango && warn_mozilla_launcher_stub
-}
 
 src_unpack() {
 	unpack ${MY_P}-source.tar.bz2
