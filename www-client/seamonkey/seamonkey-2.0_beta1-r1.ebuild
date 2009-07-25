@@ -1,7 +1,7 @@
 
 WANT_AUTOCONF="2.1"
 
-inherit flag-o-matic toolchain-funcs eutils mozcoreconf-2 mozconfig-3 makeedit multilib autotools
+inherit flag-o-matic toolchain-funcs eutils mozcoreconf-2 mozconfig-3 makeedit multilib autotools mozextension java-pkg-opt-2 python
 
 MY_PV="${PV/_beta/b}"
 MY_P="${PN}-${MY_PV}"
@@ -22,9 +22,11 @@ SRC_URI="http://releases.mozilla.org/pub/mozilla.org/${PN}/releases/${MY_PV}/sou
 KEYWORDS="~amd64 ~x86"
 SLOT="0"
 LICENSE="|| ( MPL-1.1 GPL-2 LGPL-2.1 )"
-IUSE="java ldap mozdevelop moznocompose moznoirc moznomail moznoroaming postgres crypt minimal restrict-javascript directfb moznosystem threads"
+IUSE="java ldap mozdevelop moznocompose moznoirc moznomail moznoroaming postgres crypt restrict-javascript
+	minimal directfb moznosystem threads jssh wifi python"
 
-RDEPEND="java? ( virtual/jre )
+RDEPEND="java? ( >=virtual/jre-1.4 )
+	python? ( >=dev-lang/python-2.3 )
 	>=sys-devel/binutils-2.16.1
 	!moznosystem? (
 		>=dev-libs/nss-3.12.2
@@ -39,16 +41,15 @@ RDEPEND="java? ( virtual/jre )
 		>>=gnome-base/libgnomeui-2.2.0 )
 	crypt? ( !moznomail? ( >=app-crypt/gnupg-1.4 ) )"
 
-DEPEND="${RDEPEND}
-	java? ( >=dev-java/java-config-0.2.0 )"
-
 PDEPEND="restrict-javascript? ( x11-plugins/noscript )"
 
-DEPEND="${RDEPEND}
-	java? ( >=dev-java/java-config-0.2.0 )
+DEPEND="java? ( >=virtual/jdk-1.4 )
+	${RDEPEND}
+	wifi? ( net-wireless/wireless-tools )
 	dev-lang/perl
 	dev-util/pkgconfig
 	postgres? ( >=virtual/postgresql-server-7.2.0 )"
+
 
 S="${WORKDIR}/comm-central"
 S1="${S}/mozilla"
@@ -117,9 +118,18 @@ src_unpack() {
 	eautoreconf
 }
 
+_make(){
+	emake -j1 JAVA_HOME="${JAVA_HOME}" \
+		CPPFLAGS="${CPPFLAGS} -DARON_WAS_HERE" \
+		CC="$(tc-getCC)" CXX="$(tc-getCXX)" LD="$(tc-getLD)" \
+		-f client.mk $* || die
+
+}
+
 src_compile() {
 	declare MOZILLA_FIVE_HOME="/usr/$(get_libdir)/${PN}"
 
+	local i
 	local o3=false
 	local omitfp=false
 
@@ -174,6 +184,7 @@ src_compile() {
 		--with-user-appdir=.mozilla \
 		--enable-system-hunspell \
 		--without-system-png \
+		--enable-pref-extensions \
 		--disable-tests
 
 	mozconfig_annotate 'places' --enable-storage --enable-places --enable-places_bookmarks
@@ -185,12 +196,16 @@ src_compile() {
 	# Other moz-specific settings
 	mozconfig_use_enable mozdevelop jsd
 	mozconfig_use_enable mozdevelop xpctools
+	mozconfig_use_extension python python/xpcom
+	mozconfig_use_enable java javaxpcom
+	mozconfig_use_extension jssh jssh
+#	mozconfig_use_extension widgetutils widgetutils
 	mozconfig_use_extension mozdevelop venkman
-#	mozconfig_use_extension !minimal jssh
-	mozconfig_use_with threads pthreads
-
+#	mozconfig_use_extension accessibility access-builtin
+	mozconfig_use_enable wifi necko-wifi
 	mozconfig_use_enable ldap
 	mozconfig_use_enable ldap ldap-experimental
+	mozconfig_use_with threads pthreads
 
 	if use moznoirc; then
 		mozconfig_annotate '+moznocompose +moznoirc' --enable-extensions=-irc
@@ -270,6 +285,7 @@ src_compile() {
 	#
 	####################################
 
+	JAVA_HOME="${JAVA_HOME}" \
 	CPPFLAGS="${CPPFLAGS} -DARON_WAS_HERE" \
 	CC="$(tc-getCC)" CXX="$(tc-getCXX)" LD="$(tc-getLD)" \
 	econf || die
