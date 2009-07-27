@@ -1,7 +1,7 @@
 
 WANT_AUTOCONF="2.1"
 
-inherit flag-o-matic toolchain-funcs eutils mozcoreconf-2 mozconfig-3 makeedit multilib autotools mozextension java-pkg-opt-2 python
+inherit flag-o-matic toolchain-funcs eutils mozcoreconf-2 mozconfig-3 makeedit multilib autotools mozextension fdo-mime java-pkg-opt-2 python
 
 MY_PV="${PV/_beta/b}"
 MY_P="${PN}-${MY_PV}"
@@ -377,7 +377,6 @@ src_install() {
 		${MOZILLA_FIVE_HOME}/${PN}-rebuild-databases.pl
 
 	# Install docs
-	dodoc "${S}"/{LEGAL,LICENSE}
 	dodoc "${S1}"/{LEGAL,LICENSE}
 }
 
@@ -392,10 +391,6 @@ pkg_preinst() {
 pkg_postinst() {
 	declare MOZILLA_FIVE_HOME="/usr/$(get_libdir)/${PN}"
 
-	# Update the component registry
-	MOZILLA_LIBDIR=${ROOT}${MOZILLA_FIVE_HOME} MOZILLA_LAUNCHER=${PN} \
-		/usr/libexec/mozilla-launcher -register
-
 	# Update mimedb for the new .desktop file 
 	fdo-mime_desktop_database_update
 
@@ -403,16 +398,4 @@ pkg_postinst() {
 	ewarn "have problems with exporting preferences from Seamonkey-1 -"
 	ewarn "just copy by hands requred files (prefs.js, ...)"
 	ewarn "from ~/.mozilla/default/<profile>/ to ~/.mozilla/seamonkey/<profile>/"
-}
-
-pkg_postrm() {
-	declare MOZILLA_FIVE_HOME="/usr/$(get_libdir)/${PN}"
-
-	# Update the component registry
-	if [[ -x ${MOZILLA_FIVE_HOME}/${PN}-bin ]]; then
-		MOZILLA_LIBDIR=${ROOT}${MOZILLA_FIVE_HOME} MOZILLA_LAUNCHER=${PN} \
-			/usr/libexec/mozilla-launcher -register
-	fi
-
-	update_mozilla_launcher_symlinks
 }
