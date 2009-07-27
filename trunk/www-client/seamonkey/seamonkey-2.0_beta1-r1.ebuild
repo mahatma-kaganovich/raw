@@ -105,7 +105,7 @@ src_unpack() {
 			[[ -d "${ll}" ]] || continue
 			einfo "Renaming enigmail locale '${ll}' to '${l}'"
 			rename "${ll}" "${l}" "${ll}" || die
-			sed -i -e 's%:'"${ll}"'\([:"]\)%:'"${l}"'\1%g' "${l}"/contents.rdf #"
+			sed -i -e "s:${ll}:${l}:g" "${l}"/contents.rdf jar.mn current-languages.txt
 		done
 		cd "${S}"/mailnews/extensions/enigmail
 		makemake2
