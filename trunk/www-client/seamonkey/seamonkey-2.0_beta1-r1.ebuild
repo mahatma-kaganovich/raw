@@ -23,7 +23,7 @@ KEYWORDS="~amd64 ~x86"
 SLOT="0"
 LICENSE="|| ( MPL-1.1 GPL-2 LGPL-2.1 )"
 IUSE="java ldap mozdevelop moznocompose moznoirc moznomail moznoroaming postgres crypt restrict-javascript
-	minimal directfb moznosystem threads jssh wifi python"
+	debug minimal directfb moznosystem threads jssh wifi python mobile"
 
 RDEPEND="java? ( >=virtual/jre-1.4 )
 	python? ( >=dev-lang/python-2.3 )
@@ -43,6 +43,7 @@ RDEPEND="java? ( >=virtual/jre-1.4 )
 
 PDEPEND="restrict-javascript? ( x11-plugins/noscript )"
 
+# wireless-tools requred by future (mercurial repo), maybe now too
 DEPEND="java? ( >=virtual/jdk-1.4 )
 	${RDEPEND}
 	wifi? ( net-wireless/wireless-tools )
@@ -118,14 +119,6 @@ src_unpack() {
 	eautoreconf
 }
 
-_make(){
-	emake -j1 JAVA_HOME="${JAVA_HOME}" \
-		CPPFLAGS="${CPPFLAGS} -DARON_WAS_HERE" \
-		CC="$(tc-getCC)" CXX="$(tc-getCXX)" LD="$(tc-getLD)" \
-		-f client.mk $* || die
-
-}
-
 src_compile() {
 	declare MOZILLA_FIVE_HOME="/usr/$(get_libdir)/${PN}"
 
@@ -152,9 +145,9 @@ src_compile() {
 	###### --disable-pango work in seamonkey-1.1.14, but broken here
 #	if use moznopango; then
 #		rmopt able-pango
-#		rmopt -freetype2
-#		mozconfig_annotate moznopango freetype2 \
-#			--enable-freetype2 \
+#		rmopt tree-freetype
+#		mozconfig_annotate -pango \
+#			--enable-tree-freetype \
 #			--disable-pango
 #	fi
 
@@ -194,6 +187,7 @@ src_compile() {
 	mozconfig_annotate 'galeon' --enable-oji --enable-mathml
 
 	# Other moz-specific settings
+#	mozconfig_use_enable truetype tree-freetype
 	mozconfig_use_enable mozdevelop jsd
 	mozconfig_use_enable mozdevelop xpctools
 	mozconfig_use_extension python python/xpcom
@@ -206,6 +200,7 @@ src_compile() {
 	mozconfig_use_enable ldap
 	mozconfig_use_enable ldap ldap-experimental
 	mozconfig_use_with threads pthreads
+	mozconfig_use_enable mobile mobile-optimize
 
 	if use moznoirc; then
 		mozconfig_annotate '+moznocompose +moznoirc' --enable-extensions=-irc
@@ -249,6 +244,7 @@ src_compile() {
 			--enable-url-classifier \
 			--enable-parental-controls
 	fi
+
 
 	mozconfig_annotate broken \
 		--disable-mochitest \
