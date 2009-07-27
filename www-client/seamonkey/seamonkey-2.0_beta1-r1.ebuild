@@ -24,7 +24,7 @@ KEYWORDS="~amd64 ~x86"
 SLOT="0"
 LICENSE="|| ( MPL-1.1 GPL-2 LGPL-2.1 )"
 IUSE="java ldap mozdevelop moznocompose moznoirc moznomail moznoroaming postgres crypt restrict-javascript
-	debug minimal directfb moznosystem threads jssh wifi python mobile moznocalendar"
+	debug minimal directfb moznosystem threads jssh wifi python mobile moznocalendar static"
 
 RDEPEND="java? ( >=virtual/jre-1.4 )
 	python? ( >=dev-lang/python-2.3 )
@@ -211,6 +211,7 @@ src_compile() {
 	mozconfig_use_with threads pthreads
 	mozconfig_use_enable mobile mobile-optimize
 	mozconfig_use_enable !moznocalendar calendar
+	mozconfig_use_enable static
 
 	if use moznoirc; then
 		mozconfig_annotate '+moznocompose +moznoirc' --enable-extensions=-irc
