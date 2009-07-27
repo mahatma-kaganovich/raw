@@ -24,7 +24,7 @@ KEYWORDS="~amd64 ~x86"
 SLOT="0"
 LICENSE="|| ( MPL-1.1 GPL-2 LGPL-2.1 )"
 IUSE="java ldap mozdevelop moznocompose moznoirc moznomail moznoroaming postgres crypt restrict-javascript
-	debug minimal directfb moznosystem threads jssh wifi python mobile"
+	debug minimal directfb moznosystem threads jssh wifi python mobile moznocalendar"
 
 RDEPEND="java? ( >=virtual/jre-1.4 )
 	python? ( >=dev-lang/python-2.3 )
@@ -175,7 +175,6 @@ src_compile() {
 
 	mozconfig_annotate 'gentoo' \
 		--with-system-bz2 \
-		--enable-calendar \
 		--enable-canvas \
 		--with-system-nspr \
 		--with-system-nss \
@@ -211,6 +210,7 @@ src_compile() {
 	mozconfig_use_enable ldap ldap-experimental
 	mozconfig_use_with threads pthreads
 	mozconfig_use_enable mobile mobile-optimize
+	mozconfig_use_enable !moznocalendar calendar
 
 	if use moznoirc; then
 		mozconfig_annotate '+moznocompose +moznoirc' --enable-extensions=-irc
@@ -290,7 +290,6 @@ src_compile() {
 	#
 	####################################
 
-	JAVA_HOME="${JAVA_HOME}" \
 	CPPFLAGS="${CPPFLAGS} -DARON_WAS_HERE" \
 	CC="$(tc-getCC)" CXX="$(tc-getCXX)" LD="$(tc-getLD)" \
 	econf || die
