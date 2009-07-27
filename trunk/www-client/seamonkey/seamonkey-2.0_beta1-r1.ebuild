@@ -7,6 +7,7 @@ MY_PV="${PV/_beta/b}"
 MY_P="${PN}-${MY_PV}"
 EMVER="0.96.0"
 LANGS="en be ca cs de es_AR es_ES fr gl hu lt nb_NO pl pt_PT ru sk tr"
+PATCH=""
 
 RESTRICT="nomirror"
 
