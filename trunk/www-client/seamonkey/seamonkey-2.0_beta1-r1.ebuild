@@ -195,6 +195,7 @@ src_compile() {
 	mozconfig_use_extension jssh jssh
 #	mozconfig_use_extension widgetutils widgetutils
 	mozconfig_use_extension mozdevelop venkman
+	mozconfig_use_extension mozdevelop layout-debug
 #	mozconfig_use_extension accessibility access-builtin
 	mozconfig_use_enable wifi necko-wifi
 	mozconfig_use_enable ldap
@@ -244,7 +245,6 @@ src_compile() {
 			--enable-url-classifier \
 			--enable-parental-controls
 	fi
-
 
 	mozconfig_annotate broken \
 		--disable-mochitest \
