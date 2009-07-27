@@ -99,16 +99,16 @@ src_unpack() {
 	if use crypt && ! use moznomail; then
 		cd "${S}"/mailnews/extensions || die
 		unpack enigmail-${EMVER}.tar.gz
-		cd "${S}"/mailnews/extensions/enigmail/lang || die "cd failed"
-		for l in ${LANGS} ; do
-			[[ -d "${l}" ]] && continue
-			local ll=`echo ${l}-*`
-			[[ -d "${ll}" ]] || continue
-			einfo "Renaming enigmail locale '${ll}' to '${l}'"
-			rename "${ll}" "${l}" "${ll}" || die
-			sed -i -e "s:${ll}:${l}:g" "${l}"/contents.rdf current-languages.txt
-		done
-		cd "${S}"/mailnews/extensions/enigmail
+#		cd "${S}"/mailnews/extensions/enigmail/lang || die
+#		for l in ${LANGS} ; do
+#			[[ -d "${l}" ]] && continue
+#			local ll=`echo ${l}-*`
+#			[[ -d "${ll}" ]] || continue
+#			einfo "Renaming enigmail locale '${ll}' to '${l}'"
+#			rename "${ll}" "${l}" "${ll}" || die
+#			sed -i -e "s:${ll}:${l}:g" "${l}"/contents.rdf current-languages.txt
+#		done
+		cd "${S}"/mailnews/extensions/enigmail || die
 		makemake2
 	fi
 
