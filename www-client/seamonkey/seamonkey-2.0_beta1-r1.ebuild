@@ -20,11 +20,12 @@ SRC_URI="http://releases.mozilla.org/pub/mozilla.org/${PN}/releases/${MY_PV}/sou
 
 [[ "${PATCH}" != "" ]] && SRC_URI="${SRC_URI}  mirror://gentoo/${PATCH}.tar.bz2"
 
-KEYWORDS="amd64 x86"
+KEYWORDS="~amd64 ~x86"
 SLOT="0"
 LICENSE="|| ( MPL-1.1 GPL-2 LGPL-2.1 )"
 IUSE="java ldap mozdevelop moznocompose moznoirc moznomail moznoroaming postgres crypt restrict-javascript
 	debug minimal directfb moznosystem threads jssh wifi python mobile moznocalendar static"
+#	qt-experimental"
 
 RDEPEND="java? ( >=virtual/jre-1.4 )
 	python? ( >=dev-lang/python-2.3 )
@@ -47,6 +48,9 @@ PDEPEND="restrict-javascript? ( x11-plugins/noscript )"
 # wireless-tools requred by future (mercurial repo), maybe now too
 DEPEND="java? ( >=virtual/jdk-1.4 )
 	${RDEPEND}
+       qt-experimental? (
+               x11-libs/qt-gui
+               x11-libs/qt-core )
 	wifi? ( net-wireless/wireless-tools )
 	dev-lang/perl
 	dev-util/pkgconfig
@@ -124,8 +128,7 @@ src_unpack() {
 	sed -i -e 's%^#elif$%#elif 1%g' "${S1}"/toolkit/xre/nsAppRunner.cpp
 	eend $? || die "sed failed"
 
-	cd "${S}"
-	eautoreconf
+
 }
 
 src_compile() {
@@ -154,9 +157,7 @@ src_compile() {
 	###### --disable-pango work in seamonkey-1.1.14, but broken here
 #	if use moznopango; then
 #		rmopt able-pango
-#		rmopt tree-freetype
 #		mozconfig_annotate -pango \
-#			--enable-tree-freetype \
 #			--disable-pango
 #	fi
 
@@ -195,7 +196,6 @@ src_compile() {
 	mozconfig_annotate 'galeon' --enable-oji --enable-mathml
 
 	# Other moz-specific settings
-#	mozconfig_use_enable truetype tree-freetype
 	mozconfig_use_enable mozdevelop jsd
 	mozconfig_use_enable mozdevelop xpctools
 	mozconfig_use_extension python python/xpcom
@@ -268,7 +268,11 @@ src_compile() {
 	$o3 && sed -i -e 's:\=\-O2:=-O3:g' .mozconfig
 	$omitfp && use !debug && append-flags -fomit-frame-pointer
 
-	#sed -i -e 's%--enable-default-toolkit=cairo-gtk2%--enable-default-toolkit=cairo-qt%g' "${S}"/.mozconfig
+	if use qt-experimental ; then
+		sed -i -e 's%--enable-default-toolkit=cairo-gtk2%--enable-default-toolkit=cairo-qt%g' "${S}"/.mozconfig
+		rmopt -system-cairo
+		mozconfig_annotate "qt-experimental" --disable-system-cairo
+	fi
 
 	use moznosystem &&
 	    einfo "USE 'moznosystem' flag - disabling usage system libs" &&
@@ -291,13 +295,12 @@ src_compile() {
 	#
 	####################################
 
-	CPPFLAGS="${CPPFLAGS} -DARON_WAS_HERE" \
-	CC="$(tc-getCC)" CXX="$(tc-getCXX)" LD="$(tc-getLD)" \
-	econf || die
+	# this way is more native there then eautoreconf + econf
+	emake -f client.mk configure CPPFLAGS="${CPPFLAGS} -DARON_WAS_HERE" || die
 
 	if use directfb; then
-		#local dl=`pkg-config directfb --libs`
-		local dl="-ldirectfb -ldirect"
+		local dl=`pkg-config directfb --libs`
+#		local dl="-ldirectfb -ldirect"
 		sed -i -e 's%\(^MOZ_DFB.*\)%\1 1%' \
 			-e 's%\(^OS_LIBS.*\)%\1 '"${dl}"'%' \
 			"${S1}"/config/autoconf.mk
@@ -315,7 +318,8 @@ src_compile() {
 	# requirements while compiling
 	edit_makefiles
 
-	emake || die "Emake failed. Before panic - just try to repeat emerge command."
+	# sometimes parallel build breaks
+	emake || emake -j1 || die
 
 	####################################
 	#
