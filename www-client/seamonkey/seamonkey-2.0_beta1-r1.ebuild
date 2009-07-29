@@ -20,7 +20,7 @@ SRC_URI="http://releases.mozilla.org/pub/mozilla.org/${PN}/releases/${MY_PV}/sou
 
 [[ "${PATCH}" != "" ]] && SRC_URI="${SRC_URI}  mirror://gentoo/${PATCH}.tar.bz2"
 
-KEYWORDS="~amd64 ~x86"
+KEYWORDS="amd64 x86"
 SLOT="0"
 LICENSE="|| ( MPL-1.1 GPL-2 LGPL-2.1 )"
 IUSE="java ldap mozdevelop moznocompose moznoirc moznomail moznoroaming postgres crypt restrict-javascript
