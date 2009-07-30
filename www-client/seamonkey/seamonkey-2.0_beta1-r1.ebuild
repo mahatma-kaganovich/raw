@@ -20,10 +20,10 @@ SRC_URI="http://releases.mozilla.org/pub/mozilla.org/${PN}/releases/${MY_PV}/sou
 
 [[ "${PATCH}" != "" ]] && SRC_URI="${SRC_URI}  mirror://gentoo/${PATCH}.tar.bz2"
 
-KEYWORDS="amd64 x86"
+KEYWORDS="~amd64 ~x86"
 SLOT="0"
 LICENSE="|| ( MPL-1.1 GPL-2 LGPL-2.1 )"
-IUSE="java ldap mozdevelop moznocompose moznoirc moznomail moznoroaming postgres crypt restrict-javascript
+IUSE="java ldap mozdevelop moznocompose moznoirc moznomail moznoroaming postgres crypt restrict-javascript startup-notification
 	debug minimal directfb moznosystem threads jssh wifi python mobile moznocalendar static"
 #	qt-experimental"
 
@@ -296,7 +296,7 @@ src_compile() {
 	####################################
 
 	# this way is more native there then eautoreconf + econf
-	emake -f client.mk configure CPPFLAGS="${CPPFLAGS} -DARON_WAS_HERE" || die
+	emake -f client.mk configure CC="$(tc-getCC)" CXX="$(tc-getCXX)" LD="$(tc-getLD)" || die
 
 	if use directfb; then
 		local dl=`pkg-config directfb --libs`
@@ -305,14 +305,6 @@ src_compile() {
 			-e 's%\(^OS_LIBS.*\)%\1 '"${dl}"'%' \
 			"${S1}"/config/autoconf.mk
 	fi
-
-	# It would be great if we could pass these in via CPPFLAGS or CFLAGS prior
-	# to econf, but the quotes cause configure to fail.
-	sed -i -e \
-		's|-DARON_WAS_HERE|-DGENTOO_NSPLUGINS_DIR=\\\"/usr/'"$(get_libdir)"'/nsplugins\\\" -DGENTOO_NSBROWSER_PLUGINS_DIR=\\\"/usr/'"$(get_libdir)"'/nsbrowser/plugins\\\"|' \
-		"${S}"/config/autoconf.mk \
-		"${S1}"/config/autoconf.mk \
-		"${S1}"/xpfe/global/buildconfig.html
 
 	# This removes extraneous CFLAGS from the Makefiles to reduce RAM
 	# requirements while compiling
@@ -377,8 +369,6 @@ src_install() {
 	# Add vendor
 	echo "pref(\"general.useragent.vendor\",\"Gentoo\");" >> "${D}"${MOZILLA_FIVE_HOME}/defaults/pref/vendor.js
 
-	ln -s ${D}/usr/$(get_libdir)/nsbrowser/plugins ${D}/usr/$(get_libdir)/${PN}/plugins
-
 	# Install rebuild script since mozilla-bin doesn't support registration yet
 	exeinto ${MOZILLA_FIVE_HOME}
 	doexe "${FILESDIR}"/${PN}-rebuild-databases.pl
@@ -387,6 +377,15 @@ src_install() {
 
 	# Install docs
 	dodoc "${S1}"/{LEGAL,LICENSE}
+
+	dodir /usr/$(get_libdir)/nsbrowser
+	mv "${D}"/usr/$(get_libdir)/{$PN,nsbrowser}/plugins
+	dosym ../nsbrowser/plugins /usr/$(get_libdir)/$PN/plugins
+
+	# Add StartupNotify=true bug 237317
+	use startup-notification &&
+		echo "StartupNotify=true" >> "${D}"/usr/share/applications/${PN}-${DESKTOP_PV}.desktop
+
 }
 
 pkg_preinst() {
