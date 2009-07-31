@@ -129,7 +129,11 @@ src_unpack() {
 	sed -i -e 's%^#elif$%#elif 1%g' "${S1}"/toolkit/xre/nsAppRunner.cpp
 	eend $? || die "sed failed"
 
-
+	local i
+	for i in "${S}" ; do
+		cd "${i}"
+		eautoreconf
+	done
 }
 
 src_compile() {
@@ -220,8 +224,7 @@ src_compile() {
 	fi
 	mozconfig_use_enable moznomemory necko-small-buffers
 	# to test
-#	mozconfig_use_enable !moznomemory xpcom-lea
-#	mozconfig_use_enable !moznomemory boehm
+	mozconfig_use_enable moznomemory xpcom-lea
 
 	if use moznoirc; then
 		mozconfig_annotate '+moznocompose +moznoirc' --enable-extensions=-irc
@@ -305,8 +308,10 @@ src_compile() {
 	#
 	####################################
 
-	# this way is more native there then eautoreconf + econf
-	emake -f client.mk configure CC="$(tc-getCC)" CXX="$(tc-getCXX)" LD="$(tc-getLD)" || die
+	CC="$(tc-getCC)" CXX="$(tc-getCXX)" LD="$(tc-getLD)" \
+	econf || die
+	# cross-compile problem:
+#	emake -f client.mk configure CC="$(tc-getCC)" CXX="$(tc-getCXX)" LD="$(tc-getLD)" || die
 
 	if use directfb; then
 		local dl=`pkg-config directfb --libs`
