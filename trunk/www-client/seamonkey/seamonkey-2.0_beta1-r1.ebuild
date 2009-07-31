@@ -20,12 +20,12 @@ SRC_URI="http://releases.mozilla.org/pub/mozilla.org/${PN}/releases/${MY_PV}/sou
 
 [[ "${PATCH}" != "" ]] && SRC_URI="${SRC_URI}  mirror://gentoo/${PATCH}.tar.bz2"
 
-KEYWORDS="~amd64 ~x86"
+KEYWORDS="amd64 x86"
 SLOT="0"
 LICENSE="|| ( MPL-1.1 GPL-2 LGPL-2.1 )"
 IUSE="java ldap mozdevelop moznocompose moznoirc moznomail moznoroaming postgres crypt restrict-javascript startup-notification
 	debug minimal directfb moznosystem threads jssh wifi python mobile moznocalendar static
-	moznomemory lea"
+	moznomemory"
 #	qt-experimental"
 
 RDEPEND="java? ( >=virtual/jre-1.4 )
@@ -223,7 +223,6 @@ src_compile() {
 		mozconfig_use_enable !moznomemory jemalloc
 	fi
 	mozconfig_use_enable moznomemory necko-small-buffers
-	mozconfig_use_enable lea xpcom-lea
 
 	if use moznoirc; then
 		mozconfig_annotate '+moznocompose +moznoirc' --enable-extensions=-irc
@@ -293,13 +292,9 @@ src_compile() {
 	# Finalize and report settings
 	mozconfig_final
 
-	# -fstack-protector breaks us
-	if gcc-version ge 4 1; then
-		gcc-specs-ssp && append-flags -fno-stack-protector
-	else
-		gcc-specs-ssp && append-flags -fno-stack-protector-all
+	if [[ $(gcc-major-version) -lt 4 ]]; then
+		append-cxxflags -fno-stack-protector
 	fi
-		filter-flags -fstack-protector -fstack-protector-all
 
 	####################################
 	#
