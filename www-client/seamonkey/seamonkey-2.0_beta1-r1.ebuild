@@ -34,7 +34,7 @@ RDEPEND="java? ( >=virtual/jre-1.4 )
 	!moznosystem? (
 		>=dev-libs/nss-3.12.2
 		>=dev-libs/nspr-4.7.3
-		>=app-text/hunspell-1.2
+		!static? ( >=app-text/hunspell-1.2 )
 		>=dev-db/sqlite-3.6.7
 		>=media-libs/lcms-1.17
 		app-arch/bzip2
@@ -189,7 +189,6 @@ src_compile() {
 		--enable-system-sqlite \
 		--with-default-mozilla-five-home=${MOZILLA_FIVE_HOME} \
 		--with-user-appdir=.mozilla \
-		--enable-system-hunspell \
 		--without-system-png \
 		--enable-pref-extensions \
 		--disable-tests
@@ -217,6 +216,7 @@ src_compile() {
 	mozconfig_use_enable mobile mobile-optimize
 	mozconfig_use_enable !moznocalendar calendar
 	mozconfig_use_enable static
+	mozconfig_use_enable !static system-hunspell
 	if use kernel_FreeBSD ; then
 		mozconfig_annotate FreeBSD --disable-jemalloc
 	else
