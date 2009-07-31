@@ -25,7 +25,7 @@ SLOT="0"
 LICENSE="|| ( MPL-1.1 GPL-2 LGPL-2.1 )"
 IUSE="java ldap mozdevelop moznocompose moznoirc moznomail moznoroaming postgres crypt restrict-javascript startup-notification
 	debug minimal directfb moznosystem threads jssh wifi python mobile moznocalendar static
-	moznomemory"
+	moznomemory lea"
 #	qt-experimental"
 
 RDEPEND="java? ( >=virtual/jre-1.4 )
@@ -223,8 +223,7 @@ src_compile() {
 		mozconfig_use_enable !moznomemory jemalloc
 	fi
 	mozconfig_use_enable moznomemory necko-small-buffers
-	# to test
-	mozconfig_use_enable moznomemory xpcom-lea
+	mozconfig_use_enable lea xpcom-lea
 
 	if use moznoirc; then
 		mozconfig_annotate '+moznocompose +moznoirc' --enable-extensions=-irc
