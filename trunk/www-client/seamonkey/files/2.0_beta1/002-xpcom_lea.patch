@@ -1,0 +1,14 @@
+Lea allocator try to ivalid redefine memmove.
+--- a/mozilla/xpcom/build/malloc.c
++++ b/mozilla/xpcom/build/malloc.c
+@@ -532,7 +532,9 @@
+     On Win32 platforms, 'memset()' and 'memcpy()' are already declared in
+     'windows.h'
+   */
+-#else
++#elif 1
++/* in linux defined too */
++#include <string.h>
+ #if __STD_C
+ void* memset(void*, int, size_t);
+ void* memcpy(void*, const void*, size_t);
