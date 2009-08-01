@@ -75,6 +75,18 @@ export MOZILLA_OFFICIAL=1
 export PERL="/usr/bin/perl"
 
 src_unpack() {
+	local i
+	# do not use pkg_setup to not care about eclasses
+	for i in x11-libs/cairo x11-libs/pango ; do
+		if ! built_with_use --missing true ${i} X; then
+			eerror "${i} is not built with X useflag."
+			eerror "Please add 'X' to your USE flags, and re-emerge ${i}."
+			die "${i} needs X"
+		fi
+	done
+	use static && use jssh &&
+		die 'Useflags "static" & "jssh" incompatible'
+
 	unpack ${MY_P}-source.tar.bz2
 
 	for l in ${LINGUAS}; do
@@ -129,7 +141,6 @@ src_unpack() {
 	sed -i -e 's%^#elif$%#elif 1%g' "${S1}"/toolkit/xre/nsAppRunner.cpp
 	eend $? || die "sed failed"
 
-	local i
 	for i in "${S}" ; do
 		cd "${i}"
 		eautoreconf
@@ -217,12 +228,7 @@ src_compile() {
 	mozconfig_use_enable !moznocalendar calendar
 	mozconfig_use_enable static
 	mozconfig_use_enable !static system-hunspell
-	if use kernel_FreeBSD ; then
-		mozconfig_annotate FreeBSD --disable-jemalloc
-	else
-		mozconfig_use_enable !moznomemory jemalloc
-	fi
-	mozconfig_use_enable moznomemory necko-small-buffers
+	mozconfig_use_enable !moznomemory jemalloc
 
 	if use moznoirc; then
 		mozconfig_annotate '+moznocompose +moznoirc' --enable-extensions=-irc
@@ -257,6 +263,7 @@ src_compile() {
 			--disable-help-viewer \
 			--disable-safe-browsing \
 			--disable-url-classifier \
+			--enable-necko-small-buffers \
 			--disable-parental-controls
 	else
 		mozconfig_annotate -minimal \
@@ -264,6 +271,7 @@ src_compile() {
 			--enable-help-viewer \
 			--enable-safe-browsing \
 			--enable-url-classifier \
+			--disable-necko-small-buffers \
 			--enable-parental-controls
 	fi
 
