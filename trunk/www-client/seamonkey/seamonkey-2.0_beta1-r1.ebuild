@@ -25,7 +25,7 @@ SLOT="0"
 LICENSE="|| ( MPL-1.1 GPL-2 LGPL-2.1 )"
 IUSE="java ldap mozdevelop moznocompose moznoirc moznomail moznoroaming postgres crypt restrict-javascript startup-notification
 	debug minimal directfb moznosystem threads jssh wifi python mobile moznocalendar static
-	moznomemory"
+	moznomemory accessibility"
 #	qt-experimental"
 
 RDEPEND="java? ( >=virtual/jre-1.4 )
@@ -116,6 +116,11 @@ src_unpack() {
 	if use crypt && ! use moznomail; then
 		cd "${S}"/mailnews/extensions || die
 		unpack enigmail-${EMVER}.tar.gz
+		cd "${S}"
+		[[ -e "${FILESDIR}/em-${EMVER}" ]] &&
+		    EPATCH_SUFFIX="patch" \
+		    EPATCH_FORCE="yes" \
+		    epatch "${FILESDIR}/em-${EMVER}"
 #		cd "${S}"/mailnews/extensions/enigmail/lang || die
 #		for l in ${LANGS} ; do
 #			[[ -d "${l}" ]] && continue
@@ -124,6 +129,17 @@ src_unpack() {
 #			einfo "Renaming enigmail locale '${ll}' to '${l}'"
 #			rename "${ll}" "${l}" "${ll}" || die
 #			sed -i -e "s:${ll}:${l}:g" "${l}"/contents.rdf current-languages.txt
+#		done
+#		for l in ${LANGS} ; do
+#			use "linguas_${l}" || continue
+#			cd "${S}"/mailnews/extensions/enigmail/lang/${l} || continue
+#			einfo "Making enigmail locale: $l"
+#			../make-lang.sh ${l} ${EMVER}
+#			local f="${S}/mailnews/extensions/enigmail/lang/${l}/enigmail-${l}-${EMVER}.xpi"
+#			[[ -e "${f}" ]] || continue
+#			xpi_unpack "${f}"
+#			cd "${S}"/mailnews/extensions/enigmail/lang
+#			sed -i -e "/${l}$/d" "${S}/mailnews/extensions/enigmail/lang/current-languages.txt"
 #		done
 		cd "${S}"/mailnews/extensions/enigmail || die
 		makemake2
@@ -219,6 +235,7 @@ src_compile() {
 #	mozconfig_use_extension widgetutils widgetutils
 	mozconfig_use_extension mozdevelop venkman
 	mozconfig_use_extension mozdevelop layout-debug
+	mozconfig_use_extension accessibility
 #	mozconfig_use_extension accessibility access-builtin
 	mozconfig_use_enable wifi necko-wifi
 	mozconfig_use_enable ldap
@@ -227,6 +244,7 @@ src_compile() {
 	mozconfig_use_enable mobile mobile-optimize
 	mozconfig_use_enable !moznocalendar calendar
 	mozconfig_use_enable static
+#	mozconfig_use_enable static js-static-build
 	mozconfig_use_enable !static system-hunspell
 	mozconfig_use_enable !moznomemory jemalloc
 
@@ -338,6 +356,7 @@ src_compile() {
 
 	if use crypt && ! use moznomail; then
 		emake -C "${S}"/mailnews/extensions/enigmail || die "make enigmail failed"
+
 	fi
 }
 
@@ -349,13 +368,14 @@ src_install() {
 	declare MOZILLA_FIVE_HOME=/usr/$(get_libdir)/${PN}
 
 	local LANG=""
+	local d
 	for l in ${LINGUAS}; do
 		use "linguas_${l}" || continue
 		l=${l/_/-}
 		LANG=${LANG:=${l}}
-		[[ ${l} == "en" ]] && continue
-		xpi_install "${WORKDIR}/${MY_P}.${l}.langpack"
-		! use crypt && continue
+		for d in "${WORKDIR}/${MY_P}.${l}.langpack" "${WORKDIR}/enigmail-${l}-${EMVER}" ; do
+			[[ -e "${d}" ]] && xpi_install "${d}"
+		done
 	done
 
 	# Most of the installation happens here

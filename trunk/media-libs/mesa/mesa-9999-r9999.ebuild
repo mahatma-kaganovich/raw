@@ -51,7 +51,8 @@ IUSE="${IUSE_VIDEO_CARDS}
 	nptl
 	xcb
 	kernel_FreeBSD
-	+gallium"
+	+gallium
+	+asm"
 
 RDEPEND="app-admin/eselect-opengl
 	dev-libs/expat
@@ -164,8 +165,7 @@ src_compile() {
 		myconf="${myconf} --with-state-trackers=dri,egl,glx,xorg"
 	fi
 	# Deactivate assembly code for pic build
-	# Sparc assembly code is not working
-	( use pic || use sparc ) && myconf="${myconf} --disable-asm"
+	( use pic || use !asm ) && myconf="${myconf} --disable-asm"
 	# Get rid of glut includes
 	rm -f "${S}"/include/GL/glut*h
 	[[ "${drv}" == "dri" ]] && myconf="${myconf} --with-dri-drivers=${DRI_DRIVERS}"
