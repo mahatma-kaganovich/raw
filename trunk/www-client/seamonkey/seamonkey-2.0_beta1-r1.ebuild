@@ -77,7 +77,7 @@ export PERL="/usr/bin/perl"
 src_unpack() {
 	local i
 	# do not use pkg_setup to not care about eclasses
-	for i in x11-libs/cairo x11-libs/pango ; do
+	use moznosystem || for i in x11-libs/cairo x11-libs/pango ; do
 		if ! built_with_use --missing true ${i} X; then
 			eerror "${i} is not built with X useflag."
 			eerror "Please add 'X' to your USE flags, and re-emerge ${i}."
