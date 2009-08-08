@@ -39,6 +39,7 @@ src_install(){
 	( use !"${d}" || ! [[ -d "${FILESDIR}/${d}" ]] ) && continue
 	cp "${FILESDIR}/${d}"/* "${D}"/usr/ppatch/ -Rf
     done
+    rm `find ${D} -name .svn` -Rf
     install "${TMPDIR}"/p-patch "${D}"/usr/sbin
 }
 
