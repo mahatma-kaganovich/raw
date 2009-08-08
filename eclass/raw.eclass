@@ -1,10 +1,16 @@
+inherit eutils
+EXPORT_FUNCTIONS pkg_postinst
+
 KEYWORDS="raw"
 
-# force PDEPEND/RAWDEPEND to rebuild after
-pkg_postinst(){
+# force RAWDEPEND to rebuild after
+raw_pkg_postinst(){
 	local p
-	for p in ${PDEPEND} ${RAWDEPEND}; do
-		force "${ROOT}/var/db/pkg"/${p}
+	for p in ${RAWDEPEND}; do
+		force "${ROOT}/var/db/pkg"/${p} && continue
+		for p1 in $(grep -wrl "$p" "${ROOT}/var/db/pkg" --include=PROVIDE) ; do
+			force ${p1%/PROVIDE}
+		done
 	done
 	if [[ "${REBUILD}" != "" ]]; then
 		einfo "=========================================================="
