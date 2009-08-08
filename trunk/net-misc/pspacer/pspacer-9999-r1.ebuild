@@ -17,6 +17,7 @@ DEPEND="doc? ( app-text/asciidoc )
 PDEPEND="sys-apps/iproute2
 	virtual/linux-sources"
 #	=dev-libs/libnl-1.0_pre6-r1
+RAWDEPEND="${PDEPEND}"
 
 src_compile(){
 m=""
