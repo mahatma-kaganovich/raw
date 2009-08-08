@@ -5,14 +5,14 @@ KEYWORDS="raw"
 
 # force RAWDEPEND to rebuild after
 raw_pkg_postinst(){
-	local p
+	local p p1 i
 	for p in ${RAWDEPEND}; do
 		force "${ROOT}/var/db/pkg"/${p} && continue
 		for p1 in $(grep -wrl "$p" "${ROOT}/var/db/pkg" --include=PROVIDE) ; do
 			force ${p1%/PROVIDE}
 		done
 	done
-	if [[ "${REBUILD}" != "" ]]; then
+	if [[ -n "${REBUILD}" ]]; then
 		einfo "=========================================================="
 		einfo "= Run 'emerge -Nv world' to rebuild \"${REBUILD}\""
 		einfo "=========================================================="
@@ -25,9 +25,13 @@ force(){
 		[[ -e "${p}" ]] || return 1
 		local pp=${p/${ROOT}\/var\/db\/pkg\//}
 		for f in "${p}"/{USE,IUSE}; do
-			grep -q "raw-force-rebuild" "${f}" && continue
-			sed -i -e 's/\(.*\)/\1 raw-force-rebuild/' "${f}"
-			[[ "${pp}" != "" ]] && REBUILD="${REBUILD} ${pp}"
+			if [[ -e "${f}" ]]; then
+				grep -q "raw-force-rebuild" "${f}" && continue
+				sed -i -e 's/\(.*\)/\1 raw-force-rebuild/' "${f}"
+			else
+				echo "raw-force-rebuild" >"${f}"
+			fi
+			[[ -n "${pp}" ]] && REBUILD="${REBUILD} ${pp}"
 			pp=""
 		done
 	done
