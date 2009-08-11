@@ -1,5 +1,5 @@
 #! /usr/bin/perl
-# p-patch v0.05, by mahatma
+# p-patch v0.06, by mahatma
 
 my $s;
 my %f;
@@ -125,7 +125,8 @@ err("'$_[0]' write")
 
 sub rdir{
 my @d;
-for(sort <$_[0]>){
+for(<$_[0]>){
+#print " + $_\n";
 push @d,rf("<$_")
 }
 @d
@@ -181,11 +182,39 @@ flush();
 }
 }
 
+sub p_patch2{
+my $ok=1;
+for(sort @_){
+	my $cmd;
+	if(-d $_){$ok&&=p_patch2(<$_/*>)}
+	elsif(! -e $_){$ok=0}
+	elsif(substr($_,-8) eq '.p-patch'){print " + $_\n";p_patch(rf($_));}
+	elsif(substr($_,-6) eq '.patch'){$cmd="patch -i \"$_\""}
+	elsif(substr($_,-10) eq '.patch.bz2'){$cmd="bzip2 -dc \"$_\" | patch"}
+	else{$ok=0}
+	if(defined($cmd)){
+		print " + $_\n";
+		$cmd.=" >&2 -tN -d \"$ENV{S}\" -p";
+		for my $p (1,0){
+			next if(system("$cmd$p -s --dry-run") || system("$cmd$p"));
+			print "OK (-p$p)\n";
+			last;
+		}
+	}
+}
+$ok
+}
+
 open STDERR,">&2";
 select(STDERR);
 $|=1;
 my $ok=1;
 local %ENV0=%ENV;
-for(@ARGV){p_patch(substr($_,0,2) eq '--'?substr($_,2):-d $_?rdir("$_/*.p-patch"):rf("<$_")||($ok=0))}
+for(@ARGV){
+	print "ppatch: $_\n";
+	if(substr($_,0,2) eq '--'){p_patch(substr($_,2))}
+	elsif(-e $_){$ok&&=p_patch2($_)}
+	else{$ok=0}
+}
 while(my ($k,$v)=each %ENV){print STDOUT "eval $k=".quotemeta($v)."\n" if($v ne $ENV0{$k})}
 $ok

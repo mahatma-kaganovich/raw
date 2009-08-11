@@ -1,4 +1,0 @@
-for(<$ENV{PPATCH}/*.patch>) {
-print " Trying to apply patch: $_\n";
-print `( patch --dry-run -p0 -stNi $_ -d $ENV{S} && patch -p0 -tNi $_ -d $ENV{S} && echo "OK (-p0)" ) || ( patch --dry-run -p1 -stNi $_ -d $ENV{S} && patch -p1 -tNi $_ -d $ENV{S} && echo "OK (-p1)" )`
-}
