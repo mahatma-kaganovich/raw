@@ -333,16 +333,14 @@ config_defaults(){
 		else
 			m=""
 		fi
-		[[ "${m}" == "--" ]] ||
 		grep -Prh "^\s*menuconfig\s+.*?${cfgl}\s*bool(?:\s.*)?\$" ${i} --include="Kconfig*" 2>/dev/null  | while read i1 o ; do
-			[[ "${i1}" == "menuconfig" ]] && cfg y "${o}" -
+			[[ "${i1}" == "menuconfig" ]] && cfg y "${o}" "${m}"
 		done
 		grep -Prh "^\s*(?:menu)?config\s+.*?${cfgl}\s*tristate(?:\s.*)?\$" ${i} --include="Kconfig*" 2>/dev/null  | while read i1 o ; do
 			[[ "${i1#menu}" == "config" ]] && cfg m "${o}" "${m}"
 		done
-		[[ "${m}" == "--" ]] ||
 		grep -Prh "^\s*config\s+.*?${cfgl}\s*bool(?:\s[^\n]*)?${cfgl}[^\n]*If[ 	\n]+unsure,[ 	\n]+say[ 	\n]+Y\." ${i} --include="Kconfig*" 2>/dev/null  | while read i1 o ; do
-			[[ "${i1}" == "config" ]] && cfg y "${o}" -
+			[[ "${i1}" == "config" ]] && cfg y "${o}" "${m}"
 		done
 	done
 	while cfg_loop .config.{1,2} ; do
