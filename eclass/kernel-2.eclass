@@ -15,8 +15,7 @@ DEPEND="${DEPEND}
 		kernel-alsa? ( !media-sound/alsa-driver )
 	) "
 
-[[ "${KERNEL_CONFIG}" == "" ]] &&
-    KERNEL_CONFIG="KALLSYMS_EXTRA_PASS DMA_ENGINE USB_STORAGE_[\w\d]+
+: ${KERNEL_CONFIG:="KALLSYMS_EXTRA_PASS DMA_ENGINE USB_STORAGE_[\w\d]+
 	PREEMPT_NONE
 	-X86_GENERIC MTRR_SANITIZER IA32_EMULATION LBD
 	GFS2_FS_LOCKING_DLM NTFS_RW
@@ -60,7 +59,7 @@ DEPEND="${DEPEND}
 	TIPC_ADVANCED NET_IPGRE_BROADCAST
 	IP_VS_PROTO_[\d\w_]*
 	KERNEL_LZMA
-	ISA MCA MCA_LEGACY EISA NET_ISA
+	ISA MCA MCA_LEGACY EISA NET_ISA PCI PCI_LEGACY
 	PCIEASPM CRYPTO_DEV_HIFN_795X_RNG PERF_COUNTERS
 	X86_SPEEDSTEP_RELAXED_CAP_CHECK
 	SLIP_COMPRESSED SLIP_SMART NET_FC LOGO_LINUX_[\w\d]*
@@ -69,9 +68,10 @@ DEPEND="${DEPEND}
 	===bugs:
 	-TR -RADIO_RTRACK
 	===kernel.conf:
-	"
-[[ "${KERNEL_MODULES}" == "" ]] &&
-    KERNEL_MODULES="+."
+	"}
+: ${KERNEL_MODULES:="+."}
+# prefer: "-." - defconfig, "." - defconfig for "y|m", "+." - Kconfig/oldconfig
+: ${KERNEL_DEFAULTS:="."}
 
 PROVIDE="sources? ( virtual/linux-sources )
 	kernel-alsa? ( virtual/alsa )"
@@ -125,7 +125,7 @@ kernel-2_src_compile() {
 	fi
 	[[ -n ${cflags} ]] && sed -i -e "s/^\(KBUILD_CFLAGS.*-O.\)/\1 ${cflags}/g" Makefile
 	use build-kernel || return
-	config_defaults
+	time config_defaults
 	einfo "Compiling kernel"
 	kmake all
 	local p=""
@@ -224,6 +224,9 @@ cfg(){
 	while [[ -e ${tmp} ]] ; do
 		tmp="${tmp}.1"
 	done
+	# safe
+#	grep -P "^(?:\# )?CONFIG_${o}(?:=.*| is not set)\$" .config >$tmp
+	# faster
 	( grep -P "^(?:\# )?CONFIG_${o}(?:=.*| is not set)\$" .config || echo "${o}" ) >$tmp
 	while read i ; do
 		i1="${i}"
@@ -242,7 +245,8 @@ cfg(){
 		fi
 		sed -i -e "/^# CONFIG_${i} is not set/d" -e "/^CONFIG_${i}=.*/d" .config
 		[[ "$3" == "-"  ]] && grep -P "^CONFIG_${i}=" .config.def >>.config && continue
-		[[ "$3" == "--"  ]] && grep -P "^(?:CONFIG_${i}=)|(?:${i} is not set)" .config.def >>.config && continue
+		[[ "$3" == "--"  ]] && grep -P "^(?:CONFIG_${i}=)|(?:# CONFIG_${i} is not set)" .config.def >>.config && continue
+		echo "${i}" >>.config.set
 		if [[ "${r}" == "n" ]]; then
 			echo "# CONFIG_${i} is not set" >>.config
 		elif [[ "${r}" != "-" ]]; then
@@ -276,6 +280,7 @@ cfg_loop(){
 }
 
 setconfig(){
+	einfo "Applying KERNEL_CONFIG"
 	local i o
 	cfg y EXT2_FS
 	if use pnp || use compressed; then
@@ -310,6 +315,19 @@ setconfig(){
 	done
 }
 
+_i_m(){
+	einfo "Configuring $1: ${i}"
+	m="-"
+	i1="${i}"
+	i="${i#+}"
+	if [[ "${i1}" == "${i}" ]] ; then
+		i="${i#-}"
+		[[ "${i1}" == "${i}" ]] || m="--"
+	else
+		m=""
+	fi
+}
+
 config_defaults(){
 	local i i1 o m xx
 	einfo "Configuring kernel"
@@ -318,29 +336,35 @@ config_defaults(){
 		KERNEL_CONFIG="${KERNEL_CONFIG} -IP_ADVANCED_ROUTER -NETFILTER ~IP_FIB_TRIE"
 		KERNEL_MODULES="${KERNEL_MODULES} -net +net/sched +net/irda +net/bluetooth"
 	fi
+	touch .config.set
 	kmake defconfig >/dev/null
 	cp .config .config.def
-	sed -i -e '/^#/d' .config
     while cfg_loop .config.{3,4} ; do
-	for i in ${KERNEL_MODULES}; do
-		einfo "Searching modules: ${i}"
-		m="-"
-		i1="${i}"
-		i="${i#+}"
-		if [[ "${i1}" == "${i}" ]] ; then
-			i="${i#-}"
-			[[ "${i1}" == "${i}" ]] || m="--"
-		else
-			m=""
-		fi
+	for i in ${KERNEL_DEFAULTS}; do
+		_i_m "menu defaults"
 		grep -Prh "^\s*menuconfig\s+.*?${cfgl}\s*bool(?:\s.*)?\$" ${i} --include="Kconfig*" 2>/dev/null  | while read i1 o ; do
 			[[ "${i1}" == "menuconfig" ]] && cfg y "${o}" "${m}"
 		done
+	done
+	for i in ${KERNEL_MODULES}; do
+		_i_m "modules"
 		grep -Prh "^\s*(?:menu)?config\s+.*?${cfgl}\s*tristate(?:\s.*)?\$" ${i} --include="Kconfig*" 2>/dev/null  | while read i1 o ; do
 			[[ "${i1#menu}" == "config" ]] && cfg m "${o}" "${m}"
 		done
+	done
+	for i in ${KERNEL_DEFAULTS}; do
+		_i_m "defaults"
+		[[ "${m}" == "--" ]] ||
+		grep -Prh "^\s*config\s+.*?${cfgl}\s*bool(?:\s.*)?\$" ${i} --include="Kconfig*" 2>/dev/null  | while read i1 o ; do
+			[[ "${i1}" == "config" ]] || continue
+			grep -q "^${o}\$" .config.set && continue
+			[[ -z "${m}" ]] && sed -i -e "/^CONFIG_${o}=.*/d" .config .config.def
+			sed -i -e "/^# CONFIG_${o} is not set/d" .config .config.def
+		done
 		grep -Prh "^\s*config\s+.*?${cfgl}\s*bool(?:\s[^\n]*)?${cfgl}[^\n]*If[ 	\n]+unsure,[ 	\n]+say[ 	\n]+Y\." ${i} --include="Kconfig*" 2>/dev/null  | while read i1 o ; do
-			[[ "${i1}" == "config" ]] && cfg y "${o}" "${m}"
+			[[ "${i1}" == "config" ]] || continue
+			grep -q "^${o}\$" .config.set && continue
+			cfg y "${o}" "${m}"
 		done
 	done
 	while cfg_loop .config.{1,2} ; do
@@ -348,7 +372,7 @@ config_defaults(){
 		yes '' 2>/dev/null | kmake oldconfig >/dev/null
 	done
     done
-    rm .config.{old,def}
+    rm .config.{old,def,set}
 }
 
 arch(){
