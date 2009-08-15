@@ -13,8 +13,8 @@ KEYWORDS="~alpha ~amd64 ~arm ~hppa ~ia64 ~mips ~ppc ~ppc64 ~s390 ~sh ~sparc ~x86
 IUSE="debug doc"
 DEPEND="doc? ( app-text/asciidoc )
 	app-portage/ppatch"
-PDEPEND="sys-apps/iproute2"
-#	virtual/linux-sources"
+PDEPEND="sys-apps/iproute2
+	virtual/linux-sources"
 #	=dev-libs/libnl-1.0_pre6-r1
 RAWDEPEND="${PDEPEND}"
 
