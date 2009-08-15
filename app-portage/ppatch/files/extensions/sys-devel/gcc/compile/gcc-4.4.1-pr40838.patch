@@ -1,0 +1,188 @@
+Based on http://gcc.gnu.org/ml/gcc-patches/2009-08/msg00392.html
+Re-fixed for gcc 4.4.1
+============================================================
+gcc/
+
+2009-08-06  H.J. Lu  <hongjiu.lu@intel.com>
+
+PR target/40838
+* config/i386/i386.c (ix86_update_stack_boundary): Use
+STACK_BOUNDARY if use_stack_boundary_for_incoming_stack_boundary
+is set.
+(VALID_SSE_VECTOR_MODE): New.
+(ix86_minimum_alignment): In 32bit, set
+use_stack_boundary_for_incoming_stack_boundary if any SSE
+variables are put on stack.
+
+* config/i386/i386.h (machine_function): Add
+use_stack_boundary_for_incoming_stack_boundary.
+
+gcc/testsuite/
+
+2009-08-06  H.J. Lu  <hongjiu.lu@intel.com>
+
+PR target/40838
+* gcc.target/i386/incoming-6.c: New.
+* gcc.target/i386/incoming-7.c: Likewise.
+* gcc.target/i386/incoming-8.c: Likewise.
+* gcc.target/i386/incoming-9.c: Likewise.
+
+
+============================================================
+diff -pruN a/gcc/config/i386/i386.c b/gcc/config/i386/i386.c
+--- a/gcc/config/i386/i386.c	2009-07-21 10:22:51.000000000 +0300
++++ b/gcc/config/i386/i386.c	2009-08-07 21:05:51.000000000 +0300
+@@ -8038,11 +8038,19 @@ find_drap_reg (void)
+ static void
+ ix86_update_stack_boundary (void)
+ {
++  /* Should we use STACK_BOUNDARY for incoming stack boundary?  */
++  unsigned int incoming_stack_boundary;
++
++  if (cfun->machine->use_stack_boundary_for_incoming_stack_boundary)
++    incoming_stack_boundary = STACK_BOUNDARY;
++  else
++    incoming_stack_boundary = ix86_default_incoming_stack_boundary;
++
+   /* Prefer the one specified at command line. */
+   ix86_incoming_stack_boundary 
+     = (ix86_user_incoming_stack_boundary
+        ? ix86_user_incoming_stack_boundary
+-       : ix86_default_incoming_stack_boundary);
++       : incoming_stack_boundary);
+ 
+   /* Incoming stack alignment can be changed on individual functions
+      via force_align_arg_pointer attribute.  We use the smallest
+@@ -19547,6 +19555,10 @@ ix86_local_alignment (tree exp, enum mac
+   return align;
+ }
+ 
++#define VALID_SSE_VECTOR_MODE(MODE) \
++  ((MODE) == V4SFmode || (MODE) == V4SImode || (MODE) == V2DFmode \
++   || (MODE) == V16QImode || (MODE) == V8HImode || (MODE) == V2DImode)
++
+ /* Compute the minimum required alignment for dynamic stack realignment
+    purposes for a local variable, parameter or a stack slot.  EXP is
+    the data type or decl itself, MODE is its mode and ALIGN is the
+@@ -19558,7 +19570,7 @@ ix86_minimum_alignment (tree exp, enum m
+ {
+   tree type, decl;
+ 
+-  if (TARGET_64BIT || align != 64 || ix86_preferred_stack_boundary >= 64)
++  if (TARGET_64BIT)
+     return align;
+ 
+   if (exp && DECL_P (exp))
+@@ -19572,6 +19584,15 @@ ix86_minimum_alignment (tree exp, enum m
+       decl = NULL;
+     }
+ 
++  /* In 32bit, use STACK_BOUNDARY for incoming stack boundary if any
++     SSE variables are put on stack.  */
++  if (VALID_SSE_VECTOR_MODE (mode)
++      || (type && VALID_SSE_VECTOR_MODE (TYPE_MODE (type))))
++     cfun->machine->use_stack_boundary_for_incoming_stack_boundary = 1;
++
++  if (align != 64 || ix86_preferred_stack_boundary >= 64)
++    return align;
++
+   /* Don't do dynamic stack realignment for long long objects with
+      -mpreferred-stack-boundary=2.  */
+   if ((mode == DImode || (type && TYPE_MODE (type) == DImode))
+diff -pruN a/gcc/config/i386/i386.h b/gcc/config/i386/i386.h
+--- a/gcc/config/i386/i386.h	2009-07-11 22:06:26.000000000 +0300
++++ b/gcc/config/i386/i386.h	2009-08-07 21:05:51.000000000 +0300
+@@ -2401,6 +2401,8 @@ struct machine_function GTY(())
+      ix86_current_function_calls_tls_descriptor macro for a better
+      approximation.  */
+   int tls_descriptor_call_expanded_p;
++  /* Use STACK_BOUNDARY for incoming stack boundary.  */
++  int use_stack_boundary_for_incoming_stack_boundary;
+   /* This value is used for amd64 targets and specifies the current abi
+      to be used. MS_ABI means ms abi. Otherwise SYSV_ABI means sysv abi.  */
+   int call_abi;
+diff -pruN a/gcc/testsuite/gcc.target/i386/incoming-6.c b/gcc/testsuite/gcc.target/i386/incoming-6.c
+--- a/gcc/testsuite/gcc.target/i386/incoming-6.c	1970-01-01 03:00:00.000000000 +0300
++++ b/gcc/testsuite/gcc.target/i386/incoming-6.c	2009-08-07 21:05:51.000000000 +0300
+@@ -0,0 +1,17 @@
++/* PR target/40838 */
++/* { dg-do compile { target { { ! *-*-darwin* } && ilp32 } } } */
++/* { dg-options "-w -O2 -msse2 -mpreferred-stack-boundary=4" } */
++
++typedef int v4si __attribute__ ((vector_size (16)));
++
++extern v4si y(v4si *s3);
++
++extern v4si s1, s2;
++
++v4si x(void)
++{
++  v4si s3 = s1 + s2;
++  return y(&s3);
++}
++
++/* { dg-final { scan-assembler "andl\[\\t \]*\\$-16,\[\\t \]*%esp" } } */
+diff -pruN a/gcc/testsuite/gcc.target/i386/incoming-7.c b/gcc/testsuite/gcc.target/i386/incoming-7.c
+--- a/gcc/testsuite/gcc.target/i386/incoming-7.c	1970-01-01 03:00:00.000000000 +0300
++++ b/gcc/testsuite/gcc.target/i386/incoming-7.c	2009-08-07 21:05:51.000000000 +0300
+@@ -0,0 +1,16 @@
++/* PR target/40838 */
++/* { dg-do compile { target { { ! *-*-darwin* } && ilp32 } } } */
++/* { dg-options "-w -O2 -msse2 -mpreferred-stack-boundary=4" } */
++
++typedef int v4si __attribute__ ((vector_size (16)));
++
++extern v4si y(v4si, v4si, v4si, v4si, v4si);
++
++extern v4si s1, s2;
++
++v4si x(void)
++{
++  return y(s1, s2, s1, s2, s2);
++}
++
++/* { dg-final { scan-assembler "andl\[\\t \]*\\$-16,\[\\t \]*%esp" } } */
+diff -pruN a/gcc/testsuite/gcc.target/i386/incoming-8.c b/gcc/testsuite/gcc.target/i386/incoming-8.c
+--- a/gcc/testsuite/gcc.target/i386/incoming-8.c	1970-01-01 03:00:00.000000000 +0300
++++ b/gcc/testsuite/gcc.target/i386/incoming-8.c	2009-08-07 21:05:51.000000000 +0300
+@@ -0,0 +1,18 @@
++/* PR target/40838 */
++/* { dg-do compile { target { { ! *-*-darwin* } && ilp32 } } } */
++/* { dg-options "-w -O3 -msse2 -mpreferred-stack-boundary=4" } */
++
++float
++foo (float f)
++{
++  float array[128];
++  float x;
++  int i;
++  for (i = 0; i < sizeof(array) / sizeof(*array); i++)
++    array[i] = f;
++  for (i = 0; i < sizeof(array) / sizeof(*array); i++)
++    x += array[i];
++  return x;
++}
++
++/* { dg-final { scan-assembler "andl\[\\t \]*\\$-16,\[\\t \]*%esp" } } */
+diff -pruN a/gcc/testsuite/gcc.target/i386/incoming-9.c b/gcc/testsuite/gcc.target/i386/incoming-9.c
+--- a/gcc/testsuite/gcc.target/i386/incoming-9.c	1970-01-01 03:00:00.000000000 +0300
++++ b/gcc/testsuite/gcc.target/i386/incoming-9.c	2009-08-07 21:05:51.000000000 +0300
+@@ -0,0 +1,18 @@
++/* PR target/40838 */
++/* { dg-do compile { target { { ! *-*-darwin* } && ilp32 } } } */
++/* { dg-options "-w -O3 -mno-sse -mpreferred-stack-boundary=4" } */
++
++float
++foo (float f)
++{
++  float array[128];
++  float x;
++  int i;
++  for (i = 0; i < sizeof(array) / sizeof(*array); i++)
++    array[i] = f;
++  for (i = 0; i < sizeof(array) / sizeof(*array); i++)
++    x += array[i];
++  return x;
++}
++
++/* { dg-final { scan-assembler-not "andl\[\\t \]*\\$-16,\[\\t \]*%esp" } } */
