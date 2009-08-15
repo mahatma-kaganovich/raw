@@ -3,7 +3,6 @@ ESVN_REPO_URI="http://pspacer.googlecode.com/svn/branches/devel/"
 RAWDEPEND="sys-kernel/*-sources-* dev-libs/libnl-1.0_pre6*"
 inherit eutils subversion raw
 
-MY_PV=cvs
 DESCRIPTION="PSPacer is a precise software pacer of IP traffic for Linux"
 #HOMEPAGE="http://www.gridmpi.org/gridtcp.en.jsp"
 HOMEPAGE="http://code.google.com/p/pspacer/"
@@ -14,8 +13,8 @@ KEYWORDS="~alpha ~amd64 ~arm ~hppa ~ia64 ~mips ~ppc ~ppc64 ~s390 ~sh ~sparc ~x86
 IUSE="debug doc"
 DEPEND="doc? ( app-text/asciidoc )
 	app-portage/ppatch"
-PDEPEND="sys-apps/iproute2
-	virtual/linux-sources"
+PDEPEND="sys-apps/iproute2"
+#	virtual/linux-sources"
 #	=dev-libs/libnl-1.0_pre6-r1
 RAWDEPEND="${PDEPEND}"
 
