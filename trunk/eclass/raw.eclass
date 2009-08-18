@@ -8,6 +8,7 @@ raw_pkg_postinst(){
 	local p p1 i
 	local d="${D}/usr/ppatch/"
 	for p in "${d}"*/* ; do
+		[[ -d "${p}" ]] || continue
 		p="${p#${d}}"
 		force "${ROOT}/var/db/pkg"/${p} && continue
 		for p1 in $(grep -wrl "$p" "${ROOT}/var/db/pkg" --include=PROVIDE) ; do
