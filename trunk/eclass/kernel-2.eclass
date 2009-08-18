@@ -73,7 +73,8 @@ DEPEND="${DEPEND}
 # prefer: "-." - defconfig, "." - defconfig for "y|m", "+." - Kconfig/oldconfig
 : ${KERNEL_DEFAULTS:="."}
 
-PROVIDE="virtual/linux-sources
+PROVIDE="sources? ( virtual/linux-sources )
+	!sources? ( virtual/linux-kernel )
 	kernel-alsa? ( virtual/alsa )"
 
 [[ -e "${CONFIG_ROOT}/etc/kernels/kernel.conf" ]] && source "${CONFIG_ROOT}/etc/kernels/kernel.conf"

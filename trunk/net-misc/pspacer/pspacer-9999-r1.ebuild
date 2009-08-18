@@ -1,6 +1,5 @@
 
 ESVN_REPO_URI="http://pspacer.googlecode.com/svn/branches/devel/"
-RAWDEPEND="sys-kernel/*-sources-* dev-libs/libnl-1.0_pre6*"
 inherit eutils subversion raw
 
 DESCRIPTION="PSPacer is a precise software pacer of IP traffic for Linux"
@@ -16,7 +15,6 @@ DEPEND="doc? ( app-text/asciidoc )
 PDEPEND="sys-apps/iproute2
 	virtual/linux-sources"
 #	=dev-libs/libnl-1.0_pre6-r1
-RAWDEPEND="${PDEPEND}"
 
 src_compile(){
 m=""
