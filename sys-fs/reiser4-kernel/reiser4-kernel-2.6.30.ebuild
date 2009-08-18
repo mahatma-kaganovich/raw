@@ -5,7 +5,7 @@ DESCRIPTION="Reiser4 FS patches for linux kernel"
 SLOT="${PV}"
 SRC_URI="ftp://ftp.kernel.org/pub/linux/kernel/people/edward/reiser4/reiser4-for-2.6/${FN}"
 KEYWORDS="~x86 ~amd64"
-PDEPEND="virtual/linux-sources"
+PDEPEND="|| ( virtual/linux-sources virtual/linux-kernel )"
 RESTRICT="nomirror"
 S="${WORKDIR}"
 

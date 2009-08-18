@@ -13,7 +13,7 @@ IUSE="debug doc"
 DEPEND="doc? ( app-text/asciidoc )
 	app-portage/ppatch"
 PDEPEND="sys-apps/iproute2
-	virtual/linux-sources"
+	|| ( virtual/linux-sources virtual/linux-kernel )"
 #	=dev-libs/libnl-1.0_pre6-r1
 
 src_compile(){
