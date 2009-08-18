@@ -3,10 +3,12 @@ EXPORT_FUNCTIONS pkg_postinst
 
 KEYWORDS="raw"
 
-# force RAWDEPEND to rebuild after
+# force to rebuild after
 raw_pkg_postinst(){
 	local p p1 i
-	for p in ${RAWDEPEND}; do
+	local d="${D}/usr/ppatch/"
+	for p in "${d}"*/* ; do
+		p="${p#${d}}"
 		force "${ROOT}/var/db/pkg"/${p} && continue
 		for p1 in $(grep -wrl "$p" "${ROOT}/var/db/pkg" --include=PROVIDE) ; do
 			force ${p1%/PROVIDE}

@@ -4,7 +4,6 @@ SRC_URI=""
 DESCRIPTION="smf common atom"
 KEYWORDS="~x86 ~amd64"
 PDEPEND="mail-mta/sendmail"
-RAWDEPEND="${PDEPEND}"
 DEPEND="app-portage/ppatch"
 
 

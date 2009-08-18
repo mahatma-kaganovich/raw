@@ -9,7 +9,6 @@ RDEPEND="dev-lang/perl"
 DEPEND="${RDEPEND}"
 IUSE=""
 PDEPEND=""
-RAWDEPEND=""
 
 # every patchset (=useflag) is files/... dir
 ppinit(){
@@ -18,12 +17,11 @@ ppinit(){
 		[[ -d "$p" ]] || continue
 		f="${p##*/}"
 		IUSE="$IUSE $f"
-		for p1 in "$p"/*/* ; do
-			[[ -d "${p1}" ]] || continue
-			pac="${p1#$p/}"
-			#PDEPEND="$PDEPEND $f? ( $pac )"
-			RAWDEPEND="$RAWDEPEND $pac"
-		done
+#		for p1 in "$p"/*/* ; do
+#			[[ -d "${p1}" ]] || continue
+#			pac="${p1#$p/}"
+#			PDEPEND="$PDEPEND $f? ( $pac )"
+#		done
 	done
 }
 
@@ -32,7 +30,8 @@ ppinit
 src_install(){
     local d
     dodir /usr/sbin
-    dodir /usr/ppatch
+    dodir /usr/ppatch/virtual
+    dosym linux-sources /usr/ppatch/virtual/linux-kernel
     cp "${FILESDIR}"/p-patch-${PV} "${TMPDIR}"/p-patch
     cp "${FILESDIR}"/*.p-patch "${D}"/usr/ppatch/
     for d in $IUSE ; do
