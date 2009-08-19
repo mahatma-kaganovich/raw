@@ -65,6 +65,7 @@ DEPEND="${DEPEND}
 	SLIP_COMPRESSED SLIP_SMART NET_FC LOGO_LINUX_[\w\d]*
 	-8139TOO_PIO
 	-COMPAT_BRK -COMPAT_VDSO
+	NET_CLS_IND
 	===bugs:
 	-TR -RADIO_RTRACK
 	===kernel.conf:
@@ -334,7 +335,7 @@ config_defaults(){
 	einfo "Configuring kernel"
 	echo -e "KERNEL_CONFIG=\"${KERNEL_CONFIG}\""
 	if use minimal; then
-		KERNEL_CONFIG="${KERNEL_CONFIG} -IP_ADVANCED_ROUTER -NETFILTER ~IP_FIB_TRIE"
+		KERNEL_CONFIG="${KERNEL_CONFIG} -IP_ADVANCED_ROUTER -NETFILTER ~IP_FIB_TRIE -NET_CLS_IND"
 		KERNEL_MODULES="${KERNEL_MODULES} -net +net/sched +net/irda +net/bluetooth"
 	fi
 	touch .config.set
