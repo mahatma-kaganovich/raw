@@ -269,7 +269,6 @@ cfg(){
 		;;
 		esac
 		echo "${i}" >>.config.set
-		[[ "${l}" == "${i1}" ]] && continue
 		[[ "${i1}" != "${i}" ]] && sed -i -e "/^# CONFIG_${i} is not set/d" -e "/^CONFIG_${i}=.*/d" .config
 		echo "${l}" >>.config
 	done <$tmp

@@ -223,7 +223,7 @@ syspnp(){
 #	ifmod usual_tables && mod usb_storage # on demand
 	# frost. save your silicon (and power)
 	# doload=p4-clockmod in other cases
-	ifmod thermal_sys && mod fan
+#	ifmod thermal_sys && mod fan
 	mod acpi_cpufreq
 	local gov="ondemand conservative"
 	grep -q "^vendor_id.*AMD" /proc/cpuinfo && gov="conservative ondemand"
