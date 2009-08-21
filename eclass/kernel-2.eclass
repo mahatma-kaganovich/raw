@@ -84,8 +84,6 @@ fi
 
 BDIR="${WORKDIR}/build"
 
-cfgl="\n(?:[ 	][^\n]*\n|\n)*"
-
 set_kv(){
 	local v="$1"
 	KV="${v}"
@@ -102,7 +100,7 @@ set_kv(){
 }
 
 get_v(){
-	grep -P "^$1\s*=.*$" "${S}"/Makefile | sed -e 's%^.*= *%%'
+	grep -P "^$1[ 	]*=.*$" "${S}"/Makefile | sed -e 's%^.*= *%%'
 }
 
 get_kv(){
@@ -127,7 +125,7 @@ kernel-2_src_compile() {
 	fi
 	[[ -n ${cflags} ]] && sed -i -e "s/^\(KBUILD_CFLAGS.*-O.\)/\1 ${cflags}/g" Makefile
 	use build-kernel || return
-	time config_defaults
+	config_defaults
 	einfo "Compiling kernel"
 	kmake all
 	local p=""
@@ -218,10 +216,20 @@ run_genkernel(){
 	rm "${S}/genkernel"
 }
 
+grep_kconfig(){
+	local c="^[ 	]*$1[ 	]+"
+	local t="$2"
+	local x="$3"
+	local cfgl="\n(?:[ 	][^\n]*\n|\n)*"
+	[[ -n "${t}" ]] && t="[ 	]*${t}(?:[ 	][^\n]*)?"
+	[[ -n "${x}" ]] && [[ -n "${t}" ]] && t="${t}${cfgl}"
+	grep -Prh "${c}.*?${cfgl}${t}${x}\$" "$4" --include="Kconfig*" 2>/dev/null | grep -P "${c}"
+}
+
 cfg(){
 	local r="$1"
 	local o="$2"
-	local i i1 i2
+	local i i1 i2 i3 l l1
 	local tmp="${TMPDIR}/pnp.tmp"
 	while [[ -e ${tmp} ]] ; do
 		tmp="${tmp}.1"
@@ -230,30 +238,40 @@ cfg(){
 #	grep -P "^(?:\# )?CONFIG_${o}(?:=.*| is not set)\$" .config >$tmp
 	# faster
 	( grep -P "^(?:\# )?CONFIG_${o}(?:=.*| is not set)\$" .config || echo "${o}" ) >$tmp
-	while read i ; do
-		i1="${i}"
-		i=${i#\# }
+	while read i1 ; do
+		i=${i1#\# }
 		i=${i#CONFIG_}
-		i=${i/=*/}
-		i=${i/ is not set/}
+		i=${i%%=*}
+		i=${i%% *}
 		[ "${cfg_exclude// $i }" == "${cfg_exclude}" ] || continue
-		if [[ "${r}" == "n" ]] && grep -q "^CONFIG_${i}=" .config ; then
-			for i2 in `grep -Prh "^\s*(?:menu)?config\s+.*?${cfgl}\s*select ${i}\n" . --include="Kconfig*" 2>/dev/null |grep -P "^\s*(?:menu)?config"` ; do
-				if [[ "${i2}" != "config" && "${i2}" != "menuconfig" ]] ; then
+		case "${r}" in
+		n)
+			if [[ "${i1}" == "CONFIG_${i}="* ]] ; then
+#			if grep -q "^CONFIG_${i}=" .config ; then
+				grep_kconfig "(?:menu)?config" "" "[ 	]*select[ 	]+${i}" . | while read i3 i2 ; do
 					einfo "CONFIG: -$i -> -$i2"
 					cfg $r $i2
-				fi
-			done
-		fi
-		sed -i -e "/^# CONFIG_${i} is not set/d" -e "/^CONFIG_${i}=.*/d" .config
-		[[ "$3" == "-"  ]] && grep -P "^CONFIG_${i}=" .config.def >>.config && continue
-		[[ "$3" == "--"  ]] && grep -P "^(?:CONFIG_${i}=)|(?:# CONFIG_${i} is not set)" .config.def >>.config && continue
+				done
+			fi
+			l="# CONFIG_${i} is not set"
+		;;
+		-) l="" ;;
+		*) l="CONFIG_${i}=${r}" ;;
+		esac
+		case "$3" in
+		--)
+			l1=$( grep -P "^(?:CONFIG_${i}=)|(?:# CONFIG_${i} is not set)" .config.def )
+			[[ -n "$l1" ]] && l="${l1}"
+		;;
+		-)
+			l1=$( grep -P "^CONFIG_${i}=" .config.def )
+			[[ -n "$l1" ]] && l="${l1}"
+		;;
+		esac
 		echo "${i}" >>.config.set
-		if [[ "${r}" == "n" ]]; then
-			echo "# CONFIG_${i} is not set" >>.config
-		elif [[ "${r}" != "-" ]]; then
-			echo "CONFIG_${i}=${r}" >>.config
-		fi
+		[[ "${l}" == "${i1}" ]] && continue
+		[[ "${i1}" != "${i}" ]] && sed -i -e "/^# CONFIG_${i} is not set/d" -e "/^CONFIG_${i}=.*/d" .config
+		echo "${l}" >>.config
 	done <$tmp
 	rm $tmp
 }
@@ -344,27 +362,25 @@ config_defaults(){
     while cfg_loop .config.{3,4} ; do
 	for i in ${KERNEL_DEFAULTS}; do
 		_i_m "menu defaults"
-		grep -Prh "^\s*menuconfig\s+.*?${cfgl}\s*bool(?:\s.*)?\$" ${i} --include="Kconfig*" 2>/dev/null  | while read i1 o ; do
-			[[ "${i1}" == "menuconfig" ]] && cfg y "${o}" "${m}"
+		grep_kconfig "menuconfig" "bool" "" ${i} | while read i1 o ; do
+			cfg y "${o}" "${m}"
 		done
 	done
 	for i in ${KERNEL_MODULES}; do
 		_i_m "modules"
-		grep -Prh "^\s*(?:menu)?config\s+.*?${cfgl}\s*tristate(?:\s.*)?\$" ${i} --include="Kconfig*" 2>/dev/null  | while read i1 o ; do
-			[[ "${i1#menu}" == "config" ]] && cfg m "${o}" "${m}"
+		grep_kconfig "(?:menu)?config" "tristate" "" ${i} | while read i1 o ; do
+			cfg m "${o}" "${m}"
 		done
 	done
 	for i in ${KERNEL_DEFAULTS}; do
 		_i_m "defaults"
 		[[ "${m}" == "--" ]] ||
-		grep -Prh "^\s*config\s+.*?${cfgl}\s*bool(?:\s.*)?\$" ${i} --include="Kconfig*" 2>/dev/null  | while read i1 o ; do
-			[[ "${i1}" == "config" ]] || continue
+		grep_kconfig "config" "bool" "" ${i} | while read i1 o ; do
 			grep -q "^${o}\$" .config.set && continue
 			[[ -z "${m}" ]] && sed -i -e "/^CONFIG_${o}=.*/d" .config .config.def
 			sed -i -e "/^# CONFIG_${o} is not set/d" .config .config.def
 		done
-		grep -Prh "^\s*config\s+.*?${cfgl}\s*bool(?:\s[^\n]*)?${cfgl}[^\n]*If[ 	\n]+unsure,[ 	\n]+say[ 	\n]+Y\." ${i} --include="Kconfig*" 2>/dev/null  | while read i1 o ; do
-			[[ "${i1}" == "config" ]] || continue
+		grep_kconfig "config" "bool" "[^\n]*If\s+unsure,\s+say\s+Y\..*" ${i} | while read i1 o ; do
 			grep -q "^${o}\$" .config.set && continue
 			cfg y "${o}" "${m}"
 		done
@@ -378,6 +394,10 @@ config_defaults(){
 }
 
 arch(){
+	if [[ -n "${KERNEL_ARCH}" ]] ; then
+		echo "${KERNEL_ARCH}"
+		return
+	fi
 	local arch=$(tc-ninja_magic_to_arch)
 	case ${arch} in
 		amd64) echo "x86_64"
