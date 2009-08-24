@@ -125,7 +125,7 @@ kernel-2_src_compile() {
 	fi
 	[[ -n ${cflags} ]] && sed -i -e "s/^\(KBUILD_CFLAGS.*-O.\)/\1 ${cflags}/g" Makefile
 	use build-kernel || return
-	config_defaults
+	time config_defaults
 	einfo "Compiling kernel"
 	kmake all
 	local p=""
@@ -230,15 +230,10 @@ cfg(){
 	local r="$1"
 	local o="$2"
 	local i i1 i2 i3 l l1
-	local tmp="${TMPDIR}/pnp.tmp"
-	while [[ -e ${tmp} ]] ; do
-		tmp="${tmp}.1"
-	done
 	# safe
-#	grep -P "^(?:\# )?CONFIG_${o}(?:=.*| is not set)\$" .config >$tmp
+#	grep -P "^(?:\# )?CONFIG_${o}(?:=.*| is not set)\$" .config | while read i1 ; do
 	# faster
-	( grep -P "^(?:\# )?CONFIG_${o}(?:=.*| is not set)\$" .config || echo "${o}" ) >$tmp
-	while read i1 ; do
+	( grep -P "^(?:\# )?CONFIG_${o}(?:=.*| is not set)\$" .config || echo "${o}" ) | while read i1 ; do
 		i=${i1#\# }
 		i=${i#CONFIG_}
 		i=${i%%=*}
@@ -247,7 +242,6 @@ cfg(){
 		case "${r}" in
 		n)
 			if [[ "${i1}" == "CONFIG_${i}="* ]] ; then
-#			if grep -q "^CONFIG_${i}=" .config ; then
 				grep_kconfig "(?:menu)?config" "" "[ 	]*select[ 	]+${i}" . | while read i3 i2 ; do
 					einfo "CONFIG: -$i -> -$i2"
 					cfg $r $i2
@@ -271,8 +265,7 @@ cfg(){
 		echo "${i}" >>.config.set
 		[[ "${i1}" != "${i}" ]] && sed -i -e "/^# CONFIG_${i} is not set/d" -e "/^CONFIG_${i}=.*/d" .config
 		echo "${l}" >>.config
-	done <$tmp
-	rm $tmp
+	done
 }
 
 cfg_use(){
