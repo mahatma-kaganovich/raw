@@ -2,7 +2,7 @@ $etc||="$ENV{SS}/etc";
 $rc="$etc/portage/bashrc";
 wf(">$rc",'') if(!-e $rc);
 addon($rc,'#',"ppatch auto",qq(PPATCHDIR="\$ROOT/usr/ppatch"
-for PPATCH in \$CATEGORY/\$PN \$PROVIDE ; do
+for PPATCH in \$CATEGORY/\$PN \$PN \$PROVIDE ; do
 PPATCH="\$PPATCHDIR/\$PPATCH/\$EBUILD_PHASE/"
 if [[ "\$EBUILD_PHASE" && -e "\$PPATCH" ]] ; then export PPATCH PPATCHDIR S ; `p-patch \$PPATCH` ; fi
 done),0);
