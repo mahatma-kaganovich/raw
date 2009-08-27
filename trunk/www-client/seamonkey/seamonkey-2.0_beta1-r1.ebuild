@@ -304,7 +304,7 @@ src_compile() {
 	mozconfig_use_enable !debug install-strip
 	$o3 && sed -i -e 's:\=\-O2:=-O3:g' .mozconfig
 	$omitfp && use !debug && append-flags -fomit-frame-pointer
-	[[ $(gcc-major-version).$(gcc-minor-version) == 4.4 ]] && append-flags -mno-sse
+	use x86 && [[ $(gcc-major-version).$(gcc-minor-version) == 4.4 ]] && append-flags -mno-sse
 
 	if use qt-experimental ; then
 		sed -i -e 's%--enable-default-toolkit=cairo-gtk2%--enable-default-toolkit=cairo-qt%g' "${S}"/.mozconfig
