@@ -1,0 +1,10 @@
+diff -pruN a/Lib/compileall.py b/Lib/compileall.py
+--- a/Lib/compileall.py	2008-03-04 23:14:04.000000000 +0200
++++ b/Lib/compileall.py	2009-09-04 15:55:33.000000000 +0300
+@@ -154,4 +154,6 @@ def main():
+ 
+ if __name__ == '__main__':
+     exit_status = int(not main())
++    if os.getenv('CHOST') != os.getenv('CBUILD'):
++        sys.exit(0)
+     sys.exit(exit_status)
