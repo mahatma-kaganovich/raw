@@ -1,5 +1,5 @@
 #! /usr/bin/perl
-# p-patch v0.06, by mahatma
+# p-patch v0.08, by mahatma
 
 my $s;
 my %f;
@@ -147,7 +147,7 @@ $d
 }
 
 my %wild;
-   
+
 sub wild{
 my $p=shift;
 my @x=();
@@ -184,16 +184,18 @@ flush();
 
 sub p_patch2{
 my $ok=1;
-for(sort @_){
+my @lst=sort @_;
+while($#lst>-1){
+	my $i=pop @lst;
 	my $cmd;
-	if(-d $_){$ok&&=p_patch2(<$_/*>)}
-	elsif(! -e $_){$ok=0}
-	elsif(substr($_,-8) eq '.p-patch'){print " + $_\n";p_patch(rf($_));}
-	elsif(substr($_,-6) eq '.patch'){$cmd="patch -i \"$_\""}
-	elsif(substr($_,-10) eq '.patch.bz2'){$cmd="bzip2 -dc \"$_\" | patch"}
+	if(-d $i){$ok&&=p_patch2(<$i/*>)}
+	elsif(! -e $i){$ok=0}
+	elsif(substr($i,-8) eq '.p-patch'){print " + $i\n";p_patch(rf($i));}
+	elsif(substr($i,-6) eq '.patch'){$cmd="patch -i \"$i\""}
+	elsif(substr($i,-10) eq '.patch.bz2'){$cmd="bzip2 -dc \"$i\" | patch"}
 	else{$ok=0}
 	if(defined($cmd)){
-		print " + $_\n";
+		print " + $i\n";
 		$cmd.=" >&2 -tN -d \"$ENV{S}\" -p";
 		for my $p (1,0){
 			next if(system("$cmd$p -s --dry-run") || system("$cmd$p"));
