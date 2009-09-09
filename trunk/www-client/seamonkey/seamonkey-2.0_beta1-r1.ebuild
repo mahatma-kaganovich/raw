@@ -25,7 +25,7 @@ SLOT="0"
 LICENSE="|| ( MPL-1.1 GPL-2 LGPL-2.1 )"
 IUSE="java ldap mozdevelop moznocompose moznoirc moznomail moznoroaming postgres crypt restrict-javascript startup-notification
 	debug minimal directfb moznosystem threads jssh wifi python mobile moznocalendar static
-	moznomemory accessibility"
+	moznomemory accessibility sse"
 #	qt-experimental"
 
 RDEPEND="java? ( >=virtual/jre-1.4 )
@@ -304,7 +304,13 @@ src_compile() {
 	mozconfig_use_enable !debug install-strip
 	$o3 && sed -i -e 's:\=\-O2:=-O3:g' .mozconfig
 	$omitfp && use !debug && append-flags -fomit-frame-pointer
-	use x86 && [[ $(gcc-major-version).$(gcc-minor-version) == 4.4 ]] && append-flags -mno-sse
+	if use x86 && [[ $(gcc-major-version).$(gcc-minor-version) == 4.4 ]] ; then
+		if use sse ; then
+			append-flags -msse -mstackrealign
+		else
+			append-flags -mno-sse
+		fi
+	fi
 
 	if use qt-experimental ; then
 		sed -i -e 's%--enable-default-toolkit=cairo-gtk2%--enable-default-toolkit=cairo-qt%g' "${S}"/.mozconfig
