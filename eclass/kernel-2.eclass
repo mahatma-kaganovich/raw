@@ -400,7 +400,9 @@ arch(){
 }
 
 kmake(){
-	emake ARCH=$(arch) $* ${KERNEL_MAKEOPT} || die
+	local o=""
+	[[ "${CBUILD}" != "${CTARGET}" || "${CHOST}" != "${CTARGET}" ]] && o="CROSS_COMPILE=${CTARGET}-"
+	emake ARCH=$(arch) $o $* ${KERNEL_MAKEOPT} || die
 }
 
 fixes(){
