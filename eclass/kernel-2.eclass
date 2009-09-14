@@ -7,9 +7,9 @@ IUSE="${IUSE} build-kernel debug custom-cflags pnp compressed integrated ipv6
 	netboot nls unicode +acl minimal selinux custom-arch
 	kernel-drm +kernel-alsa +sources"
 DEPEND="${DEPEND}
+	pnp? ( sys-kernel/genpnprd )
 	build-kernel? (
 		>=sys-kernel/genkernel-3.4.10.903
-		pnp? ( sys-kernel/genpnprd )
 		compressed? ( sys-kernel/genpnprd )
 		kernel-drm? ( !x11-base/x11-drm )
 		kernel-alsa? ( !media-sound/alsa-driver )
@@ -188,7 +188,7 @@ kernel-2_src_install() {
 				dosym "${f}-${KV}" /boot/"${f}-${SLOT}"
 			done
 			use sources && dosym linux-${KV_FULL} /usr/src/linux-${SLOT}
-			use integrated || dosym initrd-${KV}.img /usr/src/initrd-${SLOT}.img
+			use integrated || dosym initrd-${KV}.img /boot/initrd-${SLOT}.img
 		fi
 		if use sources ; then
 			find "${S}" -name "*.cmd" | while read f ; do
@@ -212,7 +212,7 @@ run_genkernel(){
 	cp /usr/bin/genkernel "${S}" || die
 	sed -i -e 's/has_loop/true/' "${S}/genkernel"
 #	LDFLAGS="" ARCH="$(arch)" ABI="${KERNEL_ABI}" "${S}/genkernel" --cachedir="${TMPDIR}/genkernel-cache" --tempdir="${TMPDIR}/genkernel" --logfile="${TMPDIR}/genkernel.log" --utils-arch=$(tc-ninja_magic_to_arch) --arch-override=$(arch) --postclear $* || die "genkernel failed"
-	LDFLAGS="" "${S}/genkernel" --cachedir="${TMPDIR}/genkernel-cache" --tempdir="${TMPDIR}/genkernel" --logfile="${TMPDIR}/genkernel.log" --arch-override=$(arch) --postclear $* || die "genkernel failed"
+	LDFLAGS="" "${S}/genkernel" --cachedir="${TMPDIR}/genkernel-cache" --tempdir="${TMPDIR}/genkernel" --logfile="${TMPDIR}/genkernel.log" --arch-override=$(arch) --utils-arch=$(arch) --utils-cross-compile=${CTARGET}- --postclear $* || die "genkernel failed"
 	rm "${S}/genkernel"
 }
 
