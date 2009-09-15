@@ -149,18 +149,22 @@ kernel-2_src_compile() {
 	r=`ls initramfs*-${KV}`
 	rename "${r}" "initrd-${KV}.img" "${r}" || die "initramfs rename failed"
 	if use pnp; then
-		sh "${ROOT}/usr/share/genpnprd/genpnprd" "${S}/initrd-${KV}.img"
+		sh "${ROOT}/usr/share/genpnprd/genpnprd" "${S}/initrd-${KV}.img" || die
 	elif use compressed; then
-		sh "${ROOT}/usr/share/genpnprd/genpnprd" "${S}/initrd-${KV}.img" nopnp
+		sh "${ROOT}/usr/share/genpnprd/genpnprd" "${S}/initrd-${KV}.img" nopnp || die
 	fi
+	# integrated: do not compress twice;
+	# others: +~700K, but faster boot & less RAM to uncompress.
+	# "integrated" still minimal
+	( use pnp || use compressed || use integrated ) &&
+		gzip -dc "initrd-${KV}.img" >"initrd-${KV}.cpio" &&
+		rename .cpio .img initrd-${KV}.cpio
 	if use integrated; then
 		cfg - INITRAMFS_SOURCE
 		cfg - INITRAMFS_ROOT_UID
 		cfg - INITRAMFS_ROOT_GID
 		cfg y INITRAMFS_COMPRESSION_NONE
-		gzip -dc  "initrd-${KV}.img" >"initrd-${KV}.cpio" || die
-		rm "initrd-${KV}.img"
-		echo "CONFIG_INITRAMFS_SOURCE=\"initrd-${KV}.cpio\"\nCONFIG_INITRAMFS_ROOT_UID=0\nCONFIG_INITRAMFS_ROOT_GID=0" >>.config
+		echo "CONFIG_INITRAMFS_SOURCE=\"initrd-${KV}.img\"\nCONFIG_INITRAMFS_ROOT_UID=0\nCONFIG_INITRAMFS_ROOT_GID=0" >>.config
 		yes '' 2>/dev/null | kmake oldconfig &>/dev/null
 		kmake bzImage
 	fi
@@ -175,18 +179,21 @@ kernel-2_src_install() {
 			insinto "/boot"
 			doins "initrd-${KV}.img"
 		fi
-		local f
+		local f f1
 		rm ${BDIR}/lib/firmware -Rf
 		mv "${BDIR}"/* "${D}/" || die
 		kmake INSTALL_PATH="${D}/boot" install
-		rm "${D}"/boot/vmlinuz -f &>/dev/null
-		[[ ${SLOT} == 0 ]] && use symlink && for f in vmlinuz System.map config ; do
-			dosym "${f}-${KV}" "${f}"
+		for f in vmlinuz System.map config ; do
+			f1="${D}/boot/${f}"
+			[[ -e "${f1}" ]] || continue
+			mv "$(readlink -f ${f1})" "${f1}-${KV}"
+			rm "${f1}" -f &>/dev/null
+			[[ ${SLOT} == 0 ]] && use symlink && dosym "${f}-${KV}" "${f}"
+			[[ "${SLOT}" != "${PVR}" ]] && dosym "${f}-${KV}" /boot/"${f}-${SLOT}"
 		done
+		f="${D}/boot/config-${KV}"
+		[[ -e "$f" ]] || cp "${S}/.config" "$f"
 		if [[ "${SLOT}" != "${PVR}" ]] ; then
-			for f in vmlinuz System.map config ; do
-				dosym "${f}-${KV}" /boot/"${f}-${SLOT}"
-			done
 			use sources && dosym linux-${KV_FULL} /usr/src/linux-${SLOT}
 			use integrated || dosym initrd-${KV}.img /boot/initrd-${SLOT}.img
 		fi
@@ -208,11 +215,16 @@ kernel-2_src_install() {
 
 run_genkernel(){
 	[[ ! -e "${TMPDIR}/genkernel-cache" ]] && cp "${ROOT}/var/cache/genkernel" "${TMPDIR}/genkernel-cache" -r
-	# cpio works fine without loopback
+	# cpio works fine without loopback, but may panish sandbox
 	cp /usr/bin/genkernel "${S}" || die
 	sed -i -e 's/has_loop/true/' "${S}/genkernel"
-#	LDFLAGS="" ARCH="$(arch)" ABI="${KERNEL_ABI}" "${S}/genkernel" --cachedir="${TMPDIR}/genkernel-cache" --tempdir="${TMPDIR}/genkernel" --logfile="${TMPDIR}/genkernel.log" --utils-arch=$(tc-ninja_magic_to_arch) --arch-override=$(arch) --postclear $* || die "genkernel failed"
-	LDFLAGS="" "${S}/genkernel" --cachedir="${TMPDIR}/genkernel-cache" --tempdir="${TMPDIR}/genkernel" --logfile="${TMPDIR}/genkernel.log" --arch-override=$(arch) --utils-arch=$(arch) --utils-cross-compile=${CTARGET}- --postclear $* || die "genkernel failed"
+	LDFLAGS="${KERNEL_GENKERNEL_LDFLAGS}" "${S}/genkernel" \
+		--cachedir="${TMPDIR}/genkernel-cache" \
+		--tempdir="${TMPDIR}/genkernel" \
+		--logfile="${TMPDIR}/genkernel.log" \
+		--arch-override=$(arch) \
+		--utils-arch=$(arch) --utils-cross-compile=${CTARGET}- \
+		--postclear $* ${KERNEL_GENKERNEL} || die "genkernel failed"
 	rm "${S}/genkernel"
 }
 
@@ -282,7 +294,8 @@ cfg_use(){
 
 cfg_loop(){
 	grep "CONFIG" .config >$1
-	if diff -qN $1 $2 >/dev/null ; then
+#	if diff -qN $1 $2 >/dev/null ; then
+	if cmp -s $1 $2 ; then
 		rm $1 $2
 		return 1
 	else
