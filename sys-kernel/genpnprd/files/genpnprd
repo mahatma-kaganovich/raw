@@ -78,6 +78,13 @@ cp $DATA/syspnp $rcdir/etc
 patch -p1 -std $rcdir <$DATA/linuxrc.patch
 rm $rcdir/init.{rej,orig} -f &>/dev/null
 
+# Symlinking busybox clones
+for i in $rcdir/bin/* ; do
+	[[ -e "$i" ]] || continue
+	[[ "${i%/busybox}" == "$i" ]] || continue
+	cmp "$rcdir/bin/busybox" "$i" && ln -sf busybox "$i"
+done
+
 rm "$rcdir/lib.loopfs"
 if $SQUASH ; then
 	preserve_start loop squashfs
@@ -99,6 +106,6 @@ cd $tmp || die
 rm $rcdir -Rf
 gzip -c9 "$tmp/initrd-${KV}.cpio" >"$1" || die
 rm "$tmp" -Rf
-echo "inirc updated."
+echo "initrd updated."
 
 exit 0
