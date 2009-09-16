@@ -242,14 +242,14 @@ grep_kconfig(){
 
 cfg(){
 	local r="$1"
-	local o="$2"
-	local v="${o#*=}"
-	[[ "$v" == "$o" ]] && v="${r}"
+	local o="${2%%=*}"
+	local v="${2#*=}"
+	[[ "$v" == "$2" ]] && v="${r}"
 	local i i1 i2 i3 l l1
 	# safe
 #	grep -P "^(?:\# )?CONFIG_${o}(?:=.*| is not set)\$" .config | while read i1 ; do
 	# faster
-	( grep -P "^(?:\# )?CONFIG_${o%%=*}(?:=.*| is not set)\$" .config || echo "${o}" ) | while read i1 ; do
+	( grep -P "^(?:\# )?CONFIG_${o}(?:=.*| is not set)\$" .config || echo "${o}" ) | while read i1 ; do
 		i=${i1#\# }
 		i=${i#CONFIG_}
 		i=${i%%=*}
