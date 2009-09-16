@@ -186,7 +186,7 @@ kernel-2_src_install() {
 		kmake INSTALL_PATH="${D}/boot" install
 		for f in vmlinuz System.map config ; do
 			f1="${D}/boot/${f}"
-			if ! [[ -e "${f1}" ]] ; then
+			if [[ -e "${f1}" ]] ; then
 				mv "$(readlink -f ${f1})" "${f1}-${KV}"
 				rm "${f1}" -f &>/dev/null
 			fi
