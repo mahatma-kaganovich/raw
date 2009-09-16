@@ -201,7 +201,7 @@ echo '#!/bin/sh
 KV=`uname -r`
 . /modparam.sh
 . /lib/modules/$KV/modules.alias.sh
-alias2 "$(echo -ne "$1" | sed -e 's/-/_/g')" || exit 1
+alias2 "$(echo -ne \"$1\" | sed -e s/-/_/g)" || exit 1
 for i in $ALIAS ; do
 	modparam $i
 	insmod /lib/modules/$KV/$i $PARAM
