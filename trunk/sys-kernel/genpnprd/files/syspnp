@@ -1,5 +1,5 @@
 #!/bin/sh
-## pnp modules bootloader v0.4
+## pnp modules bootloader v0.5
 ## (c) Denis Kaganovich, under Anarchy license
 ## consume preprocessed /lib/modules/$KV/modules.alias
 
@@ -25,7 +25,8 @@ mod(){
 			2)
 				m2=""
 				for m1 in $ALIAS ; do
-					m2="$m2 insmod "/lib/modules/$KV/$m1" ;"
+					modparam $m1
+					m2="$m2 insmod "/lib/modules/$KV/$m1" $PARAM ;"
 				done
 				eval "( ${m2%;} ) >/dev/null 2>&1 &"
 				pids="$pids$! "
@@ -38,9 +39,10 @@ mod(){
 			esac
 			
 			for m1 in $ALIAS ; do
+				modparam $m1
 				wait $pid
-				$QUIET || echo -ne "\033[0G\033[0K$LCOUNT	$m1"
-				insmod "/lib/modules/$KV/$m1" >/dev/null 2>&1 &
+				$QUIET || echo -ne "\033[0G\033[0K$LCOUNT	$m1 $PARAM"
+				insmod "/lib/modules/$KV/$m1" $PARAM >/dev/null 2>&1 &
 				pid="$!"
 			done
 		else
@@ -51,9 +53,10 @@ mod(){
 		for m1 in $ALIAS ; do
 			m2=`echo -ne "$m1" | sed -e 's:.*/::g' -e 's/-/_/g' -e 's/\...$//'`
 			[[ "$m" == "$m2" ]] || single "$m2" 0 || continue
+			modparam $m1
 			wait $pid
-			$QUIET || echo -ne "\033[0G\033[0K$LCOUNT	$m1"
-			insmod "/lib/modules/$KV/$m1" >/dev/null 2>&1 &
+			$QUIET || echo -ne "\033[0G\033[0K$LCOUNT	$m1 $PARAM"
+			insmod "/lib/modules/$KV/$m1" $PARAM >/dev/null 2>&1 &
 			pid="$!"
 		done
 		fi
@@ -149,6 +152,10 @@ pnp_options(){
 	slow) FAST=false ;;
 	parallel-startup) PARALLEL=1 ;;
 	parallel-startup=*) PARALLEL="${i#*=}" ;;
+	moduleparam=*)
+		i="${i#*=}"
+		echo "*/${i%%:*}.ko) PARAM=\"${i#*:}\" ;;" >>/modparam.sh
+	;;
 	esac
 	done
 }
@@ -185,6 +192,25 @@ load_all(){
 	fi
 }
 
+override_modprobe(){
+local f="/sbin/modprobe"
+[[ -e $f ]] && ! grep -q "bug #197730" $f && return
+echo '#!/bin/sh
+# mostly for initrd kernel module autoloader
+# slow, but usually not used
+KV=`uname -r`
+. /modparam.sh
+. /lib/modules/$KV/modules.alias.sh
+alias2 "$(echo -ne "$1" | sed -e 's/-/_/g')" || exit 1
+for i in $ALIAS ; do
+	modparam $i
+	insmod /lib/modules/$KV/$i $PARAM
+done' >$f
+chmod 755 $f
+echo "$f" >/proc/sys/kernel/modprobe
+}
+
+
 syspnp(){
 	local PNP_TMP="${TMPDIR}/pnp.found"
 	local NOTLOADED=""
@@ -196,10 +222,18 @@ syspnp(){
 	local PARALLEL=0
 	local pid=""
 	local pids=""
+	echo "modparam(){
+case \$1 in
+" >/modparam.sh
 
 	[[ -e "/lib/modules/${KV}/modules.alias.sh" ]] || return
 	pnp_options
 	$NOPNP && return
+	echo "*) PARAM='' ;;
+esac
+}" >>/modparam.sh
+	. /modparam.sh
+	override_modprobe
 	local i i1 i2
 	good_msg "Searching pnp"
 	for i in 0 1 2 ; do
