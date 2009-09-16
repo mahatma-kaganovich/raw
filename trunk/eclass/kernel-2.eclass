@@ -186,9 +186,10 @@ kernel-2_src_install() {
 		kmake INSTALL_PATH="${D}/boot" install
 		for f in vmlinuz System.map config ; do
 			f1="${D}/boot/${f}"
-			[[ -e "${f1}" ]] || continue
-			mv "$(readlink -f ${f1})" "${f1}-${KV}"
-			rm "${f1}" -f &>/dev/null
+			if ! [[ -e "${f1}" ]] ; then
+				mv "$(readlink -f ${f1})" "${f1}-${KV}"
+				rm "${f1}" -f &>/dev/null
+			fi
 			[[ ${SLOT} == 0 ]] && use symlink && dosym "${f}-${KV}" "${f}"
 			[[ "${SLOT}" != "${PVR}" ]] && dosym "${f}-${KV}" /boot/"${f}-${SLOT}"
 		done
