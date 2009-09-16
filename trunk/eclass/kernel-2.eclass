@@ -125,7 +125,7 @@ kernel-2_src_compile() {
 	fi
 	[[ -n ${cflags} ]] && sed -i -e "s/^\(KBUILD_CFLAGS.*-O.\)/\1 ${cflags}/g" Makefile
 	use build-kernel || return
-	time config_defaults
+	config_defaults
 	einfo "Compiling kernel"
 	kmake all
 	local p=""
@@ -158,15 +158,16 @@ kernel-2_src_compile() {
 	# "integrated" still minimal
 	( use pnp || use compressed || use integrated ) &&
 		gzip -dc "initrd-${KV}.img" >"initrd-${KV}.cpio" &&
-		rename .cpio .img initrd-${KV}.cpio
+		rm "initrd-${KV}.img"
 	if use integrated; then
-		cfg - INITRAMFS_SOURCE
-		cfg - INITRAMFS_ROOT_UID
-		cfg - INITRAMFS_ROOT_GID
+		cfg "\"initrd-${KV}.cpio\"" INITRAMFS_SOURCE
+		cfg 0 INITRAMFS_ROOT_UID
+		cfg 0 INITRAMFS_ROOT_GID
 		cfg y INITRAMFS_COMPRESSION_NONE
-		echo "CONFIG_INITRAMFS_SOURCE=\"initrd-${KV}.img\"\nCONFIG_INITRAMFS_ROOT_UID=0\nCONFIG_INITRAMFS_ROOT_GID=0" >>.config
 		yes '' 2>/dev/null | kmake oldconfig &>/dev/null
 		kmake bzImage
+	else
+		[[ -e "initrd-${KV}.cpio" ]] && rename .cpio .img "initrd-${KV}.cpio"
 	fi
 }
 
@@ -241,11 +242,13 @@ grep_kconfig(){
 cfg(){
 	local r="$1"
 	local o="$2"
+	local v="${o#*=}"
+	[[ "$v" == "$o" ]] && v="${r}"
 	local i i1 i2 i3 l l1
 	# safe
 #	grep -P "^(?:\# )?CONFIG_${o}(?:=.*| is not set)\$" .config | while read i1 ; do
 	# faster
-	( grep -P "^(?:\# )?CONFIG_${o}(?:=.*| is not set)\$" .config || echo "${o}" ) | while read i1 ; do
+	( grep -P "^(?:\# )?CONFIG_${o%%=*}(?:=.*| is not set)\$" .config || echo "${o}" ) | while read i1 ; do
 		i=${i1#\# }
 		i=${i#CONFIG_}
 		i=${i%%=*}
@@ -262,7 +265,7 @@ cfg(){
 			l="# CONFIG_${i} is not set"
 		;;
 		-) l="" ;;
-		*) l="CONFIG_${i}=${r}" ;;
+		*) l="CONFIG_${i}=${v}" ;;
 		esac
 		case "$3" in
 		--)
@@ -337,6 +340,9 @@ setconfig(){
 		o="${o/y -/n }"
 		o="${o/y ~/- }"
 		cfg ${o}
+	done
+	for i in ${!KERNEL_CONFIG_@} ; do
+		cfg "${!i}" "${i#KERNEL_CONFIG_}"
 	done
 }
 
