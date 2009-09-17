@@ -110,7 +110,7 @@ case "$i" in
 	# unique
 	my %nopnp;
 	for (keys %alias) {
-		next if(index($_,'_')>=0);
+#		next if(index($_,'_')>=0);
 		if($pnp{$_} || (not exists($dep{$_}))){
 			$nopnp{$_}=2;
 			$nopnp{$_}=2 for(@{$dep{$_}});
