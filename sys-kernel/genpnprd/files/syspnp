@@ -154,7 +154,8 @@ case \$1 in
 	nofb) NOFB=true ;;
 	nopnp) NOPNP=true ;;
 	unload) MODUNLOAD=true ;;
-	loadall) LOADALL="${i#*=}" ;;
+	loadall) LOADALL="all" ;;
+	loadall=*) LOADALL="${i#*=}" ;;
 	slow) FAST=false ;;
 	parallel-startup) PARALLEL=1 ;;
 	parallel-startup=*) PARALLEL="${i#*=}" ;;
@@ -269,7 +270,7 @@ syspnp(){
 		local NODETECT
 		if [[ -n $LOADALL ]] ; then
 			for i in $LOADALL ; do
-				[[ "$i" == 'loadall' ]] && i=''
+				[[ "$i" == 'all' ]] && i=''
 				i1="${i%%:*}"
 				i2="${i#*:}"
 				[[ -z "$i1" ]] && i1=".*"
