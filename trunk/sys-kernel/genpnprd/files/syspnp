@@ -142,7 +142,12 @@ mod_unload(){
 
 pnp_options(){
 	local i
-	for i in `cat /proc/cmdline` ; do
+	echo "modparam(){
+case \$1 in
+" >/modparam.sh
+	while [[ -n "$*" ]] ; do
+	i="$1"
+	shift
 	case "$i" in
 	quiet) $FAST || good_msg "PNP: quiet mode"; eval 'good_msg(){ return; }'; QUIET=true ;;
 	nofb) NOFB=true ;;
@@ -158,6 +163,9 @@ pnp_options(){
 	;;
 	esac
 	done
+	echo "*) PARAM='' ;;
+esac
+}" >>/modparam.sh
 }
 
 ifmod(){
@@ -196,20 +204,22 @@ override_modprobe(){
 local f="/sbin/modprobe"
 [[ -e $f ]] && ! grep -q "bug #197730" $f && return
 echo '#!/bin/sh
-# mostly for initrd kernel module autoloader
-# slow, but usually not used
 KV=`uname -r`
 . /modparam.sh
 . /lib/modules/$KV/modules.alias.sh
-alias2 "$(echo -ne \"$1\" | sed -e s/-/_/g)" || exit 1
-for i in $ALIAS ; do
+while ! [[ "${1#-}" == "$1" ]] ; do
+	shift
+done
+r=1
+alias2 "$(echo -ne "$1" | sed -e s/-/_/g)" && for i in $ALIAS ; do
 	modparam $i
 	insmod /lib/modules/$KV/$i $PARAM
-done' >$f
+	r=$?
+done
+exit $r' >$f
 chmod 755 $f
 echo "$f" >/proc/sys/kernel/modprobe
 }
-
 
 syspnp(){
 	local PNP_TMP="${TMPDIR}/pnp.found"
@@ -222,24 +232,18 @@ syspnp(){
 	local PARALLEL=0
 	local pid=""
 	local pids=""
-	echo "modparam(){
-case \$1 in
-" >/modparam.sh
 
 	[[ -e "/lib/modules/${KV}/modules.alias.sh" ]] || return
-	pnp_options
+	eval "pnp_options $(cat /proc/cmdline)" # parsing
 	$NOPNP && return
-	echo "*) PARAM='' ;;
-esac
-}" >>/modparam.sh
 	. /modparam.sh
-	override_modprobe
 	local i i1 i2
 	good_msg "Searching pnp"
 	for i in 0 1 2 ; do
 		echo -ne "" >"${PNP_TMP}.$i"
 	done
 	refresh n
+	override_modprobe
 	LCOUNT=""
 	. "/lib/modules/${KV}/modules.alias.sh"
 
