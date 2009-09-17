@@ -81,13 +81,14 @@ refresh(){
 			$QUIET || echo -ne "\033[0G\033[0K${BOLD}   ::${NORMAL}Loaded:"
 			sed -i -e 's%^>\(.*\)<$%\1%g' "${PNP_TMP}".1
 			while read i ; do
-				grep -qF ">$i<" "${PNP_TMP}".0 && continue
+				grep -qF ">$i<" "${PNP_TMP}".3 && continue
 				[[ "$1" == "n" ]] && echo "$i" >>/nopnp.lst
 				$QUIET || echo -ne " $i"
 			done <"${PNP_TMP}".1
 			$QUIET || echo ""
 		fi
 		cp "${PNP_TMP}".2 "${PNP_TMP}".0
+		cp "${PNP_TMP}".2 "${PNP_TMP}".3
 		return 0
 	fi
 
@@ -153,7 +154,7 @@ case \$1 in
 	nofb) NOFB=true ;;
 	nopnp) NOPNP=true ;;
 	unload) MODUNLOAD=true ;;
-	loadall) LOADALL=true ;;
+	loadall) LOADALL="${i#*=}" ;;
 	slow) FAST=false ;;
 	parallel-startup) PARALLEL=1 ;;
 	parallel-startup=*) PARALLEL="${i#*=}" ;;
@@ -176,30 +177,6 @@ ifmod(){
 	return 0
 }
 
-load_all(){
-	if $FAST ; then
-		mod $(grep -v '/media/\|/sound/\|/microcode\.\|/isdn/\|/net/\|/video/' </lib/modules/$KV/modules.other|sed -e 's:.*/::g' -e 's/\...$//g')
-	else
-	local i m
-	while read i ; do
-		case "$i" in
-		*/media/*) ;;
-		*/sound/*) ;;
-		*/isdn/*) ;;
-		*/microcode.*) ;;
-		# crytical:
-		*/net/*) ;;
-		*/video/*) ;;
-		*)
-			i="${i##*/}"
-			i="${i%.??}"
-			mod $i
-		;;
-		esac
-	done <"/lib/modules/$KV/modules.other"
-	fi
-}
-
 override_modprobe(){
 local f="/sbin/modprobe"
 [[ -e $f ]] && ! grep -q "bug #197730" $f && return
@@ -207,7 +184,7 @@ echo '#!/bin/sh
 KV=`uname -r`
 . /modparam.sh
 . /lib/modules/$KV/modules.alias.sh
-while ! [[ "${1#-}" == "$1" ]] ; do
+while [[ "${1#-}" != "$1" ]] ; do
 	shift
 done
 r=1
@@ -227,7 +204,7 @@ syspnp(){
 	local NOFB=false
 	local NOPNP=false
 	local QUIET=false
-	local LOADALL=false
+	local LOADALL=""
 	local FAST=true
 	local PARALLEL=0
 	local pid=""
@@ -239,7 +216,7 @@ syspnp(){
 	. /modparam.sh
 	local i i1 i2
 	good_msg "Searching pnp"
-	for i in 0 1 2 ; do
+	for i in 0 1 2 3 ; do
 		echo -ne "" >"${PNP_TMP}.$i"
 	done
 	refresh n
@@ -290,8 +267,16 @@ syspnp(){
 #	good_msg "Filtering pnp modules"
 	while count ; do
 		local NODETECT
-		if $LOADALL ; then
-			load_all
+		if [[ -n $LOADALL ]] ; then
+			for i in $LOADALL ; do
+				[[ "$i" == 'loadall' ]] && i=''
+				i1="${i%%:*}"
+				i2="${i#*:}"
+				[[ -z "$i1" ]] && i1=".*"
+				# default: exclude slow probe, fatal to unload, etc
+				[[ "$i2" == "$i" ]] && i2='/tcrypt.ko\|/paride/\|/media/\|/sound/\|/microcode\.\|/isdn/\|/net/\|/video/'
+				mod $(grep "$i1" </lib/modules/$KV/modules.other|grep -v "$i2"|sed -e 's:.*/::g' -e 's/\...$//g')
+			done
 			NODETECT=1
 		fi
 			# NODETECT: old behaviour
