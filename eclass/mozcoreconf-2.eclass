@@ -2,6 +2,7 @@
 inherit multilib flag-o-matic
 
 IUSE="${IUSE} +custom-optimization debug moznosystem"
+[[ "${ARCH}" == "x86" ]] && IUSE="${IUSE} sse"
 
 RDEPEND="!moznosystem? ( >=sys-libs/zlib-1.1.4 )"
 
@@ -146,6 +147,12 @@ mozconfig_init() {
 			then
 				replace-flags -march=pentium4 -march=pentium3
 				filter-flags -msse2
+			fi
+		elif [[ $(gcc-major-version).$(gcc-minor-version) == 4.4 ]] ; then
+			if use sse ; then
+				append-flags -msse -mstackrealign
+			else
+				append-flags -mno-sse
 			fi
 		fi
 		;;

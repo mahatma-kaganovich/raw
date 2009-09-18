@@ -25,8 +25,9 @@ SLOT="0"
 LICENSE="|| ( MPL-1.1 GPL-2 LGPL-2.1 )"
 IUSE="java ldap mozdevelop moznocompose moznoirc moznomail moznoroaming postgres crypt restrict-javascript startup-notification
 	debug minimal directfb moznosystem threads jssh wifi python mobile moznocalendar static
-	moznomemory accessibility sse"
+	moznomemory accessibility"
 #	qt-experimental"
+[[ "${ARCH}" == "x86" ]] && IUSE="${IUSE} sse"
 
 RDEPEND="java? ( >=virtual/jre-1.4 )
 	python? ( >=dev-lang/python-2.3 )
@@ -304,7 +305,7 @@ src_compile() {
 	mozconfig_use_enable !debug install-strip
 	$o3 && sed -i -e 's:\=\-O2:=-O3:g' .mozconfig
 	$omitfp && use !debug && append-flags -fomit-frame-pointer
-	if use x86 && [[ $(gcc-major-version).$(gcc-minor-version) == 4.4 ]] ; then
+	if [[ "${ARCH}" == "x86" ]] && [[ $(gcc-major-version).$(gcc-minor-version) == 4.4 ]] ; then
 		if use sse ; then
 			append-flags -msse -mstackrealign
 		else
