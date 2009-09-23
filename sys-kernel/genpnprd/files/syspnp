@@ -143,9 +143,9 @@ mod_unload(){
 
 pnp_options(){
 	local i
-	echo "modparam(){
-case \$1 in
-" >/modparam.sh
+	local p="*) PARAM='' ;;
+esac
+}"
 	while [[ -n "$*" ]] ; do
 	i="$1"
 	shift
@@ -161,13 +161,15 @@ case \$1 in
 	parallel-startup=*) PARALLEL="${i#*=}" ;;
 	moduleparam=*)
 		i="${i#*=}"
-		echo "*/${i%%:*}.ko) PARAM=\"${i#*:}\" ;;" >>/modparam.sh
+		p="*/${i%%:*}.ko) PARAM=\"${i#*:}\" ;;
+$p"
 	;;
 	esac
 	done
-	echo "*) PARAM='' ;;
-esac
-}" >>/modparam.sh
+	p="modparam(){
+case \$1 in
+$p"
+	echo "$p" >/modparam.sh
 }
 
 ifmod(){
