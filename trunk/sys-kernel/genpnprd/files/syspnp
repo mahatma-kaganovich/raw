@@ -270,7 +270,7 @@ syspnp(){
 #	good_msg "Filtering pnp modules"
 	while count ; do
 		local NODETECT
-		if [[ -n $LOADALL ]] ; then
+		if [[ -n "$LOADALL" ]] ; then
 			for i in $LOADALL ; do
 				[[ "$i" == 'all' ]] && i=''
 				i1="${i%%:*}"
