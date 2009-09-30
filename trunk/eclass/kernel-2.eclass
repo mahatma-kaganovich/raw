@@ -133,7 +133,9 @@ kernel-2_src_compile() {
 	rm "${r}"/build "${r}"/source
 	cd "${WORKDIR}"
 	local i
-	for i in linux*${REAL_KV} ; do
+	for i in linux*${KV_FULL} ; do
+		use sources || continue
+		[[ -e "${i}" ]] || continue
 		ln -s "../../../usr/src/${i}" "${r}"/build
 		ln -s "../../../usr/src/${i}" "${r}"/source
 	done
