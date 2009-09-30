@@ -103,12 +103,9 @@ get_v(){
 	grep -P "^$1[ 	]*=.*$" "${S}"/Makefile | sed -e 's%^.*= *%%'
 }
 
-get_kv(){
-	set_kv $(get_v VERSION).$(get_v PATCHLEVEL).$(get_v SUBLEVEL)$(get_v EXTRAVERSION)
-}
-
 check_kv(){
-	[ -z "${KV}" ] && get_kv
+	REAL_KV="$(get_v VERSION).$(get_v PATCHLEVEL).$(get_v SUBLEVEL)$(get_v EXTRAVERSION)"
+	[ -z "${KV}" ] && set_kv ${REAL_KV}
 }
 
 kernel-2_src_compile() {
@@ -132,11 +129,11 @@ kernel-2_src_compile() {
 	use netboot && p="${p} --netboot"
 	[[ -e "${BDIR}" ]] || mkdir "${BDIR}"
 	kmake INSTALL_MOD_PATH="${BDIR}" modules_install
-	local r="${BDIR}/lib/modules/${KV}"
+	local r="${BDIR}/lib/modules/${REAL_KV}"
 	rm "${r}"/build "${r}"/source
 	cd "${WORKDIR}"
 	local i
-	for i in linux*${KV} ; do
+	for i in linux*${REAL_KV} ; do
 		ln -s "../../../usr/src/${i}" "${r}"/build
 		ln -s "../../../usr/src/${i}" "${r}"/source
 	done
@@ -146,28 +143,28 @@ kernel-2_src_compile() {
 		[[ -e "${BDIR}/lib/firmware" ]] && p="${p} --firmware --firmware-dir=\"${BDIR}/lib/firmware\""
 	fi
 	run_genkernel ramdisk "--kerneldir=\"${S}\" --bootdir=\"${S}\" --module-prefix=\"${BDIR}\" --no-mountboot ${p}"
-	r=`ls initramfs*-${KV}`
-	rename "${r}" "initrd-${KV}.img" "${r}" || die "initramfs rename failed"
+	r=`ls initramfs*-${REAL_KV}`
+	rename "${r}" "initrd-${REAL_KV}.img" "${r}" || die "initramfs rename failed"
 	if use pnp; then
-		sh "${ROOT}/usr/share/genpnprd/genpnprd" "${S}/initrd-${KV}.img" || die
+		sh "${ROOT}/usr/share/genpnprd/genpnprd" "${S}/initrd-${REAL_KV}.img" || die
 	elif use compressed; then
-		sh "${ROOT}/usr/share/genpnprd/genpnprd" "${S}/initrd-${KV}.img" nopnp || die
+		sh "${ROOT}/usr/share/genpnprd/genpnprd" "${S}/initrd-${REAL_KV}.img" nopnp || die
 	fi
 	# integrated: do not compress twice;
 	# others: +~700K, but faster boot & less RAM to uncompress.
 	# "integrated" still minimal
 	( use pnp || use compressed || use integrated ) &&
-		gzip -dc "initrd-${KV}.img" >"initrd-${KV}.cpio" &&
-		rm "initrd-${KV}.img"
+		gzip -dc "initrd-${REAL_KV}.img" >"initrd-${REAL_KV}.cpio" &&
+		rm "initrd-${REAL_KV}.img"
 	if use integrated; then
-		cfg "\"initrd-${KV}.cpio\"" INITRAMFS_SOURCE
+		cfg "\"initrd-${REAL_KV}.cpio\"" INITRAMFS_SOURCE
 		cfg 0 INITRAMFS_ROOT_UID
 		cfg 0 INITRAMFS_ROOT_GID
 		cfg y INITRAMFS_COMPRESSION_NONE
 		yes '' 2>/dev/null | kmake oldconfig &>/dev/null
 		kmake bzImage
 	else
-		[[ -e "initrd-${KV}.cpio" ]] && rename .cpio .img "initrd-${KV}.cpio"
+		[[ -e "initrd-${REAL_KV}.cpio" ]] && rename .cpio .img "initrd-${REAL_KV}.cpio"
 	fi
 }
 
@@ -178,7 +175,7 @@ kernel-2_src_install() {
 		mkdir "${D}/boot"
 		if ! use integrated; then
 			insinto "/boot"
-			doins "initrd-${KV}.img"
+			doins "initrd-${REAL_KV}.img"
 		fi
 		local f f1
 		rm ${BDIR}/lib/firmware -Rf
@@ -187,21 +184,21 @@ kernel-2_src_install() {
 		for f in vmlinuz System.map config ; do
 			f1="${D}/boot/${f}"
 			if [[ -e "${f1}" ]] ; then
-				mv "$(readlink -f ${f1})" "${f1}-${KV}"
+				mv "$(readlink -f ${f1})" "${f1}-${REAL_KV}"
 				rm "${f1}" -f &>/dev/null
 			fi
-			[[ ${SLOT} == 0 ]] && use symlink && dosym "${f}-${KV}" "${f}"
-			[[ "${SLOT}" != "${PVR}" ]] && dosym "${f}-${KV}" /boot/"${f}-${SLOT}"
+			[[ ${SLOT} == 0 ]] && use symlink && dosym "${f}-${REAL_KV}" "${f}"
+			[[ "${SLOT}" != "${PVR}" ]] && dosym "${f}-${REAL_KV}" /boot/"${f}-${SLOT}"
 		done
-		f="${D}/boot/config-${KV}"
+		f="${D}/boot/config-${REAL_KV}"
 		[[ -e "$f" ]] || cp "${S}/.config" "$f"
 		if [[ "${SLOT}" != "${PVR}" ]] ; then
 			use sources && dosym linux-${KV_FULL} /usr/src/linux-${SLOT}
-			use integrated || dosym initrd-${KV}.img /boot/initrd-${SLOT}.img
+			use integrated || dosym initrd-${REAL_KV}.img /boot/initrd-${SLOT}.img
 		fi
 		if use sources ; then
 			find "${S}" -name "*.cmd" | while read f ; do
-				sed -i -e 's%'"${S}"'%/usr/src/linux-'"${KV}"'%g' ${f}
+				sed -i -e 's%'"${S}"'%/usr/src/linux-'"${REAL_KV}"'%g' ${f}
 			done
 		else
 			cd "${WORKDIR}"
