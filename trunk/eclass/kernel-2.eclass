@@ -148,9 +148,9 @@ kernel-2_src_compile() {
 	r=`ls initramfs*-${REAL_KV}`
 	rename "${r}" "initrd-${REAL_KV}.img" "${r}" || die "initramfs rename failed"
 	if use pnp; then
-		sh "${ROOT}/usr/share/genpnprd/genpnprd" "${S}/initrd-${REAL_KV}.img" || die
+		bash "${ROOT}/usr/share/genpnprd/genpnprd" "${S}/initrd-${REAL_KV}.img" || die
 	elif use compressed; then
-		sh "${ROOT}/usr/share/genpnprd/genpnprd" "${S}/initrd-${REAL_KV}.img" nopnp || die
+		bash "${ROOT}/usr/share/genpnprd/genpnprd" "${S}/initrd-${REAL_KV}.img" nopnp || die
 	fi
 	# integrated: do not compress twice;
 	# others: +~700K, but faster boot & less RAM to uncompress.
