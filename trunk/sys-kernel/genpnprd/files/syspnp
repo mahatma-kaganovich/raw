@@ -244,9 +244,13 @@ syspnp(){
 	# frost. save your silicon (and power)
 	# doload=p4-clockmod in other cases
 #	ifmod thermal_sys && mod fan
-	mod acpi_cpufreq
 	local gov="ondemand conservative"
-	grep -q "^vendor_id.*AMD" /proc/cpuinfo && gov="conservative ondemand"
+	if grep -q "^vendor_id.*AMD" /proc/cpuinfo ; then
+		mod powernow_k8 acpi_cpufreq
+		gov="conservative ondemand"
+	else
+		mod acpi_cpufreq
+	fi
 #	wait $pid $pids
 #	pid=""
 #	pids=""
