@@ -26,7 +26,7 @@ mod(){
 				m2=""
 				for m1 in $ALIAS ; do
 					modparam $m1
-					m2="$m2 insmod "/lib/modules/$KV/$m1" $PARAM ;"
+					m2="$m2 insmod "$m1" $PARAM ;"
 				done
 				eval "( ${m2%;} ) >/dev/null 2>&1 &"
 				pids="$pids$! "
@@ -42,7 +42,7 @@ mod(){
 				modparam $m1
 				wait $pid
 				$QUIET || echo -ne "\033[0G\033[0K$LCOUNT	$m1 $PARAM"
-				insmod "/lib/modules/$KV/$m1" $PARAM >/dev/null 2>&1 &
+				insmod "$m1" $PARAM >/dev/null 2>&1 &
 				pid="$!"
 			done
 		else
@@ -56,7 +56,7 @@ mod(){
 			modparam $m1
 			wait $pid
 			$QUIET || echo -ne "\033[0G\033[0K$LCOUNT	$m1 $PARAM"
-			insmod "/lib/modules/$KV/$m1" $PARAM >/dev/null 2>&1 &
+			insmod "$m1" $PARAM >/dev/null 2>&1 &
 			pid="$!"
 		done
 		fi
@@ -185,15 +185,16 @@ local f="/sbin/modprobe"
 [[ -e $f ]] && ! grep -q "bug #197730" $f && return
 echo '#!/bin/sh
 KV=`uname -r`
+cd /lib/modules/$KV
 . /modparam.sh
-. /lib/modules/$KV/modules.alias.sh
+. modules.alias.sh
 while [[ "${1#-}" != "$1" ]] ; do
 	shift
 done
 r=1
 alias2 "$(echo -ne "$1" | sed -e s/-/_/g)" && for i in $ALIAS ; do
 	modparam $i
-	insmod /lib/modules/$KV/$i $PARAM
+	insmod $i $PARAM
 	r=$?
 done
 exit $r' >$f
@@ -217,6 +218,7 @@ syspnp(){
 	eval "pnp_options $(cat /proc/cmdline)" # parsing
 	$NOPNP && return
 	. /modparam.sh
+	cd "/lib/modules/${KV}"
 	local i i1 i2
 	good_msg "Searching pnp"
 	for i in 0 1 2 3 ; do
@@ -225,7 +227,7 @@ syspnp(){
 	refresh n
 	override_modprobe
 	LCOUNT=""
-	. "/lib/modules/${KV}/modules.alias.sh"
+	. "modules.alias.sh"
 
 	if [[ -n "$MDOLIST" ]]; then
 		mod $MDOLIST
@@ -278,14 +280,14 @@ syspnp(){
 				[[ -z "$i1" ]] && i1=".*"
 				# default: exclude slow probe, fatal to unload, etc
 				[[ "$i2" == "$i" ]] && i2='/tcrypt.ko\|/paride/\|/media/\|/sound/\|/microcode\.\|/isdn/\|/net/\|/video/'
-				mod $(grep "$i1" </lib/modules/$KV/modules.other|grep -v "$i2"|sed -e 's:.*/::g' -e 's/\...$//g')
+				mod $(grep "$i1" <modules.other|grep -v "$i2"|sed -e 's:.*/::g' -e 's/\...$//g')
 			done
 			NODETECT=1
 		fi
 			# NODETECT: old behaviour
 		[[ "${NODETECT}" != '1' ]] && for i1 in ${MY_HWOPTS} ; do
 			[[ -e "/etc/modules/$i1" ]] && for i in `cat /etc/modules/${i1}` ; do
-				grep -q "^$i\$" "/lib/modules/$KV/modules.pnp" && continue
+				grep -q "^$i\$" "modules.pnp" && continue
 				mod "$i"
 			done
 		done
