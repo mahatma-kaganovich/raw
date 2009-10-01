@@ -1,24 +1,24 @@
---- a/init	2009-04-02 20:37:59.000000000 +0300
-+++ b/init	2009-04-20 15:26:58.000000000 +0300
+--- a/init	2009-10-01 15:46:11.000000000 +0300
++++ b/init	2009-10-01 15:46:24.000000000 +0300
 @@ -4,2 +4,3 @@
  . /etc/initrd.scripts
 +. /etc/syspnp
  
-@@ -28,2 +29,9 @@
+@@ -28,2 +29,9 @@ mount -o remount,rw / >/dev/null 2>&1
  
 +if [[ -f /lib.loopfs ]]; then
-+	modprobe loop >/dev/null 2>&1
-+	modprobe cramfs >/dev/null 2>&1
-+	modprobe squashfs >/dev/null 2>&1
++	for i in loop cramfs squashfs ; do
++		insmod `find /lib/modules -name "$i.*"` >/dev/null 2>&1
++	done
 +	mount /lib.loopfs /lib -o loop
 +fi
 +
  if [ "$0" = '/init' ]
-@@ -240,2 +248,3 @@
+@@ -239,2 +247,3 @@ then
  	good_msg 'Loading modules'
 +	syspnp
  	# Load appropriate kernel modules
-@@ -696,2 +705,4 @@
+@@ -695,2 +704,4 @@ mkdir "${CHROOT}/proc" "${CHROOT}/sys" 2
  echo -ne "${BOLD}.${NORMAL}"
 +umount /lib
 +mod_unload
