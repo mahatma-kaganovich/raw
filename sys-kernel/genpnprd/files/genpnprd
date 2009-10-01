@@ -21,11 +21,14 @@ preserve_start(){
 	done
 	cd $rcdir || die
 	mkdir $tmp/preserve || die
+	cd "lib/modules/$KV"
+	mkdir -p "$tmp/preserve/lib/modules/$KV"
 	for m in `cat $tmp/modules.lst` ; do
 		m="${m%:}"
-		cp lib/modules/$KV/$m $tmp/preserve --parents
+		cp "$m" "$tmp/preserve/lib/modules/$KV/" --parents
 		grep "^$m:" $rcdir/lib/modules/${KV}/modules.dep >>$tmp/preserve/lib/modules/${KV}/modules.dep
 	done
+	cd $rcdir
 }
 
 preserve_end(){
@@ -42,7 +45,7 @@ tmp="${TMPDIR:=$ROOT/var/tmp}/genpnprd"
 [[ -e "$tmp" ]] && rm "$tmp" -Rf
 mkdir $tmp || die
 
-rcfile="$1"
+rcfile="$(readlink -f $1)"
 if [[ -f "$rcfile" ]]; then
 	rcdir="$tmp/rc"
 	[[ -e "$rcdir" ]] && rm "$tmp" -Rf
