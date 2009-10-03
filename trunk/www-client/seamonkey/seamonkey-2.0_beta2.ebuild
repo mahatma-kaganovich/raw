@@ -236,7 +236,6 @@ src_compile() {
 #	mozconfig_use_extension widgetutils widgetutils
 	mozconfig_use_extension mozdevelop venkman
 	mozconfig_use_extension mozdevelop layout-debug
-	mozconfig_use_extension accessibility
 #	mozconfig_use_extension accessibility access-builtin
 	mozconfig_use_enable wifi necko-wifi
 	mozconfig_use_enable ldap
@@ -248,6 +247,7 @@ src_compile() {
 #	mozconfig_use_enable static js-static-build
 	mozconfig_use_enable !static system-hunspell
 	mozconfig_use_enable !moznomemory jemalloc
+	mozconfig_use_enable accessibility
 
 	if use moznoirc; then
 		mozconfig_annotate '+moznocompose +moznoirc' --enable-extensions=-irc
@@ -277,6 +277,8 @@ src_compile() {
 	# use xforms && mozconfig_annotate "+xforms" --enable-extensions=xforms,schema-validation
 
 	if use minimal; then
+#		use mobile && mozconfig_annotate +minimal,+mobile
+#			--with-embedding-profile=minimal
 		mozconfig_annotate +minimal \
 			--disable-postscript \
 			--disable-help-viewer \
