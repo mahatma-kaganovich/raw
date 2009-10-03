@@ -1,8 +1,12 @@
 
 inherit multilib flag-o-matic
 
-IUSE="${IUSE} +custom-optimization debug moznosystem"
-[[ "${ARCH}" == "x86" ]] && IUSE="${IUSE} sse"
+IUSE="${IUSE} +custom-optimization debug moznosystem +pic"
+case "${ARCH}" in
+alpha|ia64|amd64|ppc64) IUSE="${IUSE} +pic" ;;
+x86) IUSE="${IUSE} sse" ;;
+esac
+
 
 RDEPEND="!moznosystem? ( >=sys-libs/zlib-1.1.4 )"
 
@@ -101,28 +105,24 @@ mozconfig_init() {
 
 	strip-flags
 
+	# Historically we have needed to add -fPIC manually for 64-bit.
+	# I don't know why -fPIC needed for 64bit and want to off
+	use pic && append-flags -fPIC
+
 	# Additional ARCH support
 	case "${ARCH}" in
 	alpha)
-		# Historically we have needed to add -fPIC manually for 64-bit.
 		# Additionally, alpha should *always* build with -mieee for correct math
 		# operation
-		append-flags -fPIC -mieee
-		;;
-
-	ia64)
-		# Historically we have needed to add this manually for 64-bit
-		append-flags -fPIC
+		append-flags -mieee
 		;;
 
 	amd64)
 		use debug || append-flags -fomit-frame-pointer
-		# Historically we have needed to add this manually for 64-bit
-		append-flags -fPIC
 		;;
 
 	ppc64)
-		append-flags -fPIC -mminimal-toc
+		append-flags -mminimal-toc
 		;;
 
 	ppc)
