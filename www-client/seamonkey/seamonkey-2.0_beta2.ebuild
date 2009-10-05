@@ -25,7 +25,7 @@ SLOT="0"
 LICENSE="|| ( MPL-1.1 GPL-2 LGPL-2.1 )"
 IUSE="java ldap mozdevelop moznocompose moznoirc moznomail moznoroaming postgres crypt restrict-javascript startup-notification
 	debug minimal directfb moznosystem +threads jssh wifi python mobile moznocalendar static
-	moznomemory accessibility"
+	moznomemory accessibility sqlite"
 #	qt-experimental"
 [[ "${ARCH}" == "x86" ]] && IUSE="${IUSE} sse"
 
@@ -36,7 +36,7 @@ RDEPEND="java? ( >=virtual/jre-1.4 )
 		>=dev-libs/nss-3.12.2
 		>=dev-libs/nspr-4.7.3
 		!static? ( >=app-text/hunspell-1.2 )
-		>=dev-db/sqlite-3.6.7
+		sqlite? ( >=dev-db/sqlite-3.6.7 )
 		>=media-libs/lcms-1.17
 		app-arch/bzip2
 	)
@@ -214,12 +214,15 @@ src_compile() {
 		--with-system-nss \
 		--enable-image-encoder=all \
 		--enable-system-lcms \
-		--enable-system-sqlite \
 		--with-default-mozilla-five-home=${MOZILLA_FIVE_HOME} \
 		--with-user-appdir=.mozilla \
 		--without-system-png \
 		--enable-pref-extensions \
 		--disable-tests
+
+	# I don't know about sqlite bugs (runtime segfaults on x86_64 unknown source, testing),
+	# but internal sqlite are monolythic (must be faster)
+	mozconfig_use_enable sqlite system-sqlite
 
 	mozconfig_annotate 'places' --enable-storage --enable-places --enable-places_bookmarks
 
@@ -246,7 +249,12 @@ src_compile() {
 	mozconfig_use_enable static
 #	mozconfig_use_enable static js-static-build
 	mozconfig_use_enable !static system-hunspell
-	mozconfig_use_enable !moznomemory jemalloc
+	if use threads ; then
+		mozconfig_use_enable !moznomemory jemalloc
+	else
+		mozconfig_annotate "-threads" --disable-jemalloc
+		ewarn "jemalloc do not support -threads, disabling jemalloc"
+	fi
 	mozconfig_use_enable accessibility
 
 	if use moznoirc; then
