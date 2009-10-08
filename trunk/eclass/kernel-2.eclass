@@ -5,7 +5,7 @@ if [[ ${ETYPE} == sources ]]; then
 
 IUSE="${IUSE} build-kernel debug custom-cflags pnp compressed integrated ipv6
 	netboot nls unicode +acl minimal selinux custom-arch
-	kernel-drm +kernel-alsa +sources"
+	kernel-drm +kernel-alsa +sources fbcon"
 DEPEND="${DEPEND}
 	pnp? ( sys-kernel/genpnprd )
 	build-kernel? (
@@ -224,7 +224,7 @@ run_genkernel(){
 		--tempdir="${TMPDIR}/genkernel" \
 		--logfile="${TMPDIR}/genkernel.log" \
 		--arch-override=$(arch) \
-		--utils-arch=$(arch) --utils-cross-compile=${CTARGET}- \
+		--utils-arch=$(arch) --utils-cross-compile=${CTARGET:-${CHOST}}- \
 		--postclear $* ${KERNEL_GENKERNEL} || die "genkernel failed"
 	rm "${S}/genkernel"
 }
@@ -334,6 +334,12 @@ setconfig(){
 		cfg n DRM
 	fi
 	cfg_use kernel-alsa SND
+	# framebuffer enabled anymore, but "fbcon" support for more devices, exclude nouveau drm
+	if use fbcon; then
+		cfg y FB
+	else
+		cfg n FB_UVESA
+	fi
 	for i in ${KERNEL_CONFIG}; do
 		o="y ${i}"
 		o="${o/y +/m }"
@@ -409,18 +415,18 @@ arch(){
 		echo "${KERNEL_ARCH}"
 		return
 	fi
-	local arch=$(tc-ninja_magic_to_arch)
-	case ${arch} in
-		amd64) echo "x86_64"
-		;;
-		*) echo "${arch}"
-		;;
+	local h="${1:-${CTARGET:-${CHOST}}}"
+	case ${h} in
+		i?86*) echo "i386";;
+		x86_64*) echo "x86_64";;
+		*) echo "$(tc-ninja_magic_to_arch kern ${h})";;
 	esac
 }
 
 kmake(){
 	local o=""
-	[[ "${CBUILD}" != "${CTARGET}" || "${CHOST}" != "${CTARGET}" ]] && o="CROSS_COMPILE=${CTARGET}-"
+	local h="${CTARGET:-${CHOST}}"
+	[[ "${CBUILD}" != "${h}" ]] && o="CROSS_COMPILE=${h}-"
 	emake ARCH=$(arch) $o $* ${KERNEL_MAKEOPT} || die
 }
 

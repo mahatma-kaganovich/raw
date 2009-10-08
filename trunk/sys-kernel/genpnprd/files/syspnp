@@ -1,5 +1,5 @@
 #!/bin/sh
-## pnp modules bootloader v0.5
+## pnp modules bootloader v0.7
 ## (c) Denis Kaganovich, under Anarchy license
 ## consume preprocessed /lib/modules/$KV/modules.alias
 
@@ -202,6 +202,47 @@ chmod 755 $f
 echo "$f" >/proc/sys/kernel/modprobe
 }
 
+wild(){
+	WILD=$(grep "$1" <modules.other|grep -v "$2"|sed -e 's:.*/::g' -e 's/\...$//g')
+}
+
+cpufreq(){
+	wild $@ x--
+	local l=""
+	for i1 in $WILD ; do
+		mod $i1
+		wait $pid $pids
+		pid=""
+		pids=""
+		for i in `grep -l "$i1" $(find /sys/devices/system/cpu -name scaling_driver 2>/dev/null) 2>/dev/null | sed -e 's:/scaling_driver::g'` ; do
+			read i2 <"$i/cpuinfo_transition_latency" >/dev/null 2>&1 || continue
+			[[ "$i2" -gt "${l:=${i2}}" ]] && continue
+			if [[ "$i2" == "$l" ]] ; then
+				[[ "${freq#*${i1} }" == "$freq" ]] && freq="$freq$i1 "
+			else
+				freq=" $i1 "
+			fi
+		done
+		rmmod $i1 >/dev/null 2>&1
+	done
+}
+
+cpufreq_gov(){
+	local gov1=""
+	for i1 in $gov ; do
+		mod cpufreq_${i1}
+		wait $pid $pids
+		pid=""
+		pids=""
+		for i in `find /sys/devices/system/cpu -name scaling_governor 2>/dev/null` ; do
+			read i2 <"$i"
+			[[ "$i2" == "$i1" ]] || gov1="$gov1 $i"
+		done
+		rmmod cpufreq_${i1} >/dev/null 2>&1
+		[[ -z "$gov1" ]] && break
+	done
+}
+
 syspnp(){
 	local PNP_TMP="${TMPDIR}/pnp.found"
 	local NOTLOADED=""
@@ -219,7 +260,7 @@ syspnp(){
 	$NOPNP && return
 	. /modparam.sh
 	cd "/lib/modules/${KV}"
-	local i i1 i2
+	local i i1 i2 gov
 	good_msg "Searching pnp"
 	for i in 0 1 2 3 ; do
 		echo -ne "" >"${PNP_TMP}.$i"
@@ -242,35 +283,20 @@ syspnp(){
 	ifmod usbcore && mod usb_storage # user-frendly
 #	ifmod usual_tables && mod usb_storage # on demand
 	# frost. save your silicon (and power)
-	# doload=p4-clockmod in other cases
+	# autoload cpufreq driver in price of at least one more unload
 #	ifmod thermal_sys && mod fan
-	local gov="ondemand conservative"
+	local freq=""
 	if grep -q "^vendor_id.*AMD" /proc/cpuinfo ; then
-		mod powernow_k8 acpi_cpufreq
+		cpufreq "powernow\|acpi-cpufreq"
 		gov="conservative ondemand"
 	else
-		mod acpi_cpufreq
+		cpufreq "acpi-cpufreq"
+		gov="ondemand conservative"
 	fi
-#	wait $pid $pids
-#	pid=""
-#	pids=""
-	for i1 in $gov ; do
-		mod cpufreq_${i1}
-		wait $pid $pids
-		pid=""
-		pids=""
-		for i in /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor ; do
-			[[ -e "$i" ]] && echo $i1 >"$i" 2>/dev/null
-		done
-		i2=""
-		for i in /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor ; do
-			[[ -e "$i" ]] || continue
-			read i2 <"$i"
-			[[ "$i1" == "$i2" ]] && break
-		done
-		[[ "$i1" == "$i2" ]] && break
-		rmmod cpufreq_${i1} >/dev/null 2>&1
-	done
+	[[ -z "$freq" ]] && cpufreq cpufreq
+	mod $freq
+	cpufreq_gov
+	rmmod freq_table >/dev/null 2>&1
 
 	refresh
 #	good_msg "Filtering pnp modules"
@@ -284,7 +310,8 @@ syspnp(){
 				[[ -z "$i1" ]] && i1=".*"
 				# default: exclude slow probe, fatal to unload, etc
 				[[ "$i2" == "$i" ]] && i2='/tcrypt.ko\|/paride/\|/media/\|/sound/\|/microcode\.\|/isdn/\|/net/\|/video/'
-				mod $(grep "$i1" <modules.other|grep -v "$i2"|sed -e 's:.*/::g' -e 's/\...$//g')
+				wild "$i1" "$i2"
+				mod $WILD
 			done
 			NODETECT=1
 		fi
