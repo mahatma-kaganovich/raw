@@ -16,7 +16,7 @@ single(){
 mod(){
 	local m m1 m2
 	for m in $(echo -ne "$*" | sed -e 's/-/_/g') ; do
-		single "$m" 0 || continue
+		$CHK && ( single "$m" 0 || continue )
 		alias2 "$m" || continue
 		if $FAST ; then
 			case $PARALLEL in
@@ -74,7 +74,7 @@ refresh(){
 
 	if $FAST ; then
 		sed -e 's%\([^ 	]*\)[	 ]*.*$%>\1<%g' </proc/modules | sort >"${PNP_TMP}".1
-		cat `grep -l "^DRIVER=" $(find /sys -name uevent -print 2>/dev/null) 2>/dev/null` |grep "^DRIVER=\|^MODALIAS="|sort -u|sed -e 's%-%_%g' -e 's%^.*=\(.*\)$%>\1<%g' >>"${PNP_TMP}".1
+		cat `echo ""|grep -l "^DRIVER=" $(find /sys -name uevent -print 2>/dev/null) 2>/dev/null` |grep "^DRIVER=\|^MODALIAS="|sort -u|sed -e 's%-%_%g' -e 's%^.*=\(.*\)$%>\1<%g' >>"${PNP_TMP}".1
 		[[ "$(cat ${PNP_TMP}.1)" == "$(cat ${PNP_TMP}.2)" ]] && return 1
 		cp "${PNP_TMP}".1 "${PNP_TMP}".2
 		if ( $MODUNLOAD && [[ "$1" == "n" ]] ) || ! $QUIET ; then
@@ -209,12 +209,13 @@ wild(){
 cpufreq(){
 	wild $@ x--
 	local l=""
+	local CHK=false
 	for i1 in $WILD ; do
 		mod $i1
 		wait $pid $pids
 		pid=""
 		pids=""
-		for i in `grep -l "$i1" $(find /sys/devices/system/cpu -name scaling_driver 2>/dev/null) 2>/dev/null | sed -e 's:/scaling_driver::g'` ; do
+		for i in `echo ""|grep -l "$i1" $(find /sys/devices/system/cpu -name scaling_driver 2>/dev/null) 2>/dev/null | sed -e 's:/scaling_driver::g'` ; do
 			read i2 <"$i/cpuinfo_transition_latency" >/dev/null 2>&1 || continue
 			[[ "$i2" -gt "${l:=${i2}}" ]] && continue
 			if [[ "$i2" == "$l" ]] ; then
@@ -235,6 +236,7 @@ cpufreq_gov(){
 		pid=""
 		pids=""
 		for i in `find /sys/devices/system/cpu -name scaling_governor 2>/dev/null` ; do
+			echo $i1 >"$i" 2>/dev/null
 			read i2 <"$i"
 			[[ "$i2" == "$i1" ]] || gov1="$gov1 $i"
 		done
@@ -252,10 +254,22 @@ syspnp(){
 	local LOADALL=""
 	local FAST=true
 	local PARALLEL=0
+	local CHK=true
 	local pid=""
 	local pids=""
 
 	[[ -e "/lib/modules/${KV}/modules.alias.sh" ]] || return
+	echo "
+
+
+
+
+
+
+
+
+
+"
 	eval "pnp_options $(cat /proc/cmdline)" # parsing
 	$NOPNP && return
 	. /modparam.sh
