@@ -3,9 +3,21 @@
 ## (c) Denis Kaganovich, under Anarchy license
 ## consume preprocessed /lib/modules/$KV/modules.alias
 
-MODUNLOAD=false
+cmd_unload=false
 [[ -z "$KV" ]] && KV=`uname -r`
 [[ -z "$TMPDIR" ]] && [[ -e /temp ]] && TMPDIR="/temp"
+
+echo "
+
+
+
+
+
+
+
+
+
+"
 
 single(){
 	grep -qF ">$1<" "${PNP_TMP}.$2" && return 1
@@ -77,12 +89,12 @@ refresh(){
 		cat `echo ""|grep -l "^DRIVER=" $(find /sys -name uevent -print 2>/dev/null) 2>/dev/null` |grep "^DRIVER=\|^MODALIAS="|sort -u|sed -e 's%-%_%g' -e 's%^.*=\(.*\)$%>\1<%g' >>"${PNP_TMP}".1
 		[[ "$(cat ${PNP_TMP}.1)" == "$(cat ${PNP_TMP}.2)" ]] && return 1
 		cp "${PNP_TMP}".1 "${PNP_TMP}".2
-		if ( $MODUNLOAD && [[ "$1" == "n" ]] ) || ! $QUIET ; then
+		if ( $cmd_unload && [[ "$1" == "n" ]] ) || ! $QUIET ; then
 			$QUIET || echo -ne "\033[0G\033[0K${BOLD}   ::${NORMAL}Loaded:"
 			sed -i -e 's%^>\(.*\)<$%\1%g' "${PNP_TMP}".1
 			while read i ; do
 				grep -qF ">$i<" "${PNP_TMP}".3 && continue
-				[[ "$1" == "n" ]] && echo "$i" >>/nopnp.lst
+				[[ "$1" == "n" ]] && echo "$i" >>/cmd_nopnp.lst
 				$QUIET || echo -ne " $i"
 			done <"${PNP_TMP}".1
 			$QUIET || echo ""
@@ -95,13 +107,13 @@ refresh(){
 	l="\033[0G\033[0K${BOLD}   ::${NORMAL}Loaded:"
 	while read i j; do
 		single "$i" 1 || continue
-		[[ "$1" == "n" ]] && echo "$i" >>/nopnp.lst
+		[[ "$1" == "n" ]] && echo "$i" >>/cmd_nopnp.lst
 		$QUIET || echo -ne "$l $i"
 		l=""
 	done </proc/modules
 	cp "${PNP_TMP}".1 "${PNP_TMP}".0
 	[[ -z "$l" ]] || return 1
-	$QUIET || echo "" 
+	$QUIET || echo ""
 	return 0
 }
 
@@ -132,13 +144,13 @@ load_aliases(){
 mod_unload(){
 	local i l
 	l=""
-	( $MODUNLOAD && [[ -n "$REAL_ROOT" ]] && [[ -e "/nopnp.lst" ]] ) || return
+	( $cmd_unload && [[ -n "$REAL_ROOT" ]] && [[ -e "/cmd_nopnp.lst" ]] ) || return
 	echo -n "(removing unlocked modules)"
 	while read i; do
 		l="$i $l"
-	done </nopnp.lst
+	done </cmd_nopnp.lst
 	rmmod $l >/dev/null 2>&1
-	rmmod `cat /nopnp.lst` >/dev/null 2>&1
+	rmmod `cat /cmd_nopnp.lst` >/dev/null 2>&1
 }
 
 pnp_options(){
@@ -150,10 +162,10 @@ esac
 	i="$1"
 	shift
 	case "$i" in
-	quiet) $FAST || good_msg "PNP: quiet mode"; eval 'good_msg(){ return; }'; QUIET=true ;;
-	nofb) NOFB=true ;;
-	nopnp) NOPNP=true ;;
-	unload) MODUNLOAD=true ;;
+	quiet)
+	    good_msg(){ return; }
+	    QUIET=true
+	;;
 	loadall) LOADALL="all" ;;
 	loadall=*) LOADALL="${i#*=}" ;;
 	slow) FAST=false ;;
@@ -164,20 +176,14 @@ esac
 		p="*/${i%%:*}.ko) PARAM=\"${i#*:}\" ;;
 $p"
 	;;
+	*=*) export cmd_${i%%=*}="${i#*=}" ;;
+	*) export cmd_${i}=true ;;
 	esac
 	done
 	p="modparam(){
 case \$1 in
 $p"
 	echo "$p" >/modparam.sh
-}
-
-ifmod(){
-	local i
-	for i in $* ; do
-		grep -qF ">$i<" "${PNP_TMP}".0 || return 1
-	done
-	return 0
 }
 
 override_modprobe(){
@@ -203,11 +209,15 @@ echo "$f" >/proc/sys/kernel/modprobe
 }
 
 wild(){
-	WILD=$(grep "$1" <modules.other|grep -v "$2"|sed -e 's:.*/::g' -e 's/\...$//g')
+	if [[ -z "$2" ]] ; then
+		WILD=$(grep "$1" <modules.other|sed -e 's:.*/::g' -e 's/\...$//g')
+	else
+		WILD=$(grep "$1" <modules.other|grep -v "$2"|sed -e 's:.*/::g' -e 's/\...$//g')
+	fi
 }
 
 cpufreq(){
-	wild $@ x--
+	wild $@
 	local l=""
 	local CHK=false
 	for i1 in $WILD ; do
@@ -230,7 +240,7 @@ cpufreq(){
 
 cpufreq_gov(){
 	local gov1=""
-	for i1 in $gov ; do
+	for i1 in ${gov:-ondemand conservative} ; do
 		mod cpufreq_${i1}
 		wait $pid $pids
 		pid=""
@@ -246,35 +256,13 @@ cpufreq_gov(){
 }
 
 syspnp(){
-	local PNP_TMP="${TMPDIR}/pnp.found"
-	local NOTLOADED=""
-	local NOFB=false
-	local NOPNP=false
-	local QUIET=false
-	local LOADALL=""
-	local FAST=true
-	local PARALLEL=0
-	local CHK=true
-	local pid=""
-	local pids=""
+	local echo=echo PNP_TMP="${TMPDIR}/pnp.found" NOTLOADED="" cmd_nofb=false cmd_nopnp=false QUIET=false LOADALL="" FAST=true PARALLEL=0 CHK=true i i1 i2 gov="" freq="" pid="" pids=""
 
 	[[ -e "/lib/modules/${KV}/modules.alias.sh" ]] || return
-	echo "
-
-
-
-
-
-
-
-
-
-"
 	eval "pnp_options $(cat /proc/cmdline)" # parsing
-	$NOPNP && return
+	$cmd_nopnp && return
 	. /modparam.sh
 	cd "/lib/modules/${KV}"
-	local i i1 i2 gov
 	good_msg "Searching pnp"
 	for i in 0 1 2 3 ; do
 		echo -ne "" >"${PNP_TMP}.$i"
@@ -290,24 +278,28 @@ syspnp(){
 	fi
 	single usb_storage 0
 	load_aliases
-	$NOFB || mod fbcon
+	$cmd_nofb || mod fbcon
 
 	## some hand-made autoloads
 
-	ifmod usbcore && mod usb_storage # user-frendly
-#	ifmod usual_tables && mod usb_storage # on demand
+        while read i i1 ; do
+		case $i in
+#		usual_tables) mod usb_storage ;; # on demand
+		usbcore) mod usb_storage ;; # user-frendly
+#		thermal_sys) mod fan ;;
+		esac
+	done </proc/modules
 	# frost. save your silicon (and power)
 	# autoload cpufreq driver in price of at least one more unload
-#	ifmod thermal_sys && mod fan
-	local freq=""
-	if grep -q "^vendor_id.*AMD" /proc/cpuinfo ; then
-		cpufreq "powernow\|acpi-cpufreq"
-		gov="conservative ondemand"
-	else
-		cpufreq "acpi-cpufreq"
-		gov="ondemand conservative"
-	fi
-	[[ -z "$freq" ]] && cpufreq cpufreq
+	# just speedup probing by vendor
+	case "$(grep "^vendor_id" /proc/cpuinfo)" in
+	*AMD*)
+		cpufreq powernow
+		: ${gov:=conservative ondemand}
+	;;
+	*Intel*) cpufreq acpi-cpufreq ;;
+	esac
+	[[ -z "$freq" ]] && cpufreq cpufreq "drivers/cpufreq/\|powernow"
 	mod $freq
 	cpufreq_gov
 	rmmod freq_table >/dev/null 2>&1
@@ -331,10 +323,15 @@ syspnp(){
 		fi
 			# NODETECT: old behaviour
 		[[ "${NODETECT}" != '1' ]] && for i1 in ${MY_HWOPTS} ; do
-			[[ -e "/etc/modules/$i1" ]] && for i in `cat /etc/modules/${i1}` ; do
-				grep -q "^$i\$" "modules.pnp" && continue
-				mod "$i"
-			done
+			if [[ -e "/etc/modules/$i1" ]] ; then
+				for i in `cat /etc/modules/${i1}` ; do
+					grep -q "^$i\$" "modules.pnp" && continue
+					mod "$i"
+				done
+			else
+				wild "/${i1}[./]"
+				mod $WILD
+			fi
 		done
 		refresh n || break
 		mod $MDOLIST
@@ -343,13 +340,14 @@ syspnp(){
 	MY_HWOPTS=""
 	MDOLIST=""
 	echo -ne "\033[0G\033[0K"
-	$QUIET || good_msg "Boot time: $(cat /proc/uptime)"
+	good_msg "Boot time: $(cat /proc/uptime)"
 	if [[ -n "${NOTLOADED}" ]] ; then
 		good_msg "Not loaded:$NOTLOADED"
 		# try again
 		MDOLIST="$NOTLOADED"
 	fi
 	rm "${PNP_TMP}".?
+	cd /
 }
 
 [[ "$1" == "init" ]] && syspnp $* # debug
