@@ -7,8 +7,8 @@
 @@ -28,2 +29,9 @@ mount -o remount,rw / >/dev/null 2>&1
  
 +if [[ -f /lib.loopfs ]]; then
-+	for i in loop cramfs squashfs ; do
-+		insmod `find /lib/modules -name "$i.*"` >/dev/null 2>&1
++	for i in `find /lib/modules -name "*.ko"` ; do
++		insmod $i
 +	done
 +	mount /lib.loopfs /lib -o loop
 +fi
