@@ -53,7 +53,7 @@ mod(){
 			for m1 in $ALIAS ; do
 				modparam $m1
 				wait $pid
-				$QUIET || echo -ne "\033[0G\033[0K$LCOUNT	$m1 $PARAM"
+				$cmd_quiet || echo -ne "\033[0G\033[0K$LCOUNT	$m1 $PARAM"
 				insmod "$m1" $PARAM >/dev/null 2>&1 &
 				pid="$!"
 			done
@@ -67,7 +67,7 @@ mod(){
 			[[ "$m" == "$m2" ]] || single "$m2" 0 || continue
 			modparam $m1
 			wait $pid
-			$QUIET || echo -ne "\033[0G\033[0K$LCOUNT	$m1 $PARAM"
+			$cmd_quiet || echo -ne "\033[0G\033[0K$LCOUNT	$m1 $PARAM"
 			insmod "$m1" $PARAM >/dev/null 2>&1 &
 			pid="$!"
 		done
@@ -86,18 +86,18 @@ refresh(){
 
 	if $FAST ; then
 		sed -e 's%\([^ 	]*\)[	 ]*.*$%>\1<%g' </proc/modules | sort >"${PNP_TMP}".1
-		cat `echo ""|grep -l "^DRIVER=" $(find /sys -name uevent -print 2>/dev/null) 2>/dev/null` |grep "^DRIVER=\|^MODALIAS="|sort -u|sed -e 's%-%_%g' -e 's%^.*=\(.*\)$%>\1<%g' >>"${PNP_TMP}".1
+		cat `grep -l "^DRIVER=" $(find /sys -name uevent -print 2>/dev/null) </dev/null 2>/dev/null` </dev/null |grep "^DRIVER=\|^MODALIAS="|sort -u|sed -e 's%-%_%g' -e 's%^.*=\(.*\)$%>\1<%g' >>"${PNP_TMP}".1
 		[[ "$(cat ${PNP_TMP}.1)" == "$(cat ${PNP_TMP}.2)" ]] && return 1
 		cp "${PNP_TMP}".1 "${PNP_TMP}".2
-		if ( $cmd_unload && [[ "$1" == "n" ]] ) || ! $QUIET ; then
-			$QUIET || echo -ne "\033[0G\033[0K${BOLD}   ::${NORMAL}Loaded:"
+		if ( $cmd_unload && [[ "$1" == "n" ]] ) || ! $cmd_quiet ; then
+			$cmd_quiet || echo -ne "\033[0G\033[0K${BOLD}   ::${NORMAL}Loaded:"
 			sed -i -e 's%^>\(.*\)<$%\1%g' "${PNP_TMP}".1
 			while read i ; do
 				grep -qF ">$i<" "${PNP_TMP}".3 && continue
 				[[ "$1" == "n" ]] && echo "$i" >>/cmd_nopnp.lst
-				$QUIET || echo -ne " $i"
+				$cmd_quiet || echo -ne " $i"
 			done <"${PNP_TMP}".1
-			$QUIET || echo ""
+			$cmd_quiet || echo ""
 		fi
 		cp "${PNP_TMP}".2 "${PNP_TMP}".0
 		cp "${PNP_TMP}".2 "${PNP_TMP}".3
@@ -108,12 +108,12 @@ refresh(){
 	while read i j; do
 		single "$i" 1 || continue
 		[[ "$1" == "n" ]] && echo "$i" >>/cmd_nopnp.lst
-		$QUIET || echo -ne "$l $i"
+		$cmd_quiet || echo -ne "$l $i"
 		l=""
 	done </proc/modules
 	cp "${PNP_TMP}".1 "${PNP_TMP}".0
 	[[ -z "$l" ]] || return 1
-	$QUIET || echo ""
+	$cmd_quiet || echo ""
 	return 0
 }
 
@@ -127,16 +127,17 @@ load_aliases(){
 	local i m
 	while  count ; do
 		if $FAST ; then
-			mod `cat $(find /sys -name modalias -print 2>/dev/null) 2>/dev/null|sort -u'`
+			# "sort -u" breaks bus order, but speedup boot
+			mod `cat $(find /sys -name modalias -print 2>/dev/null) </dev/null 2>/dev/null|sort -u'` $MDOLIST
 		else
 		for i in `find /sys -name modalias -print 2>/dev/null` ; do
 			if [[ -e "$i" ]] && read m <"$i" ; then
 				mod $m
 			fi
 		done
+		mod $MDOLIST
 		fi
 		refresh || break
-		mod $MDOLIST
 		[[ -n "$SDELAY" ]] && sleep "$SDELAY"
 	done
 }
@@ -162,10 +163,6 @@ esac
 	i="$1"
 	shift
 	case "$i" in
-	quiet)
-	    good_msg(){ return; }
-	    QUIET=true
-	;;
 	loadall) LOADALL="all" ;;
 	loadall=*) LOADALL="${i#*=}" ;;
 	slow) FAST=false ;;
@@ -184,6 +181,7 @@ $p"
 case \$1 in
 $p"
 	echo "$p" >/modparam.sh
+	$cmd_quiet && good_msg(){ return; }
 }
 
 override_modprobe(){
@@ -225,7 +223,7 @@ cpufreq(){
 		wait $pid $pids
 		pid=""
 		pids=""
-		for i in `echo ""|grep -l "$i1" $(find /sys/devices/system/cpu -name scaling_driver 2>/dev/null) 2>/dev/null | sed -e 's:/scaling_driver::g'` ; do
+		for i in `grep -l "$i1" $(find /sys/devices/system/cpu -name scaling_driver </dev/null 2>/dev/null) 2>/dev/null | sed -e 's:/scaling_driver::g'` ; do
 			read i2 <"$i/cpuinfo_transition_latency" >/dev/null 2>&1 || continue
 			[[ "$i2" -gt "${l:=${i2}}" ]] && continue
 			if [[ "$i2" == "$l" ]] ; then
@@ -276,13 +274,13 @@ syspnp(){
 		mod $MDOLIST
 		refresh
 	fi
-	single usb_storage 0
+	$FAST || single usb_storage 0
 	load_aliases
-	$cmd_nofb || mod fbcon
 
 	## some hand-made autoloads
 
-        while read i i1 ; do
+	$cmd_nofb || [[ -z "$(cat /proc/fb 2>/dev/null)" ]] || mod fbcon
+	while read i i1 ; do
 		case $i in
 #		usual_tables) mod usb_storage ;; # on demand
 		usbcore) mod usb_storage ;; # user-frendly
