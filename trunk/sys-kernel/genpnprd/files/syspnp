@@ -1,5 +1,5 @@
 #!/bin/sh
-## pnp modules bootloader v0.7
+## pnp modules bootloader v0.8
 ## (c) Denis Kaganovich, under Anarchy license
 ## consume preprocessed /lib/modules/$KV/modules.alias
 
@@ -23,6 +23,10 @@ single(){
 	grep -qF ">$1<" "${PNP_TMP}.$2" && return 1
 	echo ">$1<" >>"${PNP_TMP}.$2"
 	return 0
+}
+
+diffu(){
+	sort -u $1|sort -m $2 -|uniq -u
 }
 
 mod(){
@@ -85,29 +89,31 @@ refresh(){
 	pids=""
 
 	if $FAST ; then
-		sed -e 's%\([^ 	]*\)[	 ]*.*$%>\1<%g' </proc/modules | sort >"${PNP_TMP}".1
-		cat `grep -l "^DRIVER=" $(find /sys -name uevent -print 2>/dev/null) </dev/null 2>/dev/null` </dev/null |grep "^DRIVER=\|^MODALIAS="|sort -u|sed -e 's%-%_%g' -e 's%^.*=\(.*\)$%>\1<%g' >>"${PNP_TMP}".1
+		sed -e 's%^\([^ 	]*\)[	 ]*.*$%>\1<%g' </proc/modules >"${PNP_TMP}".1
+		cat `grep -ls "^DRIVER=" $(find /sys -name uevent -print 2>/dev/null) </dev/null` </dev/null |grep "^DRIVER=\|^MODALIAS="|sort -u|sed -e 's%-%_%g' -e 's%^.*=\(.*\)$%>\1<%g' >>"${PNP_TMP}".1
+		sort -u "${PNP_TMP}".1 >"${PNP_TMP}".0
 		[[ "$(cat ${PNP_TMP}.1)" == "$(cat ${PNP_TMP}.2)" ]] && return 1
-		cp "${PNP_TMP}".1 "${PNP_TMP}".2
-		if ( $cmd_unload && [[ "$1" == "n" ]] ) || ! $cmd_quiet ; then
-			$cmd_quiet || echo -ne "\033[0G\033[0K${BOLD}   ::${NORMAL}Loaded:"
-			sed -i -e 's%^>\(.*\)<$%\1%g' "${PNP_TMP}".1
-			while read i ; do
-				grep -qF ">$i<" "${PNP_TMP}".3 && continue
-				[[ "$1" == "n" ]] && echo "$i" >>/cmd_nopnp.lst
-				$cmd_quiet || echo -ne " $i"
-			done <"${PNP_TMP}".1
-			$cmd_quiet || echo ""
+
+		if ! $cmd_quiet ; then
+			echo -ne "\033[0G\033[0K${BOLD}   ::${NORMAL}Loaded:"
+			for i in $(diffu ${PNP_TMP}.2 ${PNP_TMP}.0) ; do
+				i="${i#>}"
+				i="${i%<}"
+				[[ "$1" == "n" ]] && echo "$i" >>/nopnp.lst
+				echo -ne " $i"
+			done
+			echo ""
+		elif $cmd_unload && [[ "$1" == "n" ]] ; then
+			diffu ${PNP_TMP}.2 ${PNP_TMP}.0 >>/nopnp.lst
 		fi
-		cp "${PNP_TMP}".2 "${PNP_TMP}".0
-		cp "${PNP_TMP}".2 "${PNP_TMP}".3
+		cp "${PNP_TMP}".1 "${PNP_TMP}".2
 		return 0
 	fi
 
 	l="\033[0G\033[0K${BOLD}   ::${NORMAL}Loaded:"
 	while read i j; do
 		single "$i" 1 || continue
-		[[ "$1" == "n" ]] && echo "$i" >>/cmd_nopnp.lst
+		[[ "$1" == "n" ]] && echo "$i" >>/nopnp.lst
 		$cmd_quiet || echo -ne "$l $i"
 		l=""
 	done </proc/modules
@@ -128,7 +134,7 @@ load_aliases(){
 	while  count ; do
 		if $FAST ; then
 			# "sort -u" breaks bus order, but speedup boot
-			mod `cat $(find /sys -name modalias -print 2>/dev/null) </dev/null 2>/dev/null|sort -u'` $MDOLIST
+			mod $MDOLIST `cat $(find /sys -name modalias -print 2>/dev/null) </dev/null 2>/dev/null|sort -u'`
 		else
 		for i in `find /sys -name modalias -print 2>/dev/null` ; do
 			if [[ -e "$i" ]] && read m <"$i" ; then
@@ -143,15 +149,22 @@ load_aliases(){
 }
 
 mod_unload(){
-	local i l
+	local i l m=""
 	l=""
-	( $cmd_unload && [[ -n "$REAL_ROOT" ]] && [[ -e "/cmd_nopnp.lst" ]] ) || return
-	echo -n "(removing unlocked modules)"
+	( $cmd_unload && [[ -n "$REAL_ROOT" ]] && [[ -e "/nopnp.lst" ]] ) || return
+	echo -n "(removing unlocked modules"
 	while read i; do
-		l="$i $l"
-	done </cmd_nopnp.lst
-	rmmod $l >/dev/null 2>&1
-	rmmod `cat /cmd_nopnp.lst` >/dev/null 2>&1
+		i="${i#>}"
+		l="${i%<} $l"
+	done </nopnp.lst
+	i="$(cat /proc/modules)"
+	while [[ "$i" != "$m" ]]; do
+		m="$i"
+		echo -n "."
+		rmmod $l >/dev/null 2>&1
+		i="$(cat /proc/modules)"
+	done
+	echo -n ")"
 }
 
 pnp_options(){
@@ -163,8 +176,6 @@ esac
 	i="$1"
 	shift
 	case "$i" in
-	loadall) LOADALL="all" ;;
-	loadall=*) LOADALL="${i#*=}" ;;
 	slow) FAST=false ;;
 	parallel-startup) PARALLEL=1 ;;
 	parallel-startup=*) PARALLEL="${i#*=}" ;;
@@ -207,23 +218,18 @@ echo "$f" >/proc/sys/kernel/modprobe
 }
 
 wild(){
-	if [[ -z "$2" ]] ; then
-		WILD=$(grep "$1" <modules.other|sed -e 's:.*/::g' -e 's/\...$//g')
-	else
-		WILD=$(grep "$1" <modules.other|grep -v "$2"|sed -e 's:.*/::g' -e 's/\...$//g')
-	fi
+	grep "$1" <modules.other|grep -v "${2:-x--}"|sed -e 's:.*/::g' -e 's/\...$//g'
 }
 
 cpufreq(){
-	wild $@
 	local l=""
 	local CHK=false
-	for i1 in $WILD ; do
+	for i1 in $(wild $@) ; do
 		mod $i1
 		wait $pid $pids
 		pid=""
 		pids=""
-		for i in `grep -l "$i1" $(find /sys/devices/system/cpu -name scaling_driver </dev/null 2>/dev/null) 2>/dev/null | sed -e 's:/scaling_driver::g'` ; do
+		for i in `grep -ls "$i1" $(find /sys/devices/system/cpu -name scaling_driver </dev/null 2>/dev/null) | sed -e 's:/scaling_driver::g'` ; do
 			read i2 <"$i/cpuinfo_transition_latency" >/dev/null 2>&1 || continue
 			[[ "$i2" -gt "${l:=${i2}}" ]] && continue
 			if [[ "$i2" == "$l" ]] ; then
@@ -254,7 +260,7 @@ cpufreq_gov(){
 }
 
 syspnp(){
-	local echo=echo PNP_TMP="${TMPDIR}/pnp.found" NOTLOADED="" cmd_nofb=false cmd_nopnp=false QUIET=false LOADALL="" FAST=true PARALLEL=0 CHK=true i i1 i2 gov="" freq="" pid="" pids=""
+	local echo=echo PNP_TMP="${TMPDIR}/pnp.found" NOTLOADED="" cmd_nofb=false cmd_nopnp=false QUIET=false FAST=true PARALLEL=0 CHK=true i i1 i2 gov="" freq="" pid="" pids=""
 
 	[[ -e "/lib/modules/${KV}/modules.alias.sh" ]] || return
 	eval "pnp_options $(cat /proc/cmdline)" # parsing
@@ -270,11 +276,13 @@ syspnp(){
 	LCOUNT=""
 	. "./modules.alias.sh"
 
-	if [[ -n "$MDOLIST" ]]; then
-		mod $MDOLIST
-		refresh
+	if ! $FAST ; then
+		if [[ -n "$MDOLIST" ]]; then
+			mod $MDOLIST
+			refresh
+		fi
+		single usb_storage 0
 	fi
-	$FAST || single usb_storage 0
 	load_aliases
 
 	## some hand-made autoloads
@@ -305,30 +313,23 @@ syspnp(){
 	refresh
 #	good_msg "Filtering pnp modules"
 	while count ; do
-		local NODETECT
-		if [[ -n "$LOADALL" ]] ; then
-			for i in $LOADALL ; do
-				[[ "$i" == 'all' ]] && i=''
-				i1="${i%%:*}"
-				i2="${i#*:}"
-				[[ -z "$i1" ]] && i1=".*"
-				# default: exclude slow probe, fatal to unload, etc
-				[[ "$i2" == "$i" ]] && i2='/tcrypt.ko\|/paride/\|/media/\|/sound/\|/microcode\.\|/isdn/\|/net/\|/video/'
-				wild "$i1" "$i2"
-				mod $WILD
-			done
-			NODETECT=1
-		fi
-			# NODETECT: old behaviour
-		[[ "${NODETECT}" != '1' ]] && for i1 in ${MY_HWOPTS} ; do
+		for i in $cmd_loadall ; do
+			[[ "$i" == 'true' ]] && i=''
+			i1="${i%%:*}"
+			i2="${i#*:}"
+			[[ -z "$i1" ]] && i1=".*"
+			# default: exclude slow probe, fatal to unload, etc
+			[[ "$i2" == "$i" ]] && i2='/tcrypt.ko\|/paride/\|/media/\|/sound/\|/microcode\.\|/isdn/\|/net/\|/video/'
+			mod $(wild "$i1" "$i2")
+		done
+		[[ -z "$cmd_loadall" ]] && for i1 in ${MY_HWOPTS} ; do
 			if [[ -e "/etc/modules/$i1" ]] ; then
 				for i in `cat /etc/modules/${i1}` ; do
 					grep -q "^$i\$" "modules.pnp" && continue
 					mod "$i"
 				done
 			else
-				wild "/${i1}[./]"
-				mod $WILD
+				mod $(wild "/${i1}[./]")
 			fi
 		done
 		refresh n || break
