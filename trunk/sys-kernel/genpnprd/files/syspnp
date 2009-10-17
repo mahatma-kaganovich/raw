@@ -322,18 +322,17 @@ syspnp(){
 			[[ "$i2" == "$i" ]] && i2='/tcrypt.ko\|/paride/\|/media/\|/sound/\|/microcode\.\|/isdn/\|/net/\|/video/'
 			mod $(wild "$i1" "$i2")
 		done
-		[[ -z "$cmd_loadall" ]] && for i1 in ${MY_HWOPTS} ; do
+		[[ -z "$cmd_loadall" ]] && [[ "$NODETECT" != '1' ]] &&
+		for i1 in ${MY_HWOPTS} ; do
 			if [[ -e "/etc/modules/$i1" ]] ; then
-				for i in `cat /etc/modules/${i1}` ; do
-					grep -q "^$i\$" "modules.pnp" && continue
-					mod "$i"
+				for i in `cat /etc/modules/$i1` ; do
+					grep -q "^$i\$" "modules.pnp" || mod "$i"
 				done
 			else
 				mod $(wild "/${i1}[./]")
 			fi
 		done
 		refresh n || break
-		mod $MDOLIST
 		load_aliases
 	done
 	MY_HWOPTS=""
