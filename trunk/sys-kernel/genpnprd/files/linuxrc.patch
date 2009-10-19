@@ -1,25 +1,19 @@
---- a/init	2009-10-01 15:46:11.000000000 +0300
-+++ b/init	2009-10-01 15:46:24.000000000 +0300
+--- a/init	2009-10-11 00:02:42.000000000 +0300
++++ b/init	2009-10-19 19:38:21.000000000 +0300
 @@ -4,2 +4,3 @@
  . /etc/initrd.scripts
 +. /etc/syspnp
  
-@@ -28,2 +29,9 @@ mount -o remount,rw / >/dev/null 2>&1
+@@ -28,2 +29,4 @@
  
-+if [[ -f /lib.loopfs ]]; then
-+	for i in `find /lib/modules -name "*.ko"` ; do
-+		insmod $i
-+	done
-+	mount /lib.loopfs /lib -o loop
-+fi
++pnp_init
 +
  if [ "$0" = '/init' ]
-@@ -239,2 +247,3 @@ then
+@@ -239,2 +242,3 @@
  	good_msg 'Loading modules'
 +	syspnp
  	# Load appropriate kernel modules
-@@ -695,2 +704,4 @@ mkdir "${CHROOT}/proc" "${CHROOT}/sys" 2
+@@ -695,2 +699,3 @@
  echo -ne "${BOLD}.${NORMAL}"
-+umount /lib
 +mod_unload
  umount /sys || echo '*: Failed to unmount the ramdisk /sys!'
