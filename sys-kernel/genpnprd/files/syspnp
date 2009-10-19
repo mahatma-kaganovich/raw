@@ -1,5 +1,5 @@
 #!/bin/sh
-## pnp modules bootloader v0.8
+## pnp modules bootloader v0.9
 ## (c) Denis Kaganovich, under Anarchy license
 ## consume preprocessed /lib/modules/$KV/modules.alias
 
@@ -7,7 +7,9 @@ cmd_unload=false
 [[ -z "$KV" ]] && KV=`uname -r`
 [[ -z "$TMPDIR" ]] && [[ -e /temp ]] && TMPDIR="/temp"
 
-echo "
+pnp_init(){
+	if [[ -f /lib.loopfs ]]; then
+		echo "
 
 
 
@@ -18,15 +20,17 @@ echo "
 
 
 "
+		for i in `find /lib/modules -name "*.ko"` ; do
+			insmod $i
+		done
+		mount /lib.loopfs /lib -o loop
+	fi
+}
 
 single(){
 	grep -qF ">$1<" "${PNP_TMP}.$2" && return 1
 	echo ">$1<" >>"${PNP_TMP}.$2"
 	return 0
-}
-
-diffu(){
-	sort -u $1|sort -m $2 -|uniq -u
 }
 
 mod(){
@@ -90,13 +94,12 @@ refresh(){
 
 	if $FAST ; then
 		sed -e 's%^\([^ 	]*\)[	 ]*.*$%>\1<%g' </proc/modules >"${PNP_TMP}".1
-		cat `grep -ls "^DRIVER=" $(find /sys -name uevent -print 2>/dev/null) </dev/null` </dev/null |grep "^DRIVER=\|^MODALIAS="|sort -u|sed -e 's%-%_%g' -e 's%^.*=\(.*\)$%>\1<%g' >>"${PNP_TMP}".1
+		cat `grep -ls "^DRIVER=" $(find /sys -name uevent -print 2>/dev/null) </dev/null` </dev/null |grep "^DRIVER=\|^MODALIAS="|sed -e 's%-%_%g' -e 's%^.*=\(.*\)$%>\1<%g' >>"${PNP_TMP}".1
 		sort -u "${PNP_TMP}".1 >"${PNP_TMP}".0
 		[[ "$(cat ${PNP_TMP}.1)" == "$(cat ${PNP_TMP}.2)" ]] && return 1
-
 		if ! $cmd_quiet ; then
 			echo -ne "\033[0G\033[0K${BOLD}   ::${NORMAL}Loaded:"
-			for i in $(diffu ${PNP_TMP}.2 ${PNP_TMP}.0) ; do
+			for i in $(sort -m ${PNP_TMP}.0 ${PNP_TMP}.3 | uniq -u) ; do
 				i="${i#>}"
 				i="${i%<}"
 				[[ "$1" == "n" ]] && echo "$i" >>/nopnp.lst
@@ -104,9 +107,10 @@ refresh(){
 			done
 			echo ""
 		elif $cmd_unload && [[ "$1" == "n" ]] ; then
-			diffu ${PNP_TMP}.2 ${PNP_TMP}.0 >>/nopnp.lst
+			sort -m ${PNP_TMP}.0 ${PNP_TMP}.3 | uniq -u >>/nopnp.lst
 		fi
 		cp "${PNP_TMP}".1 "${PNP_TMP}".2
+		cp "${PNP_TMP}".0 "${PNP_TMP}".3
 		return 0
 	fi
 
@@ -149,6 +153,16 @@ load_aliases(){
 }
 
 mod_unload(){
+	if ! [[ -e ${NEW_ROOT}/lib/modules/$KV ]] ; then
+		if ${cmd_autoinstall:-false} ; then
+			echo -ne "(Installing /lib/modules/$KV)"
+			mount -o remount,rw ${NEW_ROOT} &&
+			cp -a /lib/modules/$KV ${NEW_ROOT}/lib/modules/$KV
+		else
+			echo -ne '(use "autoinstall" to install modules)'
+		fi
+	fi
+	umount /lib
 	local i l m=""
 	l=""
 	( $cmd_unload && [[ -n "$REAL_ROOT" ]] && [[ -e "/nopnp.lst" ]] ) || return
