@@ -7,26 +7,6 @@ cmd_unload=false
 [[ -z "$KV" ]] && KV=`uname -r`
 [[ -z "$TMPDIR" ]] && [[ -e /temp ]] && TMPDIR="/temp"
 
-pnp_init(){
-	if [[ -f /lib.loopfs ]]; then
-		echo "
-
-
-
-
-
-
-
-
-
-"
-		for i in `find /lib/modules -name "*.ko"` ; do
-			insmod $i
-		done
-		mount /lib.loopfs /lib -o loop
-	fi
-}
-
 single(){
 	grep -qF ">$1<" "${PNP_TMP}.$2" && return 1
 	echo ">$1<" >>"${PNP_TMP}.$2"
@@ -182,6 +162,10 @@ mod_unload(){
 }
 
 pnp_options(){
+	PARALLEL=0
+	FAST=true
+	cmd_nofb=false
+	cmd_nopnp=false
 	local i
 	local p="*) PARAM='' ;;
 esac
@@ -207,6 +191,27 @@ case \$1 in
 $p"
 	echo "$p" >/modparam.sh
 	$cmd_quiet && good_msg(){ return; }
+}
+
+pnp_init(){
+	pnp_options
+	if [[ -f /lib.loopfs ]]; then
+		echo "
+
+
+
+
+
+
+
+
+
+"
+		for i in `find /lib/modules -name "*.ko"` ; do
+			insmod $i
+		done
+		mount /lib.loopfs /lib -o loop
+	fi
 }
 
 override_modprobe(){
@@ -243,7 +248,7 @@ cpufreq(){
 		wait $pid $pids
 		pid=""
 		pids=""
-		for i in `grep -ls "$i1" $(find /sys/devices/system/cpu -name scaling_driver </dev/null 2>/dev/null) | sed -e 's:/scaling_driver::g'` ; do
+		for i in `grep -ls "$i1" $(find /sys/devices/system/cpu -name scaling_driver 2>/dev/null) </dev/null | sed -e 's:/scaling_driver::g'` ; do
 			read i2 <"$i/cpuinfo_transition_latency" >/dev/null 2>&1 || continue
 			[[ "$i2" -gt "${l:=${i2}}" ]] && continue
 			if [[ "$i2" == "$l" ]] ; then
@@ -274,7 +279,7 @@ cpufreq_gov(){
 }
 
 syspnp(){
-	local echo=echo PNP_TMP="${TMPDIR}/pnp.found" NOTLOADED="" cmd_nofb=false cmd_nopnp=false QUIET=false FAST=true PARALLEL=0 CHK=true i i1 i2 gov="" freq="" pid="" pids=""
+	local PNP_TMP="${TMPDIR}/pnp.found" NOTLOADED="" CHK=true i i1 i2 gov="" freq="" pid="" pids=""
 
 	[[ -e "/lib/modules/${KV}/modules.alias.sh" ]] || return
 	eval "pnp_options $(cat /proc/cmdline)" # parsing
@@ -319,7 +324,10 @@ syspnp(){
 	;;
 	*Intel*) cpufreq acpi-cpufreq ;;
 	esac
-	[[ -z "$freq" ]] && cpufreq cpufreq "drivers/cpufreq/\|powernow"
+	if [[ -z "$freq" ]]; then
+		cpufreq cpufreq "drivers/cpufreq/\|powernow"
+		rmmod speedstep_lib >/dev/null 2>&1
+	fi
 	mod $freq
 	cpufreq_gov
 	rmmod freq_table >/dev/null 2>&1
@@ -353,6 +361,7 @@ syspnp(){
 	MDOLIST=""
 	echo -ne "\033[0G\033[0K"
 	good_msg "Boot time: $(cat /proc/uptime)"
+echo "Boot time: $(cat /proc/uptime)"
 	if [[ -n "${NOTLOADED}" ]] ; then
 		good_msg "Not loaded:$NOTLOADED"
 		# try again
