@@ -3,7 +3,6 @@
 ## (c) Denis Kaganovich, under Anarchy license
 ## consume preprocessed /lib/modules/$KV/modules.alias
 
-cmd_unload=false
 [[ -z "$KV" ]] && KV=`uname -r`
 [[ -z "$TMPDIR" ]] && [[ -e /temp ]] && TMPDIR="/temp"
 
@@ -166,6 +165,7 @@ pnp_options(){
 	FAST=true
 	cmd_nofb=false
 	cmd_nopnp=false
+	cmd_unload=false
 	local i
 	local p="*) PARAM='' ;;
 esac
@@ -243,7 +243,8 @@ wild(){
 cpufreq(){
 	local l=""
 	local CHK=false
-	for i1 in $(wild $@) ; do
+	local w="$(wild $@)"
+	for i1 in $w ; do
 		mod $i1
 		wait $pid $pids
 		pid=""
@@ -259,6 +260,7 @@ cpufreq(){
 		done
 		rmmod $i1 >/dev/null 2>&1
 	done
+	rmmod $w >/dev/null 2>&1
 }
 
 cpufreq_gov(){
@@ -324,10 +326,7 @@ syspnp(){
 	;;
 	*Intel*) cpufreq acpi-cpufreq ;;
 	esac
-	if [[ -z "$freq" ]]; then
-		cpufreq cpufreq "drivers/cpufreq/\|powernow"
-		rmmod speedstep_lib >/dev/null 2>&1
-	fi
+	[[ -z "$freq" ]] && cpufreq cpufreq "drivers/cpufreq/\|powernow"
 	mod $freq
 	cpufreq_gov
 	rmmod freq_table >/dev/null 2>&1
