@@ -194,7 +194,7 @@ $p"
 }
 
 pnp_init(){
-	pnp_options
+	eval "pnp_options $(cat /proc/cmdline)" # parsing
 	if [[ -f /lib.loopfs ]]; then
 		echo "
 
@@ -281,11 +281,10 @@ cpufreq_gov(){
 }
 
 syspnp(){
+	[[ -e "/lib/modules/${KV}/modules.alias.sh" ]] || return
+	$cmd_nopnp && return
 	local PNP_TMP="${TMPDIR}/pnp.found" NOTLOADED="" CHK=true i i1 i2 gov="" freq="" pid="" pids=""
 
-	[[ -e "/lib/modules/${KV}/modules.alias.sh" ]] || return
-	eval "pnp_options $(cat /proc/cmdline)" # parsing
-	$cmd_nopnp && return
 	. /modparam.sh
 	cd "/lib/modules/${KV}"
 	good_msg "Searching pnp"
