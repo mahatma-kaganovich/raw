@@ -16,7 +16,7 @@ mod(){
 	local m m1 m2
 	for m in $(echo -ne "$*" | sed -e 's/-/_/g') ; do
 		$CHK && ( single "$m" 0 || continue )
-		alias2 "$m" || continue
+		alias2 "$m" || ( echo ">$m<" >>"${PNP_TMP}".4 ; continue )
 		if $FAST ; then
 			case $PARALLEL in
 			no) ;;
@@ -90,6 +90,7 @@ refresh(){
 		fi
 		cp "${PNP_TMP}".1 "${PNP_TMP}".2
 		cp "${PNP_TMP}".0 "${PNP_TMP}".3
+		cat "${PNP_TMP}".4 >>"${PNP_TMP}".0
 		return 0
 	fi
 
@@ -283,18 +284,18 @@ cpufreq_gov(){
 syspnp(){
 	[[ -e "/lib/modules/${KV}/modules.alias.sh" ]] || return
 	$cmd_nopnp && return
-	local PNP_TMP="${TMPDIR}/pnp.found" NOTLOADED="" CHK=true i i1 i2 gov="" freq="" pid="" pids=""
+	local PNP_TMP="${TMPDIR}/pnp.found" NOTLOADED="" CHK=true i i1 i2 gov="" freq="" pid="" pids="" LCOUNT=""
 
 	. /modparam.sh
 	cd "/lib/modules/${KV}"
 	good_msg "Searching pnp"
-	for i in 0 1 2 3 ; do
+	for i in 0 1 2 3 4 ; do
 		echo -ne "" >"${PNP_TMP}.$i"
 	done
 	refresh n
 	override_modprobe
-	LCOUNT=""
-	. "./modules.alias.sh"
+	
+	. ./modules.alias.sh
 
 	if ! $FAST ; then
 		if [[ -n "$MDOLIST" ]]; then
