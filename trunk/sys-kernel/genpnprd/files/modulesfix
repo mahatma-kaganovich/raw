@@ -1,5 +1,6 @@
 #!/bin/sh
 ## (c) Denis Kaganovich
+## v2
 
 #BUS="pci"
 BUS="\w+"
@@ -16,9 +17,11 @@ grep -Prhl "${STR}${BUS}_device_id\s+" $1 --include="*.c" | while read i ; do
 	n="${n// }"
 	bus="${bus%%_device_id*}"
 	grep -Pq "^module_init\s*\(" $i || continue
-	grep -Pq "${STR}${bus}_driver\s+" $i || continue
 	grep -q "MODULE_DEVICE_TABLE" $i && continue
 	bus="${bus%%_*}"
+	if [[ "$2" != "f" ]] || [[ "$bus" == "of" ]] ; then
+		grep -Pq "${STR}${bus}_driver\s+" $i || continue
+	fi
 	local ii="${i#$1}"
 	ii="${ii#/}"
 	if [[ "$2" != "f" ]] && ! grep -Pqr "MODULE_DEVICE_TABLE\($bus," $1 --include="*.c" ; then
