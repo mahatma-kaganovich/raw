@@ -25,7 +25,7 @@ mod(){
 				m2=""
 				for m1 in $ALIAS ; do
 					modparam $m1
-					m2="$m2 insmod "$m1" $PARAM ;"
+					m2="$m2 $insmod "$m1" $PARAM ;"
 				done
 				eval "( ${m2%;} ) >/dev/null 2>&1 &"
 				pids="$pids$! "
@@ -41,7 +41,7 @@ mod(){
 				modparam $m1
 				wait $pid
 				$cmd_quiet || echo -ne "\033[0G\033[0K$LCOUNT	$m1 $PARAM"
-				insmod "$m1" $PARAM >/dev/null 2>&1 &
+				$insmod "$m1" $PARAM >/dev/null 2>&1 &
 				pid="$!"
 			done
 		else
@@ -55,7 +55,7 @@ mod(){
 			modparam $m1
 			wait $pid
 			$cmd_quiet || echo -ne "\033[0G\033[0K$LCOUNT	$m1 $PARAM"
-			insmod "$m1" $PARAM >/dev/null 2>&1 &
+			$insmod "$m1" $PARAM >/dev/null 2>&1 &
 			pid="$!"
 		done
 		fi
@@ -74,14 +74,17 @@ refresh(){
 	if $FAST ; then
 		sed -e 's%^\([^ 	]*\)[	 ]*.*$%>\1<%g' </proc/modules >"${PNP_TMP}".1
 		cat `grep -ls "^DRIVER=" $(find /sys -name uevent -print 2>/dev/null) </dev/null` </dev/null |grep "^DRIVER=\|^MODALIAS="|sed -e 's%-%_%g' -e 's%^.*=\(.*\)$%>\1<%g' >>"${PNP_TMP}".1
+		if [[ "$(cat ${PNP_TMP}.1)" == "$(cat ${PNP_TMP}.2)" ]] ; then
+			cat "${PNP_TMP}".3 "${PNP_TMP}".4 >"${PNP_TMP}".0
+			return 1
+		fi
 		sort -u "${PNP_TMP}".1 >"${PNP_TMP}".0
-		[[ "$(cat ${PNP_TMP}.1)" == "$(cat ${PNP_TMP}.2)" ]] && return 1
 		if ! $cmd_quiet ; then
 			echo -ne "\033[0G\033[0K${BOLD}   ::${NORMAL}Loaded:"
 			for i in $(sort -m ${PNP_TMP}.0 ${PNP_TMP}.3 | uniq -u) ; do
+				[[ "$1" == "n" ]] && echo "$i" >>/nopnp.lst
 				i="${i#>}"
 				i="${i%<}"
-				[[ "$1" == "n" ]] && echo "$i" >>/nopnp.lst
 				echo -ne " $i"
 			done
 			echo ""
@@ -168,9 +171,7 @@ pnp_options(){
 	cmd_nopnp=false
 	cmd_unload=false
 	local i
-	local p="*) PARAM='' ;;
-esac
-}"
+	local p="*)PARAM='';;"
 	while [[ -n "$*" ]] ; do
 	i="$1"
 	shift
@@ -180,17 +181,23 @@ esac
 	parallel-startup=*) PARALLEL="${i#*=}" ;;
 	moduleparam=*)
 		i="${i#*=}"
-		p="*/${i%%:*}.ko) PARAM=\"${i#*:}\" ;;
-$p"
+		p="*/${i%%:*}.ko)PARAM=\"${i#*:}\";;$p"
 	;;
 	*=*) export cmd_${i%%=*}="${i#*=}" ;;
 	*) export cmd_${i}=true ;;
 	esac
 	done
-	p="modparam(){
+	if [[ -n "$cmd_noload" ]] ; then
+		for i in "`echo $cmd_noload | sed -e 's/,/ /g'`" ; do
+			p="*/$i.ko)insmod=false;;$p"
+		done
+	fi
+	echo "modparam(){
+insmod=insmod
 case \$1 in
-$p"
-	echo "$p" >/modparam.sh
+$p
+esac
+}" >/modparam.sh
 	$cmd_quiet && good_msg(){ return; }
 }
 
@@ -226,10 +233,12 @@ cd /lib/modules/$KV
 while [[ "${1#-}" != "$1" ]] ; do
 	shift
 done
+m="$1"
+shift
 r=1
-alias2 "$(echo -ne "$1" | sed -e s/-/_/g)" && for i in $ALIAS ; do
+alias2 "$(echo -ne "$m" | sed -e s/-/_/g)" && for i in $ALIAS ; do
 	modparam $i
-	insmod $i $PARAM
+	$insmod $i $PARAM $*
 	r=$?
 done
 exit $r' >$f
