@@ -18,10 +18,18 @@ grep -Prhl "${STR}${BUS}_device_id\s+" $1 --include="*.c" | while read i ; do
 	bus="${bus%%_device_id*}"
 	grep -Pq "^module_init\s*\(" $i || continue
 	grep -q "MODULE_DEVICE_TABLE" $i && continue
-	bus="${bus%%_*}"
 	if [[ "$2" != "f" ]] || [[ "$bus" == "of" ]] ; then
-		grep -Pq "${STR}${bus}_driver\s+" $i || continue
+		local b="$bus"
+		# at least 1 broken under x86_64
+#		case $b in
+#			of) b="of_platform";;
+#		esac
+		grep -Pq "${STR}${b}_driver\s+" $i || {
+			echo "UNSURE: $bus: $i"
+			continue
+		}
 	fi
+	bus="${bus%%_*}"
 	local ii="${i#$1}"
 	ii="${ii#/}"
 	if [[ "$2" != "f" ]] && ! grep -Pqr "MODULE_DEVICE_TABLE\($bus," $1 --include="*.c" ; then
