@@ -5,7 +5,7 @@ if [[ ${ETYPE} == sources ]]; then
 
 IUSE="${IUSE} build-kernel debug custom-cflags pnp compressed integrated ipv6
 	netboot nls unicode +acl minimal selinux custom-arch
-	kernel-drm +kernel-alsa +sources fbcon"
+	+kernel-drm +kernel-alsa +sources fbcon"
 DEPEND="${DEPEND}
 	pnp? ( sys-kernel/genpnprd )
 	build-kernel? (
@@ -446,7 +446,7 @@ fixes(){
 	# unicode by default/only for fat
 	use unicode && sed -i -e 's/sbi->options\.utf8/1/g' fs/fat/dir.c
 	# custom-arch
-	use custom-arch && sed -i -e 's/-march=[a-z0-9\-]*//g' arch/*/Makefile*
+	use custom-arch && sed -i -e 's/-march=[a-z0-9\-]*//g' -e 's/-mtune=[a-z0-9\-]*//g' arch/*/Makefile*
 	# prevent to build twice
 #	sed -i -e 's%-I$(srctree)/arch/$(hdr-arch)/include%%' Makefile
 	# pnp
