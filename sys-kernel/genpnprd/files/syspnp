@@ -15,8 +15,11 @@ single(){
 mod(){
 	local m m1 m2
 	for m in $(echo -ne "$*" | sed -e 's/-/_/g') ; do
-		$CHK && ( single "$m" 0 || continue )
-		alias2 "$m" || ( echo ">$m<" >>"${PNP_TMP}".4 ; continue )
+		( $CHK && single "$m" 0 ) || continue
+		alias2 "$m" || {
+			echo ">$m<" >>"${PNP_TMP}".4
+			continue
+		}
 		if $FAST ; then
 			case $PARALLEL in
 			no) ;;
