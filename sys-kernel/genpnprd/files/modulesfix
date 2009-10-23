@@ -21,7 +21,7 @@ grep -Prhl "${STR}${BUS}_device_id\s+" $1 --include="*.c" | while read i ; do
 	local ii="${i#$1}"
 	ii="${ii#/}"
 	case $ii in
-	*/scx200_acb.c|*/of_serial.c)
+	*/scx200_acb.c|*/of_serial.c|*/leds-gpio.c)
 		echo "BROKEN: $bus: $ii"
 		continue
 	;;
