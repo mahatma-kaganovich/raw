@@ -219,12 +219,17 @@ run_genkernel(){
 	# cpio works fine without loopback, but may panish sandbox
 	cp /usr/bin/genkernel "${S}" || die
 	sed -i -e 's/has_loop/true/' "${S}/genkernel"
+	# gentoo arch are weirdous
+	local a="$(arch)"
+	case ${a} in
+	i386) a="x86" ;;
+	esac
 	LDFLAGS="${KERNEL_GENKERNEL_LDFLAGS}" "${S}/genkernel" \
 		--cachedir="${TMPDIR}/genkernel-cache" \
 		--tempdir="${TMPDIR}/genkernel" \
 		--logfile="${TMPDIR}/genkernel.log" \
-		--arch-override=$(arch) \
-		--utils-arch=$(arch) --utils-cross-compile=${CTARGET:-${CHOST}}- \
+		--arch-override=${a} \
+		--utils-arch=${a} --utils-cross-compile=${CTARGET:-${CHOST}}- \
 		--postclear $* ${KERNEL_GENKERNEL} || die "genkernel failed"
 	rm "${S}/genkernel"
 }
