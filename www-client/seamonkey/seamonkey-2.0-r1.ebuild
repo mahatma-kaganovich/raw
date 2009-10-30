@@ -5,7 +5,7 @@ inherit flag-o-matic toolchain-funcs eutils mozcoreconf-2 mozconfig-3 makeedit m
 
 MY_PV="${PV/_rc/rc}"
 MY_P="${PN}-${MY_PV}"
-EMVER="0.97a0"
+EMVER="0.97a0-20091011"
 LANGS="en be ca cs de es_AR es_ES fr gl hu ka lt nb_NO nl pl pt_PT ru sk sv_SE tr"
 PATCH="${PN}-2.0-patches-0.1"
 
@@ -15,7 +15,7 @@ DESCRIPTION="Mozilla Application Suite - web browser, email, HTML editor, IRC"
 HOMEPAGE="http://www.seamonkey-project.org/"
 SRC_URI="http://releases.mozilla.org/pub/mozilla.org/${PN}/releases/${MY_PV}/source/${MY_P}.source.tar.bz2
 	!vanilla? ( http://dev.gentoo.org/~anarchy/dist/${PATCH}.tar.bz2 )
-	crypt? ( !moznomail? ( http://dev.gentoo.org/~anarchy/dist/enigmail-${EMVER}-20091011.tar.gz ) )"
+	crypt? ( !moznomail? ( http://dev.gentoo.org/~anarchy/dist/enigmail-${EMVER}.tar.gz ) )"
 
 [[ "${PATCH}" != "" ]] && SRC_URI="${SRC_URI}  mirror://gentoo/${PATCH}.tar.bz2"
 
