@@ -10,6 +10,7 @@ KEYWORDS="~amd64 ~x86"
 
 KV="2.6.20-krg"
 KERNEL_DIR="/usr/src/linux-${KV}"
+S="${WORKDIR}/kerrighed-2.4.0"
 
 src_compile(){
 	ln -s "${KERNEL_DIR}" ${S}/kernel
