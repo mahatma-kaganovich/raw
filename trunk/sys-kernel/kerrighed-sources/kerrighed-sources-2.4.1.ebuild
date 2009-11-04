@@ -21,7 +21,7 @@ IUSE="+build-kernel +pnp"
 
 KERNEL_CONFIG="${KERNEL_CONFIG} -IPC_NS -PREEMPT[\w\d_]* PREEMPT_NONE -KEYS -NUMA"
 
-S1="${WORKDIR}/kerrighed-${PV}"
+S1="${WORKDIR}/kerrighed-2.4.0"
 S="${S1}/_kernel"
 
 src_unpack(){
