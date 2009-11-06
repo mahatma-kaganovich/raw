@@ -79,7 +79,11 @@ function adjust_with_progress() {
 start() {
 	einfo "Starting DRBD resources:"
 	eindent
-	assure_module_is_loaded || return $?
+	if ! assure_module_is_loaded ; then
+		einfo "modprobe drbd failed. Trying to emerge..."
+		KERNEL_DIR="/usr/src/linux-`uname -r`" emerge -1q --nodeps drbd-kernel
+		assure_module_is_loaded || return $?
+	fi
 	adjust_with_progress || return $?
 
 	# make sure udev has time to create the device files
