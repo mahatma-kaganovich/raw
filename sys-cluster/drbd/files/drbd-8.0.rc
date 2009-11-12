@@ -106,8 +106,8 @@ start() {
 
 	# wait for stable state (vs. after split-brain syncing)
 	sleep 1
-	status=`$DRBDADM status`
-	status1="$status"
+	local status
+	local status1=`$DRBDADM status`
 	while true; do
 		sleep 5
 		status=`$DRBDADM status`
