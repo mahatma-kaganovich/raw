@@ -30,7 +30,7 @@ S="${WORKDIR}/${MY_P}"
 if [[ -n "${GIT}" ]] ; then
 	SRC_URI=""
 	IUSE="${IUSE} +doc"
-	DEPEND="${DEPEND} doc? ( app-text/xmlto ) "
+	DEPEND="${DEPEND} doc? ( dev-libs/libxslt ) "
 	src_unpack(){
 		git_src_unpack
 		cd "${S}"
@@ -55,7 +55,7 @@ src_configure() {
 }
 
 src_compile() {
-	emake KDIR="${KERNEL_DIR}" tools $(use doc && echo "doc") || die "compile problem"
+	emake KDIR="${KERNEL_DIR}" XSLTPROC_OPTIONS="--xinclude --novalid" tools $(use doc && echo "doc") || die "compile problem"
 }
 
 src_install() {
