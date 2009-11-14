@@ -421,6 +421,10 @@ src_install() {
 	# Create /usr/bin/seamonkey
 	make_wrapper seamonkey "${MOZILLA_FIVE_HOME}/seamonkey"
 
+	# prevent to stalled terminal outputs
+	exeinto /usr/bin
+	doexe "${FILESDIR}"/seamonkey-X
+
 	# Add vendor
 	echo "pref(\"general.useragent.vendor\",\"Gentoo\");" >> "${D}"${MOZILLA_FIVE_HOME}/defaults/pref/vendor.js
 
