@@ -1,0 +1,3 @@
+#!/bin/sh
+# prevent to stalled terminal outputs
+exec /usr/bin/seamonkey "$@" &>/dev/null

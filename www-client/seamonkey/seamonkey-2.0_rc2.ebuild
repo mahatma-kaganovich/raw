@@ -420,7 +420,7 @@ src_install() {
 
 	# Create /usr/bin/seamonkey
 	make_wrapper seamonkey "${MOZILLA_FIVE_HOME}/seamonkey"
-
+	
 	# Add vendor
 	echo "pref(\"general.useragent.vendor\",\"Gentoo\");" >> "${D}"${MOZILLA_FIVE_HOME}/defaults/pref/vendor.js
 
