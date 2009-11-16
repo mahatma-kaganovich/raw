@@ -2,6 +2,10 @@
 use Encode qw(:all);
 use Purple;
 
+# examples (environment):
+#	TWISTED_ENCODING='.*/cp1251' - test all server encodings with client=cp1251 (see debug window)
+#	TWISTED_ENCODING='/cp1251' - force client=cp1251
+
 # windows encodings only
 my %langs=(
 "en" => "CP1252",
@@ -220,21 +224,30 @@ my %langs=(
 "yo-NG" => "UNICODE"
 );
 
-my @server_langs=all_enc();
-#('ascii','cp1250','cp1251','cp1255','cp437','cp737','cp850','cp852','cp857','cp860','cp861','cp862','cp863','cp864','cp865','cp869','cp874','cp949','cp950','iso8859-13','iso8859-14','iso8859-15','iso8859-1','iso8859-2','iso8859-3','iso8859-4','iso8859-6','iso8859-7','iso8859-9');
+my @e=split(/\//,$ENV{'TWISTED_ENCODING'});
+
 my $lang=$ENV{'LANG'};
 $lang=~s/[\.\@].*//g;
 $lang=~s/_/-/g;
-my @client_langs=($langs{$lang});
+
+my @client_enc=all_enc($e[1]?
+	grep(/^$e[1]$/i,Encode->encodings(":all")):
+	resolve_alias($langs{$lang}||'cp1252')||resolve_alias('cp1252')
+);
+
+my @server_enc=all_enc($e[0]?
+	grep(/^$e[0]$/i,Encode->encodings(":all")):
+	values %langs
+);
 
 %PLUGIN_INFO = (
     perl_api_version => 2,
     name => "Double Encoding",
-    version => "0.1",
+    version => "0.2",
     summary => "Repair double encoded messages (usually ICQ->Jabber).",
-    description => "Decoding double encoding: client[".join(',',@client_langs)."]->server[auto]->you[utf8] (usually ICQ -> foreign Jabber). Your language detected from LANG environment.",
+    description => "Decoding double encoding: client[".join(',',@client_enc)."]->server[auto]->you[utf8] (usually ICQ -> foreign Jabber). Your language detected from LANG environment.",
     author => "Denis Kaganovich <mahatma\@eu.by>",
-    url => "",
+    url => "http://raw.googlecode.com/svn/trunk/x11-plugins/pidgin-twisted-encoding/files/",
     load => "plugin_load",
     unload => "plugin_unload"
 );
@@ -245,45 +258,44 @@ sub plugin_load {
     Purple::Signal::connect(Purple::Conversations::get_handle(),'received-im-msg',$_[0],\&im_received,'received-im-msg');
 }
 sub plugin_unload {
-    my $plugin = shift;
-    Purple::Debug::info("testplugin", "plugin_unload() - Test Plugin Unloaded.\n");
 }
-
 
 sub im_received {
 	my $im=$_[3]->get_im_data();
 	my $ss=$_[2];
+	my $l=length($ss);
 	utf8::encode($ss);
 	return if($_[2] eq $ss);
-	for my $c (@server_langs) {
-		my $s=$ss;
-		from_to($s,"utf-8",$c,HTMLCREF);
-#		next if($s eq $ss);
-		my $s1=$s;
-		from_to($s1,$c,"utf-8",HTMLCREF);
-		next if($s1 ne $ss);
-#		$s1=$s;
-		for (@client_langs){
+	my %dup=($ss=>1);
+	my ($s,$c);
+	for (@client_enc){
+		next if(from_to($s=$ss,"utf-8",$_,HTMLCREF)==$l);
+		for $c (@server_enc) {
+			$s=$ss;
+			next if(from_to($s=$ss,"utf-8",$c,HTMLCREF)!=$l);
 			from_to($s,$_,"utf-8",HTMLCREF);
-#			my $s2=$s;
-#			from_to($s2,"utf-8",$_,HTMLCREF);
-#			next if($s2 ne $s1);
 			utf8::decode($s);
-			if($_[2] ne $s && length($_[2]) eq length($s)){
-#				$_[3]->write($_[1],"[$c] $s",$_[4],time);
-				$_[3]->write($_[1],$s,$_[4],time);
-				$_[2]=$s;
-			}
+			next if(length($s)!=$l || $dup{$s}++>1);
+			Purple::Debug::info("twist-enc plugin", "encodings: $c/$_\n");
+#			$_[3]->write($_[1],"[$c] $s",$_[4],time);
+			$_[3]->write($_[1],$s,$_[4],time);
+#			$_[2]=$s;
 		}
 	}
 0
 }
 
 sub all_enc{
-	my @e=();
-	for(grep(/^(?:cp|windows|ms)/i,Encode->encodings(":all"))){
-		next if($_ eq 'cp775');
-		push @e,$_;
+	# prevent debug message
+	my %enc=('Internal'=>1);
+	for (@_){
+		$_=resolve_alias($_);
+		$enc{$_} || eval('from_to(my $x="test","utf-8",$_);$enc{$_}=1');
 	}
-	@e;
+	for('','Internal','utf-8',@client_enc){
+	    delete($enc{$_});
+	    delete($enc{resolve_alias($_)});
+	}
+	keys %enc;
 }
+
