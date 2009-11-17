@@ -240,10 +240,12 @@ my @server_enc=all_enc($e[0]?
 	values %langs
 );
 
+my %learn;
+
 %PLUGIN_INFO = (
     perl_api_version => 2,
-    name => "Double Encoding",
-    version => "0.2",
+    name => "Double Encoding (twisted encoding)",
+    version => "0.3",
     summary => "Repair double encoded messages (usually ICQ->Jabber).",
     description => "Decoding double encoding: client[".join(',',@client_enc)."]->server[auto]->you[utf8] (usually ICQ -> foreign Jabber). Your language detected from LANG environment.",
     author => "Denis Kaganovich <mahatma\@eu.by>",
@@ -255,31 +257,35 @@ sub plugin_init {
     return %PLUGIN_INFO;
 }
 sub plugin_load {
-    Purple::Signal::connect(Purple::Conversations::get_handle(),'received-im-msg',$_[0],\&im_received,'received-im-msg');
+    Purple::Signal::connect(Purple::Conversations::get_handle(),'wrote-im-msg',$_[0],\&im_received,'wrote-im-msg');
 }
 sub plugin_unload {
 }
 
 sub im_received {
-	my $im=$_[3]->get_im_data();
+	my $id=$_[0]->get_username()." -> ".$_[1];
 	my $ss=$_[2];
 	my $l=length($ss);
-	utf8::encode($ss);
-	return if($_[2] eq $ss);
 	my %dup=($ss=>1);
-	my ($s,$c);
-	for (@client_enc){
-		next if(from_to($s=$ss,"utf-8",$_,HTMLCREF)==$l);
-		for $c (@server_enc) {
-			$s=$ss;
-			next if(from_to($s=$ss,"utf-8",$c,HTMLCREF)!=$l);
-			from_to($s,$_,"utf-8",HTMLCREF);
-			utf8::decode($s);
-			next if(length($s)!=$l || $dup{$s}++>1);
-			Purple::Debug::info("twist-enc plugin", "encodings: $c/$_\n");
-#			$_[3]->write($_[1],"[$c] $s",$_[4],time);
-			$_[3]->write($_[1],$s,$_[4],time);
-#			$_[2]=$s;
+	my ($s,$c,$st);
+	utf8::encode($s=$ss);
+	return if($_[2] eq $s);
+	for $st (0..1){
+		for ($st?@client_enc:@{$learn{$id}[1]}){
+			next if(length(encode($_,$s=$ss,HTMLCREF))==$l);
+			for $c ($st?@server_enc:@{$learn{$id}[0]}){
+				next if(length($s=encode($c,$s=$ss,HTMLCREF))!=$l);
+				next if(length($s=decode($_,$s,HTMLCREF))!=$l);
+				$dup{$s}=[[$c],[$_]];
+				Purple::Debug::info("twist-enc plugin", "encodings: $c/$_ $id message: $s\n");
+			}
+		}
+		delete($dup{$ss});
+		my @r=keys(%dup);
+		$_[3]->write($_[1],$_,$_[4],time) for(@r);
+		if($#r==0){
+			$learn{$id}=$dup{$r[0]} if($st);
+			last;
 		}
 	}
 0
@@ -290,9 +296,9 @@ sub all_enc{
 	my %enc=('Internal'=>1);
 	for (@_){
 		$_=resolve_alias($_);
-		$enc{$_} || eval('from_to(my $x="test","utf-8",$_);$enc{$_}=1');
+		$enc{$_} || eval('encode($_,my $x="test");$enc{$_}=1');
 	}
-	for('','Internal','utf-8',@client_enc){
+	for('','UNICODE','Internal','utf-8',@client_enc){
 	    delete($enc{$_});
 	    delete($enc{resolve_alias($_)});
 	}
