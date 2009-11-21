@@ -490,7 +490,7 @@ src_unpack() {
 		[[ "${l}" == "en_US" ]] && continue
 		l=${l/_/-}
 		if [[ "${PVR}" == *-r9999* ]]; then
-			_hg l10n/${l} "${WORKDIR}/l10n-central/${l}" linguas_${l}
+			_hg l10n-central/${l} "${WORKDIR}/l10n/${l}" linguas_${l}
 		else
 			_hg releases/l10n-mozilla-1.9.${PVR##*r}/${l} "${WORKDIR}/l10n/${l}" linguas_${l}
 		fi
