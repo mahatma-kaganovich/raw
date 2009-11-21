@@ -73,6 +73,7 @@ done
 
 ll="${MOZVER}"
 if [[ -n "${hg}" ]]; then
+	LANGS=""
 	IUSE="${IUSE// vanilla/ +vanilla} faststart"
 	IUSE="${IUSE// python}"
 	SRC_URI=""
