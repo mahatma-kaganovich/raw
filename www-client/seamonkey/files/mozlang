@@ -1,0 +1,23 @@
+#!/bin/bash
+
+if [[ -z "$1" ]]; then
+	echo "Snapshotting for mozilla l10n (c) mahatma"
+	echo "Usage: $0 <version>"
+	echo "       $0 [1.9.1|1.9.2|central]"
+	exit
+fi
+
+base="/releases/l10n-mozilla-$1/"
+[[ "$1" == "central" ]] && base="/l10n-central/"
+
+echo -n "" >$1.langs
+for i in $(wget http://hg.mozilla.org$base -q -O - |grep -oP "\"$base.*?/\"" ) ; do
+	i=${i//\"}
+	i=${i#$base}
+	i=${i%%/*}
+	x=$(wget http://hg.mozilla.org$base/$i/file/ -q -O - |grep -oP "\".*?\.tar\.bz2\"" )
+	x=${x%\"}
+	x=${x##*\"}
+	x="http://hg.mozilla.org$x"
+	[[ "${x%bz2}" != "${x}" ]] && echo "${i//-/_} $x" >>$1.langs
+done
