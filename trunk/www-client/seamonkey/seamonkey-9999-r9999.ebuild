@@ -86,7 +86,7 @@ if [[ -z "${LANGS}" ]]; then
 	LANGS="en_US $(sed -e 's: .*::g' <"${FILESDIR}/${ll}.langs")"
 else
 	for l in ${LANGS}; do
-		[[ ${l} == "en" ]] || [[ ${l} == "en-US" ]] || SRC_URI="${SRC_URI} linguas_${l}? ( http://releases.mozilla.org/pub/mozilla.org/${PN}/releases/${MY_PV}/langpack/${MY_P}.${l/_/-}.langpack.xpi -> ${MY_P}-${l/_/-}.xpi )"
+		[[ ${l} == "en" ]] || [[ ${l} == "en_US" ]] || SRC_URI="${SRC_URI} linguas_${l}? ( http://releases.mozilla.org/pub/mozilla.org/${PN}/releases/${MY_PV}/langpack/${MY_P}.${l/_/-}.langpack.xpi -> ${MY_P}-${l/_/-}.xpi )"
 	done
 fi
 
