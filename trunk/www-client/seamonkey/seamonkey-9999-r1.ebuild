@@ -12,7 +12,7 @@ EMVER="0.97a0-20091011"
 PATCH="${PN}-2.0-patches-0.1"
 MOZVER="1.9.1"
 
-# empty: from hg (see later)
+# empty: from hg
 LANGS="en be ca cs de es_AR es_ES fr gl hu ka lt nb_NO nl pl pt_PT ru sk sv_SE tr"
 
 #RESTRICT="nomirror"
@@ -20,7 +20,6 @@ LANGS="en be ca cs de es_AR es_ES fr gl hu ka lt nb_NO nl pl pt_PT ru sk sv_SE t
 DESCRIPTION="Mozilla Application Suite - web browser, email, HTML editor, IRC"
 HOMEPAGE="http://www.seamonkey-project.org/"
 SRC_URI="http://releases.mozilla.org/pub/mozilla.org/${PN}/releases/${MY_PV}/source/${MY_P}.source.tar.bz2
-	!vanilla? ( http://dev.gentoo.org/~anarchy/dist/${PATCH}.tar.bz2 )
 	crypt? ( !moznomail? ( http://dev.gentoo.org/~anarchy/dist/enigmail-${EMVER}.tar.gz ) )
 	xforms? ( http://hg.mozilla.org/schema-validation/archive/710191b42011.tar.bz2 -> schema-validation-710191b42011.tar.bz2
 		http://hg.mozilla.org/xforms/archive/3478e987965d.tar.bz2 -> xforms-3478e987965d.tar.bz2 )"
@@ -66,11 +65,6 @@ DEPEND="java? ( >=virtual/jdk-1.4 )
 
 S="${WORKDIR}/comm-${MOZVER}"
 
-for l in ${LANGS}; do
-	IUSE="${IUSE} linguas_${l}"
-	[[ ${l} == "en" ]] || SRC_URI="${SRC_URI} linguas_${l}? ( http://releases.mozilla.org/pub/mozilla.org/${PN}/releases/${MY_PV}/langpack/${MY_P}.${l/_/-}.langpack.xpi -> ${MY_P}-${l/_/-}.xpi )"
-done
-
 ll="${MOZVER}"
 if [[ -n "${hg}" ]]; then
 	LANGS=""
@@ -90,12 +84,18 @@ fi
 
 if [[ -z "${LANGS}" ]]; then
 	LANGS="en_US $(sed -e 's: .*::g' <"${FILESDIR}/${ll}.langs")"
+else
 	for l in ${LANGS}; do
-		IUSE="${IUSE} linguas_${l}"
+		[[ ${l} == "en" ]] || [[ ${l} == "en-US" ]] || SRC_URI="${SRC_URI} linguas_${l}? ( http://releases.mozilla.org/pub/mozilla.org/${PN}/releases/${MY_PV}/langpack/${MY_P}.${l/_/-}.langpack.xpi -> ${MY_P}-${l/_/-}.xpi )"
 	done
 fi
 
+for l in ${LANGS}; do
+	IUSE="${IUSE} linguas_${l}"
+done
+
 [[ -n "${PATCH}" ]] && SRC_URI="${SRC_URI}  !vanilla? ( mirror://gentoo/${PATCH}.tar.bz2 )"
+#[[ -n "${PATCH}" ]] && SRC_URI="${SRC_URI}  !vanilla? ( http://dev.gentoo.org/~anarchy/dist/${PATCH}.tar.bz2 )"
 
 S1="${S}/mozilla"
 
@@ -224,8 +224,7 @@ src_configure(){
 		--disable-tests
 
 	local l
-	for l in ${LINGUAS}; do
-		l=${l/_/-}
+	for l in $(langs); do
 		if [[ -e "${WORKDIR}/l10n/${l}" ]]; then
 			mozconfig_annotate 'l10n' --with-l10n-base="${WORKDIR}/l10n" --enable-ui-locale=${l}
 		elif [[ "${l}" != "en-US" ]]; then
@@ -390,9 +389,7 @@ src_install() {
 
 	local LANG=""
 	local d
-	for l in ${LINGUAS}; do
-		use "linguas_${l}" || continue
-		l=${l/_/-}
+	for l in $(langs); do
 		LANG=${LANG:=${l}}
 		for d in "${WORKDIR}/${MY_P}.${l}.langpack" "${WORKDIR}/enigmail-${l}-${EMVER}" ; do
 			[[ -e "${d}" ]] && xpi_install "${d}"
@@ -403,7 +400,7 @@ src_install() {
 	dodir "${MOZILLA_FIVE_HOME}"
 	cp -RL "${S1}"/dist/bin/* "${D}"/"${MOZILLA_FIVE_HOME}"/ || die "cp failed"
 
-	if [[ -n ${LANG} && ${LANG} != "en" ]]; then
+	if [[ -n ${LANG} && ${LANG} != "en-US" ]]; then
 		elog "Setting default locale to ${LANG}"
 		dosed -e "s:\"en-US\":\"${LANG}\":g" \
 			"${MOZILLA_FIVE_HOME}"/defaults/pref/suite-l10n.js ||
@@ -465,6 +462,18 @@ pkg_postinst() {
 	fdo-mime_desktop_database_update
 }
 
+langs(){
+	local l
+	for l in ${LINGUAS} ; do
+		use "linguas_${l}" || continue
+		l="${l/_/-}"
+		case ${l} in
+		en|en-US) echo "en-US" ;;
+		*) echo "${l}"
+		esac
+	done
+}
+
 ##########################################################################################
 if [[ -n "${hg}" ]]; then
 
@@ -486,13 +495,12 @@ src_unpack() {
 	ECVS_BRANCH="LDAPCSDK_6_0_6_RTM" _cvs_m mozilla/directory/c-sdk "${S}/directory/c-sdk" ldap
 	local l
 	mkdir "${WORKDIR}/l10n"
-	for l in ${LINGUAS} ; do
-		[[ "${l}" == "en_US" ]] && continue
-		l=${l/_/-}
+	for l in $(langs) ; do
+		[[ "${l}" == "en-US" ]] ||
 		if [[ "${PVR}" == *-r9999* ]]; then
-			_hg l10n-central/${l} "${WORKDIR}/l10n/${l}" linguas_${l}
+			_hg l10n-central/${l} "${WORKDIR}/l10n/${l}"
 		else
-			_hg releases/l10n-mozilla-1.9.${PVR##*r}/${l} "${WORKDIR}/l10n/${l}" linguas_${l}
+			_hg releases/l10n-mozilla-1.9.${PVR##*r}/${l} "${WORKDIR}/l10n/${l}"
 		fi
 		# remove break if you know how to build multiple locales via source
 		break
