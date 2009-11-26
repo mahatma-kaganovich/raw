@@ -5,10 +5,10 @@ diff -pruN a/gcc/config/i386/i386.c c/gcc/config/i386/i386.c
    /* Set the default value for -mstackrealign.  */
    if (ix86_force_align_arg_pointer == -1)
      ix86_force_align_arg_pointer = STACK_REALIGN_DEFAULT;
-+  else if (!ix86_force_align_arg_pointer && STACK_REALIGN_DEFAULT) {
++  else if (!ix86_force_align_arg_pointer && (flag_tree_vectorize || optimize > 2) && STACK_REALIGN_DEFAULT) {
 +    ix86_isa_flags &= ~OPTION_MASK_ISA_SSE_UNSET;
 +    ix86_isa_flags_explicit |= OPTION_MASK_ISA_SSE_UNSET;
-+    warning (0, "-mno-stackrealign present with no SSE4a cpu, SSE disabled");
++    warning (0, "-mno-stackrealign present with no SSE4a cpu and -ftree-vectorize, SSE disabled");
 +  }
  
    /* Validate -mincoming-stack-boundary= value or default it to
