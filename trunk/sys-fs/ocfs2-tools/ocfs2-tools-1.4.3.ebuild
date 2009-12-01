@@ -24,6 +24,8 @@ RDEPEND="X? (
 	sys-fs/e2fsprogs"
 DEPEND="${RDEPEND}"
 
+RESTRICT="nomirror"
+
 src_compile() {
 	local myconf="--enable-dynamic-fsck --enable-dynamic-ctl"
 
