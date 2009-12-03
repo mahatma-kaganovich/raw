@@ -1,77 +1,42 @@
 #!/sbin/runscript
-# Copyright 1999-2006 Gentoo Foundation
+# Portions Copyright 1999-2006 Gentoo Foundation
+# + Copyright mahatma
 # Distributed under the terms of the GNU General Public License v2
-# $Header: /var/cvsroot/gentoo-x86/sys-fs/ocfs2-tools/files/ocfs2.init,v 1.1 2006/07/20 05:13:14 dberkholz Exp $
+
+: ${OCFS2_FSCK:="-fy"}
 
 depend() {
 	need net localmount
 	before netmount 
 }
 
-check_modules_config() {
-	local MODULES=$1
-	local CONFIGS=$2
-	local MODULE
-	local retval=0
-	
-	for MODULE in ${MODULES}; do
-		if ! ls -1 /sys/module | egrep -q "^${MODULE}$"; then
-			retval=1
-		fi
-	done
-	if [ ${retval} -eq 1 ] && [ -e /proc/config.gz ]; then
-		retval=0
-		for MODULE in ${CONFIGS}; do
-			if ! gzip -dc /proc/config.gz | egrep -q "^CONFIG_${MODULE}=.$"; then
-				retval=1
-			fi
-		done
-	fi
-	return ${retval}
-}
+pseudofs() {
+	[ -n "`mount -l -t $1`" ] && return 0
+	ewarn "Pseudo-filesystem $1 are not mounted."
+	ewarn "Make sure you have following lines in your /etc/fstab:"
+	ewarn "none         $2         $1        defaults                0 0"
 
-check_modules() {
-	check_modules_config "ocfs2_dlmfs ocfs2 ocfs2_dlm ocfs2_nodemanager" "OCFS2_FS OCFS2_FS_O2CB" && check_modules_config configfs CONFIGFS_FS && return 0
-	if ! egrep -q '\s*ocfs2\s*$' /proc/filesystems || ! egrep -q '\s*ocfs2_dlmfs\s*$' /proc/filesystems; then 
-		ewarn "One or more required modules are not loaded."
-                ewarn "Make sure you have "
-                ewarn " - placed ocfs, dlmfs and configfs into /etc/modules.autoload.d/kernel-2.6 or built directly into the kernel."
-                ewarn "For a (in)complete documentation, read /usr/share/doc/ocfs-<version>/INSTALL.GENTOO.bz2"
+	# Why not?
+	ebegin "Mounting $1"
+	if mount -t $1 none $2 && [ -n "`mount -l -t $1`" ] ; then
+		eend 0
+		return 0
 	fi
+	eend 1
 	return 1
 }
 
-check_pseudofs() { 
-	local retval=0
-	local HASMOUNT="mount -l -t"
-	if [ -z "`${HASMOUNT} configfs`" ] ; then
-		retval=1
-	fi
-	if [ -z "`${HASMOUNT} ocfs2_dlmfs`" ] ; then
-		retval=1
-	fi
-
-	if [ ${retval} -eq 1 ]; then
-		ewarn "One or more pseudo-filesystes are not mounted."
-		ewarn "Make sure you have following lines in your /etc/fstab:"
-		ewarn "none         /sys/kernel/config         configfs        defaults                0 0"
-		ewarn "none         /dlm                       ocfs2_dlmfs     defaults                0 0"
-		ewarn "For a (in)complete documentation, read /usr/share/doc/ocfs-<version>/INSTALL.GENTOO.bz2"
-	fi
-	return ${retval}
-}
-
-
-
 start() {
-	check_modules || return $? 
-	check_pseudofs || return $?
-	
+	# Modules will be loaded on mount, no other checks.
+	# Unless other modules will be failed to configure.
+	pseudofs configfs /sys/kernel/config || return 1
+	pseudofs ocfs2_dlmfs /dlm || return 1
+
 	einfo "Starting OCFS2 cluster"
 	for cluster in ${OCFS2_CLUSTER}; do
 		ebegin " - ${cluster}"
 		/sbin/o2cb_ctl -H -n ${cluster} -t cluster -a online=yes >/dev/null 2>&1
-		eend $?
+		eend $? || return 1
 
 		# Some heartbeat tweaks to prevent self-fencing quite so much during heavy load.
 		# http://oss.oracle.com/projects/ocfs2/dist/documentation/ocfs2_faq.html
@@ -86,37 +51,50 @@ start() {
 		echo $OCFS2_DEAD_THRESHOLD > /sys/kernel/config/cluster/${cluster}/heartbeat/dead_threshold
 	done
 	sleep 2
+
+	# Voluntary fsck. Will be happened only ondemand -
+	# on both unmounted/double fault, placed in fstab.
+	local i
+	for i in `mount -invfat ocfs2 2>/dev/null|sed -e 's: .*::g'` ; do
+		[[ -e "$i" ]] || continue
+		einfo "Trying 'fsck.ocfs2 $OCFS2_FSCK $i'"
+		fsck.ocfs2 $OCFS2_FSCK "$i" 2>/dev/null
+	done
+
+	# Any behaviour
+	ebegin "Mounting OCFS2 filesystems"
+	mount -at ocfs2
+	eend $?
 }
 
 stop() {
 	# Shamelesly stolen from netmount
-        local ret
-        ebegin "Unmounting OCFS2 filesystems"
-        [ -z "$(umount -art ocfs2 2>&1)" ]
-        ret=$?
-        eend ${ret} "Failed to simply unmount filesystems"
-        [ ${ret} -eq 0 ] && return 0
+	local ret
+	ebegin "Unmounting OCFS2 filesystems"
+	[ -z "$(umount -art ocfs2 2>&1)" ]
+	ret=$?
+	eend ${ret} "Failed to simply unmount filesystems"
+	[ ${ret} -eq 0 ] && return 0
 
-        declare -a siglist=( "TERM" "KILL" "KILL" )
-        local retry=0
-        local remaining="go"
+	declare -a siglist=( "TERM" "KILL" "KILL" )
+	local retry=0
+	local remaining="go"
 
-        while [ -n "${remaining}" -a ${retry} -lt 3 ]
-        do
-                remaining="$(awk '$3 ~ /'ocfs2'/ { if ($2 != "/") print $2 }' /proc/mounts | sort -r)"
-                IFS=$'\n'
-                set -- ${remaining//\\040/ }
-                unset IFS
-                [ -z "${remaining}" ] && break
+	while [ -n "${remaining}" -a ${retry} -lt 3 ]
+	do
+		remaining="$(awk '$3 ~ /'ocfs2'/ { if ($2 != "/") print $2 }' /proc/mounts | sort -r)"
+		IFS=$'\n'
+		set -- ${remaining//\\040/ }
+		unset IFS
+		[ -z "${remaining}" ] && break
 
-                ebegin $'\t'"Unmounting ocfs2 filesystems (retry #$((retry+1)))"
-                /bin/fuser -k -${siglist[$((retry++))]} -m "$@" &>/dev/null
-                sleep 5
-                umount "$@" &>/dev/null
-                eend $? $'\t'"Failed to unmount filesystems"
-        done
+		ebegin $'\t'"Unmounting ocfs2 filesystems (retry #$((retry+1)))"
+		/bin/fuser -k -${siglist[$((retry++))]} -m "$@" &>/dev/null
+		sleep 5
+		umount "$@" &>/dev/null
+		eend $? $'\t'"Failed to unmount filesystems"
+	done
 
-	
 	einfo "Stopping OCFS2 cluster" 
 	for cluster in ${OCFS_CLUSTERS}; do
 		ebegin " - ${cluster}"
