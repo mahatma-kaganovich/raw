@@ -43,7 +43,7 @@ start() {
 
 	for cluster in ${OCFS2_CLUSTER}; do
 		ebegin "Starting OCFS2 cluster '${cluster}'"
-		/sbin/o2cb_ctl -H -n ${cluster} -t cluster -a online=yes
+		/sbin/o2cb_ctl -H -n ${cluster} -t cluster -a online=yes >/dev/null
 		eend $? || return 1
 
 		# Some heartbeat tweaks to prevent self-fencing quite so much during heavy load.
@@ -106,7 +106,7 @@ stop() {
 	einfo "Stopping OCFS2 cluster" 
 	for cluster in ${OCFS_CLUSTERS}; do
 		ebegin " - ${cluster}"
-		/sbin/o2cb_ctl -H -n ${cluster} -t cluster -a online=no
+		/sbin/o2cb_ctl -H -n ${cluster} -t cluster -a online=no >/dev/null
 		eend $?
 	done
 }
