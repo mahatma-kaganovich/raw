@@ -88,8 +88,8 @@ mozconfig_init() {
 			mozconfig_annotate "from CFLAGS" --enable-optimize=-Os
 		elif ${XUL}; then
 			mozconfig_annotate "xulrunner default" --enable-optimize=-O2
-		elif is-flag -O3; then
-			mozconfig_annotate "from CFLAGS" --enable-optimize=-O3
+#		elif is-flag -O3; then
+#			mozconfig_annotate "from CFLAGS" --enable-optimize=-O3
 		else
 			mozconfig_annotate "Gentoo's default optimization" --enable-optimize=-O2
 		fi
