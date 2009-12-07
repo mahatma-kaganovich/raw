@@ -29,7 +29,8 @@ SLOT="0"
 LICENSE="|| ( MPL-1.1 GPL-2 LGPL-2.1 )"
 IUSE="java ldap mozdevelop moznocompose moznoirc moznomail moznoroaming postgres crypt restrict-javascript startup-notification
 	debug minimal directfb moznosystem +threads jssh wifi python mobile moznocalendar static
-	moznomemory accessibility sqlite vanilla xforms gio"
+	moznomemory accessibility sqlite vanilla xforms gio
+	custom-cflags"
 #	qt-experimental"
 
 RDEPEND="java? ( >=virtual/jre-1.4 )
@@ -176,10 +177,13 @@ src_configure(){
 	declare MOZILLA_FIVE_HOME="/usr/$(get_libdir)/${PN}"
 
 	local o3=false
-	is-flag -O3 && o3=true
-
 	setup-allowed-flags
-	export ALLOWED_FLAGS="${ALLOWED_FLAGS} -fomit-frame-pointer -O3 -mfpmath -msse* -m3dnow* -mmmx"
+	if use custom-cflags; then
+		is-flag -O3 && o3=true
+		export ALLOWED_FLAGS="${ALLOWED_FLAGS} ${CFLAGS}"
+	else
+		export ALLOWED_FLAGS="${ALLOWED_FLAGS} -fomit-frame-pointer -O3 -mfpmath -msse* -m3dnow* -mmmx -mstackrealign"
+	fi
 
 	mozconfig_init
 	mozconfig_config
