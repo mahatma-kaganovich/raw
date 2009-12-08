@@ -4,7 +4,8 @@
 
 depend() {
 	need net localmount
-	before netmount 
+	before netmount
+	after drbd
 }
 
 pseudofs() {
@@ -70,6 +71,7 @@ start() {
 	ebegin "Mounting OCFS2 filesystems"
 	mount -at ocfs2
 	eend $?
+	return $?
 }
 
 stop() {
