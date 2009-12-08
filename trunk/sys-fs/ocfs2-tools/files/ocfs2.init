@@ -77,12 +77,9 @@ start() {
 
 stop() {
 	# Shamelesly stolen from netmount
-	local ret
 	ebegin "Unmounting OCFS2 filesystems"
-	[ -z "$(umount -art ocfs2 2>&1)" ]
-	ret=$?
-	eend ${ret} "Failed to simply unmount filesystems"
-	[ ${ret} -eq 0 ] && return 0
+	[ -z "$(umount -at ocfs2 2>&1)" ]
+	if ! eend $? "Failed to simply unmount filesystems" ; then
 
 	declare -a siglist=( "TERM" "KILL" "KILL" )
 	local retry=0
@@ -99,9 +96,10 @@ stop() {
 		ebegin $'\t'"Unmounting ocfs2 filesystems (retry #$((retry+1)))"
 		/bin/fuser -k -${siglist[$((retry++))]} -m "$@" &>/dev/null
 		sleep 5
-		umount "$@" &>/dev/null
+		umount "$@"
 		eend $? $'\t'"Failed to unmount filesystems"
 	done
+	fi
 
 	einfo "Stopping OCFS2 cluster" 
 	for cluster in ${OCFS_CLUSTERS}; do
