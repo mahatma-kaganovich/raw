@@ -30,7 +30,7 @@ S="${WORKDIR}/${MY_P}"
 if [[ -n "${GIT}" ]] ; then
 	SRC_URI=""
 	IUSE="${IUSE} +doc"
-	DEPEND="${DEPEND} doc? ( dev-libs/libxslt ) "
+	DEPEND="${DEPEND} doc? ( dev-libs/libxslt app-text/docbook-xsl-stylesheets ) "
 	src_unpack(){
 		git_src_unpack
 		cd "${S}"
