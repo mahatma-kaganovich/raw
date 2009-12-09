@@ -161,7 +161,13 @@ for my $MOD (@ARGV){
 	read_aliases("<$MOD/modules.alias");
 	read_deps("<$MOD/modules.dep");
 	for(keys %dep){
-		push @{$alias{$_}},$_ if(!exists($alias{$_}))
+	        if(exists($alias{$_})){
+		    for my $a (@{$alias{$_}}){
+			goto noalias if($_ eq $a);
+		    }
+		}
+		push @{$alias{$_}},$_;
+		noalias:
 	}
 	mk_sh(">$MOD/modules.alias.sh",">$MOD/modules.pnp",">$MOD/modules.other");
 	print "OK\n";
