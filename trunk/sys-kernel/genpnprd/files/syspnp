@@ -206,6 +206,18 @@ esac
 	$cmd_quiet && good_msg(){ return; }
 }
 
+link_dir(){
+	local i
+	for i in "$1"/*; do
+		i="${i#$1}"
+		if [[ -d "$2$i" ]]; then
+			link_dir "$1$i" "$2$i"
+		else
+			ln -sf "$1$i" "$2$i"
+		fi
+	done
+}
+
 pnp_init(){
 	eval "pnp_options $(cat /proc/cmdline)" # parsing
 	if [[ -f /lib.loopfs ]]; then
@@ -224,6 +236,7 @@ pnp_init(){
 			insmod $i
 		done
 		mount /lib.loopfs /lib -o loop
+		link_dir /lib/root
 	fi
 }
 
