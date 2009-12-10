@@ -3,7 +3,7 @@
 ## adding PNP
 ## (c) Denis Kaganovich
 ## under Anarchy license
-## Usage: genpnprd <image>
+## Usage: genpnprd <image> [nopnp|[pnp] [<overlay>]]
 
 DATA="/usr/share/genpnprd"
 
@@ -52,10 +52,19 @@ if [[ -f "$rcfile" ]]; then
 	mkdir "$rcdir" || die
 	cd "$rcdir" || die
 	echo $rcdir
-	gzip -dc $rcfile | cpio -i || die "must be gzipped cpio file"
+	( gzip -dc $rcfile | cpio -i ) || cpio -i <$rcfile || die "must be [gzipped] cpio file"
 else
 #	rcdir="$rcfile"
-	die "must be gzipped cpio file"
+	die "must be [gzipped] cpio file"
+fi
+
+mkdir lib/root
+if [[ -n "$3" ]]; then
+	cp "$3" lib/root -aT
+	for i in lib lib32 lib64; do
+		[[ -d lib/root/$i ]] && mv lib/root/$i/* $i/
+	done
+	rm lib/root/{lib,lib32,lib64} -Rf
 fi
 
 if [[ -e "$rcdir/lib.loopfs" ]]; then

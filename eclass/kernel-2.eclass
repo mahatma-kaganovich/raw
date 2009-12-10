@@ -147,11 +147,8 @@ kernel-2_src_compile() {
 	run_genkernel ramdisk "--kerneldir=\"${S}\" --bootdir=\"${S}\" --module-prefix=\"${BDIR}\" --no-mountboot ${p}"
 	r=`ls initramfs*-${REAL_KV}`
 	rename "${r}" "initrd-${REAL_KV}.img" "${r}" || die "initramfs rename failed"
-	if use pnp; then
-		bash "${ROOT}/usr/share/genpnprd/genpnprd" "${S}/initrd-${REAL_KV}.img" || die
-	elif use compressed; then
-		bash "${ROOT}/usr/share/genpnprd/genpnprd" "${S}/initrd-${REAL_KV}.img" nopnp || die
-	fi
+	einfo "Preparing boot image"
+	bash "${ROOT}/usr/share/genpnprd/genpnprd" "${S}/initrd-${REAL_KV}.img" "$(use pnp || echo nopnp)" "${TMPDIR}"/overlay-rd || die
 	# integrated: do not compress twice;
 	# others: +~700K, but faster boot & less RAM to uncompress.
 	# "integrated" still minimal
@@ -212,6 +209,34 @@ kernel-2_src_install() {
 	install_universal
 	[[ ${ETYPE} == headers ]] && install_headers
 	[[ ${ETYPE} == sources ]] && install_sources
+}
+
+kernel-2_pkg_setup() {
+	if kernel_is 2 4; then
+		if [ "$( gcc-major-version )" -eq "4" ] ; then
+			echo
+			ewarn "Be warned !! >=sys-devel/gcc-4.0.0 isn't supported with linux-2.4!"
+			ewarn "Either switch to another gcc-version (via gcc-config) or use a"
+			ewarn "newer kernel that supports gcc-4."
+			echo
+			ewarn "Also be aware that bugreports about gcc-4 not working"
+			ewarn "with linux-2.4 based ebuilds will be closed as INVALID!"
+			echo
+			epause 10
+		fi
+	fi
+
+	ABI="${KERNEL_ABI}"
+	[[ ${ETYPE} == headers ]] && setup_headers
+	[[ ${ETYPE} == sources ]] || return
+	if use build-kernel; then
+		# ldd give false sandbox dependences in other place
+		einfo "Generating boot image overlay (if configured)"
+		local i="${TMPDIR}/overlay-rd"
+		mkdir "${i}"
+		bash "${ROOT}/usr/share/genpnprd/genpkgrd" "${i}" "${KERNEL_IMAGE_FILES}" "${KERNEL_IMAGE_FILES2}" "${KERNEL_IMAGE_PACKAGES}" || die
+	fi
+	echo ">>> Preparing to unpack ..."
 }
 
 run_genkernel(){
