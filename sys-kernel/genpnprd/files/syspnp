@@ -212,7 +212,7 @@ link_dir(){
 		i="${i#$1}"
 		if [[ -d "$2$i" ]]; then
 			link_dir "$1$i" "$2$i"
-		elif [[ "$i" != "*" ]]; then
+		elif [[ "$i" != "/*" ]]; then
 			ln -sf "$1$i" "$2$i"
 		fi
 	done
