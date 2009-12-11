@@ -364,9 +364,10 @@ setconfig(){
 		cfg n DRM
 	fi
 	cfg_use kernel-alsa SND
-	# framebuffer enabled anymore, but "fbcon" support for more devices, exclude nouveau drm
+	# framebuffer enabled anymore, but "fbcon" support for more devices, exclude [external] nouveau drm
 	if use fbcon; then
 		cfg y FB
+		cfg y FB_BOOT_VESA_SUPPORT
 	else
 		cfg n FB_UVESA
 	fi
