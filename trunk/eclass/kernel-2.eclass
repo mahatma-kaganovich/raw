@@ -5,7 +5,7 @@ if [[ ${ETYPE} == sources ]]; then
 
 IUSE="${IUSE} build-kernel debug custom-cflags pnp compressed integrated ipv6
 	netboot nls unicode +acl minimal selinux custom-arch
-	+kernel-drm +kernel-alsa +sources fbcon"
+	+kernel-drm +kernel-alsa +sources fbcon +staging"
 DEPEND="${DEPEND}
 	pnp? ( sys-kernel/genpnprd )
 	build-kernel? (
@@ -66,11 +66,12 @@ DEPEND="${DEPEND}
 	-8139TOO_PIO
 	-COMPAT_BRK -COMPAT_VDSO
 	NET_CLS_IND
+	DRM_RADEON_KMS DRM_NOUVEAU_BACKLIGHT
 	===bugs:
 	-TR -RADIO_RTRACK
 	===kernel.conf:
 	"}
-: ${KERNEL_MODULES:="+."}
+: ${KERNEL_MODULES:="+. -drivers/staging"}
 # prefer: "-." - defconfig, "." - defconfig for "y|m", "+." - Kconfig/oldconfig
 : ${KERNEL_DEFAULTS:="."}
 
@@ -371,6 +372,8 @@ setconfig(){
 	else
 		cfg n FB_UVESA
 	fi
+	# include some of staging drivers (auto - not placed in drivers/staging)
+	use staging && cfg n STAGING_EXCLUDE_BUILD
 	for i in ${KERNEL_CONFIG}; do
 		o="y ${i}"
 		o="${o/y +/m }"
