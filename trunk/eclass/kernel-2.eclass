@@ -369,6 +369,7 @@ setconfig(){
 	if use fbcon; then
 		cfg y FB
 		cfg y FB_BOOT_VESA_SUPPORT
+		cfg y "LOGO_LINUX_[\w\d]*"
 	else
 		cfg n FB_UVESA
 	fi
