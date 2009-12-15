@@ -368,6 +368,7 @@ setconfig(){
 	# framebuffer enabled anymore, but "fbcon" support for more devices, exclude [external] nouveau drm
 	if use fbcon; then
 		cfg y FB
+		cfg y FRAMEBUFFER_CONSOLE
 		cfg y FB_BOOT_VESA_SUPPORT
 		cfg y "LOGO_LINUX_[\w\d]*"
 	else
