@@ -5,7 +5,7 @@ if [[ ${ETYPE} == sources ]]; then
 
 IUSE="${IUSE} build-kernel debug custom-cflags pnp compressed integrated ipv6
 	netboot nls unicode +acl minimal selinux custom-arch
-	+kernel-drm +kernel-alsa +sources fbcon +staging"
+	+kernel-drm +kernel-alsa +sources fbcon staging"
 DEPEND="${DEPEND}
 	pnp? ( sys-kernel/genpnprd )
 	build-kernel? (
@@ -66,12 +66,12 @@ DEPEND="${DEPEND}
 	-8139TOO_PIO
 	-COMPAT_BRK -COMPAT_VDSO
 	NET_CLS_IND
-	DRM_RADEON_KMS DRM_NOUVEAU_BACKLIGHT
+	-STAGING_EXCLUDE_BUILD DRM_RADEON_KMS DRM_NOUVEAU_BACKLIGHT
 	===bugs:
 	-TR -RADIO_RTRACK
 	===kernel.conf:
 	"}
-: ${KERNEL_MODULES:="+. -drivers/staging"}
+: ${KERNEL_MODULES:="+."}
 # prefer: "-." - defconfig, "." - defconfig for "y|m", "+." - Kconfig/oldconfig
 : ${KERNEL_DEFAULTS:="."}
 
@@ -271,42 +271,33 @@ grep_kconfig(){
 }
 
 cfg(){
-	local r="$1"
 	local o="${2%%=*}"
 	local v="${2#*=}"
-	[[ "$v" == "$2" ]] && v="${r}"
-	local i i1 i2 i3 l l1
-	# safe
-#	grep -P "^(?:\# )?CONFIG_${o}(?:=.*| is not set)\$" .config | while read i1 ; do
-	# faster
+	[[ "$v" == "$2" ]] && v="$1"
+	local i i1 i2 i3 l
 	( grep -P "^(?:\# )?CONFIG_${o}(?:=.*| is not set)\$" .config || echo "${o}" ) | while read i1 ; do
 		i=${i1#\# }
 		i=${i#CONFIG_}
 		i=${i%%=*}
 		i=${i%% *}
 		[ "${cfg_exclude// $i }" == "${cfg_exclude}" ] || continue
-		case "${r}" in
+		case "$3" in
+		-) l=$( grep -P "^(?:CONFIG_${i}=)|(?:# CONFIG_${i} is not set)" .config.def ) ;;
+		~) l=$( grep -P "^CONFIG_${i}=" .config.def ) ;;
+		*) l="" ;;
+		esac
+		[[ -z "${l}" ]] && case "$1" in
 		n)
 			if [[ "${i1}" == "CONFIG_${i}="* ]] ; then
 				grep_kconfig "(?:menu)?config" "" "[ 	]*select[ 	]+${i}" . | while read i3 i2 ; do
 					einfo "CONFIG: -$i -> -$i2"
-					cfg $r $i2
+					cfg "$1" "$i2"
 				done
 			fi
 			l="# CONFIG_${i} is not set"
 		;;
 		-) l="" ;;
 		*) l="CONFIG_${i}=${v}" ;;
-		esac
-		case "$3" in
-		--)
-			l1=$( grep -P "^(?:CONFIG_${i}=)|(?:# CONFIG_${i} is not set)" .config.def )
-			[[ -n "$l1" ]] && l="${l1}"
-		;;
-		-)
-			l1=$( grep -P "^CONFIG_${i}=" .config.def )
-			[[ -n "$l1" ]] && l="${l1}"
-		;;
 		esac
 		echo "${i}" >>.config.set
 		[[ "${i1}" != "${i}" ]] && sed -i -e "/^# CONFIG_${i} is not set/d" -e "/^CONFIG_${i}=.*/d" .config
@@ -374,8 +365,6 @@ setconfig(){
 	else
 		cfg n FB_UVESA
 	fi
-	# include some of staging drivers (auto - not placed in drivers/staging)
-	use staging && cfg n STAGING_EXCLUDE_BUILD
 	for i in ${KERNEL_CONFIG}; do
 		o="y ${i}"
 		o="${o/y +/m }"
@@ -390,25 +379,28 @@ setconfig(){
 
 _i_m(){
 	einfo "Configuring $1: ${i}"
-	m="-"
-	i1="${i}"
-	i="${i#+}"
-	if [[ "${i1}" == "${i}" ]] ; then
-		i="${i#-}"
-		[[ "${i1}" == "${i}" ]] || m="--"
-	else
-		m=""
-	fi
+	case "${i}" in
+	-*|+*|~*)
+		m="${i:0:1}"
+		i="${i:1}"
+	;;
+	*)
+		# set if undef
+		m="~"
+	;;
+	esac
 }
 
 config_defaults(){
-	local i i1 o m xx
+	local i i1 o m x
 	einfo "Configuring kernel"
 	echo -e "KERNEL_CONFIG=\"${KERNEL_CONFIG}\""
 	if use minimal; then
 		KERNEL_CONFIG="${KERNEL_CONFIG} -IP_ADVANCED_ROUTER -NETFILTER ~IP_FIB_TRIE -NET_CLS_IND"
 		KERNEL_MODULES="${KERNEL_MODULES} -net +net/sched +net/irda +net/bluetooth"
 	fi
+	# staging submenu will be opened, but no auto-m
+	use staging || KERNEL_MODULES="${KERNEL_MODULES} -drivers/staging"
 	touch .config.set
 	kmake defconfig >/dev/null
 	cp .config .config.def
@@ -421,13 +413,15 @@ config_defaults(){
 	done
 	for i in ${KERNEL_MODULES}; do
 		_i_m "modules"
+		x='m'
+		[[ "${m}" == '-' ]] && x='-'
 		grep_kconfig "(?:menu)?config" "tristate" "" ${i} | while read i1 o ; do
-			cfg m "${o}" "${m}"
+			cfg "${x}" "${o}" "${m}"
 		done
 	done
 	for i in ${KERNEL_DEFAULTS}; do
 		_i_m "defaults"
-		[[ "${m}" == "--" ]] ||
+		[[ "${m}" == "-" ]] ||
 		grep_kconfig "config" "bool" "" ${i} | while read i1 o ; do
 			grep -q "^${o}\$" .config.set && continue
 			[[ -z "${m}" ]] && sed -i -e "/^CONFIG_${o}=.*/d" .config .config.def
@@ -435,7 +429,7 @@ config_defaults(){
 		done
 		grep_kconfig "config" "bool" "[^\n]*If\s+unsure,\s+say\s+Y\..*" ${i} | while read i1 o ; do
 			grep -q "^${o}\$" .config.set && continue
-			cfg y "${o}" "${m}"
+			cfg y "${o}" "${m/-/--}"
 		done
 	done
 	while cfg_loop .config.{1,2} ; do
