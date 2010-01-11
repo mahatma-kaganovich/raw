@@ -21,7 +21,7 @@ IUSE=""
 
 DEPEND=""
 RDEPEND=""
-PDEPEND="~sys-cluster/drbd-kernel-${PV}"
+PDEPEND=""
 
 SLOT="0"
 
