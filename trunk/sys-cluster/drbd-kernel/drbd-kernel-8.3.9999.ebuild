@@ -19,7 +19,7 @@ SRC_URI="http://oss.linbit.com/drbd/${MY_MAJ_PV}/${MY_P}.tar.gz"
 IUSE=""
 
 DEPEND="virtual/linux-sources"
-RDEPEND=""
+RDEPEND="~sys-cluster/drbd-${PV}"
 SLOT="0"
 
 S="${WORKDIR}/${MY_P}"
@@ -37,6 +37,7 @@ pkg_setup() {
 	CONNECTOR_ERROR="You must enable \"CONNECTOR - unified userspace <-> kernelspace linker\" in your kernel configuration, because drbd needs it."
 	linux-mod_pkg_setup
 	BUILD_PARAMS="-j1 KDIR=${KERNEL_DIR} O=${KERNEL_DIR}"
+	linux_chkconfig_present BLK_DEV_DRBD && die "drbd module alredy included into kernel"
 }
 
 pkg_postinst() {
