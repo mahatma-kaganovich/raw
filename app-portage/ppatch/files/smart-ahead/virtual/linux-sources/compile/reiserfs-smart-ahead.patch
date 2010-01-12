@@ -1,0 +1,50 @@
+Experimental.
+
+Disabling reiserfs read-ahead until elevator queue is empty.
+May improve busy system perfomance on simple block devices like memory cards.
+Also may relax hardware in classic busy systems with many processes.
+Do not affect IDE/ATA/hdparm level read-ahead.
+This against Linux-2.6.32
+(c) Denis Kaganovich <mahatma@eu.by>
+diff -pruN a/fs/reiserfs/journal.c b/fs/reiserfs/journal.c
+--- a/fs/reiserfs/journal.c	2009-12-14 09:54:33.000000000 +0200
++++ b/fs/reiserfs/journal.c	2009-12-14 16:51:58.000000000 +0200
+@@ -50,6 +50,7 @@
+ #include <linux/blkdev.h>
+ #include <linux/backing-dev.h>
+ #include <linux/uaccess.h>
++#include <linux/elevator.h>
+ 
+ #include <asm/system.h>
+ 
+@@ -2360,7 +2362,7 @@ static struct buffer_head *reiserfs_brea
+ 	if (buffer_uptodate(bh))
+ 		return (bh);
+ 
+-	if (block + BUFNR > max_block) {
++	if (block + BUFNR > max_block || elv_queue_empty(bdev_get_queue(dev))) {
+ 		blocks = max_block - block;
+ 	}
+ 	bhlist[0] = bh;
+diff -pruN a/fs/reiserfs/stree.c b/fs/reiserfs/stree.c
+--- a/fs/reiserfs/stree.c	2009-12-14 09:54:33.000000000 +0200
++++ b/fs/reiserfs/stree.c	2009-12-14 16:52:11.000000000 +0200
+@@ -54,6 +54,8 @@
+ #include <linux/reiserfs_fs.h>
+ #include <linux/buffer_head.h>
+ #include <linux/quotaops.h>
++#include <linux/elevator.h>
++#include <linux/blkdev.h>
+ 
+ /* Does the buffer contain a disk block which is in the tree. */
+ inline int B_IS_IN_TREE(const struct buffer_head *bh)
+@@ -761,7 +763,8 @@ int search_by_key(struct super_block *sb
+ 
+ 		/* if we are going to read leaf nodes, try for read ahead as well */
+ 		if ((search_path->reada & PATH_READA) &&
+-		    node_level == DISK_LEAF_NODE_LEVEL + 1) {
++		    node_level == DISK_LEAF_NODE_LEVEL + 1 &&
++		    elv_queue_empty(bdev_get_queue(PATH_PLAST_BUFFER(search_path)->b_bdev))) {
+ 			int pos = last_element->pe_position;
+ 			int limit = B_NR_ITEMS(bh);
+ 			struct reiserfs_key *le_key;
