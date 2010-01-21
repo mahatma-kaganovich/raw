@@ -8,12 +8,12 @@ inherit ${hg} flag-o-matic toolchain-funcs eutils mozcoreconf-2 mozconfig-3 make
 
 MY_PV="${PV/_rc/rc}"
 MY_P="${PN}-${MY_PV}"
-EMVER="0.97a0-20091011"
+EMVER="1.0.0"
 PATCH="${PN}-2.0-patches-0.1"
 MOZVER="1.9.1"
 
 # empty: from hg
-LANGS="en be ca cs de es_AR es_ES fr gl hu ka lt nb_NO nl pl pt_PT ru sk sv_SE tr"
+LANGS="en be ca cs de es_AR es_ES fr gl hu it ka lt nb_NO nl pl pt_PT ru sk sv_SE tr"
 
 #RESTRICT="nomirror"
 
@@ -134,6 +134,7 @@ src_prepare(){
 	if use !vanilla && [[ -n "${PATCH}" ]]; then
 		rm ${WORKDIR}/001*
 		cd "${S}" || die
+		EPATCH_EXCLUDE="108-fix_ftbfs_with_cairo_fb.patch" \
 		EPATCH_SUFFIX="patch" EPATCH_FORCE="yes" epatch "${WORKDIR}"
 	fi
 
