@@ -3,9 +3,7 @@ EAPI="2"
 # drbd-8.3.9999.ebuild
 GIT=$([[ ${PVR} = *.9999 ]] && echo "git autotools")
 EGIT_REPO_URI="git://git.drbd.org/drbd-${PV%.9999}.git"
-KERNEL_DIR=""
-# at least prior versions: with empty KERNEL_DIR - using linux-headers includes instead of kernel
-inherit eutils versionator ${GIT} # linux-info
+inherit eutils versionator ${GIT}
 
 LICENSE="GPL-2"
 KEYWORDS="~amd64 ~x86"
@@ -55,7 +53,7 @@ src_configure() {
 }
 
 src_compile() {
-	emake KDIR="${KERNEL_DIR}" XSLTPROC_OPTIONS="--xinclude --novalid" tools $(use doc && echo "doc") || die "compile problem"
+	emake XSLTPROC_OPTIONS="--xinclude --novalid" tools $(use doc && echo "doc") || die "compile problem"
 }
 
 src_install() {
