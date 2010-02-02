@@ -6,6 +6,8 @@ hg=""
 [[ "${PV}" == 9999* ]] && hg="mercurial cvs"
 inherit ${hg} flag-o-matic toolchain-funcs eutils mozcoreconf-2 mozconfig-3 makeedit multilib autotools mozextension fdo-mime java-pkg-opt-2 python
 
+: ${FILESDIR:=${EBUILD%/*}/files}
+
 MY_PV="${PV/_rc/rc}"
 MY_P="${PN}-${MY_PV}"
 EMVER="1.0.0"
