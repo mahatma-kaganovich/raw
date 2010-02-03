@@ -486,6 +486,7 @@ if [[ -n "${hg}" ]]; then
 
 src_unpack() {
 	use static && use jssh && die 'Useflags "static" & "jssh" incompatible'
+	local hg_mod=""
 	if [[ "${PVR}" == *-r9999* ]]; then
 		_hg comm-central
 		_hg mozilla-central "${S1}"
@@ -505,9 +506,9 @@ src_unpack() {
 	for l in $(langs) ; do
 		[[ "${l}" == "en-US" ]] ||
 		if [[ "${PVR}" == *-r9999* ]]; then
-			_hg l10n-central/${l} "${WORKDIR}/l10n/${l}"
+			_hg1 l10n-central/${l} "${WORKDIR}/l10n/${l}"
 		else
-			_hg releases/l10n-mozilla-1.9.${PVR##*r}/${l} "${WORKDIR}/l10n/${l}"
+			_hg1 releases/l10n-mozilla-1.9.${PVR##*r}/${l} "${WORKDIR}/l10n/${l}"
 		fi
 		# remove break if you know how to build multiple locales via source
 		break
@@ -515,12 +516,28 @@ src_unpack() {
 }
 
 _hg(){
-	local d=$1
+	local hg_src_dir="${PORTAGE_ACTUAL_DISTDIR-${DISTDIR}}/hg-src"
+	local m="${hg_mod:-$(basename $1)}"
+	if [[ -e "${hg_src_dir}/seamonkey/${m}" ]] && ! [[ -e "${hg_src_dir}/mozilla/${m}" ]]; then
+		if [[ -e "${hg_src_dir}/mozilla" ]]; then
+			msg="mv ${hg_src_dir}/seamonkey/${m} ${hg_src_dir}/mozilla/${m}"
+		else
+			msg="mv ${hg_src_dir}/seamonkey ${hg_src_dir}/mozilla"
+		fi
+		ewarn "Mercurial project repository was renamed. Please, do:"
+		ewarn "   $msg"
+		die "Rename or delete old project repository: $msg"
+	fi
+
 	[[ -n "$3" ]] && use !"$3" && return
-	EHG_REPO_URI="http://hg.mozilla.org/${d}" mercurial_src_unpack
+	EHG_PROJECT="mozilla" mercurial_fetch "http://hg.mozilla.org/$1" "${m}"
 	[[ -z "$2" ]] && return
 	[[ -e "$2" ]] && rm "$2" -Rf
-	mv "${WORKDIR}/${d##*/}" "$2"
+	mv "${WORKDIR}/${m}" "$2"
+}
+
+_hg1(){
+	hg_mod="${1//\//_}" _hg $*
 }
 
 _cvs(){
