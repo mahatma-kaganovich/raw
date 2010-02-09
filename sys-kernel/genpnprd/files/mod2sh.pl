@@ -22,6 +22,9 @@
 my %alias;
 my %dep;
 
+# 0-old (alias-per-case), 1-"or"
+my $JOIN=1;
+
 sub read_aliases{
 	my $s;
 	open FA,$_[0];
@@ -103,9 +106,12 @@ case "$i" in
 		}
 		my $k=sprintf("%04i",
 		    (index($_,'*')>=0 || index($_,'?')>=0)?9999-length($_):0);
-		$res{$k}.="$_)i=\"".join(' ',@d)."\";;\n";
+		if($JOIN){
+			push @{$res{"$k ".join(' ',@d)}},$_;
+		}else{
+			$res{$k}.="$_)i=\"".join(' ',@d)."\";;\n";
+		}
 	}
-
 
 	# unique
 	my %nopnp;
@@ -123,7 +129,11 @@ case "$i" in
 	for (keys %nopnp){ delete $nopnp{$_} if($nopnp{$_} != 1);}
 	print FO join("\n",sort keys %nopnp,'');
 
-	print FS "$res{$_}" for (sort keys %res);
+	if ($JOIN) {
+		print FS join('|',@{$res{$_}}).')i="'.substr($_,5)."\";;\n" for (sort keys %res);
+	} else {
+		print FS "$res{$_}" for (sort keys %res);
+	}
 	print FS '*)ALIAS=""
 return 1
 ;;
