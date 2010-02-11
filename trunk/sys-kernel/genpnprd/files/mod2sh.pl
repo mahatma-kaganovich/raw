@@ -6,6 +6,7 @@
 
 my %alias;
 my %dep;
+my $reorder='/ide/'; # must be second/last
 
 # 0-old (alias-per-case), 1-"or"
 my $JOIN=1;
@@ -106,20 +107,37 @@ case "$i" in
 
 
 	for (keys %alias) {
+		my $re=0;
 		my @d=();
-		push @d,@{$dep{$_}} for (@{$alias{$_}});
+		for (@{$alias{$_}}){
+			if(grep(/$reorder/,@{$dep{$_}})){
+				push @d,@{$dep{$_}};
+				$re=1;
+			}else{
+				unshift @d,@{$dep{$_}};
+			}
+		}
 		if(isPNP($_)){
 			for(@d){
 				$pnp{$_}=1 for (lines(mod($_)));
 			}
 		}
 		my $k=sprintf("%04i",order2($_));
+		my $m=join(' ',@d);
 		if($JOIN){
-			$k.=' '.join(' ',@d);
-			$k=~s/\/(\w+)\./'\/'.($_ eq $1?'$i':$1).'.'/ge;
-			push @{$res{$k}},$_;
+			$k.=" $m";
+			$k=~s/\/([^\/.]+)/'\/'.($_ eq $1?'$i':$1)/ge if(!exists($res{$k}));
+			if($re){
+				push @{$res{$k}},$_;
+			}else{
+				unshift @{$res{$k}},$_;
+			}
 		}else{
-			$res{$k}.="$_)i=\"".join(' ',@d)."\";;\n";
+			if($re){
+				$res{$k}.="$_)i=\"$m\";;\n";
+			}else{
+				$res{$k}="$_)i=\"$m\";;\n$res{$k}";
+			}
 		}
 	}
 
