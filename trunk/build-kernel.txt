@@ -101,7 +101,8 @@ static).
 Kernel cmdline options: "nopnp", "unload" (try to rmmod after mounting root),
 "loadall" (try to load all possible drivers, slow), "slow" (fixed v0.1 mode,
 deprecated, now vs. new bugs), "parallel-startup[={0|1|2}]" (module parallel
-loading mode: 0-none, 1-normal, 2-agressive).
+loading mode: 0-none, 1-normal, 2-agressive), "nopowersave" (disable
+powersaving/cpufreq preset).
 
 P.S. Defaults are subject to change.
 .
