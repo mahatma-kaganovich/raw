@@ -1,5 +1,5 @@
 #!/bin/sh
-## pnp modules bootloader v0.9
+## pnp modules bootloader v0.10
 ## (c) Denis Kaganovich, under Anarchy license
 ## consume preprocessed /lib/modules/$KV/modules.alias
 
@@ -339,6 +339,7 @@ syspnp(){
 #		thermal_sys) mod fan ;;
 		esac
 	done </proc/modules
+    if ! ${cmd_nopowersave:-false}; then
 	# frost. save your silicon (and power)
 	# autoload cpufreq driver in price of at least one more unload
 	# just speedup probing by vendor
@@ -353,6 +354,9 @@ syspnp(){
 	mod $freq
 	cpufreq_gov
 	rmmod freq_table >/dev/null 2>&1
+	echo 2 >/sys/devices/system/cpu/sched_mc_power_savings 2>/dev/null
+	echo 2 >/sys/devices/system/cpu/sched_smt_power_savings 2>/dev/null
+    fi
 
 	refresh
 #	good_msg "Filtering pnp modules"

@@ -4,21 +4,6 @@
 # (c) Denis Kaganovich
 # under Anarchy license
 
-# kernel/arch/x86/kernel/apm.ko
-# kernel/arch/x86/video/fbdev.ko
-## dirs:
-# [arch/]
-# [drivers/block/]
-# [drivers/char/]
-# [drivers/firmware/]
-# [drivers/hwmon/]
-# drivers/acpi/
-# drivers/md/
-# fs/
-# drivers/scsi/
-# drivers/usb/
-# arch/x86/kernel/cpu/cpufreq/
-
 my %alias;
 my %dep;
 
@@ -61,20 +46,19 @@ sub read_deps{
 	close FD;
 }
 
-#sub lines{
-#	my $i=$_[0];
-#	my %l;
-#	$l{$i}=1;
-#	$i=~s/-/_/g;
-#	$l{$i}=1;
-#	$i=~s/_/-/g;
-#	$l{$i}=1;
-#	keys %l;
-#}
+sub lines_{
+	my $i=$_[0];
+	$i=~s/-/_/g;
+	$i
+}
 
 sub lines{
 	my $i=$_[0];
-	$i=~s/-/_/g;
+	my $c='[^\[\]]*';
+	$i=~s/^($c\[)/lines_($1)/ge;
+	$i=~s/(\]$c\[)/lines_($1)/ge;
+	$i=~s/(\]$c)$/lines_($1)/ge;
+	$i=~s/^($c)$/lines_($1)/ge;
 	($i)
 }
 
@@ -82,6 +66,31 @@ sub mod{
 	my $i=$_[0];
 	$i=~s/^.*\/(.*?)\..*?$/$1/;
 	$i
+}
+
+sub order1{
+	my $a=$_[0];
+	(index($a,'*')>=0 || index($a,'?')>=0)?9999-length($a):0;
+}
+
+sub order2{
+	my $a=$_[0];
+	$a=~s/[*?]//g;
+	$a=~s/\[[^\[\]]+\]/?/g;
+	return 0 if($a eq $_[0]);
+	$a=~s/([^?])/$1$1/g;
+	9999-length($a);
+}
+
+#todo: try to resolve "[...]" matches to best result
+sub order3{
+	my $a=$_[0];
+	$a=~s/([^a-zA-Z0-9\*\?])/$1/g;
+	$a=~s/\*/.*/g;
+	$a=~s/\?/./g;
+	my @l=grep(/^$a$/,keys %alias);
+	print "$a=$#l " if($#l<0);
+	$#l+1;
 }
 
 sub mk_sh{
@@ -104,10 +113,11 @@ case "$i" in
 				$pnp{$_}=1 for (lines(mod($_)));
 			}
 		}
-		my $k=sprintf("%04i",
-		    (index($_,'*')>=0 || index($_,'?')>=0)?9999-length($_):0);
+		my $k=sprintf("%04i",order2($_));
 		if($JOIN){
-			push @{$res{"$k ".join(' ',@d)}},$_;
+			$k.=' '.join(' ',@d);
+			$k=~s/\/(\w+)\./'\/'.($_ eq $1?'$i':$1).'.'/ge;
+			push @{$res{$k}},$_;
 		}else{
 			$res{$k}.="$_)i=\"".join(' ',@d)."\";;\n";
 		}
