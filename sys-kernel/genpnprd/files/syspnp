@@ -354,8 +354,9 @@ syspnp(){
 	mod $freq
 	cpufreq_gov
 	rmmod freq_table >/dev/null 2>&1
-	echo 2 >/sys/devices/system/cpu/sched_mc_power_savings 2>/dev/null
-	echo 2 >/sys/devices/system/cpu/sched_smt_power_savings 2>/dev/null
+	for i in /sys/devices/system/cpu/sched_*_power_savings ; do
+		[[ -e "$i" ]] && echo 2 >$i 2>/dev/null
+	done
     fi
 
 	refresh
