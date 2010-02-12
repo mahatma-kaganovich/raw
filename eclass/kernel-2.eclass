@@ -5,7 +5,7 @@ if [[ ${ETYPE} == sources ]]; then
 
 IUSE="${IUSE} build-kernel debug custom-cflags pnp compressed integrated ipv6
 	netboot nls unicode +acl minimal selinux custom-arch
-	+kernel-drm +kernel-alsa +sources fbcon staging pnponly"
+	+kernel-drm +kernel-alsa +sources fbcon staging pnponly lzma"
 DEPEND="${DEPEND}
 	pnp? ( sys-kernel/genpnprd )
 	build-kernel? (
@@ -58,7 +58,7 @@ DEPEND="${DEPEND}
 	    SERIAL_8250_EXTENDED
 	TIPC_ADVANCED NET_IPGRE_BROADCAST
 	IP_VS_PROTO_[\d\w_]*
-	KERNEL_LZMA
+	KERNEL_BZIP2
 	ISA MCA MCA_LEGACY EISA NET_ISA PCI PCI_LEGACY
 	PCIEASPM CRYPTO_DEV_HIFN_795X_RNG PERF_COUNTERS
 	X86_SPEEDSTEP_RELAXED_CAP_CHECK
@@ -356,6 +356,7 @@ setconfig(){
 		cfg n DRM
 	fi
 	cfg_use kernel-alsa SND
+	cfg_use lzma KERNEL_LZMA
 	# framebuffer enabled anymore, but "fbcon" support for more devices, exclude [external] nouveau drm
 	if use fbcon; then
 		cfg y FB
