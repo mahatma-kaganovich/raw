@@ -25,7 +25,7 @@ preserve_start(){
 	mkdir -p "$tmp/preserve/lib/modules/$KV"
 	for m in `cat $tmp/modules.lst` ; do
 		m="${m%:}"
-		cp "${m#*/lib/modules/$KV}" "$tmp/preserve/lib/modules/$KV/" --parents
+		cp "${m#*/lib/modules/$KV/}" "$tmp/preserve/lib/modules/$KV/" --parents
 		[[ -e "$rcdir/lib/modules/${KV}/modules.dep" ]] && grep "^$m:" $rcdir/lib/modules/${KV}/modules.dep >>$tmp/preserve/lib/modules/${KV}/modules.dep
 	done
 	cd $rcdir
