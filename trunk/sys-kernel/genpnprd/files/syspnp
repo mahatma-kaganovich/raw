@@ -135,6 +135,7 @@ load_aliases(){
 		done
 		mod $MDOLIST
 		fi
+		REORDER=""
 		refresh || break
 		[[ -n "$SDELAY" ]] && sleep "$SDELAY"
 	done
@@ -192,13 +193,15 @@ pnp_options(){
 	*) export cmd_${i}=true ;;
 	esac
 	done
-	[[ -n "$cmd_noload" ]] && p="*/$(echo "$cmd_noload"|sed -e 's/,/.ko|*\//g').ko)insmod=false;;$p"
+	[[ -n "$cmd_noload" ]] && p="*/$(echo "$cmd_noload"|sed -e 's/,/.ko|*\//g').ko)insmod=false;return 1;;$p"
 	echo "modparam(){
 insmod=insmod
 case \$1 in
+1)insmod=${REORDER:-continue}
+return 1;;
 $p
 esac
-}" >/modparam.sh
+}" >/etc/modparam.sh
 	$cmd_quiet && good_msg(){ return; }
 }
 
@@ -242,7 +245,7 @@ local f="/sbin/modprobe"
 echo '#!/bin/sh
 KV=`uname -r`
 cd /lib/modules/$KV
-. /modparam.sh
+. /etc/modparam.sh
 . ./modules.alias.sh
 while [[ "${1#-}" != "$1" ]] ; do
 	shift
@@ -307,9 +310,9 @@ cpufreq_gov(){
 syspnp(){
 	[[ -e "/lib/modules/${KV}/modules.alias.sh" ]] || return
 	$cmd_nopnp && return
-	local PNP_TMP="${TMPDIR}/pnp.found" NOTLOADED="" CHK=true i i1 i2 gov="" freq="" pid="" pids="" LCOUNT=""
+	local PNP_TMP="${TMPDIR}/pnp.found" NOTLOADED="" CHK=true i i1 i2 gov="" freq="" pid="" pids="" LCOUNT="" REORDER=break
 
-	. /modparam.sh
+	. /etc/modparam.sh
 	cd "/lib/modules/${KV}"
 	good_msg "Searching pnp"
 	for i in 0 1 2 3 4 ; do
@@ -325,7 +328,6 @@ syspnp(){
 			mod $MDOLIST
 			refresh
 		fi
-		single usb_storage 0
 	fi
 	load_aliases
 
