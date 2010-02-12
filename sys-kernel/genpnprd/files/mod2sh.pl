@@ -6,10 +6,14 @@
 
 my %alias;
 my %dep;
-my $reorder='/ide/'; # must be second/last
+
+# to load second/last
+# will be delimited by "1" (to easy "break/continue" integration)
+my $reorder='\/ide\/|usb-storage';
 
 # 0-old (alias-per-case), 1-"or"
 my $JOIN=1;
+my $SUBST=$JOIN;
 
 sub read_aliases{
 	my $s;
@@ -109,9 +113,10 @@ case "$i" in
 	for (keys %alias) {
 		my $re=0;
 		my @d=();
+		my @a=@{$alias{$_}};
 		for (@{$alias{$_}}){
 			if(grep(/$reorder/,@{$dep{$_}})){
-				push @d,@{$dep{$_}};
+				push @d,'1',@{$dep{$_}};
 				$re=1;
 			}else{
 				unshift @d,@{$dep{$_}};
@@ -126,7 +131,7 @@ case "$i" in
 		my $m=join(' ',@d);
 		if($JOIN){
 			$k.=" $m";
-			$k=~s/\/([^\/.]+)/'\/'.($_ eq $1?'$i':$1)/ge if(!exists($res{$k}));
+			$k=~s/\/([^\/.]+)/'\/'.($_ eq $1?'$i':$1)/ge if($SUBST && !exists($res{$k}));
 			if($re){
 				push @{$res{$k}},$_;
 			}else{

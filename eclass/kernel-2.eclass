@@ -5,7 +5,7 @@ if [[ ${ETYPE} == sources ]]; then
 
 IUSE="${IUSE} build-kernel debug custom-cflags pnp compressed integrated ipv6
 	netboot nls unicode +acl minimal selinux custom-arch
-	+kernel-drm +kernel-alsa +sources fbcon staging"
+	+kernel-drm +kernel-alsa +sources fbcon staging pnponly"
 DEPEND="${DEPEND}
 	pnp? ( sys-kernel/genpnprd )
 	build-kernel? (
@@ -40,7 +40,7 @@ DEPEND="${DEPEND}
 	FB_[\w\d_]*_ACCEL -FB_HGA_ACCEL FB_SIS_300 FB_SIS_315 FB_GEODE
 	FB_MB862XX_PCI_GDC
 	-CC_OPTIMIZE_FOR_SIZE
-	-ARCNET -IDE -SMB_FS -DEFAULT_CFQ -DEFAULT_AS -DEFAULT_NOOP
+	-ARCNET -SMB_FS -DEFAULT_CFQ -DEFAULT_AS -DEFAULT_NOOP
 	-SOUND_PRIME GPIO EZX_PCAP MFD_SM501_GPIO SSB_PCMCIAHOST
 	ISCSI_IBFT_FIND EXT4DEV_COMPAT LDM_PARTITION
 	SCSI_FC_TGT_ATTRS SCSI_SAS_ATA SCSI_SRP_TGT_ATTRS
@@ -149,7 +149,7 @@ kernel-2_src_compile() {
 	r=`ls initramfs*-${REAL_KV}`
 	rename "${r}" "initrd-${REAL_KV}.img" "${r}" || die "initramfs rename failed"
 	einfo "Preparing boot image"
-	bash "${ROOT}/usr/share/genpnprd/genpnprd" "${S}/initrd-${REAL_KV}.img" "$(use pnp || echo nopnp)" "${TMPDIR}"/overlay-rd || die
+	bash "${ROOT}/usr/share/genpnprd/genpnprd" "${S}/initrd-${REAL_KV}.img" "$( (use !pnp && echo nopnp)||(use pnponly && echo pnponly) )" "${TMPDIR}"/overlay-rd || die
 	# integrated: do not compress twice;
 	# others: +~700K, but faster boot & less RAM to uncompress.
 	# "integrated" still minimal

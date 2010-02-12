@@ -3,7 +3,7 @@
 ## adding PNP
 ## (c) Denis Kaganovich
 ## under Anarchy license
-## Usage: genpnprd <image> [nopnp|[pnp] [<overlay>]]
+## Usage: genpnprd <image> [nopnp|pnponly|[pnp] [<overlay>]]
 
 DATA="/usr/share/genpnprd"
 
@@ -86,6 +86,7 @@ fi
 #cp $ROOT/usr/share/hwdata/blacklist $rcdir/lib/
 cd $rcdir || die
 [[ "$2" != "nopnp" ]] && /usr/bin/perl ${ROOT}/usr/share/genpnprd/mod2sh.pl $rcdir/lib/modules/* || die
+[[ "$2" == "pnponly" ]] && rm $rcdir/lib/modules/*/modules.{alias,dep,symbols,*.bin,*map,order,builtin} $rcdir/sbin/modprobe
 cp $DATA/syspnp $rcdir/etc
 patch -p1 -std $rcdir <$DATA/linuxrc.patch
 rm $rcdir/init.{rej,orig} -f &>/dev/null
