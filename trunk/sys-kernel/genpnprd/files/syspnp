@@ -189,8 +189,8 @@ pnp_options(){
 		i="${i#*=}"
 		p="*/${i%%:*}.ko)PARAM=\"${i#*:}\";;$p"
 	;;
-	*=*) export cmd_${i%%=*}="${i#*=}" ;;
-	*) export cmd_${i}=true ;;
+	*=*) export cmd_`echo "${i%%=*}"|sed -e 's:-:_:g'`="${i#*=}" ;;
+	*) export cmd_`echo "$i"|sed -e 's:-:_:g'`=true ;;
 	esac
 	done
 	[[ -n "$cmd_noload" ]] && p="*/$(echo "$cmd_noload"|sed -e 's/,/.ko|*\//g').ko)insmod=false;return 1;;$p"

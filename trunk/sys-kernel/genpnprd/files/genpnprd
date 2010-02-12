@@ -17,7 +17,7 @@ preserve_start(){
 	local m
 	rm $tmp/modules.dep -f &>/dev/null
 	for m in $* ; do
-		grep "/$m\..*:" $rcdir/lib/modules/${KV}/modules.dep >>$tmp/modules.lst
+		grep "/$m\..*:" $rcdir/lib/modules/${KV}/modules.dep >>$tmp/modules.lst || find $rcdir/lib/modules/${KV} -name $m.ko >>$tmp/modules.lst
 	done
 	cd $rcdir || die
 	mkdir $tmp/preserve || die
@@ -25,8 +25,8 @@ preserve_start(){
 	mkdir -p "$tmp/preserve/lib/modules/$KV"
 	for m in `cat $tmp/modules.lst` ; do
 		m="${m%:}"
-		cp "${m#/lib/modules/$KV}" "$tmp/preserve/lib/modules/$KV/" --parents
-		grep "^$m:" $rcdir/lib/modules/${KV}/modules.dep >>$tmp/preserve/lib/modules/${KV}/modules.dep
+		cp "${m#*/lib/modules/$KV}" "$tmp/preserve/lib/modules/$KV/" --parents
+		[[ -e "$rcdir/lib/modules/${KV}/modules.dep" ]] && grep "^$m:" $rcdir/lib/modules/${KV}/modules.dep >>$tmp/preserve/lib/modules/${KV}/modules.dep
 	done
 	cd $rcdir
 }
