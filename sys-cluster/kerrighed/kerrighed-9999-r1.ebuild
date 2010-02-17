@@ -2,7 +2,7 @@ inherit eutils autotools git
 
 EGIT_REPO_URI="git://mirrors.git.kernel.org/cluster/kerrighed/tools"
 EGIT_BRANCH="master"
-EGIT_TREE="master"
+EGIT_COMMIT="master"
 
 SLOT="0"
 DESCRIPTION="Kerrighed is a Single System Image operating system for clusters"

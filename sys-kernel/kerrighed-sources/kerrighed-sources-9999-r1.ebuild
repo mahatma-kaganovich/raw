@@ -5,7 +5,7 @@ inherit kernel-2 git
 
 EGIT_REPO_URI="git://mirrors.git.kernel.org/cluster/kerrighed/kernel"
 EGIT_BRANCH="master"
-EGIT_TREE="master"
+EGIT_COMMIT="master"
 
 KV="" # autodetect by overlayed kernel-2.eclass
 K_NOSETEXTRAVERSION="1"
