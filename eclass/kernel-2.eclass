@@ -5,7 +5,7 @@ if [[ ${ETYPE} == sources ]]; then
 
 IUSE="${IUSE} build-kernel debug custom-cflags pnp compressed integrated ipv6
 	netboot nls unicode +acl minimal selinux custom-arch
-	+kernel-drm +kernel-alsa +sources fbcon staging pnponly lzma"
+	+kernel-drm +kernel-alsa kernel-firmware +sources fbcon staging pnponly lzma"
 DEPEND="${DEPEND}
 	pnp? ( sys-kernel/genpnprd )
 	build-kernel? (
@@ -178,7 +178,11 @@ kernel-2_src_install() {
 			doins "initrd-${REAL_KV}.img"
 		fi
 		local f f1
-		rm ${BDIR}/lib/firmware -Rf
+		if use kernel-firmware; then
+			ewarn "Useflag 'kernel-firmware' must be enabled one branch to avoid collisions"
+		else
+			rm ${BDIR}/lib/firmware -Rf
+		fi
 		mv "${BDIR}"/* "${D}/" || die
 		kmake INSTALL_PATH="${D}/boot" install
 		for f in vmlinuz System.map config ; do
