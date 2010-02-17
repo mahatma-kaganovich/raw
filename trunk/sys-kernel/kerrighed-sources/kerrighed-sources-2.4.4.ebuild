@@ -12,7 +12,7 @@ K_NOSETEXTRAVERSION="1"
 
 HOMEPAGE="http://www.kerrighed.org/"
 DESCRIPTION="Kerrighed SSI cluster kernel"
-SRC_URI="${KERNEL_URI} http://gforge.inria.fr/frs/download.php/22621/kerrighed-${PV}.tar.gz"
+SRC_URI="${KERNEL_URI} http://gforge.inria.fr/frs/download.php/26017/kerrighed-${PV}.tar.gz"
 KEYWORDS="-* ~amd64 ~x86"
 
 # for build-kernel feature only
@@ -21,7 +21,7 @@ IUSE="+build-kernel +pnp"
 
 KERNEL_CONFIG="${KERNEL_CONFIG} -IPC_NS -PREEMPT[\w\d_]* PREEMPT_NONE -KEYS -NUMA"
 
-S1="${WORKDIR}/kerrighed-2.4.0"
+S1="${WORKDIR}/kerrighed-${PV}"
 S="${S1}/_kernel"
 
 src_unpack(){
