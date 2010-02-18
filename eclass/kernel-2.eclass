@@ -104,12 +104,21 @@ get_v(){
 	grep -P "^$1[ 	]*=.*$" "${S}"/Makefile | sed -e 's%^.*= *%%'
 }
 
+gen_KV(){
+	local KV KERNEL_DIR="${S}" g="${ROOT}/usr/share/genkernel/gen_determineargs.sh"
+	get_KV(){ KV="$(get_v VERSION).$(get_v PATCHLEVEL).$(get_v SUBLEVEL)$(get_v EXTRAVERSION)";}
+	[ -e "${g}" ] && source "${g}"
+	get_KV
+	echo "${KV}"
+}
+
 check_kv(){
-	REAL_KV="$(get_v VERSION).$(get_v PATCHLEVEL).$(get_v SUBLEVEL)$(get_v EXTRAVERSION)"
+	REAL_KV="$(gen_KV)"
 	[ -z "${KV}" ] && set_kv ${REAL_KV}
 }
 
 kernel-2_src_compile() {
+	local KV0="${KV}"
 	check_kv
 	cd "${S}"
 	fixes
@@ -126,6 +135,8 @@ kernel-2_src_compile() {
 	config_defaults
 	einfo "Compiling kernel"
 	kmake all
+	KV="${KV0}"
+	check_kv
 	local p=""
 	use netboot && p="${p} --netboot"
 	[[ -e "${BDIR}" ]] || mkdir "${BDIR}"
