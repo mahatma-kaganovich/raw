@@ -125,8 +125,8 @@ load_aliases(){
 	local i m
 	while  count ; do
 		if $FAST ; then
-			# "sort -u" breaks bus order, but speedup boot
-			mod $MDOLIST `cat $(find /sys -name modalias -print 2>/dev/null) </dev/null 2>/dev/null|sort -u'`
+			# "sort -u" (vs. "cat") breaks bus order, but speedup boot
+			mod $MDOLIST `sort -u $(find /sys -name modalias -print 2>/dev/null) </dev/null 2>/dev/null'`
 		else
 		for i in `find /sys -name modalias -print 2>/dev/null` ; do
 			if [[ -e "$i" ]] && read m <"$i" ; then
