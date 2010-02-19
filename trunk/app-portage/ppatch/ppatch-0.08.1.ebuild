@@ -10,6 +10,8 @@ DEPEND="${RDEPEND}"
 IUSE=""
 PDEPEND=""
 
+: ${FILESDIR:=${EBUILD%/*}/files}
+
 # every patchset (=useflag) is files/... dir
 ppinit(){
 	local p p1 f pac
