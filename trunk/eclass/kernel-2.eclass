@@ -13,6 +13,7 @@ DEPEND="${DEPEND}
 		compressed? ( sys-kernel/genpnprd )
 		kernel-drm? ( !x11-base/x11-drm )
 		kernel-alsa? ( !media-sound/alsa-driver )
+		kernel-firmware? ( !sys-kernel/linux-firmware )
 	) "
 
 : ${KERNEL_CONFIG:="KALLSYMS_EXTRA_PASS DMA_ENGINE USB_STORAGE_[\w\d]+
@@ -83,6 +84,9 @@ PROVIDE="sources? ( virtual/linux-sources )
 
 fi
 
+#UROOT="${ROOT}"
+UROOT=""
+
 BDIR="${WORKDIR}/build"
 
 set_kv(){
@@ -105,7 +109,7 @@ get_v(){
 }
 
 gen_KV(){
-	local KV KERNEL_DIR="${S}" g="${ROOT}/usr/share/genkernel/gen_determineargs.sh"
+	local KV KERNEL_DIR="${S}" g="${UROOT}/usr/share/genkernel/gen_determineargs.sh"
 	get_KV(){ KV="$(get_v VERSION).$(get_v PATCHLEVEL).$(get_v SUBLEVEL)$(get_v EXTRAVERSION)";}
 	[ -e "${g}" ] && source "${g}"
 	get_KV
@@ -145,11 +149,8 @@ kernel-2_src_compile() {
 	rm "${r}"/build "${r}"/source
 	cd "${WORKDIR}"
 	local i
-	for i in linux*${KV_FULL} ; do
-		use sources || continue
-		[[ -e "${i}" ]] || continue
-		ln -s "../../../usr/src/${i}" "${r}"/build
-		ln -s "../../../usr/src/${i}" "${r}"/source
+	use sources && for i in build source ; do
+		ln -s "../../../usr/src/linux-${KV_FULL}" "${r}/${i}"
 	done
 	cd "${S}"
 	if use pnp || use compressed; then
@@ -160,7 +161,7 @@ kernel-2_src_compile() {
 	r=`ls initramfs*-${REAL_KV}`
 	rename "${r}" "initrd-${REAL_KV}.img" "${r}" || die "initramfs rename failed"
 	einfo "Preparing boot image"
-	bash "${ROOT}/usr/share/genpnprd/genpnprd" "${S}/initrd-${REAL_KV}.img" "$( (use !pnp && echo nopnp)||(use pnponly && echo pnponly) )" "${TMPDIR}"/overlay-rd || die
+	bash "${UROOT}/usr/share/genpnprd/genpnprd" "${S}/initrd-${REAL_KV}.img" "$( (use !pnp && echo nopnp)||(use pnponly && echo pnponly) )" "${TMPDIR}"/overlay-rd || die
 	# integrated: do not compress twice;
 	# others: +~700K, but faster boot & less RAM to uncompress.
 	# "integrated" still minimal
@@ -250,13 +251,13 @@ kernel-2_pkg_setup() {
 		einfo "Generating boot image overlay (if configured)"
 		local i="${TMPDIR}/overlay-rd"
 		mkdir "${i}"
-		bash "${ROOT}/usr/share/genpnprd/genpkgrd" "${i}" "${KERNEL_IMAGE_FILES}" "${KERNEL_IMAGE_FILES2}" "${KERNEL_IMAGE_PACKAGES}" || die
+		bash "${UROOT}/usr/share/genpnprd/genpkgrd" "${i}" "${KERNEL_IMAGE_FILES}" "${KERNEL_IMAGE_FILES2}" "${KERNEL_IMAGE_PACKAGES}" || die
 	fi
 	echo ">>> Preparing to unpack ..."
 }
 
 run_genkernel(){
-	[[ ! -e "${TMPDIR}/genkernel-cache" ]] && cp "${ROOT}/var/cache/genkernel" "${TMPDIR}/genkernel-cache" -r
+	[[ ! -e "${TMPDIR}/genkernel-cache" ]] && cp "${UROOT}/var/cache/genkernel" "${TMPDIR}/genkernel-cache" -r
 	# cpio works fine without loopback, but may panish sandbox
 	cp /usr/bin/genkernel "${S}" || die
 	sed -i -e 's/has_loop/true/' "${S}/genkernel"
@@ -498,6 +499,6 @@ fixes(){
 	# pnp
 	use pnp || return
 	einfo "Fixing modules hardware info exports (forced mode, waiting for bugs!)"
-	sh "${ROOT}/usr/share/genpnprd/modulesfix" "${S}" f
+	sh "${UROOT}/usr/share/genpnprd/modulesfix" "${S}" f
 }
 

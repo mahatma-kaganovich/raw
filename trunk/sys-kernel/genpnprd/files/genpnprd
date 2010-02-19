@@ -7,6 +7,9 @@
 
 DATA="/usr/share/genpnprd"
 
+#UROOT="$ROOT"
+UROOT=""
+
 die(){
 	echo "Error $*"
 	exit 1
@@ -14,10 +17,16 @@ die(){
 
 
 preserve_start(){
-	local m
+	local m mm="$rcdir/lib/modules/${KV}"
 	rm $tmp/modules.dep -f &>/dev/null
+	$PNPONLY && source "$mm/modules.alias.sh"
 	for m in $* ; do
-		grep "/$m\..*:" $rcdir/lib/modules/${KV}/modules.dep >>$tmp/modules.lst || find $rcdir/lib/modules/${KV} -name $m.ko >>$tmp/modules.lst
+		if $PNPONLY; then
+			alias2 $m
+			echo "$ALIAS" >>$tmp/modules.lst
+		else
+			grep "/$m\..*:" ${mm}/modules.dep >>$tmp/modules.lst || find ${mm} -name $m.ko >>$tmp/modules.lst
+		fi
 	done
 	cd $rcdir || die
 	mkdir $tmp/preserve || die
@@ -25,9 +34,10 @@ preserve_start(){
 	mkdir -p "$tmp/preserve/lib/modules/$KV"
 	for m in `cat $tmp/modules.lst` ; do
 		m="${m%:}"
-		cp "${m#*/lib/modules/$KV/}" "$tmp/preserve/lib/modules/$KV/" --parents
-		[[ -e "$rcdir/lib/modules/${KV}/modules.dep" ]] && grep "^$m:" $rcdir/lib/modules/${KV}/modules.dep >>$tmp/preserve/lib/modules/${KV}/modules.dep
+		cp "${m#*/lib/modules/$KV}" "$tmp/preserve/lib/modules/$KV/" --parents
+		$PNPONLY || ( [[ -e "$mm/modules.dep" ]] && grep "^$m:" $mm/modules.dep >>$tmp/preserve/lib/modules/${KV}/modules.dep )
 	done
+	$PNPONLY || ${UROOT}/usr/share/genpnprd/mod2sh.pl $tmp/preserve/lib/modules/${KV}
 	cd $rcdir
 }
 
@@ -80,13 +90,10 @@ if squashfs_enabled; then
 	SQUASH=true
 fi
 
-#cp $ROOT/usr/share/hwdata/pcitable $tmp
-#patch -p1 -fstd $tmp <$DATA/pcitable.patch
-#mv $tmp/pcitable $rcdir/lib/
-#cp $ROOT/usr/share/hwdata/blacklist $rcdir/lib/
 cd $rcdir || die
-[[ "$2" != "nopnp" ]] && /usr/bin/perl ${ROOT}/usr/share/genpnprd/mod2sh.pl $rcdir/lib/modules/* || die
-[[ "$2" == "pnponly" ]] && rm $rcdir/lib/modules/*/modules.{alias,dep,symbols,*.bin,*map,order,builtin} $rcdir/sbin/modprobe
+[[ "$2" != "nopnp" ]] && /usr/bin/perl ${UROOT}/usr/share/genpnprd/mod2sh.pl $rcdir/lib/modules/* || die
+PNPONLY=false
+[[ "$2" == "pnponly" ]] && PNPONLY=true && rm $rcdir/lib/modules/*/modules.{alias,dep,symbols,*.bin,*map,order,builtin} $rcdir/sbin/modprobe
 cp $DATA/syspnp $rcdir/etc
 patch -p1 -std $rcdir <$DATA/linuxrc.patch
 rm $rcdir/init.{rej,orig} -f &>/dev/null
