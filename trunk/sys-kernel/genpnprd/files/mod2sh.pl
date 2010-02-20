@@ -6,14 +6,17 @@
 
 my %alias;
 my %dep;
+my %dup;
 
 # to load second/last
 # will be delimited by "1" (to easy "break/continue" integration)
 my $reorder='\/ide\/|usb-storage';
 
-# 0-old (alias-per-case), 1-"or"
-my $JOIN=1;
+# 0-old (alias-per-case), 1-"or", 2-slow/multi-match
+my $JOIN=2;
 my $SUBST=$JOIN;
+my $MULTI=$JOIN==2;
+my $VERBOSE=0;
 
 sub read_aliases{
 	my $s;
@@ -89,12 +92,31 @@ sub order2{
 
 #todo: try to resolve "[...]" matches to best result
 sub order3{
-	my $a=$_[0];
-	$a=~s/([^a-zA-Z0-9\*\?])/$1/g;
-	$a=~s/\*/.*/g;
-	$a=~s/\?/./g;
-	my @l=grep(/^$a$/,keys %alias);
-	print "$a=$#l " if($#l<0);
+	my @l=@{$dup{$_}};
+	print "$_=$#l\n" if($#l<0);
+	if($#l>0){
+		my %ll;
+		for (@l){
+			$ll{join(' ',@{$alias{$_}})}=1;
+		}
+		if($VERBOSE){
+		    my @l1=keys %ll;
+		    if($#l1>0){
+			print "$_ -> ";
+			for(@l1){
+				print "$_ (";
+				for(split(/ /,$_)){
+					print join(",",@{$dep{$_}});
+				}
+				print ") ";
+			}
+			print "\n";
+		    }
+		    @l=@l1;
+		}else{
+		    @l=keys %ll;
+		}
+	}
 	$#l+1;
 }
 
@@ -104,13 +126,28 @@ sub mk_sh{
 	open(FS,$_[0]) || die $!;
 	open(FP,$_[1]) || die $!;
 	open(FO,$_[2]) || die $!;
-	print FS 'alias2(){
-local i="$1"
-case "$i" in
+	print FS 'modalias(){
+local i=""
 ';
 
 
-	for (keys %alias) {
+	@k_alias=keys %alias;
+	my $n=0;
+	print "\n" if($VERBOSE && $JOIN==2);
+	for (@k_alias) {
+		my @l=($a);
+		if($JOIN==2){
+			my $a=$_;
+			$a=~s/\*/.*/g;
+			$a=~s/\?/./g;
+			$a=~s/\[.*?\]/(?:\\\[.*?\\\]|.)/g;
+			@{$dup{$_}}=$a ne $_?grep(/^$a$/,@k_alias):($_);
+			if($VERBOSE){
+				$n++;
+				print "$n/$#k_alias \r";
+			}
+		}
+
 		my $re=0;
 		my @d=();
 		my @a=@{$alias{$_}};
@@ -127,11 +164,11 @@ case "$i" in
 				$pnp{$_}=1 for (lines(mod($_)));
 			}
 		}
-		my $k=sprintf("%04i",order2($_));
+		my $k=sprintf("%04i",$JOIN==2?order3($_):order2($_));
 		my $m=join(' ',@d);
 		if($JOIN){
 			$k.=" $m";
-			$k=~s/\/([^\/.]+)/'\/'.($_ eq $1?'$i':$1)/ge if($SUBST && !exists($res{$k}));
+			$k=~s/\/([^\/.]+)/'\/'.($_ eq $1?'$1':$1)/ge if($SUBST && !exists($res{$k}));
 			if($re){
 				push @{$res{$k}},$_;
 			}else{
@@ -148,7 +185,7 @@ case "$i" in
 
 	# unique
 	my %nopnp;
-	for (keys %alias) {
+	for (@k_alias) {
 #		next if(index($_,'_')>=0);
 		if($pnp{$_} || (not exists($dep{$_}))){
 			$nopnp{$_}=2;
@@ -162,17 +199,32 @@ case "$i" in
 	for (keys %nopnp){ delete $nopnp{$_} if($nopnp{$_} != 1);}
 	print FO join("\n",sort keys %nopnp,'');
 
-	if ($JOIN) {
-		print FS join('|',@{$res{$_}}).')i="'.substr($_,5)."\";;\n" for (sort keys %res);
-	} else {
-		print FS "$res{$_}" for (sort keys %res);
+	my $tail;
+	if ($MULTI && $JOIN){
+		my @r=();
+		$r[substr($_,0,4)].=join('|',@{$res{$_}}).')i="$i '.substr($_,5)."\";;\n" for (sort keys %res);
+		while($#r>=0){
+			my $s=pop @r;
+			next if(!defined($s));
+			print FS $tail.'case "$1" in
+'.$s;
+			$tail="esac\n";
+		}
+		print FS 'case "$1" in
+'			if(!$tail);
+	}else{
+		print FS 'case "$1" in
+';
+		if ($JOIN) {
+			print FS join('|',@{$res{$_}}).')i="'.substr($_,5)."\";;\n" for (sort keys %res);
+		} else {
+			print FS "$res{$_}" for (sort keys %res);
+		}
 	}
-	print FS '*)ALIAS=""
-return 1
-;;
-esac
+	print FS 'esac
 ALIAS="$i"
-return 0
+[[ -n "$i" ]]
+return $?
 }
 ';
 	for (keys %pnp) {
