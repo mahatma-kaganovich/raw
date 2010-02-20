@@ -22,7 +22,7 @@ preserve_start(){
 	$PNPONLY && source "$mm/modules.alias.sh"
 	for m in $* ; do
 		if $PNPONLY; then
-			alias2 $m
+			modalias $m
 			echo "$ALIAS" >>$tmp/modules.lst
 		else
 			grep "/$m\..*:" ${mm}/modules.dep >>$tmp/modules.lst || find ${mm} -name $m.ko >>$tmp/modules.lst
