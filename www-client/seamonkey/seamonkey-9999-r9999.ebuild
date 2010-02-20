@@ -10,12 +10,12 @@ inherit ${hg} flag-o-matic toolchain-funcs eutils mozcoreconf-2 mozconfig-3 make
 
 MY_PV="${PV/_rc/rc}"
 MY_P="${PN}-${MY_PV}"
-EMVER="1.0.0"
-PATCH="${PN}-2.0-patches-0.1"
+EMVER="1.0.1"
+PATCH="${PN}-2.0.3-patches-0.1"
 MOZVER="1.9.1"
 
 # empty: from hg
-LANGS="en be ca cs de es_AR es_ES fr gl hu it ka lt nb_NO nl pl pt_PT ru sk sv_SE tr"
+LANGS="en be ca cs de es_AR es_ES fr gl hu it ja ka lt nb_NO nl pl pt_PT ru sk sv_SE tr"
 
 #RESTRICT="nomirror"
 
@@ -97,8 +97,9 @@ for l in ${LANGS}; do
 	IUSE="${IUSE} linguas_${l}"
 done
 
-[[ -n "${PATCH}" ]] && SRC_URI="${SRC_URI}  !vanilla? ( mirror://gentoo/${PATCH}.tar.bz2 )"
+#[[ -n "${PATCH}" ]] && SRC_URI="${SRC_URI}  !vanilla? ( mirror://gentoo/${PATCH}.tar.bz2 )"
 #[[ -n "${PATCH}" ]] && SRC_URI="${SRC_URI}  !vanilla? ( http://dev.gentoo.org/~anarchy/dist/${PATCH}.tar.bz2 )"
+[[ -n "${PATCH}" ]] && SRC_URI="${SRC_URI}  !vanilla? ( http://dev.gentoo.org/~polynomial-c/${PATCH}.tar.bz2 )"
 
 S1="${S}/mozilla"
 

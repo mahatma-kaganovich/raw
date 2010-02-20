@@ -5,7 +5,8 @@ if [[ ${ETYPE} == sources ]]; then
 
 IUSE="${IUSE} build-kernel debug custom-cflags pnp compressed integrated ipv6
 	netboot nls unicode +acl minimal selinux custom-arch
-	+kernel-drm +kernel-alsa kernel-firmware +sources fbcon staging pnponly lzma"
+	+kernel-drm +kernel-alsa kernel-firmware +sources fbcon staging pnponly lzma
+	external-firmware"
 DEPEND="${DEPEND}
 	pnp? ( sys-kernel/genpnprd )
 	build-kernel? (
@@ -153,6 +154,10 @@ kernel-2_src_compile() {
 		ln -s "../../../usr/src/linux-${KV_FULL}" "${r}/${i}"
 	done
 	cd "${S}"
+	if use external-firmware; then
+		mkdir "${BDIR}"/lib 2>/dev/null
+		cp -na "$ROOT"/lib/firmware "${BDIR}"/lib
+	fi
 	if use pnp || use compressed; then
 		p="${p} --all-ramdisk-modules"
 		[[ -e "${BDIR}/lib/firmware" ]] && p="${p} --firmware --firmware-dir=\"${BDIR}/lib/firmware\""
