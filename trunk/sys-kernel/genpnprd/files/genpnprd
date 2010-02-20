@@ -37,7 +37,7 @@ preserve_start(){
 		cp "${m#*/lib/modules/$KV}" "$tmp/preserve/lib/modules/$KV/" --parents
 		$PNPONLY || ( [[ -e "$mm/modules.dep" ]] && grep "^$m:" $mm/modules.dep >>$tmp/preserve/lib/modules/${KV}/modules.dep )
 	done
-	$PNPONLY || ${UROOT}/usr/share/genpnprd/mod2sh.pl $tmp/preserve/lib/modules/${KV}
+	$PNPONLY || /usr/bin/perl ${UROOT}/usr/share/genpnprd/mod2sh.pl $tmp/preserve/lib/modules/${KV}
 	cd $rcdir
 }
 
@@ -68,7 +68,7 @@ else
 	die "must be [gzipped] cpio file"
 fi
 
-mkdir lib/root
+mkdir lib/root || die
 if [[ -n "$3" ]]; then
 	cp "$3" lib/root -aT
 	for i in lib lib32 lib64; do
@@ -99,11 +99,18 @@ cp $DATA/modprobe.sh $rcdir/etc
 patch -p1 -std $rcdir <$DATA/linuxrc.patch
 rm $rcdir/init.{rej,orig} -f &>/dev/null
 
-# Symlinking busybox clones
-for i in $rcdir/bin/* ; do
+# Symlinking busybox clones and moving other /bin/* to archive
+for i in bin/* ; do
 	[[ -e "$i" ]] || continue
 	[[ "${i%/busybox}" == "$i" ]] || continue
-	cmp "$rcdir/bin/busybox" "$i" && ln -sf busybox "$i"
+	[[ -L "$i" ]] && continue
+	[[ -f "$i" ]] || continue
+	if cmp "bin/busybox" "$i"; then
+		ln -sf busybox "$i"
+		continue
+	fi
+	[[ -e "lib/root/$i" ]] || cp "$i" lib/root/ -a --parents || continue
+	rm "$i"
 done
 
 rm "$rcdir/lib.loopfs"
