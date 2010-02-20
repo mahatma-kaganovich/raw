@@ -1,5 +1,5 @@
 #!/bin/sh
-## pnp modules bootloader v0.10
+## pnp modules bootloader v0.11
 ## (c) Denis Kaganovich, under Anarchy license
 ## consume preprocessed /lib/modules/$KV/modules.alias
 
@@ -18,7 +18,7 @@ mod(){
 		$CHK && {
 			single "$m" 0 || continue
 		}
-		alias2 "$m" || {
+		modalias "$m" || {
 			echo ">$m<" >>"${PNP_TMP}".4
 			continue
 		}
@@ -125,7 +125,7 @@ load_aliases(){
 	local i m
 	while  count ; do
 		if $FAST ; then
-			# "sort -u" (vs. "cat") breaks bus order, but speedup boot
+			# "sort -u" breaks bus order, but speedup boot
 			mod $MDOLIST `sort -u $(find /sys -name modalias -print 2>/dev/null) </dev/null 2>/dev/null'`
 		else
 		for i in `find /sys -name modalias -print 2>/dev/null` ; do
@@ -142,6 +142,7 @@ load_aliases(){
 }
 
 mod_unload(){
+	cd /
 	if ! [[ -e ${NEW_ROOT}/lib/modules/$KV ]] ; then
 		if ${cmd_autoinstall:-false} ; then
 			echo -ne "(Installing /lib/modules/$KV)"
@@ -176,7 +177,7 @@ pnp_options(){
 	cmd_nofb=false
 	cmd_nopnp=false
 	cmd_unload=false
-	local i
+	local i v
 	local p="*)PARAM='';;"
 	while [[ -n "$*" ]] ; do
 	i="$1"
@@ -189,8 +190,14 @@ pnp_options(){
 		i="${i#*=}"
 		p="*/${i%%:*}.ko)PARAM=\"${i#*:}\";;$p"
 	;;
-	*=*) export cmd_`echo "${i%%=*}"|sed -e 's:-:_:g'`="${i#*=}" ;;
-	*) export cmd_`echo "$i"|sed -e 's:-:_:g'`=true ;;
+	*=*)	v="${i%%=*}"
+		case "$v" in
+		*.*) p="*/${i%%.*}.ko)PARAM=\"${i#*.}\";;$p" ;;
+		*) export cmd_`echo "$v"|sed -e 's:[^a-zA-Z0-9_]:_:g'`="${i#*=}" ;;
+		esac
+	;;
+	*.*) p="*/${i%%.*}.ko)PARAM=\"${i#*.}\";;$p" ;;
+	*) export cmd_`echo "$i"|sed -e 's:[^a-zA-Z0-9_]:_:g'`=true ;;
 	esac
 	done
 	[[ -n "$cmd_noload" ]] && p="*/$(echo "$cmd_noload"|sed -e 's/,/.ko|*\//g').ko)insmod=false;return 1;;$p"
@@ -237,28 +244,21 @@ pnp_init(){
 		mount /lib.loopfs /lib -o loop
 		link_dir /lib/root
 	fi
+
+	[[ -e /lib/modules/$KV/modules.dep ]] && return
+	# pnponly
+	rm /sbin/modprobe
+	. /etc/modprobe.sh
+	override_modprobe
 }
 
 override_modprobe(){
 local f="/sbin/modprobe"
 [[ -e $f ]] && ! grep -q "bug #197730" $f && return
 echo '#!/bin/sh
-KV=`uname -r`
-cd /lib/modules/$KV
-. /etc/modparam.sh
-. ./modules.alias.sh
-while [[ "${1#-}" != "$1" ]] ; do
-	shift
-done
-m="$1"
-shift
-r=1
-alias2 "$(echo -ne "$m" | sed -e s/-/_/g)" && for i in $ALIAS ; do
-	modparam $i
-	$insmod $i $PARAM $*
-	r=$?
-done
-exit $r' >$f
+. /etc/modprobe.sh
+modprobe $*
+exit $?' >$f
 chmod 755 $f
 echo "$f" >/proc/sys/kernel/modprobe
 }
@@ -312,16 +312,16 @@ syspnp(){
 	$cmd_nopnp && return
 	local PNP_TMP="${TMPDIR}/pnp.found" NOTLOADED="" CHK=true i i1 i2 gov="" freq="" pid="" pids="" LCOUNT="" REORDER=break
 
-	. /etc/modparam.sh
-	cd "/lib/modules/${KV}"
 	good_msg "Searching pnp"
+	if [[ -e /lib/modules/$KV/modules.dep ]]; then
+		# else - pnponly/init
+		. /etc/modprobe.sh
+		override_modprobe
+	fi
 	for i in 0 1 2 3 4 ; do
 		echo -ne "" >"${PNP_TMP}.$i"
 	done
 	refresh n
-	override_modprobe
-	
-	. ./modules.alias.sh
 
 	if ! $FAST ; then
 		if [[ -n "$MDOLIST" ]]; then
@@ -396,7 +396,7 @@ syspnp(){
 		MDOLIST="$NOTLOADED"
 	fi
 	rm "${PNP_TMP}".?
-	cd /
+#	cd /
 }
 
-[[ "$1" == "init" ]] && syspnp $* # debug
+#[[ "$1" == "init" ]] && syspnp $* # debug

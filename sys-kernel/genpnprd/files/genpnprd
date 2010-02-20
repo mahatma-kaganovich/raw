@@ -95,6 +95,7 @@ cd $rcdir || die
 PNPONLY=false
 [[ "$2" == "pnponly" ]] && PNPONLY=true && rm $rcdir/lib/modules/*/modules.{alias,dep,symbols,*.bin,*map,order,builtin} $rcdir/sbin/modprobe
 cp $DATA/syspnp $rcdir/etc
+cp $DATA/modprobe.sh $rcdir/etc
 patch -p1 -std $rcdir <$DATA/linuxrc.patch
 rm $rcdir/init.{rej,orig} -f &>/dev/null
 
