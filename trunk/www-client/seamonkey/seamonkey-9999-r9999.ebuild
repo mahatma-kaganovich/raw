@@ -167,6 +167,8 @@ src_prepare(){
 	ebegin "Other misc. patches"
 	## gentoo install dirs
 	sed -i -e 's%-$.MOZ_APP_VERSION.$%%g' "${S}"/config/autoconf.mk.in
+	# search +minimal
+	sed -i -e 's:^\( *setHelpFileURI\):if (typeof(setHelpFileURI) != "undefined") \1:g' "${S}"/suite/mailnews/search/*.js
 
 	sed -i -e 's%^#elif$%#elif 1%g' "${S1}"/toolkit/xre/nsAppRunner.cpp
 	eend $? || die "sed failed"
@@ -269,6 +271,7 @@ src_configure(){
 	mozconfig_use_enable mobile mobile-optimize
 	mozconfig_use_enable !moznocalendar calendar
 	mozconfig_use_enable static
+	mozconfig_use_enable static static-mail
 #	mozconfig_use_enable static js-static-build
 	mozconfig_use_enable !static system-hunspell
 	if use threads ; then
