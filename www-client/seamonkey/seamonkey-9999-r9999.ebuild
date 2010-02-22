@@ -398,8 +398,8 @@ src_install() {
 	local LANG=""
 	local d
 	for l in $(langs); do
-		LANG=${LANG:=${l}}
-		for d in "${WORKDIR}/${MY_P}.${l}.langpack" "${WORKDIR}/enigmail-${l}-${EMVER}" ; do
+		: ${LANG:=${l}}
+		for d in "${WORKDIR}/${MY_P}-${l}" "${WORKDIR}/enigmail-${l}-${EMVER}" ; do
 			[[ -e "${d}" ]] && xpi_install "${d}"
 		done
 	done
