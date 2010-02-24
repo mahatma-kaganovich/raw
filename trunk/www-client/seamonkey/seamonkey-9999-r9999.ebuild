@@ -246,7 +246,7 @@ src_configure(){
 
 	# I don't know about sqlite bugs (runtime segfaults on x86_64 unknown source, testing),
 	# but internal sqlite are monolythic (must be faster)
-	mozconfig_use_enable sqlite system-sqlite
+	mozconfig_use_enable system-sqlite
 
 	mozconfig_annotate 'places' --enable-storage --enable-places --enable-places_bookmarks
 
