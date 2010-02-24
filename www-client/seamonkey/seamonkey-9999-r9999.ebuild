@@ -31,7 +31,7 @@ SLOT="0"
 LICENSE="|| ( MPL-1.1 GPL-2 LGPL-2.1 )"
 IUSE="java ldap mozdevelop moznocompose moznoirc moznomail moznoroaming postgres crypt restrict-javascript startup-notification
 	debug minimal directfb moznosystem +threads jssh wifi python mobile moznocalendar static
-	moznomemory accessibility sqlite vanilla xforms gio
+	moznomemory accessibility system-sqlite vanilla xforms gio +alsa
 	custom-cflags"
 #	qt-experimental"
 
@@ -42,12 +42,13 @@ RDEPEND="java? ( >=virtual/jre-1.4 )
 		>=dev-libs/nss-3.12.2
 		>=dev-libs/nspr-4.7.3
 		!static? ( >=app-text/hunspell-1.2 )
-		sqlite? ( >=dev-db/sqlite-3.6.7 )
+		system-sqlite? ( dev-db/sqlite[fts3,secure-delete] )
 		>=media-libs/lcms-1.17
 		app-arch/bzip2
 		x11-libs/cairo[X]
 		x11-libs/pango[X]
 	)
+	alsa? ( media-libs/alsa-lib )
 	directfb? ( dev-libs/DirectFB )
 	gnome? ( !gio? ( >=gnome-base/gnome-vfs-2.3.5 )
 		>=gnome-base/libgnomeui-2.2.0 )
@@ -72,7 +73,6 @@ ll="${MOZVER}"
 if [[ -n "${hg}" ]]; then
 	LANGS=""
 	IUSE="${IUSE// vanilla/ +vanilla} faststart"
-	IUSE="${IUSE// python}"
 	SRC_URI=""
 	if [[ "${PVR}" == *-r9999* ]]; then
 		S="${WORKDIR}/comm-central"
@@ -168,7 +168,7 @@ src_prepare(){
 	## gentoo install dirs
 	sed -i -e 's%-$.MOZ_APP_VERSION.$%%g' "${S}"/config/autoconf.mk.in
 	# search +minimal
-	sed -i -e 's:^\( *setHelpFileURI\):if (typeof(setHelpFileURI) != "undefined") \1:g' "${S}"/suite/mailnews/search/*.js
+#	sed -i -e 's:^\( *setHelpFileURI\):if (typeof(setHelpFileURI) != "undefined") \1:g' "${S}"/suite/mailnews/search/*.js
 
 	sed -i -e 's%^#elif$%#elif 1%g' "${S1}"/toolkit/xre/nsAppRunner.cpp
 	eend $? || die "sed failed"
@@ -284,6 +284,8 @@ src_configure(){
 	# ignored in 2.0
 	mozconfig_use_enable gio
 	mozconfig_use_enable faststart
+	mozconfig_use_enable alsa ogg
+	mozconfig_use_enable alsa wave
 
 	if use moznoirc; then
 		mozconfig_annotate '+moznocompose +moznoirc' --enable-extensions=-irc
@@ -502,6 +504,7 @@ src_unpack() {
 	_hg xforms "${S1}"/extensions/xforms xforms
 	_hg schema-validation "${S1}"/extensions/schema-validation xforms
 	_hg venkman "${S1}"/extensions/venkman mozdevelop
+	_hg pyxpcom "${S1}"/extensions/python python
 	use !moznomail && use crypt && _cvs enigmail/src "${S}"/mailnews/extensions/enigmail crypt
 	use !moznoirc && _cvs_m "mozilla/extensions/irc" "${S1}/extensions/irc"
 	ECVS_BRANCH="LDAPCSDK_6_0_6_RTM" _cvs_m mozilla/directory/c-sdk "${S}/directory/c-sdk" ldap
@@ -535,6 +538,7 @@ _hg(){
 
 	[[ -n "$3" ]] && use !"$3" && return
 	EHG_PROJECT="mozilla" mercurial_fetch "http://hg.mozilla.org/$1" "${m}"
+	rm "${WORKDIR}/${m}/.hg" -Rf
 	[[ -z "$2" ]] && return
 	[[ -e "$2" ]] && rm "$2" -Rf
 	mv "${WORKDIR}/${m}" "$2"
