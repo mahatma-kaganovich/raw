@@ -168,7 +168,14 @@ src_prepare(){
 	## gentoo install dirs
 	sed -i -e 's%-$.MOZ_APP_VERSION.$%%g' "${S}"/config/autoconf.mk.in
 	# search +minimal
-#	sed -i -e 's:^\( *setHelpFileURI\):if (typeof(setHelpFileURI) != "undefined") \1:g' "${S}"/suite/mailnews/search/*.js
+	sed -i -e 's:^\( *setHelpFileURI\):if (typeof(setHelpFileURI) != "undefined") \1:g' "${S}"/suite/mailnews/search/*.js
+
+	if use python; then
+		sed -i -e 's:^DEPTH[	 ]*=[	 ]*\.$:DEPTH= ../..:g' "${S1}"/extensions/python/Makefile.in
+		sed -i -e 's:^DEPTH[	 ]*=[	 ]*\.\.$:DEPTH=../../..:g' "${S1}"/extensions/python/*/Makefile.in
+		sed -i -e 's:^DEPTH[	 ]*=[	 ]*\.\./\.\.$:DEPTH=../../../..:g' "${S1}"/extensions/python/*/*/Makefile.in
+		sed -i -e 's:^DEPTH[	 ]*=[	 ]*\.\./\.\./\.\.$:DEPTH=../../../../..:g' "${S1}"/extensions/python/*/*/*/Makefile.in
+	fi
 
 	sed -i -e 's%^#elif$%#elif 1%g' "${S1}"/toolkit/xre/nsAppRunner.cpp
 	eend $? || die "sed failed"
@@ -257,7 +264,12 @@ src_configure(){
 	# Other moz-specific settings
 	mozconfig_use_enable mozdevelop jsd
 	mozconfig_use_enable mozdevelop xpctools
-	mozconfig_use_extension python python/xpcom
+	if [[ -z "${hg}" ]] || [[ "${PVR}" == *r1 ]]; then
+		mozconfig_use_extension python python/xpcom
+	else
+		# XULRunner>=1.9.2
+		mozconfig_use_extension python python
+	fi
 	mozconfig_use_enable java javaxpcom
 	mozconfig_use_extension jssh jssh
 #	mozconfig_use_extension widgetutils widgetutils
@@ -505,8 +517,9 @@ src_unpack() {
 	_hg schema-validation "${S1}"/extensions/schema-validation xforms
 	_hg venkman "${S1}"/extensions/venkman mozdevelop
 	_hg pyxpcom "${S1}"/extensions/python python
+	use !moznoirc && _hg chatzilla "${S1}"/extensions/irc
 	use !moznomail && use crypt && _cvs enigmail/src "${S}"/mailnews/extensions/enigmail crypt
-	use !moznoirc && _cvs_m "mozilla/extensions/irc" "${S1}/extensions/irc"
+	#use !moznoirc && _cvs_m "mozilla/extensions/irc" "${S1}/extensions/irc"
 	ECVS_BRANCH="LDAPCSDK_6_0_6_RTM" _cvs_m mozilla/directory/c-sdk "${S}/directory/c-sdk" ldap
 	local l
 	mkdir "${WORKDIR}/l10n"
