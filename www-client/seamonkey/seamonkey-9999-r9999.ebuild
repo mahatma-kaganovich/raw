@@ -180,7 +180,7 @@ src_prepare(){
 	sed -i -e 's%^#elif$%#elif 1%g' "${S1}"/toolkit/xre/nsAppRunner.cpp
 	eend $? || die "sed failed"
 
-	for i in "${S1}/js/src" "${S1}" "${S}" "${S1}"/extensions/python ; do
+	for i in "${S1}/js/src" "${S1}" "${S}" ; do
 		cd "${i}" && eautoreconf
 	done
 }
@@ -288,7 +288,7 @@ src_configure(){
 	mozconfig_use_enable !moznocalendar calendar
 	mozconfig_use_enable static
 	mozconfig_use_enable static static-mail
-#	mozconfig_use_enable static js-static-build
+	mozconfig_use_enable static js-static-build
 	mozconfig_use_enable !static system-hunspell
 	if use threads ; then
 		mozconfig_use_enable !moznomemory jemalloc
