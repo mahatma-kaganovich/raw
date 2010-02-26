@@ -180,14 +180,22 @@ src_prepare(){
 	sed -i -e 's%^#elif$%#elif 1%g' "${S1}"/toolkit/xre/nsAppRunner.cpp
 	eend $? || die "sed failed"
 
-	for i in "${S1}/js/src" "${S1}" "${S}" ; do
-		cd "${i}"
-		eautoreconf
+	for i in "${S1}/js/src" "${S1}" "${S}" "${S1}"/extensions/python ; do
+		cd "${i}" && eautoreconf
 	done
 }
 
 src_configure(){
 	declare MOZILLA_FIVE_HOME="/usr/$(get_libdir)/${PN}"
+
+	if use python; then
+		python_version
+		export MOZ_PYTHON_EXTENSIONS="dom xpcom"
+		export MOZ_PYTHON_VER_DOTTED="${PYVER}"
+		export MOZ_PYTHON_INCLUDES="-I/usr/include/python${PYVER}"
+		export MOZ_PYTHON_LIBDIR="/$(get_libdir)/python${PYVER}"
+		export MOZ_PYTHON_LIBS="-L${MOZ_PYTHON_LIBDIR} -lpython${PYVER}"
+	fi
 
 	local o3=false
 	setup-allowed-flags
@@ -264,12 +272,8 @@ src_configure(){
 	# Other moz-specific settings
 	mozconfig_use_enable mozdevelop jsd
 	mozconfig_use_enable mozdevelop xpctools
-	if [[ -z "${hg}" ]] || [[ "${PVR}" == *r1 ]]; then
-		mozconfig_use_extension python python/xpcom
-	else
-		# XULRunner>=1.9.2
-		mozconfig_use_extension python python
-	fi
+	mozconfig_use_extension python python/xpcom
+#	mozconfig_use_extension python python
 	mozconfig_use_enable java javaxpcom
 	mozconfig_use_extension jssh jssh
 #	mozconfig_use_extension widgetutils widgetutils
