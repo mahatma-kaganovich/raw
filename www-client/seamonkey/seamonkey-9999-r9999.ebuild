@@ -288,7 +288,7 @@ src_configure(){
 	mozconfig_use_enable !moznocalendar calendar
 	mozconfig_use_enable static
 	mozconfig_use_enable static static-mail
-	mozconfig_use_enable static js-static-build
+	[[ "${PVR}" == *9999 ]] && mozconfig_use_enable static js-static-build
 	mozconfig_use_enable !static system-hunspell
 	if use threads ; then
 		mozconfig_use_enable !moznomemory jemalloc
