@@ -11,16 +11,20 @@ inherit ${hg} flag-o-matic toolchain-funcs eutils mozcoreconf-2 mozconfig-3 make
 MY_PV="${PV/_rc/rc}"
 MY_P="${PN}-${MY_PV}"
 EMVER="1.0.1"
-PATCH="${PN}-2.0.3-patches-0.1"
+PATCH="http://dev.gentoo.org/~polynomial-c/${PN}-2.0.3-patches-0.1.tar.bz2"
 MOZVER="1.9.1"
 
 # empty: from hg
 LANGS="en be ca cs de es_AR es_ES fr gl hu it ja ka lt nb_NO nl pl pt_PT ru sk sv_SE tr"
 
+IUSE="java mozdevelop moznoirc moznoroaming postgres restrict-javascript startup-notification
+	debug minimal directfb moznosystem +threads jssh wifi python mobile static
+	moznomemory accessibility system-sqlite vanilla xforms gio +alsa
+	custom-cflags system-xulrunner"
+#	qt-experimental"
+
 #RESTRICT="nomirror"
 
-DESCRIPTION="Mozilla Application Suite - web browser, email, HTML editor, IRC"
-HOMEPAGE="http://www.seamonkey-project.org/"
 SRC_URI="http://releases.mozilla.org/pub/mozilla.org/${PN}/releases/${MY_PV}/source/${MY_P}.source.tar.bz2
 	crypt? ( !moznomail? ( http://dev.gentoo.org/~anarchy/dist/enigmail-${EMVER}.tar.gz ) )
 	xforms? ( http://hg.mozilla.org/schema-validation/archive/710191b42011.tar.bz2 -> schema-validation-710191b42011.tar.bz2
@@ -29,11 +33,6 @@ SRC_URI="http://releases.mozilla.org/pub/mozilla.org/${PN}/releases/${MY_PV}/sou
 KEYWORDS="amd64 x86"
 SLOT="0"
 LICENSE="|| ( MPL-1.1 GPL-2 LGPL-2.1 )"
-IUSE="java ldap mozdevelop moznocompose moznoirc moznomail moznoroaming postgres crypt restrict-javascript startup-notification
-	debug minimal directfb moznosystem +threads jssh wifi python mobile moznocalendar static
-	moznomemory accessibility system-sqlite vanilla xforms gio +alsa
-	custom-cflags"
-#	qt-experimental"
 
 RDEPEND="java? ( >=virtual/jre-1.4 )
 	python? ( >=dev-lang/python-2.3 )
@@ -48,6 +47,7 @@ RDEPEND="java? ( >=virtual/jre-1.4 )
 		x11-libs/cairo[X]
 		x11-libs/pango[X]
 	)
+	system-xulrunner? ( net-libs/xulrunner )
 	alsa? ( media-libs/alsa-lib )
 	directfb? ( dev-libs/DirectFB )
 	gnome? ( !gio? ( >=gnome-base/gnome-vfs-2.3.5 )
@@ -67,7 +67,6 @@ DEPEND="java? ( >=virtual/jdk-1.4 )
 	dev-util/pkgconfig
 	postgres? ( >=virtual/postgresql-server-7.2.0 )"
 
-S="${WORKDIR}/comm-${MOZVER}"
 
 ll="${MOZVER}"
 if [[ -n "${hg}" ]]; then
@@ -97,17 +96,41 @@ for l in ${LANGS}; do
 	IUSE="${IUSE} linguas_${l}"
 done
 
-#[[ -n "${PATCH}" ]] && SRC_URI="${SRC_URI}  !vanilla? ( mirror://gentoo/${PATCH}.tar.bz2 )"
-#[[ -n "${PATCH}" ]] && SRC_URI="${SRC_URI}  !vanilla? ( http://dev.gentoo.org/~anarchy/dist/${PATCH}.tar.bz2 )"
-[[ -n "${PATCH}" ]] && SRC_URI="${SRC_URI}  !vanilla? ( http://dev.gentoo.org/~polynomial-c/${PATCH}.tar.bz2 )"
+case "${PN}" in
+*seamonkey*)
+	DESCRIPTION="Mozilla Application Suite - web browser, email, HTML editor, IRC"
+	HOMEPAGE="http://www.seamonkey-project.org/"
+	export MOZ_CO_PROJECT=suite
+	IUSE="${IUSE} ldap moznocompose moznomail crypt moznocalendar"
+	S="${WORKDIR}/comm-${MOZVER}"
+	S1="${S}/mozilla"
+;;
+*firefox*|*bonecho*|*shiretoko*)
+	PATCH=""
+	DESCRIPTION="Firefox Web Browser"
+	HOMEPAGE="http://www.mozilla.com/firefox"
+	export MOZ_CO_PROJECT=browser
+	S="${S/comm-/mozilla-}"
+	S1="${S}"
+;;
+*fennec*)
+	PATCH=""
+	DESCRIPTION="Fennec Web Browser"
+	HOMEPAGE="http://www.mozilla.org/projects/fennec/"
+	export MOZ_CO_PROJECT="xulrunner mobile"
+	S="${S/comm-/mozilla-}"
+	S1="${S}"
+;;
+*)
+	die
+;;
+esac
 
-S1="${S}/mozilla"
-
+[[ -n "${PATCH}" ]] && SRC_URI="${SRC_URI}  !vanilla? ( ${PATCH} )"
 
 # Needed by src_compile() and src_install().
 # Would do in pkg_setup but that loses the export attribute, they
 # become pure shell variables.
-export MOZ_CO_PROJECT=suite
 export BUILD_OFFICIAL=1
 export MOZILLA_OFFICIAL=1
 export PERL="/usr/bin/perl"
@@ -228,7 +251,7 @@ src_configure(){
 			die "Cairo needs directfb"
 		fi
 	elif built_with_use x11-libs/cairo directfb; then
-		ewarn "Cairo built with 'directfb' useflag, but seamonkey with '-directfb':"
+		ewarn "Cairo built with 'directfb' useflag, but $pn with '-directfb':"
 		ewarn "using built-in Cairo instead..."
 		rmopt -system-cairo
 		mozconfig_annotate "-directfb, cairo ${x1}DirectFB surface" --disable-system-cairo
@@ -300,6 +323,7 @@ src_configure(){
 	# ignored in 2.0
 	mozconfig_use_enable gio
 	mozconfig_use_enable faststart
+
 	mozconfig_use_enable alsa ogg
 	mozconfig_use_enable alsa wave
 
@@ -336,7 +360,7 @@ src_configure(){
 #			--with-embedding-profile=minimal
 		mozconfig_annotate +minimal \
 			--disable-postscript \
-			--disable-help-viewer \
+			$(SM && echo "--disable-help-viewer") \
 			--disable-safe-browsing \
 			--disable-url-classifier \
 			--enable-necko-small-buffers \
@@ -344,7 +368,7 @@ src_configure(){
 	else
 		mozconfig_annotate -minimal \
 			--enable-postscript \
-			--enable-help-viewer \
+			$(SM && echo "--enable-help-viewer") \
 			--enable-safe-browsing \
 			--enable-url-classifier \
 			--disable-necko-small-buffers \
@@ -366,6 +390,8 @@ src_configure(){
 	# required for sse prior to gcc 4.4.3, may be faster in other cases
 	[[ "${ARCH}" == "x86" ]] && append-flags -mstackrealign
 
+	! SM && use directfb && sed -i -e 's%--enable-default-toolkit=cairo-gtk2%--enable-default-toolkit=cairo-gtk2-dfb%g' "${S}"/.mozconfig
+
 	if use qt-experimental ; then
 		sed -i -e 's%--enable-default-toolkit=cairo-gtk2%--enable-default-toolkit=cairo-qt%g' "${S}"/.mozconfig
 		rmopt -system-cairo
@@ -376,6 +402,36 @@ src_configure(){
 	    einfo "USE 'moznosystem' flag - disabling usage system libs" &&
 	    sed -i -e 's/--enable-system-/--disable-system-/g' -e 's/--with-system-/--without-system-/g' "${S}"/.mozconfig
 
+	use system-xulrunner && mozconfig_annotate system-xulrunner --with-system-libxul --with-libxul-sdk=/usr/$(get_libdir)/xulrunner-devel-"`pkg-config libxul --modversion`"
+
+	echo "" >>"${S}"/.mozconfig
+
+	case "${PN}" in
+	*firefox*)
+		mozconfig_annotate '' --enable-official-branding
+		einfo
+		elog "You may not redistribute this build to any users on your network"
+		elog "or the internet. Doing so puts yourself into"
+		elog "a legal problem with Mozilla Foundation"
+	;;
+	*fennec*)
+		if use system-xulrunner; then
+		echo "mk_add_options MOZ_BUILD_PROJECTS=\"mobile\"
+mk_add_options MOZ_OBJDIR=@TOPSRCDIR@/../base
+ac_add_app_options mobile --enable-application=mobile
+">>"${S}"/.mozconfig
+		else
+		echo "mk_add_options MOZ_BUILD_PROJECTS=\"xulrunner mobile\"
+mk_add_options MOZ_OBJDIR=@TOPSRCDIR@/../base
+ac_add_app_options xulrunner --enable-application=xulrunner
+ac_add_app_options xulrunner --disable-javaxpcom
+ac_add_app_options mobile --enable-application=mobile
+ac_add_app_options mobile --with-libxul-sdk=../xulrunner/dist
+">>"${S}"/.mozconfig
+		fi
+	;;
+	esac
+
 	# Finalize and report settings
 	mozconfig_final
 
@@ -383,11 +439,12 @@ src_configure(){
 		append-cxxflags -fno-stack-protector
 	fi
 
-	CC="$(tc-getCC)" CXX="$(tc-getCXX)" LD="$(tc-getLD)" \
-	econf || die
-#	emake -f client.mk configure CC="$(tc-getCC)" CXX="$(tc-getCXX)" LD="$(tc-getLD)" || die
+	if [[ "${MOZ_CO_PROJECT// }" == "${MOZ_CO_PROJECT}" ]]; then
+		CC="$(tc-getCC)" CXX="$(tc-getCXX)" LD="$(tc-getLD)" \
+		econf || die
+	fi
 
-	if use directfb && use vanilla; then
+	if ! SM && use directfb && use vanilla; then
 		local dl=`pkg-config directfb --libs`
 #		local dl="-ldirectfb -ldirect"
 		sed -i -e 's%\(^MOZ_DFB.*\)%\1 1%' \
@@ -403,8 +460,12 @@ src_configure(){
 
 src_compile() {
 	# sometimes parallel build breaks
-	emake || emake -j1 || die
-	if use crypt && ! use moznomail; then
+	if [[ "${MOZ_CO_PROJECT// }" == "${MOZ_CO_PROJECT}" ]]; then
+		emake || emake -j1 || die
+	else
+		emake -f client.mk build || die
+	fi
+	if [[ -e "${S}"/mailnews/extensions/enigmail ]]; then
 		emake -C "${S}"/mailnews/extensions/enigmail || die
 	fi
 }
@@ -425,14 +486,18 @@ src_install() {
 		done
 	done
 
+	local pref="pref"
+	use system-xulrunner && pref="preferences"
+
 	# Most of the installation happens here
 	dodir "${MOZILLA_FIVE_HOME}"
-	cp -RL "${S1}"/dist/bin/* "${D}"/"${MOZILLA_FIVE_HOME}"/ || die "cp failed"
+	cp -RL "${S1}"/dist/bin/* "${D}"/"${MOZILLA_FIVE_HOME}"/ ||
+	    cp -RL "${WORKDIR}"/base/*/dist/bin/* "${D}"/"${MOZILLA_FIVE_HOME}"/ || die "cp failed"
 
 	if [[ -n ${LANG} && ${LANG} != "en-US" ]]; then
 		elog "Setting default locale to ${LANG}"
-		dosed -e "s:\"en-US\":\"${LANG}\":g" \
-			"${MOZILLA_FIVE_HOME}"/defaults/pref/suite-l10n.js ||
+		sed -i -e "s:\"en-US\":\"${LANG}\":g" \
+			"${D}${MOZILLA_FIVE_HOME}"/defaults/${pref}/*-l10n.js ||
 			die "sed failed to change locale"
 	fi
 
@@ -443,37 +508,75 @@ src_install() {
 	cp "${D}"${MOZILLA_FIVE_HOME}/chrome/installed-chrome.txt \
 		"${D}"${MOZILLA_FIVE_HOME}/chrome.d/0_base-chrome.txt
 
+	local Title="${PN}"
+	local Comment="Web Browser"
+	local R="${PN}"
+
 	# Install icon and .desktop for menu entry
-	newicon "${S}"/suite/branding/content/icon64.png seamonkey.png
-	domenu "${FILESDIR}"/icon/${PN}.desktop
+	case "${PN}" in
+	*seamonkey*)
+		newicon "${S}"/suite/branding/content/icon64.png "${PN}"-icon.png
+		Title="SeaMonkey"
+	;;
+	*firefox*)
+		newicon "${S}"/other-licenses/branding/firefox/content/icon48.png "${PN}"-icon.png
+		Title="Mozilla Firefox"
+		R="firefox"
+	;;
+	*bonecho*|*shiretoko*)
+		newicon "${S}"/browser/base/branding/icon48.png "${PN}"-icon.png
+		Title="Shiretoko"
+	;;
+	*fennec*)
+		newicon "${S}"/mobile/branding/nightly/content/fennec_scalable.png "${PN}"-icon.png
+		Title="Fennec"
+	;;
+	esac
+	echo "[Desktop Entry]
+Name=${Title}
+Comment=${Comment}
+Exec=/usr/bin/${PN}-X %U
+Icon=${PN}-icon
+Terminal=false
+Type=Application
+MimeType=text/html;text/xml;application/xhtml+xml;application/vnd.mozilla.xul+xml;text/mml;
+Categories=Network;WebBrowser;">"${WORKDIR}/${PN}.desktop"
+	domenu "${WORKDIR}/${PN}.desktop"
 
-	# Create /usr/bin/seamonkey
-	make_wrapper seamonkey "${MOZILLA_FIVE_HOME}/seamonkey"
+	# Create /usr/bin/${PN}
+	make_wrapper ${R} "${MOZILLA_FIVE_HOME}/${R}"
 
-	# prevent to stalled terminal outputs
+	echo '#!/bin/sh
+# prevent to stalled terminal outputs (seamonkey, etc)
+exec /usr/bin/'"${PN}"' "$@" &>/dev/null' >"${WORKDIR}/${PN}-X"
 	exeinto /usr/bin
-	doexe "${FILESDIR}"/seamonkey-X
+	doexe "${WORKDIR}/${R}-X"
 
 	# Add vendor
-	echo "pref(\"general.useragent.vendor\",\"Gentoo\");" >> "${D}"${MOZILLA_FIVE_HOME}/defaults/pref/vendor.js
+	echo "pref(\"general.useragent.vendor\",\"Gentoo\");" >> "${D}"${MOZILLA_FIVE_HOME}/defaults/${pref}/vendor.js
 
 	# Install rebuild script since mozilla-bin doesn't support registration yet
-	exeinto ${MOZILLA_FIVE_HOME}
-	doexe "${FILESDIR}"/${PN}-rebuild-databases.pl
-	dosed -e 's|/lib/|/'"$(get_libdir)"'/|g' \
-		${MOZILLA_FIVE_HOME}/${PN}-rebuild-databases.pl
+#	exeinto ${MOZILLA_FIVE_HOME}
+#	doexe "${FILESDIR}"/${PN}-rebuild-databases.pl
+#	dosed -e 's|/lib/|/'"$(get_libdir)"'/|g' \
+#		${MOZILLA_FIVE_HOME}/${PN}-rebuild-databases.pl
 
 	# Install docs
 	dodoc "${S1}"/{LEGAL,LICENSE}
 
+	if ! SM; then
+		local i
+		for i in "${D}${MOZILLA_FIVE_HOME}"/plugins/*; do
+			rename "${i##*/}" "${PN}-${i##*/}" "${i}"
+		done
+	fi
 	dodir /usr/$(get_libdir)/nsbrowser
 	mv "${D}"/usr/$(get_libdir)/{$PN,nsbrowser}/plugins
-	dosym ../nsbrowser/plugins /usr/$(get_libdir)/$PN/plugins
+	dosym ../nsbrowser/plugins "${MOZILLA_FIVE_HOME}"/plugins
 
 	# Add StartupNotify=true bug 237317
 	use startup-notification &&
 		echo "StartupNotify=true" >> "${D}"/usr/share/applications/${PN}-${DESKTOP_PV}.desktop
-
 }
 
 pkg_preinst() {
@@ -481,7 +584,7 @@ pkg_preinst() {
 
 	# Remove entire installed instance to solve various problems,
 	# for example see bug 27719
-	rm -rf "${ROOT}"${MOZILLA_FIVE_HOME}
+#	rm -rf "${ROOT}"${MOZILLA_FIVE_HOME}
 }
 
 pkg_postinst() {
@@ -503,6 +606,11 @@ langs(){
 	done
 }
 
+SM(){
+	[[ "${PN}" == *seamonkey* ]]
+	return $?
+}
+
 ##########################################################################################
 if [[ -n "${hg}" ]]; then
 
@@ -510,21 +618,21 @@ src_unpack() {
 	use static && use jssh && die 'Useflags "static" & "jssh" incompatible'
 	local hg_mod=""
 	if [[ "${PVR}" == *-r9999* ]]; then
-		_hg comm-central
+		[[ "${S}" != "${S1}" ]] && _hg "${S##*/}"
 		_hg mozilla-central "${S1}"
 	else
-		_hg releases/comm-${MOZVER}
+		[[ "${S}" != "${S1}" ]] &&  _hg releases/"${S##*/}"
 		_hg releases/mozilla-1.9.${PVR##*r} "${S1}"
 	fi
+	[[ "${PN}" == *fennec* ]] && _hg mobile-browser "${S}"/mobile
 	_hg dom-inspector "${S1}"/extensions/inspector
 	_hg xforms "${S1}"/extensions/xforms xforms
 	_hg schema-validation "${S1}"/extensions/schema-validation xforms
 	_hg venkman "${S1}"/extensions/venkman mozdevelop
 	_hg pyxpcom "${S1}"/extensions/python python
-	use !moznoirc && _hg chatzilla "${S1}"/extensions/irc
-	use !moznomail && use crypt && _cvs enigmail/src "${S}"/mailnews/extensions/enigmail crypt
-	#use !moznoirc && _cvs_m "mozilla/extensions/irc" "${S1}/extensions/irc"
-	ECVS_BRANCH="LDAPCSDK_6_0_6_RTM" _cvs_m mozilla/directory/c-sdk "${S}/directory/c-sdk" ldap
+	_hg chatzilla "${S1}"/extensions/irc !moznoirc
+	SM && use !moznomail && use crypt && _cvs enigmail/src "${S}"/mailnews/extensions/enigmail crypt
+	SM && ECVS_BRANCH="LDAPCSDK_6_0_6_RTM" _cvs_m mozilla/directory/c-sdk "${S}/directory/c-sdk" ldap
 	local l
 	mkdir "${WORKDIR}/l10n"
 	for l in $(langs) ; do
@@ -553,10 +661,11 @@ _hg(){
 		die "Rename or delete old project repository: $msg"
 	fi
 
-	[[ -n "$3" ]] && use !"$3" && return
+	[[ -n "$3" ]] && ! use $3 && return
 	EHG_PROJECT="mozilla" mercurial_fetch "http://hg.mozilla.org/$1" "${m}"
 	rm "${WORKDIR}/${m}/.hg" -Rf
 	[[ -z "$2" ]] && return
+	[[ "`readlink -f $2`" == "${WORKDIR}/${m}" ]] && return
 	[[ -e "$2" ]] && rm "$2" -Rf
 	mv "${WORKDIR}/${m}" "$2"
 }
@@ -566,23 +675,25 @@ _hg1(){
 }
 
 _cvs(){
-	[[ -n "$3" ]] && use !"$3" && return
+	[[ -n "$3" ]] && ! use $3 && return
 	ECVS_SERVER="mozdev.org:/cvs" \
 		ECVS_USER="guest" \
 		ECVS_PASS="guest" \
 		ECVS_MODULE="$1" \
 		cvs_src_unpack
 	[[ -z "$2" ]] && return
+	[[ "`readlink -f $2`" == "${WORKDIR}/$1" ]] && return
 	[[ -e "$2" ]] && rm "$2" -Rf
 	mv "${WORKDIR}/$1" "$2"
 }
 
 _cvs_m(){
-	[[ -n "$3" ]] && use !"$3" && return
+	[[ -n "$3" ]] && ! use $3 && return
 	ECVS_SERVER="cvs-mirror.mozilla.org:/cvsroot" \
 		ECVS_MODULE="$1" \
 		cvs_src_unpack
 	[[ -z "$2" ]] && return
+	[[ "`readlink -f $2`" == "${WORKDIR}/$1" ]] && return
 	[[ -e "$2" ]] && rm "$2" -Rf
 	mv "${WORKDIR}/$1" "$2"
 }
