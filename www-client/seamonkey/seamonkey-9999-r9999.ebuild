@@ -67,6 +67,7 @@ DEPEND="java? ( >=virtual/jdk-1.4 )
 	dev-util/pkgconfig
 	postgres? ( >=virtual/postgresql-server-7.2.0 )"
 
+S="${WORKDIR}/comm-${MOZVER}"
 
 ll="${MOZVER}"
 if [[ -n "${hg}" ]]; then
@@ -102,7 +103,6 @@ case "${PN}" in
 	HOMEPAGE="http://www.seamonkey-project.org/"
 	export MOZ_CO_PROJECT=suite
 	IUSE="${IUSE} ldap moznocompose moznomail crypt moznocalendar"
-	S="${WORKDIR}/comm-${MOZVER}"
 	S1="${S}/mozilla"
 ;;
 *firefox*|*bonecho*|*shiretoko*)
@@ -414,23 +414,25 @@ src_configure(){
 		elog "or the internet. Doing so puts yourself into"
 		elog "a legal problem with Mozilla Foundation"
 	;;
-	*fennec*)
-		if use system-xulrunner; then
-		echo "mk_add_options MOZ_BUILD_PROJECTS=\"mobile\"
-mk_add_options MOZ_OBJDIR=@TOPSRCDIR@/../base
-ac_add_app_options mobile --enable-application=mobile
-">>"${S}"/.mozconfig
-		else
-		echo "mk_add_options MOZ_BUILD_PROJECTS=\"xulrunner mobile\"
-mk_add_options MOZ_OBJDIR=@TOPSRCDIR@/../base
-ac_add_app_options xulrunner --enable-application=xulrunner
-ac_add_app_options xulrunner --disable-javaxpcom
-ac_add_app_options mobile --enable-application=mobile
-ac_add_app_options mobile --with-libxul-sdk=../xulrunner/dist
-">>"${S}"/.mozconfig
-		fi
-	;;
 	esac
+
+	# prepare to standard configure/make if single project or to "make -f client.mk" if multiple
+	local i a="$(apps)"
+	for i in ${MOZ_CO_PROJECT}; do
+		use system-${i} || a="${a} ${i}"
+	done
+	a="${a# }"
+	if [[ "${a// }" == "${a}" ]]; then
+		mozconfig_annotate '' --enable-application=${a}
+	else
+		echo "mk_add_options MOZ_BUILD_PROJECTS=\"${a}\"
+mk_add_options MOZ_OBJDIR=@TOPSRCDIR@/../base" >>"${S}"/.mozconfig
+		for i in ${a}; do
+			echo "ac_add_app_options ${i} --enable-application=${i}" >>"${S}"/.mozconfig
+			[[ "${a//xulrunner}" != "${a}" ]] && [[ "${i}" != "xulrunner" ]] &&
+				echo "ac_add_app_options ${i} --with-libxul-sdk=../xulrunner/dist"" ">>"${S}"/.mozconfig
+		done
+	fi
 
 	# Finalize and report settings
 	mozconfig_final
@@ -439,7 +441,7 @@ ac_add_app_options mobile --with-libxul-sdk=../xulrunner/dist
 		append-cxxflags -fno-stack-protector
 	fi
 
-	if [[ "${MOZ_CO_PROJECT// }" == "${MOZ_CO_PROJECT}" ]]; then
+	if ! grep -q "^mk_" "${S}"/.mozconfig; then
 		CC="$(tc-getCC)" CXX="$(tc-getCXX)" LD="$(tc-getLD)" \
 		econf || die
 	fi
@@ -460,13 +462,13 @@ ac_add_app_options mobile --with-libxul-sdk=../xulrunner/dist
 
 src_compile() {
 	# sometimes parallel build breaks
-	if [[ "${MOZ_CO_PROJECT// }" == "${MOZ_CO_PROJECT}" ]]; then
-		emake || emake -j1 || die
-	else
+	if grep -q "^mk_" "${S}"/.mozconfig; then
 		emake -f client.mk build || die
-	fi
-	if [[ -e "${S}"/mailnews/extensions/enigmail ]]; then
-		emake -C "${S}"/mailnews/extensions/enigmail || die
+	else
+		emake || emake -j1 || die
+		if [[ -e "${S}"/mailnews/extensions/enigmail ]]; then
+			emake -C "${S}"/mailnews/extensions/enigmail || die
+		fi
 	fi
 }
 
@@ -486,18 +488,16 @@ src_install() {
 		done
 	done
 
-	local pref="pref"
-	use system-xulrunner && pref="preferences"
-
 	# Most of the installation happens here
 	dodir "${MOZILLA_FIVE_HOME}"
 	cp -RL "${S1}"/dist/bin/* "${D}"/"${MOZILLA_FIVE_HOME}"/ ||
-	    cp -RL "${WORKDIR}"/base/*/dist/bin/* "${D}"/"${MOZILLA_FIVE_HOME}"/ || die "cp failed"
+	    cp -RL "${WORKDIR}"/base/${MOZ_CO_PROJECT##* }/dist/bin/* "${D}"/"${MOZILLA_FIVE_HOME}"/ ||
+	    die "cp failed"
 
 	if [[ -n ${LANG} && ${LANG} != "en-US" ]]; then
 		elog "Setting default locale to ${LANG}"
 		sed -i -e "s:\"en-US\":\"${LANG}\":g" \
-			"${D}${MOZILLA_FIVE_HOME}"/defaults/${pref}/*-l10n.js ||
+			"${D}${MOZILLA_FIVE_HOME}"/defaults/pref*/*-l10n.js ||
 			die "sed failed to change locale"
 	fi
 
@@ -553,7 +553,7 @@ exec /usr/bin/'"${PN}"' "$@" &>/dev/null' >"${WORKDIR}/${PN}-X"
 	doexe "${WORKDIR}/${R}-X"
 
 	# Add vendor
-	echo "pref(\"general.useragent.vendor\",\"Gentoo\");" >> "${D}"${MOZILLA_FIVE_HOME}/defaults/${pref}/vendor.js
+	echo "pref(\"general.useragent.vendor\",\"Gentoo\");" >> `echo "${D}"${MOZILLA_FIVE_HOME}/defaults/pref*/vendor.js`
 
 	# Install rebuild script since mozilla-bin doesn't support registration yet
 #	exeinto ${MOZILLA_FIVE_HOME}
