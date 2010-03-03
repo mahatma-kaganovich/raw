@@ -74,10 +74,25 @@ start() {
 	return $?
 }
 
+_umount(){
+	umount $* && return 0
+	einfo "Failed, remounting readonly & sleeping 1"
+	umount -r $* && {
+		sleep 1
+		umount $* && return 0
+		einfo "Alredy read-only, unmounting lazy & sleeping 3"
+		umount -l $*
+		sleep 2
+	}
+	sleep 1
+	umount $*
+	return $?
+}
+
 stop() {
 	local ret
 	ebegin "Unmounting OCFS2 filesystems"
-	umount -at ocfs2
+	_umount -at ocfs2
 	eend $?
 	ret=$?
 
