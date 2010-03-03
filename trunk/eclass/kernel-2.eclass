@@ -83,6 +83,12 @@ PROVIDE="sources? ( virtual/linux-sources )
 
 [[ -e "${CONFIG_ROOT}/etc/kernels/kernel.conf" ]] && source "${CONFIG_ROOT}/etc/kernels/kernel.conf"
 
+USEKEY="$(for i in ${!KERNEL_@} ; do
+	echo "${!i} , "
+done | md5sum)"
+IUSE="${IUSE} md5cfg:${USEKEY%% *}"
+
+
 fi
 
 #UROOT="${ROOT}"

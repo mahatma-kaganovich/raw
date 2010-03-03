@@ -1,16 +1,13 @@
 #!/bin/bash
 
-if [[ -z "$1" ]]; then
-	echo "Snapshotting for mozilla l10n (c) mahatma"
-	echo "Usage: $0 <version>"
-	echo "       $0 [1.9.1|1.9.2|central]"
-	exit
-fi
+ver="1.9.1 1.9.2 central"
 
+mozlang(){
 base="/releases/l10n-mozilla-$1/"
 [[ "$1" == "central" ]] && base="/l10n-central/"
 
 echo -n "" >$1.langs
+local i x
 for i in $(wget http://hg.mozilla.org$base -q -O - |grep -oP "\"$base.*?/\"" ) ; do
 	i=${i//\"}
 	i=${i#$base}
@@ -20,4 +17,16 @@ for i in $(wget http://hg.mozilla.org$base -q -O - |grep -oP "\"$base.*?/\"" ) ;
 	x=${x##*\"}
 	x="http://hg.mozilla.org$x"
 	[[ "${x%bz2}" != "${x}" ]] && echo "${i//-/_} $x" >>$1.langs
+done
+}
+
+if [[ -z "$*" ]]; then
+	echo "Snapshotting for mozilla l10n (c) mahatma"
+	echo "Usage: $0 <version>"
+	echo "       $0 {${ver// /|}|all}"
+	exit
+fi
+
+for i in ${@//all/${ver}}; do
+	mozlang $i
 done

@@ -8,14 +8,26 @@ inherit ${hg} flag-o-matic toolchain-funcs eutils mozcoreconf-2 mozconfig-3 make
 
 : ${FILESDIR:=${EBUILD%/*}/files}
 
-MY_PV="${PV/_rc/rc}"
-MY_P="${PN}-${MY_PV}"
-EMVER="1.0.1"
-PATCH="http://dev.gentoo.org/~polynomial-c/${PN}-2.0.3-patches-0.1.tar.bz2"
-MOZVER="1.9.1"
+MY_PN="${PN/fennec/mobile}"
+MY_PN="${MY_PN/shiretoko/firefox}"
+MY_PN="${MY_PN/bonecho/firefox}"
 
-# empty: from hg
-LANGS="en be ca cs de es_AR es_ES fr gl hu it ja ka lt nb_NO nl pl pt_PT ru sk sv_SE tr"
+MY_PV="${PV/_rc/rc}"
+MY_P="${MY_PN}-${MY_PV}"
+MY_P="${MY_P/mobile/fennec}"
+EMVER="1.0.1"
+PATCH="http://dev.gentoo.org/~polynomial-c/seamonkey-2.0.3-patches-0.1.tar.bz2"
+
+case "${MY_PN}" in
+mobile)
+	MOZVER="1.9.2"
+;;
+seamonkey)
+	MOZVER="1.9.1"
+	# empty: from hg
+	LANGS="en be ca cs de es_AR es_ES fr gl hu it ja ka lt nb_NO nl pl pt_PT ru sk sv_SE tr"
+;;
+esac
 
 IUSE="java mozdevelop moznoirc moznoroaming postgres restrict-javascript startup-notification
 	debug minimal directfb moznosystem +threads jssh wifi python mobile static
@@ -25,10 +37,11 @@ IUSE="java mozdevelop moznoirc moznoroaming postgres restrict-javascript startup
 
 #RESTRICT="nomirror"
 
-SRC_URI="http://releases.mozilla.org/pub/mozilla.org/${PN}/releases/${MY_PV}/source/${MY_P}.source.tar.bz2
+
+SRC_URI="http://releases.mozilla.org/pub/mozilla.org/${MY_PN}/releases/${MY_PV}/source/${MY_P}.source.tar.bz2
 	crypt? ( !moznomail? ( http://dev.gentoo.org/~anarchy/dist/enigmail-${EMVER}.tar.gz ) )
-	xforms? ( http://hg.mozilla.org/schema-validation/archive/710191b42011.tar.bz2 -> schema-validation-710191b42011.tar.bz2
-		http://hg.mozilla.org/xforms/archive/3478e987965d.tar.bz2 -> xforms-3478e987965d.tar.bz2 )"
+	xforms? ( http://hg.mozilla.org/schema-validation/archive/fc72c38dc393.tar.bz2 -> schema-validation-fc72c38dc393.tar.bz2
+		http://hg.mozilla.org/xforms/archive/32ffdcc6f490.tar.bz2 -> xforms-32ffdcc6f490.tar.bz2 )"
 
 KEYWORDS="amd64 x86"
 SLOT="0"
@@ -82,14 +95,15 @@ if [[ -n "${hg}" ]]; then
 		ll="1.9.${PVR##*r}"
 	fi
 elif [[ -z "${LANGS}" ]]; then
-	SRC_URI="${SRC_URI} `sed -e 's:^\(.*\) \(.*\)\$:linguas_\1? ( \2 -> '${MY_P}'.lang.\1.tar.bz2 ):' <${FILESDIR}/${ll}.langs`"
+#	SRC_URI="${SRC_URI} `sed -e 's:^\(.*\) \(.*\)\$:linguas_\1? ( \2 -> mozilla-'"${PV}"'.lang.\1..tar.bz2 ):' <${FILESDIR}/${ll}.langs`"
+	SRC_URI="${SRC_URI} `sed -e 's:^\(.*\) \(.*/\)\([^/]*\.tar\.bz2\)\$:linguas_\1? ( \2\3 -> l10n-mozilla-'"${MOZVER}"'.\1.\3 ):' <${FILESDIR}/${ll}.langs`"
 fi
 
 if [[ -z "${LANGS}" ]]; then
 	LANGS="en_US $(sed -e 's: .*::g' <"${FILESDIR}/${ll}.langs")"
 else
 	for l in ${LANGS}; do
-		[[ ${l} == "en" ]] || [[ ${l} == "en_US" ]] || SRC_URI="${SRC_URI} linguas_${l}? ( http://releases.mozilla.org/pub/mozilla.org/${PN}/releases/${MY_PV}/langpack/${MY_P}.${l/_/-}.langpack.xpi -> ${MY_P}-${l/_/-}.xpi )"
+		[[ ${l} == "en" ]] || [[ ${l} == "en_US" ]] || SRC_URI="${SRC_URI} linguas_${l}? ( http://releases.mozilla.org/pub/mozilla.org/${MY_PN}/releases/${MY_PV}/langpack/${MY_P}.${l/_/-}.langpack.xpi -> ${MY_P}-${l/_/-}.xpi )"
 	done
 fi
 
@@ -97,15 +111,15 @@ for l in ${LANGS}; do
 	IUSE="${IUSE} linguas_${l}"
 done
 
-case "${PN}" in
-*seamonkey*)
+case "${MY_PN}" in
+seamonkey)
 	DESCRIPTION="Mozilla Application Suite - web browser, email, HTML editor, IRC"
 	HOMEPAGE="http://www.seamonkey-project.org/"
 	export MOZ_CO_PROJECT=suite
 	IUSE="${IUSE} ldap moznocompose moznomail crypt moznocalendar"
 	S1="${S}/mozilla"
 ;;
-*firefox*|*bonecho*|*shiretoko*)
+firefox)
 	PATCH=""
 	DESCRIPTION="Firefox Web Browser"
 	HOMEPAGE="http://www.mozilla.com/firefox"
@@ -113,7 +127,7 @@ case "${PN}" in
 	S="${S/comm-/mozilla-}"
 	S1="${S}"
 ;;
-*fennec*)
+mobile)
 	PATCH=""
 	DESCRIPTION="Fennec Web Browser"
 	HOMEPAGE="http://www.mozilla.org/projects/fennec/"
@@ -607,7 +621,7 @@ langs(){
 }
 
 SM(){
-	[[ "${PN}" == *seamonkey* ]]
+	[[ "${MY_PN}" == seamonkey ]]
 	return $?
 }
 
@@ -624,7 +638,7 @@ src_unpack() {
 		[[ "${S}" != "${S1}" ]] &&  _hg releases/"${S##*/}"
 		_hg releases/mozilla-1.9.${PVR##*r} "${S1}"
 	fi
-	[[ "${PN}" == *fennec* ]] && _hg mobile-browser "${S}"/mobile
+	[[ "${MY_PN}" == mobile ]] && _hg mobile-browser "${S}"/mobile
 	_hg dom-inspector "${S1}"/extensions/inspector
 	_hg xforms "${S1}"/extensions/xforms xforms
 	_hg schema-validation "${S1}"/extensions/schema-validation xforms
@@ -662,7 +676,9 @@ _hg(){
 	fi
 
 	[[ -n "$3" ]] && ! use $3 && return
-	EHG_PROJECT="mozilla" mercurial_fetch "http://hg.mozilla.org/$1" "${m}"
+	local e="EHG_EXTRA_OPT_${m//-/_}"
+	einfo "Hint: use '${e}=\"--date yyyy-mm-dd\"' to day snapshot"
+	EHG_PROJECT="mozilla" EHG_EXTRA_OPT="${!e}" mercurial_fetch "http://hg.mozilla.org/$1" "${m}"
 	rm "${WORKDIR}/${m}/.hg" -Rf
 	[[ -z "$2" ]] && return
 	[[ "`readlink -f $2`" == "${WORKDIR}/${m}" ]] && return
