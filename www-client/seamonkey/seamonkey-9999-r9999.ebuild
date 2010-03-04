@@ -591,13 +591,14 @@ exec /usr/bin/'"${PN}"' "$@" &>/dev/null' >"${WORKDIR}/${PN}-X"
 	# Install docs
 	dodoc "${S1}"/{LEGAL,LICENSE}
 
-	mv "${D}/usr/$(get_libdir)/${PN}"/{plugins,_plugins}
-	dodir /usr/$(get_libdir)/nsbrowser/plugins
-	dosym ../nsbrowser/plugins "${MOZILLA_FIVE_HOME}"/plugins
-	for i in "${D}${MOZILLA_FIVE_HOME}"/_plugins/*; do
-		i="${i##*/}"
-		dosym ../_plugins/"${i}" "${MOZILLA_FIVE_HOME}/plugins/${PN}-${i}"
+	rm "${D}${MOZILLA_FIVE_HOME}"/libnullplugin.so
+	local i
+	SM || for i in "${D}${MOZILLA_FIVE_HOME}"/plugins/*; do
+		rename "${i##*/}" "${PN}-${i##*/}" "${i}"
 	done
+	dodir /usr/$(get_libdir)/nsbrowser
+	mv "${D}"/usr/$(get_libdir)/{${PN},nsbrowser}/plugins
+	dosym ../nsbrowser/plugins "${MOZILLA_FIVE_HOME}"/plugins
 
 	# Add StartupNotify=true bug 237317
 	use startup-notification &&
