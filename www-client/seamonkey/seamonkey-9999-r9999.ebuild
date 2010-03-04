@@ -32,7 +32,7 @@ esac
 IUSE="java mozdevelop moznoirc moznoroaming postgres restrict-javascript startup-notification
 	debug minimal directfb moznosystem +threads jssh wifi python mobile static
 	moznomemory accessibility system-sqlite vanilla xforms gio +alsa
-	custom-cflags system-xulrunner ipc"
+	custom-cflags system-xulrunner ipc system-nss system-nspr"
 #	qt-experimental"
 
 #RESTRICT="nomirror"
@@ -51,8 +51,6 @@ RDEPEND="java? ( >=virtual/jre-1.4 )
 	python? ( >=dev-lang/python-2.3 )
 	>=sys-devel/binutils-2.16.1
 	!moznosystem? (
-		>=dev-libs/nss-3.12.2
-		>=dev-libs/nspr-4.7.3
 		!static? ( >=app-text/hunspell-1.2 )
 		system-sqlite? ( dev-db/sqlite[fts3,secure-delete] )
 		>=media-libs/lcms-1.17
@@ -60,6 +58,8 @@ RDEPEND="java? ( >=virtual/jre-1.4 )
 		x11-libs/cairo[X]
 		x11-libs/pango[X]
 	)
+	system-nspr? ( >=dev-libs/nspr-4.7.3 )
+	system-nss? ( >=dev-libs/nss-3.12.2 )
 	system-xulrunner? ( net-libs/xulrunner )
 	alsa? ( media-libs/alsa-lib )
 	directfb? ( dev-libs/DirectFB )
@@ -276,8 +276,6 @@ src_configure(){
 	mozconfig_annotate 'gentoo' \
 		--with-system-bz2 \
 		--enable-canvas \
-		--with-system-nspr \
-		--with-system-nss \
 		--enable-image-encoder=all \
 		--enable-system-lcms \
 		--with-default-mozilla-five-home=${MOZILLA_FIVE_HOME} \
@@ -285,6 +283,7 @@ src_configure(){
 		--without-system-png \
 		--enable-pref-extensions \
 		--disable-tests
+
 
 	local l
 	for l in $(langs); do
@@ -296,10 +295,6 @@ src_configure(){
 		ewarn "Building only first known locale (${l})"
 		break
 	done
-
-	# I don't know about sqlite bugs (runtime segfaults on x86_64 unknown source, testing),
-	# but internal sqlite are monolythic (must be faster)
-	mozconfig_use_enable system-sqlite
 
 	mozconfig_annotate 'places' --enable-storage --enable-places --enable-places_bookmarks
 
@@ -425,7 +420,16 @@ src_configure(){
 	    einfo "USE 'moznosystem' flag - disabling usage system libs" &&
 	    sed -i -e 's/--enable-system-/--disable-system-/g' -e 's/--with-system-/--without-system-/g' "${S}"/.mozconfig
 
+
 	use system-xulrunner && mozconfig_annotate system-xulrunner --with-system-libxul --with-libxul-sdk=/usr/$(get_libdir)/xulrunner-devel-"`pkg-config libxul --modversion`"
+
+	# I don't know about sqlite bugs (runtime segfaults on x86_64 unknown source, testing),
+	# but internal sqlite are monolythic (must be faster)
+	mozconfig_use_enable system-sqlite
+
+	# mozilla.org alredy source of last versions:
+	mozconfig_use_with system-nss
+	mozconfig_use_with system-nspr
 
 	echo "" >>"${S}"/.mozconfig
 
