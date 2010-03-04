@@ -32,7 +32,7 @@ esac
 IUSE="java mozdevelop moznoirc moznoroaming postgres restrict-javascript startup-notification
 	debug minimal directfb moznosystem +threads jssh wifi python mobile static
 	moznomemory accessibility system-sqlite vanilla xforms gio +alsa
-	custom-cflags system-xulrunner"
+	custom-cflags system-xulrunner ipc"
 #	qt-experimental"
 
 #RESTRICT="nomirror"
@@ -328,9 +328,11 @@ src_configure(){
 	mozconfig_use_with threads pthreads
 	mozconfig_use_enable mobile mobile-optimize
 	mozconfig_use_enable !moznocalendar calendar
-	mozconfig_use_enable static
-	mozconfig_use_enable static static-mail
-	[[ "${PVR}" == *9999 ]] && mozconfig_use_enable static js-static-build
+	if use static; then
+		use ipc || mozconfig_use_enable static
+		mozconfig_use_enable static static-mail
+		[[ "${PVR}" == *9999 ]] && mozconfig_use_enable static js-static-build
+	fi
 	mozconfig_use_enable !static system-hunspell
 	if use threads ; then
 		mozconfig_use_enable !moznomemory jemalloc
@@ -345,6 +347,8 @@ src_configure(){
 
 	mozconfig_use_enable alsa ogg
 	mozconfig_use_enable alsa wave
+	mozconfig_use_enable ipc
+	mozconfig_use_enable ipc libxul
 
 	if use moznoirc; then
 		mozconfig_annotate '+moznocompose +moznoirc' --enable-extensions=-irc
@@ -436,7 +440,7 @@ src_configure(){
 	esac
 
 	# prepare to standard configure/make if single project or to "make -f client.mk" if multiple
-	local i a="$(apps)"
+	local i a=""
 	for i in ${MOZ_CO_PROJECT}; do
 		use system-${i} || a="${a} ${i}"
 	done
@@ -583,15 +587,13 @@ exec /usr/bin/'"${PN}"' "$@" &>/dev/null' >"${WORKDIR}/${PN}-X"
 	# Install docs
 	dodoc "${S1}"/{LEGAL,LICENSE}
 
-	if ! SM; then
-		local i
-		for i in "${D}${MOZILLA_FIVE_HOME}"/plugins/*; do
-			rename "${i##*/}" "${PN}-${i##*/}" "${i}"
-		done
-	fi
-	dodir /usr/$(get_libdir)/nsbrowser
-	mv "${D}"/usr/$(get_libdir)/{$PN,nsbrowser}/plugins
+	mv "${D}/usr/$(get_libdir)/${PN}"/{plugins,_plugins}
+	dodir /usr/$(get_libdir)/nsbrowser/plugins
 	dosym ../nsbrowser/plugins "${MOZILLA_FIVE_HOME}"/plugins
+	for i in "${D}${MOZILLA_FIVE_HOME}"/_plugins/*; do
+		i="${i##*/}"
+		dosym ../_plugins/"${i}" "${MOZILLA_FIVE_HOME}/plugins/${PN}-${i}"
+	done
 
 	# Add StartupNotify=true bug 237317
 	use startup-notification &&
