@@ -135,7 +135,6 @@ mobile)
 	S="${S/comm-/mozilla-}"
 	S1="${S}"
 	SRC_URI="${SRC_URI//\/1.0rc3\///1.0/}"
-	echo "--- $SRC_URI"
 ;;
 *)
 	die
