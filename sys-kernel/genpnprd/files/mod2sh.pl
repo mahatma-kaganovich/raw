@@ -10,7 +10,7 @@ my %dup;
 
 # to load second/last
 # will be delimited by "1" (to easy "break/continue" integration)
-my $reorder='\/ide\/|usb-storage';
+my $reorder='\/ide\/|usb-storage|\/oss\/';
 
 # 0-old (alias-per-case), 1-"or", 2-slow/multi-match
 my $JOIN=2;

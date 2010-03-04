@@ -134,6 +134,8 @@ mobile)
 	export MOZ_CO_PROJECT="xulrunner mobile"
 	S="${S/comm-/mozilla-}"
 	S1="${S}"
+	SRC_URI="${SRC_URI//\/1.0rc3\///1.0/}"
+	echo "--- $SRC_URI"
 ;;
 *)
 	die
@@ -309,9 +311,13 @@ src_configure(){
 	# Other moz-specific settings
 	mozconfig_use_enable mozdevelop jsd
 	mozconfig_use_enable mozdevelop xpctools
-	mozconfig_use_extension python python/xpcom
+	[[ -e "${S1}"/extensions/python ]] && mozconfig_use_extension python python/xpcom
 #	mozconfig_use_extension python python
-	mozconfig_use_enable java javaxpcom
+	if [[ "${MY_PN}" == "mobile" ]] && [[ -z "${hg}" ]]; then
+		( use java || use python ) && ewarn "Useflags 'java' & 'python' ignored here"
+	else
+		mozconfig_use_enable java javaxpcom
+	fi
 	mozconfig_use_extension jssh jssh
 #	mozconfig_use_extension widgetutils widgetutils
 	mozconfig_use_extension mozdevelop venkman
