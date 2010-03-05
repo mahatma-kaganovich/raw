@@ -32,7 +32,7 @@ esac
 IUSE="java mozdevelop moznoirc moznoroaming postgres restrict-javascript startup-notification
 	debug minimal directfb moznosystem +threads jssh wifi python mobile static
 	moznomemory accessibility system-sqlite vanilla xforms gio +alsa
-	custom-cflags system-xulrunner ipc system-nss system-nspr"
+	custom-cflags system-xulrunner ipc system-nss system-nspr X"
 #	qt-experimental"
 
 #RESTRICT="nomirror"
@@ -55,8 +55,8 @@ RDEPEND="java? ( >=virtual/jre-1.4 )
 		system-sqlite? ( dev-db/sqlite[fts3,secure-delete] )
 		>=media-libs/lcms-1.17
 		app-arch/bzip2
-		x11-libs/cairo[X]
-		x11-libs/pango[X]
+		x11-libs/cairo[X=,directfb=]
+		x11-libs/pango[X=]
 	)
 	system-nspr? ( >=dev-libs/nspr-4.7.3 )
 	system-nss? ( >=dev-libs/nss-3.12.2 )
@@ -66,6 +66,7 @@ RDEPEND="java? ( >=virtual/jre-1.4 )
 	gnome? ( !gio? ( >=gnome-base/gnome-vfs-2.3.5 )
 		>=gnome-base/libgnomeui-2.2.0 )
 	crypt? ( !moznomail? ( >=app-crypt/gnupg-1.4 ) )"
+#	!X? ( || ( x11-libs/gtk+[X=] x11-libs/gtk+[X=,directfb=] x11-libs/gtk+-directfb ) )
 
 PDEPEND="restrict-javascript? ( x11-plugins/noscript )"
 
@@ -258,21 +259,6 @@ src_configure(){
 #			--disable-pango
 #	fi
 
-        if use vanilla; then
-	if use directfb; then
-		if ! built_with_use x11-libs/cairo directfb; then
->			eerror "Cairo must be build with same state of 'directfb' useflag"
-			eerror "Please add 'directfb' to your USE flags, and re-emerge cairo."
-			die "Cairo needs directfb"
-		fi
-	elif built_with_use x11-libs/cairo directfb; then
-		ewarn "Cairo built with 'directfb' useflag, but $pn with '-directfb':"
-		ewarn "using built-in Cairo instead..."
-		rmopt -system-cairo
-		mozconfig_annotate "-directfb, cairo ${x1}DirectFB surface" --disable-system-cairo
-	fi
-	fi
-
 	mozconfig_annotate 'gentoo' \
 		--with-system-bz2 \
 		--enable-canvas \
@@ -321,6 +307,7 @@ src_configure(){
 	mozconfig_use_enable ldap
 	mozconfig_use_enable ldap ldap-experimental
 	mozconfig_use_with threads pthreads
+	mozconfig_use_with X x
 	mozconfig_use_enable mobile mobile-optimize
 	mozconfig_use_enable !moznocalendar calendar
 	if use static; then
