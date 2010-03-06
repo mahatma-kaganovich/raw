@@ -58,6 +58,8 @@ RDEPEND="java? ( >=virtual/jre-1.4 )
 		x11-libs/cairo[X=,directfb=]
 		x11-libs/pango[X=]
 	)
+	X? ( >=x11-libs/gtk+-2.8.6 )
+	!X? ( x11-libs/gtk+-directfb )
 	system-nspr? ( >=dev-libs/nspr-4.7.3 )
 	system-nss? ( >=dev-libs/nss-3.12.2 )
 	system-xulrunner? ( net-libs/xulrunner )
@@ -66,7 +68,6 @@ RDEPEND="java? ( >=virtual/jre-1.4 )
 	gnome? ( !gio? ( >=gnome-base/gnome-vfs-2.3.5 )
 		>=gnome-base/libgnomeui-2.2.0 )
 	crypt? ( !moznomail? ( >=app-crypt/gnupg-1.4 ) )"
-#	!X? ( || ( x11-libs/gtk+[X=] x11-libs/gtk+[X=,directfb=] x11-libs/gtk+-directfb ) )
 
 PDEPEND="restrict-javascript? ( x11-plugins/noscript )"
 
@@ -217,23 +218,24 @@ src_prepare(){
 	fi
 
 	sed -i -e 's%^#elif$%#elif 1%g' "${S1}"/toolkit/xre/nsAppRunner.cpp
+	use X || sed -i -e 's:gtk-2\.0:gtk-directfb-2.0:g' `find "${S}" -name configure.in` `find "${S}" -name "Makefile*"`
 	eend $? || die "sed failed"
 
 	for i in "${S1}/js/src" "${S1}" "${S}" ; do
 		cd "${i}" && eautoreconf
 	done
+	use X || export PKG_CONFIG_PATH="/usr/$(get_libdir)/dfb/usr/$(get_libdir)/pkgconfig:${PKG_CONFIG_PATH}"
 }
 
 src_configure(){
 	declare MOZILLA_FIVE_HOME="/usr/$(get_libdir)/${PN}"
 
 	if use python; then
-		python_version
 		export MOZ_PYTHON_EXTENSIONS="dom xpcom"
-		export MOZ_PYTHON_VER_DOTTED="${PYVER}"
-		export MOZ_PYTHON_INCLUDES="-I/usr/include/python${PYVER}"
-		export MOZ_PYTHON_LIBDIR="/$(get_libdir)/python${PYVER}"
-		export MOZ_PYTHON_LIBS="-L${MOZ_PYTHON_LIBDIR} -lpython${PYVER}"
+		export MOZ_PYTHON_VER_DOTTED="$(python_get_version)"
+		export MOZ_PYTHON_INCLUDES="-I/usr/include/$(PYTHON)"
+		export MOZ_PYTHON_LIBDIR="/$(get_libdir)/$(PYTHON)"
+		export MOZ_PYTHON_LIBS="-L${MOZ_PYTHON_LIBDIR} -l$(PYTHON)"
 	fi
 
 	local o3=false
@@ -308,6 +310,7 @@ src_configure(){
 	mozconfig_use_enable ldap ldap-experimental
 	mozconfig_use_with threads pthreads
 	mozconfig_use_with X x
+	mozconfig_use_enable X plugins
 	mozconfig_use_enable mobile mobile-optimize
 	mozconfig_use_enable !moznocalendar calendar
 	if use static; then
