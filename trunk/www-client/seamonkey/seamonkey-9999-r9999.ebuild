@@ -154,6 +154,7 @@ export PERL="/usr/bin/perl"
 
 src_unpack() {
 	use static && use jssh && die 'Useflags "static" & "jssh" incompatible'
+	use !X && use startup-notification && die 'Useflags "-X" & "startup-notification" incompatibe'
 	local i l
 	mkdir "${WORKDIR}"/l10n
 	for i in ${A} ; do
@@ -218,13 +219,14 @@ src_prepare(){
 	fi
 
 	sed -i -e 's%^#elif$%#elif 1%g' "${S1}"/toolkit/xre/nsAppRunner.cpp
-	use X || sed -i -e 's:gtk-2\.0:gtk-directfb-2.0:g' `find "${S}" -name configure.in` `find "${S}" -name "Makefile*"`
-	eend $? || die "sed failed"
+	use X || sed -i -e 's:gtk-2\.0:gtk-directfb-2.0:g' -e 's:GDK_PACKAGES=directfb:GDK_PACKAGES="directfb gdk-directfb-2.0":g' `find "${S}" -name configure.in` `find "${S}" -name "Makefile*"`
+	eend $?
 
 	for i in "${S1}/js/src" "${S1}" "${S}" ; do
 		cd "${i}" && eautoreconf
 	done
-	use X || export PKG_CONFIG_PATH="/usr/$(get_libdir)/dfb/usr/$(get_libdir)/pkgconfig:${PKG_CONFIG_PATH}"
+	use !X && export PKG_CONFIG_PATH="/usr/$(get_libdir)/dfb/usr/$(get_libdir)/pkgconfig:${PKG_CONFIG_PATH}" &&
+		export LD_LIBRARY_PATH="/usr/$(get_libdir)/dfb/usr/$(get_libdir):${LD_LIBRARY_PATH}"
 }
 
 src_configure(){
