@@ -331,6 +331,7 @@ src_configure(){
 	mozconfig_use_enable alsa wave
 	mozconfig_use_enable ipc
 	mozconfig_use_enable ipc libxul
+	mozconfig_use_enable startup-notification libnotify
 
 	if use moznoirc; then
 		mozconfig_annotate '+moznocompose +moznoirc' --enable-extensions=-irc
