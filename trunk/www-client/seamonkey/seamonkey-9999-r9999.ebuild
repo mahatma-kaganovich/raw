@@ -225,12 +225,17 @@ src_prepare(){
 	for i in "${S1}/js/src" "${S1}" "${S}" ; do
 		cd "${i}" && eautoreconf
 	done
-	use !X && export PKG_CONFIG_PATH="/usr/$(get_libdir)/dfb/usr/$(get_libdir)/pkgconfig:${PKG_CONFIG_PATH}" &&
-		export LD_LIBRARY_PATH="/usr/$(get_libdir)/dfb/usr/$(get_libdir):${LD_LIBRARY_PATH}"
 }
 
 src_configure(){
 	declare MOZILLA_FIVE_HOME="/usr/$(get_libdir)/${PN}"
+
+	export LD_RUN_PATH=":${LD_RUN_PATH}"
+
+	use !X && export PKG_CONFIG_PATH="/usr/$(get_libdir)/dfb/usr/$(get_libdir)/pkgconfig:${PKG_CONFIG_PATH}" &&
+		export LD_LIBRARY_PATH="/usr/$(get_libdir)/dfb/usr/$(get_libdir):${LD_LIBRARY_PATH}" &&
+		export LD_RUN_PATH="/usr/$(get_libdir)/dfb/usr/$(get_libdir):${LD_RUN_PATH}"
+
 
 	if use python; then
 		export MOZ_PYTHON_EXTENSIONS="dom xpcom"
@@ -445,6 +450,7 @@ src_configure(){
 	if [[ "${a// }" == "${a}" ]]; then
 		mozconfig_annotate '' --enable-application=${a}
 	else
+		[[ "${a//xulrunner}" != "${a}" ]] && export LD_RUN_PATH="${MOZILLA_FIVE_HOME}/xulrunner:${LD_RUN_PATH}"
 		echo "mk_add_options MOZ_BUILD_PROJECTS=\"${a}\"
 mk_add_options MOZ_OBJDIR=@TOPSRCDIR@/../base" >>"${S}"/.mozconfig
 		for i in ${a}; do
