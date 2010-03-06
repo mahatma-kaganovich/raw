@@ -1,7 +1,7 @@
 
 inherit multilib flag-o-matic mozcoreconf-2
 
-IUSE="gnome dbus startup-notification moznosystem"
+IUSE="gnome dbus startup-notification moznosystem X"
 
 RDEPEND=" !moznosystem? (
 		>=media-libs/jpeg-6b
@@ -11,7 +11,7 @@ RDEPEND=" !moznosystem? (
 		>=x11-libs/cairo-1.6.0
 	)
 	dev-libs/expat
-	>=x11-libs/gtk+-2.8.6
+	|| ( >=x11-libs/gtk+-2.8.6 x11-libs/gtk+-directfb )
 	>=dev-libs/glib-2.8.2
 	!moznopango? ( >=x11-libs/pango-1.10.1 )
 	>=dev-libs/libIDL-0.8.0
