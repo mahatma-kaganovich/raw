@@ -385,6 +385,7 @@ setconfig(){
 		cfg n DRM
 	fi
 	cfg_use kernel-alsa SND
+	use kernel-alsa || cfg m SOUND_PRIME
 	cfg_use lzma KERNEL_LZMA
 	# framebuffer enabled anymore, but "fbcon" support for more devices, exclude [external] nouveau drm
 	if use fbcon; then
