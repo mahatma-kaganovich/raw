@@ -18,7 +18,7 @@ IUSE="release-branch release-tag"
 
 EXPORT_FUNCTIONS src_unpack
 
-DEPEND="dev-util/mercurial"
+DEPEND="dev-vcs/mercurial"
 
 # @ECLASS-VARIABLE: EHG_REPO_URI
 # @DESCRIPTION:
