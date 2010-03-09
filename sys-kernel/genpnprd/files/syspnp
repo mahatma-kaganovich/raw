@@ -1,5 +1,5 @@
 #!/bin/sh
-## pnp modules bootloader v0.11
+## pnp modules bootloader v0.12
 ## (c) Denis Kaganovich, under Anarchy license
 ## consume preprocessed /lib/modules/$KV/modules.alias
 
@@ -79,7 +79,7 @@ refresh(){
 	if $FAST ; then
 		sed -e 's%^\([^ 	]*\)[	 ]*.*$%>\1<%g' </proc/modules >"${PNP_TMP}".1
 		cat `grep -ls "^DRIVER=" $(find /sys -name uevent -print 2>/dev/null) </dev/null` </dev/null |grep "^DRIVER=\|^MODALIAS="|sed -e 's%-%_%g' -e 's%^.*=\(.*\)$%>\1<%g' >>"${PNP_TMP}".1
-		if [[ "$(cat ${PNP_TMP}.1)" == "$(cat ${PNP_TMP}.2)" ]] ; then
+		if [[ "$(cat ${PNP_TMP}.1 /proc/partitions)" == "$(cat ${PNP_TMP}.2)" ]] ; then
 			cat "${PNP_TMP}".3 "${PNP_TMP}".4 >"${PNP_TMP}".0
 			return 1
 		fi
@@ -96,7 +96,7 @@ refresh(){
 		elif $cmd_unload && [[ "$1" == "n" ]] ; then
 			sort -m ${PNP_TMP}.0 ${PNP_TMP}.3 | uniq -u >>/nopnp.lst
 		fi
-		cp "${PNP_TMP}".1 "${PNP_TMP}".2
+		cat "${PNP_TMP}".1 /proc/partitions >"${PNP_TMP}".2
 		cp "${PNP_TMP}".0 "${PNP_TMP}".3
 		cat "${PNP_TMP}".4 >>"${PNP_TMP}".0
 		return 0
@@ -307,10 +307,105 @@ cpufreq_gov(){
 	done
 }
 
+empty_hwopts(){
+	local i
+	for i in $* ; do
+		echo -ne "" >/etc/modules/$i
+	done
+}
+
+detect_root(){
+	local i d="$*"
+	[[ "$d" == false ]] && return 1
+	[[ "$d" == true ]] && d="" && r=""
+	mkdir /DETECT_ROOT
+	for i in `( blkid $d || blkid -t $d || findfs $* || busybox findfs $* ) 2>/dev/null | sed -e "s/:.*$//g"`; do
+		mount -o ro "$i" /DETECT_ROOT >/dev/null 2>&1 || continue
+		grep -q "^$i[ 	]*/[ 	]" /DETECT_ROOT/etc/mtab 2>/dev/null && r="$r $i"
+		umount /DETECT_ROOT >/dev/null 2>&1
+	done
+	rmdir /DETECT_ROOT
+	r="${r# }"
+	if [[ "${r#* }" == "$r" ]]; then
+		echo -ne "$r"
+		return 0
+	else
+		bad_msg "Detected multiple root devices: $r" >&2
+		return 1
+	fi
+}
+
+detect_md(){
+	if [ -e '/etc/mdadm.conf' ]; then
+		mod `( grep " level=" /etc/mdadm.conf || /sbin/mdadm --examine --scan -v ) | sed -e 's:^.* level=\([^ ]*\) .*$:\1:g' | sort -u`
+	else
+		/sbin/mdadm --examine --scan -v >/etc/mdadm.conf
+		mod `grep " level=" /etc/mdadm.conf | sed -e 's:^.* level=\([^ ]*\) .*$:\1:g' | sort -u`
+	fi
+	wait $pid $pids
+	pid=""
+	pids=""
+	/sbin/mdadm --assemble 2>/dev/null && USE_MDADM_=""
+}
+
+detect_fs(){
+	[[ -e /bin/blkid ]] || [[ -e /sbin/blkid ]] || return 1
+	# dmraid/lvm/evms unsure
+	local i md="${USE_MDADM}" dm="${USE_DMRAID_NORMAL}" d="$cmd_detect_root"
+	[[ "$d" == true ]] && d=""
+	for i in `( blkid $d 2>/dev/null || blkid -t $d 2>/dev/null ) | sed -e 's:^.* TYPE="\([^"]*\)".*$:\1:g' | sort -u`; do
+		case $i in
+		linux_raid_member) md=1 ;; # use right blkid
+		LVM*|EVMS*|lvm*|evms*) dm=1 ;;
+		*raid*)
+			mod $(wild "/$i/") $i
+			md=1
+			dm=1
+		;;
+		swap) ;;
+		*) mod $(wild "/$i/") $i ;;
+		esac
+	done
+	if [[ -n "$dm" ]]; then
+		mod $(wild "/md/dm-")
+		md=1 # ?
+	fi
+	[[ -n "$md" ]] && detect_md
+	if [[ -e '/sbin/dmraid' ]]; then
+		wait $pid $pids
+		pid=""
+		pids=""
+		if /sbin/dmraid -ay ${DMRAID_OPTS} >/dev/null ; then
+			USE_DMRAID_NORMAL_=""
+		else
+			mod $(wild "/md/")
+			wait $pid $pids
+			pid=""
+			pids=""
+			/sbin/dmraid -ay ${DMRAID_OPTS} && USE_DMRAID_NORMAL_=""
+		fi
+	fi
+	empty_hwopts fs ataraid dmraid evms lvm mdadm
+	return 0
+}
+
+gentoo_compat_hwopts(){
+	local i i1
+	for i1 in ${MY_HWOPTS} ; do
+		if [[ -e "/etc/modules/$i1" ]] ; then
+			for i in `cat /etc/modules/$i1` ; do
+				grep -q "^$i\$" "modules.pnp" || mod "$i"
+			done
+		else
+			mod $(wild "/${i1}[./]")
+		fi
+	done
+}
+
 syspnp(){
 	[[ -e "/lib/modules/${KV}/modules.alias.sh" ]] || return
 	$cmd_nopnp && return
-	local PNP_TMP="${TMPDIR}/pnp.found" NOTLOADED="" CHK=true i i1 i2 gov="" freq="" pid="" pids="" LCOUNT="" REORDER=break
+	local PNP_TMP="${TMPDIR}/pnp.found" NOTLOADED="" CHK=true i i1 i2 gov="" freq="" pid="" pids="" LCOUNT="" REORDER=break USE_MDADM_="${USE_MDADM}" USE_DMRAID_NORMAL_="${USE_DMRAID_NORMAL}"
 
 	good_msg "Searching pnp"
 	if [[ -e /lib/modules/$KV/modules.dep ]]; then
@@ -330,6 +425,7 @@ syspnp(){
 		fi
 	fi
 	load_aliases
+	empty_hwopts firewire net pata pcmcia sata scsi usb
 
 	## some hand-made autoloads
 
@@ -364,6 +460,7 @@ syspnp(){
 	refresh
 #	good_msg "Filtering pnp modules"
 	while count ; do
+		# do: loadall[=...] or detect_fs or process MY_HWOPTS
 		for i in $cmd_loadall ; do
 			[[ "$i" == 'true' ]] && i=''
 			i1="${i%%:*}"
@@ -373,22 +470,20 @@ syspnp(){
 			[[ "$i2" == "$i" ]] && i2='/tcrypt.ko\|/paride/\|/media/\|/sound/\|/microcode\.\|/isdn/\|/net/\|/video/'
 			mod $(wild "$i1" "$i2")
 		done
-		[[ -z "$cmd_loadall" ]] && [[ "$NODETECT" != '1' ]] &&
-		for i1 in ${MY_HWOPTS} ; do
-			if [[ -e "/etc/modules/$i1" ]] ; then
-				for i in `cat /etc/modules/$i1` ; do
-					grep -q "^$i\$" "modules.pnp" || mod "$i"
-				done
-			else
-				mod $(wild "/${i1}[./]")
-			fi
-		done
+		if [[ -z "$cmd_loadall" ]] && [[ "$NODETECT" != '1' ]]; then
+			detect_fs
+			gentoo_compat_hwopts # deprecated?
+		fi
 		refresh n || break
 		load_aliases
 	done
 	MY_HWOPTS=""
 	MDOLIST=""
+	USE_MDADM="${USE_MDADM_}"
+	USE_DMRAID_NORMAL="${USE_DMRAID_NORMAL_}"
+
 	echo -ne "\033[0G\033[0K"
+	: ${REAL_ROOT:="`detect_root ${cmd_detect_root:-false}`"}
 	good_msg "Boot time: $(cat /proc/uptime)"
 	if [[ -n "${NOTLOADED}" ]] ; then
 		good_msg "Not loaded:$NOTLOADED"
