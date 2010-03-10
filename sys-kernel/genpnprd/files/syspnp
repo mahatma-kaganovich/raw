@@ -337,7 +337,7 @@ detect_root(){
 
 detect_md(){
 	if [ -e '/etc/mdadm.conf' ]; then
-		mod `( grep " level=" /etc/mdadm.conf || /sbin/mdadm --examine --scan -v ) | sed -e 's:^.* level=\([^ ]*\) .*$:\1:g' | sort -u`
+		mod `( grep " level=" /etc/mdadm.conf || ( /sbin/mdadm --examine --scan -v|grep " level=" ) ) | sed -e 's:^.* level=\([^ ]*\) .*$:\1:g' | sort -u`
 	else
 		/sbin/mdadm --examine --scan -v >/etc/mdadm.conf
 		mod `grep " level=" /etc/mdadm.conf | sed -e 's:^.* level=\([^ ]*\) .*$:\1:g' | sort -u`
@@ -345,17 +345,27 @@ detect_md(){
 	wait $pid $pids
 	pid=""
 	pids=""
-	/sbin/mdadm --assemble 2>/dev/null && USE_MDADM_=""
+	# busybox | mdadm | all raid modules
+	( $cmd_noraid || /sbin/mdadm --assemble 2>/dev/null || /sbin/mdadm --assemble --scan 2>/dev/null ||
+		( mod $(wild "/md/") ; ( /sbin/mdadm --assemble 2>/dev/null || /sbin/mdadm --assemble --scan ) ) ) && USE_MDADM_=""
 }
+
+
 
 detect_fs(){
 	[[ -e /bin/blkid ]] || [[ -e /sbin/blkid ]] || return 1
 	# dmraid/lvm/evms unsure
-	local i md="${USE_MDADM}" dm="${USE_DMRAID_NORMAL}" d="$cmd_detect_root"
-	[[ "$d" == true ]] && d=""
-	for i in `( blkid $d 2>/dev/null || blkid -t $d 2>/dev/null ) | sed -e 's:^.* TYPE="\([^"]*\)".*$:\1:g' | sort -u`; do
+	local i md="${USE_MDADM}" dm="${USE_DMRAID_NORMAL}" t=""
+	for i in $( {
+			if [[ "$cmd_detect_root" == true ]]; then
+				blkid
+			else
+				blkid $cmd_detect_root || blkid -t $cmd_detect_root
+				[[ -n "$REAL_ROOT" ]] && [[ "$REAL_ROOT" != "$cmd_detect_root" ]] && ( blkid $REAL_ROOT || blkid -t $REAL_ROOT )
+			fi
+	    } 2>/dev/null | sed -e 's:^.* TYPE="\([^"]*\)".*$:\1:g' | sort -u ); do
 		case $i in
-		linux_raid_member) md=1 ;; # use right blkid
+		linux_raid_member|mdraid) md=1 ;; # use right blkid
 		LVM*|EVMS*|lvm*|evms*) dm=1 ;;
 		*raid*)
 			mod $(wild "/$i/") $i
@@ -371,18 +381,19 @@ detect_fs(){
 		md=1 # ?
 	fi
 	[[ -n "$md" ]] && detect_md
+	$cmd_noraid && t=t
 	if [[ -e '/sbin/dmraid' ]]; then
 		wait $pid $pids
 		pid=""
 		pids=""
-		if /sbin/dmraid -ay ${DMRAID_OPTS} >/dev/null ; then
+		if /sbin/dmraid -ay$t ${DMRAID_OPTS} >/dev/null ; then
 			USE_DMRAID_NORMAL_=""
 		else
 			mod $(wild "/md/")
 			wait $pid $pids
 			pid=""
 			pids=""
-			/sbin/dmraid -ay ${DMRAID_OPTS} && USE_DMRAID_NORMAL_=""
+			/sbin/dmraid -ay$t ${DMRAID_OPTS} && USE_DMRAID_NORMAL_=""
 		fi
 	fi
 	empty_hwopts fs ataraid dmraid evms lvm mdadm
