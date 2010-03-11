@@ -25,6 +25,7 @@ LICENSE="LGPL-2"
 SLOT="0"
 KEYWORDS="~alpha ~amd64 ~arm ~hppa ~ia64 ~mips ~ppc ~ppc64 ~sh ~sparc ~x86 ~x86-fbsd raw"
 IUSE_VIDEO_CARDS="
+	video_cards_svga
 	video_cards_nouveau
 	video_cards_radeonhd
 	video_cards_intel
@@ -52,7 +53,8 @@ IUSE="${IUSE_VIDEO_CARDS}
 	xcb
 	kernel_FreeBSD
 	+gallium
-	+asm"
+	glut
+	X"
 
 RDEPEND="app-admin/eselect-opengl
 	dev-libs/expat
@@ -68,6 +70,7 @@ RDEPEND="app-admin/eselect-opengl
 	doc? ( app-doc/opengl-manpages )
 	!<=x11-base/xorg-x11-6.9"
 DEPEND="${RDEPEND}
+	glut? ( !media-libs/freeglut )
 	!<=x11-proto/xf86driproto-2.0.3
 	dev-util/pkgconfig
 	x11-misc/makedepend
@@ -82,6 +85,8 @@ DEPEND="${RDEPEND}
 		x11-libs/libdrm
 	)
 	motif? ( x11-proto/printproto )"
+
+PROVIDE="glut? ( virtual/glut )"
 
 S="${WORKDIR}/${MY_P}"
 
@@ -132,6 +137,8 @@ src_unpack() {
 		use ${i} || sed -i -e s/-DUSE_${i}_ASM//i "${S}"/configure*
 	done
 
+	use gallium && sed -i -e 's:GALLIUM_WINSYS_DIRS="":GALLIUM_WINSYS_DIRS="xlib":g' configure.ac
+
 	eautoreconf
 }
 
@@ -162,22 +169,28 @@ src_compile() {
 		myconf="${myconf} $(use_enable video_cards_nouveau gallium-nouveau)"
 		myconf="${myconf} $(use_enable video_cards_intel gallium-intel)"
 		myconf="${myconf} $(use_enable video_cards_radeon gallium-radeon)"
+		myconf="${myconf} $(use_enable video_cards_svga gallium-svga)"
 		myconf="${myconf} --with-state-trackers=dri,egl,glx,xorg"
+		ewarn "My gallium configuration required 'xorg-server' headers installed."
+		ewarn "To avoid circular dependences install mesa without gallium before and re-emerge after."
+		myconf="--enable-gallium-swrast"
 	fi
 	# Deactivate assembly code for pic build
-	( use pic || use !asm ) && myconf="${myconf} --disable-asm"
+	( use pic ) && myconf="${myconf} --disable-asm"
 	# Get rid of glut includes
-	rm -f "${S}"/include/GL/glut*h
+	use glut || rm -f "${S}"/include/GL/glut*h
 	[[ "${drv}" == "dri" ]] && myconf="${myconf} --with-dri-drivers=${DRI_DRIVERS}"
 	econf ${myconf} \
 		$(use_enable nptl glx-tls) \
 		--with-driver=${drv} \
-		--disable-glut \
+		$(use_enable glut) \
 		--without-demos \
 		$(use_enable xcb) \
 		$(use_enable motif glw) \
 		$(use_enable motif) \
 		$(use_enable gallium) \
+		$(use_with X x) \
+		--with-egl-displays=x11,kms \
 		|| die
 	emake || die
 }
