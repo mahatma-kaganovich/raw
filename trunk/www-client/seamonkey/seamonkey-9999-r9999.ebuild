@@ -55,8 +55,8 @@ RDEPEND="java? ( >=virtual/jre-1.4 )
 		system-sqlite? ( dev-db/sqlite[fts3,secure-delete] )
 		>=media-libs/lcms-1.17
 		app-arch/bzip2
-		x11-libs/cairo[X=,directfb=]
-		x11-libs/pango[X=]
+		x11-libs/cairo[directfb=]
+		x11-libs/pango
 	)
 	X? ( >=x11-libs/gtk+-2.8.6 )
 	!X? ( x11-libs/gtk+-directfb )
