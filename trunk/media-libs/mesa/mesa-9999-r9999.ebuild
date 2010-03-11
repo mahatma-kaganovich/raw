@@ -166,6 +166,7 @@ src_compile() {
 	driver_enable video_cards_trident trident
 	driver_enable video_cards_via unichrome
 	if use gallium; then
+		myconf="--enable-gallium-swrast"
 		myconf="${myconf} $(use_enable video_cards_nouveau gallium-nouveau)"
 		myconf="${myconf} $(use_enable video_cards_intel gallium-intel)"
 		myconf="${myconf} $(use_enable video_cards_radeon gallium-radeon)"
@@ -173,7 +174,6 @@ src_compile() {
 		myconf="${myconf} --with-state-trackers=dri,egl,glx,xorg"
 		ewarn "My gallium configuration required 'xorg-server' headers installed."
 		ewarn "To avoid circular dependences install mesa without gallium before and re-emerge after."
-		myconf="--enable-gallium-swrast"
 	fi
 	# Deactivate assembly code for pic build
 	( use pic ) && myconf="${myconf} --disable-asm"
