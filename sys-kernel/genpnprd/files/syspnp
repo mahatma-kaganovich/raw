@@ -254,7 +254,7 @@ pnp_init(){
 
 override_modprobe(){
 local f="/sbin/modprobe"
-[[ -e $f ]] && ! grep -q "bug #197730" $f && return
+[[ -e $f ]] && ! ( grep -q "bug #197730" $f && rm /sbin/modprobe ) && return
 echo '#!/bin/sh
 . /etc/modprobe.sh
 modprobe $*

@@ -71,6 +71,7 @@ DEPEND="${DEPEND}
 	-STAGING_EXCLUDE_BUILD DRM_RADEON_KMS DRM_NOUVEAU_BACKLIGHT
 	SND_BT87X_OVERCLOCK  SND_HDA_RECONFIG SND_HDA_PATCH_LOADER SND_HDA_POWER_SAVE SND_HDA_INPUT_JACK
 	PSS_MIXER SC6600 SC6600_JOY
+	KSM PM_RUNTIME PCI_IOV HOTPLUG_PCI_CPCI
 	===bugs:
 	-TR
 	===kernel.conf:
@@ -461,7 +462,7 @@ config_defaults(){
 			[[ -z "${m}" ]] && sed -i -e "/^CONFIG_${o}=.*/d" .config .config.def
 			sed -i -e "/^# CONFIG_${o} is not set/d" .config .config.def
 		done
-		grep_kconfig "config" "bool" "[^\n]*If\s+unsure,\s+say\s+Y\..*" ${i} | while read i1 o ; do
+		grep_kconfig "config" "bool" "[^\n]*If\s+(?:unsure|in\sdoubt),\s+say\s+Y\..*" ${i} | while read i1 o ; do
 			grep -q "^${o}\$" .config.set && continue
 			cfg y "${o}" "${m/-/--}"
 		done
