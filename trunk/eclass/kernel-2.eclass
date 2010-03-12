@@ -146,6 +146,8 @@ kernel-2_src_compile() {
 	[[ -n ${cflags} ]] && sed -i -e "s/^\(KBUILD_CFLAGS.*-O.\)/\1 ${cflags}/g" Makefile
 	use build-kernel || return
 	config_defaults
+	einfo "Compiling kernel"
+	kmake bzimage
 	einfo "Compiling kernel modules"
 	kmake modules ${KERNEL_MODULES_MAKEOPT}
 	einfo "Generating initrd image"
@@ -188,11 +190,10 @@ kernel-2_src_compile() {
 		cfg 0 INITRAMFS_ROOT_GID
 		cfg y INITRAMFS_COMPRESSION_NONE
 		yes '' 2>/dev/null | kmake oldconfig &>/dev/null
+		kmake bzImage
 	else
 		[[ -e "initrd-${REAL_KV}.cpio" ]] && rename .cpio .img "initrd-${REAL_KV}.cpio"
 	fi
-	einfo "Compiling kernel"
-	kmake bzImage
 }
 
 kernel-2_src_install() {
