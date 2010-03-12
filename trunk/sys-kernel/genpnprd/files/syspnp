@@ -335,52 +335,128 @@ detect_root(){
 	fi
 }
 
-detect_md(){
-	if [ -e '/etc/mdadm.conf' ]; then
-		mod `( grep " level=" /etc/mdadm.conf || ( /sbin/mdadm --examine --scan -v|grep " level=" ) ) | sed -e 's:^.* level=\([^ ]*\) .*$:\1:g' | sort -u`
-	else
-		/sbin/mdadm --examine --scan -v >/etc/mdadm.conf
-		mod `grep " level=" /etc/mdadm.conf | sed -e 's:^.* level=\([^ ]*\) .*$:\1:g' | sort -u`
+# modifyed genkernel's function to support other network filesystems (/dev/<filsystem>)
+override_findnfsmount(){
+findnfsmount() {
+	if [ "${IP}" != '' ] || busybox udhcpc -n -T 15 -q
+	then
+		[ -e /rootpath ] && NFSROOT=`cat /rootpath`
+
+		if [ "${NFSROOT}" = '' ]
+		then
+			# Obtain NFSIP	
+			OPTIONS=`busybox dmesg | grep rootserver | sed -e "s/,/ /g"`
+			for OPTION in $OPTIONS
+			do
+				if [ `echo $OPTION | sed -e "s/=/ /g" | cut -d " " -f 1` = 'rootserver' ]
+				then
+					NFSIP=`echo $OPTION | sed -e "s/=/ /g" | cut -d " " -f 2`
+				fi 
+			done
+			
+			# Obtain NFSPATH
+			OPTIONS=`busybox dmesg | grep rootpath | sed -e "s/,/ /g"`	
+			for OPTION in $OPTIONS
+			do
+				if [ `echo $OPTION | sed -e "s/=/ /g" | cut -d " " -f 1` = 'rootpath' ]
+				then
+					NFSPATH=`echo $OPTION | sed -e "s/=/ /g" | cut -d " " -f 2`
+		 		fi
+			done
+
+			# Setup NFSROOT
+			if [ "${NFSIP}" != '' ] && [ "$NFSPATH" != '' ]
+			then
+				NFSROOT="${NFSIP}:${NFSPATH}"
+			else
+				bad_msg "The DHCP Server did not send a valid root-path."
+				bad_msg "Please check your DHCP setup, or provide a nfsroot=<...> parameter."
+			fi
+		fi
+
+		if [ "${NFSROOT}" != '' ]
+		then
+			if [ "${CDROOT}" != '0' ]
+			then
+				good_msg "Attempting to mount ${NFSLIKE_FS} CD image on ${NFSROOT}"
+				mount -t ${NFSLIKE_FS} -o ro,nolock,rsize=1024,wsize=1024 ${NFSROOT} ${NEW_ROOT}/mnt/cdrom ||
+					mount -t ${NFSLIKE_FS} -o ro,nolock ${NFSROOT} ${NEW_ROOT}/mnt/cdrom ||
+					mount -t ${NFSLIKE_FS} -o ro ${NFSROOT} ${NEW_ROOT}/mnt/cdrom
+				if [ "$?" = '0' ]
+				then
+					REAL_ROOT="/dev/${NFSLIKE_FS}"
+				else
+					bad_msg "${NFSLIKE_FS} Mounting failed. Is the path corrent ?"
+				fi
+			else	
+				good_msg "Attempting to mount NFS root on ${NFSROOT}"
+				mount -t ${NFSLIKE_FS} -o ro,nolock,rsize=1024,wsize=1024 ${NFSROOT} ${NEW_ROOT} ||
+					mount -t ${NFSLIKE_FS} -o ro,nolock ${NFSROOT} ${NEW_ROOT} ||
+					mount -t ${NFSLIKE_FS} -o ro ${NFSROOT} ${NEW_ROOT}
+				if [ "$?" = '0' ]
+				then
+					REAL_ROOT="/dev/${NFSLIKE_FS}"
+				else
+					bad_msg "${NFSLIKE_FS} Mounting failed. Is the path correct ?"
+				fi
+				# FIXME: Need to start portmap and the other rpc daemons in
+				# order to remount rw.
+			fi
+
+		fi
 	fi
-	wait $pid $pids
-	pid=""
-	pids=""
-	# busybox | mdadm | all raid modules
-	( $cmd_noraid || /sbin/mdadm --assemble 2>/dev/null || /sbin/mdadm --assemble --scan 2>/dev/null ||
-		( mod $(wild "/md/") ; ( /sbin/mdadm --assemble 2>/dev/null || /sbin/mdadm --assemble --scan ) ) ) && USE_MDADM_=""
 }
-
-
+}
 
 detect_fs(){
 	[[ -e /bin/blkid ]] || [[ -e /sbin/blkid ]] || return 1
 	# dmraid/lvm/evms unsure
-	local i md="${USE_MDADM}" dm="${USE_DMRAID_NORMAL}" t=""
+	local i md="${USE_MDADM}" dm="${USE_DMRAID_NORMAL}" t="" nfs="$NFSROOT"
 	for i in $( {
 			if [[ "$cmd_detect_root" == true ]]; then
 				blkid
 			else
-				blkid $cmd_detect_root || blkid -t $cmd_detect_root
-				[[ -n "$REAL_ROOT" ]] && [[ "$REAL_ROOT" != "$cmd_detect_root" ]] && ( blkid $REAL_ROOT || blkid -t $REAL_ROOT )
+				blkid $cmd_detect_root || blkid -t $cmd_detect_root || echo -e "$cmd_detect_root"
+				[[ -n "$REAL_ROOT" ]] && [[ "$REAL_ROOT" != "$cmd_detect_root" ]] && ( blkid $REAL_ROOT || blkid -t $REAL_ROOT || echo -e "$REAL_ROOT" )
 			fi
 	    } 2>/dev/null | sed -e 's:^.* TYPE="\([^"]*\)".*$:\1:g' | sort -u ); do
 		case $i in
-		linux_raid_member|mdraid) md=1 ;; # use right blkid
-		LVM*|EVMS*|lvm*|evms*) dm=1 ;;
+		linux_raid_member|mdraid|/dev/md*) md=1 ;; # use right blkid
+		LVM*|EVMS*|lvm*|evms*|/dev/mapper*|/dev/dm*) dm=1 ;;
 		*raid*)
-			mod $(wild "/$i/") $i
-			md=1
+			mod $(wild "/$i/\|raid") $i
 			dm=1
+		;;
+		/dev/nfs*) nfs=1 ;;
+		/dev/*)
+			i="${i#/dev/}"
+			mod "$i"
+			export NFSLIKE_FS="$i"
+			grep -q "[ 	]$i\$" /proc/filesystems && override_findnfsmount
 		;;
 		swap) ;;
 		*) mod $(wild "/$i/") $i ;;
 		esac
 	done
-	if [[ -n "$dm" ]]; then
-		mod $(wild "/md/dm-")
-		md=1 # ?
+	[[ -n "$nfs" ]] && mod nfs
+	[[ -n "$dm" ]] && mod $(wild "/md/dm-\|raid_class")
+	if [[ -n "$md$dm" ]]; then
+		# maybe dm wrong here, but try
+		if [[ -e '/etc/mdadm.conf' ]]; then
+			mod `( grep " level=" /etc/mdadm.conf || ( /sbin/mdadm --examine --scan -v|grep " level=" ) ) | sed -e 's:^.* level=\([^ ]*\) .*$:\1:g' | sort -u`
+		else
+			/sbin/mdadm --examine --scan -v >/etc/mdadm.conf
+			mod `grep " level=" /etc/mdadm.conf | sed -e 's:^.* level=\([^ ]*\) .*$:\1:g' | sort -u`
+		fi
+		if [[ -n "$md" ]]; then
+			wait $pid $pids
+			pid=""
+			pids=""
+			# busybox | mdadm | all raid modules
+			( $cmd_noraid || /sbin/mdadm --assemble 2>/dev/null || /sbin/mdadm --assemble --scan 2>/dev/null ||
+				( mod $(wild "/md/") ; ( /sbin/mdadm --assemble 2>/dev/null || /sbin/mdadm --assemble --scan ) ) ) && USE_MDADM_=""
+		fi
 	fi
-	[[ -n "$md" ]] && detect_md
 	$cmd_noraid && t=t
 	if [[ -e '/sbin/dmraid' ]]; then
 		wait $pid $pids
@@ -389,7 +465,7 @@ detect_fs(){
 		if /sbin/dmraid -ay$t ${DMRAID_OPTS} >/dev/null ; then
 			USE_DMRAID_NORMAL_=""
 		else
-			mod $(wild "/md/")
+			mod $(wild "/md/\|raid")
 			wait $pid $pids
 			pid=""
 			pids=""
@@ -471,7 +547,8 @@ syspnp(){
 	refresh
 #	good_msg "Filtering pnp modules"
 	while count ; do
-		# do: loadall[=...] or detect_fs or process MY_HWOPTS
+		detect_fs
+		# do: loadall[=...] or process MY_HWOPTS
 		for i in $cmd_loadall ; do
 			[[ "$i" == 'true' ]] && i=''
 			i1="${i%%:*}"
@@ -481,10 +558,7 @@ syspnp(){
 			[[ "$i2" == "$i" ]] && i2='/tcrypt.ko\|/paride/\|/media/\|/sound/\|/microcode\.\|/isdn/\|/net/\|/video/'
 			mod $(wild "$i1" "$i2")
 		done
-		if [[ -z "$cmd_loadall" ]] && [[ "$NODETECT" != '1' ]]; then
-			detect_fs
-			gentoo_compat_hwopts # deprecated?
-		fi
+		[[ -z "$cmd_loadall" ]] && [[ "$NODETECT" != '1' ]] && gentoo_compat_hwopts # deprecated
 		refresh n || break
 		load_aliases
 	done
