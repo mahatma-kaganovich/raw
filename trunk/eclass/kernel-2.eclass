@@ -147,7 +147,7 @@ kernel-2_src_compile() {
 	use build-kernel || return
 	config_defaults
 	einfo "Compiling kernel"
-	kmake bzimage
+	kmake bzImage
 	einfo "Compiling kernel modules"
 	kmake modules ${KERNEL_MODULES_MAKEOPT}
 	einfo "Generating initrd image"
