@@ -42,7 +42,7 @@ DEPEND="${DEPEND}
 	FB_[\w\d_]*_ACCEL -FB_HGA_ACCEL FB_SIS_300 FB_SIS_315 FB_GEODE
 	FB_MB862XX_PCI_GDC
 	-CC_OPTIMIZE_FOR_SIZE
-	-ARCNET -SMB_FS -DEFAULT_CFQ -DEFAULT_AS -DEFAULT_NOOP
+	-SMB_FS -DEFAULT_CFQ -DEFAULT_AS -DEFAULT_NOOP
 	GPIO EZX_PCAP MFD_SM501_GPIO SSB_PCMCIAHOST
 	ISCSI_IBFT_FIND EXT4DEV_COMPAT LDM_PARTITION
 	SCSI_FC_TGT_ATTRS SCSI_SAS_ATA SCSI_SRP_TGT_ATTRS
@@ -72,7 +72,7 @@ DEPEND="${DEPEND}
 	SND_BT87X_OVERCLOCK  SND_HDA_RECONFIG SND_HDA_PATCH_LOADER SND_HDA_POWER_SAVE SND_HDA_INPUT_JACK
 	PSS_MIXER SC6600 SC6600_JOY
 	===bugs:
-	-TR -RADIO_RTRACK
+	-TR
 	===kernel.conf:
 	"}
 : ${KERNEL_MODULES:="+."}
@@ -146,8 +146,9 @@ kernel-2_src_compile() {
 	[[ -n ${cflags} ]] && sed -i -e "s/^\(KBUILD_CFLAGS.*-O.\)/\1 ${cflags}/g" Makefile
 	use build-kernel || return
 	config_defaults
-	einfo "Compiling kernel"
-	kmake all
+	einfo "Compiling kernel modules"
+	kmake modules ${KERNEL_MODULES_MAKEOPT}
+	einfo "Generating initrd image"
 	KV="${KV0}"
 	check_kv
 	local p=""
@@ -187,10 +188,11 @@ kernel-2_src_compile() {
 		cfg 0 INITRAMFS_ROOT_GID
 		cfg y INITRAMFS_COMPRESSION_NONE
 		yes '' 2>/dev/null | kmake oldconfig &>/dev/null
-		kmake bzImage
 	else
 		[[ -e "initrd-${REAL_KV}.cpio" ]] && rename .cpio .img "initrd-${REAL_KV}.cpio"
 	fi
+	einfo "Compiling kernel"
+	kmake bzImage
 }
 
 kernel-2_src_install() {
