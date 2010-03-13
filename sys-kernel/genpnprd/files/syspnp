@@ -177,6 +177,7 @@ pnp_options(){
 	cmd_nofb=false
 	cmd_nopnp=false
 	cmd_unload=false
+	cmd_noraid=false
 	local i v
 	local p="*)PARAM='';;"
 	while [[ -n "$*" ]] ; do
@@ -413,7 +414,7 @@ detect_fs(){
 	# dmraid/lvm/evms unsure
 	local i md="${USE_MDADM}" dm="${USE_DMRAID_NORMAL}" t="" nfs="$NFSROOT"
 	for i in $( {
-			if [[ "$cmd_detect_root" == true ]]; then
+			if [[ "${cmd_detect_root:-true}" == true ]]; then
 				blkid
 			else
 				blkid $cmd_detect_root || blkid -t $cmd_detect_root || echo -e "$cmd_detect_root"
@@ -452,9 +453,10 @@ detect_fs(){
 			wait $pid $pids
 			pid=""
 			pids=""
+			echo -ne "\033[0G\033[0K"
 			# busybox | mdadm | all raid modules
-			( $cmd_noraid || /sbin/mdadm --assemble 2>/dev/null || /sbin/mdadm --assemble --scan 2>/dev/null ||
-				( mod $(wild "/md/") ; ( /sbin/mdadm --assemble 2>/dev/null || /sbin/mdadm --assemble --scan ) ) ) && USE_MDADM_=""
+			( $cmd_noraid || /sbin/mdadm --assemble || /sbin/mdadm --assemble --scan ||
+				( mod $(wild "/md/") ; ( /sbin/mdadm --assemble || /sbin/mdadm --assemble --scan ) ) ) && USE_MDADM_=""
 		fi
 	fi
 	$cmd_noraid && t=t
