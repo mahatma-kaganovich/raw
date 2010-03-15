@@ -1,9 +1,8 @@
 #!/bin/sh
-## pnp modules bootloader v0.12
+## pnp modules bootloader v0.13
 ## (c) Denis Kaganovich, under Anarchy license
 ## consume preprocessed /lib/modules/$KV/modules.alias
 
-[[ -z "$KV" ]] && KV=`uname -r`
 [[ -z "$TMPDIR" ]] && [[ -e /temp ]] && TMPDIR="/temp"
 
 single(){
@@ -191,6 +190,10 @@ pnp_options(){
 		i="${i#*=}"
 		p="*/${i%%:*}.ko)PARAM=\"${i#*:}\";;$p"
 	;;
+	md=*)	v="${i%%=*}"
+		i=`echo "$v"|sed -e 's:[^a-zA-Z0-9_]:_:g'`
+		eval "cmd_$i=\"\$cmd_$i $v\""
+	;;
 	*=*)	v="${i%%=*}"
 		case "$v" in
 		*.*) p="*/${i%%.*}.ko)PARAM=\"${i#*.}\";;$p" ;;
@@ -311,7 +314,7 @@ cpufreq_gov(){
 empty_hwopts(){
 	local i
 	for i in $* ; do
-		echo -ne "" >/etc/modules/$i
+		echo -ne "" >/etc/modules/$i 2>/dev/null
 	done
 }
 
@@ -336,83 +339,60 @@ detect_root(){
 	fi
 }
 
-# modifyed genkernel's function to support other network filesystems (/dev/<filsystem>)
-override_findnfsmount(){
-findnfsmount() {
-	if [ "${IP}" != '' ] || busybox udhcpc -n -T 15 -q
-	then
-		[ -e /rootpath ] && NFSROOT=`cat /rootpath`
-
-		if [ "${NFSROOT}" = '' ]
-		then
-			# Obtain NFSIP	
-			OPTIONS=`busybox dmesg | grep rootserver | sed -e "s/,/ /g"`
-			for OPTION in $OPTIONS
-			do
-				if [ `echo $OPTION | sed -e "s/=/ /g" | cut -d " " -f 1` = 'rootserver' ]
-				then
-					NFSIP=`echo $OPTION | sed -e "s/=/ /g" | cut -d " " -f 2`
-				fi 
-			done
-			
-			# Obtain NFSPATH
-			OPTIONS=`busybox dmesg | grep rootpath | sed -e "s/,/ /g"`	
-			for OPTION in $OPTIONS
-			do
-				if [ `echo $OPTION | sed -e "s/=/ /g" | cut -d " " -f 1` = 'rootpath' ]
-				then
-					NFSPATH=`echo $OPTION | sed -e "s/=/ /g" | cut -d " " -f 2`
-		 		fi
-			done
-
-			# Setup NFSROOT
-			if [ "${NFSIP}" != '' ] && [ "$NFSPATH" != '' ]
-			then
-				NFSROOT="${NFSIP}:${NFSPATH}"
-			else
-				bad_msg "The DHCP Server did not send a valid root-path."
-				bad_msg "Please check your DHCP setup, or provide a nfsroot=<...> parameter."
-			fi
+dhcp_get(){
+	local i r=''
+	for i in `busybox dmesg | grep rootserver | sed -e "s/,/ /g"`; do
+		if [[ "`echo $i | sed -e "s/=/ /g" | cut -d " " -f 1`" == "$1" ]]; then
+			r="`echo "$i" | sed -e "s/=/ /g" | cut -d " " -f 2`"
+			# FIXME: first value will be more balanced, but last - actual in longrun
+			break
 		fi
+	done
+	echo -ne "$r"
+}
 
-		if [ "${NFSROOT}" != '' ]
-		then
-			if [ "${CDROOT}" != '0' ]
-			then
-				good_msg "Attempting to mount ${NFSLIKE_FS} CD image on ${NFSROOT}"
-				mount -t ${NFSLIKE_FS} -o ro,nolock,rsize=1024,wsize=1024 ${NFSROOT} ${NEW_ROOT}/mnt/cdrom ||
-					mount -t ${NFSLIKE_FS} -o ro,nolock ${NFSROOT} ${NEW_ROOT}/mnt/cdrom ||
-					mount -t ${NFSLIKE_FS} -o ro ${NFSROOT} ${NEW_ROOT}/mnt/cdrom
-				if [ "$?" = '0' ]
-				then
-					REAL_ROOT="/dev/${NFSLIKE_FS}"
-				else
-					bad_msg "${NFSLIKE_FS} Mounting failed. Is the path corrent ?"
-				fi
-			else	
-				good_msg "Attempting to mount NFS root on ${NFSROOT}"
-				mount -t ${NFSLIKE_FS} -o ro,nolock,rsize=1024,wsize=1024 ${NFSROOT} ${NEW_ROOT} ||
-					mount -t ${NFSLIKE_FS} -o ro,nolock ${NFSROOT} ${NEW_ROOT} ||
-					mount -t ${NFSLIKE_FS} -o ro ${NFSROOT} ${NEW_ROOT}
-				if [ "$?" = '0' ]
-				then
-					REAL_ROOT="/dev/${NFSLIKE_FS}"
-				else
-					bad_msg "${NFSLIKE_FS} Mounting failed. Is the path correct ?"
-				fi
-				# FIXME: Need to start portmap and the other rpc daemons in
-				# order to remount rw.
-			fi
+# modifyed genkernel's function to support other network filesystems (/dev/<filsystem>)
+findnfsmount() {
+	grep -q "[ 	]${NFSLIKE_FS:=nfs}\$" /proc/filesystems || return 1
+	if [[ -n "$IP" ]] || busybox udhcpc -n -T 15 -q ; then
+		[ -e /rootpath ] && cmd_nfsroot=`cat /rootpath`
 
+		if [[ -z "${cmd_nfsroot:=$(dhcp_get rootserver):$(dhcp_get rootpath)}" ]]; then
+			bad_msg "The DHCP Server did not send a valid root-path."
+			bad_msg "Please check your DHCP setup, or provide a nfsroot=<...> parameter."
+		else
+			local local o m="$NEW_ROOT"
+			[[ "$CDROOT" != '0' ]] && m="$m/mnt/cdrom"
+			good_msg "Attempting to mount $NFSLIKE_FS on $cmd_nfsroot into $m"
+			for o in "ro,nolock,rsize=1024,wsize=1024" "ro,nolock" "ro"; do
+				if mount -t $NFSLIKE_FS -o $o $cmd_nfsroot $m ; then
+					# FIXME: Need to start portmap and the other rpc daemons in
+					# order to remount rw.
+					REAL_ROOT="/dev/$NFSLIKE_FS"
+					return 0
+				fi
+			done
+			bad_msg "$NFSLIKE_FS Mounting failed. Is the path correct ?"
 		fi
 	fi
+	return 1
 }
+
+msg_(){
+	wait $pid $pids
+	pid=""
+	pids=""
+	if $cmd_quiet; then
+		echo -ne "\033[0G"
+	else
+		echo -ne "\033[0G\033[0K"
+		[[ -n "$*" ]] && good_msg "$*"
+	fi
 }
 
 detect_fs(){
-	[[ -e /bin/blkid ]] || [[ -e /sbin/blkid ]] || return 1
 	# dmraid/lvm/evms unsure
-	local i md="${USE_MDADM}" dm="${USE_DMRAID_NORMAL}" t="" nfs="$NFSROOT"
+	local i m="" md="$USE_MDADM" dm="$USE_DMRAID_NORMAL" t="" nfs="$cmd_nfsroot" lvm="$USE_LVM_NORMAL" evms="$USE_EVMS_NORMAL"
 	for i in $( {
 			if [[ "${cmd_detect_root:-true}" == true ]]; then
 				blkid
@@ -422,59 +402,104 @@ detect_fs(){
 			fi
 	    } 2>/dev/null | sed -e 's:^.* TYPE="\([^"]*\)".*$:\1:g' | sort -u ); do
 		case $i in
-		linux_raid_member|mdraid|/dev/md*) md=1 ;; # use right blkid
-		LVM*|EVMS*|lvm*|evms*|/dev/mapper*|/dev/dm*) dm=1 ;;
-		*raid*)
-			mod $(wild "/$i/\|raid") $i
+		linux_raid_member|mdraid|/dev/md*) : md=1 ;; # use right blkid
+		/dev/mapper*|/dev/dm*) : dm=1 ;;
+		EVMS*|evms*)
+			evms=1
 			dm=1
 		;;
-		/dev/nfs*) nfs=1 ;;
+		LVM*|lvm*)
+			lvm=1
+			dm=1
+		;;
+		*raid*)
+			m="$m $(wild "/$i/\|raid") $i"
+			dm=1
+		;;
 		/dev/*)
 			i="${i#/dev/}"
-			mod "$i"
-			export NFSLIKE_FS="$i"
-			grep -q "[ 	]$i\$" /proc/filesystems && override_findnfsmount
+			m="$m $i"
+			NFSLIKE_FS="$i"
+			[[ "$REAL_ROOT" == "$i" ]] && REAL_ROOT=/dev/nfs # compat
 		;;
 		swap) ;;
-		*) mod $(wild "/$i/") $i ;;
+		*) m="$m $(wild "/$i/") $i" ;;
 		esac
 	done
-	[[ -n "$nfs" ]] && mod nfs
-	[[ -n "$dm" ]] && mod $(wild "/md/dm-\|raid_class")
+	[[ -n "$dm" ]] && m="$m dm-mod"
+	# FIXME: IMHO it will be loaded after dmraid failure
+#	[[ -n "$dm" ]] && m=$m $(wild "/md/dm-\|raid_class")"
+	mod $m
+	if [[ -n "$evms" ]]; then
+		msg_ "Activating EVMS"
+		if evms_activate ; then
+			USE_EVMS_NORMAL_=""
+			lvm=""
+			USE_LVM_NORMAL=""
+			USE_LVM_NORMAL_=""
+		fi
+	fi
+	if [[ -n "$lvm" ]]; then
+		msg_ "Activating LVM"
+		if vgscan --ignorelockingfailure --mknodes 2>/dev/null ; then
+			sleep 2
+			vgchange -ay --ignorelockingfailure 2>/dev/null
+			USE_LVM_NORMAL_=""
+			evms=""
+			USE_EVMS_NORMAL=""
+			USE_EVMS_NORMAL_=""
+		fi
+	fi
+	for i in $cmd_md ; do
+		set `echo "$i"|sed -i -e 's:,: :g'`
+		i="$1$2$3$4"
+		if [[ -n "$5" ]] && [[ "${i##*/dev/}" == "$i" ]]; then
+			mod "raid$2"
+			i="$1 --level=$2 --chunk=$3"
+			shift 4
+			i="--build /dev/md$i"
+		else
+			mod $(wild "/md/raid")
+			i="$1"
+			shift
+			[[ "${i#d}" != "$i" ]] && i="${i#d} --run"
+			i="--assemble /dev/md$i"
+		fi
+		msg_
+		mdadm $i --raid-devices=$# $*
+	done
 	if [[ -n "$md$dm" ]]; then
 		# maybe dm wrong here, but try
 		if [[ -e '/etc/mdadm.conf' ]]; then
-			mod `( grep " level=" /etc/mdadm.conf || ( /sbin/mdadm --examine --scan -v|grep " level=" ) ) | sed -e 's:^.* level=\([^ ]*\) .*$:\1:g' | sort -u`
+			mod `( grep " level=" /etc/mdadm.conf || ( mdadm --examine --scan -v|grep " level=" ) ) | sed -e 's:^.* level=\([^ ]*\) .*$:\1:g' | sort -u`
 		else
-			/sbin/mdadm --examine --scan -v >/etc/mdadm.conf
+			mdadm --examine --scan -v >/etc/mdadm.conf
 			mod `grep " level=" /etc/mdadm.conf | sed -e 's:^.* level=\([^ ]*\) .*$:\1:g' | sort -u`
 		fi
 		if [[ -n "$md" ]]; then
-			wait $pid $pids
-			pid=""
-			pids=""
-			echo -ne "\033[0G\033[0K"
+			msg_
 			# busybox | mdadm | all raid modules
-			( $cmd_noraid || /sbin/mdadm --assemble || /sbin/mdadm --assemble --scan ||
-				( mod $(wild "/md/") ; ( /sbin/mdadm --assemble || /sbin/mdadm --assemble --scan ) ) ) && USE_MDADM_=""
+			( $cmd_noraid || mdadm --assemble || mdadm --assemble --scan ||
+				( mod $(wild "/md/") ; ( mdadm --assemble || mdadm --assemble --scan ) ) ) && USE_MDADM_=""
 		fi
 	fi
-	$cmd_noraid && t=t
-	if [[ -e '/sbin/dmraid' ]]; then
-		wait $pid $pids
-		pid=""
-		pids=""
-		if /sbin/dmraid -ay$t ${DMRAID_OPTS} >/dev/null ; then
+	if [ -e /sbin/dmraid -o -e /usr/sbin/dmraid ]; then
+		if $cmd_noraid; then
+			t=t
+			msg_ "Testing Device-Mapper RAID(s)"
+		else
+			msg_ "Activating Device-Mapper RAID(s)"
+		fi
+		if dmraid -ay$t ${DMRAID_OPTS} >/dev/null ; then
 			USE_DMRAID_NORMAL_=""
 		else
 			mod $(wild "/md/\|raid")
-			wait $pid $pids
-			pid=""
-			pids=""
-			/sbin/dmraid -ay$t ${DMRAID_OPTS} && USE_DMRAID_NORMAL_=""
+			msg_
+			dmraid -ay$t ${DMRAID_OPTS} && USE_DMRAID_NORMAL_=""
 		fi
 	fi
-	empty_hwopts fs ataraid dmraid evms lvm mdadm
+	[ -e /bin/blkid -o -e /sbin/blkid ] && empty_hwopts fs
+	empty_hwopts ataraid dmraid evms lvm mdadm
 	return 0
 }
 
@@ -494,7 +519,10 @@ gentoo_compat_hwopts(){
 syspnp(){
 	[[ -e "/lib/modules/${KV}/modules.alias.sh" ]] || return
 	$cmd_nopnp && return
-	local PNP_TMP="${TMPDIR}/pnp.found" NOTLOADED="" CHK=true i i1 i2 gov="" freq="" pid="" pids="" LCOUNT="" REORDER=break USE_MDADM_="${USE_MDADM}" USE_DMRAID_NORMAL_="${USE_DMRAID_NORMAL}"
+	# +some compats
+	local PNP_TMP="${TMPDIR}/pnp.found" NOTLOADED="" CHK=true i i1 i2 gov="" freq="" pid="" pids="" LCOUNT="" REORDER=break USE_MDADM_="${USE_MDADM:=$cmd_domdadm}" USE_DMRAID_NORMAL_="${USE_DMRAID_NORMAL:=$cmd_dodmraid}" USE_EVMS_NORMAL_="${USE_EVMS_NORMAL:=$cmd_doevms} USE_LVM_NORMAL_="${USE_LVM_NORMAL:=$cmd_dolvm}
+	[[ "${USE_DMRAID_NORMAL:-true}" != true ]] && DMRAID_OPTS="$USE_DMRAID_NORMAL"
+	: ${REAL_ROOT:=$cmd_real_root}
 
 	good_msg "Searching pnp"
 	if [[ -e /lib/modules/$KV/modules.dep ]]; then
@@ -568,9 +596,11 @@ syspnp(){
 	MDOLIST=""
 	USE_MDADM="${USE_MDADM_}"
 	USE_DMRAID_NORMAL="${USE_DMRAID_NORMAL_}"
+	USE_LVM_NORMAL="${USE_LVM_NORMAL_}"
+	USE_EVMS_NORMAL="${USE_EVMS_NORMAL_}"
 
 	echo -ne "\033[0G\033[0K"
-	: ${REAL_ROOT:="`detect_root ${cmd_detect_root:-false}`"}
+	: ${REAL_ROOT:="`detect_root ${cmd_detect_root:-false}`"} #"
 	good_msg "Boot time: $(cat /proc/uptime)"
 	if [[ -n "${NOTLOADED}" ]] ; then
 		good_msg "Not loaded:$NOTLOADED"
@@ -581,4 +611,45 @@ syspnp(){
 #	cd /
 }
 
-#[[ "$1" == "init" ]] && syspnp $* # debug
+# minimalistic. debug
+if [[ -z "$KV"  ]] && ! [[ -e /proc/version ]]; then
+NEW_ROOT="/newroot"
+NEW_ROOT_TYPE=auto
+CDROOT=0
+good_msg(){
+echo "$*"
+}
+bad_msg(){
+echo "! $*"
+}
+mount -t proc proc /proc
+mount -o remount,rw,noatime /
+/bin/busybox --install -s
+KV=`uname -r`
+pnp_init
+mount -t sysfs /sys /sys
+echo /sbin/mdev >/proc/sys/kernel/hotplug
+syspnp
+cd /sys
+mdev -s
+cd /
+while true; do
+	[[ "$NEW_ROOT" == shell ]] && sh
+	if [[ -n "$REAL_ROOT" ]] && mkdir "$NEW_ROOT" 2>/dev/null ; then
+		if [[ -z "$NFSLIKE_FS" ]] || ! findnfsmount; then
+			mount -t "$NEW_ROOT_TYPE" -o ro "$REAL_ROOT" "$NEW_ROOT" || rmdir "$NEW_ROOT"
+		fi
+	fi
+	if [[ -e "$NEW_ROOT" ]]; then
+		mod_unload
+		umount /sys
+		umount /proc
+		exec /sbin/switch_root -c /dev/console "$NEW_ROOT" "${cmd_real_init:-/sbin/init}" "$cmd_init_opts"
+		bad_msg "failed to switch root"
+		NEW_ROOT=shell
+	else
+		bad_msg "failed to mount root"
+		read -p "Enter root partition or 'shell':" REAL_ROOT
+	fi
+done
+fi
