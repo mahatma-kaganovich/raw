@@ -368,7 +368,7 @@ findnfsmount() {
 				if mount -t $NFSLIKE_FS -o $o $cmd_nfsroot $m ; then
 					# FIXME: Need to start portmap and the other rpc daemons in
 					# order to remount rw.
-					REAL_ROOT="/dev/$NFSLIKE_FS"
+					REAL_ROOT="/dev/nfs"
 					return 0
 				fi
 			done
@@ -639,6 +639,7 @@ while true; do
 		if [[ -z "$NFSLIKE_FS" ]] || ! findnfsmount; then
 			mount -t "$NEW_ROOT_TYPE" -o ro "$REAL_ROOT" "$NEW_ROOT" || rmdir "$NEW_ROOT"
 		fi
+		[[ "$NEW_ROOT" == /dev/nfs ]] && [[ -e /newroot ]] && NEW_ROOT="/newroot"
 	fi
 	if [[ -e "$NEW_ROOT" ]]; then
 		mod_unload
