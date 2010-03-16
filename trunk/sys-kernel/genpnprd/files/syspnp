@@ -528,7 +528,7 @@ detect_fs(){
 				( mod $(wild "/md/") ; ( mdadm --assemble || mdadm --assemble --scan ) ) ) && USE_MDADM_=""
 		fi
 	fi
-	if [ -e /sbin/dmraid -o -e /usr/sbin/dmraid ]; then
+	if [[ -e /sbin/dmraid ]] || [[ -e /usr/sbin/dmraid ]; then
 		if $cmd_noraid; then
 			t=t
 			msg_ "Testing Device-Mapper RAID(s)"
@@ -614,6 +614,15 @@ set_root_loop(){
 	LOOPTYPE="$4"
 }
 
+# vs. "find" optimization [dis]order
+ordered_modalias(){
+	local i
+	[[ -e "$1/modalias" ]] && mod `cat "$1/modalias"`
+	for i in $1/* ; do
+		[[ -d "$i" ]] && [[ ! -L "$i" ]] && ordered_modalias "$i"
+	done
+}
+
 syspnp(){
 	[[ -e "/lib/modules/${KV}/modules.alias.sh" ]] || return
 	$cmd_nopnp && return
@@ -642,7 +651,9 @@ syspnp(){
 		while count ; do
 			if [[ -n "$REORDER" ]]; then
 				# first pass - strict bus order
-				mod $MDOLIST `cat $(find $SYS_FIND -name modalias -print 2>/dev/null|sort) </dev/null 2>/dev/null|uniq'`
+#				mod $MDOLIST `cat $(find $SYS_FIND -name modalias -print 2>/dev/null|sort) </dev/null 2>/dev/null|uniq`
+				mod $MDOLIST
+				ordered_modalias $SYS_FIND
 				REORDER=""
 				wait $pid $pids
 				pid=""
@@ -652,7 +663,7 @@ syspnp(){
 				pid=""
 				pids=""
 			else
-				mod $MDOLIST `sort -u $(find $SYS_FIND -name modalias -print 2>/dev/null) </dev/null 2>/dev/null'`
+				mod $MDOLIST `sort -u $(find $SYS_FIND -name modalias -print 2>/dev/null) </dev/null 2>/dev/null`
 			fi
 			$cmd_unload && refresh
 			load_misc
