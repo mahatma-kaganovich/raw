@@ -1,5 +1,5 @@
 #!/bin/sh
-## pnp modules bootloader v0.13
+## pnp modules bootloader v0.14
 ## (c) Denis Kaganovich, under Anarchy license
 ## consume preprocessed /lib/modules/$KV/modules.alias
 
@@ -204,6 +204,7 @@ pnp_options(){
 	*) export cmd_`echo "$i"|sed -e 's:[^a-zA-Z0-9_]:_:g'`=true ;;
 	esac
 	done
+	$cmd_nofb && p="*/fb.ko)insmod=false;return 1;;$p"
 	[[ -n "$cmd_noload" ]] && p="*/$(echo "$cmd_noload"|sed -e 's/,/.ko|*\//g').ko)insmod=false;return 1;;$p"
 	echo "modparam(){
 insmod=insmod
@@ -318,24 +319,60 @@ empty_hwopts(){
 	done
 }
 
-detect_root(){
-	local i d="$*"
-	[[ "$d" == false ]] && return 1
-	[[ "$d" == true ]] && d="" && r=""
-	mkdir /DETECT_ROOT
-	for i in `( blkid $d || blkid -t $d || findfs $* || busybox findfs $* ) 2>/dev/null | sed -e "s/:.*$//g"`; do
-		mount -o ro "$i" /DETECT_ROOT >/dev/null 2>&1 || continue
-		grep -q "^$i[ 	]*/[ 	]" /DETECT_ROOT/etc/mtab 2>/dev/null && r="$r $i"
-		umount /DETECT_ROOT >/dev/null 2>&1
-	done
-	rmdir /DETECT_ROOT
-	r="${r# }"
-	if [[ "${r#* }" == "$r" ]]; then
-		echo -ne "$r"
-		return 0
-	else
-		bad_msg "Detected multiple root devices: $r" >&2
+# params: part [loop]
+# out: $DETECTED_LOOPS++, $DETECTED_ROOTS++
+detect_part(){
+	grep -qF ">$*<" "${PNP_TMP}.5" && return 0
+	local l
+	wait $pid $pids
+	pid=""
+	pids=""
+	$cmd_quiet || echo -ne "\033[0G\033[0K$LCOUNT	Inspecting: $1"
+	mkdir /DETECT_ROOT || return 1
+	mount -o ro "$1" /DETECT_ROOT >/dev/null 2>&1 || {
+		rmdir /DETECT_ROOT
 		return 1
+	}
+	echo ">$*<" >>"${PNP_TMP}.5"
+	[[ "${2:-false}" != false ]] && for l in $( {
+		if [[ "$2" == true ]]; then
+			blkid ${LOOPS_}
+		else
+			blkid $2
+		fi
+		} | sed -e 's%^\(.*:\).* TYPE="\([^"]*\)".*$%\1\2%g'
+	    ) ; do
+		DETECTED_LOOPS="$DETECTED_LOOPS $1:${l#/DETECT_ROOT/}"
+		fs="${l#:*}"
+		case "$fs" in
+		ext2) LOOPTYPE=normal ;;
+		*) LOOPTYPE="$fs" ;;
+		esac
+		mod $fs # loop
+	done
+	[[ -e "/DETECT_ROOT/${cmd_real_init:-/sbin/init}" ]] && grep -q "^$1[ 	]*/[ 	]" /DETECT_ROOT/etc/mtab 2>/dev/null && DETECTED_ROOTS="$DETECTED_ROOTS $1"
+#	[[ -e "/DETECT_ROOT/${cmd_real_init:-/sbin/init}" ]] && DETECTED_ROOTS="$DETECTED_ROOTS $1"
+	umount /DETECT_ROOT >/dev/null 2>&1
+	rmdir /DETECT_ROOT
+}
+
+detect_root(){
+	local i d="${cmd_detect_root:-false}" l="$cmd_loop" fs
+	[[ "$d" == true ]] && d=""
+	if [[ "$d" != false ]]; then
+		# if real_root & loop hard-defined - don't probe other loops
+		[[ -n "$REAL_ROOT" ]] && [[ "${l:-true}" != true ]] && l=false
+		# if real_root & loop hard-defined - probe all loops
+#		[[ -n "$REAL_ROOT" ]] && [[ "${l:-true}" != true ]] && l=true
+		for i in `( blkid $d || blkid -t $d || findfs $d || busybox findfs $d ) 2>/dev/null | sed -e 's:^.* TYPE="swap".*$::g' -e 's/:.*$//g'`; do
+			case "$i" in
+			/dev/loop0) ;;
+			*) detect_part "$i" "$l" ;;
+			esac
+		done
+	fi
+	if [[ -n "$REAL_ROOT" ]] && [[ "${cmd_loop:-false}" != false ]]; then
+		detect_part "$REAL_ROOT" "$cmd_loop"
 	fi
 }
 
@@ -498,6 +535,7 @@ detect_fs(){
 			dmraid -ay$t ${DMRAID_OPTS} && USE_DMRAID_NORMAL_=""
 		fi
 	fi
+	detect_root
 	[ -e /bin/blkid -o -e /sbin/blkid ] && empty_hwopts fs
 	empty_hwopts ataraid dmraid evms lvm mdadm
 	return 0
@@ -516,36 +554,8 @@ gentoo_compat_hwopts(){
 	done
 }
 
-syspnp(){
-	[[ -e "/lib/modules/${KV}/modules.alias.sh" ]] || return
-	$cmd_nopnp && return
-	# +some compats
-	local PNP_TMP="${TMPDIR}/pnp.found" NOTLOADED="" CHK=true i i1 i2 gov="" freq="" pid="" pids="" LCOUNT="" REORDER=break USE_MDADM_="${USE_MDADM:=$cmd_domdadm}" USE_DMRAID_NORMAL_="${USE_DMRAID_NORMAL:=$cmd_dodmraid}" USE_EVMS_NORMAL_="${USE_EVMS_NORMAL:=$cmd_doevms}" USE_LVM_NORMAL_="${USE_LVM_NORMAL:=$cmd_dolvm}"
-	[[ "${USE_DMRAID_NORMAL:-true}" != true ]] && DMRAID_OPTS="$USE_DMRAID_NORMAL"
-	: ${REAL_ROOT:=$cmd_real_root}
-
-	good_msg "Searching pnp"
-	if [[ -e /lib/modules/$KV/modules.dep ]]; then
-		# else - pnponly/init
-		. /etc/modprobe.sh
-		override_modprobe
-	fi
-	for i in 0 1 2 3 4 ; do
-		echo -ne "" >"${PNP_TMP}.$i"
-	done
-	refresh n
-
-	if ! $FAST ; then
-		if [[ -n "$MDOLIST" ]]; then
-			mod $MDOLIST
-			refresh
-		fi
-	fi
-	load_aliases
-	empty_hwopts firewire net pata pcmcia sata scsi usb
-
+load_hand_made(){
 	## some hand-made autoloads
-
 	$cmd_nofb || [[ -z "$(cat /proc/fb 2>/dev/null)" ]] || mod fbcon
 	while read i i1 ; do
 		case $i in
@@ -554,7 +564,7 @@ syspnp(){
 #		thermal_sys) mod fan ;;
 		esac
 	done </proc/modules
-    if ! ${cmd_nopowersave:-false}; then
+	${cmd_nopowersave:-false} && return
 	# frost. save your silicon (and power)
 	# autoload cpufreq driver in price of at least one more unload
 	# just speedup probing by vendor
@@ -572,26 +582,87 @@ syspnp(){
 	for i in /sys/devices/system/cpu/sched_*_power_savings ; do
 		[[ -e "$i" ]] && echo 2 >$i 2>/dev/null
 	done
-    fi
+}
 
-	refresh
-#	good_msg "Filtering pnp modules"
-	while count ; do
-		detect_fs
-		# do: loadall[=...] or process MY_HWOPTS
-		for i in $cmd_loadall ; do
-			[[ "$i" == 'true' ]] && i=''
-			i1="${i%%:*}"
-			i2="${i#*:}"
-			[[ -z "$i1" ]] && i1=".*"
-			# default: exclude slow probe, fatal to unload, etc
-			[[ "$i2" == "$i" ]] && i2='/tcrypt.ko\|/paride/\|/media/\|/sound/\|/microcode\.\|/isdn/\|/net/\|/video/'
-			mod $(wild "$i1" "$i2")
-		done
-		[[ -z "$cmd_loadall" ]] && [[ "$NODETECT" != '1' ]] && gentoo_compat_hwopts # deprecated
-		refresh n || break
-		load_aliases
+load_misc(){
+	detect_fs
+	# do: loadall[=...] or process MY_HWOPTS
+	for i in $cmd_loadall ; do
+		[[ "$i" == 'true' ]] && i=''
+		i1="${i%%:*}"
+		i2="${i#*:}"
+		[[ -z "$i1" ]] && i1=".*"
+		# default: exclude slow probe, fatal to unload, etc
+		[[ "$i2" == "$i" ]] && i2='/tcrypt.ko\|/paride/\|/media/\|/sound/\|/microcode\.\|/isdn/\|/net/\|/video/'
+		mod $(wild "$i1" "$i2")
 	done
+	[[ -z "$cmd_loadall" ]] && [[ "$NODETECT" != '1' ]] && gentoo_compat_hwopts # deprecated
+}
+
+set_root_loop(){
+	set 1 `echo "$1"|sed -e 's/:/ /g'`
+	REAL_ROOT="$2"
+	LOOP="$3"
+	LOOPTYPE="$4"
+}
+
+syspnp(){
+	[[ -e "/lib/modules/${KV}/modules.alias.sh" ]] || return
+	$cmd_nopnp && return
+	# +some compats
+	local PNP_TMP="${TMPDIR}/pnp.found" NOTLOADED="" CHK=true i i1 i2 gov="" freq="" pid="" pids="" LCOUNT="" REORDER=break USE_MDADM_="${USE_MDADM:=$cmd_domdadm}" USE_DMRAID_NORMAL_="${USE_DMRAID_NORMAL:=$cmd_dodmraid}" USE_EVMS_NORMAL_="${USE_EVMS_NORMAL:=$cmd_doevms}" USE_LVM_NORMAL_="${USE_LVM_NORMAL:=$cmd_dolvm}" LOOPS_=""
+	[[ "${USE_DMRAID_NORMAL:-true}" != true ]] && DMRAID_OPTS="$USE_DMRAID_NORMAL"
+	: ${REAL_ROOT:=$cmd_real_root}
+	for i in ${LOOPS:-"/*"}; do
+		LOOPS_="${LOOPS_} /DETECT_ROOT$i"
+	done
+
+	good_msg "Searching pnp"
+	if [[ -e /lib/modules/$KV/modules.dep ]]; then
+		# else - pnponly/init
+		. /etc/modprobe.sh
+		override_modprobe
+	fi
+	for i in 0 1 2 3 4 5; do
+		echo -ne "" >"${PNP_TMP}.$i"
+	done
+
+	empty_hwopts firewire net pata pcmcia sata scsi usb
+	if $FAST && ! $cmd_unload; then
+		while count ; do
+			mod $MDOLIST `sort -u $(find /sys -name modalias -print 2>/dev/null) </dev/null 2>/dev/null'`
+			if [[ -n "$REORDER" ]]; then
+				REORDER=""
+				wait $pid $pids
+				pid=""
+				pids=""
+				load_hand_made
+				wait $pid $pids
+				pid=""
+				pids=""
+			fi
+			load_misc
+			refresh || break
+		done
+	else
+		# non-pnp tracking mode & hardware-paranoid
+		refresh n
+		if ! $FAST ; then
+			if [[ -n "$MDOLIST" ]]; then
+				mod $MDOLIST
+				refresh
+			fi
+		fi
+		load_aliases
+		load_hand_made
+		refresh
+		while count ; do
+			load_misc
+			refresh n || break
+			load_aliases
+		done
+	fi
+
 	MY_HWOPTS=""
 	MDOLIST=""
 	USE_MDADM="${USE_MDADM_}"
@@ -600,7 +671,21 @@ syspnp(){
 	USE_EVMS_NORMAL="${USE_EVMS_NORMAL_}"
 
 	echo -ne "\033[0G\033[0K"
-	: ${REAL_ROOT:="`detect_root ${cmd_detect_root:-false}`"} #"
+
+	# assign detected root/loop
+	if [[ -z "$REAL_ROOT" ]]; then
+		DETECTED_ROOTS="${DETECTED_ROOTS# }"
+		DETECTED_LOOPS="${DETECTED_LOOPS# }"
+		[[ "${DETECTED_ROOTS#* }" == "$DETECTED_ROOTS" ]] && DETECTED_ROOT="$DETECTED_ROOTS"
+		[[ "${DETECTED_LOOPS#* }" == "$DETECTED_LOOPS" ]] && DETECTED_LOOP="$DETECTED_LOOPS"
+		[[ "${cmd_loop:-true}" == true ]] && REAL_ROOT="$DETECTED_ROOT"
+		( [[ "$cmd_loop" != true ]] || [[ -z "$DETECTED_ROOTS" ]] ) && [[ -z "$REAL_ROOT" ]] && set_root_loop "$DETECTED_LOOP"
+		if [[ -z "$REAL_ROOT" ]]; then
+			[[ -n "$DETECTED_ROOTS" ]] && bad_msg "Detected possible root devices: $DETECTED_ROOTS"
+			[[ -n "$DETECTED_LOOPS" ]] && bad_msg "Detected loopbacks: $DETECTED_LOOPS"
+		fi
+	fi
+
 	good_msg "Boot time: $(cat /proc/uptime)"
 	if [[ -n "${NOTLOADED}" ]] ; then
 		good_msg "Not loaded:$NOTLOADED"
@@ -623,7 +708,7 @@ bad_msg(){
 echo "! $*"
 }
 mount -t proc proc /proc
-mount -o remount,rw,noatime /
+mount -o remount,rw,noatime / 2>/dev/null
 /bin/busybox --install -s
 KV=`uname -r`
 pnp_init
@@ -633,24 +718,48 @@ syspnp
 cd /sys
 mdev -s
 cd /
+: ${cmd_real_init:=/sbin/init}
 while true; do
-	[[ "$NEW_ROOT" == shell ]] && sh
 	if [[ -n "$REAL_ROOT" ]] && mkdir "$NEW_ROOT" 2>/dev/null ; then
 		if [[ -z "$NFSLIKE_FS" ]] || ! findnfsmount; then
 			mount -t "$NEW_ROOT_TYPE" -o ro "$REAL_ROOT" "$NEW_ROOT" || rmdir "$NEW_ROOT"
 		fi
 		[[ "$NEW_ROOT" == /dev/nfs ]] && [[ -e /newroot ]] && NEW_ROOT="/newroot"
+		if [[ -e "$NEW_ROOT" ]] && [[ -n "$LOOP" ]]; then
+			LOOP_ROOT="$NEW_ROOT/mnt/livecd"
+			if ! [[ -e "$LOOP_ROOT" ]]; then
+				LOOP_ROOT="$NEW_ROOT.loop"
+				mkdir "$LOOP_ROOT"
+			fi
+			if ! ( [[ -e "$LOOP_ROOT" ]] && mount -o loop,ro "/newroot/$LOOP" "$LOOP_ROOT" && [[ -e "$LOOP_ROOT$cmd_real_init" ]] ) ; then
+				umount "$LOOP_ROOT"
+				rmdir "$LOOP_ROOT"
+				umount "$NEW_ROOT"
+				rmdir "$NEW_ROOT"
+				rmdir "$LOOP_ROOT"
+				LOOP_ROOT=""
+			fi
+		fi
 	fi
-	if [[ -e "$NEW_ROOT" ]]; then
+	if [[ -n "$LOOP_ROOT" ]] && [[ -e "$LOOP_ROOT" ]]; then
 		mod_unload
 		umount /sys
 		umount /proc
-		exec /sbin/switch_root -c /dev/console "$NEW_ROOT" "${cmd_real_init:-/sbin/init}" "$cmd_init_opts"
+		[[ -e /lib.loopfs ]] && mkdir /lib.rc && mount -o loop /lib.loopfs /lib.rc && link_dir /lib.rc /lib
+		link_dir "$LOOP_ROOT"
+		exec "$cmd_real_init" "$cmd_init_opts"
+	elif [[ -e "$NEW_ROOT" ]]; then
+		mod_unload
+		umount /sys
+		umount /proc
+		exec /sbin/switch_root -c /dev/console "$NEW_ROOT" "$cmd_real_init" "$cmd_init_opts"
 		bad_msg "failed to switch root"
-		NEW_ROOT=shell
+		sh
 	else
 		bad_msg "failed to mount root"
 		read -p "Enter root partition or 'shell':" REAL_ROOT
+		set_root_loop "$REAL_ROOT"
+		[[ "$REAL_ROOT" == shell ]] && sh
 	fi
 done
 fi
