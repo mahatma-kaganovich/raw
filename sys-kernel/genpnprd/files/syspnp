@@ -360,6 +360,10 @@ detect_part(){
 	rmdir /DETECT_ROOT
 }
 
+part_(){
+	( blkid $1 || blkid -t "$1" || findfs "$1" || busybox findfs "$1" ) 2>/dev/null | sed -e 's:^.* TYPE="swap".*$::g' -e 's/:.*$//g'
+}
+
 detect_root(){
 	local i d="${cmd_detect_root:-false}" l="$cmd_loop" fs
 	[[ "$d" == true ]] && d=""
@@ -368,7 +372,7 @@ detect_root(){
 		[[ -n "$REAL_ROOT" ]] && [[ "${l:-true}" != true ]] && l=false
 		# if real_root & loop hard-defined - probe all loops
 #		[[ -n "$REAL_ROOT" ]] && [[ "${l:-true}" != true ]] && l=true
-		for i in `( blkid $d || blkid -t $d || findfs $d || busybox findfs $d ) 2>/dev/null | sed -e 's:^.* TYPE="swap".*$::g' -e 's/:.*$//g'`; do
+		for i in `part_ "$d"`; do
 			case "$i" in
 			/dev/loop0) ;;
 			*) detect_part "$i" "$l" ;;
@@ -376,7 +380,7 @@ detect_root(){
 		done
 	fi
 	if [[ -n "$REAL_ROOT" ]] && [[ "${cmd_loop:-false}" != false ]]; then
-		detect_part "$REAL_ROOT" "$cmd_loop"
+		detect_part "$(part_ "$REAL_ROOT")" "$cmd_loop"
 	fi
 }
 
