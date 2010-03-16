@@ -5,6 +5,10 @@
 
 [[ -z "$TMPDIR" ]] && [[ -e /temp ]] && TMPDIR="/temp"
 
+## millisecons
+#SYS_FIND="/sys"
+SYS_FIND=/sys/devices
+
 single(){
 	grep -qF ">$1<" "${PNP_TMP}.$2" && return 1
 	echo ">$1<" >>"${PNP_TMP}.$2"
@@ -77,7 +81,7 @@ refresh(){
 
 	if $FAST ; then
 		sed -e 's%^\([^ 	]*\)[	 ]*.*$%>\1<%g' </proc/modules >"${PNP_TMP}".1
-		cat `grep -ls "^DRIVER=" $(find /sys -name uevent -print 2>/dev/null) </dev/null` </dev/null |grep "^DRIVER=\|^MODALIAS="|sed -e 's%-%_%g' -e 's%^.*=\(.*\)$%>\1<%g' >>"${PNP_TMP}".1
+		cat `grep -ls "^DRIVER=" $(find $SYS_FIND -name uevent -print 2>/dev/null) </dev/null` </dev/null |grep "^DRIVER=\|^MODALIAS="|sed -e 's%-%_%g' -e 's%^.*=\(.*\)$%>\1<%g' >>"${PNP_TMP}".1
 		if [[ "$(cat ${PNP_TMP}.1 /proc/partitions)" == "$(cat ${PNP_TMP}.2)" ]] ; then
 			cat "${PNP_TMP}".3 "${PNP_TMP}".4 >"${PNP_TMP}".0
 			return 1
@@ -125,9 +129,9 @@ load_aliases(){
 	while  count ; do
 		if $FAST ; then
 			# "sort -u" breaks bus order, but speedup boot
-			mod $MDOLIST `sort -u $(find /sys -name modalias -print 2>/dev/null) </dev/null 2>/dev/null'`
+			mod $MDOLIST `sort -u $(find $SYS_FIND -name modalias -print 2>/dev/null) </dev/null 2>/dev/null'`
 		else
-		for i in `find /sys -name modalias -print 2>/dev/null` ; do
+		for i in `find $SYS_FIND -name modalias -print 2>/dev/null` ; do
 			if [[ -e "$i" ]] && read m <"$i" ; then
 				mod $m
 			fi
@@ -177,6 +181,7 @@ pnp_options(){
 	cmd_nopnp=false
 	cmd_unload=false
 	cmd_noraid=false
+	cmd_real_init=/sbin/init
 	local i v
 	local p="*)PARAM='';;"
 	while [[ -n "$*" ]] ; do
@@ -190,9 +195,8 @@ pnp_options(){
 		i="${i#*=}"
 		p="*/${i%%:*}.ko)PARAM=\"${i#*:}\";;$p"
 	;;
-	md=*)	v="${i%%=*}"
-		i=`echo "$v"|sed -e 's:[^a-zA-Z0-9_]:_:g'`
-		eval "cmd_$i=\"\$cmd_$i $v\""
+	md=*)	v="cmd_${i%%=*}"
+		eval "$v=\"\$$v ${i#*=}\""
 	;;
 	*=*)	v="${i%%=*}"
 		case "$v" in
@@ -350,8 +354,8 @@ detect_part(){
 		esac
 		mod $fs # loop
 	done
-	[[ -e "/DETECT_ROOT/${cmd_real_init:-/sbin/init}" ]] && grep -q "^$1[ 	]*/[ 	]" /DETECT_ROOT/etc/mtab 2>/dev/null && DETECTED_ROOTS="$DETECTED_ROOTS $1"
-#	[[ -e "/DETECT_ROOT/${cmd_real_init:-/sbin/init}" ]] && DETECTED_ROOTS="$DETECTED_ROOTS $1"
+	[[ -e "/DETECT_ROOT/$cmd_real_init" ]] && grep -q "^$1[ 	]*/[ 	]" /DETECT_ROOT/etc/mtab 2>/dev/null && DETECTED_ROOTS="$DETECTED_ROOTS $1"
+#	[[ -e "/DETECT_ROOT/$cmd_real_init" ]] && DETECTED_ROOTS="$DETECTED_ROOTS $1"
 	umount /DETECT_ROOT >/dev/null 2>&1
 	rmdir /DETECT_ROOT
 }
@@ -628,10 +632,13 @@ syspnp(){
 	done
 
 	empty_hwopts firewire net pata pcmcia sata scsi usb
-	if $FAST && ! $cmd_unload; then
+	if $FAST; then
+		# this way too fast
+		$cmd_unload && refresh n
 		while count ; do
-			mod $MDOLIST `sort -u $(find /sys -name modalias -print 2>/dev/null) </dev/null 2>/dev/null'`
 			if [[ -n "$REORDER" ]]; then
+				# first pass - strict bus order
+				mod $MDOLIST `cat $(find $SYS_FIND -name modalias -print 2>/dev/null|sort) </dev/null 2>/dev/null|uniq'`
 				REORDER=""
 				wait $pid $pids
 				pid=""
@@ -640,18 +647,18 @@ syspnp(){
 				wait $pid $pids
 				pid=""
 				pids=""
+			else
+				mod $MDOLIST `sort -u $(find $SYS_FIND -name modalias -print 2>/dev/null) </dev/null 2>/dev/null'`
 			fi
+			$cmd_unload && refresh
 			load_misc
-			refresh || break
+			refresh n || break
 		done
 	else
-		# non-pnp tracking mode & hardware-paranoid
 		refresh n
-		if ! $FAST ; then
-			if [[ -n "$MDOLIST" ]]; then
-				mod $MDOLIST
-				refresh
-			fi
+		if [[ -n "$MDOLIST" ]]; then
+			mod $MDOLIST
+			refresh
 		fi
 		load_aliases
 		load_hand_made
@@ -718,7 +725,6 @@ syspnp
 cd /sys
 mdev -s
 cd /
-: ${cmd_real_init:=/sbin/init}
 while true; do
 	if [[ -n "$REAL_ROOT" ]] && mkdir "$NEW_ROOT" 2>/dev/null ; then
 		if [[ -z "$NFSLIKE_FS" ]] || ! findnfsmount; then
@@ -753,13 +759,13 @@ while true; do
 		umount /sys
 		umount /proc
 		exec /sbin/switch_root -c /dev/console "$NEW_ROOT" "$cmd_real_init" "$cmd_init_opts"
-		bad_msg "failed to switch root"
-		sh
 	else
 		bad_msg "failed to mount root"
 		read -p "Enter root partition or 'shell':" REAL_ROOT
 		set_root_loop "$REAL_ROOT"
-		[[ "$REAL_ROOT" == shell ]] && sh
+		[[ "$REAL_ROOT" == shell ]] || continue
 	fi
+	bad_msg "failed to switch root"
+	sh
 done
 fi
