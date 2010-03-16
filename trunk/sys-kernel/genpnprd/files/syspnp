@@ -520,7 +520,7 @@ syspnp(){
 	[[ -e "/lib/modules/${KV}/modules.alias.sh" ]] || return
 	$cmd_nopnp && return
 	# +some compats
-	local PNP_TMP="${TMPDIR}/pnp.found" NOTLOADED="" CHK=true i i1 i2 gov="" freq="" pid="" pids="" LCOUNT="" REORDER=break USE_MDADM_="${USE_MDADM:=$cmd_domdadm}" USE_DMRAID_NORMAL_="${USE_DMRAID_NORMAL:=$cmd_dodmraid}" USE_EVMS_NORMAL_="${USE_EVMS_NORMAL:=$cmd_doevms} USE_LVM_NORMAL_="${USE_LVM_NORMAL:=$cmd_dolvm}
+	local PNP_TMP="${TMPDIR}/pnp.found" NOTLOADED="" CHK=true i i1 i2 gov="" freq="" pid="" pids="" LCOUNT="" REORDER=break USE_MDADM_="${USE_MDADM:=$cmd_domdadm}" USE_DMRAID_NORMAL_="${USE_DMRAID_NORMAL:=$cmd_dodmraid}" USE_EVMS_NORMAL_="${USE_EVMS_NORMAL:=$cmd_doevms}" USE_LVM_NORMAL_="${USE_LVM_NORMAL:=$cmd_dolvm}"
 	[[ "${USE_DMRAID_NORMAL:-true}" != true ]] && DMRAID_OPTS="$USE_DMRAID_NORMAL"
 	: ${REAL_ROOT:=$cmd_real_root}
 
