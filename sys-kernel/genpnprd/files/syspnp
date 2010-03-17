@@ -607,12 +607,10 @@ syspnp(){
 	while count && refresh; do
 		fast_modalias
 	done
+	REFRESH_SAME=''
 	while count ; do
 		if [[ -n "$REORDER" ]]; then
 			REORDER=""
-			wait $pid $pids
-			pid=""
-			pids=""
 			load_hand_made
 			wait $pid $pids
 			pid=""
