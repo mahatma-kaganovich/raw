@@ -66,11 +66,6 @@ Current defaults checked by kernel 2.6.20 (kerrighed-sources).
 Known problem: when frambuffer devices and/or fbcon are modules - tty1
 (and console 1) is "dumb terminal" (but ALT-F2 is OK).
 
-From v0.1 (cmdline "slow", requred for old kernels - 2.6.20/etc)
-"usb-storage" forced to loading after other hardware (to prevent flashes
-to boot device substitution). For live USB storage add
-"doload=usb-storage" to kernel command line to load this module before others.
-
 === Compiling.
 
 Compiling must be usual "make all" + "genkernel ramdisk",
@@ -104,6 +99,10 @@ deprecated, now vs. new bugs), "parallel-startup[={0|1|2}]" (module parallel
 loading mode: 0-none, 1-normal, 2-agressive), "nopowersave" (disable
 powersaving/cpufreq preset), "detect_root[=...]" (root autodetection, with param -
 like real_root, but detect fs only on given device).
+
+To resolve problems around "quiet": "quiet=false".
+Raids trying to autodetect+assemble, to disable assemble try "noraid" cmd.
+Also you can try minimal "init=/etc/syspnp".
 
 P.S. Defaults are subject to change.
 .

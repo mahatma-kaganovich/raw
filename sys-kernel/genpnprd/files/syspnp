@@ -25,48 +25,30 @@ mod(){
 			echo ">$m<" >>"${PNP_TMP}".4
 			continue
 		}
-		if $FAST ; then
-			case $PARALLEL in
-			no) ;;
-			0) ;;
-			2)
-				m2=""
-				for m1 in $ALIAS ; do
-					modparam $m1
-					m2="$m2 $insmod "$m1" $PARAM ;"
-				done
-				eval "( ${m2%;} ) >/dev/null 2>&1 &"
-				pids="$pids$! "
-				continue
-			;;
-			*)
-				pids="$pids$pid "
-				pid=""
-			;;
-			esac
-			
+		case $PARALLEL in
+		no|0) ;;
+		2)
+			m2=""
 			for m1 in $ALIAS ; do
 				modparam $m1
-				wait $pid
-				$cmd_quiet || echo -ne "\033[0G\033[0K$LCOUNT	$m1 $PARAM"
-				$insmod "$m1" $PARAM >/dev/null 2>&1 &
-				pid="$!"
+				m2="$m2 $insmod "$m1" $PARAM ;"
 			done
-		else
-		if ! [[ $PARALLEL == 0 ]] ; then
+			eval "( ${m2%;} ) >/dev/null 2>&1 &"
+			pids="$pids$! "
+			continue
+		;;
+		*)
 			pids="$pids$pid "
 			pid=""
-		fi
+		;;
+		esac
 		for m1 in $ALIAS ; do
-			m2=`echo -ne "$m1" | sed -e 's:.*/::g' -e 's/-/_/g' -e 's/\...$//'`
-			[[ "$m" == "$m2" ]] || single "$m2" 0 || continue
 			modparam $m1
 			wait $pid
 			$cmd_quiet || echo -ne "\033[0G\033[0K$LCOUNT	$m1 $PARAM"
 			$insmod "$m1" $PARAM >/dev/null 2>&1 &
 			pid="$!"
 		done
-		fi
 	done
 }
 
@@ -79,42 +61,28 @@ refresh(){
 	pid=""
 	pids=""
 
-	if $FAST ; then
-		sed -e 's%^\([^ 	]*\)[	 ]*.*$%>\1<%g' </proc/modules >"${PNP_TMP}".1
-		cat `grep -ls "^DRIVER=" $(find $SYS_FIND -name uevent -print 2>/dev/null) </dev/null` </dev/null |grep "^DRIVER=\|^MODALIAS="|sed -e 's%-%_%g' -e 's%^.*=\(.*\)$%>\1<%g' >>"${PNP_TMP}".1
-		if [[ "$(cat ${PNP_TMP}.1 /proc/partitions)" == "$(cat ${PNP_TMP}.2)" ]] ; then
-			cat "${PNP_TMP}".3 "${PNP_TMP}".4 >"${PNP_TMP}".0
-			return 1
-		fi
-		sort -u "${PNP_TMP}".1 >"${PNP_TMP}".0
-		if ! $cmd_quiet ; then
-			echo -ne "\033[0G\033[0K${BOLD}   ::${NORMAL}Loaded:"
-			for i in $(sort -m ${PNP_TMP}.0 ${PNP_TMP}.3 | uniq -u) ; do
-				[[ "$1" == "n" ]] && echo "$i" >>/nopnp.lst
-				i="${i#>}"
-				i="${i%<}"
-				echo -ne " $i"
-			done
-			echo ""
-		elif $cmd_unload && [[ "$1" == "n" ]] ; then
-			sort -m ${PNP_TMP}.0 ${PNP_TMP}.3 | uniq -u >>/nopnp.lst
-		fi
-		cat "${PNP_TMP}".1 /proc/partitions >"${PNP_TMP}".2
-		cp "${PNP_TMP}".0 "${PNP_TMP}".3
-		cat "${PNP_TMP}".4 >>"${PNP_TMP}".0
-		return 0
+	sed -e 's%^\([^ 	]*\)[	 ]*.*$%>\1<%g' </proc/modules >"${PNP_TMP}".1
+	cat `grep -ls "^DRIVER=" $(find $SYS_FIND -name uevent -print 2>/dev/null) </dev/null` </dev/null |grep "^DRIVER=\|^MODALIAS="|sed -e 's%-%_%g' -e 's%^.*=\(.*\)$%>\1<%g' >>"${PNP_TMP}".1
+	if [[ "$(cat ${PNP_TMP}.1 /proc/partitions)" == "$(cat ${PNP_TMP}.2)" ]] ; then
+		cat "${PNP_TMP}".3 "${PNP_TMP}".4 >"${PNP_TMP}".0
+		return 1
 	fi
-
-	l="\033[0G\033[0K${BOLD}   ::${NORMAL}Loaded:"
-	while read i j; do
-		single "$i" 1 || continue
-		[[ "$1" == "n" ]] && echo "$i" >>/nopnp.lst
-		$cmd_quiet || echo -ne "$l $i"
-		l=""
-	done </proc/modules
-	cp "${PNP_TMP}".1 "${PNP_TMP}".0
-	[[ -z "$l" ]] || return 1
-	$cmd_quiet || echo ""
+	sort -u "${PNP_TMP}".1 >"${PNP_TMP}".0
+	if ! $cmd_quiet ; then
+		echo -ne "\033[0G\033[0K${BOLD}   ::${NORMAL}Loaded:"
+		for i in $(sort -m ${PNP_TMP}.0 ${PNP_TMP}.3 | uniq -u) ; do
+			[[ "$1" == "n" ]] && echo "$i" >>/nopnp.lst
+			i="${i#>}"
+			i="${i%<}"
+			echo -ne " $i"
+		done
+		echo ""
+	elif $cmd_unload && [[ "$1" == "n" ]] ; then
+		sort -m ${PNP_TMP}.0 ${PNP_TMP}.3 | uniq -u >>/nopnp.lst
+	fi
+	cat "${PNP_TMP}".1 /proc/partitions >"${PNP_TMP}".2
+	cp "${PNP_TMP}".0 "${PNP_TMP}".3
+	cat "${PNP_TMP}".4 >>"${PNP_TMP}".0
 	return 0
 }
 
@@ -122,26 +90,6 @@ count(){
 	[[ "${LCOUNT#????????????????}" == "${LCOUNT}" ]] && return 0
 	bad_msg "Deadloop?"
 	return 1
-}
-
-load_aliases(){
-	local i m
-	while  count ; do
-		if $FAST ; then
-			# "sort -u" breaks bus order, but speedup boot
-			mod $MDOLIST `sort -u $(find $SYS_FIND -name modalias -print 2>/dev/null) </dev/null 2>/dev/null'`
-		else
-		for i in `find $SYS_FIND -name modalias -print 2>/dev/null` ; do
-			if [[ -e "$i" ]] && read m <"$i" ; then
-				mod $m
-			fi
-		done
-		mod $MDOLIST
-		fi
-		REORDER=""
-		refresh || break
-		[[ -n "$SDELAY" ]] && sleep "$SDELAY"
-	done
 }
 
 mod_unload(){
@@ -176,7 +124,6 @@ mod_unload(){
 
 pnp_options(){
 	PARALLEL=0
-	FAST=true
 	cmd_nofb=false
 	cmd_nopnp=false
 	cmd_unload=false
@@ -188,7 +135,6 @@ pnp_options(){
 	i="$1"
 	shift
 	case "$i" in
-	slow) FAST=false ;;
 	parallel-startup) PARALLEL=1 ;;
 	parallel-startup=*) PARALLEL="${i#*=}" ;;
 	moduleparam=*)
@@ -205,6 +151,7 @@ pnp_options(){
 		esac
 	;;
 	*.*) p="*/${i%%.*}.ko)PARAM=\"${i#*.}\";;$p" ;;
+	scandelay) cmd_scandelay=10 ;;
 	*) export cmd_`echo "$i"|sed -e 's:[^a-zA-Z0-9_]:_:g'`=true ;;
 	esac
 	done
@@ -617,8 +564,8 @@ set_root_loop(){
 # vs. "find" optimization [dis]order
 ordered_modalias(){
 	local i
-	[[ -e "$1/modalias" ]] && mod `cat "$1/modalias"`
-	for i in $1/* ; do
+	[[ -e "$1/modalias" ]] && ! grep -q "^DRIVER=." "$1/uevent" 2>/dev/null && mod `cat "$1/modalias"`
+	for i in "$1"/* ; do
 		[[ -d "$i" ]] && [[ ! -L "$i" ]] && ordered_modalias "$i"
 	done
 }
@@ -645,45 +592,29 @@ syspnp(){
 	done
 
 	empty_hwopts firewire net pata pcmcia sata scsi usb
-	if $FAST; then
-		# this way too fast
-		$cmd_unload && refresh n
-		while count ; do
-			if [[ -n "$REORDER" ]]; then
-				# first pass - strict bus order
-#				mod $MDOLIST `cat $(find $SYS_FIND -name modalias -print 2>/dev/null|sort) </dev/null 2>/dev/null|uniq`
-				mod $MDOLIST
-				ordered_modalias $SYS_FIND
-				REORDER=""
-				wait $pid $pids
-				pid=""
-				pids=""
-				load_hand_made
-				wait $pid $pids
-				pid=""
-				pids=""
-			else
-				mod $MDOLIST `sort -u $(find $SYS_FIND -name modalias -print 2>/dev/null) </dev/null 2>/dev/null`
-			fi
-			$cmd_unload && refresh
-			load_misc
-			refresh n || break
-		done
-	else
-		refresh n
-		if [[ -n "$MDOLIST" ]]; then
-			mod $MDOLIST
-			refresh
+	$cmd_unload && refresh n
+	while count ; do
+		if [[ -n "$REORDER" ]]; then
+			# first pass - strict bus order
+#			mod $MDOLIST `cat $(find $SYS_FIND -name modalias -print 2>/dev/null|sort) </dev/null 2>/dev/null|uniq`
+			[[ -n "$MDOLIST" ]] && mod $MDOLIST
+			ordered_modalias $SYS_FIND
+			REORDER=""
+			wait $pid $pids
+			pid=""
+			pids=""
+			load_hand_made
+			wait $pid $pids
+			pid=""
+			pids=""
+		else
+			mod $MDOLIST `sort -u $(find $SYS_FIND -name modalias -print 2>/dev/null) </dev/null 2>/dev/null`
 		fi
-		load_aliases
-		load_hand_made
-		refresh
-		while count ; do
-			load_misc
-			refresh n || break
-			load_aliases
-		done
-	fi
+		$cmd_unload && refresh
+		load_misc
+		refresh n || break
+		[[ -n "$cmd_scandelay" ]] && sleep "$cmd_scandelay"
+	done
 
 	MY_HWOPTS=""
 	MDOLIST=""
@@ -730,7 +661,7 @@ bad_msg(){
 echo "! $*"
 }
 mount -t proc proc /proc
-mount -o remount,rw,noatime / 2>/dev/null
+mount -o remount,rw,noatime / 2>/dev/null || mount -o remount,rw,noatime,xip,acl /dev/ram0 / 2>/dev/null
 /bin/busybox --install -s
 KV=`uname -r`
 pnp_init
@@ -757,7 +688,6 @@ while true; do
 				rmdir "$LOOP_ROOT"
 				umount "$NEW_ROOT"
 				rmdir "$NEW_ROOT"
-				rmdir "$LOOP_ROOT"
 				LOOP_ROOT=""
 			fi
 		fi
