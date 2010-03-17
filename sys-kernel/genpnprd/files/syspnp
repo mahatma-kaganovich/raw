@@ -56,7 +56,7 @@ refresh(){
 	LCOUNT="${LCOUNT}."
 	echo -ne "\033[0G\033[0K$LCOUNT"
 	local i j l
-	
+
 	wait $pid $pids
 	pid=""
 	pids=""
@@ -65,7 +65,9 @@ refresh(){
 	cat `grep -ls "^DRIVER=" $(find $SYS_FIND -name uevent -print 2>/dev/null) </dev/null` </dev/null |grep "^DRIVER=\|^MODALIAS="|sed -e 's%-%_%g' -e 's%^.*=\(.*\)$%>\1<%g' >>"${PNP_TMP}".1
 	if [[ "$(cat ${PNP_TMP}.1 /proc/partitions)" == "$(cat ${PNP_TMP}.2)" ]] ; then
 		cat "${PNP_TMP}".3 "${PNP_TMP}".4 >"${PNP_TMP}".0
-		return 1
+		[[ "$REFRESH_SAME$1" == "n" ]] || return 1
+		REFRESH_SAME=1
+		return 0
 	fi
 	sort -u "${PNP_TMP}".1 >"${PNP_TMP}".0
 	if ! $cmd_quiet ; then
@@ -83,6 +85,7 @@ refresh(){
 	cat "${PNP_TMP}".1 /proc/partitions >"${PNP_TMP}".2
 	cp "${PNP_TMP}".0 "${PNP_TMP}".3
 	cat "${PNP_TMP}".4 >>"${PNP_TMP}".0
+	REFRESH_SAME=''
 	return 0
 }
 
@@ -570,11 +573,16 @@ ordered_modalias(){
 	done
 }
 
+fast_modalias(){
+	mod $MDOLIST `sort -u $(find $SYS_FIND -name modalias -print 2>/dev/null) </dev/null 2>/dev/null`
+#	mod $MDOLIST `cat $(find $SYS_FIND -name modalias -print 2>/dev/null|sort) </dev/null 2>/dev/null|uniq`
+}
+
 syspnp(){
 	[[ -e "/lib/modules/${KV}/modules.alias.sh" ]] || return
 	$cmd_nopnp && return
 	# +some compats
-	local PNP_TMP="${TMPDIR}/pnp.found" NOTLOADED="" CHK=true i i1 i2 gov="" freq="" pid="" pids="" LCOUNT="" REORDER=break USE_MDADM_="${USE_MDADM:=$cmd_domdadm}" USE_DMRAID_NORMAL_="${USE_DMRAID_NORMAL:=$cmd_dodmraid}" USE_EVMS_NORMAL_="${USE_EVMS_NORMAL:=$cmd_doevms}" USE_LVM_NORMAL_="${USE_LVM_NORMAL:=$cmd_dolvm}" LOOPS_=""
+	local PNP_TMP="${TMPDIR}/pnp.found" NOTLOADED="" CHK=true i i1 i2 gov="" freq="" pid="" pids="" LCOUNT="" REORDER=break USE_MDADM_="${USE_MDADM:=$cmd_domdadm}" USE_DMRAID_NORMAL_="${USE_DMRAID_NORMAL:=$cmd_dodmraid}" USE_EVMS_NORMAL_="${USE_EVMS_NORMAL:=$cmd_doevms}" USE_LVM_NORMAL_="${USE_LVM_NORMAL:=$cmd_dolvm}" LOOPS_="" REFRESH_SAME
 	[[ "${USE_DMRAID_NORMAL:-true}" != true ]] && DMRAID_OPTS="$USE_DMRAID_NORMAL"
 	: ${REAL_ROOT:=$cmd_real_root}
 	for i in ${LOOPS:-"/*"}; do
@@ -592,13 +600,15 @@ syspnp(){
 	done
 
 	empty_hwopts firewire net pata pcmcia sata scsi usb
-	$cmd_unload && refresh n
+	refresh n
+	# first pass - strict bus order
+	[[ -n "$MDOLIST" ]] && mod $MDOLIST
+	ordered_modalias $SYS_FIND
+	while count && refresh; do
+		fast_modalias
+	done
 	while count ; do
 		if [[ -n "$REORDER" ]]; then
-			# first pass - strict bus order
-#			mod $MDOLIST `cat $(find $SYS_FIND -name modalias -print 2>/dev/null|sort) </dev/null 2>/dev/null|uniq`
-			[[ -n "$MDOLIST" ]] && mod $MDOLIST
-			ordered_modalias $SYS_FIND
 			REORDER=""
 			wait $pid $pids
 			pid=""
@@ -608,7 +618,7 @@ syspnp(){
 			pid=""
 			pids=""
 		else
-			mod $MDOLIST `sort -u $(find $SYS_FIND -name modalias -print 2>/dev/null) </dev/null 2>/dev/null`
+			fast_modalias
 		fi
 		$cmd_unload && refresh
 		load_misc
