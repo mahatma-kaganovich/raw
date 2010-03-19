@@ -38,6 +38,11 @@ preserve_start(){
 		$PNPONLY || ( [[ -e "$mm/modules.dep" ]] && grep "^$m:" $mm/modules.dep >>$tmp/preserve/lib/modules/${KV}/modules.dep )
 	done
 	$PNPONLY || /usr/bin/perl ${UROOT}/usr/share/genpnprd/mod2sh.pl $tmp/preserve/lib/modules/${KV}
+
+	# copy libs for busybox, if busybox not static (usually not useful step, may panish sandbox)
+	ROOT="$rcdir" bash "$UROOT/usr/share/genpnprd/genpkgrd" "$tmp/preserve" "/bin/busybox"
+	rm "$tmp/preserve/bin/busybox"
+
 	cd $rcdir
 }
 

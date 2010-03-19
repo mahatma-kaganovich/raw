@@ -675,6 +675,8 @@ mount -o remount,rw,noatime / 2>/dev/null || mount -o remount,rw,noatime,xip,acl
 /bin/busybox --install -s
 KV=`uname -r`
 pnp_init
+rm /sbin/modprobe
+override_modprobe
 mount -t sysfs /sys /sys
 echo /sbin/mdev >/proc/sys/kernel/hotplug
 syspnp
