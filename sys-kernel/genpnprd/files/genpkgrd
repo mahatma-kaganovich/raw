@@ -2,6 +2,8 @@
 # Copy files and Gentoo packages with lib dependences
 # (c) mahatma
 
+ldd="lddtree"
+
 [[ -z "$*" ]] && {
 	echo "Usage: $0 outdir \"simple files list\" \"files list\" \"packages list\""
 	echo "(warning: 'ldd' do not work in cross compile, use pre-tracked dependeces)"
@@ -15,8 +17,8 @@ get_files(){
 	shift
 	local i f f1 f2 f3
 	for f in $* ; do
-		[[ -z "$f" ]] && continue
-		[[ -e "$ROOT/$f" ]] || continue
+		[[ -z "$ROOT$f" ]] && continue
+		[[ -e "$ROOT$f" ]] || continue
 		[[ -e "$out$f" ]] && continue
 		echo " + $f"
 		f1=""
@@ -36,9 +38,9 @@ get_files(){
 		elif [[ -d "$ROOT$f" ]]; then
 			mkdir "$out$f"
 		else
-			cp "$f" "$out/$f" -a || exit 1
+			cp "$ROOT$f" "$out/$f" -a || exit 1
 		fi
-		for i in `ldd "$ROOT$f" 2>/dev/null`; do
+		for i in `$ldd "$ROOT$f" 2>/dev/null`; do
 			[[ -e "$out$i" ]] && continue
 			get_files "$out" "$i"
 		done
