@@ -3,51 +3,82 @@
 ## adding PNP
 ## (c) Denis Kaganovich
 ## under Anarchy license
-## Usage: genpnprd <image> [nopnp|pnponly|[pnp] [<overlay>]]
+
+# non-genkernel, "mount" for not fixed busybox
+MINIMAL="/bin/busybox blkid"
+
+[[ -z "$*" ]] && {
+	echo "Usage: $0 <image> [nopnp|pnponly|pnp] [<overlay> [sources]]]
+Example: $0 initrd.cpio
+	- will create initrd image from compiled '/usr/src/linux' sources
+	- (required: $MINIMAL)"
+	exit
+}
 
 DATA="/usr/share/genpnprd"
 
 #UROOT="$ROOT"
 UROOT=""
+home="`pwd`"
+PNPONLY=false
+GENKERNEL=true
+LIBLOOP=true
+: ${TMPDIR:="$ROOT/var/tmp"}
+tmp="$TMPDIR/genpnprd.$$"
+
 
 die(){
 	echo "Error $*"
+	rm "$tmp" -Rf
 	exit 1
 }
 
+genpkg(){
+	"$1" "$2" "$3" "$4" "$5"
+}
 
 preserve_start(){
+	echo "Preserving unpacked /lib"
 	local m mm="$rcdir/lib/modules/${KV}"
-	rm $tmp/modules.dep -f &>/dev/null
 	$PNPONLY && source "$mm/modules.alias.sh"
 	for m in $* ; do
 		if $PNPONLY; then
 			modalias $m
-			echo "$ALIAS" >>$tmp/modules.lst
+			echo "$ALIAS" >>"$tmp/modules.lst"
 		else
-			grep "/$m\..*:" ${mm}/modules.dep >>$tmp/modules.lst || find ${mm} -name $m.ko >>$tmp/modules.lst
+			grep "/$m\..*:" "${mm}/modules.dep" >>"$tmp/modules.lst" || find "${mm}" -name "$m.ko" >>"$tmp/modules.lst"
 		fi
 	done
-	cd $rcdir || die
-	mkdir $tmp/preserve || die
+	cd "$rcdir" || die
+	mkdir "$tmp/preserve" || die
 	cd "lib/modules/$KV"
-	mkdir -p "$tmp/preserve/lib/modules/$KV"
+	echo "/bin/busybox /bin/mount /bin/sh" >"$tmp/preserve.lst"
 	for m in `cat $tmp/modules.lst` ; do
 		m="${m%:}"
-		cp "${m#*/lib/modules/$KV/}" "$tmp/preserve/lib/modules/$KV/" --parents
-		$PNPONLY || ( [[ -e "$mm/modules.dep" ]] && grep "^$m:" $mm/modules.dep >>$tmp/preserve/lib/modules/${KV}/modules.dep )
+		echo "/lib/modules/$KV/${m#*/lib/modules/$KV/}" >>"$tmp/preserve.lst"
+		$PNPONLY || ( [[ -e "$mm/modules.dep" ]] && grep "^$m:" "$mm/modules.dep" >>"$tmp/_modules.dep" )
 	done
-	$PNPONLY || /usr/bin/perl ${UROOT}/usr/share/genpnprd/mod2sh.pl $tmp/preserve/lib/modules/${KV}
-
-	# copy libs for busybox, if busybox not static (usually not useful step, may panish sandbox)
-	ROOT="$rcdir" bash "$UROOT/usr/share/genpnprd/genpkgrd" "$tmp/preserve" "/bin/busybox"
-	rm "$tmp/preserve/bin/busybox"
-
-	cd $rcdir
+	ROOT="$rcdir" bash "$UROOT/usr/share/genpnprd/genpkgrd" "$tmp/preserve" "$(cat "$tmp/preserve.lst")" >/dev/null
+	mv "$tmp/_modules.dep" "$tmp/preserve/lib/modules/${KV}/modules.dep" 2>/dev/null
+	$PNPONLY || /usr/bin/perl "$UROOT/usr/share/genpnprd/mod2sh.pl" "$tmp/preserve/lib/modules/${KV}"
+	cd "$rcdir"
+	if ! $LIBLOOP; then
+		mv "$rcdir"/{etc,dev,sys,proc} "$tmp/preserve/" || die
+		for m in `find .|sort`; do
+			[[ "$m" == ./* ]] || continue
+			m="${m#./}"
+			if ! [[ -e "$tmp/preserve/$m" ]]; then
+#				[[ -f "$m" ]] || continue
+				[[ -L "$m" ]] && cp "$m" "$tmp/preserve" --parents -a
+			fi
+			[[ -e "$tmp/preserve/$m" ]] && rm "$m" 2>/dev/null
+		done
+	fi
 }
 
 preserve_end(){
-	mv $tmp/preserve/* $rcdir -f &>/dev/null
+	mv "$tmp/preserve/lib"/* "$rcdir/lib/" -f
+	rm "$tmp/preserve" -Rf
 }
 
 squashfs_enabled(){
@@ -56,23 +87,53 @@ squashfs_enabled(){
 }
 
 SQUASH=false
-tmp="${TMPDIR:=$ROOT/var/tmp}/genpnprd"
 [[ -e "$tmp" ]] && rm "$tmp" -Rf
 mkdir $tmp || die
+rcdir="$tmp/rc"
+[[ -e "$rcdir" ]] && rm "$tmp" -Rf
+mkdir "$rcdir" || die
+cd "$rcdir" || die
 
 rcfile="$(readlink -f $1)"
 if [[ -f "$rcfile" ]]; then
-	rcdir="$tmp/rc"
-	[[ -e "$rcdir" ]] && rm "$tmp" -Rf
-	mkdir "$rcdir" || die
-	cd "$rcdir" || die
-	echo $rcdir
 	( gzip -dc $rcfile | cpio -i ) || cpio -i <$rcfile || die "must be [gzipped] cpio file"
 else
-#	rcdir="$rcfile"
-	die "must be [gzipped] cpio file"
+	echo "Generating new image '$1'"
+	mkdir "$rcdir"/{etc,dev,sys,proc,bin,sbin}
+	ln -s "../etc/syspnp" "$rcdir/sbin/init"
+	ln -s "etc/syspnp" "$rcdir/linuxrc"
+	ln -s "etc/syspnp" "$rcdir/init"
+	x=""
+	for i in $MINIMAL; do
+		x="$x $(which $i 2>/dev/null||echo "$i")"
+	done
+	bash "$UROOT/usr/share/genpnprd/genpkgrd" "$rcdir" "$x"
+	for i in "[" ash cat cut echo mount sh uname ; do
+		ln -s busybox "$rcdir/bin/$i" &>/dev/null
+	done
+	src="${4:-"$ROOT/usr/src/linux"}"
+	if [[ -z "$3" ]] || ! [[ -e "$3/lib/modules" ]]; then
+		echo "Installing kernel modules from $src"
+		make -j2 -C "$src" -s INSTALL_MOD_PATH="$rcdir" modules_install || die
+	else
+		echo "Using '$3/lib/modules'"
+	fi
+	[[ -z "$2" ]] && PNPONLY=true
+	GENKERNEL=false
+	LIBLOOP=false
 fi
 
+#if [[ -L "lib" ]]; then
+#	i=`readlink lib`
+#	i="${i##*/}"
+#	rm lib || die
+#	mv "$i" lib || die
+#	ln -s lib "$i"
+#fi
+
+if $LIBLOOP; then
+	cp "$3" "$rcdir" -aT
+else
 mkdir lib/root || die
 if [[ -n "$3" ]]; then
 	cp "$3" lib/root -aT
@@ -80,6 +141,7 @@ if [[ -n "$3" ]]; then
 		[[ -d lib/root/$i ]] && mv lib/root/$i/* $i/
 	done
 	rm lib/root/{lib,lib32,lib64} -Rf
+fi
 fi
 
 if [[ -e "$rcdir/lib.loopfs" ]]; then
@@ -97,26 +159,27 @@ fi
 
 cd $rcdir || die
 [[ "$2" != "nopnp" ]] && /usr/bin/perl ${UROOT}/usr/share/genpnprd/mod2sh.pl $rcdir/lib/modules/* || die
-PNPONLY=false
-[[ "$2" == "pnponly" ]] && PNPONLY=true && rm $rcdir/lib/modules/*/modules.{alias,dep,symbols,*.bin,*map,order,builtin} $rcdir/sbin/modprobe
+[[ "$2" == "pnponly" ]] && PNPONLY=true
+$PNPONLY && rm $rcdir/lib/modules/*/modules.{alias,dep,symbols,*.bin,*map,order,builtin} $rcdir/sbin/modprobe 2>/dev/null
 cp $DATA/syspnp $rcdir/etc
 chmod 755 $rcdir/etc/syspnp
 [[ -e $rcdir/sbin/init ]] || ln -s /etc/syspnp $rcdir/sbin/init
 cp $DATA/modprobe.sh $rcdir/etc
-patch -p1 -std $rcdir <$DATA/linuxrc.patch
+$GENKERNEL && patch -p1 -std $rcdir <$DATA/linuxrc.patch
 rm $rcdir/init.{rej,orig} -f &>/dev/null
 
 # Symlinking busybox clones and moving other to archive
 for i in `find .` ; do
+	[[ "$m" == ./* ]] || continue
 	[[ -e "$i" ]] || continue
 	[[ -L "$i" ]] && continue
 	[[ -f "$i" ]] || continue
 	case "$i" in
-	*/busybox|*/init|*/etc/*|./lib*) continue ;;
+	*/busybox|*/init|*/etc/*|./lib*|*/mount) continue ;;
 	*/*/*) ;;
 	*) continue ;;
 	esac
-	if cmp "bin/busybox" "$i"; then
+	if cmp "bin/busybox" "$i" &>/dev/null; then
 		ln -sf /bin/busybox "$i"
 		continue
 	fi
@@ -124,16 +187,31 @@ for i in `find .` ; do
 	rm "$i"
 done
 
-rm "$rcdir/lib.loopfs"
+rm "$rcdir/lib.loopfs" 2>/dev/null
 if $SQUASH ; then
 	preserve_start loop squashfs
-	mksquashfs "$rcdir/lib" "$rcdir/lib.loopfs" -all-root -no-recovery -no-progress || die "mksquashfs"
+	if $LIBLOOP; then
+		mksquashfs "$rcdir/lib/" "$rcdir/lib.loopfs" -all-root -no-recovery -no-progress || die "mksquashfs"
+	else
+		mksquashfs "$rcdir/" "$tmp/rd.loopfs" -all-root -no-recovery -no-progress || die "mksquashfs"
+	fi
 else
 	preserve_start loop cramfs
-	mkcramfs "$rcdir/lib" "$rcdir/lib.loopfs" || die "mkcramfs"
+	if $LIBLOOP; then
+		mkcramfs "$rcdir/lib" "$rcdir/lib.loopfs" || die "mkcramfs"
+	else
+		mkcramfs "$rcdir/" "$tmp/rd.loopfs" || die "mkcramfs"
+	fi
 fi
-rm $rcdir/lib/* -Rf
-preserve_end
+rm "$rcdir"/lib/* -Rf
+cd "$rcdir" || die
+if $LIBLOOP; then
+	preserve_end
+else
+	rm "$rcdir" -Rf || die
+	mv "$tmp/preserve" "$rcdir"
+	mv "$tmp/rd.loopfs" "$rcdir/"
+fi
 
 for i in 0 1 2 3; do
 	mknod -m 660 "$rcdir/dev/loop${i}" b 7 ${i}
@@ -141,9 +219,14 @@ done
 
 cd $rcdir || die
 find . -print | cpio --quiet -o -H newc -F "$tmp/initrd-${KV}.cpio" || die
-cd $tmp || die
-rm $rcdir -Rf
-gzip -c9 "$tmp/initrd-${KV}.cpio" >"$1" || die
+cd "$tmp" || die
+rm "$rcdir" -Rf
+cd "$home"
+if [[ "$1" == *.cpio ]]; then
+	mv "$tmp/initrd-${KV}.cpio" "$1" || die
+else
+	gzip -c9 "$tmp/initrd-${KV}.cpio" >"$1" || die
+fi
 rm "$tmp" -Rf
 echo "initrd updated."
 

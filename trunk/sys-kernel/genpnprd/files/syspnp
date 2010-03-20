@@ -95,7 +95,18 @@ count(){
 	return 1
 }
 
+mnt_loop(){
+	if losetup $1 $2; then
+		mount -o ro $1 $3 && return 0
+		losetup -d $1
+		return 1
+	fi
+	mount -o loop,ro $2 $3
+	return $?
+}
+
 mod_unload(){
+	local i l m=""
 	cd /
 	if ! [[ -e ${NEW_ROOT}/lib/modules/$KV ]] ; then
 		if ${cmd_autoinstall:-false} ; then
@@ -106,8 +117,10 @@ mod_unload(){
 			echo -ne '(use "autoinstall" to install modules)'
 		fi
 	fi
-	umount /lib
-	local i l m=""
+	for i in /rc /lib; do
+		[[ -d "$i" ]] && umount $i && break
+	done
+	losetup -d /dev/loop1 &>/dev/null
 	l=""
 	( $cmd_unload && [[ -n "$REAL_ROOT" ]] && [[ -e "/nopnp.lst" ]] ) || return
 	echo -n "(removing unlocked modules"
@@ -185,7 +198,9 @@ link_dir(){
 
 pnp_init(){
 	eval "pnp_options $(cat /proc/cmdline)" # parsing
-	if [[ -f /lib.loopfs ]]; then
+	local l
+	for l in /*.loopfs; do
+	if [[ -f "$l" ]]; then
 		echo "
 
 
@@ -200,9 +215,14 @@ pnp_init(){
 		for i in `find /lib/modules -name "*.ko"` ; do
 			insmod $i
 		done
-		mount /lib.loopfs /lib -o loop
-		link_dir /lib/root
+		local d="${l%.loopfs}"
+		mkdir $d 2>/dev/null
+		mnt_loop /dev/loop1 $l $d
+		break
 	fi
+	done
+	[[ -d /rc ]] && link_dir /rc
+	[[ -d /lib/root ]] && link_dir /lib/root
 
 	[[ -e /lib/modules/$KV/modules.dep ]] && return
 	# pnponly
@@ -268,8 +288,8 @@ cpufreq_gov(){
 
 empty_hwopts(){
 	local i
-	for i in $* ; do
-		echo -ne "" >/etc/modules/$i 2>/dev/null
+	[[ -e /etc/modules ]] && for i in $* ; do
+		 echo -ne "" >/etc/modules/$i
 	done
 }
 
@@ -290,9 +310,9 @@ detect_part(){
 	echo ">$*<" >>"${PNP_TMP}.5"
 	[[ "${2:-false}" != false ]] && for l in $( {
 		if [[ "$2" == true ]]; then
-			blkid ${LOOPS_}
+			$blkid ${LOOPS_}
 		else
-			blkid $2
+			$blkid $2
 		fi
 		} | sed -e 's%^\(.*:\).* TYPE="\([^"]*\)".*$%\1\2%g'
 	    ) ; do
@@ -311,7 +331,7 @@ detect_part(){
 }
 
 part_(){
-	( blkid $1 || blkid -t "$1" || findfs "$1" || busybox findfs "$1" ) 2>/dev/null | sed -e 's:^.* TYPE="swap".*$::g' -e 's/:.*$//g'
+	( $blkid $1 || $blkid -t "$1" || findfs "$1" || busybox findfs "$1" ) 2>/dev/null | sed -e 's:^.* TYPE="swap".*$::g' -e 's/:.*$//g'
 }
 
 detect_root(){
@@ -324,7 +344,7 @@ detect_root(){
 #		[[ -n "$REAL_ROOT" ]] && [[ "${l:-true}" != true ]] && l=true
 		for i in `part_ "$d"`; do
 			case "$i" in
-			/dev/loop0) ;;
+			/dev/loop1) ;;
 			*) detect_part "$i" "$l" ;;
 			esac
 		done
@@ -390,10 +410,10 @@ detect_fs(){
 	local i m="" md="$USE_MDADM" dm="$USE_DMRAID_NORMAL" t="" nfs="$cmd_nfsroot" lvm="$USE_LVM_NORMAL" evms="$USE_EVMS_NORMAL"
 	for i in $( {
 			if [[ "${cmd_detect_root:-true}" == true ]]; then
-				blkid
+				$blkid
 			else
-				blkid $cmd_detect_root || blkid -t $cmd_detect_root || echo -e "$cmd_detect_root"
-				[[ -n "$REAL_ROOT" ]] && [[ "$REAL_ROOT" != "$cmd_detect_root" ]] && ( blkid $REAL_ROOT || blkid -t $REAL_ROOT || echo -e "$REAL_ROOT" )
+				$blkid $cmd_detect_root || $blkid -t $cmd_detect_root || echo -e "$cmd_detect_root"
+				[[ -n "$REAL_ROOT" ]] && [[ "$REAL_ROOT" != "$cmd_detect_root" ]] && ( $blkid $REAL_ROOT || $blkid -t $REAL_ROOT || echo -e "$REAL_ROOT" )
 			fi
 	    } 2>/dev/null | sed -e 's:^.* TYPE="\([^"]*\)".*$:\1:g' | sort -u ); do
 		case $i in
@@ -494,7 +514,7 @@ detect_fs(){
 		fi
 	fi
 	detect_root
-	[ -e /bin/blkid -o -e /sbin/blkid ] && empty_hwopts fs
+	[[ -e $blkid ]] && empty_hwopts fs
 	empty_hwopts ataraid dmraid evms lvm mdadm
 	return 0
 }
@@ -583,6 +603,7 @@ syspnp(){
 	$cmd_nopnp && return
 	# +some compats
 	local PNP_TMP="${TMPDIR}/pnp.found" NOTLOADED="" CHK=true i i1 i2 gov="" freq="" pid="" pids="" LCOUNT="" REORDER=break USE_MDADM_="${USE_MDADM:=$cmd_domdadm}" USE_DMRAID_NORMAL_="${USE_DMRAID_NORMAL:=$cmd_dodmraid}" USE_EVMS_NORMAL_="${USE_EVMS_NORMAL:=$cmd_doevms}" USE_LVM_NORMAL_="${USE_LVM_NORMAL:=$cmd_dolvm}" LOOPS_="" REFRESH_SAME
+	local blkid="$(which blkid 2>/dev/null || ( [[ -e /bin/blkid ]] && echo /bin/blkid ) || ( [[ -e /sbin/blkid ]] && echo /sbin/blkid ) )"
 	[[ "${USE_DMRAID_NORMAL:-true}" != true ]] && DMRAID_OPTS="$USE_DMRAID_NORMAL"
 	: ${REAL_ROOT:=$cmd_real_root}
 	for i in ${LOOPS:-"/*"}; do
@@ -695,8 +716,9 @@ while true; do
 				LOOP_ROOT="$NEW_ROOT.loop"
 				mkdir "$LOOP_ROOT"
 			fi
-			if ! ( [[ -e "$LOOP_ROOT" ]] && mount -o loop,ro "/newroot/$LOOP" "$LOOP_ROOT" && [[ -e "$LOOP_ROOT$cmd_real_init" ]] ) ; then
+			if ! ( [[ -e "$LOOP_ROOT" ]] && mnt_loop /dev/loop0 "/newroot/$LOOP" "$LOOP_ROOT" && [[ -e "$LOOP_ROOT$cmd_real_init" ]] ) ; then
 				umount "$LOOP_ROOT"
+				losetup -d /dev/loop0
 				rmdir "$LOOP_ROOT"
 				umount "$NEW_ROOT"
 				rmdir "$NEW_ROOT"
@@ -708,7 +730,9 @@ while true; do
 		mod_unload
 		umount /sys
 		umount /proc
-		[[ -e /lib.loopfs ]] && mkdir /lib.rc && mount -o loop /lib.loopfs /lib.rc && link_dir /lib.rc /lib
+		mkdir /rc 2>/dev/null
+		( mnt_loop /dev/loop1 /lib.loopfs /rc && link_dir /rc /lib ) ||
+		( mnt_loop /dev/loop1 /rc.loopfs /rc && link_dir /rc )
 		link_dir "$LOOP_ROOT"
 		exec "$cmd_real_init" "$cmd_init_opts"
 	elif [[ -e "$NEW_ROOT" ]]; then

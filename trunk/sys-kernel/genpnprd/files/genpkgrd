@@ -6,7 +6,7 @@ ldd="lddtree"
 
 [[ -z "$*" ]] && {
 	echo "Usage: $0 outdir \"simple files list\" \"files list\" \"packages list\""
-	echo "(warning: 'ldd' do not work in cross compile, use pre-tracked dependeces)"
+	[[ "$ldd" == "ldd" ]] && echo "(warning: 'ldd' do not work in cross compile, use pre-tracked dependeces)"
 	exit 1
 }
 
@@ -30,11 +30,12 @@ get_files(){
 			get_files "$out" "$f1"
 			f3="$f3../"
 		done
-		f1="`readlink "$ROOT$f" 2>/dev/null`"
-		if [[ -n "$f1" ]]; then
+		if [[ -L "$ROOT$f" ]]; then
+			f1="`readlink "$ROOT$f" 2>/dev/null`"
 			[[ "${f1#/}" == "$f1" ]] && f1="$f2/$f1"
 			get_files "$out" "$f1"
-			ln -s "$f3${f1#/}" "$out$f" || exit 1
+			cp "$ROOT$f" "$out/$f" -a || exit 1
+#			ln -s "$f3${f1#/}" "$out$f" || exit 1
 		elif [[ -d "$ROOT$f" ]]; then
 			mkdir "$out$f"
 		else
@@ -75,7 +76,7 @@ done
 
 echo "Copying simple files..."
 get_files $1 $2
-#[[ -z "$3$4" ]] && exit
+[[ -z "$3$4" ]] && exit
 pkg_from $1
 echo "Copying packaged files..."
 get_files $1 $3
