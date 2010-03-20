@@ -34,8 +34,8 @@ get_files(){
 			f1="`readlink "$ROOT$f" 2>/dev/null`"
 			[[ "${f1#/}" == "$f1" ]] && f1="$f2/$f1"
 			get_files "$out" "$f1"
-			cp "$ROOT$f" "$out/$f" -a || exit 1
-#			ln -s "$f3${f1#/}" "$out$f" || exit 1
+#			cp "$ROOT$f" "$out/$f" -a || exit 1
+			ln -s "$f3${f1#/}" "$out$f" || exit 1
 		elif [[ -d "$ROOT$f" ]]; then
 			mkdir "$out$f"
 		else
