@@ -131,7 +131,7 @@ fi
 #	ln -s lib "$i"
 #fi
 
-if $LIBLOOP; then
+if ! $LIBLOOP; then
 	cp "$3" "$rcdir" -aT
 else
 mkdir lib/root || die
