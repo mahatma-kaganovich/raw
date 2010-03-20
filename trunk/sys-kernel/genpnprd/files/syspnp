@@ -117,7 +117,7 @@ mod_unload(){
 			echo -ne '(use "autoinstall" to install modules)'
 		fi
 	fi
-	for i in /rc /lib; do
+	for i in /rd /lib; do
 		[[ -d "$i" ]] && umount $i && break
 	done
 	losetup -d /dev/loop1 &>/dev/null
@@ -221,7 +221,7 @@ pnp_init(){
 		break
 	fi
 	done
-	[[ -d /rc ]] && link_dir /rc
+	[[ -d /rd ]] && link_dir /rd
 	[[ -d /lib/root ]] && link_dir /lib/root
 
 	[[ -e /lib/modules/$KV/modules.dep ]] && return
@@ -730,9 +730,9 @@ while true; do
 		mod_unload
 		umount /sys
 		umount /proc
-		mkdir /rc 2>/dev/null
-		( mnt_loop /dev/loop1 /lib.loopfs /rc && link_dir /rc /lib ) ||
-		( mnt_loop /dev/loop1 /rc.loopfs /rc && link_dir /rc )
+		mkdir /rd 2>/dev/null
+		( mnt_loop /dev/loop1 /lib.loopfs /rd && link_dir /rd /lib ) ||
+		( mnt_loop /dev/loop1 /rd.loopfs /rd && link_dir /rd )
 		link_dir "$LOOP_ROOT"
 		exec "$cmd_real_init" "$cmd_init_opts"
 	elif [[ -e "$NEW_ROOT" ]]; then
