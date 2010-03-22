@@ -170,7 +170,7 @@ rm $rcdir/init.{rej,orig} -f &>/dev/null
 
 # Symlinking busybox clones and moving other to archive
 for i in `find .` ; do
-	[[ "$m" == ./* ]] || continue
+	[[ "$i" == ./* ]] || continue
 	[[ -e "$i" ]] || continue
 	[[ -L "$i" ]] && continue
 	[[ -f "$i" ]] || continue
