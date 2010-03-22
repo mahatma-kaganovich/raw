@@ -189,6 +189,17 @@ link_dir(){
 	for i in "$1"/*; do
 		i="${i#$1}"
 		if [[ -d "$2$i" ]]; then
+			if [[ -L "$2$i" ]]; then
+				if [[ -L "$1$i" ]]; then
+					cp "$1$i" "$2$i" -a
+					continue
+				else
+					local d="$(readlink "$2$i")"
+					rm "$2$i"
+					mkdir "$2$i"
+					link_dir "$d" "$2$i"
+				fi
+			fi
 			link_dir "$1$i" "$2$i"
 		elif [[ "$i" != "/*" ]]; then
 			ln -sf "$1$i" "$2$i"
@@ -406,6 +417,16 @@ msg_(){
 }
 
 detect_fs(){
+	if $waitscan; then
+		[[ -e /etc/modules/waitscan ]] || mod scsi_wait_scan
+		empty_hwopts waitscan
+		[[ -n "$cmd_scandelay" ]] && sleep "$cmd_scandelay"
+		waitscan=false
+		wait $pid $pids
+		pid=""
+		pids=""
+		rmmod scsi_wait_scan 2>/dev/null
+	fi
 	# dmraid/lvm/evms unsure
 	local i m="" md="$USE_MDADM" dm="$USE_DMRAID_NORMAL" t="" nfs="$cmd_nfsroot" lvm="$USE_LVM_NORMAL" evms="$USE_EVMS_NORMAL"
 	for i in $( {
@@ -514,8 +535,6 @@ detect_fs(){
 		fi
 	fi
 	detect_root
-	[[ -e $blkid ]] && empty_hwopts fs
-	empty_hwopts ataraid dmraid evms lvm mdadm
 	return 0
 }
 
@@ -563,7 +582,6 @@ load_hand_made(){
 }
 
 load_misc(){
-	detect_fs
 	# do: loadall[=...] or process MY_HWOPTS
 	for i in $cmd_loadall ; do
 		[[ "$i" == 'true' ]] && i=''
@@ -575,6 +593,7 @@ load_misc(){
 		mod $(wild "$i1" "$i2")
 	done
 	[[ -z "$cmd_loadall" ]] && [[ "$NODETECT" != '1' ]] && gentoo_compat_hwopts # deprecated
+	detect_fs
 }
 
 set_root_loop(){
@@ -602,8 +621,8 @@ syspnp(){
 	[[ -e "/lib/modules/${KV}/modules.alias.sh" ]] || return
 	$cmd_nopnp && return
 	# +some compats
-	local PNP_TMP="${TMPDIR}/pnp.found" NOTLOADED="" CHK=true i i1 i2 gov="" freq="" pid="" pids="" LCOUNT="" REORDER=break USE_MDADM_="${USE_MDADM:=$cmd_domdadm}" USE_DMRAID_NORMAL_="${USE_DMRAID_NORMAL:=$cmd_dodmraid}" USE_EVMS_NORMAL_="${USE_EVMS_NORMAL:=$cmd_doevms}" USE_LVM_NORMAL_="${USE_LVM_NORMAL:=$cmd_dolvm}" LOOPS_="" REFRESH_SAME
-	local blkid="$(which blkid 2>/dev/null || ( [[ -e /bin/blkid ]] && echo /bin/blkid ) || ( [[ -e /sbin/blkid ]] && echo /sbin/blkid ) )"
+	local PNP_TMP="${TMPDIR}/pnp.found" NOTLOADED="" CHK=true i i1 i2 gov="" freq="" pid="" pids="" LCOUNT="" REORDER=break USE_MDADM_="${USE_MDADM:=$cmd_domdadm}" USE_DMRAID_NORMAL_="${USE_DMRAID_NORMAL:=$cmd_dodmraid}" USE_EVMS_NORMAL_="${USE_EVMS_NORMAL:=$cmd_doevms}" USE_LVM_NORMAL_="${USE_LVM_NORMAL:=$cmd_dolvm}" LOOPS_="" REFRESH_SAME waitscan=true
+	local blkid="$(which blkid 2>/dev/null || ( [[ -e /bin/blkid ]] && echo /bin/blkid ) || ( [[ -e /sbin/blkid ]] && echo /sbin/blkid ) || echo blkid )"
 	[[ "${USE_DMRAID_NORMAL:-true}" != true ]] && DMRAID_OPTS="$USE_DMRAID_NORMAL"
 	: ${REAL_ROOT:=$cmd_real_root}
 	for i in ${LOOPS:-"/*"}; do
@@ -620,7 +639,10 @@ syspnp(){
 		echo -ne "" >"${PNP_TMP}.$i"
 	done
 
-	empty_hwopts firewire net pata pcmcia sata scsi usb
+	empty_hwopts firewire net pata pcmcia sata scsi usb   ataraid dmraid evms lvm mdadm
+	i="$(readlink $blkid)"
+	[[ -e "$blkid" ]] && [[ "${i%busybox}" == "$i" ]] && empty_hwopts fs
+
 	refresh n
 	# first pass - strict bus order
 	CHK=false
@@ -644,7 +666,6 @@ syspnp(){
 		$cmd_unload && refresh
 		load_misc
 		refresh n || break
-		[[ -n "$cmd_scandelay" ]] && sleep "$cmd_scandelay"
 	done
 
 	MY_HWOPTS=""
