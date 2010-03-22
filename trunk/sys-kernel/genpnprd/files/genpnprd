@@ -52,7 +52,7 @@ preserve_start(){
 	cd "$rcdir" || die
 	mkdir "$tmp/preserve" || die
 	cd "lib/modules/$KV"
-	echo "/bin/busybox /bin/mount /bin/sh" >"$tmp/preserve.lst"
+	echo "/bin/busybox /bin/mount /bin/sh /bin/uname" >"$tmp/preserve.lst"
 	for m in `cat $tmp/modules.lst` ; do
 		m="${m%:}"
 		echo "/lib/modules/$KV/${m#*/lib/modules/$KV/}" >>"$tmp/preserve.lst"
@@ -64,7 +64,7 @@ preserve_start(){
 	cd "$rcdir"
 	if ! $LIBLOOP; then
 		mv "$rcdir"/{etc,dev,sys,proc} "$tmp/preserve/" || die
-		for m in `find .|sort`; do
+		find .|sort|while read m; do
 			[[ "$m" == ./* ]] || continue
 			m="${m#./}"
 			if ! [[ -e "$tmp/preserve/$m" ]]; then
@@ -131,18 +131,18 @@ fi
 #	ln -s lib "$i"
 #fi
 
-if ! $LIBLOOP; then
-	cp "$3" "$rcdir" -aT
-else
-mkdir lib/root || die
-if [[ -n "$3" ]]; then
+[[ -n "$3" ]] &&
+if $LIBLOOP; then
+	mkdir lib/root || die
 	cp "$3" lib/root -aT
 	for i in lib lib32 lib64; do
 		[[ -d lib/root/$i ]] && mv lib/root/$i/* $i/
 	done
 	rm lib/root/{lib,lib32,lib64} -Rf
+else
+	cp "$3" "$rcdir" -aT
 fi
-fi
+
 
 if [[ -e "$rcdir/lib.loopfs" ]]; then
 	mkdir $tmp/loop
@@ -169,7 +169,7 @@ $GENKERNEL && patch -p1 -std $rcdir <$DATA/linuxrc.patch
 rm $rcdir/init.{rej,orig} -f &>/dev/null
 
 # Symlinking busybox clones and moving other to archive
-for i in `find .` ; do
+find .|sort|while read i ; do
 	[[ "$i" == ./* ]] || continue
 	[[ -e "$i" ]] || continue
 	[[ -L "$i" ]] && continue
@@ -183,6 +183,7 @@ for i in `find .` ; do
 		ln -sf /bin/busybox "$i"
 		continue
 	fi
+	$LIBLOOP || continue
 	[[ -e "lib/root/$i" ]] || cp "$i" lib/root/ -a --parents || continue
 	rm "$i"
 done
