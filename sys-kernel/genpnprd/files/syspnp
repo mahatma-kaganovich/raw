@@ -175,7 +175,7 @@ pnp_options(){
 	*) export cmd_`echo "$i"|sed -e 's:[^a-zA-Z0-9_]:_:g'`=true ;;
 	esac
 	done
-	$cmd_nofb && p="*/fb.ko)insmod=false;return 1;;$p"
+	$cmd_nofb && p="*/fb.ko|*/drm_kms_helper.ko|*/fbcon.ko)insmod=false;return 1;;$p"
 	[[ -n "$cmd_noload" ]] && p="*/$(echo "$cmd_noload"|sed -e 's/,/.ko|*\//g').ko)insmod=false;return 1;;$p"
 	echo "modparam(){
 insmod=insmod
@@ -252,6 +252,30 @@ modprobe $*
 exit $?' >$f
 chmod 755 $f
 echo "$f" >/proc/sys/kernel/modprobe
+}
+
+
+setup_hotplug(){
+[[ -e /sbin/mdev ]] || {
+echo '#!/bin/sh
+[[ -n "$DEVNAME" ]] && case "$1" in
+block)
+	mknod /dev/$DEVNAME b $MAJOR $MINOR
+;;
+tty|input)
+	mknod /dev/$DEVNAME c $MAJOR $MINOR
+;;
+*)
+esac
+[[ -z "$FIRMWARE" ]] && exit
+echo 1 >/sys/$DEVPATH/loading
+[[ -e /lib/firmware/$FIRMWARE ]] && cat /lib/firmware/$FIRMWARE >/sys/$DEVPATH/data && echo 0 >/sys/$DEVPATH/loading && exit
+echo -1 >/sys/$DEVPATH/loading
+#exit 1
+' >/sbin/mdev
+chmod 755 /sbin/mdev
+}
+echo /sbin/mdev > /proc/sys/kernel/hotplug
 }
 
 wild(){
@@ -722,7 +746,7 @@ pnp_init
 rm /sbin/modprobe
 override_modprobe
 mount -t sysfs /sys /sys
-echo /sbin/mdev >/proc/sys/kernel/hotplug
+setup_hotplug
 syspnp
 cd /sys
 mdev -s
