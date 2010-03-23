@@ -15,12 +15,13 @@ ldd="lddtree"
 get_files(){
 	local out="$1"
 	shift
-	local i f f1 f2 f3
+	local i f f1 f2 f3 ff
 	for f in $* ; do
-		[[ -z "$ROOT$f" ]] && continue
-		[[ -e "$ROOT$f" ]] || continue
+		[[ -z "$f" ]] && continue
+		ff="$ROOT$f"
+		[[ -e "$ff" ]] || continue
 		[[ -e "$out$f" ]] && continue
-		echo " + $f"
+		echo " + $ff"
 		f1=""
 		f2="${f%/*}"
 		f3=""
@@ -30,18 +31,17 @@ get_files(){
 			get_files "$out" "$f1"
 			f3="$f3../"
 		done
-		if [[ -L "$ROOT$f" ]]; then
-			f1="`readlink "$ROOT$f" 2>/dev/null`"
+		if [[ -L "$ff" ]]; then
+			f1="`readlink "$ff" 2>/dev/null`"
 			[[ "${f1#/}" == "$f1" ]] && f1="$f2/$f1"
 			get_files "$out" "$f1"
-#			cp "$ROOT$f" "$out/$f" -a || exit 1
 			ln -s "$f3${f1#/}" "$out$f" || exit 1
-		elif [[ -d "$ROOT$f" ]]; then
+		elif [[ -d "$ff" ]]; then
 			mkdir "$out$f"
 		else
-			cp "$ROOT$f" "$out/$f" -a || exit 1
+			cp "$ff" "$out/$f" -a || exit 1
 		fi
-		for i in `$ldd "$ROOT$f" 2>/dev/null`; do
+		for i in `$ldd "$ff" 2>/dev/null`; do
 			[[ -e "$out$i" ]] && continue
 			get_files "$out" "$i"
 		done

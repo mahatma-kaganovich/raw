@@ -5,7 +5,7 @@
 ## under Anarchy license
 
 # non-genkernel, "mount" for not fixed busybox
-MINIMAL="/bin/busybox blkid"
+MINIMAL="/bin/busybox /sbin/blkid"
 
 [[ -z "$*" ]] && {
 	echo "Usage: $0 <image> [nopnp|pnponly|pnp] [<overlay> [sources]]]
@@ -58,7 +58,7 @@ preserve_start(){
 		echo "/lib/modules/$KV/${m#*/lib/modules/$KV/}" >>"$tmp/preserve.lst"
 		$PNPONLY || ( [[ -e "$mm/modules.dep" ]] && grep "^$m:" "$mm/modules.dep" >>"$tmp/_modules.dep" )
 	done
-	ROOT="$rcdir" bash "$UROOT/usr/share/genpnprd/genpkgrd" "$tmp/preserve" "$(cat "$tmp/preserve.lst")" >/dev/null
+	ROOT="$rcdir" bash "$UROOT/usr/share/genpnprd/genpkgrd" "$tmp/preserve" "$(cat "$tmp/preserve.lst")" # >/dev/null
 	mv "$tmp/_modules.dep" "$tmp/preserve/lib/modules/${KV}/modules.dep" 2>/dev/null
 	$PNPONLY || /usr/bin/perl "$UROOT/usr/share/genpnprd/mod2sh.pl" "$tmp/preserve/lib/modules/${KV}"
 	cd "$rcdir"
@@ -97,8 +97,21 @@ cd "$rcdir" || die
 rcfile="$(readlink -f $1)"
 if [[ -f "$rcfile" ]]; then
 	( gzip -dc $rcfile | cpio -i ) || cpio -i <$rcfile || die "must be [gzipped] cpio file"
+	if [[ -n "$3" ]]; then
+		if $LIBLOOP; then
+			mkdir lib/root || die
+			cp "$3" lib/root -aT
+			for i in lib lib32 lib64; do
+				[[ -d lib/root/$i ]] && mv lib/root/$i/* $i/
+			done
+			rm lib/root/{lib,lib32,lib64} -Rf
+		else
+			cp "$3" "$rcdir" -aT
+		fi
+	fi
 else
 	echo "Generating new image '$1'"
+	[[ -n "$3" ]] && cp "$3" "$rcdir" -aT
 	mkdir "$rcdir"/{etc,dev,sys,proc,bin,sbin}
 	ln -s "../etc/syspnp" "$rcdir/sbin/init"
 	ln -s "etc/syspnp" "$rcdir/linuxrc"
@@ -130,19 +143,6 @@ fi
 #	mv "$i" lib || die
 #	ln -s lib "$i"
 #fi
-
-[[ -n "$3" ]] &&
-if $LIBLOOP; then
-	mkdir lib/root || die
-	cp "$3" lib/root -aT
-	for i in lib lib32 lib64; do
-		[[ -d lib/root/$i ]] && mv lib/root/$i/* $i/
-	done
-	rm lib/root/{lib,lib32,lib64} -Rf
-else
-	cp "$3" "$rcdir" -aT
-fi
-
 
 if [[ -e "$rcdir/lib.loopfs" ]]; then
 	mkdir $tmp/loop

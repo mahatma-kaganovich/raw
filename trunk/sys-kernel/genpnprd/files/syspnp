@@ -63,8 +63,12 @@ refresh(){
 
 	sed -e 's%^\([^ 	]*\)[	 ]*.*$%>\1<%g' </proc/modules >"${PNP_TMP}".1
 	cat `grep -ls "^DRIVER=" $(find $SYS_FIND -name uevent -print 2>/dev/null) </dev/null` </dev/null |grep "^DRIVER=\|^MODALIAS="|sed -e 's%-%_%g' -e 's%^.*=\(.*\)$%>\1<%g' >>"${PNP_TMP}".1
-	if [[ "$(cat ${PNP_TMP}.1 /proc/partitions)" == "$(cat ${PNP_TMP}.2)" ]] ; then
+	if [[ "$(cat ${PNP_TMP}.1 $checks)" == "$(cat ${PNP_TMP}.2)" ]] ; then
 		cat "${PNP_TMP}".3 "${PNP_TMP}".4 >"${PNP_TMP}".0
+		if [[ "$1" == "n" ]] && ps ax|grep -q "[ 	]/sbin/mdev"; then
+			REFRESH_SAME=1
+			return 0
+		fi
 		[[ "$REFRESH_SAME$1" == "n" ]] || return 1
 		return 0
 	fi
@@ -81,7 +85,7 @@ refresh(){
 	elif $cmd_unload && [[ "$1" == "n" ]] ; then
 		sort -m ${PNP_TMP}.0 ${PNP_TMP}.3 | uniq -u >>/nopnp.lst
 	fi
-	cat "${PNP_TMP}".1 /proc/partitions >"${PNP_TMP}".2
+	cat "${PNP_TMP}".1 $checks >"${PNP_TMP}".2
 	cp "${PNP_TMP}".0 "${PNP_TMP}".3
 	cat "${PNP_TMP}".4 >>"${PNP_TMP}".0
 	REFRESH_SAME=''
@@ -188,17 +192,14 @@ link_dir(){
 	local i
 	for i in "$1"/*; do
 		i="${i#$1}"
-		if [[ -d "$2$i" ]]; then
+		if [[ -L "$1$i" ]] && ( [[ -L "$2$i" ]] || ! [[ -e "$2$i" ]] ) ; then
+			cp "$1$i" "$2$i" -a
+		elif [[ -d "$2$i" ]]; then
 			if [[ -L "$2$i" ]]; then
-				if [[ -L "$1$i" ]]; then
-					cp "$1$i" "$2$i" -a
-					continue
-				else
-					local d="$(readlink "$2$i")"
-					rm "$2$i"
-					mkdir "$2$i"
-					link_dir "$d" "$2$i"
-				fi
+				local d="$(readlink "$2$i")"
+				rm "$2$i"
+				mkdir "$2$i"
+				link_dir "$d" "$2$i"
 			fi
 			link_dir "$1$i" "$2$i"
 		elif [[ "$i" != "/*" ]]; then
@@ -621,7 +622,7 @@ syspnp(){
 	[[ -e "/lib/modules/${KV}/modules.alias.sh" ]] || return
 	$cmd_nopnp && return
 	# +some compats
-	local PNP_TMP="${TMPDIR}/pnp.found" NOTLOADED="" CHK=true i i1 i2 gov="" freq="" pid="" pids="" LCOUNT="" REORDER=break USE_MDADM_="${USE_MDADM:=$cmd_domdadm}" USE_DMRAID_NORMAL_="${USE_DMRAID_NORMAL:=$cmd_dodmraid}" USE_EVMS_NORMAL_="${USE_EVMS_NORMAL:=$cmd_doevms}" USE_LVM_NORMAL_="${USE_LVM_NORMAL:=$cmd_dolvm}" LOOPS_="" REFRESH_SAME waitscan=true
+	local PNP_TMP="${TMPDIR}/pnp.found" NOTLOADED="" CHK=true i i1 i2 gov="" freq="" pid="" pids="" LCOUNT="" REORDER=break USE_MDADM_="${USE_MDADM:=$cmd_domdadm}" USE_DMRAID_NORMAL_="${USE_DMRAID_NORMAL:=$cmd_dodmraid}" USE_EVMS_NORMAL_="${USE_EVMS_NORMAL:=$cmd_doevms}" USE_LVM_NORMAL_="${USE_LVM_NORMAL:=$cmd_dolvm}" LOOPS_="" REFRESH_SAME waitscan=true checks=""
 	local blkid="$(which blkid 2>/dev/null || ( [[ -e /bin/blkid ]] && echo /bin/blkid ) || ( [[ -e /sbin/blkid ]] && echo /sbin/blkid ) || echo blkid )"
 	[[ "${USE_DMRAID_NORMAL:-true}" != true ]] && DMRAID_OPTS="$USE_DMRAID_NORMAL"
 	: ${REAL_ROOT:=$cmd_real_root}
@@ -653,6 +654,7 @@ syspnp(){
 		fast_modalias
 	done
 	REFRESH_SAME=1
+	checks="$checks /proc/partitions"
 	while count ; do
 		if [[ -n "$REORDER" ]]; then
 			REORDER=""
