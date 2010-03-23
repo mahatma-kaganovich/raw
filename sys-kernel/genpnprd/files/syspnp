@@ -265,7 +265,6 @@ block)
 tty|input)
 	mknod /dev/$DEVNAME c $MAJOR $MINOR
 ;;
-*)
 esac
 [[ -z "$FIRMWARE" ]] && exit
 echo 1 >/sys/$DEVPATH/loading
