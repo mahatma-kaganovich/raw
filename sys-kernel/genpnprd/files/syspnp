@@ -65,8 +65,9 @@ refresh(){
 	cat `grep -ls "^DRIVER=" $(find $SYS_FIND -name uevent -print 2>/dev/null) </dev/null` </dev/null |grep "^DRIVER=\|^MODALIAS="|sed -e 's%-%_%g' -e 's%^.*=\(.*\)$%>\1<%g' >>"${PNP_TMP}".1
 	if [[ "$(cat ${PNP_TMP}.1 $checks)" == "$(cat ${PNP_TMP}.2)" ]] ; then
 		cat "${PNP_TMP}".3 "${PNP_TMP}".4 >"${PNP_TMP}".0
-		if [[ "$1" == "n" ]] && ps ax|grep -q "[ 	]/sbin/mdev"; then
-			REFRESH_SAME=1
+		if ps ax|grep -q "[ 	]/sbin/mdev"; then
+			REFRESH_SAME=''
+			[[ "$1" == "n" ]] && REFRESH_SAME=1
 			return 0
 		fi
 		[[ "$REFRESH_SAME$1" == "n" ]] || return 1
@@ -258,12 +259,25 @@ echo "$f" >/proc/sys/kernel/modprobe
 setup_hotplug(){
 [[ -e /sbin/mdev ]] || {
 echo '#!/bin/sh
-[[ -n "$DEVNAME" ]] && case "$1" in
-block)
-	mknod /dev/$DEVNAME b $MAJOR $MINOR
-;;
-tty|input)
-	mknod /dev/$DEVNAME c $MAJOR $MINOR
+
+mk(){
+	[[ -e /dev/$DEVNAME ]] || mknod -m 0600 /dev/$DEVNAME $1 $MAJOR $MINOR
+}
+
+sscan(){
+	for i in /sys/class/$1/*/uevent; do
+		local DEVNAME="" MAJOR="" MINOR=""
+		. "$i"
+		mk $2
+	done
+}
+
+case "$1" in
+block) mk b ;;
+tty|input) mk c ;;
+-s)
+	sscan block b
+#	sscan tty c
 ;;
 esac
 [[ -z "$FIRMWARE" ]] && exit
@@ -450,6 +464,7 @@ detect_fs(){
 		pid=""
 		pids=""
 		rmmod scsi_wait_scan 2>/dev/null
+		mdev -s
 	fi
 	# dmraid/lvm/evms unsure
 	local i m="" md="$USE_MDADM" dm="$USE_DMRAID_NORMAL" t="" nfs="$cmd_nfsroot" lvm="$USE_LVM_NORMAL" evms="$USE_EVMS_NORMAL"
