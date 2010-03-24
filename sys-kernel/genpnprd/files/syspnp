@@ -125,7 +125,7 @@ mod_unload(){
 	for i in /rd /lib; do
 		[[ -d "$i" ]] && umount $i && break
 	done
-	losetup -d /dev/loop1 &>/dev/null
+	losetup -d /dev/loop1 >/dev/null 2>&1
 	l=""
 	( $cmd_unload && [[ -n "$REAL_ROOT" ]] && [[ -e "/nopnp.lst" ]] ) || return
 	echo -n "(removing unlocked modules"
