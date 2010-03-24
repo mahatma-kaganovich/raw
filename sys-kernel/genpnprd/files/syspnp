@@ -455,6 +455,7 @@ msg_(){
 }
 
 detect_fs(){
+	local i m="" md="$USE_MDADM" dm="$USE_DMRAID_NORMAL" t="" nfs="$cmd_nfsroot" lvm="$USE_LVM_NORMAL" evms="$USE_EVMS_NORMAL"
 	if $waitscan; then
 		[[ -e /etc/modules/waitscan ]] || mod scsi_wait_scan
 		empty_hwopts waitscan
@@ -464,10 +465,12 @@ detect_fs(){
 		pid=""
 		pids=""
 		rmmod scsi_wait_scan 2>/dev/null
+		m="`pwd`"
+		cd /sys
 		mdev -s
+		cd "$m"
 	fi
 	# dmraid/lvm/evms unsure
-	local i m="" md="$USE_MDADM" dm="$USE_DMRAID_NORMAL" t="" nfs="$cmd_nfsroot" lvm="$USE_LVM_NORMAL" evms="$USE_EVMS_NORMAL"
 	for i in $( {
 			if [[ "${cmd_detect_root:-true}" == true ]]; then
 				$blkid
