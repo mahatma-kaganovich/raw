@@ -1,3 +1,4 @@
+EAPI=3
 inherit flag-o-matic
 source "${PORTDIR}/eclass/kernel-2.eclass"
 
@@ -10,6 +11,7 @@ IUSE="${IUSE} build-kernel debug custom-cflags pnp compressed integrated ipv6
 DEPEND="${DEPEND}
 	pnp? ( sys-kernel/genpnprd )
 	build-kernel? (
+		sys-apps/grep[pcre]
 		>=sys-kernel/genkernel-3.4.10.903
 		compressed? ( sys-kernel/genpnprd )
 		kernel-drm? ( !x11-base/x11-drm )
