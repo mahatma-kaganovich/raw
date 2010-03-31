@@ -11,7 +11,7 @@ IUSE="${IUSE} build-kernel debug custom-cflags pnp compressed integrated ipv6
 DEPEND="${DEPEND}
 	pnp? ( sys-kernel/genpnprd )
 	build-kernel? (
-		sys-apps/grep[pcre]
+		<sys-apps/grep-2.6.1[pcre]
 		>=sys-kernel/genkernel-3.4.10.903
 		compressed? ( sys-kernel/genpnprd )
 		kernel-drm? ( !x11-base/x11-drm )
@@ -303,7 +303,7 @@ grep_kconfig(){
 	local cfgl="\n(?:[ 	][^\n]*\n|\n)*"
 	[[ -n "${t}" ]] && t="[ 	]*${t}(?:[ 	][^\n]*)?"
 	[[ -n "${x}" ]] && [[ -n "${t}" ]] && t="${t}${cfgl}"
-	grep -Prh "${c}.*?${cfgl}${t}${x}\$" "$4" --include="Kconfig*" 2>/dev/null | grep -P "${c}"
+	grep -Prh "${c}.*?${cfgl}${t}${x}\$" "$4" --include="Kconfig*" | grep -P "${c}"
 }
 
 cfg(){
