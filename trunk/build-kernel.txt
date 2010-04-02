@@ -38,7 +38,7 @@ to gentoo initrd behaviour with optional fixes.
 === Config options.
 
 There are two variables: KERNEL_MODULES, KERNEL_CONFIG.
-(see defaults in my "kernel-2.eclass").
+(see defaults in "/usr/share/genpnprd/Kconfig.pl").
 
 KERNEL_MODULES contains directory list to wildcard modules enable.
 If "+" prefix given - modules will be forced, else - only unset
