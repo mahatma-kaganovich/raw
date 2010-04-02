@@ -94,6 +94,10 @@ rcdir="$tmp/rc"
 mkdir "$rcdir" || die
 cd "$rcdir" || die
 
+kmake(){
+	make -j2 -C "$src" -s $* || die
+}
+
 rcfile="$(readlink -f $1)"
 if [[ -f "$rcfile" ]]; then
 	( gzip -dc $rcfile | cpio -i ) || cpio -i <$rcfile || die "must be [gzipped] cpio file"
@@ -125,9 +129,27 @@ else
 		ln -s busybox "$rcdir/bin/$i" &>/dev/null
 	done
 	src="${4:-"$ROOT/usr/src/linux"}"
+	c="$src/.config"
+	if ! [[ -e "$c" ]]; then
+		echo "No '$c', configuring and build kernel"
+		kmake defconfig
+		i="$(cat "$c")"
+		S="$src"
+		export S ${!KERNEL_@}
+		while true; do
+			/usr/bin/perl "${UROOT}/usr/share/genpnprd/Kconfig.pl"
+			yes '' 2>/dev/null | kmake oldconfig >/dev/null
+			j="$(cat "$c")"
+			[[ "$i" == "$j" ]] && break
+			i="$j"
+		done
+		rm "$c.old"
+		kmake bzImage
+		kmake modules -i
+	fi
 	if [[ -z "$3" ]] || ! [[ -e "$3/lib/modules" ]]; then
 		echo "Installing kernel modules from $src"
-		make -j2 -C "$src" -s INSTALL_MOD_PATH="$rcdir" modules_install || die
+		kmake INSTALL_MOD_PATH="$rcdir" modules_install
 	else
 		echo "Using '$3/lib/modules'"
 	fi
