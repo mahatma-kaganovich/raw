@@ -49,7 +49,6 @@ $ENV{KERNEL_CONFIG}||='
 	    SERIAL_8250_EXTENDED
 	TIPC_ADVANCED NET_IPGRE_BROADCAST
 	IP_VS_PROTO_[\d\w_]*
-	KERNEL_BZIP2
 	ISA MCA MCA_LEGACY EISA NET_ISA PCI PCI_LEGACY
 	PCIEASPM CRYPTO_DEV_HIFN_795X_RNG PERF_COUNTERS
 	X86_SPEEDSTEP_RELAXED_CAP_CHECK
@@ -76,8 +75,8 @@ sub Kcload{
 		chomp($s);
 		$s=~s/^\s*((?:menu)?config)\s+(\S+)/$c=$1;$v="$d:$2";next/se;
 		$s=~s/^\s*choice\s*$/$c=choice;$v=undef;next/se;
-		$s=~s/^\s*tristate(?:\s+\S*|$)/$tristate{$v}=1;next/se;
-		$s=~s/^\s*bool(?:\s+\S*|$)/if($c eq 'menuconfig'){$menu{$v}=1}else{$bool{$v}=1};next/se;
+		$s=~s/^\s*(?:def_)?tristate(?:\s+\S*|$)/$tristate{$v}=1;next/se;
+		$s=~s/^\s*(?:def_)?bool(?:\s+\S*|$)/if($c eq 'menuconfig'){$menu{$v}=1}else{$bool{$v}=1};next/se;
 		$s=~s/^\s*select\s*(\S*)/push @{$select{$1}},$v;next/se;
 		$s=~s/If\s+(?:unsure|in\s+doubt),\s+say\s+Y\./$yes{$v}=1;next/se;
 		$s=~s/If\s+(?:unsure|in\s+doubt),\s+say\s+N\./$no{$v}=1;next/se;
@@ -109,12 +108,14 @@ sub load_config{
 }
 
 sub set_config{
-	open(my $F,"<$_[0]") || die $!;
-	sysread($F,my $s,-s $F);
-	close($F);
+	my $s;
+	if(open(my $F,"<$_[0]")){
+		sysread($F,$s,-s $F);
+		close($F);
+	}
 	if(! -e "$_[0].default"){
 		open(my $F,">$_[0].default");
-		syswrite($F,$s);
+		print $F $s;
 		close($F);
 	}
 	my $x;
@@ -177,16 +178,13 @@ sub defaults{
 	for(@l){
 		my $y=$yes{$_};
 		$_=~s/.*://;
-		if($c eq '-'){
+		if(($c eq '-' && exists($defconfig{$_})) || ($c ne '+' && $defconfig{$_})){
+			cfg($_,$defconfig{$_});
+		}else{
 			$unset{$_}=1;
 			delete($config{$_});
-			next;
+			cfg($_,'y') if($y && ($c eq '+' || !defined($defconfig{$_})));
 		}
-		if(! $defconfig{$_}){
-			$unset{$_}=1;
-			delete($config{$_});
-		}
-		cfg($_,'y') if($y);
 	}
 }
 
@@ -258,3 +256,4 @@ if($ARGV[0] eq '-config'){
 	$ENV{S}||=$ARGV[0]||'.';
 	Kconfig();
 }
+
