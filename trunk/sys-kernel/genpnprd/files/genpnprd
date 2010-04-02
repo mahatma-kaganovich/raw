@@ -128,13 +128,17 @@ else
 	for i in "[" ash cat cut echo mount sh uname ; do
 		ln -s busybox "$rcdir/bin/$i" &>/dev/null
 	done
-	src="${4:-"$ROOT/usr/src/linux"}"
-	c="$src/.config"
+	S="${4:-"$ROOT/usr/src/linux"}"
+	c="$S/.config"
 	if ! [[ -e "$c" ]]; then
 		echo "No '$c', configuring and build kernel"
 		kmake defconfig
+		i="$ROOT/etc/kernels/kernel.conf"
+		if [[ -e "$i" ]]; then
+			eval "$(/usr/bin/perl "${UROOT}/usr/share/genpnprd/Kconfig.pl -config")"
+			. $i
+		fi
 		i="$(cat "$c")"
-		S="$src"
 		export S ${!KERNEL_@}
 		while true; do
 			/usr/bin/perl "${UROOT}/usr/share/genpnprd/Kconfig.pl"
@@ -148,7 +152,7 @@ else
 		kmake modules -i
 	fi
 	if [[ -z "$3" ]] || ! [[ -e "$3/lib/modules" ]]; then
-		echo "Installing kernel modules from $src"
+		echo "Installing kernel modules from $S"
 		kmake INSTALL_MOD_PATH="$rcdir" modules_install
 	else
 		echo "Using '$3/lib/modules'"
