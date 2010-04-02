@@ -135,7 +135,7 @@ else
 		kmake defconfig
 		i="$ROOT/etc/kernels/kernel.conf"
 		if [[ -e "$i" ]]; then
-			eval "$(/usr/bin/perl "${UROOT}/usr/share/genpnprd/Kconfig.pl -config")"
+			eval "$(/usr/bin/perl "${UROOT}/usr/share/genpnprd/Kconfig.pl" -config)"
 			. $i
 		fi
 		i="$(cat "$c")"
