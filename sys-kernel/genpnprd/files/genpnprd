@@ -95,7 +95,7 @@ mkdir "$rcdir" || die
 cd "$rcdir" || die
 
 kmake(){
-	make -j2 -C "$src" -s $* || die
+	make -j2 -C "$S" -s $* || die
 }
 
 rcfile="$(readlink -f $1)"
