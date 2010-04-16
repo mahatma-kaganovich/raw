@@ -502,6 +502,17 @@ rmopt(){
 	sed -i -e "/$*/d" "${S}"/.mozconfig
 }
 
+icon(){
+	local i
+	for i in $*; do
+		[[ -d "${i}" ]] && for i in $(find "${i}" -name "*_scalable.png") $(find "${i}" -name icon64.png) $(find "${i}" -name icon48.png) ; do
+			[[ -f "${i}" ]] && break
+		done
+		[[ -f "${i}" ]] && break
+	done
+	[[ -f "${i}" ]] && newicon "${i}" "${PN}"-icon.png
+}
+
 src_install() {
 	declare MOZILLA_FIVE_HOME=/usr/$(get_libdir)/${PN}
 
@@ -541,20 +552,20 @@ src_install() {
 	# Install icon and .desktop for menu entry
 	case "${PN}" in
 	*seamonkey*)
-		newicon "${S}"/suite/branding/content/icon64.png "${PN}"-icon.png
+		icon "${S}"/suite/branding/{,nightly/}content
 		Title="SeaMonkey"
 	;;
 	*firefox*)
-		newicon "${S}"/other-licenses/branding/firefox/content/icon48.png "${PN}"-icon.png
+		icon "${S}"/other-licenses/branding/firefox/content
 		Title="Mozilla Firefox"
 		R="firefox"
 	;;
 	*bonecho*|*shiretoko*)
-		newicon "${S}"/browser/base/branding/icon48.png "${PN}"-icon.png
+		icon "${S}"/browser/base/branding
 		Title="Shiretoko"
 	;;
 	*fennec*)
-		newicon "${S}"/mobile/branding/nightly/content/fennec_scalable.png "${PN}"-icon.png
+		icon "${S}"/mobile/branding/{,nightly/}content
 		Title="Fennec"
 	;;
 	esac
