@@ -255,42 +255,6 @@ chmod 755 $f
 echo "$f" >/proc/sys/kernel/modprobe
 }
 
-
-setup_hotplug(){
-[[ -e /sbin/mdev ]] || {
-echo '#!/bin/sh
-
-mk(){
-	[[ -e /dev/$DEVNAME ]] || mknod -m 0600 /dev/$DEVNAME $1 $MAJOR $MINOR
-}
-
-sscan(){
-	for i in /sys/class/$1/*/uevent; do
-		local DEVNAME="" MAJOR="" MINOR=""
-		. "$i"
-		mk $2
-	done
-}
-
-case "$1" in
-block) mk b ;;
-tty|input) mk c ;;
--s)
-	sscan block b
-#	sscan tty c
-;;
-esac
-[[ -z "$FIRMWARE" ]] && exit
-echo 1 >/sys/$DEVPATH/loading
-[[ -e /lib/firmware/$FIRMWARE ]] && cat /lib/firmware/$FIRMWARE >/sys/$DEVPATH/data && echo 0 >/sys/$DEVPATH/loading && exit
-echo -1 >/sys/$DEVPATH/loading
-#exit 1
-' >/sbin/mdev
-chmod 755 /sbin/mdev
-}
-echo /sbin/mdev > /proc/sys/kernel/hotplug
-}
-
 wild(){
 	grep "$1" <modules.other|grep -v "${2:-x--}"|sed -e 's:.*/::g' -e 's/\...$//g'
 }
@@ -744,6 +708,13 @@ syspnp(){
 #	cd /
 }
 
+run_shell(){
+	: ${SHELL:=/bin/ash}
+	export SHELL
+#	grep -q eyboard /proc/bus/input/devices ||
+	/bin/vkb
+}
+
 # minimalistic. debug
 if [[ -z "$KV"  ]] && ! [[ -e /proc/version ]]; then
 NEW_ROOT="/newroot"
@@ -763,7 +734,7 @@ pnp_init
 rm /sbin/modprobe
 override_modprobe
 mount -t sysfs /sys /sys
-setup_hotplug
+echo /sbin/mdev >/proc/sys/kernel/hotplug
 syspnp
 cd /sys
 mdev -s
@@ -811,6 +782,6 @@ while true; do
 		[[ "$REAL_ROOT" == shell ]] || continue
 	fi
 	bad_msg "failed to switch root"
-	sh
+	run_shell
 done
 fi
