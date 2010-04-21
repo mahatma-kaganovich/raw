@@ -1,7 +1,12 @@
 #!/bin/sh
+# some of busyboxes don't have mdev, some - mdev.conf|/dev/input/
 
 mk(){
 	[[ -z "$DEVNAME" ]] && return
+	if [[ "$ACTION" == "remove" ]]; then
+		rm "/dev/$DEVNAME"
+		return
+	fi
 	[[ -e /dev/$DEVNAME ]] && return
 	d="${DEVNAME%/*}"
 	[[ "$d" == "$DEVNAME" ]] || [[ -d "/dev/$d" ]] || mkdir -p "/dev/$d"
@@ -18,12 +23,13 @@ sscan(){
 
 case "$1" in
 block) mk b ;;
-tty|input) mk c ;;
+#tty|input) mk c ;;
 -s)
 	sscan block b
 	sscan input c
 #	sscan tty c
 ;;
+*) mk c ;;
 esac
 [[ -z "$FIRMWARE" ]] && exit
 echo 1 >/sys/$DEVPATH/loading
