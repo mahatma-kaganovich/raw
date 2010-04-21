@@ -1,7 +1,6 @@
 EAPI=3
 SLOT=0
 DESCRIPTION="PNP update & compress modules for genkernel initrd"
-S="${FILESDIR}"
 KEYWORDS="x86 amd64"
 RDEPEND="sys-fs/cramfs
 	sys-fs/squashfs-tools
@@ -9,9 +8,13 @@ RDEPEND="sys-fs/cramfs
 	sys-apps/grep[pcre]"
 
 src_install(){
-	cd ${S}
-	insinto /usr/share/genpnprd
-	doins *
+	cd "${FILESDIR}"
 	insinto /etc/kernels
 	doins kernel.conf
+	insinto /usr/share/genpnprd
+	doins *
+	for i in etc sbin; do
+		insinto /usr/share/genpnprd/$i
+		doins $i/*
+	done
 }
