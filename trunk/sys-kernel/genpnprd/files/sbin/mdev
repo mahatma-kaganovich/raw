@@ -3,7 +3,6 @@
 mk(){
 	[[ -z "$DEVNAME" ]] && return
 	[[ -e /dev/$DEVNAME ]] && return
-	echo $DEVNAME
 	d="${DEVNAME%/*}"
 	[[ "$d" == "$DEVNAME" ]] || [[ -d "/dev/$d" ]] || mkdir -p "/dev/$d"
 	mknod -m 0600 /dev/$DEVNAME $1 $MAJOR $MINOR
