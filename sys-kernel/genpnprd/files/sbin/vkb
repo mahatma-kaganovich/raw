@@ -1,0 +1,268 @@
+#!/bin/sh
+# console/shell dumb virtual keyboard v0.1
+# (c) Denis Kaganovich
+#
+# pointer resolution = screen res
+# tell me about incompatible touchscreens or fix self
+
+LINE=""
+# To adaptive font resolution add into drivers/video/console/fbcon.c fbcon_startup:
+# printk(KERN_INFO "fbcon: font res: %dx%d\n", vc->vc_font.width, vc->vc_font.height);
+FONTRES=`dmesg|grep "fbcon: font res:"|sed -e 's%^.*font res: %%'`
+: ${FONTRES:=8x16}
+#kmapfile="us.map"
+
+resX=${FONTRES%x*}
+resY=${FONTRES#*x}
+
+# relative/mouse accelerate
+relAccX=2
+relAccY=8
+
+WIDTH=14
+HEIGHT=4
+KMAP='"	1b:00: 31:00: 32:00: 33:00: 34:00: 35:00: 36:00: 37:00: 38:00: 39:00: 30:00: 2d:00: 3d:00: 7f:00:
+	09:00: 71:0b: 77:0b: 65:0b: 72:0b: 74:0b: 79:0b: 75:0b: 69:0b: 6f:0b: 70:0b: 5b:00: 5d:00: 01:02:
+	02:07: 61:0b: 73:0b: 64:0b: 66:0b: 67:0b: 68:0b: 6a:0b: 6b:0b: 6c:0b: 3b:00: 27:00: 60:00: 5c:00:
+	7a:0b: 78:0b: 63:0b: 76:0b: 62:0b: 6e:0b: 6d:0b: 2c:00: 2e:00: 2f:00: 00:07: 03:07: 20:00: 07:02:" "
+
+	1b:00: 21:00: 40:00: 23:00: 24:00: 25:00: 5e:00: 26:00: 2a:00: 28:00: 29:00: 5f:00: 2b:00: 7f:00:
+	09:00: 51:0b: 57:0b: 45:0b: 52:0b: 54:0b: 59:0b: 55:0b: 49:0b: 4f:0b: 50:0b: 7b:00: 7d:00: 01:02:
+	02:07: 41:0b: 53:0b: 44:0b: 46:0b: 47:0b: 48:0b: 4a:0b: 4b:0b: 4c:0b: 3a:00: 22:00: 7e:00: 7c:00:
+	5a:0b: 58:0b: 43:0b: 56:0b: 42:0b: 4e:0b: 4d:0b: 3c:00: 3e:00: 3f:00: 00:07: 03:07: 20:00: 07:02:"'
+
+let X0=0
+let X1=resX*WIDTH-1
+let Y0=0
+let Y1=resY*HEIGHT-1
+
+X=0
+Y=0
+XX=1
+YY=1
+Z=1
+T=0
+TT=0
+
+loadkmap(){
+	local i=0 t k p=7 m
+	KMAP=""
+	for t in `hexdump -v -s 7 -n 256 -e '"" 1/1 "%x " ""' $1`; do
+		let i=i+1
+		m=""
+		if [[ "$t" == 1 ]]; then
+			let p=p+256
+			m="`hexdump -v -s $p -n 256 -e '"" 2/1 "%02x:" " "' $1`"
+		fi
+		KMAP="$KMAP \"$m\""
+	done
+}
+
+keytab(){
+	local t=$1
+	eval "set $KMAP"
+	shift $t
+	RES="$1"
+}
+
+key(){
+#	echo "key? $1 $2"
+	keytab $1
+	local k=$2
+	eval "set $RES"
+	shift $k
+	KEY="$1"
+}
+
+drawkbd(){
+	local s="\033[s\033[0;1f"
+	local t=$1 key c b=0 xx i=0 x=1 y=1 k bb=0 kk=''
+	eval "set $KMAP"
+	shift $T
+	while [[ -z "$1" ]]; do
+		[[ $T == $TT ]] && let TT=TT+1
+		let T=T+1
+		if [[ $T == 256 ]]; then
+			T=0
+			eval "set $KMAP"
+		else
+			shift
+		fi
+	done
+	for key in $1; do
+		if [[ -n "$kmapfile" ]]; then
+			[[ "${kk#*$key}" == "$kk" ]] || continue
+			kk="$kk $key"
+		fi
+		k='   '
+		case "$key" in
+		1b:00:) k='esc' ;;
+		00:07:) k='shift' ;;
+		7f:00:) k='bs ' ;;
+		01:02:) k='enter' ;;
+		02:07:) k='ctrl' ;;
+		03:07:) k='alt' ;;
+		07:02:) k='caps' ;;
+		09:00:) k='tab' ;;
+#		0c:03:) k="#$T " ;; # ???
+		0*|1*) k='---'
+			continue
+		;;
+		7f*) ;;
+		*) k=" \x${key%%:*} " ;;
+		esac
+		let i=i+1
+		if [[ "$b" != 1 ]]; then
+			s="$s\033[47;30m"
+			b=1
+		else
+			s="$s\033[0;37m"
+			b=0
+		fi
+		if [[ $x == $XX ]] && [[ $y == $YY ]]; then
+			s="$s\033[45;30m"
+			KEY="$key"
+		fi
+		let xx=x*3-2
+		s="$s\033[$y;${xx}f$k"
+		let x=x+1
+		if [[ $x -gt $WIDTH ]]; then
+			let xx=x*3-2
+			s="$s\033[$y;${xx}f\033[0;37m\033[0K"
+			x=1
+			let y=y+1
+			[[ $y -gt 4 ]] && break
+			let bb=1-bb
+			b="$bb"
+		fi
+	done
+	s="$s\033[u"
+	echo -ne "$s" >&2
+}
+
+run(){
+#		echo "$*"
+		eval "$*"
+}
+
+dokey(){
+#	echo "$1"
+	[[ -n "$1" ]] && case "$1" in
+	00:07:) let T=1-T ;; # shift
+	7f:00:) LINE="${LINE%?}" ;; # back
+	02:07:) ;; # ctrl
+	03:07:) ;; # alt
+#	0c:03:) let T=T+1; TT="$T" ;; # ???
+	07:02:) let T=1-T ; TT="$T" ;; # caps
+#	07:02:) let T=T+1 ; TT="$T" ;  echo "tab=$T" ;; # caps
+	01:02:) # enter
+		run "$LINE"
+		LINE=""
+	;;
+#	*) echo -ne "\x${1%%:*}" ; T="$TT" ;;
+	*)
+		LINE="$LINE`echo -ne "\x${1%%:*}"`"
+		T="$TT"
+	;;
+	esac
+#	echo -n "$LINE"
+	echo -ne "\033[0G# $LINE\033[0K" >&2
+}
+
+fin(){
+	killall hexdump >/dev/null 2>&1
+}
+
+vkb(){
+[[ -n "$kmapfile" ]] && loadkmap "$kmapfile"
+local x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 x11 x12 d tty=`tty`
+{
+for i in $* ; do
+	if ! [[ -e "$i" ]]; then
+		echo "$0: $i not found" >&2
+		exit
+	fi
+	# unbuffer
+	while true ; do
+		hexdump -v -n 24 -e '"" 12/2 "%x " "\n"' "$i"|| break
+	done 2>/dev/null  &
+done
+drawkbd
+dokey
+read d <$tty && echo ". . . . . . . . . . . $d"
+} | while read x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 x11 x12; do
+	if [[ "$x1 $x2" == ". ." ]]; then
+		run "$x12"
+		break
+	fi
+#	echo "$x1 $x2 $x3 $x4 $x5 $x6 $x7 $x8 $x9 $x10 $x11 $x12" >&2
+	# endian*?
+	let d=0x$x11+0x$x12*65536
+	[[ "${d#??????????}" == "$d" ]] || let d=d-4294967296
+	case "$x9" in
+		2)	case "$x10" in
+			0)	let X=d*relAccX+X
+				if [[ $X -gt $X1 ]]; then
+					X=$X1
+				elif [[ $X -lt $X0 ]]; then
+					X=$X0
+				fi
+				let XX=X-X0+resX
+				let XX=XX/resX
+			;;
+			1)	let Y=d*relAccY+Y
+				if [[ $Y -gt $Y1 ]]; then
+					Y=$Y1
+				elif [[ $Y -lt $X0 ]]; then
+					Y=$Y0
+				fi
+				let YY=Y-Y0+resY
+				let YY=YY/resY
+			;;
+			2) let Z=Y+d ;;
+			*) continue ;;
+			esac
+		;;
+		3)	case "$x10" in
+			0)	X="$d"
+				let XX=X+resX
+				let XX=XX/resX
+			;;
+			1)	Y="$d"
+				let YY=Y+resY
+				let YY=YY/resY
+			;;
+			2) Z="$d" ;;
+			18)	drawkbd
+				[[ $d == 1 ]] && dokey "$KEY"
+				continue
+			;;
+			*) continue ;;
+			esac
+		;;
+		1)	drawkbd
+			[[ $d == 1 ]] && dokey "$KEY"
+			continue
+		;;
+		*) continue ;;
+	esac
+	drawkbd
+done
+fin
+return 99
+}
+
+[[ -z "$SHELL" ]] && for SHELL in /bin/ash /bin/bash /bin/sh; do
+		[[ -e "$SHELL" ]] && break
+done
+
+if [[ -n "$*" ]]; then
+	vkb $*
+else
+#	echo "console/shell virtual keyboard emulator v0.1
+#Usage:   $0 {<device>}
+#Example: $0 /dev/input/event*"
+#	grep -q eyboard /proc/bus/input/devices ||
+	vkb /dev/input/event*
+fi
+[[ "$?" == "99" ]] && exec $SHELL

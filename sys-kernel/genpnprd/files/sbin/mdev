@@ -1,0 +1,33 @@
+#!/bin/sh
+
+mk(){
+	[[ -z "$DEVNAME" ]] && return
+	[[ -e /dev/$DEVNAME ]] && return
+	echo $DEVNAME
+	d="${DEVNAME%/*}"
+	[[ "$d" == "$DEVNAME" ]] || [[ -d "/dev/$d" ]] || mkdir -p "/dev/$d"
+	mknod -m 0600 /dev/$DEVNAME $1 $MAJOR $MINOR
+}
+
+sscan(){
+	for i in /sys/class/$1/*/uevent; do
+		local DEVNAME="" MAJOR="" MINOR=""
+		eval "$(grep "^[A-Z]*=[^=]" "$i")"
+		mk $2
+	done
+}
+
+case "$1" in
+block) mk b ;;
+tty|input) mk c ;;
+-s)
+	sscan block b
+	sscan input c
+#	sscan tty c
+;;
+esac
+[[ -z "$FIRMWARE" ]] && exit
+echo 1 >/sys/$DEVPATH/loading
+[[ -e /lib/firmware/$FIRMWARE ]] && cat /lib/firmware/$FIRMWARE >/sys/$DEVPATH/data && echo 0 >/sys/$DEVPATH/loading && exit
+echo -1 >/sys/$DEVPATH/loading
+#exit 1
