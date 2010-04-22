@@ -9,6 +9,8 @@
 #SYS_FIND="/sys"
 SYS_FIND=/sys/devices
 
+pids=""
+
 single(){
 	grep -qF ">$1<" "${PNP_TMP}.$2" && return 1
 	echo ">$1<" >>"${PNP_TMP}.$2"
@@ -214,22 +216,14 @@ pnp_init(){
 	local l
 	for l in /*.loopfs; do
 	if [[ -f "$l" ]]; then
-		echo "
-
-
-
-
-
-
-
-
-
-"
+		echo -ne "\033[15;1f"
 		for i in `find /lib/modules -name "*.ko"` ; do
 			insmod $i
 		done
 		local d="${l%.loopfs}"
 		mkdir $d 2>/dev/null
+		wait $pids
+		pids=""
 		mnt_loop /dev/loop1 $l $d
 		break
 	fi
@@ -429,10 +423,7 @@ detect_fs(){
 		pid=""
 		pids=""
 		rmmod scsi_wait_scan 2>/dev/null
-		m="`pwd`"
-		cd /sys
-		mdev -s
-		cd "$m"
+		/sbin/mdev -s block
 	fi
 	# dmraid/lvm/evms unsure
 	for i in $( {
@@ -627,7 +618,7 @@ syspnp(){
 	[[ -e "/lib/modules/${KV}/modules.alias.sh" ]] || return
 	$cmd_nopnp && return
 	# +some compats
-	local PNP_TMP="${TMPDIR}/pnp.found" NOTLOADED="" CHK=true i i1 i2 gov="" freq="" pid="" pids="" LCOUNT="" REORDER=break USE_MDADM_="${USE_MDADM:=$cmd_domdadm}" USE_DMRAID_NORMAL_="${USE_DMRAID_NORMAL:=$cmd_dodmraid}" USE_EVMS_NORMAL_="${USE_EVMS_NORMAL:=$cmd_doevms}" USE_LVM_NORMAL_="${USE_LVM_NORMAL:=$cmd_dolvm}" LOOPS_="" REFRESH_SAME waitscan=true checks=""
+	local PNP_TMP="${TMPDIR}/pnp.found" NOTLOADED="" CHK=true i i1 i2 gov="" freq="" pid="" LCOUNT="" REORDER=break USE_MDADM_="${USE_MDADM:=$cmd_domdadm}" USE_DMRAID_NORMAL_="${USE_DMRAID_NORMAL:=$cmd_dodmraid}" USE_EVMS_NORMAL_="${USE_EVMS_NORMAL:=$cmd_doevms}" USE_LVM_NORMAL_="${USE_LVM_NORMAL:=$cmd_dolvm}" LOOPS_="" REFRESH_SAME waitscan=true checks=""
 	local blkid="$(which blkid 2>/dev/null || ( [[ -e /bin/blkid ]] && echo /bin/blkid ) || ( [[ -e /sbin/blkid ]] && echo /sbin/blkid ) || echo blkid )"
 	[[ "${USE_DMRAID_NORMAL:-true}" != true ]] && DMRAID_OPTS="$USE_DMRAID_NORMAL"
 	: ${REAL_ROOT:=$cmd_real_root}
@@ -709,10 +700,13 @@ syspnp(){
 }
 
 run_shell(){
-	: ${SHELL:=/bin/ash}
+	[[ -z "$SHELL" ]] && for SHELL in /bin/ash /bin/bash /bin/sh; do
+		[[ -e "$SHELL" ]] && break
+	done
 	export SHELL
-#	grep -q eyboard /proc/bus/input/devices ||
-	/bin/vkb
+#	grep -q eyboard /proc/bus/input/devices || vkb
+	vkb
+#	$SHELL
 }
 
 # minimalistic. debug
@@ -727,17 +721,17 @@ bad_msg(){
 echo "! $*"
 }
 mount -t proc proc /proc
-mount -o remount,rw,noatime / 2>/dev/null || mount -o remount,rw,noatime,xip,acl /dev/ram0 / 2>/dev/null
+mount -t sysfs /sys /sys
 /bin/busybox --install -s
+echo /sbin/mdev >/proc/sys/kernel/hotplug
+cd /sys
+/sbin/mdev -s &
+pids="$pids$! "
 KV=`uname -r`
 pnp_init
 rm /sbin/modprobe
 override_modprobe
-mount -t sysfs /sys /sys
-echo /sbin/mdev >/proc/sys/kernel/hotplug
 syspnp
-cd /sys
-mdev -s
 cd /
 while true; do
 	if [[ -n "$REAL_ROOT" ]] && mkdir "$NEW_ROOT" 2>/dev/null ; then
@@ -777,7 +771,8 @@ while true; do
 		exec /sbin/switch_root -c /dev/console "$NEW_ROOT" "$cmd_real_init" "$cmd_init_opts"
 	else
 		bad_msg "failed to mount root"
-		read -p "Enter root partition or 'shell':" REAL_ROOT
+		echo -n "Enter root partition or 'shell':"
+		REAL_ROOT=`SHELL="" vkb`
 		set_root_loop "$REAL_ROOT"
 		[[ "$REAL_ROOT" == shell ]] || continue
 	fi

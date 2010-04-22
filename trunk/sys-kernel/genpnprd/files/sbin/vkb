@@ -16,8 +16,8 @@ resX=${FONTRES%x*}
 resY=${FONTRES#*x}
 
 # relative/mouse accelerate
-relAccX=2
-relAccY=8
+let relAccX=resX/2
+let relAccY=resY/2
 
 WIDTH=14
 HEIGHT=4
@@ -43,6 +43,8 @@ YY=1
 Z=1
 T=0
 TT=0
+
+: ${SHELL:=_read}
 
 loadkmap(){
 	local i=0 t k p=7 m
@@ -75,7 +77,7 @@ key(){
 }
 
 drawkbd(){
-	local s="\033[s\033[0;1f"
+	local s="\033[0;1f"
 	local t=$1 key c b=0 xx i=0 x=1 y=1 k bb=0 kk=''
 	eval "set $KMAP"
 	shift $T
@@ -136,17 +138,19 @@ drawkbd(){
 			b="$bb"
 		fi
 	done
-	s="$s\033[u"
 	echo -ne "$s" >&2
 }
 
 run(){
-#		echo "$*"
-		eval "$*"
+		case "$1" in
+		exit) fin 1 ;;
+		esac
+		echo "$*"
+		echo -ne "\033[s" >&2
+#		eval "$*"
 }
 
 dokey(){
-#	echo "$1"
 	[[ -n "$1" ]] && case "$1" in
 	00:07:) let T=1-T ;; # shift
 	7f:00:) LINE="${LINE%?}" ;; # back
@@ -156,8 +160,11 @@ dokey(){
 	07:02:) let T=1-T ; TT="$T" ;; # caps
 #	07:02:) let T=T+1 ; TT="$T" ;  echo "tab=$T" ;; # caps
 	01:02:) # enter
+		echo -ne "
+\033[u\033[s$PROMPT" >&2
 		run "$LINE"
 		LINE=""
+		return
 	;;
 #	*) echo -ne "\x${1%%:*}" ; T="$TT" ;;
 	*)
@@ -165,12 +172,12 @@ dokey(){
 		T="$TT"
 	;;
 	esac
-#	echo -n "$LINE"
-	echo -ne "\033[0G# $LINE\033[0K" >&2
+	echo -ne "\033[u\033[s$PROMPT$LINE" >&2
 }
 
 fin(){
 	killall hexdump >/dev/null 2>&1
+	[[ -n "$1" ]] && killall vkb >/dev/null 2>&1
 }
 
 vkb(){
@@ -187,6 +194,7 @@ for i in $* ; do
 		hexdump -v -n 24 -e '"" 12/2 "%x " "\n"' "$i"|| break
 	done 2>/dev/null  &
 done
+echo -ne "\033[s" >&2
 drawkbd
 dokey
 read d <$tty && echo ". . . . . . . . . . . $d"
@@ -195,7 +203,6 @@ read d <$tty && echo ". . . . . . . . . . . $d"
 		run "$x12"
 		break
 	fi
-#	echo "$x1 $x2 $x3 $x4 $x5 $x6 $x7 $x8 $x9 $x10 $x11 $x12" >&2
 	# endian*?
 	let d=0x$x11+0x$x12*65536
 	[[ "${d#??????????}" == "$d" ]] || let d=d-4294967296
@@ -233,36 +240,49 @@ read d <$tty && echo ". . . . . . . . . . . $d"
 				let YY=YY/resY
 			;;
 			2) Z="$d" ;;
-			18)	drawkbd
-				[[ $d == 1 ]] && dokey "$KEY"
-				continue
+			18)	if [[ $d == 1 ]]; then
+					drawkbd
+					dokey "$KEY"
+					continue
+				fi
 			;;
 			*) continue ;;
 			esac
 		;;
-		1)	drawkbd
-			[[ $d == 1 ]] && dokey "$KEY"
-			continue
+		1)	if [[ $d == 1 ]]; then
+				drawkbd
+				dokey "$KEY"
+				continue
+			fi
 		;;
 		*) continue ;;
 	esac
 	drawkbd
+	dokey
 done
 fin
 return 99
 }
 
-[[ -z "$SHELL" ]] && for SHELL in /bin/ash /bin/bash /bin/sh; do
-		[[ -e "$SHELL" ]] && break
-done
 
-if [[ -n "$*" ]]; then
-	vkb $*
-else
-#	echo "console/shell virtual keyboard emulator v0.1
-#Usage:   $0 {<device>}
-#Example: $0 /dev/input/event*"
-#	grep -q eyboard /proc/bus/input/devices ||
-	vkb /dev/input/event*
-fi
-[[ "$?" == "99" ]] && exec $SHELL
+_vkb(){
+( vkb ${*:-/dev/input/event*} && return $? ) | $SHELL
+return $?
+}
+
+_read(){
+	local x
+	read x
+	echo "$x"
+	fin 1
+}
+
+p=""
+while [[ -n "$*" ]]; do
+	case "$1" in
+	-p)shift;PROMPT="$1";;
+	*)p="$p $1";;
+	esac
+	shift
+done
+_vkb $p && exec $SHELL

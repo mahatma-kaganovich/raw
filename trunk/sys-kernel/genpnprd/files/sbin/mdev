@@ -1,38 +1,39 @@
 #!/bin/sh
 # some of busyboxes don't have mdev, some - mdev.conf|/dev/input/
 
-mk(){
-	[[ -z "$DEVNAME" ]] && return
-	if [[ "$ACTION" == "remove" ]]; then
-		rm "/dev/$DEVNAME"
-		return
-	fi
-	[[ -e /dev/$DEVNAME ]] && return
-	d="${DEVNAME%/*}"
-	[[ "$d" == "$DEVNAME" ]] || [[ -d "/dev/$d" ]] || mkdir -p "/dev/$d"
-	mknod -m 0600 /dev/$DEVNAME $1 $MAJOR $MINOR
-}
-
-sscan(){
-	for i in /sys/class/$1/*/uevent; do
-		local DEVNAME="" MAJOR="" MINOR=""
+mdevs(){
+	for i in $*; do
+		local DEVNAME="" MAJOR="" MINOR="" FIRMWARE="" DEVPATH="" DEVMODE=""
 		eval "$(grep "^[A-Z]*=[^=]" "$i")"
-		mk $2
+		i="${i#/sys/class/}"
+		mdev "${i%%/*}"
 	done
 }
 
+mdev(){
+local i t=c
 case "$1" in
-block) mk b ;;
-#tty|input) mk c ;;
+block) t=b ;;
 -s)
-	sscan block b
-	sscan input c
-#	sscan tty c
+	shift
+	for i in ${*:-"*"}; do
+		mdevs /sys/class/$i/*/uevent
+	done
 ;;
-*) mk c ;;
 esac
-[[ -z "$FIRMWARE" ]] && exit
+if [[ "$ACTION" == "remove" ]]; then
+	rm "/dev/$DEVNAME"
+	return
+fi
+if [[ -n "$DEVNAME" ]] && ! [[ -e "/dev/$DEVNAME" ]]; then
+	DEVNAME="/dev/$DEVNAME"
+	mkdir -p "${DEVNAME%/*}" 2>/dev/null
+	mknod -m ${DEVMODE:-0600} "$DEVNAME" $t $MAJOR $MINOR
+fi
+[[ -z "$FIRMWARE" ]] && return
 echo 1 >/sys/$DEVPATH/loading
-[[ -e /lib/firmware/$FIRMWARE ]] && cat /lib/firmware/$FIRMWARE >/sys/$DEVPATH/data && echo 0 >/sys/$DEVPATH/loading && exit
+[[ -e /lib/firmware/$FIRMWARE ]] && cat /lib/firmware/$FIRMWARE >/sys/$DEVPATH/data && echo 0 >/sys/$DEVPATH/loading && return
 echo -1 >/sys/$DEVPATH/loading
-#exit 1
+}
+
+mdev $*
