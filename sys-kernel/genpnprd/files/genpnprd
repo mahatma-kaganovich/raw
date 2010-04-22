@@ -52,18 +52,18 @@ preserve_start(){
 	cd "$rcdir" || die
 	mkdir "$tmp/preserve" || die
 	cd "lib/modules/$KV"
-	echo "/bin/busybox /bin/mount /bin/sh /bin/uname" >"$tmp/preserve.lst"
+	echo "/bin/busybox /bin/mount /bin/sh /bin/uname /sbin/mdev" >"$tmp/preserve.lst"
 	for m in `cat $tmp/modules.lst` ; do
 		m="${m%:}"
 		echo "/lib/modules/$KV/${m#*/lib/modules/$KV/}" >>"$tmp/preserve.lst"
 		$PNPONLY || ( [[ -e "$mm/modules.dep" ]] && grep "^$m:" "$mm/modules.dep" >>"$tmp/_modules.dep" )
 	done
-	ROOT="$rcdir" bash "$UROOT/usr/share/genpnprd/genpkgrd" "$tmp/preserve" "$(cat "$tmp/preserve.lst")" # >/dev/null
+	ROOT="$rcdir" bash "$UROOT/usr/share/genpnprd/genpkgrd" "$tmp/preserve" "$(cat "$tmp/preserve.lst")" >/dev/null
 	mv "$tmp/_modules.dep" "$tmp/preserve/lib/modules/${KV}/modules.dep" 2>/dev/null
 	$PNPONLY || /usr/bin/perl "$UROOT/usr/share/genpnprd/mod2sh.pl" "$tmp/preserve/lib/modules/${KV}"
 	cd "$rcdir"
 	if ! $LIBLOOP; then
-		mv "$rcdir"/{etc,dev,sys,proc} "$tmp/preserve/" || die
+		mv "$rcdir"/{etc,sys,proc,dev} "$tmp/preserve/" || die
 		find .|sort|while read m; do
 			[[ "$m" == ./* ]] || continue
 			m="${m#./}"
@@ -243,7 +243,7 @@ else
 	mv "$tmp/rd.loopfs" "$rcdir/"
 fi
 
-for i in 0 1 2 3; do
+[[ -e "$rcdir/dev" ]] && for i in 0 1 2 3; do
 	mknod -m 660 "$rcdir/dev/loop${i}" b 7 ${i}
 done
 
