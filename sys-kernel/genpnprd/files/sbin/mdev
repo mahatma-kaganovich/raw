@@ -27,7 +27,8 @@ if [[ "$ACTION" == "remove" ]]; then
 fi
 if [[ -n "$DEVNAME" ]] && ! [[ -e "/dev/$DEVNAME" ]]; then
 	DEVNAME="/dev/$DEVNAME"
-	mkdir -p "${DEVNAME%/*}" 2>/dev/null
+	i="${DEVNAME%/*}"
+	[[ -e "$i" ]] || mkdir -p "$i"
 	mknod -m ${DEVMODE:-0600} "$DEVNAME" $t $MAJOR $MINOR
 fi
 [[ -z "$FIRMWARE" ]] && return

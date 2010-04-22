@@ -222,8 +222,6 @@ pnp_init(){
 		done
 		local d="${l%.loopfs}"
 		mkdir $d 2>/dev/null
-		wait $pids
-		pids=""
 		mnt_loop /dev/loop1 $l $d
 		break
 	fi
@@ -721,12 +719,13 @@ bad_msg(){
 echo "! $*"
 }
 mount -t proc proc /proc
-mount -t sysfs /sys /sys
 /bin/busybox --install -s
+mount -t sysfs /sys /sys
 echo /sbin/mdev >/proc/sys/kernel/hotplug
 cd /sys
+/sbin/mdev -s mem
 /sbin/mdev -s &
-pids="$pids$! "
+#pids="$pids$! "
 KV=`uname -r`
 pnp_init
 rm /sbin/modprobe
