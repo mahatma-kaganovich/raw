@@ -1,0 +1,12 @@
+Required for touchscreed/vkb unless I don't know how to detect font resolution.
+--- a/drivers/video/console/fbcon.c	2010-04-19 14:50:13.000000000 +0300
++++ b/drivers/video/console/fbcon.c	2010-04-19 14:49:18.000000000 +0300
+@@ -1026,6 +1026,8 @@ static const char *fbcon_startup(void)
+ 		info->var.yres,
+ 		info->var.bits_per_pixel);
+ 
++	printk(KERN_INFO "fbcon: font res: %dx%d\n", vc->vc_font.width, vc->vc_font.height);
++
+ 	fbcon_add_cursor_timer(info);
+ 	fbcon_has_exited = 0;
+ 	return display_desc;

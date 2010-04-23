@@ -194,7 +194,9 @@ for i in etc sbin; do
 done
 $PNPONLY && rm $rcdir/lib/modules/*/modules.{alias,dep,symbols,*.bin,*map,order,builtin} $rcdir/sbin/modprobe 2>/dev/null
 [[ -e $rcdir/sbin/init ]] || ln -s /etc/syspnp $rcdir/sbin/init
-$GENKERNEL && patch -p1 -std $rcdir <$DATA/linuxrc.patch
+$GENKERNEL && for i in $DATA/*.patch; do
+	patch -p1 -std $rcdir <$i
+done
 rm $rcdir/init.{rej,orig} -f &>/dev/null
 
 # Symlinking busybox clones and moving other to archive
