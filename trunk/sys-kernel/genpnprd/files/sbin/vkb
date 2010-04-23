@@ -46,6 +46,18 @@ TT=0
 
 : ${SHELL:=_read}
 
+# detect byteorder
+case "`echo -ne "\x01\x02" |hexdump -e '"" 1/2 "%04x" ""'`" in
+0102)b2w(){ let RES=$1*256+$2;};;
+0201)b2w(){ let RES=$2*256+$1;};;
+*)echo "Unknown arch";exit 1;;
+esac
+case "`echo -ne "\x01\x02\x03\x04" |hexdump -e '"" 1/4 "%08x" ""'`" in
+*3*1*)w2d(){ let RES=$2*65536+$1;};;
+*1*3*)w2d(){ let RES=$1*65536+$2;};;
+*)echo "Unknown arch";exit 1;;
+esac
+
 loadkmap(){
 	local i=0 t k p=7 m
 	KMAP=""
@@ -203,8 +215,8 @@ read d <$tty && echo ". . . . . . . . . . . $d"
 		run "$x12"
 		break
 	fi
-	# endian*?
-	let d=0x$x11+0x$x12*65536
+	w2d 0x$x11 0x$x12
+	d="$RES"
 	[[ "${d#??????????}" == "$d" ]] || let d=d-4294967296
 	case "$x9" in
 		2)	case "$x10" in
