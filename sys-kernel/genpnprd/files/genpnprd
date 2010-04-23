@@ -197,7 +197,7 @@ $PNPONLY && rm $rcdir/lib/modules/*/modules.{alias,dep,symbols,*.bin,*map,order,
 $GENKERNEL && for i in $DATA/*.patch; do
 	patch -p1 -std $rcdir <$i
 done
-rm $rcdir/init.{rej,orig} -f &>/dev/null
+rm $rcdir/{init,etc/initrd.scripts}.{rej,orig} -f &>/dev/null
 
 # Symlinking busybox clones and moving other to archive
 find .|sort|while read i ; do
