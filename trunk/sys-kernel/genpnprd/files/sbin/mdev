@@ -19,6 +19,7 @@ block) t=b ;;
 	for i in ${*:-"*"}; do
 		mdevs /sys/class/$i/*/uevent
 	done
+	return
 ;;
 esac
 if [[ "$ACTION" == "remove" ]]; then

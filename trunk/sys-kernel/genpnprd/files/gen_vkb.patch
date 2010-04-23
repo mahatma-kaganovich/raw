@@ -1,0 +1,9 @@
+--- a/etc/initrd.scripts	2010-04-23 17:09:40.000000000 +0300
++++ b/etc/initrd.scripts	2010-04-23 17:11:35.000000000 +0300
+@@ -347,5 +347,5 @@ whereis(){
+ 	echo '   Please specify another value or: press Enter for the same, type "shell" for a shell, or "q" to skip...'
+ 	echo -n "${2}(${oldvalue}) :: "
+-	read ${1}
++	export ${1}="`SHELL="" vkb`"
+ 	case `eval echo '$'${1}` in
+ 		'q')
