@@ -197,10 +197,6 @@ vkb(){
 local x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 x11 x12 d tty=`tty`
 {
 for i in $* ; do
-	if ! [[ -e "$i" ]]; then
-		echo "$0: $i not found" >&2
-		exit
-	fi
 	# unbuffer
 	while true ; do
 		hexdump -v -n 24 -e '"" 12/2 "%x " "\n"' "$i"|| break

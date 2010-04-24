@@ -315,19 +315,19 @@ detect_part(){
 	echo ">$*<" >>"${PNP_TMP}.5"
 	[[ "${2:-false}" != false ]] && for l in $( {
 		if [[ "$2" == true ]]; then
-			$blkid ${LOOPS_}
+			_fstype ${LOOPS_}
 		else
-			$blkid $2
+			_fstype $2
 		fi
 		} | sed -e 's%^\(.*:\).* TYPE="\([^"]*\)".*$%\1\2%g'
 	    ) ; do
 		DETECTED_LOOPS="$DETECTED_LOOPS $1:${l#/DETECT_ROOT/}"
-		fs="${l#:*}"
-		case "$fs" in
+		l="${l#*:}"
+		case "$l" in
 		ext2) LOOPTYPE=normal ;;
-		*) LOOPTYPE="$fs" ;;
+		*) LOOPTYPE="$l" ;;
 		esac
-		mod $fs # loop
+		mod $l # loop
 	done
 	[[ -e "/DETECT_ROOT/$cmd_real_init" ]] && grep -q "^$1[ 	]*/[ 	]" /DETECT_ROOT/etc/mtab 2>/dev/null && DETECTED_ROOTS="$DETECTED_ROOTS $1"
 #	[[ -e "/DETECT_ROOT/$cmd_real_init" ]] && DETECTED_ROOTS="$DETECTED_ROOTS $1"
@@ -336,7 +336,7 @@ detect_part(){
 }
 
 part_(){
-	( $blkid $1 || $blkid -t "$1" || findfs "$1" || busybox findfs "$1" ) 2>/dev/null | sed -e 's:^.* TYPE="swap".*$::g' -e 's/:.*$//g'
+	( ( [[ -b "$1" ]] && echo "$1" ) || $fstype $1 || $blkid $1 || $blkid -t "$1" || findfs "$1" || busybox findfs "$1" ) 2>/dev/null | sed -e 's:^.* TYPE="swap".*$::g' -e 's/:.*$//g'
 }
 
 detect_root(){
@@ -410,6 +410,63 @@ msg_(){
 	fi
 }
 
+# dirty
+fstype(){
+local i d
+[[ -z "$*" ]] && set `cat /proc/partitions|sed -e "s:^.*[ ]:/dev/:g" -e "s:^/dev/name$::"` ""
+while [[ -n "$*" ]]; do
+d="$1"
+[[ -z "$d" ]] || [[ -e "$d" ]] || d="`findfs $1 2>/dev/null`"
+( [[ -b "$d" ]] || [[ -f "$d" ]] ) && for i in 0 3 4 8 24 32 54 82 510 536 1016 1024 1040 1048 1080 1560 2048 4086 4096 8182 8192 8212 8244 9564 16374 32758 32768 32769 32777 65526 65536 65588 65600 270336; do
+case "`echo -ne "$i:";hexdump -v -s $i -n 10 -e '"" 10/1 "%x" ""' $d 2>/dev/null`" in
+32:4f52434c4449534b*)echo oracleasm;;
+3:4e54465320202020*)echo ntfs;;
+1080:53ef*)echo "jbd
+ext4dev
+ext4
+ext3
+ext2";;
+8244:5265497345724673*|65588:526549734572324673*|65588:526549734572334673*|65588:5265497345724673*|8212:5265497345724673*)echo reiserfs;;
+65536:52654973457234*)echo reiser4;;
+65536:01161970*)echo "gfs
+gfs";;
+82:4d5357494e*|82:4641543332202020*|54:4d53444f53*|54:4641543136202020*|54:4641543132202020*|0:eb*|0:e9*|510:55aa*)echo vfat;;
+1040:7f13*|1040:8f13*|1040:6824*|1040:7824*)echo minix;;
+1024:f5fc01a5*)echo vxfs;;
+0:58465342*)echo xfs;;
+0:2d726f6d3166732d*)echo romfs;;
+0:cefa7b1b*)echo bfs;;
+0:453dcd28*)echo cramfs;;
+4:514e58344653*)echo qnx4;;
+32769:4245413031*|32769:424f4f5432*|32769:4344303031*|32769:4344573032*|32769:4e53523032*|32769:4e53523033*|32769:5445413031*)echo udf;;
+32777:4344524f4d*|32769:4344303031*)echo iso9660;;
+32768:4a465331*)echo jfs;;
+8192:000002f5b007b10c*|8192:0cb107b0f5020000*|270336:000002f5b007b10c*|270336:0cb107b0f5020000*)echo zfs;;
+1024:4244*|1024:482b*|1024:4858*)echo "hfsplus
+hfs";;
+9564:541901*)echo ufs;;
+8192:49e895f9*)echo hpfs;;
+1016:107e18fd*)echo sysv;;
+4086:535741502d5350414345*|4086:53574150535041434532*|8182:535741502d5350414345*|8182:53574150535041434532*|16374:535741502d5350414345*|16374:53574150535041434532*|32758:535741502d5350414345*|32758:53574150535041434532*|65526:535741502d5350414345*|65526:53574150535041434532*)echo swap;;
+4086:533[12]53555350454e44*|4086:554c53555350454e44*|8182:533[12]53555350454e44*|8182:554c53555350454e44*|16374:533[12]53555350454e44*|16374:554c53555350454e44*|32758:533[12]53555350454e44*|32758:554c53555350454e44*|65526:533[12]53555350454e44*|65526:554c53555350454e44*)echo swsuspend;;
+8:4f7261636c65434653*)echo ocfs;;
+1024:4f4346535632*|2048:4f4346535632*|4096:4f4346535632*|8192:4f4346535632*)echo ocfs2;;
+0:4c554b53babe*)echo crypt_LUKS;;
+0:73717368*|0:68737173*)echo squashfs;;
+536:4c564d3220303031*|24:4c564d3220303031*|1048:4c564d3220303031*|1560:4c564d3220303031*|8192:4f4346535632*)echo lvm2pv;;
+65600:5f42485266535f4d*)echo btrfs;;
+esac|while read i; do
+	echo "$d: TYPE=\"$i\""
+done
+done
+shift
+done
+}
+
+_fstype(){
+	$fstype $* || $blkid $* || $blkid -t $* || echo -e "$*"
+}
+
 detect_fs(){
 	local i m="" md="$USE_MDADM" dm="$USE_DMRAID_NORMAL" t="" nfs="$cmd_nfsroot" lvm="$USE_LVM_NORMAL" evms="$USE_EVMS_NORMAL"
 	if $waitscan; then
@@ -426,12 +483,12 @@ detect_fs(){
 	# dmraid/lvm/evms unsure
 	for i in $( {
 			if [[ "${cmd_detect_root:-true}" == true ]]; then
-				$blkid
+				_fstype
 			else
-				$blkid $cmd_detect_root || $blkid -t $cmd_detect_root || echo -e "$cmd_detect_root"
-				[[ -n "$REAL_ROOT" ]] && [[ "$REAL_ROOT" != "$cmd_detect_root" ]] && ( $blkid $REAL_ROOT || $blkid -t $REAL_ROOT || echo -e "$REAL_ROOT" )
+				_fstype $cmd_detect_root
+				[[ -n "$REAL_ROOT" ]] && [[ "$REAL_ROOT" != "$cmd_detect_root" ]] && _fstype $REAL_ROOT
 			fi
-	    } 2>/dev/null | sed -e 's:^.* TYPE="\([^"]*\)".*$:\1:g' | sort -u ); do
+	    } 2>/dev/null | sed -e 's:^.* TYPE="\([^"]*\)".*$:\1:g'| sort -u ); do
 		case $i in
 		linux_raid_member|mdraid|/dev/md*) : md=1 ;; # use right blkid
 		/dev/mapper*|/dev/dm*) : dm=1 ;;
@@ -616,7 +673,7 @@ syspnp(){
 	[[ -e "/lib/modules/${KV}/modules.alias.sh" ]] || return
 	$cmd_nopnp && return
 	# +some compats
-	local PNP_TMP="${TMPDIR}/pnp.found" NOTLOADED="" CHK=true i i1 i2 gov="" freq="" pid="" LCOUNT="" REORDER=break USE_MDADM_="${USE_MDADM:=$cmd_domdadm}" USE_DMRAID_NORMAL_="${USE_DMRAID_NORMAL:=$cmd_dodmraid}" USE_EVMS_NORMAL_="${USE_EVMS_NORMAL:=$cmd_doevms}" USE_LVM_NORMAL_="${USE_LVM_NORMAL:=$cmd_dolvm}" LOOPS_="" REFRESH_SAME waitscan=true checks=""
+	local PNP_TMP="${TMPDIR}/pnp.found" NOTLOADED="" CHK=true i i1 i2 gov="" freq="" pid="" LCOUNT="" REORDER=break USE_MDADM_="${USE_MDADM:=$cmd_domdadm}" USE_DMRAID_NORMAL_="${USE_DMRAID_NORMAL:=$cmd_dodmraid}" USE_EVMS_NORMAL_="${USE_EVMS_NORMAL:=$cmd_doevms}" USE_LVM_NORMAL_="${USE_LVM_NORMAL:=$cmd_dolvm}" LOOPS_="" REFRESH_SAME waitscan=true checks="" fstype=fstype
 	local blkid="$(which blkid 2>/dev/null || ( [[ -e /bin/blkid ]] && echo /bin/blkid ) || ( [[ -e /sbin/blkid ]] && echo /sbin/blkid ) || echo blkid )"
 	[[ "${USE_DMRAID_NORMAL:-true}" != true ]] && DMRAID_OPTS="$USE_DMRAID_NORMAL"
 	: ${REAL_ROOT:=$cmd_real_root}
@@ -634,9 +691,9 @@ syspnp(){
 		echo -ne "" >"${PNP_TMP}.$i"
 	done
 
-	empty_hwopts firewire net pata pcmcia sata scsi usb   ataraid dmraid evms lvm mdadm
+	empty_hwopts firewire net pata pcmcia sata scsi usb   ataraid dmraid evms lvm mdadm fs
 	i="$(readlink $blkid)"
-	[[ -e "$blkid" ]] && [[ "${i%busybox}" == "$i" ]] && empty_hwopts fs
+	[[ -e "$blkid" ]] && [[ "${i%busybox}" == "$i" ]] && fstype=false
 
 	refresh n
 	# first pass - strict bus order
