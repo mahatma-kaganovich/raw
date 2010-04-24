@@ -417,6 +417,7 @@ local i d
 while [[ -n "$*" ]]; do
 d="$1"
 [[ -z "$d" ]] || [[ -e "$d" ]] || d="`findfs $1 2>/dev/null`"
+! grep "^$d:" /etc/fstype.cache 2>/dev/null  &&
 ( [[ -b "$d" ]] || [[ -f "$d" ]] ) && for i in 0 3 4 8 24 32 54 82 510 536 1016 1024 1040 1048 1080 1560 2048 4086 4096 8182 8192 8212 8244 9564 16374 32758 32768 32769 32777 65526 65536 65588 65600 270336; do
 case "`echo -ne "$i:";hexdump -v -s $i -n 10 -e '"" 10/1 "%x" ""' $d 2>/dev/null`" in
 32:4f52434c4449534b*)echo oracleasm;;
@@ -457,6 +458,7 @@ hfs";;
 65600:5f42485266535f4d*)echo btrfs;;
 esac|while read i; do
 	echo "$d: TYPE=\"$i\""
+	echo "$d: TYPE=\"$i\"" >>/etc/fstype.cache
 done
 done
 shift
