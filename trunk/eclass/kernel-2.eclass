@@ -1,5 +1,6 @@
 EAPI=3
 inherit flag-o-matic
+[[ "${PV}" == 9999* ]] && KV_FULL="${PV}"
 source "${PORTDIR}/eclass/kernel-2.eclass"
 
 
