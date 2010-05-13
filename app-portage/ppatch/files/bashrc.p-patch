@@ -1,12 +1,26 @@
 $etc||="$ENV{SS}/etc";
 $rc="$etc/portage/bashrc";
 wf(">$rc",'') if(!-e $rc);
-addon($rc,'#',"ppatch auto",qq(PPATCHDIR="\${PPATCH_ROOT:-\${PORTAGE_CONFIGROOT:-\$ROOT}}/usr/ppatch"
+addon($rc,'#',"ppatch auto",qq(_ppatch(){
+local p i PPATCH PPATCHDIR
+PPATCHDIR="\${PPATCH_ROOT:-\${PORTAGE_CONFIGROOT:-\$ROOT}}/usr/ppatch"
 for PPATCH in \$CATEGORY/\$PN \$PN \$PROVIDE ; do\
 PPATCH="\$PPATCHDIR/\$PPATCH/\$EBUILD_PHASE/"
-if [[ -n "\$EBUILD_PHASE" && -e "\$PPATCH" ]] ; then
-	[[ -e "\$PPATCH/bashrc" ]] && source "\$PPATCH/bashrc"
-	export PPATCH PPATCHDIR S
-	`p-patch \$PPATCH`
+if [[ -n "\$EBUILD_PHASE" ]]; then
+	p="\$PPATCH"
+	while true; do
+		for i in "\$p"/*bashrc ; do
+			[[ -e "\$i" ]] && source \$i
+		done
+		i="\$p"
+		p="\${p%/*}"
+		[[ "\$p" < "\$PPATCHDIR" || "\$p" == "\$i" ]] && break
+	done
+	if [[ -e "\$PPATCH" ]] ; then
+		export PPATCH PPATCHDIR S
+		`p-patch \$PPATCH`
+	fi
 fi
-done),0);
+done
+}
+_ppatch),0);
