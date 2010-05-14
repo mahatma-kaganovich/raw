@@ -117,7 +117,21 @@ start() {
 	done
 
 	einfon "Become primary if configured "
-	$DRBDADM sh-b-pri all
+	local i
+	# primary if configured, filtering output to force (if configured)
+	$DRBDADM sh-b-pri all 2>&1 | while read i; do
+		echo "$i" >&2
+		echo "$i"
+	done|grep -o "'[^' ]*drbdsetup [^ ]* primary' terminated with exit code 17\$"|sort -u|while read i; do
+			[[ "$ret" == 0 ]] || break
+			[[ "$DRBD_FORCE_PRIMARY" == "yes" ]] || break
+			i="${i#\'}"
+			i="${i%\'*}"
+			$i
+			[[ "$?" == 17 ]] || continue
+			einfon "Forcing '$i' with --overwrite-data-of-peer "
+			$i -o
+	done
 	echo
 
 	eend $ret

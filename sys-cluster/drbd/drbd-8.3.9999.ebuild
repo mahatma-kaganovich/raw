@@ -61,6 +61,7 @@ src_install() {
 
 	# gentoo-ish init-script
 	newinitd "${FILESDIR}"/${PN}-8.0.rc ${PN} || die
+	newconfd "${FILESDIR}"/drbd.conf drbd
 
 	# manually install udev rules
 	insinto /etc/udev/rules.d
