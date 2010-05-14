@@ -74,9 +74,30 @@ start() {
 	return $?
 }
 
+umount_fuser(){
+	local i w=false
+	# trick to faster logic
+	while true; do
+		( umount -v $* 2>&1 && break ) | grep "^umount: .*: device is busy\.\$" | sed -e 's%^umount: \(.*\): device is busy\.$%\1%g' | while read i; do
+			einfo "device '$i' is busy by users:"
+			fuser -"${OCFS2_UMOUNT_KILL}" -mMv"${OCFS2_UMOUNT_KILL:+k}" "$i"
+			w=true
+		done
+		umount $* && return 0
+		if $w; then
+			einfo "Sleeping 1 while killing processes"
+			sleep 1
+			umount $* && return 0
+		fi
+		return 1
+	done
+	return 0
+}
+
+# trying to umount ASAP to keep cluster clean
 _umount(){
-	umount $* && return 0
-	einfo "Failed, remounting readonly & sleeping 1"
+	umount_fuser $* && return 0
+	einfo "Direct umount failed, remounting readonly & sleeping 1"
 	umount -r $* && {
 		sleep 1
 		umount $* && return 0
