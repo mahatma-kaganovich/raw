@@ -63,6 +63,9 @@ src_install() {
 	newinitd "${FILESDIR}"/${PN}-8.0.rc ${PN} || die
 	newconfd "${FILESDIR}"/drbd.conf drbd
 
+	insinto /etc/drbd.d
+	newins "${FILESDIR}"/global_common2.conf
+
 	# manually install udev rules
 	insinto /etc/udev/rules.d
 	newins scripts/drbd.rules 65-drbd.rules || die
