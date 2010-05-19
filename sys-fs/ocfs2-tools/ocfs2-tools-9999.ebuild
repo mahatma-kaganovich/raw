@@ -40,6 +40,7 @@ RESTRICT="nomirror"
 if [[ "${PVR}" == *9999* ]]; then
 	SRC_URI=""
 	EGIT_REPO_URI="git://oss.oracle.com/git/ocfs2-tools.git"
+	epatch(){ cat $*|patch -tNp1; }
 fi
 
 src_prepare(){
@@ -49,6 +50,7 @@ src_prepare(){
 		export ac_config_files="ocfs2cdsl/ocfs2cdsl.8"
 		sed -i -e 's:^\(SUBDIRS = .*\)$:\1 ocfs2cdsl:' Makefile
 	fi
+	epatch "${FILESDIR}"/*.patch
 }
 
 src_configure(){
