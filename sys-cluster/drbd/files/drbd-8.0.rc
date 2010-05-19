@@ -19,6 +19,7 @@ MODPROBE="/sbin/modprobe"
 RMMOD="/sbin/rmmod"
 UDEV_TIMEOUT=10
 ADD_MOD_PARAM=""
+DRBD_WAIT=status
 
 if [ -f $DEFAULTFILE ]; then
   . $DEFAULTFILE
@@ -104,12 +105,33 @@ start() {
 	ret=$?
 	echo
 
-	# wait for stable state (vs. after split-brain syncing)
+	# DRBD_WAIT:
+	#  "status" - wait for stable state (vs. after split-brain syncing)
+	#  "primary" - wait for sh-b-pri=OK or "status"
+	#  "none" - sh-b-pri nowait
 	sleep 1
-	local status
-	local status1=`$DRBDADM status`
+	local status status1 pri=-1 pid=""
+	[[ "$DRBD_WAIT" == "none" ]] || status1=`$DRBDADM status`
 	while true; do
-		sleep 5
+		if [[ "$DRBD_WAIT" != "status" ]]; then
+			if [[ "$DRBD_WAIT" == "primary" ]]; then
+				sleep 5 &
+				local pid=$?
+			fi
+			einfon "Become primary if configured "
+			$DRBDADM sh-b-pri all
+			pri=$?
+		fi
+		if [[ "$pri" == 0 ]] || [[ "$DRBD_WAIT" == "none" ]]; then
+			echo
+			eend $ret
+			return $ret
+		fi
+		if [[ -n "$pid" ]]; then
+			wait $pid
+		else
+			sleep 5
+		fi
 		status=`$DRBDADM status`
 		[[ "$status" == "$status1" ]] && break
 		einfo "$status1"
