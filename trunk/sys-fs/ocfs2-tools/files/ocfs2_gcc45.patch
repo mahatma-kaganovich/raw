@@ -1,0 +1,22 @@
+--- a/mount.ocfs2/mount.ocfs2.c	2009-04-14 01:10:40.000000000 +0300
++++ b/mount.ocfs2/mount.ocfs2.c	2010-05-19 15:44:51.000000000 +0300
+@@ -260,16 +260,18 @@ int main(int argc, char **argv)
+ 	char hb_ctl_path[PATH_MAX];
+ 	char *extra = NULL;
+ 	int dev_ro = 0;
+ 	char *hbstr = NULL;
+-	char stackstr[strlen(OCFS2_CLUSTER_STACK_ARG) + OCFS2_STACK_LABEL_LEN + 1] = "";
++	char stackstr[strlen(OCFS2_CLUSTER_STACK_ARG) + OCFS2_STACK_LABEL_LEN + 1];
+ 	ocfs2_filesys *fs = NULL;
+ 	struct o2cb_cluster_desc cluster;
+ 	struct o2cb_region_desc desc;
+ 	int clustered = 1;
+ 	int hb_started = 0;
+ 	struct stat statbuf;
+ 
++	stackstr[0] = '\0';
++
+ 	initialize_ocfs_error_table();
+ 	initialize_o2dl_error_table();
+ 	initialize_o2cb_error_table();
+ 
