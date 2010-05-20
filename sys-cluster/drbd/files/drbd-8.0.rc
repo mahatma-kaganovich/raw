@@ -78,6 +78,7 @@ function adjust_with_progress() {
 }
 
 start() {
+	local i
 	einfo "Starting DRBD resources:"
 	eindent
 	if ! assure_module_is_loaded ; then
@@ -100,15 +101,32 @@ start() {
 	done
 	eend 0
 
-	einfon "Waiting for connection "
 	$DRBDADM wait-con-int
 	ret=$?
 	echo
+
 
 	# DRBD_WAIT:
 	#  "status" - wait for stable state (vs. after split-brain syncing)
 	#  "primary" - wait for sh-b-pri=OK or "status"
 	#  "none" - sh-b-pri nowait
+	#  "sync" - wait-sync
+	if [[ "$DRBD_WAIT" == "sync" ]]; then
+		einfon "Waiting for sync and become primary if configured "
+		$DRBDADM -d sh-b-pri all 2>&1 | while read i; do
+			`echo "$i"|sed -e 's: primary$: wait-sync:g'`
+			$i
+			[[ "$?" == 17 ]] && [[ "$DRBD_FORCE_PRIMARY" == "yes" ]] && $i -o
+		done
+		echo
+		eend $ret
+		return $ret
+	else
+		einfon "Waiting for connection "
+		$DRBDADM wait-con-int
+		ret=$?
+		echo
+	fi
 	sleep 1
 	local status status1 pri=-1 pid=""
 	[[ "$DRBD_WAIT" == "none" ]] || status1=`$DRBDADM status`
@@ -139,7 +157,6 @@ start() {
 	done
 
 	einfon "Become primary if configured "
-	local i
 	# primary if configured, filtering output to force (if configured)
 	$DRBDADM sh-b-pri all 2>&1 | while read i; do
 		echo "$i" >&2
