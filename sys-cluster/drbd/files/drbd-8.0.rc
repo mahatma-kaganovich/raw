@@ -19,7 +19,7 @@ MODPROBE="/sbin/modprobe"
 RMMOD="/sbin/rmmod"
 UDEV_TIMEOUT=10
 ADD_MOD_PARAM=""
-DRBD_WAIT=status
+DRBD_WAIT=sync
 
 if [ -f $DEFAULTFILE ]; then
   . $DEFAULTFILE
@@ -77,6 +77,20 @@ function adjust_with_progress() {
 	IFS=$IFS_O
 }
 
+wait_sync(){
+	local i cmd pid
+	einfon "Waiting for sync (press key to show status) "
+	while read -n 1 i; do cat /proc/drbd; done <&2 &
+	pid=$!
+	drbdadm -d wait-connect all|while read i; do
+		cmd="${i%% wait-connect*}"
+		[[ "$cmd" == "$i" ]] && continue
+		$cmd wait-sync
+	done
+	kill $pid
+	echo
+}
+
 start() {
 	local i
 	einfo "Starting DRBD resources:"
@@ -101,6 +115,7 @@ start() {
 	done
 	eend 0
 
+	einfon "Waiting for connection "
 	$DRBDADM wait-con-int
 	ret=$?
 	echo
@@ -112,33 +127,25 @@ start() {
 	#  "none" - sh-b-pri nowait
 	#  "sync" - wait-sync
 	if [[ "$DRBD_WAIT" == "sync" ]]; then
-		einfon "Waiting for sync and become primary if configured "
-		$DRBDADM -d sh-b-pri all 2>&1 | while read i; do
-			`echo "$i"|sed -e 's: primary$: wait-sync:g'`
-			$i
-			[[ "$?" == 17 ]] && [[ "$DRBD_FORCE_PRIMARY" == "yes" ]] && $i -o
-		done
-		echo
-		eend $ret
-		return $ret
+		wait_sync|cat
+		DRBD_WAIT="primary"
 	else
-		einfon "Waiting for connection "
-		$DRBDADM wait-con-int
-		ret=$?
-		echo
+		sleep 1
 	fi
-	sleep 1
-	local status status1 pri=-1 pid=""
+	local status status1 pri=-1 pid="" skip
 	[[ "$DRBD_WAIT" == "none" ]] || status1=`$DRBDADM status`
 	while true; do
 		if [[ "$DRBD_WAIT" != "status" ]]; then
 			if [[ "$DRBD_WAIT" == "primary" ]]; then
 				sleep 5 &
-				local pid=$?
+				pid=$!
 			fi
-			einfon "Become primary if configured "
-			$DRBDADM sh-b-pri all
-			pri=$?
+			if [[ "$DRBD_WAIT" == "none" ]] || ! ( echo "$status1"|grep -q "SyncTarget" ); then
+				echo "$status1"|grep -q "SyncTarget"
+				einfon "Become primary if configured "
+				$DRBDADM sh-b-pri all
+				pri=$?
+			fi
 		fi
 		if [[ "$pri" == 0 ]] || [[ "$DRBD_WAIT" == "none" ]]; then
 			echo
