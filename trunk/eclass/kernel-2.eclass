@@ -29,7 +29,7 @@ PROVIDE="sources? ( virtual/linux-sources )
 	!sources? ( virtual/linux-kernel )
 	kernel-alsa? ( virtual/alsa )"
 
-[[ -e "${CONFIG_ROOT}/etc/kernels/kernel.conf" ]] && source "${CONFIG_ROOT}/etc/kernels/kernel.conf"
+[[ -e "${CONFIG_ROOT}${KERNEL_CONF:=/etc/kernels/kernel.conf}" ]] && source "${CONFIG_ROOT}${KERNEL_CONF}"
 
 USEKEY="$(for i in ${!KERNEL_@} ; do
 	echo "${!i} , "
