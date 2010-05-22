@@ -44,7 +44,7 @@ src_configure() {
 		--without-km \
 		--without-udev \
 		--with-xen \
-		--without-pacemaker \
+		--with-pacemaker \
 		--with-heartbeat \
 		--without-rgmanager \
 		--without-bashcompletion \
@@ -61,10 +61,10 @@ src_install() {
 
 	# gentoo-ish init-script
 	newinitd "${FILESDIR}"/${PN}-8.0.rc ${PN} || die
-	newconfd "${FILESDIR}"/drbd.conf drbd
+	newconfd "${FILESDIR}"/drbd.conf.d drbd
 
 	insinto /etc/drbd.d
-	newins "${FILESDIR}"/global_common2.conf
+	doins "${FILESDIR}"/global_common2.conf
 
 	# manually install udev rules
 	insinto /etc/udev/rules.d
