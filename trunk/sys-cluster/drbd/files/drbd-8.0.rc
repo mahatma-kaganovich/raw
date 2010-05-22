@@ -5,13 +5,6 @@
 
 opts="${opts} reload"
 
-depend() {
-	use logger
-	need net
-	before heartbeat
-	after sshd
-}
-
 DEFAULTFILE="/etc/conf.d/drbd"
 DRBDADM="/sbin/drbdadm"
 PROC_DRBD="/proc/drbd"
@@ -19,11 +12,20 @@ MODPROBE="/sbin/modprobe"
 RMMOD="/sbin/rmmod"
 UDEV_TIMEOUT=10
 ADD_MOD_PARAM=""
-DRBD_WAIT=sync
+DRBD_WAIT_SYNC="wait-sync --wait-after-sb --outdated-wfc-timeout=3 --degr-wfc-timeout=3 --wfc-timeout=3"
+DRBD_WAIT_PRIMARY="wait-sync --wait-after-sb --outdated-wfc-timeout=0 --degr-wfc-timeout=0 --wfc-timeout=0"
+DRBD_CLIENTS="heartbeat ocfs2"
 
 if [ -f $DEFAULTFILE ]; then
   . $DEFAULTFILE
 fi
+
+depend() {
+	use logger
+	need net
+	before $DRBD_CLIENTS
+	after sshd
+}
 
 # Just in case drbdadm want to display any errors in the configuration
 # file, or we need to ask the user about registering this installation
@@ -77,18 +79,60 @@ function adjust_with_progress() {
 	IFS=$IFS_O
 }
 
-wait_sync(){
-	local i cmd pid
-	einfon "Waiting for sync (press key to show status) "
-	while read -n 1 i; do cat /proc/drbd; done <&2 &
-	pid=$!
-	drbdadm -d wait-connect all|while read i; do
-		cmd="${i%% wait-connect*}"
-		[[ "$cmd" == "$i" ]] && continue
-		$cmd wait-sync
+primary(){
+	local r
+	case `$1 $2 cstate` in
+	SyncSource*) ;;
+	*)
+		$1 $2 $DRBD_WAIT_PRIMARY
+		echo -n "$2w$? "
+	;;
+	esac
+	for r in 1 2 3; do
+		$1 $2 primary
+		r="$?"
+		echo -n "$2p$r "
+		[[ "$r" == 0 ]] && return 0
+		sleep 1
 	done
-	kill $pid
-	echo
+	[[ "$r" == 17 ]] || return $r
+	[[ "$DRBD_FORCE_PRIMARY" == "yes" ]] || return $r
+	$1 $2 primary -o
+	r="$?"
+	echo -n "$2f$r "
+	return $r
+}
+
+wait_sync(){
+	local i cmd ipid pid p s break="....."
+	while read -n 1 i; do
+		break="${break#?}$i"
+		[[ "$break" == "break" ]] && killall /sbin/drbdsetup
+		echo "=== status (say "break" to stop waiting): ==="
+		cat /proc/drbd
+	done <&2 &
+	ipid=$!
+	drbdadm -d wait-connect all|{
+		pid=""
+		while read i; do
+			cmd="${i%% wait-connect*}"
+			[[ "$cmd" == "$i" ]] && continue
+			$cmd $DRBD_WAIT_SYNC &
+			pid="$pid $!"
+		done
+		wait $pid
+		echo -n "*w$? "
+	}
+	drbdadm -d sh-b-pri all|{
+		pid=""
+		while read cmd i p s; do
+			[[ "$p" == "primary" ]] || continue
+			primary "$cmd" "$i" &
+			pid="$pid $!"
+		done
+		wait $pid
+	}
+	kill $ipid
 }
 
 start() {
@@ -120,65 +164,9 @@ start() {
 	ret=$?
 	echo
 
-
-	# DRBD_WAIT:
-	#  "status" - wait for stable state (vs. after split-brain syncing)
-	#  "primary" - wait for sh-b-pri=OK or "status"
-	#  "none" - sh-b-pri nowait
-	#  "sync" - wait-sync
-	if [[ "$DRBD_WAIT" == "sync" ]]; then
-		wait_sync|cat
-		DRBD_WAIT="primary"
-	else
-		sleep 1
-	fi
-	local status status1 pri=-1 pid="" skip
-	[[ "$DRBD_WAIT" == "none" ]] || status1=`$DRBDADM status`
-	while true; do
-		if [[ "$DRBD_WAIT" != "status" ]]; then
-			if [[ "$DRBD_WAIT" == "primary" ]]; then
-				sleep 5 &
-				pid=$!
-			fi
-			if [[ "$DRBD_WAIT" == "none" ]] || ! ( echo "$status1"|grep -q "SyncTarget" ); then
-				echo "$status1"|grep -q "SyncTarget"
-				einfon "Become primary if configured "
-				$DRBDADM sh-b-pri all
-				pri=$?
-			fi
-		fi
-		if [[ "$pri" == 0 ]] || [[ "$DRBD_WAIT" == "none" ]]; then
-			echo
-			eend $ret
-			return $ret
-		fi
-		if [[ -n "$pid" ]]; then
-			wait $pid
-		else
-			sleep 5
-		fi
-		status=`$DRBDADM status`
-		[[ "$status" == "$status1" ]] && break
-		einfo "$status1"
-		status1="$status"
-	done
-
-	einfon "Become primary if configured "
-	# primary if configured, filtering output to force (if configured)
-	$DRBDADM sh-b-pri all 2>&1 | while read i; do
-		echo "$i" >&2
-		echo "$i"
-	done|grep -o "'[^' ]*drbdsetup [^ ]* primary' terminated with exit code 17\$"|sort -u|while read i; do
-			[[ "$ret" == 0 ]] || break
-			[[ "$DRBD_FORCE_PRIMARY" == "yes" ]] || break
-			i="${i#\'}"
-			i="${i%\'*}"
-			$i
-			[[ "$?" == 17 ]] || continue
-			einfon "Forcing '$i' with --overwrite-data-of-peer "
-			$i -o
-	done
-	echo
+	einfon "Waiting & become primary if configured (key2status) [ "
+	wait_sync|cat
+	echo "]"
 
 	eend $ret
 	return $ret
