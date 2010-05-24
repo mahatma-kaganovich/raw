@@ -12,7 +12,7 @@ MODPROBE="/sbin/modprobe"
 RMMOD="/sbin/rmmod"
 UDEV_TIMEOUT=10
 ADD_MOD_PARAM=""
-DRBD_WAIT_SYNC="wait-sync --wait-after-sb --outdated-wfc-timeout=3 --degr-wfc-timeout=3 --wfc-timeout=3"
+DRBD_WAIT_SYNC="wait-sync --wait-after-sb --outdated-wfc-timeout=5 --degr-wfc-timeout=5 --wfc-timeout=5"
 DRBD_WAIT_PRIMARY="wait-sync --wait-after-sb --outdated-wfc-timeout=0 --degr-wfc-timeout=0 --wfc-timeout=0"
 DRBD_CLIENTS="heartbeat ocfs2"
 
@@ -80,9 +80,9 @@ function adjust_with_progress() {
 }
 
 primary(){
-	local r
-	case `$1 $2 cstate` in
-	SyncSource*|StandAlone*) ;;
+	local r=`$1 $2 cstate`
+	case "$r" in
+	SyncSource*|StandAlone*) echo -n "$2$r " ;;
 	*)
 		$1 $2 $DRBD_WAIT_PRIMARY
 		echo -n "$2w$? "
