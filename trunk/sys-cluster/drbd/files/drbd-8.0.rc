@@ -15,6 +15,7 @@ ADD_MOD_PARAM=""
 DRBD_WAIT_SYNC="wait-sync --wait-after-sb --outdated-wfc-timeout=5 --degr-wfc-timeout=5 --wfc-timeout=5"
 DRBD_WAIT_PRIMARY="wait-sync --wait-after-sb --outdated-wfc-timeout=0 --degr-wfc-timeout=0 --wfc-timeout=0"
 DRBD_CLIENTS="heartbeat ocfs2"
+DRBD_EMERGE_MODULE="yes"
 
 if [ -f $DEFAULTFILE ]; then
   . $DEFAULTFILE
@@ -135,15 +136,43 @@ wait_sync(){
 	kill $ipid
 }
 
+
+remerge(){
+	EGIT_OFFLINE=1 KERNEL_DIR="/usr/src/linux-`uname -r`" emerge -1q --nodeps ${1:+=}sys-cluster/drbd-kernel$1
+	return $?
+}
+
+# try to rebuild & reload most equal module version
+# FIXME: need to check protocol version
+chk_ver(){
+	local v=`$DRBDADM sh-nop 2>&1|grep "userland version:"|sed -e 's%^.*userland version: %-%'`
+	[[ -z "$v" ]] && return 0
+	if [[ -z "$1" ]]; then
+		einfo "Trying to emerge equal module version..."
+		remerge $v || return 1
+	else
+		einfo "Trying to emerge latest module version..."
+		remerge || return 1
+	fi
+	rmmod drbd
+	assure_module_is_loaded
+	return 1
+}
+
 start() {
 	local i
 	einfo "Starting DRBD resources:"
 	eindent
-	if ! assure_module_is_loaded ; then
-		einfo "modprobe drbd failed. Trying to emerge..."
-		KERNEL_DIR="/usr/src/linux-`uname -r`" emerge -1q --nodeps drbd-kernel
-		assure_module_is_loaded || return $?
+	if [[ "$DRBD_EMERGE_MODULE" == "yes" ]]; then
+		if ! assure_module_is_loaded ; then
+			einfo "modprobe drbd failed. Trying to emerge..."
+			remerge
+			chk_ver
+		else
+			chk_ver 1 || chk_ver
+		fi
 	fi
+	assure_module_is_loaded || return $?
 	adjust_with_progress || return $?
 
 	# make sure udev has time to create the device files
