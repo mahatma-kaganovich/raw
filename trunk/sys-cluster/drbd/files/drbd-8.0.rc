@@ -82,7 +82,7 @@ function adjust_with_progress() {
 primary(){
 	local r
 	case `$1 $2 cstate` in
-	SyncSource*) ;;
+	SyncSource*|StandAlone*) ;;
 	*)
 		$1 $2 $DRBD_WAIT_PRIMARY
 		echo -n "$2w$? "
@@ -106,7 +106,7 @@ primary(){
 wait_sync(){
 	local i cmd ipid pid p s break="....."
 	while read -n 1 i; do
-		break="${break#?}$i"
+		break="${break#?}${i:-.}"
 		[[ "$break" == "break" ]] && killall /sbin/drbdsetup
 		echo "=== status (say "break" to stop waiting): ==="
 		cat /proc/drbd
