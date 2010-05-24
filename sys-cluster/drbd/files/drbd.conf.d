@@ -10,6 +10,6 @@ DRBD_FORCE_PRIMARY="no"
 
 # this values default and good for most cases:
 # wait for all after connect, usually just a smart delay  (do "0" to full sync)
-#DRBD_WAIT_SYNC="wait-sync --wait-after-sb --outdated-wfc-timeout=3 --degr-wfc-timeout=3 --wfc-timeout=3"
+#DRBD_WAIT_SYNC="wait-sync --wait-after-sb --outdated-wfc-timeout=5 --degr-wfc-timeout=5 --wfc-timeout=5"
 # wait before primary exclude SyncSource, unlimited unless documented data loss
 #DRBD_WAIT_PRIMARY="wait-sync --wait-after-sb --outdated-wfc-timeout=0 --degr-wfc-timeout=0 --wfc-timeout=0"
