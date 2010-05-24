@@ -81,9 +81,9 @@ function adjust_with_progress() {
 }
 
 primary(){
-	local r=`$1 $2 cstate`
-	case "$r" in
-	SyncSource*|StandAlone*) echo -n "$2$r " ;;
+	local r s=`$1 $2 cstate`
+	case "$s" in
+	SyncSource*|StandAlone*) echo -n "$2$s " ;;
 	*)
 		$1 $2 $DRBD_WAIT_PRIMARY
 		echo -n "$2w$? "
@@ -101,6 +101,9 @@ primary(){
 	$1 $2 primary -o
 	r="$?"
 	echo -n "$2f$r "
+	case "$s" in
+	StandAlone*) $DRBDADM connect minor-$2 ;;
+	esac
 	return $r
 }
 
