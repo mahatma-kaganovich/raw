@@ -1,3 +1,4 @@
+EAPI="3"
 
 # drbd-kernel-8.3.9999.ebuild
 GIT=$([[ ${PVR} = *.9999 ]] && echo "git")
@@ -24,7 +25,19 @@ SLOT="0"
 
 S="${WORKDIR}/${MY_P}"
 
-[[ "${GIT}" == "git" ]] && SRC_URI=""
+if [[ "${GIT}" == "git" ]]; then
+	SRC_URI=""
+	export EGIT_PROJECT="drbd"
+fi
+
+src_prepare(){
+	local i
+	cd "${S}/drbd" || die
+	einfo "Replacing includes to local headers"
+	for i in linux/*; do
+		sed -i -e "s:#include <$i>:#include \"$i\":g" *.c *.h linux/*.h
+	done
+}
 
 pkg_setup() {
 	if ! kernel_is 2 6; then
@@ -37,7 +50,7 @@ pkg_setup() {
 	CONNECTOR_ERROR="You must enable \"CONNECTOR - unified userspace <-> kernelspace linker\" in your kernel configuration, because drbd needs it."
 	linux-mod_pkg_setup
 	BUILD_PARAMS="-j1 KDIR=${KERNEL_DIR} O=${KERNEL_DIR}"
-	linux_chkconfig_present BLK_DEV_DRBD && die "drbd module alredy included into kernel"
+	linux_chkconfig_present BLK_DEV_DRBD && ewarn "drbd module alredy included into kernel: this module must overlap kernel's"
 }
 
 pkg_postinst() {

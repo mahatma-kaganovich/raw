@@ -1,4 +1,4 @@
-EAPI="2"
+EAPI="3"
 
 # drbd-8.3.9999.ebuild
 GIT=$([[ ${PVR} = *.9999 ]] && echo "git autotools")
