@@ -80,12 +80,20 @@ function adjust_with_progress() {
 	IFS=$IFS_O
 }
 
+standalone(){
+	case "`$1 $2 cstate`" in
+	StandAlone*) return 0 ;;
+	esac
+	return 1
+}
+
 primary(){
 	local r s=`$1 $2 cstate`
 	case "$s" in
-	SyncSource*|StandAlone*) echo -n "$2$s " ;;
+	SyncSource*|StandAlone*|WFconnection*) echo -n "$2$s " ;;
 	*)
 		$1 $2 $DRBD_WAIT_PRIMARY
+		r=$?
 		echo -n "$2w$? "
 	;;
 	esac
@@ -98,12 +106,16 @@ primary(){
 	done
 	[[ "$r" == 17 ]] || return $r
 	[[ "$DRBD_FORCE_PRIMARY" == "yes" ]] || return $r
+	if ! standalone $*; then
+		$1 $2 disconnect
+		echo -n "$2d$? "
+		sleep 1
+		standalone $* || return 1
+	fi
 	$1 $2 primary -o
 	r="$?"
 	echo -n "$2f$r "
-	case "$s" in
-	StandAlone*) $DRBDADM connect minor-$2 ;;
-	esac
+	$DRBDADM connect minor-$2
 	return $r
 }
 
