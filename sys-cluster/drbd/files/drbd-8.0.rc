@@ -139,7 +139,7 @@ primary(){
 	[[ "$r" == 17 ]] || return $r
 	[[ "$DRBD_FORCE_PRIMARY" == "yes" ]] || return $r
 	if ! standalone $*; then
-		unsafe $* && unsafe $* && return 1
+		unsafe $* && return 1
 		$* disconnect
 		echo -n "$2d$? "
 		sleep 1
