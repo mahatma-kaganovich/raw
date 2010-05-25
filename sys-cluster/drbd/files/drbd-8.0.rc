@@ -16,6 +16,7 @@ DRBD_WAIT_SYNC="wait-sync --wait-after-sb --outdated-wfc-timeout=5 --degr-wfc-ti
 DRBD_WAIT_PRIMARY="wait-sync --wait-after-sb --outdated-wfc-timeout=0 --degr-wfc-timeout=0 --wfc-timeout=0"
 DRBD_CLIENTS="heartbeat ocfs2"
 DRBD_EMERGE_MODULE="yes"
+DRBD_HIDE_WAIT="no"
 
 if [ -f $DEFAULTFILE ]; then
   . $DEFAULTFILE
@@ -80,42 +81,75 @@ function adjust_with_progress() {
 	IFS=$IFS_O
 }
 
+# alt status-based waiting
+_wait(){
+	local s1="" s=`$* status`
+	while true; do
+		echo -n "."
+		sleep 10
+		s1=`$* status`
+		[[ "$s1" == "$s" ]] && break
+		s="$s1"
+	done
+	echo "$2~ "
+	return 0
+}
+
 standalone(){
-	case "`$1 $2 cstate`" in
+	case "`$* cstate`" in
 	StandAlone*) return 0 ;;
 	esac
 	return 1
 }
 
+unsafe(){
+	local i s=`$* cstate`
+	for i in 1 0; do
+		case "$s" in
+		*SyncS*|*MapS*) ;;
+		*Sync*|*Map*)
+			echo -n "$2$s "
+			[[ "$i" == 0 ]] && return 0
+			_wait $*
+		;;
+		esac
+	done
+	return 1
+}
+
 primary(){
-	local r s=`$1 $2 cstate`
-	case "$s" in
+	local r s=`$* cstate`
+	[[ -z "$DRBD_WAIT_PRIMARY" ]] && _wait $* || case "$s" in
 	SyncSource*|StandAlone*|WFconnection*) echo -n "$2$s " ;;
 	*)
-		$1 $2 $DRBD_WAIT_PRIMARY
+		$* $DRBD_WAIT_PRIMARY
 		r=$?
 		echo -n "$2w$? "
 	;;
 	esac
-	for r in 1 2 3; do
-		$1 $2 primary
+	for s in 1 1 0 ; do
+		r=1
+		unsafe $* && continue
+		$* primary
 		r="$?"
 		echo -n "$2p$r "
 		[[ "$r" == 0 ]] && return 0
-		sleep 1
+		sleep $s
 	done
 	[[ "$r" == 17 ]] || return $r
 	[[ "$DRBD_FORCE_PRIMARY" == "yes" ]] || return $r
 	if ! standalone $*; then
-		$1 $2 disconnect
+		unsafe $* && unsafe $* && return 1
+		$* disconnect
 		echo -n "$2d$? "
 		sleep 1
 		standalone $* || return 1
 	fi
-	$1 $2 primary -o
+	$* primary -o
 	r="$?"
 	echo -n "$2f$r "
 	$DRBDADM connect minor-$2
+	echo -n "$2c$? "
 	return $r
 }
 
@@ -124,22 +158,27 @@ wait_sync(){
 	while read -n 1 i; do
 		break="${break#?}${i:-.}"
 		[[ "$break" == "break" ]] && killall /sbin/drbdsetup
-		echo "=== status (say "break" to stop waiting): ==="
+		echo "=== status (say 'break' to stop '/sbin/drbdsetup'): ==="
 		cat /proc/drbd
 	done <&2 &
 	ipid=$!
-	drbdadm -d wait-connect all|{
+	$DRBDADM -d wait-connect all|{
 		pid=""
-		while read i; do
-			cmd="${i%% wait-connect*}"
-			[[ "$cmd" == "$i" ]] && continue
-			$cmd $DRBD_WAIT_SYNC &
+		while read cmd i p s; do
+			[[ "$p" == "wait-connect" ]] || continue
+			{
+			if [[ "$DRBD_HIDE_WAIT" == "yes" ]]; then
+				$cmd $i $p $s
+				echo -n "${i}C$? "
+			fi
+			[[ -z "$DRBD_WAIT_SYNC" ]] && _wait $cmd $i || $cmd $i $DRBD_WAIT_SYNC
+			echo -n "${i}W$? "
+			} &
 			pid="$pid $!"
 		done
 		wait $pid
-		echo -n "*w$? "
 	}
-	drbdadm -d sh-b-pri all|{
+	$DRBDADM -d sh-b-pri all|{
 		pid=""
 		while read cmd i p s; do
 			[[ "$p" == "primary" ]] || continue
@@ -153,7 +192,7 @@ wait_sync(){
 
 
 remerge(){
-	EGIT_OFFLINE=1 KERNEL_DIR="/usr/src/linux-`uname -r`" emerge -1q --nodeps ${1:+=}sys-cluster/drbd-kernel$1
+	EGIT_OFFLINE=1 KERNEL_DIR="/usr/src/linux-`uname -r`" emerge -1q --nodeps "${1:+=}sys-cluster/drbd-kernel$1"
 	return $?
 }
 
@@ -164,7 +203,7 @@ chk_ver(){
 	[[ -z "$v" ]] && return 0
 	if [[ -z "$1" ]]; then
 		einfo "Trying to emerge equal module version..."
-		remerge $v || return 1
+		remerge "$v-*" || remerge "$v" || return 1
 	else
 		einfo "Trying to emerge latest module version..."
 		remerge || return 1
@@ -203,10 +242,13 @@ start() {
 	done
 	eend 0
 
-	einfon "Waiting for connection "
-	$DRBDADM wait-con-int
-	ret=$?
-	echo
+	ret=0
+	if [[ "$DRBD_HIDE_WAIT" != "yes" ]]; then
+		einfon "Waiting for connection "
+		$DRBDADM wait-con-int
+		ret=$?
+		echo
+	fi
 
 	einfon "Waiting & become primary if configured (key2status) [ "
 	wait_sync|cat
