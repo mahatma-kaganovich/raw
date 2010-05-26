@@ -208,7 +208,7 @@ chk_ver(){
 		einfo "Trying to emerge latest module version..."
 		remerge || return 1
 	fi
-	rmmod drbd
+	$RMMOD drbd
 	assure_module_is_loaded
 	return 1
 }

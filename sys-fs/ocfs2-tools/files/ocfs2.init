@@ -27,6 +27,30 @@ fmod() {
 	return 1
 }
 
+# unsure about possibility to keep heartbeat unclean after correct umount
+# but Oracle do so
+clean_heartbeat(){
+	local err=0 id
+	for i in "/sys/kernel/config/cluster/$1/heartbeat"/*; do
+		[[ -d "$i" ]] || continue
+		id="${i##*/}"
+		ebegin "Cleaning OCFS2 heartbeat region $1/$id"
+		[[ "`/sbin/ocfs2_hb_ctl -I -u "$id" | grep -o " [0-9]* refs$"`" == " 0 refs" ]] && /sbin/ocfs2_hb_ctl -K -u "$id"  || ! [[ -d "$i" ]]
+		eend $? || err=1
+	done
+	return $err
+}
+
+stop_cluster(){
+	if clean_heartbeat $1 || [[ "${OCFS2_FORCE_STOP}" == yes ]]; then
+		ebegin "Stopping OCFS2 cluster '$1'"
+		/sbin/o2cb_ctl -H -n $1 -t cluster -a online=no >/dev/null
+		eend $? || return 1
+	else
+		return 1
+	fi
+}
+
 start() {
 	(	fmod /sys/fs/ocfs2 ocfs2 &&
 		fmod /sys/fs/ocfs2/cluster_stack ocfs2_stackglue &&
@@ -42,7 +66,11 @@ start() {
 	for cluster in ${OCFS2_CLUSTER}; do
 		ebegin "Starting OCFS2 cluster '${cluster}'"
 		/sbin/o2cb_ctl -H -n ${cluster} -t cluster -a online=yes >/dev/null
-		eend $? || return 1
+		if ! eend $? ; then
+			local OCFS2_FORCE_STOP=no
+			stop_cluster $cluster
+			return 1
+		fi
 
 		# Some heartbeat tweaks to prevent self-fencing quite so much during heavy load.
 		# http://oss.oracle.com/projects/ocfs2/dist/documentation/ocfs2_faq.html
@@ -118,9 +146,8 @@ stop() {
 	ret=$?
 
 	for cluster in ${OCFS2_CLUSTER}; do
-		ebegin "Stopping OCFS2 cluster '${cluster}'"
-		/sbin/o2cb_ctl -H -n ${cluster} -t cluster -a online=no >/dev/null
-		eend $? || ret=1
+		stop_cluster $cluster || ret=1
 	done
 	return $ret
 }
+
