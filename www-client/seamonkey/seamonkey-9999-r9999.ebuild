@@ -11,8 +11,12 @@ inherit ${hg} flag-o-matic toolchain-funcs eutils mozcoreconf-2 mozconfig-3 make
 MY_PN="${PN/fennec/mobile}"
 MY_PN="${MY_PN/shiretoko/firefox}"
 MY_PN="${MY_PN/bonecho/firefox}"
+MY_PN="${MY_PN/minefield/firefox}"
+MY_PN="${MY_PN/mozilla-firefox/firefox}"
 
-MY_PV="${PV/_rc/rc}"
+MY_PV="${PV/_/}"
+MY_PV="${MY_PV/beta/b}"
+MY_PV="${MY_PV/alpha/a}"
 MY_P="${MY_PN}-${MY_PV}"
 MY_P="${MY_P/mobile/fennec}"
 EMVER="1.0.1"
@@ -57,6 +61,7 @@ RDEPEND="java? ( >=virtual/jre-1.4 )
 		app-arch/bzip2
 		x11-libs/cairo[directfb=]
 		x11-libs/pango
+		dev-libs/libevent
 	)
 	X? ( >=x11-libs/gtk+-2.8.6 )
 	!X? ( x11-libs/gtk+-directfb )
@@ -84,10 +89,18 @@ DEPEND="java? ( >=virtual/jdk-1.4 )
 
 S="${WORKDIR}/comm-${MOZVER}"
 
+force(){
+	local i
+	for i in $*; do
+		[[ "${i#+}" == "${i}" ]] && IUSE="${IUSE// $i/ +$i}" || IUSE="${IUSE// +$i/ $i}"
+	done
+}
+
 ll="${MOZVER}"
 if [[ -n "${hg}" ]]; then
 	LANGS=""
-	IUSE="${IUSE// vanilla/ +vanilla} faststart"
+	IUSE="${IUSE} faststart"
+	force vanilla
 	SRC_URI=""
 	if [[ "${PVR}" == *-r9999* ]]; then
 		S="${WORKDIR}/comm-central"
@@ -123,11 +136,12 @@ seamonkey)
 ;;
 firefox)
 	PATCH=""
-	DESCRIPTION="Firefox Web Browser"
+	DESCRIPTION="${PN} Web Browser"
 	HOMEPAGE="http://www.mozilla.com/firefox"
 	export MOZ_CO_PROJECT=browser
 	S="${S/comm-/mozilla-}"
 	S1="${S}"
+	force ipc
 ;;
 mobile)
 	PATCH=""
@@ -137,6 +151,8 @@ mobile)
 	S="${S/comm-/mozilla-}"
 	S1="${S}"
 	SRC_URI="${SRC_URI//\/1.0rc3\///1.0/}"
+	SRC_URI="${SRC_URI//\/1.0.1\///1.0.1rc1/}"
+	force ipc
 ;;
 *)
 	die
@@ -220,6 +236,7 @@ src_prepare(){
 
 	sed -i -e 's%^#elif$%#elif 1%g' "${S1}"/toolkit/xre/nsAppRunner.cpp
 	use X || sed -i -e 's:gtk-2\.0:gtk-directfb-2.0:g' -e 's:GDK_PACKAGES=directfb:GDK_PACKAGES="directfb gdk-directfb-2.0":g' `find "${S}" -name configure.in` `find "${S}" -name "Makefile*"`
+
 	eend $?
 
 	for i in "${S1}/js/src" "${S1}" "${S}" ; do
@@ -279,6 +296,8 @@ src_configure(){
 		--enable-pref-extensions \
 		--disable-tests
 
+	grep -q "system-libevent" "${S}"/configure.in "${S1}"/configure.in &&
+		mozconfig_annotate "gentoo" --with-system-libevent
 
 	local l
 	for l in $(langs); do
@@ -345,6 +364,8 @@ src_configure(){
 
 	if use moznoirc; then
 		mozconfig_annotate '+moznocompose +moznoirc' --enable-extensions=-irc
+	elif [[ -e "${S1}/extensions/irc" ]]; then
+		SM || mozconfig_annotate '+moznocompose -moznoirc' --enable-extensions=irc
 	fi
 
 	if use moznoroaming ; then
@@ -406,7 +427,10 @@ src_configure(){
 	# required for sse prior to gcc 4.4.3, may be faster in other cases
 	[[ "${ARCH}" == "x86" ]] && append-flags -mstackrealign
 
-	! SM && use directfb && sed -i -e 's%--enable-default-toolkit=cairo-gtk2%--enable-default-toolkit=cairo-gtk2-dfb%g' "${S}"/.mozconfig
+	# current versions segfault
+	append-flags -fno-unroll-loops
+
+#	! SM && use directfb && sed -i -e 's%--enable-default-toolkit=cairo-gtk2%--enable-default-toolkit=cairo-gtk2-dfb%g' "${S}"/.mozconfig
 
 	if use qt-experimental ; then
 		sed -i -e 's%--enable-default-toolkit=cairo-gtk2%--enable-default-toolkit=cairo-qt%g' "${S}"/.mozconfig
@@ -429,9 +453,19 @@ src_configure(){
 	mozconfig_use_with system-nss
 	mozconfig_use_with system-nspr
 
+	case "${MY_PN}" in
+	firefox) mozconfig_annotate '' --enable-faststripe ;;
+	esac
+
 	echo "" >>"${S}"/.mozconfig
 
 	case "${PN}" in
+	*minefield*)
+		mozconfig_annotate '' --with-branding=browser/branding/nightly
+	;;
+	*bonecho*|*shiretoko*)
+		mozconfig_annotate '' --with-branding=browser/branding/unofficial
+	;;
 	*firefox*)
 		mozconfig_annotate '' --enable-official-branding
 		einfo
@@ -472,7 +506,7 @@ mk_add_options MOZ_OBJDIR=@TOPSRCDIR@/../base" >>"${S}"/.mozconfig
 		econf || die
 	fi
 
-	if ! SM && use directfb && use vanilla; then
+	if use directfb && use vanilla && grep -vq "cairo-gtk2-dfb" "${S}"/.mozconfig; then
 		local dl=`pkg-config directfb --libs`
 #		local dl="-ldirectfb -ldirect"
 		sed -i -e 's%\(^MOZ_DFB.*\)%\1 1%' \
@@ -560,9 +594,15 @@ src_install() {
 		Title="Mozilla Firefox"
 		R="firefox"
 	;;
+	*minefield*)
+		icon "${S}"/browser/branding/nightly
+		Title="Minefield"
+		R="firefox"
+	;;
 	*bonecho*|*shiretoko*)
-		icon "${S}"/browser/base/branding
+		icon "${S}"/browser/branding/unofficial
 		Title="Shiretoko"
+		R="firefox"
 	;;
 	*fennec*)
 		icon "${S}"/mobile/branding/{,nightly/}content
@@ -572,7 +612,7 @@ src_install() {
 	echo "[Desktop Entry]
 Name=${Title}
 Comment=${Comment}
-Exec=/usr/bin/${PN}-X %U
+Exec=/usr/bin/${R}-X %U
 Icon=${PN}-icon
 Terminal=false
 Type=Application
@@ -581,13 +621,13 @@ Categories=Network;WebBrowser;">"${WORKDIR}/${PN}.desktop"
 	domenu "${WORKDIR}/${PN}.desktop"
 
 	# Create /usr/bin/${PN}
-	make_wrapper ${R} "${MOZILLA_FIVE_HOME}/${R}"
+	make_wrapper ${PN} "${MOZILLA_FIVE_HOME}/${R}"
 
 	echo '#!/bin/sh
 # prevent to stalled terminal outputs (seamonkey, etc)
 exec /usr/bin/'"${PN}"' "$@" &>/dev/null' >"${WORKDIR}/${PN}-X"
 	exeinto /usr/bin
-	doexe "${WORKDIR}/${R}-X"
+	doexe "${WORKDIR}/${PN}-X"
 
 	# Add vendor
 	echo "pref(\"general.useragent.vendor\",\"Gentoo\");" >> `echo "${D}"${MOZILLA_FIVE_HOME}/defaults/pref*/vendor.js`
