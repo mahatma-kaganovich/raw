@@ -41,6 +41,20 @@ clean_heartbeat(){
 	return $err
 }
 
+UUID(){
+	local dev fs stack uuid label
+	/sbin/mounted.ocfs2 -d|while read dev fs stack uuid label; do
+		[[ "$stack" == "o2cb" ]] && echo "$uuid"
+	done|sort -u
+}
+
+clusters(){
+	[[ -z "${OCFS2_CLUSTER}" ]] && for i in /sys/kernel/config/cluster/*; do
+		OCFS2_CLUSTER="${OCFS2_CLUSTER} ${i##*/}"
+	done
+	echo "${OCFS2_CLUSTER}"
+}
+
 stop_cluster(){
 	if clean_heartbeat $1 || [[ "${OCFS2_FORCE_STOP}" == yes ]]; then
 		ebegin "Stopping OCFS2 cluster '$1'"
@@ -49,6 +63,14 @@ stop_cluster(){
 	else
 		return 1
 	fi
+}
+
+online(){
+	local cluster
+	for cluster in ${*:-$(clusters)}; do
+		grep -q "^1\$" /sys/kernel/config/cluster/$cluster/node/*/local 2>/dev/null || return 1
+	done
+	return 0
 }
 
 start() {
@@ -63,9 +85,12 @@ start() {
 		return 1
 	fi
 
-	for cluster in ${OCFS2_CLUSTER}; do
+	# autodetect
+	: ${OCFS2_CLUSTER:=$(UUID)}
+
+	for cluster in $(clusters); do
 		ebegin "Starting OCFS2 cluster '${cluster}'"
-		/sbin/o2cb_ctl -H -n ${cluster} -t cluster -a online=yes >/dev/null
+		online $cluster || /sbin/o2cb_ctl -H -n ${cluster} -t cluster -a online=yes >/dev/null
 		if ! eend $? ; then
 			local OCFS2_FORCE_STOP=no
 			stop_cluster $cluster
@@ -84,15 +109,20 @@ start() {
 		# (dead_threshold - 1) * 2s
 		echo $OCFS2_DEAD_THRESHOLD > /sys/kernel/config/cluster/${cluster}/heartbeat/dead_threshold
 	done
-	sleep 2
+
+	local i
+	for i in 9 8 7 6 5 4 3 2 1 0; do
+		online && break
+		echo -n "$i"
+		sleep 1
+	done
 
 	# Voluntary fsck. Will be happened only ondemand -
 	# on both unmounted/double fault, placed in fstab.
-	local i
 	for i in `mount -invfat ocfs2 2>/dev/null|sed -e 's: .*::g'` ; do
 		[[ -e "$i" ]] || continue
 		einfo "OCFS2: Trying 'fsck.ocfs2 $OCFS2_FSCK $i' (fs check if possible)"
-		fsck.ocfs2 $OCFS2_FSCK "$i" 2>/dev/null
+		/sbin/fsck.ocfs2 $OCFS2_FSCK "$i" 2>/dev/null
 	done
 
 	# Any behaviour
@@ -102,52 +132,57 @@ start() {
 	return $?
 }
 
-umount_fuser(){
-	local i w=false
-	# trick to faster logic
-	while true; do
-		( umount -v $* 2>&1 && break ) | grep "^umount: .*: device is busy\.\$" | sed -e 's%^umount: \(.*\): device is busy\.$%\1%g' | while read i; do
-			einfo "device '$i' is busy by users:"
-			fuser -"${OCFS2_UMOUNT_KILL}" -mMv"${OCFS2_UMOUNT_KILL:+k}" "$i"
-			w=true
-		done
-		umount $* && return 0
-		if $w; then
-			einfo "Sleeping 1 while killing processes"
-			sleep 1
-			umount $* && return 0
-		fi
-		return 1
-	done
-	return 0
+_fuser(){
+	fuser -"${OCFS2_UMOUNT_KILL}" -v"${OCFS2_UMOUNT_KILL:+k}" $*
+	return $?
 }
 
-# trying to umount ASAP to keep cluster clean
 _umount(){
-	umount_fuser $* && return 0
-	einfo "Direct umount failed, remounting readonly & sleeping 1"
-	umount -r $* && {
-		sleep 1
-		umount $* && return 0
-		einfo "Alredy read-only, unmounting lazy & sleeping 3"
-		umount -l $*
-		sleep 2
+	local i m
+	i=`umount $* 2>&1` && {
+		echo -n "$i"
+		return 0
 	}
+	echo "$i"
+	_fuser -mM `echo "$i"|grep "^umount: .* device is busy\.\$"|sed -e 's%^umount: \([^ 	]*\): device is busy\.$%\1%g'` || return 1
+	[[ -z "${OCFS2_UMOUNT_KILL}" ]] && return 1
+	umount $* && return 0
 	sleep 1
 	umount $*
 	return $?
 }
 
 stop() {
-	local ret
-	ebegin "Unmounting OCFS2 filesystems"
-	_umount -at ocfs2
-	eend $?
-	ret=$?
+	local ret=0 dev m i
+	# now umount only clusters - under heartbeat. others later
+#	ebegin "Unmounting OCFS2 filesystems"
+#	_umount -at ocfs2
+#	eend $?
+#	ret=$?
 
-	for cluster in ${OCFS2_CLUSTER}; do
+	for cluster in $(clusters); do
+		for dev in `cat /sys/kernel/config/cluster/$cluster/heartbeat/*/dev 2>/dev/null`; do
+			m=`grep "/dev/$dev " /proc/mounts|sed -e 's:^[^ ]* \([^ ]*\) .*$:\1:g'`
+			[[ -z "$m" ]] && continue
+			ebegin "Unmounting OCFS2 cluster '$cluster' filesystems '$dev' from '$m'"
+			if _umount $m; then
+				eend 0
+				continue
+			elif umount -l $m; then
+				einfon "Lazy unmounted. Waiting "
+				for i in 9 8 7 6 5 4 3 2 1 0; do
+					( /sbin/ocfs2_hb_ctl -I -d /dev/$dev || break ) | grep -q " 0 refs\$" && break
+					echo -n "$i"
+					_fuser $m
+					sleep 1
+				done
+				echo
+				[[ "$i" != 0 ]] && continue
+			fi
+			eend 1
+			ret=1
+		done
 		stop_cluster $cluster || ret=1
 	done
 	return $ret
 }
-
