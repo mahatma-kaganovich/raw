@@ -1,4 +1,4 @@
-EAPI="2"
+EAPI="3"
 WANT_AUTOCONF="2.1"
 
 
@@ -36,7 +36,7 @@ esac
 IUSE="java mozdevelop moznoirc moznoroaming postgres restrict-javascript startup-notification
 	debug minimal directfb moznosystem +threads jssh wifi python mobile static
 	moznomemory accessibility system-sqlite vanilla xforms gio +alsa
-	custom-cflags system-xulrunner ipc system-nss system-nspr X"
+	custom-cflags +strip-cflags system-xulrunner ipc system-nss system-nspr X"
 #	qt-experimental"
 
 #RESTRICT="nomirror"
@@ -137,11 +137,12 @@ seamonkey)
 firefox)
 	PATCH=""
 	DESCRIPTION="${PN} Web Browser"
-	HOMEPAGE="http://www.mozilla.com/firefox"
+	HOMEPAGE="http://www.mozilla.org/projects/${PN}"
 	export MOZ_CO_PROJECT=browser
 	S="${S/comm-/mozilla-}"
 	S1="${S}"
 	force ipc
+	[[ "$PN" == "shiretoko" ]] && IUSE="${IUSE} +release-tag"
 ;;
 mobile)
 	PATCH=""
@@ -161,9 +162,6 @@ esac
 
 [[ -n "${PATCH}" ]] && SRC_URI="${SRC_URI}  !vanilla? ( ${PATCH} )"
 
-# Needed by src_compile() and src_install().
-# Would do in pkg_setup but that loses the export attribute, they
-# become pure shell variables.
 export BUILD_OFFICIAL=1
 export MOZILLA_OFFICIAL=1
 export PERL="/usr/bin/perl"
@@ -239,6 +237,10 @@ src_prepare(){
 
 	eend $?
 
+	for i in "${WORKDIR}"/l10n/*/toolkit/chrome/global/*; do
+		[[ -e "${i}" ]] && ln -s "${i}" "${i%/*}/../../../suite/chrome/browser/${i##*/}"
+	done
+
 	for i in "${S1}/js/src" "${S1}" "${S}" ; do
 		cd "${i}" && eautoreconf
 	done
@@ -264,11 +266,11 @@ src_configure(){
 
 	local o3=false
 	setup-allowed-flags
+	export ALLOWED_FLAGS="${ALLOWED_FLAGS} -fomit-frame-pointer -O3 -mfpmath -msse* -m3dnow* -mmmx -mstackrealign -fPIC"
+	use strip-cflags && strip-flags
 	if use custom-cflags; then
 		is-flag -O3 && o3=true
 		export ALLOWED_FLAGS="${ALLOWED_FLAGS} ${CFLAGS}"
-	else
-		export ALLOWED_FLAGS="${ALLOWED_FLAGS} -fomit-frame-pointer -O3 -mfpmath -msse* -m3dnow* -mmmx -mstackrealign"
 	fi
 
 	mozconfig_init
@@ -426,9 +428,6 @@ src_configure(){
 
 	# required for sse prior to gcc 4.4.3, may be faster in other cases
 	[[ "${ARCH}" == "x86" ]] && append-flags -mstackrealign
-
-	# current versions segfault
-	append-flags -fno-unroll-loops
 
 #	! SM && use directfb && sed -i -e 's%--enable-default-toolkit=cairo-gtk2%--enable-default-toolkit=cairo-gtk2-dfb%g' "${S}"/.mozconfig
 
