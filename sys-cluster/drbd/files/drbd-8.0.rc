@@ -120,7 +120,7 @@ unsafe(){
 primary(){
 	local r s=`$* cstate`
 	[[ -z "$DRBD_WAIT_PRIMARY" ]] && _wait $* || case "$s" in
-	SyncSource*|StandAlone*|WFconnection*) echo -n "$2$s " ;;
+	SyncSource*|StandAlone*|WFConnection*) echo -n "$2$s " ;;
 	*)
 		$* $DRBD_WAIT_PRIMARY
 		r=$?
@@ -159,6 +159,7 @@ wait_sync(){
 		break="${break#?}${i:-.}"
 		[[ "$break" == "break" ]] && killall /sbin/drbdsetup
 		echo "=== status (say 'break' to stop '/sbin/drbdsetup'): ==="
+		ps -o pid,time,command -C drbdsetup
 		cat /proc/drbd
 	done <&2 &
 	ipid=$!
