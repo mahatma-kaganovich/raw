@@ -15,3 +15,6 @@ DRBD_HIDE_WAIT="no"
 #DRBD_WAIT_SYNC="wait-sync --wait-after-sb --outdated-wfc-timeout=5 --degr-wfc-timeout=5 --wfc-timeout=5"
 # wait before primary exclude SyncSource, unlimited unless documented data loss
 #DRBD_WAIT_PRIMARY="wait-sync --wait-after-sb --outdated-wfc-timeout=0 --degr-wfc-timeout=0 --wfc-timeout=0"
+
+# config
+#DRBDADM="/sbin/drbdadm -c /etc/drbd.conf"
