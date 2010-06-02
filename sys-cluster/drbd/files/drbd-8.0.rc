@@ -17,6 +17,7 @@ DRBD_WAIT_PRIMARY="wait-sync --wait-after-sb --outdated-wfc-timeout=0 --degr-wfc
 DRBD_CLIENTS="heartbeat ocfs2"
 DRBD_EMERGE_MODULE="yes"
 DRBD_HIDE_WAIT="no"
+DRBD_RMMOD="no"
 
 if [ -f $DEFAULTFILE ]; then
   . $DEFAULTFILE
@@ -46,6 +47,13 @@ function assure_module_is_loaded() {
 }
 
 function adjust_with_progress() {
+	CMD="adjust"
+	[[ -e "$PROC_DRBD" ]] && CMD="up"
+	einfon "Setting drbd parameters "
+	COMMANDS=`$DRBDADM -d $CMD all` || { 
+		eend 20 "Error executing drbdadm"
+		return 20 
+	}
 	IFS_O=$IFS
 	NEWLINE='
 '
@@ -54,11 +62,6 @@ function adjust_with_progress() {
 	local S=0
 	local N=0
 
-	einfon "Setting drbd parameters "
-	COMMANDS=`$DRBDADM -d adjust all` || { 
-		eend 20 "Error executing drbdadm"
-		return 20 
-	}
 	echo -n "[ "
 	
 	for CMD in $COMMANDS; do
@@ -160,7 +163,7 @@ wait_sync(){
 		[[ "$break" == "break" ]] && killall /sbin/drbdsetup
 		echo "=== status (say 'break' to stop '/sbin/drbdsetup'): ==="
 		ps -o pid,time,command -C drbdsetup
-		cat /proc/drbd
+		cat $PROC_DRBD
 	done <&2 &
 	ipid=$!
 	$DRBDADM -d wait-connect all|{
@@ -224,7 +227,7 @@ start() {
 			remerge
 			chk_ver
 		else
-			chk_ver 1 || chk_ver
+			$RMMOD drbd && ( chk_ver 1 || chk_ver )
 		fi
 	fi
 	assure_module_is_loaded || return $?
@@ -259,24 +262,49 @@ start() {
 	return $ret
 }
 
+isdown(){
+			$DRBDADM -d down all|while read c m s; do
+				if [[ -e "/dev/drbd$m" ]]; then
+				echo "==$m"
+					eend 1
+					return 1
+				fi
+			done
+			return 0
+}
+
 stop() {
 	ebegin "Stopping all DRBD resources"
 	
-	# Check for mounted drbd devices
-	if ! grep -q '^/dev/drbd' /proc/mounts &>/dev/null; then
-		if [ -e ${PROC_DRBD} ]; then
-			${DRBDADM} down all
-			sleep 3
-			${RMMOD} drbd
+	# Check for mounted drbd devices, controlled by config
+	local c m s
+	for DEVICE in `$DRBDADM sh-dev all`; do
+		if grep -q '^$DEVICE ' /proc/mounts &>/dev/null ; then
+			einfo "drbd devices mounted, please umount them before trying to stop drbd!"
+			eend 1
+			return 1
 		fi
-		ret=$?
-		eend $ret
-		return $ret
-	else
-		einfo "drbd devices mounted, please umount them before trying to stop drbd!"
-		eend 1
-		return 1
+	done
+	ret=0
+	if [ -e ${PROC_DRBD} ]; then
+		$DRBDADM down all
+		ret="$?"
+		if [[ "$DRBD_RMMOD" == yes ]]; then
+			${RMMOD} drbd
+			ret="$?"
+		else
+			${RMMOD} drbd 2>/dev/null
+			for DEVICE in `$DRBDADM sh-dev all`; do
+				if [[ -e "$DEVICE" ]]; then
+					einfo "drbd device '$DEVICE' still active"
+					eend 1
+					return 1
+				fi
+			done
+		fi
 	fi
+	eend $ret
+	return $ret
 }
 
 status() {
@@ -298,7 +326,7 @@ status() {
 
 reload() {
 	ebegin "Reloading DRBD"
-	${DRBDADM} adjust all
+	$DRBDADM adjust all
 	ret=$?
 	eend $ret
 	return $ret
