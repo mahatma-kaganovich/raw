@@ -1,6 +1,6 @@
 diff -pruN a/net/netfilter/Kconfig b/net/netfilter/Kconfig
 --- a/net/netfilter/Kconfig	2010-06-02 21:05:28.000000000 +0300
-+++ b/net/netfilter/Kconfig	2010-06-02 21:14:29.000000000 +0300
++++ b/net/netfilter/Kconfig	2010-06-02 22:11:50.000000000 +0300
 @@ -492,6 +492,12 @@ config NETFILTER_XT_TARGET_NOTRACK
  	  If you want to compile it as a module, say M here and read
  	  <file:Documentation/kbuild/modules.txt>.  If unsure, say `N'.
@@ -16,18 +16,18 @@ diff -pruN a/net/netfilter/Kconfig b/net/netfilter/Kconfig
  	depends on NETFILTER_ADVANCED
 diff -pruN a/net/netfilter/nf_conntrack_core.c b/net/netfilter/nf_conntrack_core.c
 --- a/net/netfilter/nf_conntrack_core.c	2010-06-02 21:05:28.000000000 +0300
-+++ b/net/netfilter/nf_conntrack_core.c	2010-06-02 21:23:30.000000000 +0300
-@@ -573,6 +573,9 @@ struct nf_conn *nf_conntrack_alloc(struc
- 				   gfp_t gfp)
- {
++++ b/net/netfilter/nf_conntrack_core.c	2010-06-02 22:13:12.000000000 +0300
+@@ -757,6 +760,9 @@ resolve_normal_ct(struct net *net, struc
+ 	struct nf_conntrack_tuple_hash *h;
  	struct nf_conn *ct;
+ 	u16 zone = tmpl ? nf_ct_zone(tmpl) : NF_CT_DEFAULT_ZONE;
 +#ifdef CONFIG_NETFILTER_XT_TARGET_NOTRACK_NEW
 +	struct nf_conntrack_expect *exp;
 +#endif
  
- 	if (unlikely(!nf_conntrack_hash_rnd_initted)) {
- 		get_random_bytes(&nf_conntrack_hash_rnd,
-@@ -768,6 +771,17 @@ resolve_normal_ct(struct net *net, struc
+ 	if (!nf_ct_get_tuple(skb, skb_network_offset(skb),
+ 			     dataoff, l3num, protonum, &tuple, l3proto,
+@@ -768,6 +774,17 @@ resolve_normal_ct(struct net *net, struc
  	/* look for tuple match */
  	h = nf_conntrack_find_get(net, zone, &tuple);
  	if (!h) {
@@ -45,7 +45,7 @@ diff -pruN a/net/netfilter/nf_conntrack_core.c b/net/netfilter/nf_conntrack_core
  		h = init_conntrack(net, tmpl, &tuple, l3proto, l4proto,
  				   skb, dataoff);
  		if (!h)
-@@ -856,6 +870,12 @@ nf_conntrack_in(struct net *net, u_int8_
+@@ -856,6 +873,12 @@ nf_conntrack_in(struct net *net, u_int8_
  	ct = resolve_normal_ct(net, tmpl, skb, dataoff, pf, protonum,
  			       l3proto, l4proto, &set_reply, &ctinfo);
  	if (!ct) {
@@ -60,7 +60,7 @@ diff -pruN a/net/netfilter/nf_conntrack_core.c b/net/netfilter/nf_conntrack_core
  		ret = NF_ACCEPT;
 diff -pruN a/net/netfilter/xt_NOTRACK.c b/net/netfilter/xt_NOTRACK.c
 --- a/net/netfilter/xt_NOTRACK.c	2010-06-02 21:05:28.000000000 +0300
-+++ b/net/netfilter/xt_NOTRACK.c	2010-06-02 21:14:29.000000000 +0300
++++ b/net/netfilter/xt_NOTRACK.c	2010-06-02 22:11:50.000000000 +0300
 @@ -19,6 +19,9 @@ notrack_tg(struct sk_buff *skb, const st
  	if (skb->nfct != NULL)
  		return XT_CONTINUE;
