@@ -15,7 +15,7 @@ ADD_MOD_PARAM=""
 DRBD_WAIT_SYNC="wait-sync --wait-after-sb --outdated-wfc-timeout=5 --degr-wfc-timeout=5 --wfc-timeout=5"
 DRBD_WAIT_PRIMARY="wait-sync --wait-after-sb --outdated-wfc-timeout=0 --degr-wfc-timeout=0 --wfc-timeout=0"
 DRBD_CLIENTS="heartbeat ocfs2"
-DRBD_EMERGE_MODULE="yes"
+DRBD_EMERGE_MODULE="upgrade"
 DRBD_HIDE_WAIT="no"
 DRBD_RMMOD="no"
 
@@ -41,7 +41,9 @@ function assure_module_is_loaded() {
 	ebegin "Loading drbd module"
 	ret=0
 
-	$MODPROBE -s drbd `$DRBDADM sh-mod-parms` $ADD_MOD_PARAM || ret=20
+	$MODPROBE -s drbd `$DRBDADM sh-mod-parms` $ADD_MOD_PARAM || 
+	    insmod /lib/modules/`uname -r`/kernel/drivers/block/drbd/drbd.ko `$DRBDADM sh-mod-parms` $ADD_MOD_PARAM ||
+	    ret=20
 	eend $ret
 	return $ret
 }
@@ -203,8 +205,18 @@ remerge(){
 # try to rebuild & reload most equal module version
 # FIXME: need to check protocol version
 chk_ver(){
-	local v=`$DRBDADM sh-nop 2>&1|grep "userland version:"|sed -e 's%^.*userland version: %-%'`
-	[[ -z "$v" ]] && return 0
+	local v v1
+	if [[ "$DRBD_EMERGE_MODULE" == "upgrade" ]]; then
+		v=`grep -o "^version: [^ ]*" $PROC_DRBD`
+		v="${v#version: }"
+		v1=`$DRBDADM -V|grep "^DRBDADM_VERSION="`
+		v1="${v1#*=}"
+		( [[ -z "$v" ]] || [[ -z "$v1" ]] || [[ "$v1" < "$v" ]] ) && return 0
+	else
+		v=`$DRBDADM sh-nop 2>&1|grep "userland version:"|sed -e 's%^.*userland version: %-%'`
+		[[ -z "$v" ]] && return 0
+	fi
+	$RMMOD drbd || return 0
 	if [[ -z "$1" ]]; then
 		einfo "Trying to emerge equal module version..."
 		remerge "$v-*" || remerge "$v" || return 1
@@ -221,13 +233,13 @@ start() {
 	local i
 	einfo "Starting DRBD resources:"
 	eindent
-	if [[ "$DRBD_EMERGE_MODULE" == "yes" ]]; then
+	if [[ "$DRBD_EMERGE_MODULE" == "yes" ]] || [[ "$DRBD_EMERGE_MODULE" == "upgrade" ]]; then
 		if ! assure_module_is_loaded ; then
 			einfo "modprobe drbd failed. Trying to emerge..."
 			remerge
 			chk_ver
 		else
-			$RMMOD drbd && ( chk_ver 1 || chk_ver )
+			chk_ver 1 || chk_ver
 		fi
 	fi
 	assure_module_is_loaded || return $?
