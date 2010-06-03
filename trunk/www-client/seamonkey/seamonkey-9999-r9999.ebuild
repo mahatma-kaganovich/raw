@@ -36,7 +36,7 @@ esac
 IUSE="java mozdevelop moznoirc moznoroaming postgres restrict-javascript startup-notification
 	debug minimal directfb moznosystem +threads jssh wifi python mobile static
 	moznomemory accessibility system-sqlite vanilla xforms gio +alsa
-	custom-cflags +strip-cflags system-xulrunner ipc system-nss system-nspr X"
+	+custom-cflags +custom-optimization system-xulrunner ipc system-nss system-nspr X"
 #	qt-experimental"
 
 #RESTRICT="nomirror"
@@ -267,7 +267,7 @@ src_configure(){
 	local o3=false
 	setup-allowed-flags
 	export ALLOWED_FLAGS="${ALLOWED_FLAGS} -fomit-frame-pointer -O3 -mfpmath -msse* -m3dnow* -mmmx -mstackrealign -fPIC"
-	use strip-cflags && strip-flags
+#	use strip-cflags && strip-flags
 	if use custom-cflags; then
 		is-flag -O3 && o3=true
 		export ALLOWED_FLAGS="${ALLOWED_FLAGS} ${CFLAGS}"
@@ -428,6 +428,7 @@ src_configure(){
 
 	# required for sse prior to gcc 4.4.3, may be faster in other cases
 	[[ "${ARCH}" == "x86" ]] && append-flags -mstackrealign
+	append-flags -fno-unroll-loops
 
 #	! SM && use directfb && sed -i -e 's%--enable-default-toolkit=cairo-gtk2%--enable-default-toolkit=cairo-gtk2-dfb%g' "${S}"/.mozconfig
 
