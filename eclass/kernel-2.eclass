@@ -346,7 +346,7 @@ kmake(){
 	local o=""
 	local h="${CTARGET:-${CHOST}}"
 	[[ "${CBUILD}" != "${h}" ]] && o="CROSS_COMPILE=${h}-"
-	emake ARCH=$(arch) $o $* ${KERNEL_MAKEOPT} || die
+	emake HOSTCC="$(tc-getBUILD_CC)" ARCH=$(arch) $o $* ${KERNEL_MAKEOPT} || die
 }
 
 fixes(){

@@ -4,7 +4,7 @@
 mdevs(){
 	for i in $*; do
 		local DEVNAME="" MAJOR="" MINOR="" FIRMWARE="" DEVPATH="" DEVMODE=""
-		eval "$(grep "^[A-Z]*=[^=]" "$i")"
+		eval "$(sed -e 's:^\(.*\)=\([^"].*[^"]\)$:\1="\2":g' -e 's/^[^=]*$//g' <"$i")" || echo "== $i"
 		i="${i#/sys/class/}"
 		mdev "${i%%/*}"
 	done
