@@ -226,6 +226,8 @@ run_genkernel(){
 	case ${a} in
 	i386) a="x86" ;;
 	esac
+	# e2fsprogs need more crosscompile info
+	ac_cv_build="${CBUILD}" ac_cv_host="${CTARGET:-${CHOST}}" CC="$(tc-getCC)" LD="$(tc-getLD)" CXX="$(tc-getCXX)" CPP="$(tc-getCPP)" AS="$(tc-getAS)" \
 	LDFLAGS="${KERNEL_GENKERNEL_LDFLAGS}" "${S}/genkernel" \
 		--cachedir="${TMPDIR}/genkernel-cache" \
 		--tempdir="${TMPDIR}/genkernel" \
