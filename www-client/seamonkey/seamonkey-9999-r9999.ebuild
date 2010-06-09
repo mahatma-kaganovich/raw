@@ -268,10 +268,7 @@ src_configure(){
 	setup-allowed-flags
 	export ALLOWED_FLAGS="${ALLOWED_FLAGS} -fomit-frame-pointer -O3 -mfpmath -msse* -m3dnow* -mmmx -mstackrealign -fPIC"
 #	use strip-cflags && strip-flags
-	if use custom-cflags; then
-		is-flag -O3 && o3=true
-		export ALLOWED_FLAGS="${ALLOWED_FLAGS} ${CFLAGS}"
-	fi
+	local CF="${CFLAGS}"
 
 	mozconfig_init
 	mozconfig_config
@@ -424,7 +421,9 @@ src_configure(){
 	mozconfig_use_enable !debug strip-libs
 	mozconfig_use_enable !debug install-strip
 
-	$o3 && sed -i -e 's:\=\-O2:=-O3:g' .mozconfig
+	use custom-cflags && export CFLAGS="${CF}"
+	export CXXFLAGS="${CFLAGS}"
+	is-flag -O3 && sed -i -e 's:\=\-O2:=-O3:g' .mozconfig
 
 	# required for sse prior to gcc 4.4.3, may be faster in other cases
 	[[ "${ARCH}" == "x86" ]] && append-flags -mstackrealign
