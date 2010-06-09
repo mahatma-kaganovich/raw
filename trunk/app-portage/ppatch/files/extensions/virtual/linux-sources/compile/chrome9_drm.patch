@@ -1,0 +1,24 @@
+With DRI:
+Section "Device"
+        Option     "I2CScan" "On"
+        Option     "AccelMethod" "XAA"
+        Option     "ExaScratchSize" "65536"
+        Option     "SWCursor" "On"
+        Option     "ForcePanel" "On"
+Without DRI (faster SSE copy):
+Section "Device"
+        Option     "I2CScan" "On"
+        Option     "AccelMethod" "EXA"
+        Option     "ExaScratchSize" "65536"
+        Option     "SWCursor" "On"
+        Option     "ShadowFB" "On"
+        Option     "ForcePanel" "On"
+        Option     "EnableAGPDMA" "On"
+--- a/include/drm/drm_pciids.h	2010-05-17 00:17:36.000000000 +0300
++++ b/include/drm/drm_pciids.h	2010-06-06 14:50:10.000000000 +0300
+@@ -514,4 +514,5 @@
+ 	{0x1106, 0x3343, PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0}, \
+ 	{0x1106, 0x3230, PCI_ANY_ID, PCI_ANY_ID, 0, 0, VIA_DX9_0}, \
+ 	{0x1106, 0x3157, PCI_ANY_ID, PCI_ANY_ID, 0, 0, VIA_PRO_GROUP_A}, \
++	{0x1106, 0x3371, PCI_ANY_ID, PCI_ANY_ID, 0, 0, VIA_DX9_0}, \
+ 	{0, 0, 0} 

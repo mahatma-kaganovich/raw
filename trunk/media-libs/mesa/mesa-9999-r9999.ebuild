@@ -54,6 +54,7 @@ IUSE="${IUSE_VIDEO_CARDS}
 	kernel_FreeBSD
 	+gallium
 	glut
+	xlib-osmesa
 	X"
 
 RDEPEND="app-admin/eselect-opengl
@@ -137,13 +138,13 @@ src_unpack() {
 		use ${i} || sed -i -e s/-DUSE_${i}_ASM//i "${S}"/configure*
 	done
 
-	use gallium && sed -i -e 's:GALLIUM_WINSYS_DIRS="":GALLIUM_WINSYS_DIRS="xlib":g' configure.ac
+#	use gallium && sed -i -e 's:GALLIUM_WINSYS_DIRS="":GALLIUM_WINSYS_DIRS="xlib":g' configure.ac
 
 	eautoreconf
 }
 
 src_compile() {
-	local myconf
+	local myconf altconf=""
 	local drv="dri"
 	# Configurable DRI drivers
 	driver_enable swrast
@@ -180,6 +181,17 @@ src_compile() {
 	# Get rid of glut includes
 	use glut || rm -f "${S}"/include/GL/glut*h
 	[[ "${drv}" == "dri" ]] && myconf="${myconf} --with-dri-drivers=${DRI_DRIVERS}"
+	# dirty
+	if use xlib-osmesa; then
+		sed -i -e 's%DRIVER_DIRS="dri"%DRIVER_DIRS="x11 dri"%g' -e 's%GALLIUM_WINSYS_DIRS=""%GALLIUM_WINSYS_DIRS="xlib"%g' configure
+		myconf="${myconf} --enable-gl-osmesa"
+		ewarn "You selected 'xlib' flag. It is cause multiple 'libGL.so.*'"
+		ewarn "installing in /usr/lib/opengl/xorg-x11/lib/ and symlinks to it."
+		ewarn "To use 'dri' lib - point libGL.so.1 here to libGL.so.1.2"
+		ewarn "To use 'xlib/OSmesa' - point libGL.so.1 here to libGL.so.1.5.*"
+		ewarn "Look to link also in /usr/lib/ & libGL.so, but it is not required for compiz."
+		ewarn "xlib/OSmesa library must emulate compiz-related texture calls anyware."
+	fi
 	econf ${myconf} \
 		$(use_enable nptl glx-tls) \
 		--with-driver=${drv} \

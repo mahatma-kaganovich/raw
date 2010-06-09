@@ -1,5 +1,5 @@
 #!/bin/sh
-# console/shell dumb virtual keyboard v0.1
+# console/shell dumb virtual keyboard v0.2
 # (c) Denis Kaganovich
 #
 # pointer resolution = screen res
@@ -35,6 +35,9 @@ let X0=0
 let X1=resX*WIDTH-1
 let Y0=0
 let Y1=resY*HEIGHT-1
+
+let sX=X1-X0
+let sY=Y1-Y0
 
 X=0
 Y=0
@@ -192,78 +195,117 @@ fin(){
 	[[ -n "$1" ]] && killall vkb >/dev/null 2>&1
 }
 
-vkb(){
-[[ -n "$kmapfile" ]] && loadkmap "$kmapfile"
-local x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 x11 x12 d tty=`tty`
-{
-for i in $* ; do
-	# unbuffer
-	while true ; do
-		hexdump -v -n 24 -e '"" 12/2 "%x " "\n"' "$i"|| break
-	done 2>/dev/null  &
-done
-echo -ne "\033[s" >&2
-drawkbd
-dokey
-read d <$tty && echo ". . . . . . . . . . . $d"
-} | while read x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 x11 x12; do
-	if [[ "$x1 $x2" == ". ." ]]; then
-		run "$x12"
-		break
-	fi
+_d(){
 	w2d 0x$x11 0x$x12
 	d="$RES"
 	[[ "${d#??????????}" == "$d" ]] || let d=d-4294967296
-	case "$x9" in
-		2)	case "$x10" in
-			0)	let X=d*relAccX+X
-				if [[ $X -gt $X1 ]]; then
-					X=$X1
-				elif [[ $X -lt $X0 ]]; then
-					X=$X0
-				fi
-				let XX=X-X0+resX
-				let XX=XX/resX
-			;;
-			1)	let Y=d*relAccY+Y
-				if [[ $Y -gt $Y1 ]]; then
-					Y=$Y1
-				elif [[ $Y -lt $X0 ]]; then
-					Y=$Y0
-				fi
-				let YY=Y-Y0+resY
-				let YY=YY/resY
-			;;
-			2) let Z=Y+d ;;
-			*) continue ;;
-			esac
-		;;
-		3)	case "$x10" in
-			0)	X="$d"
-				let XX=X+resX
-				let XX=XX/resX
-			;;
-			1)	Y="$d"
-				let YY=Y+resY
-				let YY=YY/resY
-			;;
-			2) Z="$d" ;;
-			18)	if [[ $d == 1 ]]; then
-					drawkbd
-					dokey "$KEY"
-					continue
-				fi
-			;;
-			*) continue ;;
-			esac
-		;;
-		1)	if [[ $d == 1 ]]; then
-				drawkbd
-				dokey "$KEY"
-				continue
-			fi
-		;;
-		*) continue ;;
+}
+
+vkb(){
+[[ -n "$kmapfile" ]] && loadkmap "$kmapfile"
+local x0 x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 x11 x12 d=" ." tty=`tty` buf=12
+while [[ $buf != 0 ]]; do
+	d="$d $d"
+	let buf=buf-1
+done
+d="\"$d\n\""
+{
+for i in $* ; do
+	# unbuffer
+	case $i in
+	*/event*)
+		while true ; do hexdump -v -n 96 -e "\": \" 12/2 \"%x \" $d" "$i"|| break ; done &
+#		hexdump -v -e "\": \" 12/2 \"%x \" $d" "$i" &
+	;;	
+	*/mice|*/mouse*)
+#		while true; do hexdump -v -n 3 -e '"+ . . . . . . . " 3/1 "%x " " . . .\n"' "$i";done &
+  		hexdump -v -e "\"+ . . . . . . . \" 3/1 \"%x \" $d" "$i" &
+	;;
+	esac
+done 2>/dev/null
+echo -ne "\033[s" >&2
+drawkbd
+dokey
+read d <$tty && echo ": . . . . . . . . . . . $d"
+} | while read x0 x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 x11 x12; do
+	case "$x9$x0$x10" in
+	*+*)
+		let X=0x$x9*relAccX+X
+		let d=0x$x8/16%2 && let X=256-X
+		if [[ $X -gt $X1 ]]; then
+			X=$X1
+		elif [[ $X -lt $X0 ]]; then
+			X=$X0
+		fi
+		let XX=X-X0+resX
+		let XX=XX/resX
+		let Y=0x$x10*relAccY+Y
+		let d=0x$x8/32%2 && let Y=256-Y
+		if [[ $Y -gt $Y1 ]]; then
+			Y=$Y1
+		elif [[ $Y -lt $X0 ]]; then
+			Y=$Y0
+		fi
+		let YY=Y-Y0+resY
+		let YY=YY/resY
+		if let x8=0x$x8/6%4 ; then
+			drawkbd
+			dokey "$KEY"
+		elif [[ $x9$x10 != 00 ]]; then
+			drawkbd
+		fi
+		continue
+	;;
+	2:0)	_d
+		let X=d*relAccX+X
+		if [[ $X -gt $X1 ]]; then
+			X=$X1
+		elif [[ $X -lt $X0 ]]; then
+			X=$X0
+		fi
+		let XX=X-X0+resX
+		let XX=XX/resX
+	;;
+	2:1)	_d
+		let Y=d*relAccY+Y
+		if [[ $Y -gt $Y1 ]]; then
+			Y=$Y1
+		elif [[ $Y -lt $X0 ]]; then
+			Y=$Y0
+		fi
+		let YY=Y-Y0+resY
+		let YY=YY/resY
+	;;
+	2:2)	_d
+		let Z=Y+d
+	;;
+	3:0)	_d
+		let X=d-X0
+		let XX=X%sX+X0+resX
+		let XX=XX/resX
+	;;
+	3:1)	_d
+		let Y=d-Y0
+		let YY=Y%sY+Y0+resY
+		let YY=YY/resY
+	;;
+	3:2)	_d
+		Z="$d"
+	;;
+	3:18|1:*) _d
+#	3:18)	_d
+		[[ $d == 1 ]] || continue
+		if [[ $d == 1 ]]; then
+			drawkbd
+			dokey "$KEY"
+			continue
+		fi
+	;;
+	.:.)
+		run "$x12"
+		break
+	;;
+	*) continue ;;
 	esac
 	drawkbd
 	dokey
