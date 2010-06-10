@@ -45,6 +45,8 @@ mod(){
 		;;
 		esac
 		for m1 in $ALIAS ; do
+#			m="${m1##*/}"
+#			[[ -e "/sys/module/${m%.ko}" ]] && continue
 			modparam $m1
 			wait $pid
 			$cmd_quiet || echo -ne "\033[0G\033[0K$LCOUNT	$m1 $PARAM"
@@ -252,6 +254,7 @@ wild(){
 }
 
 cpufreq(){
+	[[ -n "$freq" ]] && return
 	local l=""
 	local CHK=false
 	local w="$(wild $@)"
@@ -276,7 +279,7 @@ cpufreq(){
 
 cpufreq_gov(){
 	local gov1=""
-	for i1 in ${gov:-ondemand conservative} ; do
+	for i1 in $gov ; do
 		mod cpufreq_${i1}
 		wait $pid $pids
 		pid=""
@@ -329,7 +332,7 @@ detect_part(){
 		esac
 		mod $l # loop
 	done
-	[[ -e "/DETECT_ROOT/$cmd_real_init" ]] && grep -q "^$1[ 	]*/[ 	]" /DETECT_ROOT/etc/mtab 2>/dev/null && DETECTED_ROOTS="$DETECTED_ROOTS $1"
+	[[ -e "/DETECT_ROOT/$cmd_real_init" ]] && grep -sq "^$1[ 	]*/[ 	]" /DETECT_ROOT/etc/mtab && DETECTED_ROOTS="$DETECTED_ROOTS $1"
 #	[[ -e "/DETECT_ROOT/$cmd_real_init" ]] && DETECTED_ROOTS="$DETECTED_ROOTS $1"
 	umount /DETECT_ROOT >/dev/null 2>&1
 	rmdir /DETECT_ROOT
@@ -417,7 +420,7 @@ local i d
 while [[ -n "$*" ]]; do
 d="$1"
 [[ -z "$d" ]] || [[ -e "$d" ]] || d="`findfs $1 2>/dev/null`"
-! grep "^$d:" /etc/fstype.cache 2>/dev/null  &&
+! grep -s "^$d:" /etc/fstype.cache &&
 ( [[ -b "$d" ]] || [[ -f "$d" ]] ) && for i in 0 3 4 8 24 32 54 82 510 536 1016 1024 1040 1048 1080 1560 2048 4086 4096 8182 8192 8212 8244 9564 16374 32758 32768 32769 32777 65526 65536 65588 65600 270336; do
 case "`echo -ne "$i:";hexdump -v -s $i -n 10 -e '"" 10/1 "%x" ""' $d 2>/dev/null`" in
 32:4f52434c4449534b*)echo oracleasm;;
@@ -615,19 +618,27 @@ load_hand_made(){
 #		thermal_sys) mod fan ;;
 		esac
 	done </proc/modules
-	${cmd_nopowersave:-false} && return
 	# frost. save your silicon (and power)
 	# autoload cpufreq driver in price of at least one more unload
-	# just speedup probing by vendor
+	# speedup probing by vendor & other vendor-related
+	freq=`cat $(find /sys/devices/system/cpu -name scaling_driver 2>/dev/null) </dev/null`
 	case "$(grep "^vendor_id" /proc/cpuinfo)" in
 	*AMD*)
 		cpufreq powernow
 		: ${gov:=conservative ondemand}
 	;;
 	*Intel*) cpufreq acpi-cpufreq ;;
+	*CentaurHauls*) mod via-cputemp padlock-aes padlock-sha via-rng ;;
 	esac
-	[[ -z "$freq" ]] && cpufreq cpufreq "drivers/cpufreq/\|powernow"
+	cpufreq cpufreq "drivers/cpufreq/\|powernow"
+	[[ -z "$freq" ]] && return
 	mod $freq
+	${cmd_nopowersave:-false} && return
+	[[ -z "$gov" ]] && if grep -sq 1 /sys/class/power_supply/BAT*/present && ! grep -sq 1 /sys/class/power_supply/AC*/online ; then
+		gov="conservative ondemand"
+	else
+		gov="ondemand conservative"
+	fi
 	cpufreq_gov
 	rmmod freq_table >/dev/null 2>&1
 	for i in /sys/devices/system/cpu/sched_*_power_savings ; do
@@ -660,7 +671,7 @@ set_root_loop(){
 # vs. "find" optimization [dis]order
 ordered_modalias(){
 	local i
-	[[ -e "$1/modalias" ]] && ! grep -q "^DRIVER=." "$1/uevent" 2>/dev/null && mod `cat "$1/modalias"`
+	[[ -e "$1/modalias" ]] && ! grep -sq "^DRIVER=." "$1/uevent" && mod `cat "$1/modalias"`
 	for i in "$1"/* ; do
 		[[ -d "$i" ]] && [[ ! -L "$i" ]] && ordered_modalias "$i"
 	done
@@ -761,9 +772,11 @@ run_shell(){
 		[[ -e "$SHELL" ]] && break
 	done
 	export SHELL
-#	grep -q eyboard /proc/bus/input/devices || vkb
-	vkb
-#	$SHELL
+	if grep "^B: ABS=........" /proc/bus/input/devices ; then
+		vkb
+	else
+		$SHELL
+	fi
 }
 
 # minimalistic. debug

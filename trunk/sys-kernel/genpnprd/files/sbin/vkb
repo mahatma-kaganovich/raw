@@ -1,5 +1,5 @@
 #!/bin/sh
-# console/shell dumb virtual keyboard v0.2
+# console/shell dumb virtual keyboard v0.3
 # (c) Denis Kaganovich
 #
 # pointer resolution = screen res
@@ -214,19 +214,23 @@ for i in $* ; do
 	# unbuffer
 	case $i in
 	*/event*)
-		while true ; do hexdump -v -n 96 -e "\": \" 12/2 \"%x \" $d" "$i"|| break ; done &
-#		hexdump -v -e "\": \" 12/2 \"%x \" $d" "$i" &
+#		while true ; do hexdump -v -n 24 -e "\": \" 12/2 \"%x \" \"\n\"" "$i"|| break ; done &
+#		while true ; do hexdump -v -n 48 -e "\": \" 12/2 \"%x \" $d" "$i"|| break ; done &
+		{ hexdump -v -e "\": \" 12/2 \"%x \" $d" "$i";} &
 	;;	
 	*/mice|*/mouse*)
 #		while true; do hexdump -v -n 3 -e '"+ . . . . . . . " 3/1 "%x " " . . .\n"' "$i";done &
-  		hexdump -v -e "\"+ . . . . . . . \" 3/1 \"%x \" $d" "$i" &
+  		{ hexdump -v -e "\"+ . . . . . . . \" 3/1 \"%x \" $d" "$i";} &
 	;;
 	esac
 done 2>/dev/null
 echo -ne "\033[s" >&2
 drawkbd
 dokey
-read d <$tty && echo ": . . . . . . . . . . . $d"
+read d <$tty && {
+    echo ": . . . . . . . . . . . $d"
+    killall hexdump
+}
 } | while read x0 x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 x11 x12; do
 	case "$x9$x0$x10" in
 	*+*)
@@ -253,6 +257,7 @@ read d <$tty && echo ": . . . . . . . . . . . $d"
 			dokey "$KEY"
 		elif [[ $x9$x10 != 00 ]]; then
 			drawkbd
+			dokey
 		fi
 		continue
 	;;
@@ -292,8 +297,8 @@ read d <$tty && echo ": . . . . . . . . . . . $d"
 	3:2)	_d
 		Z="$d"
 	;;
-	3:18|1:*) _d
-#	3:18)	_d
+#	3:18|1:*) _d
+	3:18)	_d
 		[[ $d == 1 ]] || continue
 		if [[ $d == 1 ]]; then
 			drawkbd
@@ -314,9 +319,35 @@ fin
 return 99
 }
 
+find_abs_pressure(){
+	local h="" a="" n=""
+	while read i; do
+		case "$i" in
+		N:*) n="${i#*=}" ;;
+		H:*) h="${i#*=}" ;;
+		B:\ ABS=*) a="${i#*=}" ;;
+		?*) ;;
+		*)
+			# 58=pressure
+			if [[ "$a" != "${a#???????}" ]]; then
+				echo "$i" >&2
+				for i in $h; do
+					[[ "${i#event}" != "$i" ]] && echo "/dev/input/$i"
+				done
+			fi
+			h=""
+			a=""
+			n=""
+		;;
+		esac
+	done </proc/bus/input/devices
+}
 
 _vkb(){
-( vkb ${*:-/dev/input/event*} && return $? ) | $SHELL
+local dev="${*:-`find_abs_pressure`}"
+[[ -z "$dev" ]] && return
+echo "$dev"
+( vkb $dev && return $? ) | $SHELL
 return $?
 }
 
