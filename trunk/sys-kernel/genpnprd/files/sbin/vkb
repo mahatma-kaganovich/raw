@@ -325,12 +325,11 @@ find_abs_pressure(){
 		case "$i" in
 		N:*) n="${i#*=}" ;;
 		H:*) h="${i#*=}" ;;
-		B:\ ABS=*) a="${i#*=}" ;;
+		B:\ ABS=????????) a="${i#*=}" ;;
 		?*) ;;
 		*)
 			# 58=pressure
-			if [[ "$a" != "${a#???????}" ]]; then
-				echo "$i" >&2
+			if [[ -n "$a" ]] ; then
 				for i in $h; do
 					[[ "${i#event}" != "$i" ]] && echo "/dev/input/$i"
 				done
@@ -344,7 +343,8 @@ find_abs_pressure(){
 }
 
 _vkb(){
-local dev="${*:-`find_abs_pressure`}"
+local dev="${*:-$cmd_vkb_touchscreen}"
+: ${dev:=`find_abs_pressure`}
 [[ -z "$dev" ]] && return
 echo "$dev"
 ( vkb $dev && return $? ) | $SHELL
