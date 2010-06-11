@@ -772,7 +772,7 @@ run_shell(){
 		[[ -e "$SHELL" ]] && break
 	done
 	export SHELL
-	if grep "^B: ABS=........" /proc/bus/input/devices ; then
+	if [[ -n "$cmd_vkb_touchscreen" ]] || grep "^B: ABS=........" /proc/bus/input/devices ; then
 		vkb
 	else
 		$SHELL
