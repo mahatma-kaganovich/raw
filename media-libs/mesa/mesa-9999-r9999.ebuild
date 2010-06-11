@@ -75,6 +75,7 @@ DEPEND="${RDEPEND}
 	!<=x11-proto/xf86driproto-2.0.3
 	dev-util/pkgconfig
 	x11-misc/makedepend
+	dev-libs/libxml2[python]
 	x11-proto/inputproto
 	x11-proto/xextproto
 	!hppa? ( x11-proto/xf86driproto )
