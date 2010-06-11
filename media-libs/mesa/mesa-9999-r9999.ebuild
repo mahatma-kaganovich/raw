@@ -1,4 +1,4 @@
-
+EAPI="3"
 GIT=$([[ ${PVR} = *9999* ]] && echo "git")
 EGIT_REPO_URI="git://anongit.freedesktop.org/mesa/mesa"
 
