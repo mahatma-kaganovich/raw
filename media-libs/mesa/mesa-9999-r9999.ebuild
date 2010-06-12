@@ -116,12 +116,7 @@ pkg_setup() {
 	append-flags -ffast-math
 }
 
-src_unpack() {
-	if [[ "${GIT}" = "git" ]]; then
-		git_src_unpack
-	else
-		unpack ${A}
-	fi
+src_prepare() {
 	cd "${S}"
 
 	# FreeBSD 6.* doesn't have posix_memalign().
@@ -144,7 +139,7 @@ src_unpack() {
 	eautoreconf
 }
 
-src_compile() {
+src_configure() {
 	local myconf altconf=""
 	local drv="dri"
 	# Configurable DRI drivers
@@ -205,7 +200,6 @@ src_compile() {
 		$(use_with X x) \
 		--with-egl-displays=x11,kms \
 		|| die
-	emake || die
 }
 
 src_install() {
