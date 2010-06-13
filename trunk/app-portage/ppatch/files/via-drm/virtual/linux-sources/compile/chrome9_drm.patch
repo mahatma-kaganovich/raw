@@ -1,9 +1,9 @@
 xorg.conf
 Section "Device"
-	Option     "AccelMethod" "EXA"
+	Option     "AccelMethod" "XAA" # "EXA" if no composite
 	Option     "ExaScratchSize" "8192"
 	Option     "EnableAGPDMA" "On"
-	Option     "EnableAGPDMA" "On"
+	Option     "MaxDRIMem" "16384"
 --- a/include/drm/drm_pciids.h	2010-05-17 00:17:36.000000000 +0300
 +++ b/include/drm/drm_pciids.h	2010-06-06 14:50:10.000000000 +0300
 @@ -514,4 +514,5 @@
