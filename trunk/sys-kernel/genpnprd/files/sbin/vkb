@@ -346,7 +346,6 @@ _vkb(){
 local dev="${*:-$cmd_vkb_touchscreen}"
 : ${dev:=`find_abs_pressure`}
 [[ -z "$dev" ]] && return
-echo "$dev"
 ( vkb $dev && return $? ) | $SHELL
 return $?
 }

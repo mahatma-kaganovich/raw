@@ -6,7 +6,6 @@
 
 my %alias;
 my %dep;
-my %dup;
 
 # to load second/last
 # will be delimited by "1" (to easy "break/continue" integration)
@@ -19,16 +18,29 @@ my $MULTI=$JOIN==2;
 my $VERBOSE=0;
 
 sub read_aliases{
-	my $s;
+	my ($s,$id,$m);
 	open FA,$_[0];
 	while(defined($s=<FA>)){
 		chomp($s);
-		my $id,$m;
 		$s=~s/^alias\s(\S*)\s(\S*)$/$id=$1;$m=$2;""/e;
 		defined($id)||next;
 		push @{$alias{$_}},$m for (lines($id));
 	}
 	close FA;
+	# remove dead aliases
+	$m=1;
+	while($m){
+		$m=0;
+		for(keys %alias){
+			my @a=@{$alias{$_}};
+			delete($alias{$_});
+			for $id (@a){
+				exists($alias{$id})||exists($dep{$id})||next;
+				push @{$alias{$_}},$id;
+			}
+			$m||=!exists($alias{$_});
+		}
+	}
 }
 
 sub read_deps{
@@ -92,7 +104,11 @@ sub order2{
 
 #todo: try to resolve "[...]" matches to best result
 sub order3{
-	my @l=@{$dup{$_}};
+	my $a=$_;
+	$a=~s/\*/.*/g;
+#	$a=~s/\?/./g;
+	$a=~s/\[.*?\]|\?/(?:\\\[.*?\\\]|.)/g;
+	my @l=$a ne $_?grep(/^$a$/,@k_alias):($_);
 	print "$_=$#l\n" if($#l<0);
 	if($#l>0){
 		my %ll;
@@ -133,21 +149,12 @@ local i=""
 
 	@k_alias=keys %alias;
 	my $n=0;
-	print "\n" if($VERBOSE && $JOIN==2);
+	print "\n" if($VERBOSE);
 	for (@k_alias) {
-		my @l=($a);
-		if($JOIN==2){
-			my $a=$_;
-			$a=~s/\*/.*/g;
-#			$a=~s/\?/./g;
-			$a=~s/\[.*?\]|\?/(?:\\\[.*?\\\]|.)/g;
-			@{$dup{$_}}=$a ne $_?grep(/^$a$/,@k_alias):($_);
-			if($VERBOSE){
-				$n++;
-				print "$n/$#k_alias \r";
-			}
+		if($VERBOSE){
+			$n++;
+			print "$n/$#k_alias \r";
 		}
-
 		my $re=0;
 		my @d=();
 		my @a=@{$alias{$_}};
@@ -253,8 +260,8 @@ for my $MOD (@ARGV){
 	%alias=();
 	%dep=();
 	print "mod2sh: $MOD ";
-	read_aliases("<$MOD/modules.alias");
 	read_deps("<$MOD/modules.dep");
+	read_aliases("<$MOD/modules.alias");
 	for(keys %dep){
 	        if(exists($alias{$_})){
 		    for my $a (@{$alias{$_}}){
