@@ -219,8 +219,8 @@ for i in $* ; do
 		{ hexdump -v -e "\": \" 12/2 \"%x \" $d" "$i";} &
 	;;	
 	*/mice|*/mouse*)
-#		while true; do hexdump -v -n 3 -e '"+ . . . . . . . " 3/1 "%x " " . . .\n"' "$i";done &
-  		{ hexdump -v -e "\"+ . . . . . . . \" 3/1 \"%x \" $d" "$i";} &
+		while true; do hexdump -v -n 3 -e '"+ . . . . . . . " 3/1 "%x " " . . .\n"' "$i";done &
+#		{ hexdump -v -e "\"+ . . . . . . . \" 3/1 \"%x \" $d" "$i";} &
 	;;
 	esac
 done 2>/dev/null
@@ -233,6 +233,13 @@ read d <$tty && {
 }
 } | while read x0 x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 x11 x12; do
 	case "$x9$x0$x10" in
+	0+0)
+		if [[ $x8 != 8 ]]; then
+			drawkbd
+			dokey "$KEY"
+		fi
+		continue
+	;;
 	*+*)
 		let X=0x$x9*relAccX+X
 		let d=0x$x8/16%2 && let X=256-X
@@ -252,14 +259,6 @@ read d <$tty && {
 		fi
 		let YY=Y-Y0+resY
 		let YY=YY/resY
-		if let x8=0x$x8/6%4 ; then
-			drawkbd
-			dokey "$KEY"
-		elif [[ $x9$x10 != 00 ]]; then
-			drawkbd
-			dokey
-		fi
-		continue
 	;;
 	2:0)	_d
 		let X=d*relAccX+X
@@ -345,7 +344,8 @@ find_abs_pressure(){
 _vkb(){
 local dev="${*:-$cmd_vkb_touchscreen}"
 : ${dev:=`find_abs_pressure`}
-[[ -z "$dev" ]] && return
+: ${dev:=/dev/input/mice}
+[[ -e "$dev" ]] || return
 ( vkb $dev && return $? ) | $SHELL
 return $?
 }
