@@ -615,7 +615,8 @@ load_hand_made(){
 		case $i in
 #		usual_tables) mod usb_storage ;; # on demand
 		usbcore) mod usb_storage ;; # user-frendly
-#		thermal_sys) mod fan ;;
+		thermal_sys) mod fan ;;
+		ioatdma) mod i7300_idle ;;
 		esac
 	done </proc/modules
 	# frost. save your silicon (and power)
@@ -627,7 +628,10 @@ load_hand_made(){
 		cpufreq powernow
 		: ${gov:=conservative ondemand}
 	;;
-	*Intel*) cpufreq acpi-cpufreq ;;
+	*Intel*)
+		cpufreq acpi-cpufreq
+		mod intel_idle
+	;;
 	*CentaurHauls*) mod via-cputemp padlock-aes padlock-sha via-rng ;;
 	esac
 	cpufreq cpufreq "drivers/cpufreq/\|powernow"
