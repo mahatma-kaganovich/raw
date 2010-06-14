@@ -25,7 +25,7 @@ LICENSE="LGPL-2"
 SLOT="0"
 KEYWORDS="~alpha ~amd64 ~arm ~hppa ~ia64 ~mips ~ppc ~ppc64 ~sh ~sparc ~x86 ~x86-fbsd raw"
 IUSE_VIDEO_CARDS="
-	video_cards_svga
+	video_cards_vmware
 	video_cards_nouveau
 	video_cards_radeonhd
 	video_cards_intel
@@ -54,12 +54,14 @@ IUSE="${IUSE_VIDEO_CARDS}
 	kernel_FreeBSD
 	+gallium
 	glut
-	xlib-osmesa
+	xlib
+	osmesa
+	llvm
 	X"
 
 RDEPEND="app-admin/eselect-opengl
 	dev-libs/expat
-	x11-libs/libX11
+	x11-libs/libX11[xcb?]
 	x11-libs/libXext
 	x11-libs/libXxf86vm
 	x11-libs/libXi
@@ -69,6 +71,17 @@ RDEPEND="app-admin/eselect-opengl
 	x11-libs/libICE
 	motif? ( x11-libs/openmotif )
 	doc? ( app-doc/opengl-manpages )
+	llvm? (
+		>=sys-devel/llvm-2.7
+		x11-libs/libdrm
+	)
+	gallium? (
+		x11-libs/libdrm
+		video_cards_intel? ( x11-libs/libdrm[video_cards_intel] )
+		video_cards_radeon? ( x11-libs/libdrm[video_cards_radeon] )
+	)
+	video_cards_vmware? ( x11-libs/libdrm[video_cards_vmware] )
+	video_cards_nouveau? ( x11-libs/libdrm[video_cards_nouveau] )
 	!<=x11-base/xorg-x11-6.9"
 DEPEND="${RDEPEND}
 	glut? ( !media-libs/freeglut )
@@ -82,10 +95,7 @@ DEPEND="${RDEPEND}
 	>=x11-proto/dri2proto-1.99.3
 	x11-proto/xf86vidmodeproto
 	>=x11-proto/glproto-1.4.8
-	gallium? (
-		x11-base/xorg-server
-		x11-libs/libdrm
-	)
+	gallium? ( x11-base/xorg-server )
 	motif? ( x11-proto/printproto )"
 
 PROVIDE="glut? ( virtual/glut )"
@@ -95,14 +105,6 @@ S="${WORKDIR}/${MY_P}"
 # Think about: ggi, svga, fbcon, no-X configs
 
 pkg_setup() {
-	if use xcb; then
-		if ! built_with_use x11-libs/libX11 xcb; then
-			msg="You must build libX11 with xcb enabled."
-			eerror ${msg}
-			die ${msg}
-		fi
-	fi
-
 	if use debug; then
 		append-flags -g
 	fi
@@ -142,19 +144,13 @@ src_prepare() {
 src_configure() {
 	local myconf altconf=""
 	local drv="dri"
+	local targets=""
 	# Configurable DRI drivers
 	driver_enable swrast
-	if use gallium ; then
-		driver_enable video_cards_intel i810 i965
-	else
-		driver_enable video_cards_radeon radeon r200 r300
-		driver_enable video_cards_intel i810 i915 i965
-#		driver_enable video_cards_nouveau nouveau
-	fi
 	driver_enable video_cards_mach64 mach64
 	driver_enable video_cards_mga mga
 	driver_enable video_cards_r128 r128
-	driver_enable video_cards_radeonhd radeon r200 r300
+	driver_enable video_cards_radeonhd radeon r200 r300 r600
 	driver_enable video_cards_s3virge s3v
 	driver_enable video_cards_savage savage
 	driver_enable video_cards_sis sis
@@ -163,28 +159,40 @@ src_configure() {
 	driver_enable video_cards_trident trident
 	driver_enable video_cards_via unichrome
 	if use gallium; then
-		myconf="--enable-gallium-swrast"
-		myconf="${myconf} $(use_enable video_cards_nouveau gallium-nouveau)"
+		driver_enable video_cards_intel i810 i965
+		myconf="--enable-gallium --enable-gallium-swrast"
 		myconf="${myconf} $(use_enable video_cards_intel gallium-intel)"
 		myconf="${myconf} $(use_enable video_cards_radeon gallium-radeon)"
-		myconf="${myconf} $(use_enable video_cards_svga gallium-svga)"
+		myconf="${myconf} $(use_enable video_cards_radeon gallium-r600)"
 		myconf="${myconf} --with-state-trackers=dri,egl,glx,xorg"
-		ewarn "My gallium configuration required 'xorg-server' headers installed."
+		ewarn "This gallium configuration required 'xorg-server' headers installed."
 		ewarn "To avoid circular dependences install mesa without gallium before and re-emerge after."
+	else
+		driver_enable video_cards_radeon radeon r200 r300 r600
+		driver_enable video_cards_intel i810 i915 i965
+		myconf="${myconf} --disable-gallium-intel --disable-gallium-radeon --disable-gallium-r600 --with-state-trackers=dri,egl,glx"
 	fi
+	# unique gallium features: gallium will be locally enabled
+	myconf="${myconf} $(use_enable video_cards_vmware gallium-svga)"
+	myconf="${myconf} $(use_enable video_cards_nouveau gallium-nouveau)"
+	myconf="${myconf} $(use_enable llvm gallium-llvm)"
 	# Deactivate assembly code for pic build
 	( use pic ) && myconf="${myconf} --disable-asm"
 	# Get rid of glut includes
 	use glut || rm -f "${S}"/include/GL/glut*h
 	[[ "${drv}" == "dri" ]] && myconf="${myconf} --with-dri-drivers=${DRI_DRIVERS}"
 	# dirty
-	if use xlib-osmesa; then
-		sed -i -e 's%DRIVER_DIRS="dri"%DRIVER_DIRS="x11 dri"%g' -e 's%GALLIUM_WINSYS_DIRS=""%GALLIUM_WINSYS_DIRS="xlib"%g' configure
+	if use osmesa; then
+		sed -i -e 's%DRIVER_DIRS="dri"%DRIVER_DIRS="x11 dri"%g' configure
 		myconf="${myconf} --enable-gl-osmesa"
-		ewarn "You selected 'xlib' flag. It is cause multiple 'libGL.so.*'"
+	fi
+	use xlib && targets="${targets} libgl-xlib"
+	[[ -n "${targets}" ]]  && sed -i -e 's:GALLIUM_TARGET_DIRS="":GALLIUM_TARGET_DIRS="'"${targets}"'":g' configure{,.ac}
+	if use xlib || use osmesa; then
+		ewarn "You selected 'xlib' and|or 'osmesa' flag. It is cause multiple 'libGL.so.*'"
 		ewarn "installing in /usr/lib/opengl/xorg-x11/lib/ and symlinks to it."
 		ewarn "To use 'dri' lib - point libGL.so.1 here to libGL.so.1.2"
-		ewarn "To use 'xlib/OSmesa' - point libGL.so.1 here to libGL.so.1.5.*"
+		ewarn "To use 'x11/xlib/OSmesa' - point libGL.so.1 here to libGL.so.1.5.*"
 		ewarn "Look to link also in /usr/lib/ & libGL.so, but it is not required for compiz."
 		ewarn "xlib/OSmesa library must emulate compiz-related texture calls anyware."
 	fi
@@ -192,11 +200,9 @@ src_configure() {
 		$(use_enable nptl glx-tls) \
 		--with-driver=${drv} \
 		$(use_enable glut) \
-		--without-demos \
 		$(use_enable xcb) \
 		$(use_enable motif glw) \
 		$(use_enable motif) \
-		$(use_enable gallium) \
 		$(use_with X x) \
 		--with-egl-displays=x11,kms \
 		|| die
