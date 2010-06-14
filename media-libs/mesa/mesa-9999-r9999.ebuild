@@ -182,19 +182,11 @@ src_configure() {
 	use glut || rm -f "${S}"/include/GL/glut*h
 	[[ "${drv}" == "dri" ]] && myconf="${myconf} --with-dri-drivers=${DRI_DRIVERS}"
 	# dirty
-	if use osmesa; then
-		sed -i -e 's%DRIVER_DIRS="dri"%DRIVER_DIRS="x11 dri"%g' configure
-		myconf="${myconf} --enable-gl-osmesa"
-	fi
+	use osmesa && myconf="${myconf} --enable-gl-osmesa"
 	use xlib && targets="${targets} libgl-xlib"
 	[[ -n "${targets}" ]]  && sed -i -e 's:GALLIUM_TARGET_DIRS="":GALLIUM_TARGET_DIRS="'"${targets}"'":g' configure{,.ac}
 	if use xlib || use osmesa; then
-		ewarn "You selected 'xlib' and|or 'osmesa' flag. It is cause multiple 'libGL.so.*'"
-		ewarn "installing in /usr/lib/opengl/xorg-x11/lib/ and symlinks to it."
-		ewarn "To use 'dri' lib - point libGL.so.1 here to libGL.so.1.2"
-		ewarn "To use 'x11/xlib/OSmesa' - point libGL.so.1 here to libGL.so.1.5.*"
-		ewarn "Look to link also in /usr/lib/ & libGL.so, but it is not required for compiz."
-		ewarn "xlib/OSmesa library must emulate compiz-related texture calls anyware."
+		sed -i -e 's%DRIVER_DIRS="dri"%DRIVER_DIRS="x11 dri"%g' configure{,.ac}
 	fi
 	econf ${myconf} \
 		$(use_enable nptl glx-tls) \
@@ -242,13 +234,33 @@ src_install() {
 	# libGLU doesn't get the plain .so symlink either
 	#dosym libGLU.so.1 /usr/$(get_libdir)/libGLU.so
 
-	# Figure out why libGL.so.1.5 is built (directfb), and why it's linked to
-	# as the default libGL.so.1
+	local i d
+	d="/usr/$(get_libdir)/opengl/xorg-x11-xlib"
+	for i in "${D}"/usr/$(get_libdir)/opengl/xorg-x11/lib/libGL.so.1.5*; do
+		[[ -e "${i}" ]] || continue
+		if ! [[ -d "${D}${d}"/lib ]]; then
+			if eselect opengl list|grep -q "xorg-x11-xlib"; then
+				OPENGL_DIR=`eselect opengl show`
+			else
+				OPENGL_DIR=xorg-x11-xlib
+			fi
+			export OPENGL_DIR
+			dodir "${d}"/lib || die
+			dosym ../xorg-x11/extensions "${d}"/extensions
+			dosym ../xorg-x11/include "${d}"/include
+			ewarn "You selected 'xlib' and|or 'osmesa' flag. Installing multiple 'libGL.so.*'"
+			ewarn "into /usr/lib/opengl/*/lib/ and symlinks to it."
+			ewarn "To use 'dri' (hardware) lib - say 'eselect opengl set xorg-x11'"
+			ewarn "To use 'xlib/OSmesa' (software) - 'eselect opengl set xorg-x11-xlib'"
+			ewarn "xlib/OSmesa library must emulate compiz-related texture calls anyware."
+		fi
+		mv "${i}" "${D}${d}"/lib
+	done
 }
 
 pkg_postinst() {
-	switch_opengl_implem
-#	die "debug"
+		echo
+		eselect opengl set --use-old ${OPENGL_DIR:-xorg-x11}
 }
 
 fix_opengl_symlinks() {
@@ -290,14 +302,6 @@ dynamic_libgl_install() {
 			fi
 		done
 	eend 0
-}
-
-switch_opengl_implem() {
-		# Switch to the xorg implementation.
-		# Use new opengl-update that will not reset user selected
-		# OpenGL interface ...
-		echo
-		eselect opengl set --use-old ${OPENGL_DIR}
 }
 
 # $1 - VIDEO_CARDS flag
