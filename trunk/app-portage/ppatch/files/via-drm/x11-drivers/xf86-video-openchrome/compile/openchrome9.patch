@@ -1,0 +1,22 @@
+--- xf86-video-openchrome-0.2.904_p853/src/via_dri.c	2010-05-06 21:28:29.000000000 +0300
++++ xf86-video-openchrome-0.2.904_p853.fixed/src/via_dri.c	2010-06-16 02:29:25.000000000 +0300
+@@ -595,7 +595,6 @@ VIADRIScreenInit(ScreenPtr pScreen)
+     pDRIInfo->drmDriverName = VIAKernelDriverName;
+     switch (pVia->Chipset) {
+         case VIA_K8M890:
+-        case VIA_P4M900:
+         case VIA_VX800:
+         case VIA_VX855:
+             pDRIInfo->clientDriverName = "swrast";
+--- xf86-video-openchrome-0.2.904_p853/src/via_xvmc.c	2010-05-06 21:28:29.000000000 +0300
++++ xf86-video-openchrome-0.2.904_p853.fixed/src/via_xvmc.c	2010-06-16 02:29:25.000000000 +0300
+@@ -327,8 +327,7 @@ ViaInitXVMC(ScreenPtr pScreen)
+         (pVia->Chipset == VIA_CX700) ||
+         (pVia->Chipset == VIA_VX800) ||
+         (pVia->Chipset == VIA_VX855) ||
+-        (pVia->Chipset == VIA_K8M890) ||
+-        (pVia->Chipset == VIA_P4M900)) {
++        (pVia->Chipset == VIA_K8M890)) {
+         xf86DrvMsg(pScrn->scrnIndex, X_WARNING,
+                    "[XvMC] XvMC is not supported on this chipset.\n");
+         return;
