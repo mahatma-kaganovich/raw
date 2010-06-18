@@ -270,6 +270,7 @@ cpufreq(){
 				[[ "${freq#*${c} }" == "$freq" ]] && freq="$freq$c "
 			else
 				freq=" $c "
+				l="$i2"
 			fi
 			ok="$c"
 		done 2>/dev/null </dev/null
