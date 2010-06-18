@@ -273,6 +273,7 @@ cpufreq(){
 				l="$i2"
 			fi
 			ok="$c"
+			break
 		done 2>/dev/null </dev/null
 	done
 	[[ -z "$ok" ]] && return
