@@ -255,26 +255,28 @@ wild(){
 
 cpufreq(){
 	[[ -n "$freq" ]] && return
-	local l=""
-	local CHK=false
-	local w="$(wild $@)"
-	for i1 in $w ; do
-		mod $i1
+	local l="" CHK=false w="$(wild $@)" c="" ok=""
+	for i in $w ; do
+		[[ -n "$c" ]] && rmmod $c >/dev/null 2>&1
+		mod $i
+		c="$i"
 		wait $pid $pids
 		pid=""
 		pids=""
-		for i in `grep -ls "$i1" $(find /sys/devices/system/cpu -name scaling_driver 2>/dev/null) </dev/null | sed -e 's:/scaling_driver::g'` ; do
-			read i2 <"$i/cpuinfo_transition_latency" >/dev/null 2>&1 || continue
+		for i in `grep -ls "$c" $(find /sys/devices/system/cpu -name scaling_driver)` ; do
+			read i2 <"${i%scaling_driver}cpuinfo_transition_latency" || continue
 			[[ "$i2" -gt "${l:=${i2}}" ]] && continue
 			if [[ "$i2" == "$l" ]] ; then
-				[[ "${freq#*${i1} }" == "$freq" ]] && freq="$freq$i1 "
+				[[ "${freq#*${c} }" == "$freq" ]] && freq="$freq$c "
 			else
-				freq=" $i1 "
+				freq=" $c "
 			fi
-		done
-		rmmod $i1 >/dev/null 2>&1
+			ok="$c"
+		done 2>/dev/null </dev/null
 	done
-	rmmod $w >/dev/null 2>&1
+	[[ -z "$ok" ]] && return
+	[[ "$ok" != "$c" ]] && rmmod $c >/dev/null 2>&1
+	[[ "$freq" != "$c" ]] && mod $freq
 }
 
 cpufreq_gov(){
@@ -619,8 +621,7 @@ load_hand_made(){
 		ioatdma) mod i7300_idle ;;
 		esac
 	done </proc/modules
-	# frost. save your silicon (and power)
-	# autoload cpufreq driver in price of at least one more unload
+	# frost. save your silicon (and power): autoload best cpufreq driver
 	# speedup probing by vendor & other vendor-related
 	freq=`cat $(find /sys/devices/system/cpu -name scaling_driver 2>/dev/null) </dev/null`
 	case "$(grep "^vendor_id" /proc/cpuinfo)" in
@@ -629,14 +630,17 @@ load_hand_made(){
 		: ${gov:=conservative ondemand}
 	;;
 	*Intel*)
-		cpufreq acpi-cpufreq
 		mod intel_idle
+		cpufreq acpi-cpufreq
 	;;
-	*CentaurHauls*) mod via-cputemp padlock-aes padlock-sha via-rng ;;
+	*CentaurHauls*)
+		mod via-cputemp padlock-aes padlock-sha via-rng
+		# e_powersaver not kosher & may affect msr/speedstep, I use "doload"
+		cpufreq acpi-cpufreq
+	;;
 	esac
 	cpufreq cpufreq "drivers/cpufreq/\|powernow"
 	[[ -z "$freq" ]] && return
-	mod $freq
 	${cmd_nopowersave:-false} && return
 	[[ -z "$gov" ]] && if grep -sq 1 /sys/class/power_supply/BAT*/present && ! grep -sq 1 /sys/class/power_supply/AC*/online ; then
 		gov="conservative ondemand"
