@@ -20,6 +20,7 @@ single(){
 mod(){
 	local m m1 m2
 	for m in $(echo -ne "$*" | sed -e 's/-/_/g') ; do
+		[[ -e "/sys/module/$m" ]] && continue # fast
 		$CHK && {
 			single "$m" 0 || continue
 		}
@@ -35,6 +36,7 @@ mod(){
 				modparam $m1
 				m2="$m2 $insmod "$m1" $PARAM ;"
 			done
+			$cmd_quiet || echo -ne "\033[0G\033[0K$LCOUNT	[...] $m1 $PARAM"
 			eval "( ${m2%;} ) >/dev/null 2>&1 &"
 			pids="$pids$! "
 			continue
@@ -84,7 +86,7 @@ refresh(){
 			[[ "$1" == "n" ]] && echo "$i" >>/nopnp.lst
 			i="${i#>}"
 			i="${i%<}"
-			echo -ne " $i"
+			[[ -e "/sys/module/$i" ]] && echo -ne " $i"
 		done
 		echo ""
 	elif $cmd_unload && [[ "$1" == "n" ]] ; then
@@ -255,8 +257,8 @@ wild(){
 
 cpufreq(){
 	[[ -n "$freq" ]] && return
-	local l="" CHK=false w="$(wild $@)" c="" ok=""
-	for i in $w ; do
+	local l="" CHK=false c="" ok=""
+	for i in $(wild $@) ; do
 		[[ -n "$c" ]] && rmmod $c >/dev/null 2>&1
 		mod $i
 		c="$i"
@@ -288,11 +290,10 @@ cpufreq_gov(){
 		wait $pid $pids
 		pid=""
 		pids=""
-		for i in `find /sys/devices/system/cpu -name scaling_governor 2>/dev/null` ; do
-			echo $i1 >"$i" 2>/dev/null
-			read i2 <"$i"
-			[[ "$i2" == "$i1" ]] || gov1="$gov1 $i"
-		done
+		for i in `find /sys/devices/system/cpu -name scaling_governor` ; do
+			echo $i1 >"$i" || gov1="$gov1 $i1"
+#			[[ "$(cat "$i")" == "$i1" ]] || gov1="$gov1 $i"
+		done 2>/dev/null
 		rmmod cpufreq_${i1} >/dev/null 2>&1
 		[[ -z "$gov1" ]] && break
 	done
