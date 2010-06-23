@@ -22,10 +22,15 @@ block) t=b ;;
 	return
 ;;
 esac
-if [[ "$ACTION" == "remove" ]]; then
+case "$ACTION" in
+remove)
 	rm "/dev/$DEVNAME"
 	return
-fi
+;;
+add)
+	[[ -n "$MODALIAS" ]] && echo "$MODALIAS" >>/etc/modalias
+;;
+esac
 if [[ -n "$DEVNAME" ]] && ! [[ -e "/dev/$DEVNAME" ]]; then
 	DEVNAME="/dev/$DEVNAME"
 	i="${DEVNAME%/*}"
