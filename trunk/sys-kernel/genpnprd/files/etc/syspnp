@@ -21,9 +21,7 @@ mod(){
 	local m m1 m2
 	for m in $(echo -ne "$*" | sed -e 's/-/_/g') ; do
 		[[ -e "/sys/module/$m" ]] && continue # fast
-		$CHK && {
-			single "$m" 0 || continue
-		}
+		$CHK "$m" 0 || continue
 		modalias "$m" || {
 			echo ">$m<" >>"${PNP_TMP}".4
 			continue
@@ -257,7 +255,7 @@ wild(){
 
 cpufreq(){
 	[[ -n "$freq" ]] && return
-	local l="" CHK=false c="" ok=""
+	local l="" CHK=true c="" ok=""
 	for i in $(wild $@) ; do
 		[[ -n "$c" ]] && rmmod $c >/dev/null 2>&1
 		mod $i
@@ -624,6 +622,11 @@ load_hand_made(){
 		ioatdma) mod i7300_idle ;;
 		esac
 	done </proc/modules
+}
+
+load_hand_made0(){
+	## some hand-made autoloads, stage0
+
 	# frost. save your silicon (and power): autoload best cpufreq driver
 	# speedup probing by vendor & other vendor-related
 	freq=`cat $(find /sys/devices/system/cpu -name scaling_driver 2>/dev/null) </dev/null`
@@ -682,14 +685,20 @@ set_root_loop(){
 # vs. "find" optimization [dis]order
 ordered_modalias(){
 	local i
-	[[ -e "$1/modalias" ]] && ! grep -sq "^DRIVER=." "$1/uevent" && mod `cat "$1/modalias"`
+	if [[ -e "$1/modalias" ]]; then
+		! grep -sq "^DRIVER=." "$1/uevent" && mod `cat "$1/modalias"`
+#	else
+#		[[ -e "$1/uevent" ]] && i=`grep -s "^MODALIAS=" "$1/uevent"` && ! grep -sq "^DRIVER=." "$1/uevent" && mod "${i#MODALIAS=}"
+	fi
 	for i in "$1"/* ; do
 		[[ -d "$i" ]] && [[ ! -L "$i" ]] && ordered_modalias "$i"
 	done
 }
 
 fast_modalias(){
-	mod $MDOLIST `sort -u $(find $SYS_FIND -name modalias -print 2>/dev/null) </dev/null 2>/dev/null`
+	# ssb (b43) have no modalias
+	mod $MDOLIST `grep -sh "^MODALIAS=" $(find $SYS_FIND -name uevent -print) </dev/null|sed -e 's:^MODALIAS=::g'|sort -u`
+#	mod $MDOLIST `sort -u $(find $SYS_FIND -name modalias -print 2>/dev/null) </dev/null 2>/dev/null`
 #	mod $MDOLIST `cat $(find $SYS_FIND -name modalias -print 2>/dev/null|sort) </dev/null 2>/dev/null|uniq`
 }
 
@@ -697,7 +706,7 @@ syspnp(){
 	[[ -e "/lib/modules/${KV}/modules.alias.sh" ]] || return
 	$cmd_nopnp && return
 	# +some compats
-	local PNP_TMP="${TMPDIR}/pnp.found" NOTLOADED="" CHK=true i i1 i2 gov="" freq="" pid="" LCOUNT="" REORDER=break USE_MDADM_="${USE_MDADM:=$cmd_domdadm}" USE_DMRAID_NORMAL_="${USE_DMRAID_NORMAL:=$cmd_dodmraid}" USE_EVMS_NORMAL_="${USE_EVMS_NORMAL:=$cmd_doevms}" USE_LVM_NORMAL_="${USE_LVM_NORMAL:=$cmd_dolvm}" LOOPS_="" REFRESH_SAME waitscan=true checks="" fstype=fstype
+	local PNP_TMP="${TMPDIR}/pnp.found" NOTLOADED="" CHK=single i i1 i2 gov="" freq="" pid="" LCOUNT="" REORDER=break USE_MDADM_="${USE_MDADM:=$cmd_domdadm}" USE_DMRAID_NORMAL_="${USE_DMRAID_NORMAL:=$cmd_dodmraid}" USE_EVMS_NORMAL_="${USE_EVMS_NORMAL:=$cmd_doevms}" USE_LVM_NORMAL_="${USE_LVM_NORMAL:=$cmd_dolvm}" LOOPS_="" REFRESH_SAME waitscan=true checks="" fstype=fstype
 	local blkid="$(which blkid 2>/dev/null || ( [[ -e /bin/blkid ]] && echo /bin/blkid ) || ( [[ -e /sbin/blkid ]] && echo /sbin/blkid ) || echo blkid )"
 	[[ "${USE_DMRAID_NORMAL:-true}" != true ]] && DMRAID_OPTS="$USE_DMRAID_NORMAL"
 	: ${REAL_ROOT:=$cmd_real_root}
@@ -718,16 +727,21 @@ syspnp(){
 	empty_hwopts firewire net pata pcmcia sata scsi usb   ataraid dmraid evms lvm mdadm fs
 	i="$(readlink $blkid)"
 	[[ -e "$blkid" ]] && [[ "${i%busybox}" == "$i" ]] && fstype=false
-
 	refresh n
 	# first pass - strict bus order
-	CHK=false
-	[[ -n "$MDOLIST" ]] && mod $MDOLIST
-	ordered_modalias $SYS_FIND
 	CHK=true
+	[[ -n "$MDOLIST" ]] && mod $MDOLIST
+	load_hand_made0
+	ordered_modalias $SYS_FIND
+	CHK=single
+	mod `cat /etc/modalias 2>/dev/null && rm /etc/modalias`
+
+#	refresh
+	# paranoid
 	while count && refresh; do
 		fast_modalias
 	done
+
 	REFRESH_SAME=1
 	checks="$checks /proc/partitions"
 	while count ; do
@@ -743,6 +757,7 @@ syspnp(){
 		$cmd_unload && refresh
 		load_misc
 		refresh n || break
+		mod `cat /etc/modalias 2>/dev/null && rm /etc/modalias`
 	done
 
 	MY_HWOPTS=""
