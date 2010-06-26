@@ -221,7 +221,7 @@ run_genkernel(){
 	# cpio works fine without loopback, but may panish sandbox
 	cp /usr/bin/genkernel "${S}" || die
 	sed -i -e 's/has_loop/true/' "${S}/genkernel"
-	local a="$(tc-ninja_magic_to_arch kern ${CTARGET:-${CHOST}})"
+	local a="$(arch "" 1)"
 	# e2fsprogs need more crosscompile info
 	ac_cv_build="${CBUILD}" ac_cv_host="${CTARGET:-${CHOST}}" CC="$(tc-getCC)" LD="$(tc-getLD)" CXX="$(tc-getCXX)" CPP="$(tc-getCPP)" AS="$(tc-getAS)" \
 	LDFLAGS="${KERNEL_GENKERNEL_LDFLAGS}" "${S}/genkernel" \
@@ -501,9 +501,13 @@ arch(){
 	fi
 	local h="${1:-${CTARGET:-${CHOST}}}"
 	case ${h} in
-		# x86 profile sometimes buggy
-		i?86*) use 32-64 && [[ "$(march)" == native ]] && echo "x86" || echo "i386";;
-		x86_64*) use 32-64 && [[ "$(march)" == native ]] && echo "x86" || echo "x86_64";;
+		# x86 profile sometimes buggy. to kernel when not 32/64 - do old
+		i?86*) ( [[ -n "$2" ]] || ( use 32-64 && [[ "$(march)" == native ]] ) ) &&
+			echo "x86" || echo "i386"
+		;;
+		x86_64*) [[ -z "$2" ]] && use 32-64 && [[ "$(march)" == native ]] &&
+			echo "x86" || echo "x86_64"
+		;;
 		*) echo "$(tc-ninja_magic_to_arch kern ${h})";;
 	esac
 }
