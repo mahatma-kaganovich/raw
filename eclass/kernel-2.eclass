@@ -417,7 +417,7 @@ native)
 			*\ k8\ *)CF1 MK8;;
 			esac
 			case "${model_name}" in
-			*Geoge*)CF1 GEOGELX;;
+			*Geode*)CF1 GEODE_LX;;
 			esac
 		esac
 	;;
@@ -432,8 +432,8 @@ native)
 	*)	case "${model_name}" in
 		*Winchip*C6*)CF1 MWINCHIPC6;;
 		*Winchip*)CF1 MWINCHIP3D;;
-		*Geoge*GX1*|*Media*GX*)CF1 MGEOGEGX1;;
-		*Geoge*)CF1 GEOGELX;;
+		*Geode*GX1*|*Media*GX*)CF1 MGEODEGX1;;
+		*Geode*)CF1 GEODE_LX;;
 		*Efficeon*)CF1 MEFFICEON;V=TRANSMETA_32;;
 		*Crusoe*)CF1 MCRUSOE;V=TRANSMETA_32;;
 		esac
