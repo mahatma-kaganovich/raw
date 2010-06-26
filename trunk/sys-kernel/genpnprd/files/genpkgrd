@@ -81,7 +81,7 @@ pkg_from $1
 echo "Copying packaged files..."
 get_files $1 $3
 echo "Copying packages..."
-get_files $1 $(list_pkg $3)
+get_files $1 $(list_pkg $4)
 echo "Copying packages info..."
 cp_db $1
 rm "$TMPDIR/_files.lst"
