@@ -300,7 +300,7 @@ setconfig(){
 # use smp: when 'native' = single/multi cpu, ht/mc will be forced ON
 cpu2K(){
 local i v V="" CF="" march=$(march)
-local vendor_id="" model_name="" flags="" cpu_family="" model="" cache_alignment=""
+local vendor_id="" model_name="" flags="" cpu_family="" model="" cache_alignment="" fpu=""
 CF1 -SMP -X86_BIGSMP
 use smp && CF1 SMP X86_BIGSMP
 [[ "$(march mtune)" == generic ]] && CF1 X86_GENERIC
@@ -310,7 +310,7 @@ if [[ -z "${march}" ]]; then
 	march="${march%%-*}"
 fi
 case "${march}" in
-i386)echo M386;;
+i386)echo M386 MATH_EMULATION;;
 i486)echo M486;;
 i586|pentium)echo M586;;
 pentium-mmx)echo M586MMX;;
@@ -369,6 +369,8 @@ native)
 		cmp_legacy)CF1 SMP -SCHED_SMT SCHED_MC;;
 		esac
 	done
+
+	[[ "${fpu}" != yes ]] && CF1 MATH_EMULATION
 
 	case "${vendor_id}" in
 	*Intel*)
