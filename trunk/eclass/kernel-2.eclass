@@ -12,7 +12,7 @@ if [[ ${ETYPE} == sources ]]; then
 IUSE="${IUSE} build-kernel debug custom-cflags pnp compressed integrated ipv6
 	netboot nls unicode +acl minimal selinux custom-arch
 	+kernel-drm +kernel-alsa kernel-firmware +sources fbcon staging pnponly lzma
-	external-firmware xen"
+	external-firmware xen +smp 32-64"
 DEPEND="${DEPEND}
 	pnp? ( sys-kernel/genpnprd )
 	build-kernel? (
@@ -31,10 +31,10 @@ PROVIDE="sources? ( virtual/linux-sources )
 
 [[ -e "${CONFIG_ROOT}${KERNEL_CONF:=/etc/kernels/kernel.conf}" ]] && source "${CONFIG_ROOT}${KERNEL_CONF}"
 
-USEKEY="$(for i in ${!KERNEL_@} ; do
-	echo "${!i} , "
-done | md5sum)"
-IUSE="${IUSE} md5cfg:${USEKEY%% *}"
+#USEKEY="$(for i in ${!KERNEL_@} ; do
+#	echo "${!i} , "
+#done | md5sum)"
+#IUSE="${IUSE} md5cfg:${USEKEY%% *}"
 
 
 fi
@@ -211,7 +211,7 @@ kernel-2_pkg_setup() {
 		einfo "Generating boot image overlay (if configured)"
 		local i="${TMPDIR}/overlay-rd"
 		mkdir "${i}"
-		bash "${UROOT}/usr/share/genpnprd/genpkgrd" "${i}" "${KERNEL_IMAGE_FILES}" "${KERNEL_IMAGE_FILES2}" "${KERNEL_IMAGE_PACKAGES}" || die
+		bash "${UROOT}/usr/share/genpnprd/genpkgrd" "${i}" "${KERNEL_IMAGE_FILES}" "${KERNEL_IMAGE_FILES2}" "${KERNEL_IMAGE_PACKAGES}"
 	fi
 	echo ">>> Preparing to unpack ..."
 }
@@ -221,18 +221,13 @@ run_genkernel(){
 	# cpio works fine without loopback, but may panish sandbox
 	cp /usr/bin/genkernel "${S}" || die
 	sed -i -e 's/has_loop/true/' "${S}/genkernel"
-	# gentoo arch are weirdous
-	local a="$(arch)"
-	case ${a} in
-	i386) a="x86" ;;
-	esac
 	# e2fsprogs need more crosscompile info
 	ac_cv_build="${CBUILD}" ac_cv_host="${CTARGET:-${CHOST}}" CC="$(tc-getCC)" LD="$(tc-getLD)" CXX="$(tc-getCXX)" CPP="$(tc-getCPP)" AS="$(tc-getAS)" \
 	LDFLAGS="${KERNEL_GENKERNEL_LDFLAGS}" "${S}/genkernel" \
 		--cachedir="${TMPDIR}/genkernel-cache" \
 		--tempdir="${TMPDIR}/genkernel" \
 		--logfile="${TMPDIR}/genkernel.log" \
-		--arch-override=${a} \
+		--arch-override=$(tc-ninja_magic_to_arch kern ${CTARGET:-${CHOST}}) \
 		--utils-arch=${a} --utils-cross-compile=${CTARGET:-${CHOST}}- \
 		--postclear $* ${KERNEL_GENKERNEL} || die "genkernel failed"
 	rm "${S}/genkernel"
@@ -300,6 +295,171 @@ setconfig(){
 	fi
 }
 
+# Kernel-config CPU from CFLAGS and|or /proc/cpuinfo (native)
+# use smp: when 'native' = single/multi cpu, ht/mc will be forced ON
+cpu2K(){
+local i v V="" CF="" march=$(march)
+local vendor_id="" model_name="" flags="" cpu_family="" model="" cache_alignment=""
+CF1 -SMP -X86_BIGSMP
+use smp && CF1 SMP X86_BIGSMP
+[[ "$(march mtune)" == generic ]] && CF1 X86_GENERIC
+if [[ -z "${march}" ]]; then
+	CF1 GENERIC_CPU X86_GENERIC
+	march="${CTARGET:-${CHOST}}"
+	march="${march%%-*}"
+fi
+case "${march}" in
+i386)echo M386;;
+i486)echo M486;;
+i586|pentium)echo M586;;
+pentium-mmx)echo M586MMX;;
+pentiumpro)echo M686;;
+i686)echo X86_GENERIC M686;;
+pentium2)echo MPENTIUMII;;
+pentium3|pentium3m)echo MPENTIUMIII;;
+pentium-m)echo MPENTIUMM;;
+pentium4|pentium4m|prescott)echo MPENTIUM4;;
+nocona)echo MPSC;;
+core2)echo MCORE2;;
+k6|k6-2|k6-3)echo MK6;;
+athlon|athlon-tbird|athlon-4|athlon-xp|athlon-mp)echo MK7;;
+k8|opteron|athlon64|athlon-fx|k8-sse3|opteron-sse3|athlon64-sse3|amdfam10|barcelona)echo MK8;;
+winchip-c6)echo MWINCHIPC6;;
+winchip2)echo MWINCHIP3D;;
+c3)echo MCYRIXIII;;
+c3-2)echo MVIAC3_2;;
+geode)echo MGEODE_LX;;
+native)
+	CF1 -SCHED_SMT -SCHED_MC -X86_UP_APIC -X86_TSC -X86_PAT -X86_MSR -X86_MCE -MTRR -X86_CMOV -X86_X2APIC
+	case "${CTARGET:-${CHOST}}" in
+	x86*|i?86*)use 32-64 && CF1 -64BIT;;
+	esac
+
+	while read i ; do
+		v="${i%%:*}"
+		v="${v//	}"
+		v="${v// /_}"
+		[[ -n "${v}" ]] && local ${v}="${i#*: }"
+	done </proc/cpuinfo
+
+	for i in ${flags:-.}; do
+		case $i in
+		apic)CF1 X86_UP_APIC;;
+		ht)	case "${model_name}" in
+			*Celeron*);;
+			*)CF1 SMP SCHED_SMT SCHED_MC;; # FIXME: intel smt vs. mc
+			esac
+		;;
+		tsc)CF1 X86_TSC;;
+		pae)use xen && CF1 X86_PAE;;
+		pat)CF1 X86_PAT;;
+		msr)CF1 X86_MSR;;
+		mce)CF1 X86_MCE;;
+		mtrr)CF1 MTRR;;
+		cmov)CF1 X86_CMOV;;
+		x2apic)CF1 X86_X2APIC;;
+		mp)CF1 SMP;; # ?
+		lm)use 32-64 && CF1 64BIT;;
+		esac
+	done
+
+	for i in ${flags:-.}; do
+		case $i in
+		cmp_legacy)CF1 SMP -SCHED_SMT SCHED_MC;;
+		esac
+	done
+
+	case "${vendor_id}" in
+	*Intel*)
+		V=INTEL
+		case "${model_name}" in
+		*Atom*)CF1 MATOM;;
+		*)	case "${cpu_family}" in
+			[3-4])CF1 M${cpu_family}86;;
+			5)	case " ${flags} " in
+				*\ mmx\ *)CF1 M586MMX;;
+				*\ tsc\ *)CF1 M586TSC;;
+				*)CF1 M586;;
+				esac
+			;;
+			15)CF1 MPENTIUM4 MPSC;;
+			*) # family 6+ [/15]
+				[[ "${cache_alignment}" == 128 ]] && CF1 MPENTIUM4 MPSC ||
+				case " ${flags} " in
+				*\ ssse3\ *)CF1 MCORE2;;
+				*\ sse2\ *)CF1 MPENTIUMM;;
+				*\ sse\ *)CF1 MPENTIUMIII;;
+				*\ mmx\ *)CF1 MPENTIUMII;;
+				*)CF1 M686;;
+				esac
+			;;
+			esac
+		esac
+	;;
+	*AMD*)
+		V=AMD
+		case "${cpu_family}" in
+		1|2|3);;
+		4)	case "${model}" in
+			3|7|8|9)CF1 M486;;
+			*)	case " ${flags} " in
+				*\ mmx\ *)CF1 M586MMX;;
+				*\ tsc\ *)CF1 M586TSC;;
+				*)CF1 M586;;
+				esac
+			;;
+			esac
+		;;
+		5)CF1 MK6;;
+		6)CF1 MK7;;
+		*)	case " ${flags} " in
+			*\ k8\ *)CF1 MK8;;
+			esac
+			case "${model_name}" in
+			*Geoge*)CF1 GEOGELX;;
+			esac
+		esac
+	;;
+	*Centaur*)
+		V=CENTAUR
+		case "${model_name}" in
+		*C7*)CF1 MVIAC7;;
+		*C3-2*)CF1 MVIAC3_2;;
+		*C3*)CF1 MCYRIXIII;V="";;
+		esac
+	;;
+	*)	case "${model_name}" in
+		*Winchip*C6*)CF1 MWINCHIPC6;;
+		*Winchip*)CF1 MWINCHIP3D;;
+		*Geoge*GX1*|*Media*GX*)CF1 MGEOGEGX1;;
+		*Geoge*)CF1 GEOGELX;;
+		*Efficeon*)CF1 MEFFICEON;V=TRANSMETA_32;;
+		*Crusoe*)CF1 MCRUSOE;V=TRANSMETA_32;;
+		esac
+	;;
+	*)CF1 GENERIC_CPU X86_GENERIC;;
+	esac
+;;
+*)CF1 GENERIC_CPU X86_GENERIC;;
+esac
+[[ -n "${V}" ]] && CF1 "-CPU_SUP_[\w\d_]*" CPU_SUP_${V}
+KERNEL_CONFIG="${KERNEL_CONFIG}
+#-march=${march}# ${CF//  / }"
+}
+
+march(){
+local a=" ${CFLAGS} ${KERNEL_CFLAGS}"
+a="${a##* -${1:-march}=}"
+echo "${a%% *}"
+}
+
+CF1(){
+	for i in $*; do
+		CF="${CF// -${i#-} }"
+		CF="${CF// ${i#-} } ${i} "
+	done
+}
+
 _i_m(){
 	einfo "Configuring $1: ${i}"
 	case "${i}" in
@@ -318,13 +478,14 @@ config_defaults(){
 	local i i1 o m x
 	einfo "Configuring kernel"
 	if use minimal; then
-		KERNEL_CONFIG="${KERNEL_CONFIG} -IP_ADVANCED_ROUTER -NETFILTER ~IP_FIB_TRIE -NET_CLS_IND"
+		KERNEL_CONFIG="${KERNEL_CONFIG} -IP_ADVANCED_ROUTER -NETFILTER ~IP_FIB_TRIE -NET_CLS_IND SLOB TINY_RCU -NAMESPACES -AUDIT -TASKSTATS CC_OPTIMIZE_FOR_SIZE -KALLSYMS -GROUP_SCHED -CGROUPS"
 		KERNEL_MODULES="${KERNEL_MODULES} -net +net/sched +net/irda +net/bluetooth"
 	fi
 	# staging submenu will be opened, but no auto-m
 	use staging || KERNEL_MODULES="${KERNEL_MODULES} -drivers/staging"
 	kmake defconfig >/dev/null
 	setconfig
+	cpu2K
 	export ${!KERNEL_@}
 	while cfg_loop .config.{3,4} ; do
 		/usr/bin/perl "${UROOT}/usr/share/genpnprd/Kconfig.pl"
@@ -339,8 +500,9 @@ arch(){
 	fi
 	local h="${1:-${CTARGET:-${CHOST}}}"
 	case ${h} in
-		i?86*) echo "i386";;
-		x86_64*) echo "x86_64";;
+		# x86 profile sometimes buggy
+		i?86*) use 32-64 && [[ "$(march)" == native ]] && echo "x86" || echo "i386";;
+		x86_64*) use 32-64 && [[ "$(march)" == native ]] && echo "x86" || echo "x86_64";;
 		*) echo "$(tc-ninja_magic_to_arch kern ${h})";;
 	esac
 }
