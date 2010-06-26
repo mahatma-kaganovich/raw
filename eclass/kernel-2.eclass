@@ -1,4 +1,4 @@
-EAPI=3
+EAPI=2
 inherit flag-o-matic
 [[ "${PV}" == 9999* ]] && KV_FULL="${PV}"
 source "${PORTDIR}/eclass/kernel-2.eclass"
@@ -221,13 +221,14 @@ run_genkernel(){
 	# cpio works fine without loopback, but may panish sandbox
 	cp /usr/bin/genkernel "${S}" || die
 	sed -i -e 's/has_loop/true/' "${S}/genkernel"
+	local a="$(tc-ninja_magic_to_arch kern ${CTARGET:-${CHOST}})"
 	# e2fsprogs need more crosscompile info
 	ac_cv_build="${CBUILD}" ac_cv_host="${CTARGET:-${CHOST}}" CC="$(tc-getCC)" LD="$(tc-getLD)" CXX="$(tc-getCXX)" CPP="$(tc-getCPP)" AS="$(tc-getAS)" \
 	LDFLAGS="${KERNEL_GENKERNEL_LDFLAGS}" "${S}/genkernel" \
 		--cachedir="${TMPDIR}/genkernel-cache" \
 		--tempdir="${TMPDIR}/genkernel" \
 		--logfile="${TMPDIR}/genkernel.log" \
-		--arch-override=$(tc-ninja_magic_to_arch kern ${CTARGET:-${CHOST}}) \
+		--arch-override=${a} \
 		--utils-arch=${a} --utils-cross-compile=${CTARGET:-${CHOST}}- \
 		--postclear $* ${KERNEL_GENKERNEL} || die "genkernel failed"
 	rm "${S}/genkernel"
