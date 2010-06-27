@@ -311,7 +311,7 @@ if [[ -z "${march}" ]]; then
 fi
 case "${march}" in
 i386)echo M386 MATH_EMULATION;;
-i486)echo M486;;
+i486)echo M486 MATH_EMULATION;;
 i586|pentium)echo M586;;
 pentium-mmx)echo M586MMX;;
 pentiumpro)echo M686;;
@@ -418,9 +418,9 @@ native)
 		*)	case " ${flags} " in
 			*\ k8\ *)CF1 MK8;;
 			esac
-			case "${model_name}" in
-			*Geode*)CF1 GEODE_LX;;
-			esac
+		esac
+		case "${model_name}" in
+		*Geode*)CF1 GEODE_LX;;
 		esac
 	;;
 	*Centaur*)
