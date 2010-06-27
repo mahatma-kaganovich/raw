@@ -417,6 +417,7 @@ native)
 		6)CF1 MK7;;
 		*)	case " ${flags} " in
 			*\ k8\ *)CF1 MK8;;
+			*)CF1 GENERIC_CPU X86_GENERIC;;
 			esac
 		esac
 		case "${model_name}" in
@@ -429,6 +430,7 @@ native)
 		*C7*)CF1 MVIAC7;;
 		*C3-2*)CF1 MVIAC3_2;;
 		*C3*)CF1 MCYRIXIII;V="";;
+		*)CF1 GENERIC_CPU X86_GENERIC;;
 		esac
 	;;
 	*)	case "${model_name}" in
@@ -438,9 +440,9 @@ native)
 		*Geode*)CF1 GEODE_LX;;
 		*Efficeon*)CF1 MEFFICEON;V=TRANSMETA_32;;
 		*Crusoe*)CF1 MCRUSOE;V=TRANSMETA_32;;
+		*)CF1 GENERIC_CPU X86_GENERIC;;
 		esac
 	;;
-	*)CF1 GENERIC_CPU X86_GENERIC;;
 	esac
 ;;
 *)CF1 GENERIC_CPU X86_GENERIC;;
