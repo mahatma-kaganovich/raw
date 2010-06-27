@@ -4,25 +4,25 @@
 ## (c) Denis Kaganovich
 ## under Anarchy license
 
-#MINIMAL="/bin/busybox"
-MINIMAL="/bin/busybox /sbin/blkid"
-
-[[ -z "$*" ]] && {
-	echo "Usage: $0 <image> [nopnp|pnponly|pnp] [<overlay> [sources]]]
-Example: $0 initrd.cpio
-	- will create initrd image from compiled '/usr/src/linux' sources
-	- (required: $MINIMAL)"
-	exit
-}
-
+#FILES="/bin/busybox"
+FILES="/bin/busybox /sbin/blkid"
 DATA="/usr/share/genpnprd"
-
 #UROOT="$ROOT"
 UROOT=""
 home="`pwd`"
 PNPONLY=false
 GENKERNEL=true
 LIBLOOP=true
+MAKEOPTS="-j2 -s"
+
+PNPMODE=""
+PKGFILES=""
+PACKAGES=""
+OVERLAY=""
+IMAGE=""
+CLEAN=""
+CRAMFS=""
+
 : ${TMPDIR:="$ROOT/var/tmp"}
 tmp="$TMPDIR/genpnprd.$$"
 
@@ -82,8 +82,55 @@ preserve_end(){
 }
 
 squashfs_enabled(){
-	[[ -e "$rcdir/lib/modules/$KV/kernel/fs/squashfs" ]] && return 0
+	[[ "$CRAMFS" != 1 ]] && [[ -e "$rcdir/lib/modules/$KV/kernel/fs/squashfs" ]] && return 0
 	return 1
+}
+
+kmake(){
+	make -C "$S" $* $MAKEOPTS || die
+}
+
+IMAGE=""
+PNPMODE=""
+OVERLAY=""
+S="$ROOT/usr/src/linux"
+
+i=0
+while [[ -n "$*" ]]; do
+	case "$1" in
+	--*)
+		x="${1#--}"
+		shift
+		export $x="$1"
+	;;
+	*)
+		let i=i+1
+		case $i in
+		1)IMAGE="$1";;
+		2)PNPMODE="$1";;
+		3)OVERLAY="$1";;
+		4)S="$1";;
+		esac
+	;;
+	esac
+	shift
+done
+
+[[ -z "$IMAGE" ]] && {
+	echo "Usage:	$0 <image> [nopnp|pnponly|pnp [<overlay> [sources]]]
+or	$0 {--<option> <value>}
+Options: IMAGE, PNPMODE, OVERLAY, S,
+	FILES, PKGFILES, PACKAGES, CLEAN, CRAMFS, MAKEOPTS
+	- and other internal variables
+Examples: $0 initrd.cpio
+	- create initrd image from compiled '/usr/src/linux' sources
+	- (required: --FILES '$FILES')
+	$0 --IMAGE initrd.cpio \\
+		--PACKAGES 'sys-apps/util-linux sys-fs/*' \\
+		--CLEAN '/usr/share/doc /usr/share/man /usr/include' \\
+		--CRAMFS 1
+	- create rescue image with fs-tools and cramfs (vs. squashfs)"
+	exit
 }
 
 SQUASH=false
@@ -94,41 +141,41 @@ rcdir="$tmp/rc"
 mkdir "$rcdir" || die
 cd "$rcdir" || die
 
-kmake(){
-	make -j2 -C "$S" -s $* || die
-}
-
-rcfile="$(readlink -f $1)"
+rcfile="$(readlink -f $IMAGE)"
 if [[ -f "$rcfile" ]]; then
 	( gzip -dc $rcfile | cpio -i ) || cpio -i <$rcfile || die "must be [gzipped] cpio file"
-	if [[ -n "$3" ]]; then
+	if [[ -n "$OVERLAY" ]]; then
 		if $LIBLOOP; then
 			mkdir lib/root || die
-			cp "$3" lib/root -aT
+			cp "$OVERLAY" lib/root -aT
 			for i in lib lib32 lib64; do
 				[[ -d lib/root/$i ]] && mv lib/root/$i/* $i/
 			done
 			rm lib/root/{lib,lib32,lib64} -Rf
 		else
-			cp "$3" "$rcdir" -aT
+			cp "$OVERLAY" "$rcdir" -aT
 		fi
 	fi
 else
-	echo "Generating new image '$1'"
-	[[ -n "$3" ]] && cp "$3" "$rcdir" -aT
+	echo "Generating new image '$IMAGE'"
+	[[ -n "$OVERLAY" ]] && cp "$OVERLAY" "$rcdir" -aT
 	mkdir "$rcdir"/{etc,dev,sys,proc,bin,sbin}
 	ln -s "../etc/syspnp" "$rcdir/sbin/init"
 	ln -s "etc/syspnp" "$rcdir/linuxrc"
 	ln -s "etc/syspnp" "$rcdir/init"
 	x=""
-	for i in $MINIMAL; do
+	for i in $FILES; do
 		x="$x $(which $i 2>/dev/null||echo "$i")"
 	done
-	bash "$UROOT/usr/share/genpnprd/genpkgrd" "$rcdir" "$x"
+	bash "$UROOT/usr/share/genpnprd/genpkgrd" "$rcdir" "$x" "$PKGFILES" "$PACKAGES"
+	for i in $CLEAN; do
+		i=`readlink -f "$rcdir/$i"` || continue
+		[[ "${i#$rcdir/}" == "$i" ]] && continue
+		rm "$i" -Rf
+	done
 	for i in "[" ash cat cut echo mount sh uname ; do
 		ln -s busybox "$rcdir/bin/$i" &>/dev/null
 	done
-	S="${4:-"$ROOT/usr/src/linux"}"
 	c="$S/.config"
 	if ! [[ -e "$c" ]]; then
 		echo "No '$c', configuring and build kernel"
@@ -151,13 +198,13 @@ else
 		kmake bzImage
 		kmake modules -i
 	fi
-	if [[ -z "$3" ]] || ! [[ -e "$3/lib/modules" ]]; then
+	if [[ -z "$OVERLAY" ]] || ! [[ -e "$OVERLAY/lib/modules" ]]; then
 		echo "Installing kernel modules from $S"
 		kmake INSTALL_MOD_PATH="$rcdir" modules_install
 	else
-		echo "Using '$3/lib/modules'"
+		echo "Using '$OVERLAY/lib/modules'"
 	fi
-	[[ -z "$2" ]] && PNPONLY=true
+	[[ -z "$PNPMODE" ]] && PNPONLY=true
 	GENKERNEL=false
 	LIBLOOP=false
 fi
@@ -184,8 +231,8 @@ if squashfs_enabled; then
 fi
 
 cd $rcdir || die
-[[ "$2" != "nopnp" ]] && /usr/bin/perl ${UROOT}/usr/share/genpnprd/mod2sh.pl $rcdir/lib/modules/* || die
-[[ "$2" == "pnponly" ]] && PNPONLY=true
+[[ "$PNPMODE" != "nopnp" ]] && /usr/bin/perl ${UROOT}/usr/share/genpnprd/mod2sh.pl $rcdir/lib/modules/* || die
+[[ "$PNPMODE" == "pnponly" ]] && PNPONLY=true
 for i in etc sbin; do
 	for j in $DATA/$i/*; do
 		cp $j $rcdir/$i
@@ -254,10 +301,10 @@ find . -print | cpio --quiet -o -H newc -F "$tmp/initrd-${KV}.cpio" || die
 cd "$tmp" || die
 rm "$rcdir" -Rf
 cd "$home"
-if [[ "$1" == *.cpio ]]; then
-	mv "$tmp/initrd-${KV}.cpio" "$1" || die
+if [[ "$IMAGE" == *.cpio ]]; then
+	mv "$tmp/initrd-${KV}.cpio" "$IMAGE" || die
 else
-	gzip -c9 "$tmp/initrd-${KV}.cpio" >"$1" || die
+	gzip -c9 "$tmp/initrd-${KV}.cpio" >"$IMAGE" || die
 fi
 rm "$tmp" -Rf
 echo "initrd updated."
