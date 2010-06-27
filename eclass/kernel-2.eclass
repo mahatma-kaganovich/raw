@@ -301,7 +301,7 @@ setconfig(){
 cpu2K(){
 local i v V="" CF="" march=$(march)
 local vendor_id="" model_name="" flags="" cpu_family="" model="" cache_alignment="" fpu=""
-CF1 -SMP -X86_BIGSMP
+CF1 -SMP -X86_BIGSMP -X86_GENERIC
 use smp && CF1 SMP X86_BIGSMP
 [[ "$(march mtune)" == generic ]] && CF1 X86_GENERIC
 if [[ -z "${march}" ]]; then
