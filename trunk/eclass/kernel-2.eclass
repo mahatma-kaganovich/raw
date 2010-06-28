@@ -300,7 +300,7 @@ setconfig(){
 # use smp: when 'native' = single/multi cpu, ht/mc will be forced ON
 cpu2K(){
 local i v V="" CF="" march=$(march)
-local vendor_id="" model_name="" flags="" cpu_family="" model="" cache_alignment="" fpu=""
+local vendor_id="" model_name="" flags="" cpu_family="" model="" cache_alignment="" fpu="" siblings="" cpu_cores="" processor=""
 CF1 -SMP -X86_BIGSMP -X86_GENERIC
 use smp && CF1 SMP X86_BIGSMP
 [[ "$(march mtune)" == generic ]] && CF1 X86_GENERIC
@@ -342,13 +342,23 @@ native)
 		v="${v// /_}"
 		[[ -n "${v}" ]] && local ${v}="${i#*: }"
 	done </proc/cpuinfo
+	flags=" ${flags:-.} "
 
-	for i in ${flags:-.}; do
+	for i in ${flags}; do
 		case $i in
 		apic)CF1 X86_UP_APIC;;
 		ht)	case "${model_name}" in
 			*Celeron*);;
-			*)CF1 SMP SCHED_SMT SCHED_MC;; # FIXME: intel smt vs. mc
+			*)
+				# xtopology & other flags present only on SMP running anymore
+				[[ "${cpu_cores:-1}" -gt 1 ]] && CF1 SMP SCHED_MC
+				[[ "${siblings:-0}" -gt "${cpu_cores:-1}" ]] && CF1 SMP SCHED_SMT
+				if ! grep -q SMP /proc/version; then
+					ewarn "Trying to detect hyperthreading/cores under non-SMP kernel:"
+					ewarn "SMP+SMT+MC forced, recommended to re-ebuild kernel under new kernel."
+					CF1 SMP SCHED_SMT SCHED_MC
+				fi
+			;;
 			esac
 		;;
 		tsc)CF1 X86_TSC;;
@@ -361,85 +371,73 @@ native)
 		x2apic)CF1 X86_X2APIC;;
 		mp)CF1 SMP;; # ?
 		lm)use 32-64 && CF1 64BIT;;
+		cmp_legacy)CF1 SMP SCHED_MC;;
+		up)ewarn "Running SMP on UP. Recommended useflag '-smp' and '-SMP' in /etc/kernel.conf";;
 		esac
 	done
 
-	for i in ${flags:-.}; do
-		case $i in
-		cmp_legacy)CF1 SMP -SCHED_SMT SCHED_MC;;
-		esac
-	done
-
+	[[ "${processor:-0}" != 0 ]] && CF1 SMP
 	[[ "${fpu}" != yes ]] && CF1 MATH_EMULATION
 
 	case "${vendor_id}" in
 	*Intel*)
 		V=INTEL
-		case "${model_name}" in
+		case "${cpu_family}:${model}:${flags}:${model_name}" in
 		*Atom*)CF1 MATOM;;
-		*)	case "${cpu_family}" in
-			[3-4])CF1 M${cpu_family}86;;
-			5)	case " ${flags} " in
-				*\ mmx\ *)CF1 M586MMX;;
-				*\ tsc\ *)CF1 M586TSC;;
-				*)CF1 M586;;
-				esac
-			;;
-			15)CF1 MPENTIUM4 MPSC;;
-			*) # family 6+ [/15]
-				[[ "${cache_alignment}" == 128 ]] && CF1 MPENTIUM4 MPSC ||
-				case " ${flags} " in
-				*\ ssse3\ *)CF1 MCORE2;;
-				*\ sse2\ *)CF1 MPENTIUMM;;
-				*\ sse\ *)CF1 MPENTIUMIII;;
-				*\ mmx\ *)CF1 MPENTIUMII;;
-				*)CF1 M686;;
-				esac
-			;;
-			esac
+		5:*\ mmx\ *)CF1 M586MMX;;
+		5:*\ tsc\ *)CF1 M586TSC;;
+		15:*)CF1 MPENTIUM4 MPSC;;
+		6:*\ ssse3\ *)CF1 MCORE2;;
+		6:*\ sse2\ *)CF1 MPENTIUMM;;
+		6:*\ sse\ *)CF1 MPENTIUMIII;;
+		6:*\ mmx\ *)CF1 MPENTIUMII;;
+		[3-6]:*)CF1 M${cpu_family}86;;
+		*)CF1 GENERIC_CPU X86_GENERIC;;
 		esac
 	;;
 	*AMD*)
 		V=AMD
-		case "${cpu_family}" in
-		1|2|3);;
-		4)	case "${model}" in
-			3|7|8|9)CF1 M486;;
-			*)	case " ${flags} " in
-				*\ mmx\ *)CF1 M586MMX;;
-				*\ tsc\ *)CF1 M586TSC;;
-				*)CF1 M586;;
-				esac
-			;;
-			esac
-		;;
-		5)CF1 MK6;;
-		6)CF1 MK7;;
-		*)	case " ${flags} " in
-			*\ k8\ *)CF1 MK8;;
-			*)CF1 GENERIC_CPU X86_GENERIC;;
-			esac
-		esac
-		case "${model_name}" in
+		case "${cpu_family}:${model}:${flags}:${model_name}" in
+		4:[3789]:*)CF1 M486;;
+		4:*\ mmx\ *)CF1 M586MMX;;
+		4:*\ tsc\ *)CF1 M586TSC;;
+		4:*)CF1 M586;;
+		5:*)CF1 MK6;;
+		6:*)CF1 MK7;;
+		7:*|*\ k8\ *)CF1 MK8;;
 		*Geode*)CF1 GEODE_LX;;
+		*)CF1 GENERIC_CPU X86_GENERIC;;
 		esac
 	;;
 	*Centaur*)
 		V=CENTAUR
-		case "${model_name}" in
+		case "${cpu_family}:${model}:${model_name}" in
 		*C7*)CF1 MVIAC7;;
-		*C3-2*)CF1 MVIAC3_2;;
-		*C3*)CF1 MCYRIXIII;V="";;
+		*Winchip*C6*)CF1 MWINCHIPC6;;
+		*Winchip*)CF1 MWINCHIP3D;;
+		6:[0-8]:*)CF1 MCYRIXIII;;
+		6:*)CF1 MVIAC3_2;;
 		*)CF1 GENERIC_CPU X86_GENERIC;;
 		esac
 	;;
-	*)	case "${model_name}" in
-		*Winchip*C6*)CF1 MWINCHIPC6;;
-		*Winchip*)CF1 MWINCHIP3D;;
-		*Geode*GX1*|*Media*GX*)CF1 MGEODEGX1;;
-		*Geode*)CF1 GEODE_LX;;
+	*Cyrix*)	V=CYRIX
+			CF1 GENERIC_CPU X86_GENERIC
+			case "${model_name}" in
+			*6x86*|M\ II)CF1 M686;;
+			*5x86*)CF1 M586;;
+			*486*)CF1 M486;;
+			*Geode*|*MediaGX*)CF1 MGEODEGX1 -X86_GENERIC;;
+			esac
+	;;
+	*)	CF1 -CPU_SUP_{INTEL,AMD,CENTAUR}
+		case "${model_name}" in
+		*Geode*|*MediaGX*)CF1 MGEODEGX1;V=CYRIX;;
 		*Efficeon*)CF1 MEFFICEON;V=TRANSMETA_32;;
 		*Crusoe*)CF1 MCRUSOE;V=TRANSMETA_32;;
+		386)CF1 GENERIC_CPU X86_GENERIC M386;;
+		486)CF1 GENERIC_CPU X86_GENERIC M486;;
+		586|5x86)CF1 GENERIC_CPU X86_GENERIC M586;;
+		686|6x86)CF1 GENERIC_CPU X86_GENERIC M686;;
 		*)CF1 GENERIC_CPU X86_GENERIC;;
 		esac
 	;;
