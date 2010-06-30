@@ -1,5 +1,5 @@
 #!/bin/sh
-## pnp modules bootloader v0.14
+## pnp modules bootloader v0.15
 ## (c) Denis Kaganovich, under Anarchy license
 ## consume preprocessed /lib/modules/$KV/modules.alias
 
@@ -64,6 +64,8 @@ refresh(){
 	wait $pid $pids
 	pid=""
 	pids=""
+
+	${cmd_fast:=false} && return 1
 
 	sed -e 's%^\([^ 	]*\)[	 ]*.*$%>\1<%g' </proc/modules >"${PNP_TMP}".1
 	cat `grep -ls "^DRIVER=" $(find $SYS_FIND -name uevent -print 2>/dev/null) </dev/null` </dev/null |grep "^DRIVER=\|^MODALIAS="|sed -e 's%-%_%g' -e 's%^.*=\(.*\)$%>\1<%g' >>"${PNP_TMP}".1
@@ -419,7 +421,7 @@ msg_(){
 # dirty
 fstype(){
 local i d
-[[ -z "$*" ]] && set `cat /proc/partitions|sed -e "s:^.*[ ]:/dev/:g" -e "s:^/dev/name$::"` ""
+[[ -z "$*" ]] && set `sed -e "s:^.*[ ]:/dev/:g" -e "s:^/dev/name$::" </proc/partitions` ""
 while [[ -n "$*" ]]; do
 d="$1"
 [[ -z "$d" ]] || [[ -e "$d" ]] || d="`findfs $1 2>/dev/null`"
@@ -686,9 +688,9 @@ set_root_loop(){
 ordered_modalias(){
 	local i
 	if [[ -e "$1/modalias" ]]; then
-		! grep -sq "^DRIVER=." "$1/uevent" && mod `cat "$1/modalias"`
-#	else
-#		[[ -e "$1/uevent" ]] && i=`grep -s "^MODALIAS=" "$1/uevent"` && ! grep -sq "^DRIVER=." "$1/uevent" && mod "${i#MODALIAS=}"
+		! grep -sq "^DRIVER=." "$1/uevent" && mod "`cat "$1/modalias"`"
+#	elif [[ -e "$1/uevent" ]]; then
+#		i=`grep -s "^MODALIAS=" "$1/uevent"` && mod "${i#MODALIAS=}"
 	fi
 	for i in "$1"/* ; do
 		[[ -d "$i" ]] && [[ ! -L "$i" ]] && ordered_modalias "$i"
@@ -698,8 +700,16 @@ ordered_modalias(){
 fast_modalias(){
 	# ssb (b43) have no modalias
 	mod $MDOLIST `grep -sh "^MODALIAS=" $(find $SYS_FIND -name uevent -print) </dev/null|sed -e 's:^MODALIAS=::g'|sort -u`
-#	mod $MDOLIST `sort -u $(find $SYS_FIND -name modalias -print 2>/dev/null) </dev/null 2>/dev/null`
-#	mod $MDOLIST `cat $(find $SYS_FIND -name modalias -print 2>/dev/null|sort) </dev/null 2>/dev/null|uniq`
+}
+
+ofast_modalias(){
+	mod `grep -sh "^MODALIAS=" $(find $SYS_FIND -name uevent -print|sort) </dev/null|sed -e 's:^MODALIAS=::g'`
+}
+
+etc_modalias(){
+	mv /etc/modalias /etc/modalias_ 2>/dev/null || return 1
+	mod `cat /etc/modalias_`
+	rm /etc/modalias_
 }
 
 syspnp(){
@@ -729,16 +739,16 @@ syspnp(){
 	[[ -e "$blkid" ]] && [[ "${i%busybox}" == "$i" ]] && fstype=false
 	refresh n
 	# first pass - strict bus order
-	CHK=true
+#	CHK=true # try twice?
 	[[ -n "$MDOLIST" ]] && mod $MDOLIST
 	load_hand_made0
-	ordered_modalias $SYS_FIND
+	$cmd_fast && ofast_modalias || ordered_modalias $SYS_FIND
 	CHK=single
-	mod `cat /etc/modalias 2>/dev/null && rm /etc/modalias`
+	etc_modalias
 
 #	refresh
 	# paranoid
-	while count && refresh; do
+	while refresh && count ; do
 		fast_modalias
 	done
 
@@ -752,12 +762,12 @@ syspnp(){
 			pid=""
 			pids=""
 		else
-			fast_modalias
+			$cmd_fast || fast_modalias
 		fi
+		etc_modalias
 		$cmd_unload && refresh
 		load_misc
 		refresh n || break
-		mod `cat /etc/modalias 2>/dev/null && rm /etc/modalias`
 	done
 
 	MY_HWOPTS=""
@@ -767,7 +777,12 @@ syspnp(){
 	USE_LVM_NORMAL="${USE_LVM_NORMAL_}"
 	USE_EVMS_NORMAL="${USE_EVMS_NORMAL_}"
 
-	echo -ne "\033[0G\033[0K"
+#	echo -ne "\033[0G\033[0K"
+	j=0
+	for i in /sys/module/*; do
+		let j=j+1
+	done
+	echo "$j modules"
 
 	# assign detected root/loop
 	if [[ -z "$REAL_ROOT" ]]; then
