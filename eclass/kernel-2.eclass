@@ -80,6 +80,7 @@ kernel-2_src_compile() {
 	fixes
 	[[ ${ETYPE} == headers ]] && compile_headers
 	[[ ${ETYPE} == sources ]] || return
+	cpu2K
 	local cflags="${KERNEL_CFLAGS}"
 	if use custom-cflags; then
 		use custom-arch || filter-flags "-march=*"
@@ -492,7 +493,6 @@ config_defaults(){
 	use staging || KERNEL_MODULES="${KERNEL_MODULES} -drivers/staging"
 	kmake defconfig >/dev/null
 	setconfig
-	cpu2K
 	export ${!KERNEL_@}
 	while cfg_loop .config.{3,4} ; do
 		/usr/bin/perl "${UROOT}/usr/share/genpnprd/Kconfig.pl"
