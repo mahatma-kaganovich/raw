@@ -301,8 +301,8 @@ setconfig(){
 cpu2K(){
 local i v V="" CF="" march=$(march)
 local vendor_id="" model_name="" flags="" cpu_family="" model="" cache_alignment="" fpu="" siblings="" cpu_cores="" processor=""
-CF1 -SMP -X86_BIGSMP -X86_GENERIC
-use smp && CF1 SMP X86_BIGSMP
+CF1 -SMP -X86_BIGSMP -X86_GENERIC X86_X2APIC
+use smp && CF1 SMP X86_BIGSMP SCHED_SMT SCHED_MC
 [[ "$(march mtune)" == generic ]] && CF1 X86_GENERIC
 if [[ -z "${march}" ]]; then
 	CF1 GENERIC_CPU X86_GENERIC
@@ -350,9 +350,6 @@ native)
 		ht)	case "${model_name}" in
 			*Celeron*);;
 			*)
-				# xtopology & other flags present only on SMP running anymore
-				[[ "${cpu_cores:-1}" -gt 1 ]] && CF1 SMP SCHED_MC
-				[[ "${siblings:-0}" -gt "${cpu_cores:-1}" ]] && CF1 SMP SCHED_SMT
 				if ! grep -q SMP /proc/version; then
 					ewarn "Trying to detect hyperthreading/cores under non-SMP kernel:"
 					ewarn "SMP+SMT+MC forced, recommended to re-ebuild kernel under new kernel."
@@ -376,7 +373,14 @@ native)
 		esac
 	done
 
-	[[ "${processor:-0}" != 0 ]] && CF1 SMP
+	[[ "${processor:-0}" -gt 0 ]] && CF1 SMP
+#	[[ "${processor:-0}" -gt 7 ]] && CF1 X86_BIGSMP
+#	[[ "${processor:-0}" -gt 511 ]] && CF1 MAXSMP
+#	let i=${processor:-0}+1
+#	CF1 NR_CPUS=${i}
+	# xtopology & other flags present only on SMP running anymore
+	[[ "${cpu_cores:-1}" -gt 1 ]] && CF1 SMP SCHED_MC
+	[[ "${siblings:-0}" -gt "${cpu_cores:-1}" ]] && CF1 SMP SCHED_SMT
 	[[ "${fpu}" != yes ]] && CF1 MATH_EMULATION
 
 	case "${vendor_id}" in
@@ -434,10 +438,10 @@ native)
 		*Geode*|*MediaGX*)CF1 MGEODEGX1;V=CYRIX;;
 		*Efficeon*)CF1 MEFFICEON;V=TRANSMETA_32;;
 		*Crusoe*)CF1 MCRUSOE;V=TRANSMETA_32;;
-		386)CF1 GENERIC_CPU X86_GENERIC M386;;
-		486)CF1 GENERIC_CPU X86_GENERIC M486;;
-		586|5x86)CF1 GENERIC_CPU X86_GENERIC M586;;
-		686|6x86)CF1 GENERIC_CPU X86_GENERIC M686;;
+		*386*)CF1 GENERIC_CPU X86_GENERIC M386;;
+		*486*)CF1 GENERIC_CPU X86_GENERIC M486;;
+		*586*|*5x86*)CF1 GENERIC_CPU X86_GENERIC M586;;
+		*686|*6x86*)CF1 GENERIC_CPU X86_GENERIC M686;;
 		*)CF1 GENERIC_CPU X86_GENERIC;;
 		esac
 	;;
@@ -446,8 +450,8 @@ native)
 *)CF1 GENERIC_CPU X86_GENERIC;;
 esac
 [[ -n "${V}" ]] && CF1 "-CPU_SUP_[\w\d_]*" CPU_SUP_${V}
-KERNEL_CONFIG="${KERNEL_CONFIG}
-#-march=${march}# ${CF//  / }"
+KERNEL_CONFIG="#-march=${march}# ${CF//  / }
+${KERNEL_CONFIG}"
 }
 
 march(){
