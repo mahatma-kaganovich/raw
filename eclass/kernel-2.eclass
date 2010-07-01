@@ -14,6 +14,7 @@ IUSE="${IUSE} build-kernel debug custom-cflags pnp compressed integrated ipv6
 	+kernel-drm +kernel-alsa kernel-firmware +sources fbcon staging pnponly lzma
 	external-firmware xen +smp 32-64"
 DEPEND="${DEPEND}
+	!<app-portage/ppatch-0.08-r16
 	pnp? ( sys-kernel/genpnprd )
 	build-kernel? (
 		>=sys-kernel/genkernel-3.4.10.903
@@ -383,7 +384,7 @@ native)
 		mp)CF1 SMP;; # ?
 		lm)use 32-64 && CF1 64BIT;;
 		cmp_legacy)CF1 SMP SCHED_MC;;
-		up)ewarn "Running SMP on UP. Recommended useflag '-smp' and '-SMP' in /etc/kernel.conf";;
+		up)ewarn "Running SMP on UP. Recommended useflag '-smp' and '-SMP' in ${KERNEL_CONF}";;
 		esac
 	done
 
