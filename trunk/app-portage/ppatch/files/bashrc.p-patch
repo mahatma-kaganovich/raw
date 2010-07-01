@@ -16,7 +16,7 @@ if [[ -n "\$EBUILD_PHASE" ]]; then
 		p="\${p%/*}"
 		[[ "\$p" < "\$PPATCHDIR" || "\$p" == "\$i" ]] && break
 	done
-	if [[ -e "\$PPATCH" ]] ; then
+        if [[ -e "\$PPATCH" ]] && ! ( [[ \${EAPI:-1} -gt 1 ]] && [[ \$EBUILD_PHASE == compile ]] && [[ "`readlink -f "\$PPATCH"`" == "`readlink -f "\$PPATCH/../prepare"`" ]] ) ; then
 		export PPATCH PPATCHDIR S
 		`p-patch \$PPATCH`
 	fi
