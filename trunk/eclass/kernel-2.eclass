@@ -2,7 +2,7 @@ EAPI=2
 inherit flag-o-matic
 [[ "${PV}" == 9999* ]] && KV_FULL="${PV}"
 source "${PORTDIR}/eclass/kernel-2.eclass"
-
+EXPORT_FUNCTIONS src_configure src_prepare
 
 #UROOT="${ROOT}"
 UROOT=""
@@ -73,13 +73,9 @@ check_kv(){
 	[ -z "${KV}" ] && set_kv ${REAL_KV}
 }
 
-kernel-2_src_compile() {
-	local KV0="${KV}"
-	check_kv
-	cd "${S}"
-	fixes
-	[[ ${ETYPE} == headers ]] && compile_headers
+kernel-2_src_configure() {
 	[[ ${ETYPE} == sources ]] || return
+	cd "${S}"
 	cpu2K
 	local cflags="${KERNEL_CFLAGS}"
 	if use custom-cflags; then
@@ -90,6 +86,23 @@ kernel-2_src_compile() {
 	[[ -n ${cflags} ]] && sed -i -e "s/^\(KBUILD_CFLAGS.*-O.\)/\1 ${cflags}/g" Makefile
 	use build-kernel || return
 	config_defaults
+}
+
+kernel-2_src_compile() {
+	cd "${S}"
+	[[ ${ETYPE} == headers ]] && compile_headers
+
+	if [[ $K_DEBLOB_AVAILABLE == 1 ]] && use deblob ; then
+		echo ">>> Running deblob script ..."
+		sh "${T}/${DEBLOB_A}" --force || \
+			die "Deblob script failed to run!!!"
+	fi
+
+	####
+	[[ ${ETYPE} == sources ]] || return
+	local KV0="${KV}"
+	check_kv
+	use build-kernel || return
 	einfo "Compiling kernel"
 	kmake bzImage
 	einfo "Compiling kernel modules"
@@ -320,8 +333,8 @@ i686)echo X86_GENERIC M686;;
 pentium2)echo MPENTIUMII;;
 pentium3|pentium3m)echo MPENTIUMIII;;
 pentium-m)echo MPENTIUMM;;
-pentium4|pentium4m|prescott)echo MPENTIUM4;;
-nocona)echo MPSC;;
+pentium4|pentium4m|prescott)echo MPENTIUM4 MPSC;;
+nocona)echo MPENTIUM4 MPSC;;
 core2)echo MCORE2;;
 k6|k6-2|k6-3)echo MK6;;
 athlon|athlon-tbird|athlon-4|athlon-xp|athlon-mp)echo MK7;;
@@ -450,6 +463,10 @@ native)
 ;;
 *)CF1 GENERIC_CPU X86_GENERIC;;
 esac
+case "${CTARGET:-${CHOST}}:$CF" in
+	x86_64*|*\ 64BIT\ *)CF1 -MPENTIUM4;;
+	*) CF1 -MPSC;;
+esac
 [[ -n "${V}" ]] && CF1 "-CPU_SUP_[\w\d_]*" CPU_SUP_${V}
 KERNEL_CONFIG="#-march=${march}# ${CF//  / }
 ${KERNEL_CONFIG}"
@@ -525,7 +542,9 @@ kmake(){
 	emake HOSTCC="$(tc-getBUILD_CC)" ARCH=$(arch) $o $* ${KERNEL_MAKEOPT} || die
 }
 
-fixes(){
+kernel-2_src_prepare(){
+	[[ ${ETYPE} == sources ]] || return
+
 	local i
 	einfo "Fixing compats"
 	# glibc 2.8+
@@ -549,4 +568,3 @@ fixes(){
 	einfo "Fixing modules hardware info exports (forced mode, waiting for bugs!)"
 	sh "${UROOT}/usr/share/genpnprd/modulesfix" "${S}" f
 }
-
