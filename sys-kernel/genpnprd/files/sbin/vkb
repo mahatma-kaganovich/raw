@@ -47,8 +47,6 @@ Z=1
 T=0
 TT=0
 
-: ${SHELL:=_read}
-
 # detect byteorder
 case "`echo -ne "\x01\x02" |hexdump -e '"" 1/2 "%04x" ""'`" in
 0102)b2w(){ let RES=$1*256+$2;};;
@@ -341,20 +339,20 @@ find_abs_pressure(){
 	done </proc/bus/input/devices
 }
 
-_vkb(){
-local dev="${*:-$cmd_vkb_touchscreen}"
-: ${dev:=`find_abs_pressure`}
-: ${dev:=/dev/input/mice}
-[[ -e "$dev" ]] || return
-( vkb $dev && return $? ) | $SHELL
-return $?
-}
-
 _read(){
 	local x
 	read x
 	echo "$x"
 	fin 1
+}
+
+_vkb(){
+local dev="${*:-$cmd_vkb_touchscreen}"
+: ${dev:=`find_abs_pressure`}
+: ${dev:=/dev/input/mice}
+[[ -e "$dev" ]] || return 0
+( vkb $dev && return $? ) | ${SHELL:-_read}
+return $?
 }
 
 p=""
@@ -365,4 +363,4 @@ while [[ -n "$*" ]]; do
 	esac
 	shift
 done
-_vkb $p && exec $SHELL
+_vkb $p && ${SHELL:+exec} ${SHELL:-_read}
