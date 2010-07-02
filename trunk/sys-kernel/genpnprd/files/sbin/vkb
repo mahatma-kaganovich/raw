@@ -201,7 +201,7 @@ _d(){
 
 vkb(){
 [[ -n "$kmapfile" ]] && loadkmap "$kmapfile"
-local x0 x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 x11 x12 d=" ." tty=`tty` buf=12
+local x0 x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 x11 x12 d=" ." tty=`tty` buf=12 i
 while [[ $buf != 0 ]]; do
 	d="$d $d"
 	let buf=buf-1
@@ -239,8 +239,9 @@ read d <$tty && {
 		continue
 	;;
 	*+*)
-		let X=0x$x9*relAccX+X
-		let d=0x$x8/16%2 && let X=256-X
+		i=0x$x9
+		let d=0x$x8/16%2 && let i=i-256
+		let X=X+i*relAccX
 		if [[ $X -gt $X1 ]]; then
 			X=$X1
 		elif [[ $X -lt $X0 ]]; then
@@ -248,11 +249,12 @@ read d <$tty && {
 		fi
 		let XX=X-X0+resX
 		let XX=XX/resX
-		let Y=0x$x10*relAccY+Y
-		let d=0x$x8/32%2 && let Y=256-Y
+		i=0x$x10
+		let d=0x$x8/32%2 && let i=i-256
+		let Y=Y-i*relAccY
 		if [[ $Y -gt $Y1 ]]; then
 			Y=$Y1
-		elif [[ $Y -lt $X0 ]]; then
+		elif [[ $Y -lt $Y0 ]]; then
 			Y=$Y0
 		fi
 		let YY=Y-Y0+resY
