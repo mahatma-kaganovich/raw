@@ -29,14 +29,17 @@ mobile)
 seamonkey)
 	MOZVER="1.9.1"
 	# empty: from hg
-	LANGS="en be ca cs de es_AR es_ES fr gl hu it ja ka lt nb_NO nl pl pt_PT ru sk sv_SE tr"
+	case "${PV}" in
+	*alpha*)MOZVER="1.9.3";;
+	*)LANGS="en be ca cs de es_AR es_ES fr gl hu it ja ka lt nb_NO nl pl pt_PT ru sk sv_SE tr";;
+	esac
 ;;
 esac
 
 IUSE="java mozdevelop moznoirc moznoroaming postgres restrict-javascript startup-notification
 	debug minimal directfb moznosystem +threads jssh wifi python mobile static
 	moznomemory accessibility system-sqlite vanilla xforms gio +alsa
-	+custom-cflags +custom-optimization system-xulrunner ipc system-nss system-nspr X"
+	+custom-cflags +custom-optimization system-xulrunner +ipc system-nss system-nspr X"
 #	qt-experimental"
 
 #RESTRICT="nomirror"
@@ -90,9 +93,10 @@ DEPEND="java? ( >=virtual/jdk-1.4 )
 S="${WORKDIR}/comm-${MOZVER}"
 
 force(){
-	local i
+	local i j
 	for i in $*; do
-		[[ "${i#+}" == "${i}" ]] && IUSE="${IUSE// $i/ +$i}" || IUSE="${IUSE// +$i/ $i}"
+		j="${i#-}"
+		[[ "$j" == "$i" ]] && IUSE="${IUSE// $i/ +$i}" || IUSE="${IUSE// +$j/ $j}"
 	done
 }
 
@@ -133,6 +137,8 @@ seamonkey)
 	export MOZ_CO_PROJECT=suite
 	IUSE="${IUSE} ldap moznocompose moznomail crypt moznocalendar"
 	S1="${S}/mozilla"
+	#[[ -n "${hg}" ]] && 
+	force -ipc
 ;;
 firefox)
 	PATCH=""
@@ -141,7 +147,6 @@ firefox)
 	export MOZ_CO_PROJECT=browser
 	S="${S/comm-/mozilla-}"
 	S1="${S}"
-	force ipc
 	[[ "$PN" == "shiretoko" ]] && IUSE="${IUSE} +release-tag"
 ;;
 mobile)
@@ -153,7 +158,6 @@ mobile)
 	S1="${S}"
 	SRC_URI="${SRC_URI//\/1.0rc3\///1.0/}"
 	SRC_URI="${SRC_URI//\/1.0.1\///1.0.1rc1/}"
-	force ipc
 ;;
 *)
 	die
