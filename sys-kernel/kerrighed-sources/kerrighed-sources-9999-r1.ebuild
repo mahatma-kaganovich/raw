@@ -17,12 +17,8 @@ KEYWORDS="-* ~amd64 ~x86"
 IUSE="+build-kernel +pnp"
 
 KERNEL_CONFIG="${KERNEL_CONFIG}
-	===kerrighed:
-	-PREEMPT -PREEMPT_VOLUNTARY PREEMPT_NONE -KEYS -IA32_EMULATION
-	-NTFS_FS -NUMA
-	===
+	===kerrighed: PREEMPT_NONE -KEYS -NUMA -IA32_EMULATION
 	"
-#	-NET_IPIP -NET_IPGRE -DUMMY -BONDING -EQUALIZER
 
 S="${WORKDIR}/kernel"
 
@@ -32,6 +28,7 @@ src_unpack(){
 	git_src_unpack
 	sed -i -e 's%-Werror% %' "${S}"/kerrighed/scheduler/Makefile
 	sed -i -e 's%^\(EXTRAVERSION =\)$%\1 -krg%' "${S}"/Makefile
+	filter-flags -ftracer
 }
 
 src_install(){
