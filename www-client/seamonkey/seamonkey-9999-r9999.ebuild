@@ -27,10 +27,10 @@ mobile)
 	MOZVER="1.9.2"
 ;;
 seamonkey)
-	MOZVER="1.9.1"
+	MOZVER="1.9.2"
 	# empty: from hg
 	case "${PV}" in
-	*alpha*)MOZVER="1.9.3";;
+	*alpha*)MOZVER="central";;
 	*)LANGS="en be ca cs de es_AR es_ES fr gl hu it ja ka lt nb_NO nl pl pt_PT ru sk sv_SE tr";;
 	esac
 ;;
@@ -241,8 +241,18 @@ src_prepare(){
 
 	eend $?
 
+	local i i1 i2
 	for i in "${WORKDIR}"/l10n/*/toolkit/chrome/global/*; do
 		[[ -e "${i}" ]] && ln -s "${i}" "${i%/*}/../../../suite/chrome/browser/${i##*/}"
+	done
+	for i in `find "${S}" -name locales` ; do
+		[[ -d "${i}"/en-US ]] || continue
+		i1="${i%/locales}"
+		i1="${i1#${S1}/}"
+		i1="${i1#${S}/}"
+		for i2 in "${WORKDIR}"/l10n/*; do
+			[[ -d "${i2}/${i1}" ]] && cp -an "${i}"/en-US/* "${i2}/${i1}"
+		done
 	done
 
 	for i in "${S1}/js/src" "${S1}" "${S}" ; do
@@ -361,8 +371,8 @@ src_configure(){
 
 	mozconfig_use_enable alsa ogg
 	mozconfig_use_enable alsa wave
-	mozconfig_use_enable ipc
-	mozconfig_use_enable ipc libxul
+#	mozconfig_use_enable ipc
+#	mozconfig_use_enable ipc libxul
 	mozconfig_use_enable startup-notification libnotify
 
 	if use moznoirc; then
@@ -780,3 +790,4 @@ _cvs_m(){
 }
 
 fi
+
