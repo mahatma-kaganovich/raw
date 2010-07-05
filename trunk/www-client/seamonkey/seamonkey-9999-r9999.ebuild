@@ -722,7 +722,7 @@ src_unpack() {
 	_hg chatzilla "${S1}"/extensions/irc !moznoirc
 	SM && use !moznomail && use crypt && _cvs enigmail/src "${S}"/mailnews/extensions/enigmail crypt
 	SM && ECVS_BRANCH="LDAPCSDK_6_0_6_RTM" _cvs_m mozilla/directory/c-sdk "${S}/directory/c-sdk" ldap
-	local l
+	local l EHG_EXTRA_OPT="${EHG_EXTRA_OPT} --rev tip"
 	mkdir "${WORKDIR}/l10n"
 	for l in $(langs) ; do
 		[[ "${l}" == "en-US" ]] ||
@@ -753,7 +753,7 @@ _hg(){
 	[[ -n "$3" ]] && ! use $3 && return
 	local e="EHG_EXTRA_OPT_${m//-/_}"
 	einfo "Hint: use '${e}=\"--date yyyy-mm-dd\"' to day snapshot"
-	EHG_PROJECT="mozilla" EHG_EXTRA_OPT="${!e}" mercurial_fetch "http://hg.mozilla.org/$1" "${m}"
+	EHG_PROJECT="mozilla" EHG_EXTRA_OPT="${EHG_EXTRA_OPT} ${!e}" mercurial_fetch "http://hg.mozilla.org/$1" "${m}"
 	rm "${WORKDIR}/${m}/.hg" -Rf
 	[[ -z "$2" ]] && return
 	[[ "`readlink -f $2`" == "${WORKDIR}/${m}" ]] && return
