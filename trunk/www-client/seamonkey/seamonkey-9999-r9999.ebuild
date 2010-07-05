@@ -19,7 +19,7 @@ MY_PV="${MY_PV/beta/b}"
 MY_PV="${MY_PV/alpha/a}"
 MY_P="${MY_PN}-${MY_PV}"
 MY_P="${MY_P/mobile/fennec}"
-EMVER="1.0.1"
+EMVER="1.1.2"
 PATCH="http://dev.gentoo.org/~polynomial-c/seamonkey-2.0.3-patches-0.1.tar.bz2"
 
 case "${MY_PN}" in
