@@ -625,7 +625,7 @@ src_install() {
 	echo "[Desktop Entry]
 Name=${Title}
 Comment=${Comment}
-Exec=/usr/bin/${R}-X %U
+Exec=/usr/bin/${PN}-X %U
 Icon=${PN}-icon
 Terminal=false
 Type=Application
