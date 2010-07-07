@@ -6,7 +6,7 @@ HOMEPAGE="http://www.kerrighed.org/"
 SRC_URI="http://gforge.inria.fr/frs/download.php/27161/${P}.tar.gz"
 DEPEND="=sys-kernel/kerrighed-sources-${PV}"
 #	sys-apps/lsb-release"
-KEYWORDS="~amd64 ~x86"
+KEYWORDS="~amd64"
 
 KV="2.6.30-krg"
 KERNEL_DIR="/usr/src/linux-${KV}"
