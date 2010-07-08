@@ -116,15 +116,19 @@ start() {
 		echo -n "$i"
 		sleep 1
 	done
-	let i=OCFS2_RECONNECT_DELAY_MS*2/1000 && sleep $i
+	# usure: IMHO locking not starts here
+#	let i=OCFS2_RECONNECT_DELAY_MS*2/1000
+#	sleep $i
 
 	# Voluntary fsck. Will be happened only ondemand -
 	# on both unmounted/double fault, placed in fstab.
+	[[ "$OCFS2_FSCK_SWAPOFF" == "yes" ]] && swapoff -a
 	for i in `mount -invfat ocfs2 2>/dev/null|sed -e 's: .*::g'` ; do
 		[[ -e "$i" ]] || continue
 		einfo "OCFS2: Trying 'fsck.ocfs2 $OCFS2_FSCK $i' (fs check if possible)"
 		/sbin/fsck.ocfs2 $OCFS2_FSCK "$i" 2>/dev/null
 	done
+	[[ "$OCFS2_FSCK_SWAPOFF" == "yes" ]] && swapon -a
 
 	# Any behaviour
 	ebegin "Mounting OCFS2 filesystems"
