@@ -122,8 +122,19 @@ unsafe(){
 	return 1
 }
 
+# node configured to be only SyncSource (master/slave dual-primary)
+# overcoded to avoid stacked (unsure)
+only_source(){
+	$* show|grep "^[ 	]*after-sb-0pri|grep -qv "^[ 	]*after-sb-0pri[ 	]*discard-remote;" && return 1
+	$* show|grep "^[ 	]*after-sb-1pri|grep -qv "^[ 	]*after-sb-1pri[ 	]*violently-as0p;" && return 1
+	$* show|grep -q "^[ 	]*after-sb-0pri[ 	]*discard-remote;" || return 1
+	$* show|grep -q "^[ 	]*after-sb-1pri[ 	]*violently-as0p;" || return 1
+	return 0
+}
+
 primary(){
 	local r s=`$* cstate`
+	if ! only_source $* ; then
 	[[ -z "$DRBD_WAIT_PRIMARY" ]] && _wait $* || case "$s" in
 	SyncSource*|StandAlone*|WFConnection*) echo -n "$2$s " ;;
 	*)
@@ -132,6 +143,7 @@ primary(){
 		echo -n "$2w$? "
 	;;
 	esac
+	fi
 	for s in 1 1 0 ; do
 		r=1
 		unsafe $* && continue
