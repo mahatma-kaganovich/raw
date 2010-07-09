@@ -125,8 +125,8 @@ unsafe(){
 # node configured to be only SyncSource (master/slave dual-primary)
 # overcoded to avoid stacked (unsure)
 only_source(){
-	$* show|grep "^[ 	]*after-sb-0pri|grep -qv "^[ 	]*after-sb-0pri[ 	]*discard-remote;" && return 1
-	$* show|grep "^[ 	]*after-sb-1pri|grep -qv "^[ 	]*after-sb-1pri[ 	]*violently-as0p;" && return 1
+	$* show|grep "^[ 	]*after-sb-0pri"|grep -qv "^[ 	]*after-sb-0pri[ 	]*discard-remote;" && return 1
+	$* show|grep "^[ 	]*after-sb-1pri"|grep -qv "^[ 	]*after-sb-1pri[ 	]*violently-as0p;" && return 1
 	$* show|grep -q "^[ 	]*after-sb-0pri[ 	]*discard-remote;" || return 1
 	$* show|grep -q "^[ 	]*after-sb-1pri[ 	]*violently-as0p;" || return 1
 	return 0
