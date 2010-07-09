@@ -223,7 +223,7 @@ chk_ver(){
 		v="${v#version: }"
 		v1=`$DRBDADM -V|grep "^DRBDADM_VERSION="`
 		v1="${v1#*=}"
-		( [[ -z "$v" ]] || [[ -z "$v1" ]] || [[ "$v1" < "$v" ]] ) && return 0
+		( [[ -z "$v" ]] || [[ -z "$v1" ]] || ! [[ "$v1" > "$v" ]] ) && return 0
 	else
 		v=`$DRBDADM sh-nop 2>&1|grep "userland version:"|sed -e 's%^.*userland version: %-%'`
 		[[ -z "$v" ]] && return 0
