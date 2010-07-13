@@ -30,10 +30,11 @@ src_configure(){
 }
 
 src_install(){
-	emake install{,-info,-man}  DESTDIR="${D}" || die
+	emake install DESTDIR="${D}" || die
 	use fastcgi && example/fcgi/lighttpd-fastcgi-elliptics.conf
 	dodoc doc/design_notes.txt \
 		doc/io_storage_backend.txt \
+		example/EXAMPLE \
 		example/check/README.check \
 		example/ioserv.conf
 }
