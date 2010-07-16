@@ -6,10 +6,10 @@ LICENSE="CDDL"
 SLOT="0"
 KEYWORDS="~x86 ~amd64"
 IUSE=""
+RDEPEND="sys-libs/spl"
 DEPEND="${RDEPEND}"
 if [[ "${PVR}" == *9999* ]]; then
 	EGIT_REPO_URI="git://github.com/behlendorf/${PN}.git"
-#	EGIT_BRANCH="top"
 	EGIT_COMMIT="top"
 else
 	SRC_URI="http://github.com/behlendorf/${PN}/tarball/${P} -> ${P}.tar.gz"
