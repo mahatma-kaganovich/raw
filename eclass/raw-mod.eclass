@@ -1,10 +1,23 @@
 inherit eutils linux-mod
+EXPORT_FUNCTIONS src_compile src_install src_prepare src_configure pkg_setup
 
 mmake(){
-	emake DESTDIR="${D}" ARCH=$(tc-arch-kernel) ABI=${KERNEL_ABI} $* || die "emake failed"
+	emake DESTDIR="${D}" HOSTCC="$(tc-getBUILD_CC)" CROSS_COMPILE="${CTARGET:-${CHOST}}-" ARCH="$(tc-arch-kernel)" ABI="${KERNEL_ABI}" $* || die "emake failed"
 }
 
-kern_prepare(){
+mconf(){
+	DESTDIR="${D}" HOSTCC="$(tc-getBUILD_CC)" CROSS_COMPILE="${CTARGET:-${CHOST}}-" ARCH="$(tc-arch-kernel)" ABI="${KERNEL_ABI}" econf $* || die
+}
+
+# around 2.6.35 bug
+raw-mod_pkg_setup(){
+	local d=`pwd`
+	cd "${KERNEL_DIR}"
+	linux-mod_pkg_setup
+	cd "$d"
+}
+
+raw-mod_src_prepare(){
 	local k="${WORKDIR}/raw-kernel"
 	local kk="${KERNEL_DIR}"
 	[ -h "${KERNEL_DIR}" ] && kk="$(readlink -f ${KERNEL_DIR})" 
@@ -15,12 +28,18 @@ kern_prepare(){
 	KERNEL_DIR="${k}"
 }
 
-src_compile(){
-	kern_prepare
-	econf --with-kernel="${KERNEL_DIR}" || die
+raw-mod_src_configure(){
+	local l h=`mconf --help`
+	for l in with-kernel with-linux with-kdir with-kdir-path; do
+		[[ "${h#*--$l=}" == "$h" ]] || break
+	done
+	mconf --${l}="${KERNEL_DIR}"
+}
+
+raw-mod_src_compile(){
 	mmake
 }
 
-src_install(){
+raw-mod_src_install(){
 	mmake install
 }
