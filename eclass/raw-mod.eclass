@@ -33,7 +33,7 @@ raw-mod_src_configure(){
 	for l in with-kernel with-linux with-kdir with-kdir-path; do
 		[[ "${h#*--$l=}" == "$h" ]] || break
 	done
-	mconf --${l}="${KERNEL_DIR}"
+	mconf --${l}="${KERNEL_DIR}" ${myconf}
 }
 
 raw-mod_src_compile(){
