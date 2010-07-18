@@ -361,7 +361,7 @@ native)
 
 	for i in ${flags}; do
 		case $i in
-		apic)CF1 X86_UP_APIC;;
+		apic)CF1 X86_UP_APIC X86_UP_IOAPIC;;
 		ht)	case "${model_name}" in
 			*Celeron*);;
 			*)
