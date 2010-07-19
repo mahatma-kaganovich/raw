@@ -158,10 +158,14 @@ src_configure() {
 	driver_enable video_cards_tdfx tdfx
 	driver_enable video_cards_trident trident
 	driver_enable video_cards_via unichrome
-	if use gallium; then
-		driver_enable video_cards_intel i810 i965
+	if use gallium || use llvm || use video_cards_vmware || use video_cards_nouveau; then
 		myconf="--enable-gallium --enable-gallium-swrast"
+	fi
+	if use gallium; then
+		driver_enable video_cards_intel i810
 		myconf="${myconf} $(use_enable video_cards_intel gallium-intel)"
+		myconf="${myconf} $(use_enable video_cards_intel gallium-i915)"
+		myconf="${myconf} $(use_enable video_cards_intel gallium-i965)"
 		myconf="${myconf} $(use_enable video_cards_radeon gallium-radeon)"
 		myconf="${myconf} $(use_enable video_cards_radeon gallium-r600)"
 		myconf="${myconf} --with-state-trackers=dri,egl,glx,xorg"
@@ -170,7 +174,7 @@ src_configure() {
 	else
 		driver_enable video_cards_radeon radeon r200 r300 r600
 		driver_enable video_cards_intel i810 i915 i965
-		myconf="${myconf} --disable-gallium-intel --disable-gallium-radeon --disable-gallium-r600 --with-state-trackers=dri,egl,glx"
+		myconf="${myconf} --disable-gallium-intel --disable-gallium-i915 --disable-gallium-i965 --disable-gallium-radeon --disable-gallium-r600 --with-state-trackers=dri,egl,glx"
 	fi
 	# unique gallium features: gallium will be locally enabled
 	myconf="${myconf} $(use_enable video_cards_vmware gallium-svga)"
@@ -180,7 +184,7 @@ src_configure() {
 	( use pic ) && myconf="${myconf} --disable-asm"
 	# Get rid of glut includes
 	use glut || rm -f "${S}"/include/GL/glut*h
-	[[ "${drv}" == "dri" ]] && myconf="${myconf} --with-dri-drivers=${DRI_DRIVERS}"
+	[[ "${drv}" == "dri" ]] && myconf="${myconf} --with-dri-drivers=${DRI_DRIVERS#,}"
 	# dirty
 	use osmesa && myconf="${myconf} --enable-gl-osmesa"
 	use xlib && targets="${targets} libgl-xlib"
@@ -195,8 +199,9 @@ src_configure() {
 		$(use_enable xcb) \
 		$(use_enable motif glw) \
 		$(use_enable motif) \
+		--enable-gles1 --enable-gles2 --enable-gles-overlay \
 		$(use_with X x) \
-		--with-egl-displays=x11,kms \
+		--with-egl-platforms=x11,kms \
 		|| die
 }
 
