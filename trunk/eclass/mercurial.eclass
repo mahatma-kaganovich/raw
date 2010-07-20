@@ -117,16 +117,18 @@ function mercurial_fetch {
 	local EHG_REVISION
 	# if release-branch|release-tag useflag given - use first named revision before tip or default
 	if [[ -z "${EHG_REVISION}" ]]; then
+		local i="EHG_BRANCH_${PN}"
 		if use release-branch; then
-			for EHG_REVISION in `hg branches -c -R "${hg_src_dir}/${EHG_PROJECT}/${module}" | sed -e 's: .*$::g'` ; do
+			for EHG_REVISION in `hg branches -c -R "${hg_src_dir}/${EHG_PROJECT}/${module}" | sed -e 's: .*$::g' | egrep "${!i}"` ; do
 				[[ "${EHG_REVISION}" == "default" ]] || break
 			done
 		fi
+		i="EHG_TAG_${PN}"
 		if use release-tag &&
 		    ( ! use release-branch ||
 			[[ "${EHG_REVISION}" == "default" ]] ||
 			[[ -z "${EHG_REVISION}" ]] ); then
-			for EHG_REVISION in `hg tags -R "${hg_src_dir}/${EHG_PROJECT}/${module}" | sed -e 's: .*$::g'` ; do
+			for EHG_REVISION in `hg tags -R "${hg_src_dir}/${EHG_PROJECT}/${module}" | sed -e 's: .*$::g' | egrep "${!i}"` ; do
 				[[ "${EHG_REVISION}" == "tip" ]] || break
 			done
 		fi
