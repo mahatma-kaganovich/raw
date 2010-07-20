@@ -139,6 +139,7 @@ seamonkey)
 	S1="${S}/mozilla"
 	#[[ -n "${hg}" ]] && 
 	force -ipc
+	: ${EHG_TAG_seamonkey:=SEAMONKEY}
 ;;
 firefox)
 	PATCH=""
@@ -148,6 +149,7 @@ firefox)
 	S="${S/comm-/mozilla-}"
 	S1="${S}"
 	[[ "$PN" == "shiretoko" ]] && IUSE="${IUSE} +release-tag"
+	: ${EHG_TAG_shiretoko:=FIREFOX}
 ;;
 mobile)
 	PATCH=""
@@ -158,6 +160,7 @@ mobile)
 	S1="${S}"
 	SRC_URI="${SRC_URI//\/1.0rc3\///1.0/}"
 	SRC_URI="${SRC_URI//\/1.0.1\///1.0.1rc1/}"
+	: ${EHG_TAG_fennec:=FENNEC}
 ;;
 *)
 	die

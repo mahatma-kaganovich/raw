@@ -93,7 +93,8 @@ kmake(){
 IMAGE=""
 PNPMODE=""
 OVERLAY=""
-S="$ROOT/usr/src/linux"
+S=""
+KV=""
 
 i=0
 while [[ -n "$*" ]]; do
@@ -123,8 +124,10 @@ Options: IMAGE, PNPMODE, OVERLAY, S,
 	FILES, PKGFILES, PACKAGES, CLEAN, CRAMFS, MAKEOPTS
 	- and other internal variables
 Examples: $0 initrd.cpio
-	- create initrd image from compiled '/usr/src/linux' sources
+	- create initrd image from current environment
 	- (required: --FILES '$FILES')
+	$0  initrd.cpio --S /usr/src/linux
+	- create initrd image from compiled '/usr/src/linux' sources
 	$0 --IMAGE initrd.cpio \\
 		--PACKAGES 'sys-apps/util-linux sys-fs/*' \\
 		--CLEAN '/usr/share/doc /usr/share/man /usr/include' \\
@@ -176,8 +179,29 @@ else
 	for i in "[" ash cat cut echo mount sh uname ; do
 		ln -s busybox "$rcdir/bin/$i" &>/dev/null
 	done
-	c="$S/.config"
-	if ! [[ -e "$c" ]]; then
+	if [[ -n "$OVERLAY" ]] && [[ -e "$OVERLAY/lib/modules" ]]; then
+		echo "Using '$OVERLAY/lib/modules'"
+	elif [[ -z "$S" ]]; then
+		KV=`uname -r`
+		m="$ROOT/lib/modules/$KV"
+		echo "Copying modules from $m"
+		[[ -e "$m/modules.dep" ]] || die "No $m/modules.dep"
+		mkdir -p "$rcdir/lib/modules/$KV"
+		# long path against symlinks
+		for f in "$m"/* `cat "$m/modules.dep"`; do
+			f="${f%:}"
+			[[ "${f#/}" == "$f" ]] && f="$m/$f"
+			[[ -f "$f" ]] || continue
+			x="$rcdir/${f#$ROOT}"
+			[[ -f "$x" ]] && continue
+			[[ -d "${x%/*}" ]] || mkdir -p "${x%/*}"
+			cp "$f" "$x" -aTL
+		done
+		echo "Copying firmware"
+		cp -aL "$ROOT/lib/firmware" "$rcdir/lib/firmware"
+	else
+	    c="$S/.config"
+	    if ! [[ -e "$c" ]]; then
 		echo "No '$c', configuring and build kernel"
 		kmake defconfig
 		i="$ROOT/etc/kernels/kernel.conf"
@@ -197,12 +221,9 @@ else
 		rm "$c.old"
 		kmake bzImage
 		kmake modules -i
-	fi
-	if [[ -z "$OVERLAY" ]] || ! [[ -e "$OVERLAY/lib/modules" ]]; then
-		echo "Installing kernel modules from $S"
-		kmake INSTALL_MOD_PATH="$rcdir" modules_install
-	else
-		echo "Using '$OVERLAY/lib/modules'"
+	    fi
+	    echo "Installing kernel modules from $S"
+	    kmake INSTALL_MOD_PATH="$rcdir" modules_install
 	fi
 	[[ -z "$PNPMODE" ]] && PNPONLY=true
 	GENKERNEL=false
@@ -224,7 +245,7 @@ if [[ -e "$rcdir/lib.loopfs" ]]; then
 	umount $tmp/loop
 fi
 
-KV=`ls $rcdir/lib/modules`
+: ${KV=`ls $rcdir/lib/modules`}
 
 if squashfs_enabled; then
 	SQUASH=true
