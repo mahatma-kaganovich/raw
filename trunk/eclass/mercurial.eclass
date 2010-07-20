@@ -98,6 +98,8 @@ function mercurial_fetch {
 	cd "${hg_src_dir}/${EHG_PROJECT}" || \
 		die "failed to cd to ${hg_src_dir}/${EHG_PROJECT}"
 
+	rm "${hg_src_dir}/${EHG_PROJECT}/${module}"/branch -f
+
 	# Clone/update repository:
 	if [[ ! -d "${module}" ]]; then
 		einfo "Cloning ${EHG_REPO_URI} to ${hg_src_dir}/${EHG_PROJECT}/${module}"
@@ -129,8 +131,6 @@ function mercurial_fetch {
 			done
 		fi
 	fi
-
-	rm "${hg_src_dir}/${EHG_PROJECT}/${module}"/branch -f
 
 	# don't use empty/tip revision: to compatibility with '--date' EHG_EXTRA_OPT
 	[[ -n "${EHG_REVISION}" ]] && EHG_REVISION="--rev ${EHG_REVISION}"
