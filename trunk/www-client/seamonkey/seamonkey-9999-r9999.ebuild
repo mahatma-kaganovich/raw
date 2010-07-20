@@ -309,8 +309,7 @@ src_configure(){
 		--enable-pref-extensions \
 		--disable-tests
 
-	grep -q "system-libevent" "${S}"/configure.in "${S1}"/configure.in &&
-		mozconfig_annotate "gentoo" --with-system-libevent
+	isopt system-libevent && mozconfig_annotate "gentoo" --with-system-libevent
 
 	local l
 	for l in $(langs); do
@@ -371,8 +370,10 @@ src_configure(){
 
 	mozconfig_use_enable alsa ogg
 	mozconfig_use_enable alsa wave
-#	mozconfig_use_enable ipc
-#	mozconfig_use_enable ipc libxul
+	if isopt --disable-ipc; then
+		mozconfig_use_enable ipc
+		mozconfig_use_enable ipc libxul
+	fi
 	mozconfig_use_enable startup-notification libnotify
 
 	if use moznoirc; then
@@ -547,6 +548,11 @@ src_compile() {
 
 rmopt(){
 	sed -i -e "/$*/d" "${S}"/.mozconfig
+}
+
+isopt(){
+	grep -q "$*" "${S}"/configure.in "${S1}"/configure.in
+	return $?
 }
 
 icon(){
