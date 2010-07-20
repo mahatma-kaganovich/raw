@@ -130,7 +130,7 @@ function mercurial_fetch {
 		fi
 	fi
 
-	rm "${hg_src_dir}/${EHG_PROJECT}/${module}"/branch
+	rm "${hg_src_dir}/${EHG_PROJECT}/${module}"/branch -f
 
 	# don't use empty/tip revision: to compatibility with '--date' EHG_EXTRA_OPT
 	[[ -n "${EHG_REVISION}" ]] && EHG_REVISION="--rev ${EHG_REVISION}"
