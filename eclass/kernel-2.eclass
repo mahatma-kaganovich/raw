@@ -430,7 +430,8 @@ native)
 	*Centaur*)
 		V=CENTAUR
 		case "${cpu_family}:${model}:${model_name}" in
-		*C7*)CF1 MVIAC7;;
+#		*C7*)CF1 MVIAC7;;
+		*C7*)CF1 MPENTIUMIII X86_GENERIC GENERIC_CPU;;
 		*Winchip*C6*)CF1 MWINCHIPC6;;
 		*Winchip*)CF1 MWINCHIP3D;;
 		6:[0-8]:*)CF1 MCYRIXIII;;
