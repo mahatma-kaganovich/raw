@@ -464,8 +464,8 @@ native)
 *)CF1 GENERIC_CPU X86_GENERIC;;
 esac
 case "${CTARGET:-${CHOST}}:$CF" in
-	x86_64*|*\ 64BIT\ *)CF1 -MPENTIUM4;;
-	*) CF1 -MPSC;;
+	x86_64*|*\ 64BIT\ *)CF1 -MPENTIUM4 -PENTIUMIII -X86_GENERIC;;
+	*)CF1 -MPSC -GENERIC_CPU;;
 esac
 [[ -n "${V}" ]] && CF1 "-CPU_SUP_[\w\d_]*" CPU_SUP_${V}
 KERNEL_CONFIG="#-march=${march}# ${CF//  / }
