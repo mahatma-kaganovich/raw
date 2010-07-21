@@ -121,7 +121,7 @@ done
 	echo "Usage:	$0 <image> [nopnp|pnponly|pnp [<overlay> [sources]]]
 or	$0 {--<option> <value>}
 Options: IMAGE, PNPMODE, OVERLAY, S,
-	FILES, PKGFILES, PACKAGES, CLEAN, CRAMFS, MAKEOPTS
+	FILES, PKGFILES, PACKAGES, CLEAN, CRAMFS, MAKEOPTS, KV
 	- and other internal variables
 Examples: $0 initrd.cpio
 	- create initrd image from current environment
@@ -182,8 +182,7 @@ else
 	if [[ -n "$OVERLAY" ]] && [[ -e "$OVERLAY/lib/modules" ]]; then
 		echo "Using '$OVERLAY/lib/modules'"
 	elif [[ -z "$S" ]]; then
-		KV=`uname -r`
-		m="$ROOT/lib/modules/$KV"
+		m="$ROOT/lib/modules/${KV:=`uname -r`}"
 		echo "Copying modules from $m"
 		[[ -e "$m/modules.dep" ]] || die "No $m/modules.dep"
 		mkdir -p "$rcdir/lib/modules/$KV"
