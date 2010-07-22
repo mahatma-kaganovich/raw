@@ -334,7 +334,7 @@ i686)CF1 X86_GENERIC M686;;
 pentium2)CF1 MPENTIUMII;;
 pentium3|pentium3m)CF1 MPENTIUMIII;;
 pentium-m)CF1 MPENTIUMM;;
-pentium4|pentium4m|prescott|nocona)[[ "$(march mtune)" == generic ]] && CF1 MPENTIUMIII GENERIC_CPU || CF1 MPENTIUM4 MPSC;;
+pentium4|pentium4m|prescott|nocona)[[ "$(march mtune)" == generic ]] && CF1 MPENTIUMIII X86_GENERIC GENERIC_CPU || CF1 MPENTIUM4 MPSC;;
 core2)CF1 MCORE2;;
 k6|k6-2|k6-3)CF1 MK6;;
 athlon|athlon-tbird|athlon-4|athlon-xp|athlon-mp)CF1 MK7;;
