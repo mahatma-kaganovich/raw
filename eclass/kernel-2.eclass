@@ -30,6 +30,13 @@ PROVIDE="sources? ( virtual/linux-sources )
 	!sources? ( virtual/linux-kernel )
 	kernel-alsa? ( virtual/alsa )"
 
+CF1(){
+	for i in $*; do
+		CF="${CF// -${i#-} }"
+		CF="${CF// ${i#-} } ${i} "
+	done
+}
+
 [[ -e "${CONFIG_ROOT}${KERNEL_CONF:=/etc/kernels/kernel.conf}" ]] && source "${CONFIG_ROOT}${KERNEL_CONF}"
 
 #USEKEY="$(for i in ${!KERNEL_@} ; do
@@ -477,27 +484,6 @@ march(){
 local a=" ${CFLAGS} ${KERNEL_CFLAGS}"
 a="${a##* -${1:-march}=}"
 echo "${a%% *}"
-}
-
-CF1(){
-	for i in $*; do
-		CF="${CF// -${i#-} }"
-		CF="${CF// ${i#-} } ${i} "
-	done
-}
-
-_i_m(){
-	einfo "Configuring $1: ${i}"
-	case "${i}" in
-	-*|+*|~*)
-		m="${i:0:1}"
-		i="${i:1}"
-	;;
-	*)
-		# set if undef
-		m="~"
-	;;
-	esac
 }
 
 config_defaults(){
