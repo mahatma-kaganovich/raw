@@ -46,9 +46,7 @@ IUSE="java mozdevelop moznoirc moznoroaming postgres restrict-javascript startup
 
 
 SRC_URI="http://releases.mozilla.org/pub/mozilla.org/${MY_PN}/releases/${MY_PV}/source/${MY_P}.source.tar.bz2
-	crypt? ( !moznomail? ( http://dev.gentoo.org/~anarchy/dist/enigmail-${EMVER}.tar.gz ) )
-	xforms? ( http://hg.mozilla.org/schema-validation/archive/44f3007c3002.tar.bz2 -> schema-validation-44f3007c3002.tar.bz2
-		http://hg.mozilla.org/xforms/archive/a82c84521604.tar.bz2 -> xforms-a82c84521604.tar.bz2 )"
+	crypt? ( !moznomail? ( http://dev.gentoo.org/~anarchy/dist/enigmail-${EMVER}.tar.gz ) )"
 
 KEYWORDS="amd64 x86"
 SLOT="0"
@@ -120,6 +118,22 @@ elif [[ -z "${LANGS}" ]]; then
 #	SRC_URI="${SRC_URI} `sed -e 's:^\(.*\) \(.*\)\$:linguas_\1? ( \2 -> mozilla-'"${PV}"'.lang.\1..tar.bz2 ):' <${FILESDIR}/${ll}.langs`"
 	SRC_URI="${SRC_URI} `sed -e 's:^\(.*\) \(.*/\)\([^/]*\.tar\.bz2\)\$:linguas_\1? ( \2\3 -> l10n-mozilla-'"${MOZVER}"'.\1.\3 ):' <${FILESDIR}/${ll}.langs`"
 fi
+
+case "${ll}" in
+central)
+sv_v=44f3007c3002
+xf_v=a82c84521604
+;;
+*)
+sv_v=fc72c38dc393
+xf_v=b4b01fd808f2
+;;
+esac
+
+SRC_URI="${SRC_URI}
+		xforms? ( http://hg.mozilla.org/schema-validation/archive/${sv_v}.tar.bz2 -> schema-validation-${sv_v}.tar.bz2
+		http://hg.mozilla.org/xforms/archive/${xf_v}.tar.bz2 -> xforms-${xf_v}.tar.bz2 )"
+
 
 if [[ -z "${LANGS}" ]]; then
 	LANGS="en_US $(sed -e 's: .*::g' <"${FILESDIR}/${ll}.langs")"
