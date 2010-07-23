@@ -47,8 +47,8 @@ IUSE="java mozdevelop moznoirc moznoroaming postgres restrict-javascript startup
 
 SRC_URI="http://releases.mozilla.org/pub/mozilla.org/${MY_PN}/releases/${MY_PV}/source/${MY_P}.source.tar.bz2
 	crypt? ( !moznomail? ( http://dev.gentoo.org/~anarchy/dist/enigmail-${EMVER}.tar.gz ) )
-	xforms? ( http://hg.mozilla.org/schema-validation/archive/fc72c38dc393.tar.bz2 -> schema-validation-fc72c38dc393.tar.bz2
-		http://hg.mozilla.org/xforms/archive/32ffdcc6f490.tar.bz2 -> xforms-32ffdcc6f490.tar.bz2 )"
+	xforms? ( http://hg.mozilla.org/schema-validation/archive/44f3007c3002.tar.bz2 -> schema-validation-44f3007c3002.tar.bz2
+		http://hg.mozilla.org/xforms/archive/a82c84521604.tar.bz2 -> xforms-a82c84521604.tar.bz2 )"
 
 KEYWORDS="amd64 x86"
 SLOT="0"
