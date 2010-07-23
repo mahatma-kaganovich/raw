@@ -101,6 +101,9 @@ force(){
 }
 
 ll="${MOZVER}"
+case "${PV}" in
+*alpha*|*beta*)force vanilla;;
+esac
 if [[ -n "${hg}" ]]; then
 	LANGS=""
 	IUSE="${IUSE} faststart"
