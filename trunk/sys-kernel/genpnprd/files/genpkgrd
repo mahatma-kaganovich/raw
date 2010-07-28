@@ -11,6 +11,7 @@ ldd="lddtree"
 }
 
 : ${TMPDIR:=/tmp}
+tmpf="$TMPDIR/_files$$.lst"
 
 get_files(){
 	local out="$1"
@@ -56,13 +57,10 @@ list_pkg(){
 }
 
 pkg_from(){
-	local i
-	local f="$TMPDIR/_files.lst"
-	touch $f
-	find -L $1 -type f | sort -u >$f.1
-	i=`sort -m $f.1 $f |uniq -u|sed -e 's:^'"$1"'\(.*\)$:obj \1 :'`
-	[[ -n "$i" ]] && ( grep -lRF "$i" $ROOT/var/db/pkg --include=CONTENTS|sed -e 's:/CONTENTS$::' -e "s:^$ROOT/var/db/pkg/::" )
-	mv $f.1 $f
+	touch $tmpf
+	find -L $1 -type f | sort -u >$tmpf.1
+	sort -m $tmpf.1 $tmpf |uniq -u|sed -e 's:^'"$1"'\(.*\)$:obj \1 :'|grep -lRFf - $ROOT/var/db/pkg --include=CONTENTS|sed -e 's:/CONTENTS$::' -e "s:^$ROOT/var/db/pkg/::"
+	mv $tmpf.1 $tmpf
 }
 
 cp_db(){
@@ -74,6 +72,7 @@ for i in `pkg_from $1`; do
 done
 }
 
+rm $tmpf -f
 echo "Copying simple files..."
 get_files $1 $2
 [[ -z "$3$4" ]] && exit
@@ -84,4 +83,4 @@ echo "Copying packages..."
 get_files $1 $(list_pkg $4)
 echo "Copying packages info..."
 cp_db $1
-rm "$TMPDIR/_files.lst"
+rm $tmpf
