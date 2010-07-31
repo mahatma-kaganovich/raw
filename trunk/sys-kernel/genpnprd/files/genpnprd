@@ -220,6 +220,7 @@ else
 		rm "$c.old"
 		kmake bzImage
 		kmake modules -i
+		cc -Os "${S}/Documentation/hwmon/hpfall.c" -o "$rcdir/bin/hpfall"
 	    fi
 	    echo "Installing kernel modules from $S"
 	    kmake INSTALL_MOD_PATH="$rcdir" modules_install
