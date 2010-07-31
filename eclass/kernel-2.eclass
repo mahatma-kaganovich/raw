@@ -141,6 +141,7 @@ kernel-2_src_compile() {
 	run_genkernel ramdisk "--kerneldir=\"${S}\" --bootdir=\"${S}\" --module-prefix=\"${BDIR}\" --no-mountboot ${p}"
 	r=`ls initramfs*-${REAL_KV}`
 	rename "${r}" "initrd-${REAL_KV}.img" "${r}" || die "initramfs rename failed"
+	use !minimal && _cc Documentation/hwmon/hpfall.c "${TMPDIR}"/overlay-rd/bin
 	einfo "Preparing boot image"
 	bash "${UROOT}/usr/share/genpnprd/genpnprd" "${S}/initrd-${REAL_KV}.img" "$( (use !pnp && echo nopnp)||(use pnponly && echo pnponly) )" "${TMPDIR}"/overlay-rd || die
 	# integrated: do not compress twice;
@@ -527,6 +528,13 @@ kmake(){
 	local h="${CTARGET:-${CHOST}}"
 	[[ "${CBUILD}" != "${h}" ]] && o="CROSS_COMPILE=${h}-"
 	emake HOSTCC="$(tc-getBUILD_CC)" ARCH=$(arch) $o $* ${KERNEL_MAKEOPT} || die
+}
+
+_cc(){
+	einfo "Compiling '$1'"
+	$(tc-getCC) ${CFLAGS} ${LDFLAGS} -static $1 -o ${1%.c} &&
+	    [[ -z "$2" ]] || ( ( [[ -d "$2" ]] || mkdir -p $2 ) && cp ${1%.c} $2 )
+	return $?
 }
 
 kernel-2_src_prepare(){
