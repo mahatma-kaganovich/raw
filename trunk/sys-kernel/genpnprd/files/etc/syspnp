@@ -630,7 +630,7 @@ gentoo_compat_hwopts(){
 load_hand_made(){
 	## some hand-made autoloads
 	$cmd_nofb || [[ -z "$(cat /proc/fb 2>/dev/null)" ]] || mod fbcon
-	[[ -e /dev/freefall ]] && hpfall
+#	[[ -e /dev/freefall ]] && hpfall
 	while read i i1 ; do
 		case $i in
 #		usual_tables) mod usb_storage ;; # on demand
