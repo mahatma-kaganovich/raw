@@ -27,7 +27,7 @@ mobile)
 	MOZVER="1.9.2"
 ;;
 seamonkey)
-	MOZVER="1.9.2"
+	MOZVER="1.9.1"
 	# empty: from hg
 	case "${PV}" in
 	*alpha*)MOZVER="central";;
