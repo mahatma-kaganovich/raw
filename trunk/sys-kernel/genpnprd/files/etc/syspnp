@@ -344,7 +344,7 @@ detect_part(){
 }
 
 part_(){
-	( ( [[ -b "$1" ]] && echo "$1" ) || $fstype $1 || $blkid $1 || $blkid -t "$1" || findfs "$1" || busybox findfs "$1" ) 2>/dev/null | sed -e 's:^.* TYPE="swap".*$::g' -e 's/:.*$//g'
+	( ( [[ -b "$1" ]] && echo "$1" ) || $fstype $1 || $blkid $1 || $blkid -t "$1" || findfs "$1" || busybox findfs "$1" || fstype $1 ) 2>/dev/null | sed -e 's:^.* TYPE="swap".*$::g' -e 's/:.*$//g'
 }
 
 detect_root(){
@@ -426,8 +426,8 @@ while [[ -n "$*" ]]; do
 d="$1"
 [[ -z "$d" ]] || [[ -e "$d" ]] || d="`findfs $1 2>/dev/null`"
 ! grep -s "^$d:" /etc/fstype.cache &&
-( [[ -b "$d" ]] || [[ -f "$d" ]] ) && for i in 0 3 4 8 24 32 54 82 510 536 1016 1024 1040 1048 1080 1560 2048 4086 4096 8182 8192 8212 8244 9564 16374 32758 32768 32769 32777 65526 65536 65588 65600 270336; do
-case "`echo -ne "$i:";hexdump -v -s $i -n 10 -e '"" 10/1 "%x" ""' $d 2>/dev/null`" in
+( [[ -b "$d" ]] || [[ -f "$d" ]] ) && for i in 0 3 4 8 24 32 54 82 510 536 1016 1024 1030 1040 1048 1080 1560 2048 4086 4096 8182 8192 8212 8244 9564 16374 32758 32768 32769 32777 65526 65536 65588 65600 270336; do
+case "`hexdump -v -s $i -n 10 -e '"'$i:'" 10/1 "%x" ""' $d 2>/dev/null`" in
 32:4f52434c4449534b*)echo oracleasm;;
 3:4e54465320202020*)echo ntfs;;
 1080:53ef*)echo "jbd
@@ -464,6 +464,7 @@ hfs";;
 0:73717368*|0:68737173*)echo squashfs;;
 536:4c564d3220303031*|24:4c564d3220303031*|1048:4c564d3220303031*|1560:4c564d3220303031*|8192:4f4346535632*)echo lvm2pv;;
 65600:5f42485266535f4d*)echo btrfs;;
+1030:3434*)echo nilfs2;;
 esac|while read i; do
 	echo "$d: TYPE=\"$i\""
 	echo "$d: TYPE=\"$i\"" >>/etc/fstype.cache
@@ -474,7 +475,7 @@ done
 }
 
 _fstype(){
-	$fstype $* || $blkid $* || $blkid -t $* || echo -e "$*"
+	$fstype $* || $blkid $* || $blkid -t $* || fstype $* || echo -e "$*"
 }
 
 detect_fs(){
@@ -630,7 +631,6 @@ gentoo_compat_hwopts(){
 load_hand_made(){
 	## some hand-made autoloads
 	$cmd_nofb || [[ -z "$(cat /proc/fb 2>/dev/null)" ]] || mod fbcon
-#	[[ -e /dev/freefall ]] && hpfall
 	while read i i1 ; do
 		case $i in
 #		usual_tables) mod usb_storage ;; # on demand
