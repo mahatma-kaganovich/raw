@@ -495,11 +495,10 @@ detect_fs(){
 	for i in $( {
 			if [[ "${cmd_detect_root:-true}" == true ]]; then
 				_fstype
-				[[ "$fstype" == false ]] && [[ -n "$REAL_ROOT" ]] && _fstype $REAL_ROOT
 			else
 				_fstype $cmd_detect_root
-				[[ -n "$REAL_ROOT" ]] && [[ "$REAL_ROOT" != "$cmd_detect_root" ]] && _fstype $REAL_ROOT
 			fi
+			[[ -n "$REAL_ROOT" ]] && [[ "$REAL_ROOT" != "$cmd_detect_root" ]] && _fstype $REAL_ROOT
 	    } 2>/dev/null | sed -e 's:^.* TYPE="\([^"]*\)".*$:\1:g'| sort -u ); do
 		case $i in
 		linux_raid_member|mdraid|/dev/md*) md=1 ;; # use right blkid
