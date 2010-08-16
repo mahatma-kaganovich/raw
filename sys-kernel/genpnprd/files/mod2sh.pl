@@ -19,7 +19,7 @@ my $VERBOSE=0;
 
 sub read_aliases{
 	my ($s,$id,$m);
-	open FA,$_[0];
+	open FA,$_[0] || return;
 	while(defined($s=<FA>)){
 		chomp($s);
 		$s=~s/^alias\s(\S*)\s(\S*)$/$id=$1;$m=$2;""/e;
@@ -27,25 +27,11 @@ sub read_aliases{
 		push @{$alias{$_}},$m for (lines($id));
 	}
 	close FA;
-	# remove dead aliases
-	$m=1;
-	while($m){
-		$m=0;
-		for(keys %alias){
-			my @a=@{$alias{$_}};
-			delete($alias{$_});
-			for $id (@a){
-				exists($alias{$id})||exists($dep{$id})||next;
-				push @{$alias{$_}},$id;
-			}
-			$m||=!exists($alias{$_});
-		}
-	}
 }
 
 sub read_deps{
 	my $s;
-	open FD,$_[0];
+	open FD,$_[0] || return;
 	while(defined($s=<FD>)){
 		chomp($s);
 		my $id=$s;
@@ -64,6 +50,99 @@ sub read_deps{
 		}
 	}
 	close FD;
+}
+
+sub read_modinfo{
+	my ($id,$m,$i,$s,%v);
+	open FM,"modinfo `find $_[0] -name '*.ko' -print`|" || return;
+	while(defined($s=<FM>)||exists($v{filename})){
+		chomp($s);
+		my ($x,$y);
+		$s=~s/^(\S*):[ 	]*(.*?)$/$x=$1;$y=$2;/e;
+		if(exists($v{filename}) && $x ne "filename"){
+			push @{$v{$x}},$y;
+			next if(defined($s));
+		}
+		$id=$m=pop @{$v{filename}};
+		substr($m,0,length($_[0])+1)='';
+		$id=~s/.*\/(.*?)\..*?$/$1/;
+		$s=~s/://;
+		$id=lines_($id);
+		for $i (lines($id)){
+			for(@{$v{depends}}){
+				for(lines($_)){
+					push @{$dep{$i}},split(/,/,$_);
+				}
+			}
+			push @{$dep{$i}},$m;
+		}
+		for(@{$v{alias}}){
+			for(lines($_)){
+				push @{$alias{$_}},$id;
+			}
+		}
+		%v={};
+		push @{$v{$x}},$y if(defined($x));
+	}
+	close FM;
+}
+
+sub check_info{
+	# remove dead & duplicate aliases
+	my $m=1;
+	while($m){
+		$m=0;
+		for(keys %alias){
+			my @a=@{$alias{$_}};
+			delete($alias{$_});
+			for my $i (@a){
+				for(@{$alias{$_}}){
+					if($_ eq $i){
+						undef $i;
+						last;
+					}
+				}
+				push @{$alias{$_}},$i if(defined($i) && (exists($alias{$i})||exists($dep{$i})));
+			}
+			$m||=!exists($alias{$_});
+		}
+	}
+	# update aliases, remove duplicate deps
+	while(1){
+		my $n;
+		for(keys %dep){
+			if(exists($alias{$_})){
+				for my $a (@{$alias{$_}}){
+					goto noalias if($_ eq $a);
+				}
+			}
+			push @{$alias{$_}},$_;
+			$n++;
+			noalias:
+			my ($n1,@a);
+			for my $i (@{$dep{$_}}){
+				my @a1=($i);
+				if($i ne $_ && exists($dep{$i})){
+					@a1=@{$dep{$i}};
+					$n1++;
+				}
+				for $i (@a1){
+					for(@a){
+						if($i eq $_){
+							undef $i;
+							last;
+						}
+					}
+					push @a,$i if(defined($i));
+				}
+			}
+			if($n1){
+				@{$dep{$_}}=@a;
+				$n+=$n1;
+			}
+		}
+		last if(!$n);
+	}
 }
 
 sub lines_{
@@ -260,17 +339,13 @@ for my $MOD (@ARGV){
 	%alias=();
 	%dep=();
 	print "mod2sh: $MOD ";
-	read_deps("<$MOD/modules.dep");
-	read_aliases("<$MOD/modules.alias");
-	for(keys %dep){
-	        if(exists($alias{$_})){
-		    for my $a (@{$alias{$_}}){
-			goto noalias if($_ eq $a);
-		    }
-		}
-		push @{$alias{$_}},$_;
-		noalias:
+	if(-e "$MOD/modules.dep" && -e "$MOD/modules.alias"){
+		read_deps("<$MOD/modules.dep");
+		read_aliases("<$MOD/modules.alias");
+	}else{
+		read_modinfo("$MOD");
 	}
+	&check_info;
 	mk_sh(">$MOD/modules.alias.sh",">$MOD/modules.pnp",">$MOD/modules.other");
 	print "OK\n";
 }
