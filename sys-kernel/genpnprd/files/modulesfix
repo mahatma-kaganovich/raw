@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 ## (c) Denis Kaganovich
 ## v2
 
@@ -39,6 +39,9 @@ grep -Prhl "${STR}${BUS}_device_id\s+" $1 --include="*.c" | while read i ; do
 	bus="${bus%%_*}"
 	if [[ "$2" != "f" ]] && ! grep -Pqr "MODULE_DEVICE_TABLE\($bus," $1 --include="*.c" ; then
 		echo "UNKNOWN BUS: $bus ($ii)"
+	elif [[ "$n" == mmc_spi_of_match_table ]]; then
+		echo "Fixing: $bus: ($n) $ii"
+		sed -i -e 's/^\(module_init.*\)$/\n#if defined(CONFIG_'"${bus^^}"')\nMODULE_DEVICE_TABLE('"$bus, $n"');\n#endif\n\n\1/' $i
 	else
 		echo "Fixing: $bus: ($n) $ii"
 		sed -i -e 's/^\(module_init.*\)$/\nMODULE_DEVICE_TABLE('"$bus, $n"');\n\n\1/' $i
