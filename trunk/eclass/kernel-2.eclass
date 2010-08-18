@@ -115,6 +115,7 @@ kernel-2_src_compile() {
 	kmake bzImage
 	einfo "Compiling kernel modules"
 	kmake modules ${KERNEL_MODULES_MAKEOPT}
+	grep -q "=m$" .config && [[ -z "`find . -name "*.ko" -print`" ]] && die "Modules configured, but not built"
 	einfo "Generating initrd image"
 	KV="${KV0}"
 	check_kv
