@@ -1,14 +1,14 @@
-EAPI=2
 inherit flag-o-matic
 [[ "${PV}" == 9999* ]] && KV_FULL="${PV}"
 source "${PORTDIR}/eclass/kernel-2.eclass"
-EXPORT_FUNCTIONS src_configure src_prepare
 
 #UROOT="${ROOT}"
 UROOT=""
 
 if [[ ${ETYPE} == sources ]]; then
 
+EAPI=2
+EXPORT_FUNCTIONS src_configure src_prepare
 IUSE="${IUSE} build-kernel debug custom-cflags pnp compressed integrated ipv6
 	netboot nls unicode +acl minimal selinux custom-arch
 	+kernel-drm +kernel-alsa kernel-firmware +sources fbcon staging pnponly lzma
