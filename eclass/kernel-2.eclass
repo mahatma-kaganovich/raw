@@ -127,7 +127,7 @@ kernel-2_src_compile() {
 	rm "${r}"/build "${r}"/source
 	cd "${WORKDIR}"
 	local i
-	use sources && for i in build source ; do
+	use sources && for i in build source; do
 		ln -s "../../../usr/src/linux-${KV_FULL}" "${r}/${i}"
 	done
 	cd "${S}"
@@ -200,6 +200,23 @@ kernel-2_src_install() {
 			find "${S}" -name "*.cmd" | while read f ; do
 				sed -i -e 's%'"${S}"'%/usr/src/linux-'"${REAL_KV}"'%g' ${f}
 			done
+			if use pnp && use compressed; then
+				einfo "Compressing with squashfs"
+				f="linux-${REAL_KV}"
+				if [[ -e "${ROOT}/lib/modules/${REAL_KV}" ]]; then
+					ewarn "Modules '${REAL_KV}' alredy installed, modules symlink skipped"
+				else
+					f1="/lib/modules/${REAL_KV}/kernel"
+					rm "${D}${f1}" -Rf
+					dosym "../../../usr/src/${f}" "${f1}"
+				fi
+				cd "${WORKDIR}"
+				mksquashfs "${S}" "${f}".squashfs -no-recovery -no-progress || die
+				rm "${S}" -Rf
+				keepdir /usr/src/"${f}"
+				insinto /usr/src
+				doins "${f}".squashfs
+			fi
 		else
 			cd "${WORKDIR}"
 			rm "${S}" -Rf

@@ -117,16 +117,19 @@ mnt_loop(){
 }
 
 mod_unload(){
-	local i l m=""
+	local i="$NEW_ROOT/lib/modules/$KV" l="$NEW_ROOT/usr/src/linux-$KV" m=""
 	cd /
-	if ! [[ -e ${NEW_ROOT}/lib/modules/$KV ]] ; then
+	if ! [[ -e $i ]] ; then
 		if ${cmd_autoinstall:-false} ; then
 			echo -ne "(Installing /lib/modules/$KV)"
 			mount -o remount,rw ${NEW_ROOT} &&
-			cp -a /lib/modules/$KV ${NEW_ROOT}/lib/modules/$KV
+			cp -a /lib/modules/$KV $i
 		else
 			echo -ne '(use "autoinstall" to install modules)'
 		fi
+	elif [[ -L $i/kernel ]] && i=`ls $l.*fs 2>/dev/null` && [[ -f "$i" ]]; then
+		echo -ne "(mount $i)"
+		mnt_loop /dev/loop3 "$i" $l
 	fi
 	for i in /rd /lib; do
 		[[ -d "$i" ]] && umount $i && break
