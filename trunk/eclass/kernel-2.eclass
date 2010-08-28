@@ -203,8 +203,9 @@ kernel-2_src_install() {
 			if use pnp && use compressed; then
 				einfo "Compressing with squashfs"
 				f="linux-${REAL_KV}"
-				if [[ -e "${ROOT}/lib/modules/${REAL_KV}" ]]; then
-					ewarn "Modules '${REAL_KV}' alredy installed, modules symlink skipped"
+				f1="${ROOT}/lib/modules/${REAL_KV}/kernel"
+				if ! [[ -L "${f1}" ]] && [[ -e "${f1}" ]]; then
+					ewarn "Modules '${f1}' alredy installed, modules symlink skipped"
 				else
 					f1="/lib/modules/${REAL_KV}/kernel"
 					rm "${D}${f1}" -Rf
