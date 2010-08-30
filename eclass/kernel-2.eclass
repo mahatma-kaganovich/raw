@@ -1,8 +1,8 @@
-EAPI=3
+: ${EAPI:=1} # 3 or neutral
 inherit flag-o-matic
 [[ "${PV}" == 9999* ]] && KV_FULL="${PV}"
 source "${PORTDIR}/eclass/kernel-2.eclass"
-EXPORT_FUNCTIONS src_configure src_prepare
+EXPORT_FUNCTIONS src_configure src_prepare pkg_prerm
 
 #UROOT="${ROOT}"
 UROOT=""
@@ -23,6 +23,8 @@ DEPEND="${DEPEND}
 		kernel-alsa? ( !media-sound/alsa-driver )
 		kernel-firmware? ( !sys-kernel/linux-firmware )
 	) "
+
+: ${KERNEL_DOC_CFLAGS:="-static"}
 
 eval "`/usr/bin/perl ${UROOT}/usr/share/genpnprd/Kconfig.pl -config`"
 
@@ -97,6 +99,12 @@ kernel-2_src_configure() {
 }
 
 kernel-2_src_compile() {
+	if has "${EAPI:-0}" 0 1; then
+		kernel-2_src_prepare
+		kernel-2_src_configure
+	fi
+	####
+
 	cd "${S}"
 	[[ ${ETYPE} == headers ]] && compile_headers
 
@@ -142,7 +150,9 @@ kernel-2_src_compile() {
 	run_genkernel ramdisk "--kerneldir=\"${S}\" --bootdir=\"${S}\" --module-prefix=\"${BDIR}\" --no-mountboot ${p}"
 	r=`ls initramfs*-${REAL_KV}`
 	rename "${r}" "initrd-${REAL_KV}.img" "${r}" || die "initramfs rename failed"
-	use !minimal && _cc Documentation/hwmon/hpfall.c # "${TMPDIR}"/overlay-rd/bin
+	use !minimal && for i in `find Documentation -name "*.c"`; do
+		_cc $i
+	done
 	einfo "Preparing boot image"
 	bash "${UROOT}/usr/share/genpnprd/genpnprd" "${S}/initrd-${REAL_KV}.img" "$( (use !pnp && echo nopnp)||(use pnponly && echo pnponly) )" "${TMPDIR}"/overlay-rd || die
 	# integrated: do not compress twice;
@@ -204,12 +214,8 @@ kernel-2_src_install() {
 				einfo "Compressing with squashfs"
 				f="linux-${REAL_KV}"
 				f1="/lib/modules/${REAL_KV}/kernel"
-				if ! [[ -L "${ROOT}${f1}" ]] && [[ -e "${ROOT}${f1}" ]]; then
-					ewarn "Modules '${f1}' alredy installed, modules symlink skipped"
-				else
-					rm "${D}${f1}" -Rf
-					dosym "../../../usr/src/${f}" "${f1}"
-				fi
+				rm "${D}${f1}" -Rf
+				dosym "../../../usr/src/${f}" "${f1}"
 				cd "${WORKDIR}"
 				mksquashfs "${S}" "${f}".squashfs -no-recovery -no-progress || die
 				rm "${S}" -Rf
@@ -229,32 +235,12 @@ kernel-2_src_install() {
 	[[ ${ETYPE} == sources ]] && install_sources
 }
 
-kernel-2_pkg_setup() {
-	if kernel_is 2 4; then
-		if [ "$( gcc-major-version )" -eq "4" ] ; then
-			echo
-			ewarn "Be warned !! >=sys-devel/gcc-4.0.0 isn't supported with linux-2.4!"
-			ewarn "Either switch to another gcc-version (via gcc-config) or use a"
-			ewarn "newer kernel that supports gcc-4."
-			echo
-			ewarn "Also be aware that bugreports about gcc-4 not working"
-			ewarn "with linux-2.4 based ebuilds will be closed as INVALID!"
-			echo
-			epause 10
-		fi
-	fi
-
-	ABI="${KERNEL_ABI}"
-	[[ ${ETYPE} == headers ]] && setup_headers
-	[[ ${ETYPE} == sources ]] || return
-	if use build-kernel; then
-		# ldd give false sandbox dependences in other place
-		einfo "Generating boot image overlay (if configured)"
-		local i="${TMPDIR}/overlay-rd"
-		mkdir "${i}"
-		bash "${UROOT}/usr/share/genpnprd/genpkgrd" "${i}" "${KERNEL_IMAGE_FILES}" "${KERNEL_IMAGE_FILES2}" "${KERNEL_IMAGE_PACKAGES}"
-	fi
-	echo ">>> Preparing to unpack ..."
+to_overlay(){
+	use build-kernel || return
+	einfo "Generating boot image overlay (if configured)"
+	local i="${TMPDIR}/overlay-rd"
+	mkdir "${i}"
+	bash "${UROOT}/usr/share/genpnprd/genpkgrd" "${i}" "${KERNEL_IMAGE_FILES}" "${KERNEL_IMAGE_FILES2}" "${KERNEL_IMAGE_PACKAGES}"
 }
 
 run_genkernel(){
@@ -293,7 +279,6 @@ cfg_use(){
 
 cfg_loop(){
 	grep "CONFIG" .config >$1
-#	if diff -qN $1 $2 >/dev/null ; then
 	if cmp -s $1 $2 ; then
 		rm $1 $2
 		return 1
@@ -474,7 +459,7 @@ native)
 			*Geode*|*MediaGX*)CF1 MGEODEGX1 -X86_GENERIC;;
 			esac
 	;;
-	*)	CF1 -CPU_SUP_{INTEL,AMD,CENTAUR}
+	*)	#CF1 -CPU_SUP_{INTEL,AMD,CENTAUR}
 		case "${model_name}" in
 		*Geode*|*MediaGX*)CF1 MGEODEGX1;V=CYRIX;;
 		*Efficeon*)CF1 MEFFICEON;V=TRANSMETA_32;;
@@ -537,7 +522,7 @@ arch(){
 		x86_64*) [[ -z "$2" ]] && use 32-64 && [[ "$(march)" == native ]] &&
 			echo "x86" || echo "x86_64"
 		;;
-		*) echo "$(tc-ninja_magic_to_arch kern ${h})";;
+		*) tc-ninja_magic_to_arch kern ${h};;
 	esac
 }
 
@@ -550,8 +535,8 @@ kmake(){
 
 _cc(){
 	einfo "Compiling '$1'"
-	$(tc-getCC) ${CFLAGS} ${LDFLAGS} -static $1 -o ${1%.c} &&
-	    [[ -z "$2" ]] || ( ( [[ -d "$2" ]] || mkdir -p $2 ) && cp ${1%.c} $2 )
+	$(tc-getCC) -I"${S}"/include ${CFLAGS} ${LDFLAGS} ${KERNEL_DOC_CFLAGS} $1 -o ${1%.c} &&
+	    [[ -n "$2" ]] && ( ( [[ -d "$2" ]] || mkdir -p "$2" ) && cp ${1%.c} "$2" )
 	return $?
 }
 
@@ -559,6 +544,7 @@ kernel-2_src_prepare(){
 	[[ ${ETYPE} == sources ]] || return
 
 	local i
+	to_overlay
 	einfo "Fixing compats"
 	# glibc 2.8+
 	for i in "${S}/scripts/mod/sumversion.c" ; do
@@ -580,4 +566,42 @@ kernel-2_src_prepare(){
 	use pnp || return
 	einfo "Fixing modules hardware info exports (forced mode, waiting for bugs!)"
 	sh "${UROOT}/usr/share/genpnprd/modulesfix" "${S}" f
+}
+
+# around git-sources, etc (postinst_sources -> kernel-2_pkg_postinst)
+override_postinst(){
+	pkg_postinst(){
+		kernel-2_pkg_postinst
+	}
+}
+
+_umount(){
+	[[ ${ETYPE} == sources ]] &&  use build-kernel && use pnp && use compressed || return
+	override_postinst
+	local i ROOT
+	[[ "${ROOT}" == "/" ]] && ROOT=""
+	for i in `portageq contents "${ROOT:-/}" "${CATEGORY}/${P}"|grep "^${ROOT}/usr/src/linux-[^/]*$"`; do
+		[[ -d "${i}" ]] && ( umount "${i}" || umount -l "${i}" ) && elog "Unmounted sources: ${i}"
+	done 2>/dev/null
+}
+
+kernel-2_pkg_prerm() {
+	_umount
+}
+
+kernel-2_pkg_preinst() {
+	[[ ${ETYPE} == headers ]] && preinst_headers
+	####
+	_umount
+	[[ ${ETYPE} == sources ]] &&  use build-kernel || return
+	local i="/lib/modules/${REAL_KV}/kernel"
+	( ( [[ -L "${D}${i}" ]] && ! [[ -L "${ROOT}${i}" ]] && [[ -e "${ROOT}${i}" ]] ) ||
+	    ( [[ -L "${ROOT}${i}" ]] && ! [[ -L "${D}${i}" ]] && [[ -e "${D}${i}" ]] ) ) &&
+	    rm -Rf "${ROOT}${i}"
+}
+
+kernel-2_pkg_postinst() {
+	[[ ${ETYPE} == sources ]] && postinst_sources
+	####
+	[[ ${ETYPE} == sources ]] && use build-kernel && use pnp && use compressed && mount -o loop,ro "${ROOT}"/usr/src/linux-"${REAL_KV}"{.squashfs,} && elog "Mounted sources: ${REAL_KV}"
 }
