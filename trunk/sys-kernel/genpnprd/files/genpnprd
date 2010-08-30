@@ -287,6 +287,17 @@ find .|sort|while read i ; do
 	rm "$i"
 done
 
+ln -s busybox bin/zcat
+for i in init etc/initrd.defaults etc/initrd.scripts etc/syspnp; do
+	[[ -L $i ]] && continue
+	read j <$i 2>/dev/null || continue
+	[[ -n "${j##\#*}" ]] && j=""
+	gzip -9 $i || continue
+	echo "$j
+eval \"\`zcat /$i.gz\`\"">$i
+	chmod 755 $i
+done
+
 rm "$rcdir/lib.loopfs" 2>/dev/null
 if $SQUASH ; then
 	preserve_start loop squashfs
