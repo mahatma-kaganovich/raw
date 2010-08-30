@@ -12,7 +12,7 @@ if [[ ${ETYPE} == sources ]]; then
 IUSE="${IUSE} build-kernel debug custom-cflags pnp compressed integrated ipv6
 	netboot nls unicode +acl minimal selinux custom-arch
 	+kernel-drm +kernel-alsa kernel-firmware +sources fbcon staging pnponly lzma
-	external-firmware xen +smp 32-64"
+	external-firmware xen +smp 32-64 tools"
 DEPEND="${DEPEND}
 	!<app-portage/ppatch-0.08-r16
 	pnp? ( sys-kernel/genpnprd )
@@ -24,7 +24,7 @@ DEPEND="${DEPEND}
 		kernel-firmware? ( !sys-kernel/linux-firmware )
 	) "
 
-: ${KERNEL_DOC_CFLAGS:="-static"}
+: ${KERNEL_UTILS_CFLAGS:="${CFLAGS}"}
 
 eval "`/usr/bin/perl ${UROOT}/usr/share/genpnprd/Kconfig.pl -config`"
 
@@ -124,6 +124,10 @@ kernel-2_src_compile() {
 	einfo "Compiling kernel modules"
 	kmake modules ${KERNEL_MODULES_MAKEOPT}
 	grep -q "=m$" .config && [[ -z "`find . -name "*.ko" -print`" ]] && die "Modules configured, but not built"
+	if use tools; then
+		einfo "Compiling tools"
+		mktools
+	fi
 	einfo "Generating initrd image"
 	KV="${KV0}"
 	check_kv
@@ -191,6 +195,7 @@ kernel-2_src_install() {
 		fi
 		mv "${BDIR}"/* "${D}/" || die
 		kmake INSTALL_PATH="${D}/boot" install
+		use tools && mktools INSTALL_PATH="${D}/boot" install
 		for f in vmlinuz System.map config ; do
 			f1="${D}/boot/${f}"
 			if [[ -e "${f1}" ]] ; then
@@ -530,12 +535,19 @@ kmake(){
 	local o=""
 	local h="${CTARGET:-${CHOST}}"
 	[[ "${CBUILD}" != "${h}" ]] && o="CROSS_COMPILE=${h}-"
-	emake HOSTCC="$(tc-getBUILD_CC)" ARCH=$(arch) $o $* ${KERNEL_MAKEOPT} || die
+	emake HOSTCC="$(tc-getBUILD_CC)" ARCH=$(arch) $o "${@}" ${KERNEL_MAKEOPT} || die
+}
+
+mktools(){
+	local i
+	for i in tools/*/Makefile; do
+		kmake -C "${i%/Makefile}" CFLAGS="${KERNEL_UTILS_CFLAGS}" "${@}"
+	done
 }
 
 _cc(){
 	einfo "Compiling '$1'"
-	$(tc-getCC) -I"${S}"/include ${CFLAGS} ${LDFLAGS} ${KERNEL_DOC_CFLAGS} $1 -o ${1%.c} &&
+	$(tc-getCC) -I"${S}"/include ${KERNEL_UTILS_CFLAGS} ${LDFLAGS} $1 -o ${1%.c} &&
 	    [[ -n "$2" ]] && ( ( [[ -d "$2" ]] || mkdir -p "$2" ) && cp ${1%.c} "$2" )
 	return $?
 }
