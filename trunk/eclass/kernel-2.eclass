@@ -195,7 +195,7 @@ kernel-2_src_install() {
 		fi
 		mv "${BDIR}"/* "${D}/" || die
 		kmake INSTALL_PATH="${D}/boot" install
-		use tools && mktools INSTALL_PATH="${D}/boot" install
+		use tools && mktools INSTALL_PATH="${D}" DESTDIR="${D}" install
 		for f in vmlinuz System.map config ; do
 			f1="${D}/boot/${f}"
 			if [[ -e "${f1}" ]] ; then
