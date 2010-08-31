@@ -99,7 +99,7 @@ kernel-2_src_configure() {
 }
 
 kernel-2_src_compile() {
-	if has "${EAPI:-0}" 0 1; then
+	if [[ "${EAPI}" == 1 ]]; then
 		kernel-2_src_prepare
 		kernel-2_src_configure
 	fi
@@ -221,12 +221,13 @@ kernel-2_src_install() {
 				f1="/lib/modules/${REAL_KV}/kernel"
 				rm "${D}${f1}" -Rf
 				dosym "../../../usr/src/${f}" "${f1}"
+				rm "initrd-${REAL_KV}.img"
 				cd "${WORKDIR}"
-				mksquashfs "${S}" "${f}".squashfs -no-recovery -no-progress || die
-				rm "${S}" -Rf
 				keepdir /usr/src/"${f}"
-				insinto /usr/src
-				doins "${f}".squashfs
+				f="${D}/usr/src/${f}.squashfs"
+				mksquashfs "${S}" "${f}" -no-recovery -no-progress || die
+				chmod 755 "${f}"
+				rm "${S}" -Rf
 			fi
 		else
 			cd "${WORKDIR}"
@@ -256,7 +257,7 @@ run_genkernel(){
 	local a="$(arch "" 1)"
 	# e2fsprogs need more crosscompile info
 	ac_cv_build="${CBUILD}" ac_cv_host="${CTARGET:-${CHOST}}" CC="$(tc-getCC)" LD="$(tc-getLD)" CXX="$(tc-getCXX)" CPP="$(tc-getCPP)" AS="$(tc-getAS)" \
-	LDFLAGS="${KERNEL_GENKERNEL_LDFLAGS}" "${S}/genkernel" \
+	CFLAGS="${KERNEL_UTILS_CFLAGS}" LDFLAGS="${KERNEL_GENKERNEL_LDFLAGS}" "${S}/genkernel" \
 		--cachedir="${TMPDIR}/genkernel-cache" \
 		--tempdir="${TMPDIR}/genkernel" \
 		--logfile="${TMPDIR}/genkernel.log" \
@@ -590,10 +591,16 @@ override_postinst(){
 _umount(){
 	[[ ${ETYPE} == sources ]] &&  use build-kernel && use pnp && use compressed || return
 	override_postinst
-	local i ROOT
-	[[ "${ROOT}" == "/" ]] && ROOT=""
-	for i in `portageq contents "${ROOT:-/}" "${CATEGORY}/${P}"|grep "^${ROOT}/usr/src/linux-[^/]*$"`; do
-		[[ -d "${i}" ]] && ( umount "${i}" || umount -l "${i}" ) && elog "Unmounted sources: ${i}"
+	local i x y z
+	for i in `portageq contents "${ROOT:-/}" "${CATEGORY}/${P}"|grep "^${ROOT%/}/usr/src/linux-[^/]*$"`; do
+		[[ -d "${i}" ]] || continue
+		while read x y z; do
+			[[ "${y}" == "${i}" ]] || continue
+			x="${x%:}"
+			( umount ${x} || umount -l ${x} ) && elog "Unmounted $x: $i"
+			losetup -d ${x}
+		done </proc/mounts
+		( umount "${i}" || umount -l "${i}" ) && elog "Unmounted $i"
 	done 2>/dev/null
 }
 
