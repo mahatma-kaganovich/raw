@@ -78,11 +78,11 @@ RDEPEND="java? ( >=virtual/jre-1.4 )
 PDEPEND="restrict-javascript? ( x11-plugins/noscript )"
 
 # wireless-tools requred by future (mercurial repo), maybe now too
+#       qt-experimental? (
+#               x11-libs/qt-gui
+#               x11-libs/qt-core )
 DEPEND="java? ( >=virtual/jdk-1.4 )
 	${RDEPEND}
-       qt-experimental? (
-               x11-libs/qt-gui
-               x11-libs/qt-core )
 	wifi? ( net-wireless/wireless-tools )
 	dev-lang/perl
 	dev-util/pkgconfig
