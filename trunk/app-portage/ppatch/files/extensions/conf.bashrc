@@ -8,23 +8,24 @@
 
 iscurrent(){
 	local m=`md5sum "$1"`
-	grep -sq "^obj ${2:-1} ${m%% *} " /var/db/pkg/$CATEGORY/$PN*/CONTENTS
+	grep -sq "^obj ${2:-1} ${m%% *} " "${ROOT}"/var/db/pkg/$CATEGORY/$PN*/CONTENTS
 	return $?
 }
 
 upcf(){
 	local i i1 m dif d c=" [conf]"
 	find "${D}"/etc -print|while read i; do
-		i1="${i#$D}"
+		i1r="${i#$D}"
+		i1="${ROOT}${i1r}"
 		[[ -f "$i1" ]] || continue
 		cmp -s "$i1" "$i" && continue
-		if iscurrent "$i1"; then
+		if iscurrent "$i1" "${i1r}"; then
 			echo "$c Replacing: $i1"
 			cp "$i" "$i1" -a
 			continue
 		fi
 		d="${i1%/*}"
-		if [[ -e "$i1.patch" ]] && ( patch -sRtNd "$d" -i "$i1.patch" -o - -r - | iscurrent - "$i1" ); then
+		if [[ -e "$i1.patch" ]] && ( patch -sRtNd "$d" -i "$i1.patch" -o - -r - | iscurrent - "${i1r}" ); then
 			echo "$c Upgrading: $i1"
 			patch -sRtNd "$d" -i "$i1.patch" -o - -r - |diff -pruN - "$i"|patch -stNd "$d" && {
 				rm "$i"
@@ -32,7 +33,7 @@ upcf(){
 			}
 			echo "$c Upgrading failed"
 		fi
-		if iscurrent "$i" "$i1"; then
+		if iscurrent "$i" "${i1r}"; then
 			echo "$c diff: $i1.diff"
 			diff -pruN "$i" "$i1" >"$i1.diff"
 			rm "$i"
