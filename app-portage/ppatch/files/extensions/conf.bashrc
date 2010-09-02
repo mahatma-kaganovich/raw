@@ -18,7 +18,6 @@ upcf(){
 		i1r="${i#$D}"
 		i1="${ROOT}${i1r}"
 		[[ -f "$i1" ]] || continue
-		[[ -n "${i##*/config}" ]] && continue
 		cmp -s "$i1" "$i" && continue
 		if iscurrent "$i1"; then
 			echo "$c Replacing: $i1"
@@ -27,13 +26,11 @@ upcf(){
 		fi
 		d="${i1%/*}"
 		if [[ -e "$i1.patch" ]]; then
-			patch -stNd "${i%/*}" -i "$i1.patch" -o - -r - | cmp -s - "$i1" && continue
-			if patch -sRtNd "$d" -i "$i1.patch" -o - -r - | iscurrent - ; then
-				echo "$c Upgrading: $i1"
-				patch -sRtNd "$d" -i "$i1.patch" -o - -r - |diff -pruN - "$i"|patch -stNd "$d" && {
-					echo "$i" >>"${TMPDIR}"/conf.bashrc.rm.tmp
-					continue
-				}
+			if patch -stNd "${i%/*}" -i "$i1.patch" -o - -r - | cmp -s - "$i1" ||
+			    ( echo "$c Upgrading: $i1"; patch -sRtNd "$d" -i "$i1.patch" -o - -r - | iscurrent - &&
+			    ( patch -sRtNd "$d" -i "$i1.patch" -o - -r - |diff -pruN - "$i"|patch -stNd "$d" ) ); then
+				echo "$i" >>"${TMPDIR}"/conf.bashrc.rm.tmp
+				continue
 			fi
 			echo "$c Upgrading failed"
 		fi
@@ -45,7 +42,17 @@ upcf(){
 	done
 }
 
+rmcf(){
+	local i i1
+	cat "${TMPDIR}"/conf.bashrc.rm.tmp|while read i; do
+		i1="${ROOT}${i#$D}"
+		for i1 in "${i1%/*}"/._cfg????_"${i1##*/}"; do
+			cmp -s "$i" "$i1" && rm "$i1"
+		done
+	done
+}
+
 [[ -e "${D}/etc" ]] && case "$EBUILD_PHASE" in
 preinst)upcf;;
-postinst)[[ -e "${TMPDIR}"/conf.bashrc.rm.tmp ]] && rm `cat "${TMPDIR}"/conf.bashrc.rm.tmp`;;
+postinst)[[ -e "${TMPDIR}"/conf.bashrc.rm.tmp ]] && rmcf;;
 esac
