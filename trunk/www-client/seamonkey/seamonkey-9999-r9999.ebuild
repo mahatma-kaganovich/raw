@@ -390,7 +390,7 @@ src_configure(){
 
 	mozconfig_use_enable alsa ogg
 	mozconfig_use_enable alsa wave
-	if isopt --disable-ipc; then
+	if isopt '\--disable-ipc'; then
 		mozconfig_use_enable ipc
 		mozconfig_use_enable ipc libxul
 	fi
