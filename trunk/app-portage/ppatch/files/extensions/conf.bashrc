@@ -8,7 +8,7 @@
 
 iscurrent(){
 	local m=`md5sum "$1"`
-	grep -sq "^obj ${2:-1} ${m%% *} " "${ROOT}"/var/db/pkg/$CATEGORY/$PN*/CONTENTS
+	grep -sq "^obj ${i1r} ${m%% *} " "${ROOT}"/var/db/pkg/$CATEGORY/$PN*/CONTENTS
 	return $?
 }
 
@@ -18,27 +18,34 @@ upcf(){
 		i1r="${i#$D}"
 		i1="${ROOT}${i1r}"
 		[[ -f "$i1" ]] || continue
+		[[ -n "${i##*/config}" ]] && continue
 		cmp -s "$i1" "$i" && continue
-		if iscurrent "$i1" "${i1r}"; then
+		if iscurrent "$i1"; then
 			echo "$c Replacing: $i1"
 			cp "$i" "$i1" -a
 			continue
 		fi
 		d="${i1%/*}"
-		if [[ -e "$i1.patch" ]] && ( patch -sRtNd "$d" -i "$i1.patch" -o - -r - | iscurrent - "${i1r}" ); then
-			echo "$c Upgrading: $i1"
-			patch -sRtNd "$d" -i "$i1.patch" -o - -r - |diff -pruN - "$i"|patch -stNd "$d" && {
-				rm "$i"
-				continue
-			}
+		if [[ -e "$i1.patch" ]]; then
+			patch -stNd "${i%/*}" -i "$i1.patch" -o - -r - | cmp -s - "$i1" && continue
+			if patch -sRtNd "$d" -i "$i1.patch" -o - -r - | iscurrent - ; then
+				echo "$c Upgrading: $i1"
+				patch -sRtNd "$d" -i "$i1.patch" -o - -r - |diff -pruN - "$i"|patch -stNd "$d" && {
+					echo "$i" >>"${TMPDIR}"/conf.bashrc.rm.tmp
+					continue
+				}
+			fi
 			echo "$c Upgrading failed"
 		fi
-		if iscurrent "$i" "${i1r}"; then
+		if iscurrent "$i"; then
 			echo "$c diff: $i1.diff"
 			diff -pruN "$i" "$i1" >"$i1.diff"
-			rm "$i"
+			echo "$i" >>"${TMPDIR}"/conf.bashrc.rm.tmp
 		fi
 	done
 }
 
-[[ "$EBUILD_PHASE" == preinst ]] && [[ -e "${D}/etc" ]] && upcf
+[[ -e "${D}/etc" ]] && case "$EBUILD_PHASE" in
+preinst)upcf;;
+postinst)[[ -e "${TMPDIR}"/conf.bashrc.rm.tmp ]] && rm `cat "${TMPDIR}"/conf.bashrc.rm.tmp`;;
+esac
