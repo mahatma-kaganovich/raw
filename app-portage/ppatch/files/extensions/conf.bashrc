@@ -13,7 +13,7 @@ iscurrent(){
 }
 
 upcf(){
-	local i i1 m dif d c=" [conf]"
+	local i i1 i1r d c=" [conf]"
 	find "${D}"/etc -print|while read i; do
 		i1r="${i#$D}"
 		i1="${ROOT}${i1r}"
