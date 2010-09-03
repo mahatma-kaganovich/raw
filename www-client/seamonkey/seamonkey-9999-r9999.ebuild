@@ -45,8 +45,7 @@ IUSE="java mozdevelop moznoirc moznoroaming postgres restrict-javascript startup
 #RESTRICT="nomirror"
 
 
-SRC_URI="http://releases.mozilla.org/pub/mozilla.org/${MY_PN}/releases/${MY_PV}/source/${MY_P}.source.tar.bz2
-	crypt? ( !moznomail? ( http://dev.gentoo.org/~anarchy/dist/enigmail-${EMVER}.tar.gz ) )"
+SRC_URI="http://releases.mozilla.org/pub/mozilla.org/${MY_PN}/releases/${MY_PV}/source/${MY_P}.source.tar.bz2"
 
 KEYWORDS="amd64 x86"
 SLOT="0"
@@ -72,21 +71,9 @@ RDEPEND="java? ( >=virtual/jre-1.4 )
 	alsa? ( media-libs/alsa-lib )
 	directfb? ( dev-libs/DirectFB )
 	gnome? ( !gio? ( >=gnome-base/gnome-vfs-2.3.5 )
-		>=gnome-base/libgnomeui-2.2.0 )
-	crypt? ( !moznomail? ( >=app-crypt/gnupg-1.4 ) )"
+		>=gnome-base/libgnomeui-2.2.0 )"
 
 PDEPEND="restrict-javascript? ( x11-plugins/noscript )"
-
-# wireless-tools requred by future (mercurial repo), maybe now too
-#       qt-experimental? (
-#               x11-libs/qt-gui
-#               x11-libs/qt-core )
-DEPEND="java? ( >=virtual/jdk-1.4 )
-	${RDEPEND}
-	wifi? ( net-wireless/wireless-tools )
-	dev-lang/perl
-	dev-util/pkgconfig
-	postgres? ( >=virtual/postgresql-server-7.2.0 )"
 
 S="${WORKDIR}/comm-${MOZVER}"
 
@@ -153,6 +140,8 @@ seamonkey)
 	HOMEPAGE="http://www.seamonkey-project.org/"
 	export MOZ_CO_PROJECT=suite
 	IUSE="${IUSE} ldap moznocompose moznomail crypt moznocalendar"
+	SRC_URI="${SRC_URI} crypt? ( !moznomail? ( http://dev.gentoo.org/~anarchy/dist/enigmail-${EMVER}.tar.gz ) )"
+	RDEPEND="${RDEPEND} crypt? ( !moznomail? ( >=app-crypt/gnupg-1.4 ) )"
 	S1="${S}/mozilla"
 	#[[ -n "${hg}" ]] && 
 	force -ipc
@@ -185,6 +174,17 @@ mobile)
 esac
 
 [[ -n "${PATCH}" ]] && SRC_URI="${SRC_URI}  !vanilla? ( ${PATCH} )"
+
+# wireless-tools requred by future (mercurial repo), maybe now too
+#       qt-experimental? (
+#               x11-libs/qt-gui
+#               x11-libs/qt-core )
+DEPEND="java? ( >=virtual/jdk-1.4 )
+	${RDEPEND}
+	wifi? ( net-wireless/wireless-tools )
+	dev-lang/perl
+	dev-util/pkgconfig
+	postgres? ( >=virtual/postgresql-server-7.2.0 )"
 
 export BUILD_OFFICIAL=1
 export MOZILLA_OFFICIAL=1
