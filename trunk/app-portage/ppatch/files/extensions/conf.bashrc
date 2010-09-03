@@ -27,8 +27,8 @@ upcf(){
 		d="${i1%/*}"
 		if [[ -e "$i1.patch" ]]; then
 			if patch -stNd "${i%/*}" -i "$i1.patch" -o - -r - | cmp -s - "$i1" ||
-			    ( echo "$c Upgrading: $i1"; patch -sRtNd "$d" -i "$i1.patch" -o - -r - | iscurrent - &&
-			    ( patch -sRtNd "$d" -i "$i1.patch" -o - -r - |diff -pruN - "$i"|patch -stNd "$d" ) ); then
+			    ( echo "$c Upgrading: $i1"; patch -sRtNd "$d" -i "$i1.patch" -o - -r - ${ETC_PATCH} | iscurrent - &&
+			    ( patch -sRtNd "$d" -i "$i1.patch" -o - -r - ${ETC_PATCH} |diff -pruN - "$i" ${ETC_DIFF} |patch -stNd "$d" ${ETC_PATCH} ) ); then
 				echo "$i" >>"${TMPDIR}"/conf.bashrc.rm.tmp
 				continue
 			fi
@@ -36,7 +36,7 @@ upcf(){
 		fi
 		if iscurrent "$i"; then
 			echo "$c diff: $i1.diff"
-			diff -pruN "$i" "$i1" >"$i1.diff"
+			diff -pruN "$i" "$i1" ${ETC_DIFF} >"$i1.diff"
 			echo "$i" >>"${TMPDIR}"/conf.bashrc.rm.tmp
 		fi
 	done
