@@ -10,13 +10,15 @@ while [[ "${1#-}" != "$1" ]] ; do
 done
 m="$1"
 shift
-r=1
 modalias "$(echo -ne "$m" | sed -e s/-/_/g)" && for i in $ALIAS ; do
 	modparam $i
-	$insmod $i $PARAM $*
-	r=$?
+	wait $pid
+	pid=""
+	$insmod $i $PARAM "${@}" &
+	pid="$!"
 done
-return $r
+${modprobe_wait:-wait} $pid
+return $?
 }
 
 #export -f modalias modparam modprobe

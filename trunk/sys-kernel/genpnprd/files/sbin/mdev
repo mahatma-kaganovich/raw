@@ -1,5 +1,8 @@
 #!/bin/sh
+# mdev replacement, (c) Denis Kaganovich, under Anarchy or GPLv2 license
 # some of busyboxes don't have mdev, some - mdev.conf|/dev/input/
+# Detect all: mdev -s "*" -m
+# or: mdev -s "*" -i (& do not writable /etc/modalias -> modprobe via mdev)
 
 mdevs(){
 	for i in $*; do
@@ -10,14 +13,34 @@ mdevs(){
 	done
 }
 
+modmdev(){
+	local m pid="" modprobe_wait=true
+	for m in "${@}"; do
+		modprobe "$m"
+	done
+	wait $pid
+}
+
 mdev(){
 local i t=c
 case "$1" in
 block) t=b ;;
+-m|-i)
+	[[ -e /etc/modprobe.sh ]] && . /etc/modprobe.sh
+	modmdev `echo ""|grep -sh "^MODALIAS=" $(find /sys -name uevent -print|sort)|sed -e 's:^MODALIAS=::g'|uniq`
+	while [[ -f /etc/modalias ]] && mv /etc/modalias /etc/modalias_ && ( [[ "$1" == "-m" ]] || ( ! ln -s /sys /etc/modalias && [[ -f /etc/modalias ]] ) ) ; do
+		modmdev `cat /etc/modalias_`
+		rm /etc/modalias_
+	done
+	return
+;;
 -s)
 	shift
-	for i in ${*:-"*"}; do
-		mdevs /sys/class/$i/*/uevent
+	for i in "${@:-"*"}"; do
+		case "$i" in
+		-*)mdev $i;;
+		*)mdevs /sys/class/$i/*/uevent;;
+		esac
 	done
 	return
 ;;
@@ -27,8 +50,9 @@ remove)
 	rm "/dev/$DEVNAME"
 	return
 ;;
-add)
-	[[ -n "$MODALIAS" ]] && echo "$MODALIAS" >>/etc/modalias
+add)	if [[ -n "$MODALIAS" ]]; then
+		echo "$MODALIAS" >>/etc/modalias || `cat /proc/sys/kernel/modprobe` -- $MODALIAS
+	fi
 ;;
 esac
 if [[ -n "$DEVNAME" ]] && ! [[ -e "/dev/$DEVNAME" ]]; then
@@ -37,10 +61,9 @@ if [[ -n "$DEVNAME" ]] && ! [[ -e "/dev/$DEVNAME" ]]; then
 	[[ -e "$i" ]] || mkdir -p "$i"
 	mknod -m ${DEVMODE:-0600} "$DEVNAME" $t $MAJOR $MINOR
 fi
-[[ -z "$FIRMWARE" ]] && return
-echo 1 >/sys/$DEVPATH/loading
-[[ -e /lib/firmware/$FIRMWARE ]] && cat /lib/firmware/$FIRMWARE >/sys/$DEVPATH/data && echo 0 >/sys/$DEVPATH/loading && return
-echo -1 >/sys/$DEVPATH/loading
+if [[ -n "$FIRMWARE" ]] && echo 1 >/sys/$DEVPATH/loading; then
+	[[ -e /lib/firmware/$FIRMWARE ]] && cat /lib/firmware/$FIRMWARE >/sys/$DEVPATH/data && echo 0 >/sys/$DEVPATH/loading || echo -1 >/sys/$DEVPATH/loading
+fi
 }
 
-mdev $*
+mdev "${@}"
