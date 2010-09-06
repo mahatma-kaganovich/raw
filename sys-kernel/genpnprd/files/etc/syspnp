@@ -119,7 +119,10 @@ mnt_loop(){
 mod_unload(){
 	local i="$NEW_ROOT/lib/modules/$KV" l="$NEW_ROOT/usr/src/linux-$KV" m=""
 	cd /
-	if ! [[ -e $i ]] ; then
+	if [[ -L $i/kernel ]] && i=`ls $l.*fs 2>/dev/null` && [[ -f "$i" ]]; then
+		echo -ne "(mount $i)"
+		mnt_loop /dev/loop3 "$i" $l
+	elif ! [[ -e $i ]] ; then
 		if ${cmd_autoinstall:-false} ; then
 			echo -ne "(Installing /lib/modules/$KV)"
 			mount -o remount,rw ${NEW_ROOT} &&
@@ -127,9 +130,6 @@ mod_unload(){
 		else
 			echo -ne '(use "autoinstall" to install modules)'
 		fi
-	elif [[ -L $i/kernel ]] && i=`ls $l.*fs 2>/dev/null` && [[ -f "$i" ]]; then
-		echo -ne "(mount $i)"
-		mnt_loop /dev/loop3 "$i" $l
 	fi
 	for i in /rd /lib; do
 		[[ -d "$i" ]] && umount $i && break
@@ -161,9 +161,7 @@ pnp_options(){
 	cmd_real_init=/sbin/init
 	local i v
 	local p="*)PARAM='';;"
-	while [[ -n "$*" ]] ; do
-	i="$1"
-	shift
+	for i in "${@}" ; do
 	case "$i" in
 	parallel-startup) PARALLEL=1 ;;
 	parallel-startup=*) PARALLEL="${i#*=}" ;;
@@ -248,7 +246,8 @@ local f="/sbin/modprobe"
 [[ -e $f ]] && ! ( grep -q "bug #197730" $f && rm /sbin/modprobe ) && return
 echo '#!/bin/sh
 . /etc/modprobe.sh
-modprobe $*
+modprobe "${@}"
+wait $pid
 exit $?' >$f
 chmod 755 $f
 echo "$f" >/proc/sys/kernel/modprobe
@@ -326,9 +325,9 @@ detect_part(){
 	echo ">$*<" >>"${PNP_TMP}.5"
 	[[ "${2:-false}" != false ]] && for l in $( {
 		if [[ "$2" == true ]]; then
-			_fstype ${LOOPS_}
+			fstype ${LOOPS_}
 		else
-			_fstype $2
+			fstype $2
 		fi
 		} | sed -e 's%^\(.*:\).* TYPE="\([^"]*\)".*$%\1\2%g'
 	    ) ; do
@@ -347,7 +346,7 @@ detect_part(){
 }
 
 part_(){
-	( ( [[ -b "$1" ]] && echo "$1" ) || $fstype $1 || $blkid $1 || $blkid -t "$1" || findfs "$1" || busybox findfs "$1" || fstype $1 ) 2>/dev/null | sed -e 's:^.* TYPE="swap".*$::g' -e 's/:.*$//g'
+	[[ -b "$1" ]] && echo "$1" || ( fstype $1 | sed -e 's:^.* TYPE="swap".*$::g' -e 's/:.*$//g' )
 }
 
 detect_root(){
@@ -422,27 +421,24 @@ msg_(){
 }
 
 lsblk(){
-	local i t="${PNP_TMP}.6"
-	sed -e "s:^.*[ ]:/dev/:g" -e "s:^/dev/name$::" </proc/partitions >$t
-	for i in `sed -e "s:[0-9]*$::g" <$t|sort -u`; do
-		grep -s "^$i[0-9][0-9]*$" $t||echo $i
-	done
+	local i
+	while read i; do
+		i="${i##* }"
+		[[ -n "$i" ]] && [[ -e "/dev/$i" ]] && {
+			[[ "${i%[0-9]}" == "$i" ]] && grep -q " $i[0-9]*$" /proc/partitions || echo "/dev/$i"
+		}
+	done </proc/partitions
 }
 
-fstype(){
-local i d
-[[ -z "$*" ]] && set `lsblk` ""
-while [[ -n "$*" ]]; do
-d="$1"
-[[ -z "$d" ]] || [[ -e "$d" ]] || d="`findfs $1 2>/dev/null`"
+fstype_(){
 ! grep -s "^$d:" /etc/fstype.cache &&
-! ( $blkid "$d" 2>/dev/null|grep " TYPE=" ) &&
+! ( $blkid "$d"|grep " TYPE=" ) &&
 ( [[ -b "$d" ]] || [[ -f "$d" ]] ) && for i in 0 3 4 8 24 32 54 82 510 536 1016 1024 1030 1040 1048 1080 1560 2048 4086 4096 8182 8192 8212 8244 9564 16374 32758 32768 32769 32777 65526 65536 65588 65600 270336; do
-case "`hexdump -v -s $i -n 10 -e '"'$i:'" 10/1 "%x" ""' $d 2>/dev/null`" in
+case "`hexdump -v -s $i -n 10 -e '"'$i:'" 10/1 "%x" ""' $d`" in
 32:4f52434c4449534b*)echo oracleasm;;
 3:4e54465320202020*)echo ntfs;;
 1080:53ef*)
-	case "`hexdump -v -s 1116 -n 12 -e '"" 1 "%04x" ""' $d 2>/dev/null`" in
+	case "`hexdump -v -s 1116 -n 12 -e '"" 1 "%04x" ""' $d`" in
 	???[012389ab]00[01][02]000[1-7])echo ext2;;
 	????00[01][0246]000[1-7])echo ext3;;
 	*[1-7])echo ext4;;
@@ -484,12 +480,19 @@ esac|while read i; do
 	echo "$d: TYPE=\"$i\"" >>/etc/fstype.cache
 done
 done
-shift
-done
 }
 
-_fstype(){
-	$fstype $* || $blkid $* || $blkid -t $* || fstype $* || echo -e "$*"
+fstype(){
+local i d
+[[ -z "$*" ]] && set `lsblk` ""
+for d in "${@}"; do
+[[ -z "$d" ]] || [[ -e "$d" ]] || {
+	d=`$blkid -t $d||findfs "$d"||busybox findfs "$d"` && [[ "${d#* TYPE=}" != "$d" ]] && echo "$d" && continue
+	d="${d%%:*}"
+}
+i=`fstype_` && [[ -n "$i" ]] && echo "$i" && continue
+[[ -b "$d" ]] && echo "$d"
+done 2>/dev/null
 }
 
 detect_fs(){
@@ -508,11 +511,11 @@ detect_fs(){
 	# dmraid/lvm/evms unsure
 	for i in $( {
 			if [[ "${cmd_detect_root:-true}" == true ]]; then
-				_fstype
+				fstype
 			else
-				_fstype $cmd_detect_root
+				fstype $cmd_detect_root
 			fi
-			[[ -n "$REAL_ROOT" ]] && [[ "$REAL_ROOT" != "$cmd_detect_root" ]] && _fstype $REAL_ROOT
+			[[ -n "$REAL_ROOT" ]] && [[ "$REAL_ROOT" != "$cmd_detect_root" ]] && fstype $REAL_ROOT
 	    } 2>/dev/null | sed -e 's:^.* TYPE="\([^"]*\)".*$:\1:g'| sort -u ); do
 		case $i in
 		linux_raid_member|mdraid|/dev/md*) md=1 ;; # use right blkid
@@ -732,20 +735,21 @@ fast_modalias(){
 }
 
 ofast_modalias(){
-	mod `grep -sh "^MODALIAS=" $(find $SYS_FIND -name uevent -print|sort) </dev/null|sed -e 's:^MODALIAS=::g'`
+	mod `grep -sh "^MODALIAS=" $(find $SYS_FIND -name uevent -print|sort) </dev/null|sed -e 's:^MODALIAS=::g'|uniq`
 }
 
 etc_modalias(){
 	mv /etc/modalias /etc/modalias_ 2>/dev/null || return 1
 	mod `cat /etc/modalias_`
 	rm /etc/modalias_
+	return 0
 }
 
 syspnp(){
 	[[ -e "/lib/modules/${KV}/modules.alias.sh" ]] || return
 	$cmd_nopnp && return
 	# +some compats
-	local PNP_TMP="${TMPDIR}/pnp.found" NOTLOADED="" CHK=single i i1 i2 gov="" freq="" pid="" LCOUNT="" REORDER=break USE_MDADM_="${USE_MDADM:=$cmd_domdadm}" USE_DMRAID_NORMAL_="${USE_DMRAID_NORMAL:=$cmd_dodmraid}" USE_EVMS_NORMAL_="${USE_EVMS_NORMAL:=$cmd_doevms}" USE_LVM_NORMAL_="${USE_LVM_NORMAL:=$cmd_dolvm}" LOOPS_="" REFRESH_SAME waitscan=true checks="" fstype=fstype
+	local PNP_TMP="${TMPDIR}/pnp.found" NOTLOADED="" CHK=single i i1 i2 gov="" freq="" pid="" LCOUNT="" REORDER=break USE_MDADM_="${USE_MDADM:=$cmd_domdadm}" USE_DMRAID_NORMAL_="${USE_DMRAID_NORMAL:=$cmd_dodmraid}" USE_EVMS_NORMAL_="${USE_EVMS_NORMAL:=$cmd_doevms}" USE_LVM_NORMAL_="${USE_LVM_NORMAL:=$cmd_dolvm}" LOOPS_="" REFRESH_SAME waitscan=true checks=""
 	local blkid="$(which blkid 2>/dev/null || ( [[ -e /bin/blkid ]] && echo /bin/blkid ) || ( [[ -e /sbin/blkid ]] && echo /sbin/blkid ) || echo blkid )"
 	[[ "${USE_DMRAID_NORMAL:-true}" != true ]] && DMRAID_OPTS="$USE_DMRAID_NORMAL"
 	: ${REAL_ROOT:=$cmd_real_root}
@@ -759,17 +763,16 @@ syspnp(){
 		. /etc/modprobe.sh
 		override_modprobe
 	fi
-	for i in 0 1 2 3 4 5 6; do
+	for i in 0 1 2 3 4 5; do
 		echo -ne "" >"${PNP_TMP}.$i"
 	done
 
 	empty_hwopts firewire net pata pcmcia sata scsi usb   ataraid dmraid evms lvm mdadm fs
-	i="$(readlink $blkid)"
-#	[[ -e "$blkid" ]] && [[ "${i%busybox}" == "$i" ]] && fstype=false
+	[[ -e "$blkid" ]] && ( i="$(readlink $blkid)";[[ "${i%busybox}" == "$i" ]] ) || blkid=false
 	refresh n
 	# first pass - strict bus order
 #	CHK=true # try twice?
-	[[ -n "$MDOLIST" ]] && mod $MDOLIST
+	mod $MDOLIST unix
 	load_hand_made0
 	$cmd_fast && ofast_modalias || ordered_modalias $SYS_FIND
 	CHK=single
@@ -793,7 +796,7 @@ syspnp(){
 		else
 			$cmd_fast || fast_modalias
 		fi
-		etc_modalias
+		etc_modalias && ln -s /proc /etc/modalias
 		$cmd_unload && refresh
 		load_misc
 		refresh n || break
