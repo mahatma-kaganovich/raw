@@ -34,11 +34,11 @@ upcf(){
 			fi
 			echo "$c Upgrading failed"
 		fi
-		if iscurrent "$i"; then
+#		if iscurrent "$i"; then
 			echo "$c diff: $i1.diff"
 			diff -pruN "$i" "$i1" ${ETC_DIFF} >"$i1.diff"
 			echo "$i" >>"${TMPDIR}"/conf.bashrc.rm.tmp
-		fi
+#		fi
 	done
 }
 

@@ -32,7 +32,8 @@ mod(){
 			m2=""
 			for m1 in $ALIAS ; do
 				modparam $m1
-				m2="$m2 $insmod "$m1" $PARAM ;"
+				$INSMOD
+				m2="$m2 insmod "$m1" $PARAM ;"
 			done
 			$cmd_quiet || echo -ne "\033[0G\033[0K$LCOUNT	[...] $m1 $PARAM"
 			eval "( ${m2%;} ) >/dev/null 2>&1 &"
@@ -48,9 +49,10 @@ mod(){
 #			m="${m1##*/}"
 #			[[ -e "/sys/module/${m%.ko}" ]] && continue
 			modparam $m1
+			$INSMOD
 			wait $pid
 			$cmd_quiet || echo -ne "\033[0G\033[0K$LCOUNT	$m1 $PARAM"
-			$insmod "$m1" $PARAM >/dev/null 2>&1 &
+			insmod "$m1" $PARAM >/dev/null 2>&1 &
 			pid="$!"
 		done
 	done
@@ -183,13 +185,12 @@ pnp_options(){
 	*) export cmd_`echo "$i"|sed -e 's:[^a-zA-Z0-9_]:_:g'`=true ;;
 	esac
 	done
-	$cmd_nofb && p="*/fb.ko|*/drm_kms_helper.ko|*/fbcon.ko)insmod=false;return 1;;$p"
-	[[ -n "$cmd_noload" ]] && p="*/$(echo "$cmd_noload"|sed -e 's/,/.ko|*\//g').ko)insmod=false;return 1;;$p"
+	$cmd_nofb && p="*/fb.ko|*/drm_kms_helper.ko|*/fbcon.ko)INSMOD=continue;;$p"
+	[[ -n "$cmd_noload" ]] && p="*/$(echo "$cmd_noload"|sed -e 's/,/.ko|*\//g').ko)INSMOD=continue;;$p"
 	echo "modparam(){
-insmod=insmod
+INSMOD=""
 case \$1 in
-1)insmod=${REORDER:-continue}
-return 1;;
+1)INSMOD=${REORDER:-continue};;
 $p
 esac
 }" >/etc/modparam.sh
