@@ -13,23 +13,15 @@ mdevs(){
 	done
 }
 
-modmdev(){
-	local m pid="" modprobe_wait=true
-	for m in "${@}"; do
-		modprobe "$m"
-	done
-	wait $pid
-}
-
 mdev(){
 local i t=c
 case "$1" in
 block) t=b ;;
 -m|-i)
 	[[ -e /etc/modprobe.sh ]] && . /etc/modprobe.sh
-	modmdev `echo ""|grep -sh "^MODALIAS=" $(find /sys -name uevent -print|sort)|sed -e 's:^MODALIAS=::g'|uniq`
+	modprobe -a `echo ""|grep -sh "^MODALIAS=" $(find /sys -name uevent -print|sort)|sed -e 's:^MODALIAS=::g'|uniq`
 	while [[ -f /etc/modalias ]] && mv /etc/modalias /etc/modalias_ && ( [[ "$1" == "-m" ]] || ( ! ln -s /sys /etc/modalias && [[ -f /etc/modalias ]] ) ) ; do
-		modmdev `cat /etc/modalias_`
+		modprobe -a `cat /etc/modalias_`
 		rm /etc/modalias_
 	done
 	return

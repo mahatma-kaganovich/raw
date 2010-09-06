@@ -247,7 +247,6 @@ local f="/sbin/modprobe"
 echo '#!/bin/sh
 . /etc/modprobe.sh
 modprobe "${@}"
-wait $pid
 exit $?' >$f
 chmod 755 $f
 echo "$f" >/proc/sys/kernel/modprobe
