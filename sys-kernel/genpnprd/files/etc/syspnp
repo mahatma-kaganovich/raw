@@ -329,7 +329,7 @@ detect_part(){
 		else
 			fstype $2
 		fi
-		} | sed -e 's%^\(.*:\).* TYPE="\([^"]*\)".*$%\1\2%g'
+		} |sed -e 's%^\(.*:\).* TYPE="\([^"]*\)".*$%\1\2%g'
 	    ) ; do
 		DETECTED_LOOPS="$DETECTED_LOOPS $1:${l#/DETECT_ROOT/}"
 		l="${l#*:}"
@@ -490,8 +490,9 @@ for d in "${@}"; do
 	d=`$blkid -t $d||findfs "$d"||busybox findfs "$d"` && [[ "${d#* TYPE=}" != "$d" ]] && echo "$d" && continue
 	d="${d%%:*}"
 }
-i=`fstype_` && [[ -n "$i" ]] && echo "$i" && continue
-[[ -b "$d" ]] && echo "$d"
+i=`fstype_`
+echo "${i:-$d}"
+#[[ -n "$i" ]] && echo "$i" || ( [[ -b "$d" ]] && echo "$d:" || echo "$d" )
 done 2>/dev/null
 }
 
