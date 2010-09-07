@@ -2,7 +2,7 @@
 # mdev replacement, (c) Denis Kaganovich, under Anarchy or GPLv2 license
 # some of busyboxes don't have mdev, some - mdev.conf|/dev/input/
 # Detect all: mdev -s "*" -m
-# mdev -all = mdev -s mem -b "*" -i
+# mdev -all = mdev -s mem -b "*" -m -i
 # (& do not writable /etc/modalias -> modprobe via mdev)
 
 DETECTBLK=false
@@ -37,9 +37,7 @@ block) t=b ;;
 -b)DETECTBLK=true;return;;
 -m|-i)
 	loadsh modprobe
-	modprobe -q -a `echo ""|grep -sh "^MODALIAS=" $(find /sys -name uevent -print|sort)|sed -e 's:^MODALIAS=::g'|uniq`
-;;
--i)
+	[[ "$1" == "-m" ]] && modprobe -q -a `echo ""|grep -sh "^MODALIAS=" $(find /sys -name uevent -print|sort)|sed -e 's:^MODALIAS=::g'|uniq`
 	while [[ -f /etc/modalias ]] && mv /etc/modalias /etc/modalias_ && ( [[ "$1" == "-m" ]] || ( ! ln -s /sys /etc/modalias 2>/dev/null && [[ -f /etc/modalias ]] ) ) ; do
 		modprobe -q -a `cat /etc/modalias_`
 		rm /etc/modalias_
@@ -56,7 +54,7 @@ block) t=b ;;
 	done
 	return
 ;;
--all)mdev -s mem -b "*" -i;return;;
+-all)mdev -s mem -b "*" -m -i;return;;
 esac
 case "$ACTION" in
 remove)
