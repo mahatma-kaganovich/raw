@@ -1,8 +1,10 @@
 #!/bin/sh
 # mdev replacement, (c) Denis Kaganovich, under Anarchy or GPLv2 license
 # some of busyboxes don't have mdev, some - mdev.conf|/dev/input/
-# Detect all: mdev -s "*" -m
-# or: mdev -s "*" -i (& do not writable /etc/modalias -> modprobe via mdev)
+# Detect all: mdev -b -s "*" -m
+# or: mdev -b -s "*" -i (& do not writable /etc/modalias -> modprobe via mdev)
+
+DETECTBLK=false
 
 mdevs(){
 	for i in $*; do
@@ -14,15 +16,23 @@ mdevs(){
 }
 
 modprobe(){
-	/sbin/modprobe "${@}"
+	`cat /proc/sys/kernel/modprobe` "${@}"
+}
+
+loadsh(){
+	local i
+	for i in "${@}"; do
+		[[ -e /etc/$i.sh ]] && . /etc/$i.sh
+	done
 }
 
 mdev(){
 local i t=c
 case "$1" in
 block) t=b ;;
+-b)DETECTBLK=true;;
 -m|-i)
-	[[ -e /etc/modprobe.sh ]] && . /etc/modprobe.sh
+	loadsh modprobe
 	modprobe -q -a `echo ""|grep -sh "^MODALIAS=" $(find /sys -name uevent -print|sort)|sed -e 's:^MODALIAS=::g'|uniq`
 	while [[ -f /etc/modalias ]] && mv /etc/modalias /etc/modalias_ && ( [[ "$1" == "-m" ]] || ( ! ln -s /sys /etc/modalias && [[ -f /etc/modalias ]] ) ) ; do
 		modprobe -q -a `cat /etc/modalias_`
@@ -47,7 +57,7 @@ remove)
 	return
 ;;
 add)	if [[ -n "$MODALIAS" ]]; then
-		echo "$MODALIAS" >>/etc/modalias || `cat /proc/sys/kernel/modprobe` -- $MODALIAS
+		echo "$MODALIAS" >>/etc/modalias || modprobe -- $MODALIAS
 	fi
 ;;
 esac
@@ -55,7 +65,14 @@ if [[ -n "$DEVNAME" ]] && ! [[ -e "/dev/$DEVNAME" ]]; then
 	DEVNAME="/dev/$DEVNAME"
 	i="${DEVNAME%/*}"
 	[[ -e "$i" ]] || mkdir -p "$i"
-	mknod -m ${DEVMODE:-0600} "$DEVNAME" $t $MAJOR $MINOR
+	mknod -m ${DEVMODE:-0600} "$DEVNAME" $t $MAJOR $MINOR && [[ $t == b ]] && if $DETECTBLK || [[ -d /etc/modalias ]]; then
+		loadsh blkid
+		: ${KV:=`uname -r`}
+		i=$(for i in `blkid $DEVNAME|grep ":.* TYPE="|sed -e 's:^.* TYPE="\([^"]*\)".*$:\1:g'|sort -u`; do
+			i=`find /lib/modules/$KV/ /lib/modules/$KV/kernel/|grep "/$i/.*\.ko\$\|$i\.ko\$"|sed -e 's:^.*/::g' -e 's:\.ko$::g'|sort -u`
+		done) # "
+		echo "$i" >>/etc/modalias || modprobe -q -a $i
+	fi
 fi
 if [[ -n "$FIRMWARE" ]] && echo 1 >/sys/$DEVPATH/loading; then
 	[[ -e /lib/firmware/$FIRMWARE ]] && cat /lib/firmware/$FIRMWARE >/sys/$DEVPATH/data && echo 0 >/sys/$DEVPATH/loading || echo -1 >/sys/$DEVPATH/loading
