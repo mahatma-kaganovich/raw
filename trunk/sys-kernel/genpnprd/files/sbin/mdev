@@ -1,17 +1,18 @@
 #!/bin/sh
 # mdev replacement, (c) Denis Kaganovich, under Anarchy or GPLv2 license
 # some of busyboxes don't have mdev, some - mdev.conf|/dev/input/
-# Detect all: mdev -b -s "*" -m
-# or: mdev -b -s "*" -i (& do not writable /etc/modalias -> modprobe via mdev)
+# Detect all: mdev -s "*" -m
+# mdev -all = mdev -s mem -b "*" -i
+# (& do not writable /etc/modalias -> modprobe via mdev)
 
 DETECTBLK=false
 
 mdevs(){
 	for i in $*; do
 		local DEVNAME="" MAJOR="" MINOR="" FIRMWARE="" DEVPATH="" DEVMODE=""
-		eval "$(sed -e 's:^\(.*\)=\([^"].*[^"]\)$:\1="\2":g' -e 's/^[^=]*$//g' <"$i")" || echo "== $i"
+		eval "$(sed -e 's:^\(.*\)=\([^"].*[^"]\)$:\1="\2":g' -e 's/^[^=]*$//g' <"$i")" || echo "! $i"
 		i="${i#/sys/class/}"
-		mdev "${i%%/*}"
+		[[ -e "/dev/$DEVNAME" ]] || mdev "${i%%/*}"
 	done
 }
 
@@ -19,22 +20,27 @@ modprobe(){
 	`cat /proc/sys/kernel/modprobe` "${@}"
 }
 
+modmdev(){
+	[[ -z "$MODALIAS" ]] || echo "$MODALIAS" >>/etc/modalias 2>/dev/null || modprobe "${@}" $MODALIAS
+}
+
 loadsh(){
-	local i
-	for i in "${@}"; do
-		[[ -e /etc/$i.sh ]] && . /etc/$i.sh
-	done
+	[[ "${SHLOADED##* $1 }" == "${SHLOADED}" ]] &&
+		[[ -e /etc/$1.sh ]] && . /etc/$1.sh && SHLOADED="$SHLOADED$1 "
+	return $?
 }
 
 mdev(){
 local i t=c
 case "$1" in
 block) t=b ;;
--b)DETECTBLK=true;;
+-b)DETECTBLK=true;return;;
 -m|-i)
 	loadsh modprobe
 	modprobe -q -a `echo ""|grep -sh "^MODALIAS=" $(find /sys -name uevent -print|sort)|sed -e 's:^MODALIAS=::g'|uniq`
-	while [[ -f /etc/modalias ]] && mv /etc/modalias /etc/modalias_ && ( [[ "$1" == "-m" ]] || ( ! ln -s /sys /etc/modalias && [[ -f /etc/modalias ]] ) ) ; do
+;;
+-i)
+	while [[ -f /etc/modalias ]] && mv /etc/modalias /etc/modalias_ && ( [[ "$1" == "-m" ]] || ( ! ln -s /sys /etc/modalias 2>/dev/null && [[ -f /etc/modalias ]] ) ) ; do
 		modprobe -q -a `cat /etc/modalias_`
 		rm /etc/modalias_
 	done
@@ -50,16 +56,14 @@ block) t=b ;;
 	done
 	return
 ;;
+-all)mdev -s mem -b "*" -i;return;;
 esac
 case "$ACTION" in
 remove)
 	rm "/dev/$DEVNAME"
 	return
 ;;
-add)	if [[ -n "$MODALIAS" ]]; then
-		echo "$MODALIAS" >>/etc/modalias || modprobe -- $MODALIAS
-	fi
-;;
+add)modmdev --;;
 esac
 if [[ -n "$DEVNAME" ]] && ! [[ -e "/dev/$DEVNAME" ]]; then
 	DEVNAME="/dev/$DEVNAME"
@@ -68,10 +72,11 @@ if [[ -n "$DEVNAME" ]] && ! [[ -e "/dev/$DEVNAME" ]]; then
 	mknod -m ${DEVMODE:-0600} "$DEVNAME" $t $MAJOR $MINOR && [[ $t == b ]] && if $DETECTBLK || [[ -d /etc/modalias ]]; then
 		loadsh blkid
 		: ${KV:=`uname -r`}
-		i=$(for i in `blkid $DEVNAME|grep ":.* TYPE="|sed -e 's:^.* TYPE="\([^"]*\)".*$:\1:g'|sort -u`; do
-			i=`find /lib/modules/$KV/ /lib/modules/$KV/kernel/|grep "/$i/.*\.ko\$\|$i\.ko\$"|sed -e 's:^.*/::g' -e 's:\.ko$::g'|sort -u`
+		MODALIAS=$(for i in `blkid $DEVNAME|grep ":.* TYPE="|sed -e 's:^.* TYPE="\([^"]*\)".*$:\1:g'|sort -u`; do
+			grep -q "	$i$" /proc/filesystems && continue
+			find /lib/modules/$KV/ /lib/modules/$KV/kernel/|grep "/$i/.*\.ko\$\|$i\.ko\$"|sed -e 's:^.*/::g' -e 's:\.ko$::g'|sort -u
 		done) # "
-		echo "$i" >>/etc/modalias || modprobe -q -a $i
+		modmdev -q -a
 	fi
 fi
 if [[ -n "$FIRMWARE" ]] && echo 1 >/sys/$DEVPATH/loading; then
