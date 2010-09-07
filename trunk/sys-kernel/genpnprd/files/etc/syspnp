@@ -676,7 +676,7 @@ etc_modalias(){
 
 loadsh(){
 	[[ "${SHLOADED##* $1 }" == "${SHLOADED}" ]] &&
-		[[ -e /etc/$1.sh ]] && . /etc/$1.sh && SHLOADED="$SHLOADED$1 "
+		[[ -e /etc/$1.sh ]] && . /etc/$1.sh && SHLOADED="$SHLOADED $1 "
 	return $?
 }
 
