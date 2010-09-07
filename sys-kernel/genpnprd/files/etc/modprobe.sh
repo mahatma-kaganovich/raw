@@ -6,13 +6,13 @@ modparam(){ return;}
 . ./modules.alias.sh
 
 _modprobe(){
-local m="$(echo -ne "$1" | sed -e s/-/_/g)"
+local m="$(echo -ne "$1" | sed -e s/-/_/g)" i
 shift
 for m in $m; do
-	modalias "$m" && for m in $ALIAS ; do
-		modparam $m
+	modalias "$m" && for i in $ALIAS ; do
+		modparam $i
 		$INSMOD
-		insmod $m $PARAM "${@}"
+		insmod $i $PARAM "${@}"
 		r=$?
 	done
 done
@@ -35,5 +35,3 @@ done
 _modprobe "${@}"
 return $r
 }
-
-#export -f modalias modparam modprobe _modprobe
