@@ -36,13 +36,13 @@ case "$1" in
 block) t=b ;;
 -b)DETECTBLK=true;return;;
 -m|-i)
+	i=/etc/modalias
 	loadsh modprobe
 	[[ "$1" == "-m" ]] && modprobe -q -a `echo ""|grep -sh "^MODALIAS=" $(find /sys -name uevent -print|sort)|sed -e 's:^MODALIAS=::g'|uniq`
-	while [[ -f /etc/modalias ]] && mv /etc/modalias /etc/modalias_ && ( [[ "$1" == "-m" ]] || ( ! ln -s /sys /etc/modalias 2>/dev/null && [[ -f /etc/modalias ]] ) ) ; do
-		modprobe -q -a `cat /etc/modalias_`
-		rm /etc/modalias_
+	while ! ( [[ "$1" == "-i" ]] && ln -s /sys $i 2>/dev/null ) && [[ -f $i ]] && mv $i ${i}_ ; do
+		modprobe -q -a `cat ${i}_`
+		rm ${i}_
 	done
-	return
 ;;
 -s)
 	shift
