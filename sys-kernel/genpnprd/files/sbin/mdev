@@ -17,11 +17,22 @@ mdevs(){
 }
 
 modprobe(){
-	`cat /proc/sys/kernel/modprobe` "${@}"
+	local i m
+	read m </proc/sys/kernel/modprobe && if [[ "$1 $2" == "-q -a" ]] && ! $m -V -a >/dev/null 2>&1; then
+		shift 2
+		for i in "${@}"; do
+			$m -q "$i"
+		done
+	else
+		$m "${@}"
+	fi
 }
 
 modmdev(){
-	[[ -z "$MODALIAS" ]] || echo "$MODALIAS" >>/etc/modalias 2>/dev/null || modprobe "${@}" $MODALIAS
+	[[ -z "$MODALIAS" ]] || echo "$MODALIAS" >>/etc/modalias 2>/dev/null || {
+		loadsh modprobe
+		modprobe "${@}" $MODALIAS
+	}
 }
 
 loadsh(){
@@ -70,10 +81,10 @@ if [[ -n "$DEVNAME" ]] && ! [[ -e "/dev/$DEVNAME" ]]; then
 	mknod -m ${DEVMODE:-0600} "$DEVNAME" $t $MAJOR $MINOR && [[ $t == b ]] && if $DETECTBLK || [[ -d /etc/modalias ]]; then
 		loadsh blkid
 		: ${KV:=`uname -r`}
-		MODALIAS=$(for i in `blkid $DEVNAME|grep ":.* TYPE="|sed -e 's:^.* TYPE="\([^"]*\)".*$:\1:g'|sort -u`; do
+		MODALIAS=$(for i in `blkid $DEVNAME|grep ":.* TYPE="|sed -e 's:^.* TYPE="\([^"]*\)".*$:\1:g'|sort -u`; do # "
 			grep -q "	$i$" /proc/filesystems && continue
 			find /lib/modules/$KV/ /lib/modules/$KV/kernel/|grep "/$i/.*\.ko\$\|$i\.ko\$"|sed -e 's:^.*/::g' -e 's:\.ko$::g'|sort -u
-		done) # "
+		done)
 		modmdev -q -a
 	fi
 fi
