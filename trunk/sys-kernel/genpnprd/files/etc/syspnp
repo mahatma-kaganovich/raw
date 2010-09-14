@@ -9,6 +9,8 @@
 #SYS_FIND="/sys"
 SYS_FIND=/sys/devices
 
+export blkid_cache="/etc/blkid.sh.cache"
+
 pids=""
 
 single(){
