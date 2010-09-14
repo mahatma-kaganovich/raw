@@ -1,8 +1,6 @@
 #!/bin/sh
 # (c) Denis Kaganovich, under Anarchy or GPLv2 license
 
-blkid_cache="/etc/blkid.sh.cache"
-
 lsblk(){
 	local i
 	while read i; do
@@ -11,6 +9,17 @@ lsblk(){
 			[[ "${i%[0-9]}" == "$i" ]] && grep -q " $i[0-9]*$" /proc/partitions || echo "/dev/$i"
 		}
 	done </proc/partitions
+}
+
+blk_label(){
+	local l=`hexdump -v -s $1 -n ${2:-80} -e '"" /1 "%s" ""' $d`
+	[[ -n "$l" ]] && echo -n " LABEL=\"$l\""
+}
+
+blk_uuid(){
+	echo -n ' UUID="'
+	hexdump -v -s $1 -n ${2:-16} -e '"" 4/1 "%02x" "-" 2/1 "%02x" "-" 2/1 "%02x" "-" 2/1 "%02x" "-" 6/1 "%02x" ""' $d
+	echo -n '"'
 }
 
 _blkid(){
@@ -22,11 +31,12 @@ case "`hexdump -v -s $i -n 10 -e '"'$i:'" 10/1 "%x" ""' $d`" in
 3:4e54465320202020*)echo ntfs;;
 1080:53ef*)
 	case "`hexdump -v -s 1116 -n 12 -e '"" 1 "%04x" ""' $d`" in
-	???[012389ab]00[01][02]000[1-7])echo ext2;;
-	????00[01][0246]000[1-7])echo ext3;;
-	*[1-7])echo ext4;;
-	*)echo jbd;;
+	???[012389ab]00[01][02]000[1-7])echo -n ext2;;
+	????00[01][0246]000[1-7])echo -n ext3;;
+	*[1-7])echo -n ext4;;
+	*)echo -n jbd;;
 	esac
+	blk_uuid 1128;blk_label 1144;echo ""
 ;;
 8244:5265497345724673*|65588:526549734572324673*|65588:526549734572334673*|65588:5265497345724673*|8212:5265497345724673*)echo reiserfs;;
 65536:52654973457234*)echo reiser4;;
@@ -57,28 +67,29 @@ hfs";;
 0:73717368*|0:68737173*)echo squashfs;;
 536:4c564d3220303031*|24:4c564d3220303031*|1048:4c564d3220303031*|1560:4c564d3220303031*|8192:4f4346535632*)echo lvm2pv;;
 65600:5f42485266535f4d*)echo btrfs;;
-1030:3434*)echo nilfs2;;
-esac|while read i; do
-	echo "$d: TYPE=\"$i\""
-	echo "$d: TYPE=\"$i\"" >>$blkid_cache
+1030:3434*)echo -n nilfs2;blk_uuid 1176;blk_label 1256;echo "";;
+esac|while read i u; do
+	i="$d:${u:+ }$u TYPE=\"$i\""
+	echo "$i"
+	echo "$i" >>$blkid_cache
 done
 done
 }
 
 blkid(){
-local r=1
+local r=1 blkid_cache
 [[ -z "$blkid" ]] && {
 	blkid="$(which blkid 2>/dev/null || ( [[ -e /bin/blkid ]] && echo /bin/blkid ) || ( [[ -e /sbin/blkid ]] && echo /sbin/blkid ) || echo blkid)"
 	[[ -e "$blkid" ]] && ( i="$(readlink $blkid)";[[ "${i%busybox}" == "$i" ]] ) || blkid=false
 }
 [[ -z "$*" ]] && set `lsblk` ""
 while [[ -n "$*" ]]; do
-local d="$1" i=""
+local d="$1" i="" u
 shift
 case "$d" in
--t)	d="$1"
+-t)	i=$(blkid|grep -F "${1%%=*}=\"${1#*=}\"")
 	shift
-	i=`$blkid -t $d||findfs "$d"||busybox findfs "$d"` && [[ "${i#* TYPE=}" != "$i" ]] && d="" || d="${i%%:*}"
+	d=""
 ;;
 esac
 [[ -n "$d" ]] && i=`_blkid`
