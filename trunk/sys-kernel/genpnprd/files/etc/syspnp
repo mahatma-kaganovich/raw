@@ -246,12 +246,8 @@ override_modprobe(){
 loadsh modprobe || return
 local f="/sbin/modprobe"
 [[ -e $f ]] && ! ( grep -q "bug #197730" $f && rm /sbin/modprobe ) && return
-echo '#!/bin/sh
-. /etc/modprobe.sh
-modprobe "${@}"
-exit $?' >$f
-chmod 755 $f
-echo "$f" >/proc/sys/kernel/modprobe
+ln -s /etc/modprobe.sh $f
+echo $f >/proc/sys/kernel/modprobe
 }
 
 wild(){
@@ -848,8 +844,12 @@ while true; do
 		exec /sbin/switch_root -c /dev/console "$NEW_ROOT" "$cmd_real_init" "$cmd_init_opts"
 	else
 		bad_msg "failed to mount root"
-		echo -n "Enter root partition or 'shell':"
-		REAL_ROOT=`SHELL="" vkb`
+		while true; do
+			cat /lib/keymaps/keymapList 2>/dev/null
+			echo -n "Enter root partition, keymap or 'shell':"
+			REAL_ROOT=`SHELL="" vkb`
+			loadkmap <"/lib/keymaps/$REAL_ROOT.map" 2>/dev/null || break
+		done
 		set_root_loop "$REAL_ROOT"
 		[[ "$REAL_ROOT" == shell ]] || continue
 	fi

@@ -1,30 +1,28 @@
 #!/bin/sh
-# mdev replacement, (c) Denis Kaganovich, under Anarchy or GPLv2 license
-# some of busyboxes don't have mdev, some - mdev.conf|/dev/input/
-# Detect all: mdev -s "*" -m
-# mdev -all = mdev -s mem -b "*" -m -i
-# (& do not writable /etc/modalias -> modprobe via mdev)
+# some of busyboxes dont have mdev, some - mdev.conf|/dev/input/
+# mdev -h
 
 DETECTBLK=false
+Q=-qs
 
 mdevs(){
 	for i in $*; do
 		local DEVNAME="" MAJOR="" MINOR="" FIRMWARE="" DEVPATH="" DEVMODE=""
 		eval "$(sed -e 's:^\(.*\)=\([^"].*[^"]\)$:\1="\2":g' -e 's/^[^=]*$//g' <"$i")" || echo "! $i"
 		i="${i#/sys/class/}"
-		[[ -e "/dev/$DEVNAME" ]] || mdev "${i%%/*}"
+		[[ -e "/dev/$DEVNAME" ]] || _mdev "${i%%/*}"
 	done
 }
 
 modprobe(){
 	local i m
-	read m </proc/sys/kernel/modprobe && if [[ "$1 $2" == "-q -a" ]] && ! $m -V -a >/dev/null 2>&1; then
+	read m </proc/sys/kernel/modprobe && if [[ "$2" == "-a" ]] && ! $m -V -a >/dev/null 2>&1; then
 		shift 2
 		for i in "${@}"; do
-			$m -q "$i"
+			$m $Q "$i"
 		done
 	else
-		$m "${@}"
+		$m $Q "${@}"
 	fi
 }
 
@@ -41,17 +39,47 @@ loadsh(){
 	return $?
 }
 
-mdev(){
+_mdev(){
 local i t=c
+case "$1:$ACTION" in
+block:*)t=b;;
+*:remove)
+	rm "/dev/$DEVNAME"
+	return
+;;
+*:add)modmdev --;;
+esac
+if [[ -n "$DEVNAME" ]] && ! [[ -e "/dev/$DEVNAME" ]]; then
+	DEVNAME="/dev/$DEVNAME"
+	i="${DEVNAME%/*}"
+	[[ -e "$i" ]] || mkdir -p "$i"
+	mknod -m ${DEVMODE:-0600} "$DEVNAME" $t $MAJOR $MINOR && [[ $t == b ]] && if $DETECTBLK || [[ -d /etc/modalias ]]; then
+		loadsh blkid
+		: ${KV:=`uname -r`}
+		MODALIAS=$(for i in `blkid $DEVNAME|grep ":.* TYPE="|sed -e 's:^.* TYPE="\([^"]*\)".*$:\1:g'|sort -u`; do # "
+			grep -q "	$i$" /proc/filesystems && continue
+			find /lib/modules/$KV/ /lib/modules/$KV/kernel/|grep "/$i/.*\.ko\$\|$i\.ko\$"|sed -e 's:^.*/::g' -e 's:\.ko$::g'|sort -u
+		done)
+		modmdev $Q -a
+	fi
+fi
+if [[ -n "$FIRMWARE" ]] && echo 1 >/sys/$DEVPATH/loading; then
+	[[ -e /lib/firmware/$FIRMWARE ]] && cat /lib/firmware/$FIRMWARE >/sys/$DEVPATH/data && echo 0 >/sys/$DEVPATH/loading || echo -1 >/sys/$DEVPATH/loading
+fi
+}
+
+mdev(){
+local i
+while [[ -n "$*" ]]; do
 case "$1" in
-block) t=b ;;
--b)DETECTBLK=true;return;;
+-[vq]|-[vq]s)Q=$1;;
+-b)DETECTBLK=true;;
 -m|-i)
 	i=/etc/modalias
 	loadsh modprobe
-	[[ "$1" == "-m" ]] && modprobe -q -a `echo ""|grep -sh "^MODALIAS=" $(find /sys -name uevent -print|sort)|sed -e 's:^MODALIAS=::g'|uniq`
+	[[ "$1" == "-m" ]] && modprobe $Q -a `echo ""|grep -sh "^MODALIAS=" $(find /sys -name uevent -print|sort)|sed -e 's:^MODALIAS=::g'|uniq`
 	while ! ( [[ "$1" == "-i" ]] && ln -s /sys $i 2>/dev/null ) && [[ -f $i ]] && mv $i ${i}_ ; do
-		modprobe -q -a `cat ${i}_`
+		modprobe $Q -a `cat ${i}_`
 		rm ${i}_
 	done
 ;;
@@ -65,32 +93,24 @@ block) t=b ;;
 	done
 	return
 ;;
--all)mdev -s mem -b "*" -m -i;return;;
-esac
-case "$ACTION" in
-remove)
-	rm "/dev/$DEVNAME"
-	return
+-all)mdev -s mem -b "*" -m -i;;
+-*)echo 'mdev replacement, (c) Denis Kaganovich, under Anarchy or GPLv2 license
+Options:
+-s [c]	populate /dev from /sys/class/[c]
+-v|q[s]	modprobe output
+-b	modprobe new fs
+-m	scan+modprobe modaliases
+-i	install: modaliases to background
+-all	= mdev -s mem -b "*" -m -i
+Example: mdev -s "*" -m'
+return
 ;;
-add)modmdev --;;
+*)_mdev $1;;
 esac
-if [[ -n "$DEVNAME" ]] && ! [[ -e "/dev/$DEVNAME" ]]; then
-	DEVNAME="/dev/$DEVNAME"
-	i="${DEVNAME%/*}"
-	[[ -e "$i" ]] || mkdir -p "$i"
-	mknod -m ${DEVMODE:-0600} "$DEVNAME" $t $MAJOR $MINOR && [[ $t == b ]] && if $DETECTBLK || [[ -d /etc/modalias ]]; then
-		loadsh blkid
-		: ${KV:=`uname -r`}
-		MODALIAS=$(for i in `blkid $DEVNAME|grep ":.* TYPE="|sed -e 's:^.* TYPE="\([^"]*\)".*$:\1:g'|sort -u`; do # "
-			grep -q "	$i$" /proc/filesystems && continue
-			find /lib/modules/$KV/ /lib/modules/$KV/kernel/|grep "/$i/.*\.ko\$\|$i\.ko\$"|sed -e 's:^.*/::g' -e 's:\.ko$::g'|sort -u
-		done)
-		modmdev -q -a
-	fi
-fi
-if [[ -n "$FIRMWARE" ]] && echo 1 >/sys/$DEVPATH/loading; then
-	[[ -e /lib/firmware/$FIRMWARE ]] && cat /lib/firmware/$FIRMWARE >/sys/$DEVPATH/data && echo 0 >/sys/$DEVPATH/loading || echo -1 >/sys/$DEVPATH/loading
-fi
+shift
+done
 }
 
-mdev "${@}"
+case $0 in
+*mdev*)mdev "${@}";;
+esac
