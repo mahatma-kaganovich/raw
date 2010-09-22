@@ -5,7 +5,18 @@ modparam(){ return;}
 . /etc/modparam.sh
 . ./modules.alias.sh
 
-_modprobe(){
+modprobe(){
+local r=1 INSMOD="" a=false
+while true; do
+case "$1" in
+--)shift;break;;
+-*a*)a=true;;
+-*);;
+*)break;;
+esac
+shift
+done
+$a && set "$*"
 local m="$(echo -ne "$1" | sed -e s/-/_/g)" i
 shift
 for m in $m; do
@@ -16,22 +27,9 @@ for m in $m; do
 		r=$?
 	done
 done
-}
-
-modprobe(){
-local r=1 INSMOD=""
-while true; do
-case "$1" in
--a|--all)
-	shift
-	_modprobe "$*"
-	return $r
-;;
--*);;
-*)break;;
-esac
-shift
-done
-_modprobe "${@}"
 return $r
 }
+
+case $0 in
+*modprobe*)modprobe "${@}";exit $?;;
+esac
