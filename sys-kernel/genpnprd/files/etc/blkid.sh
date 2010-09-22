@@ -108,3 +108,7 @@ esac
 done 2>/dev/null
 return $r
 }
+
+case $0 in
+*blkid*)blkid "${@}";exit $?;;
+esac
