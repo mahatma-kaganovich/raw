@@ -1,9 +1,10 @@
 #!/bin/sh
 
+modalias(){ ALIAS=`find -name "$1.ko"`;return $?;}
 cd /lib/modules/${KV:=`uname -r`}
+[[ -e ./modules.alias.sh ]] && . ./modules.alias.sh # || return 1
 modparam(){ return;}
-. /etc/modparam.sh
-. ./modules.alias.sh
+[[ -e /etc/modparam.sh ]] && . /etc/modparam.sh
 
 modprobe(){
 local r=1 INSMOD="" a=false

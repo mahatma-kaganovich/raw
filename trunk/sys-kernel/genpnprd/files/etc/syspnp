@@ -187,7 +187,7 @@ pnp_options(){
 	*) export cmd_`echo "$i"|sed -e 's:[^a-zA-Z0-9_]:_:g'`=true ;;
 	esac
 	done
-	$cmd_nofb && p="*/fb.ko|*/drm_kms_helper.ko|*/fbcon.ko)INSMOD=continue;;$p"
+	$cmd_nofb && p="*/fb.ko|*/drm_kms_helper.ko)INSMOD=continue;;$p"
 	[[ -n "$cmd_noload" ]] && p="*/$(echo "$cmd_noload"|sed -e 's/,/.ko|*\//g').ko)INSMOD=continue;;$p"
 	echo "modparam(){
 INSMOD=""
@@ -577,6 +577,7 @@ load_hand_made(){
 	$cmd_nofb || [[ -z "$(cat /proc/fb 2>/dev/null)" ]] || mod fbcon
 	while read i i1 ; do
 		case $i in
+		drm_kms_helper)mod fbcon;;
 #		usual_tables) mod usb_storage ;; # on demand
 		usbcore) mod usb_storage ;; # user-frendly
 		thermal_sys) mod fan ;;
@@ -698,6 +699,7 @@ syspnp(){
 	done
 
 	empty_hwopts firewire net pata pcmcia sata scsi usb   ataraid dmraid evms lvm mdadm fs
+	etc_modalias
 	refresh n
 	# first pass - strict bus order
 #	CHK=true # try twice?
