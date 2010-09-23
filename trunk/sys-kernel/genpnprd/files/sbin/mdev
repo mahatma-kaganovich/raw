@@ -40,7 +40,7 @@ loadsh(){
 }
 
 _mdev(){
-local i t=c
+local i j t=c
 case "$1:$ACTION" in
 block:*)t=b;;
 *:remove)
@@ -102,7 +102,11 @@ case "$1" in
 	mount -a 2>/dev/null
 	SHLOADED=""
 	echo /sbin/modprobe >/proc/sys/kernel/modprobe
-	mdev -s -m block -M
+	i="-"
+	while j=`cat /proc/modules` && [[ "$i" != "$j" ]]; do
+		mdev -s -m block -M
+		i="$j"
+	done
 	[[ -e /sys/module/drm_kms_helper ]] && modprobe fbcon
 	/sbin/switch_root -c /dev/console /new_root /sbin/init
 	shift
