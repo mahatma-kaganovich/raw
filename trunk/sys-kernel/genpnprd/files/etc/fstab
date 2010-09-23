@@ -1,4 +1,4 @@
-/dev/ram0	/	ext2	defaults	0 0
+#/dev/ram0	/	ext2	defaults	0 0
 proc		/proc	proc	defaults	0 0
 sys		/sys	sysfs	defaults	0 0
 /lib.loopfs	/lib	squashfs	loop,ro	0 0
