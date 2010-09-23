@@ -40,7 +40,7 @@ loadsh(){
 }
 
 _mdev(){
-local i j t=c
+local i t=c
 case "$1:$ACTION" in
 block:*)t=b;;
 *:remove)
@@ -61,8 +61,16 @@ if [[ -n "$DEVNAME" ]] && ! [[ -e "/dev/$DEVNAME" ]]; then
 			find /lib/modules/$KV/ /lib/modules/$KV/kernel/|grep "/$i/.*\.ko\$\|$i\.ko\$"|sed -e 's:^.*/::g' -e 's:\.ko$::g'|sort -u
 		done)
 		modmdev $Q -a
+		mount -a 2>/dev/null
+		$droot && ! [[ -e /new_root ]] && {
+			mkdir /new_root
+			mount -o ro $DEVNAME /new_root 2>/dev/null
+			[[ -e /new_root/sbin/init ]] && grep -sq "^$DEVNAME[ 	]*/[ 	]" /new_root/etc/fstab || {
+				umount /new_root
+				rmdir /new_root
+			}
+		}
 	fi
-	mount -a 2>/dev/null
 fi
 if [[ -n "$FIRMWARE" ]] && echo 1 >/sys/$DEVPATH/loading; then
 	[[ -e /lib/firmware/$FIRMWARE ]] && cat /lib/firmware/$FIRMWARE >/sys/$DEVPATH/data && echo 0 >/sys/$DEVPATH/loading || echo -1 >/sys/$DEVPATH/loading
@@ -70,7 +78,7 @@ fi
 }
 
 mdev(){
-local i
+local i j droot=false
 while [[ -n "$*" ]]; do
 case "$1" in
 -[vq]|-[vq]s)Q=$1;;
@@ -98,10 +106,11 @@ case "$1" in
 -init)
 	/bin/busybox mount -t proc proc /proc||mount -t proc proc /proc
 	/bin/busybox --install -s
-	mdev -M -s mem -b block
+	mdev -M -b -s mem block
 	mount -a 2>/dev/null
 	SHLOADED=""
 	echo /sbin/modprobe >/proc/sys/kernel/modprobe
+	droot=true
 	i="-"
 	while j=`cat /proc/modules` && [[ "$i" != "$j" ]]; do
 		mdev -s -m block -M
