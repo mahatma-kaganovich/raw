@@ -74,7 +74,7 @@ sub read_modinfo{
 					push @{$dep{$i}},split(/,/,$_);
 				}
 			}
-			push @{$dep{$i}},$m;
+			($m ne '') && push @{$dep{$i}},$m;
 		}
 		for(@{$v{alias}}){
 			for(lines($_)){
