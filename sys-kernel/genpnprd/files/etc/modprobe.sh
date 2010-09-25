@@ -6,12 +6,17 @@ cd /lib/modules/${KV:=`uname -r`}
 modparam(){ return;}
 [[ -e /etc/modparam.sh ]] && . /etc/modparam.sh
 
+modverbose(){
+	echo "insmod $i $PARAM"
+}
+
 modprobe(){
-local r=1 INSMOD="" a=false
+local rr=0 r=1 INSMOD="" a=false V=
 while true; do
 case "$1" in
 --)shift;break;;
 -*a*)a=true;;
+-*v*)V=modverbose;;
 -*);;
 *)break;;
 esac
@@ -21,14 +26,22 @@ $a && set "$*"
 local m="$(echo -ne "$1" | sed -e s/-/_/g)" i
 shift
 for m in $m; do
+	a="/temp/cache/modprobe/$m.m"
+	[[ -e "$a" ]] && continue
+	r=0
 	modalias "$m" && for i in $ALIAS ; do
 		modparam $i
 		$INSMOD
-		insmod $i $PARAM "${@}"
-		r=$?
-	done
+		$V
+		insmod $i $PARAM "${@}" || r=1
+	done || rr=1
+	if [[ $r == 0 ]]; then
+		touch "$a" 2>/dev/null
+	else
+		rr=1
+	fi
 done
-return $r
+return $r$rr
 }
 
 case $0 in
