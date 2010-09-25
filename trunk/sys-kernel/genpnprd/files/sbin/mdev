@@ -2,8 +2,10 @@
 # some of busyboxes dont have mdev, some - mdev.conf|/dev/input/
 # mdev -h
 
+DROOT=false
 DETECTBLK=false
 Q=-qs
+O=/dev/null
 
 mdevs(){
 	[[ -e "$1" ]] && for i in $*; do
@@ -15,12 +17,12 @@ mdevs(){
 }
 
 modprobe(){
-	local i m
+	local i m c
 	read m </proc/sys/kernel/modprobe && [[ -x "$m" ]] || m="busybox modprobe"
-	if [[ "$2" == "-a" ]] && ! $m -V -a >/dev/null 2>&1; then
+	if [[ "$2" == "-a" ]] && ! $m -V -a >$O 2>&1; then
 		shift 2
 		for i in "${@}"; do
-			$m $Q "$i"
+			$m $Q "$i" 2>$O
 		done
 	else
 		$m $Q "${@}"
@@ -28,7 +30,7 @@ modprobe(){
 }
 
 modmdev(){
-	[[ -z "$MODALIAS" ]] || echo "$MODALIAS" >>/etc/modalias 2>/dev/null || {
+	[[ -z "$MODALIAS" ]] || echo "$MODALIAS" 2>$O >>/etc/modalias || {
 		loadsh modprobe
 		modprobe "${@}" $MODALIAS
 	}
@@ -62,13 +64,13 @@ if [[ -n "$DEVNAME" ]] && ! [[ -e "/dev/$DEVNAME" ]]; then
 			find /lib/modules/$KV/ /lib/modules/$KV/kernel/|grep "/$i/.*\.ko\$\|$i\.ko\$"|sed -e 's:^.*/::g' -e 's:\.ko$::g'|sort -u
 		done)
 		modmdev $Q -a
-		mount -a 2>/dev/null
-		$droot && { i=/newroot
+		mount -a 2>$O
+		$DROOT && { i=/newroot
 			mkdir $i && (
-			mount -o ro $DEVNAME $i && ( [[ -e $i/sbin/init ]] &&
+			mount -v -o ro $DEVNAME $i && ( [[ -e $i/sbin/init ]] &&
 			grep -q "^$DEVNAME[ 	]*/[ 	]" $i/etc/fstab || (
 			umount $i;false ) ) || rmdir $i )
-		} 2>/dev/null
+		} 2>$O
 	fi
 fi
 if [[ -n "$FIRMWARE" ]] && echo 1 >/sys/$DEVPATH/loading; then
@@ -77,16 +79,17 @@ fi
 }
 
 mdev(){
-local i j droot=false
+local i j
 while [[ -n "$*" ]]; do
 case "$1" in
--[vq]|-[vq]s)Q=$1;;
+-v|-vs)Q=$1;O=/dev/console;;
+-q|-qs)Q=$1;O=/dev/null;;
 -b)DETECTBLK=true;;
 -m|-i|-M)
 	i=/etc/modalias
 	loadsh modprobe
 	[[ "$1" == "-m" ]] && modprobe $Q -a `echo ""|grep -sh "^MODALIAS=" $(find /sys -name uevent -print|sort)|sed -e 's:^MODALIAS=::g'|uniq`
-	while ! ( [[ "$1" == "-i" ]] && ln -s /sys $i 2>/dev/null ) && [[ -f $i ]] && mv $i ${i}_ ; do
+	while ! ( [[ "$1" == "-i" ]] && ln -s /sys $i 2>$O ) && [[ -f $i ]] && mv $i ${i}_ ; do
 		modprobe $Q -a `cat ${i}_`
 		rm ${i}_
 	done
@@ -105,46 +108,42 @@ case "$1" in
 	return
 ;;
 -all)mdev -s mem -b "*" -m -i;;
--init|-fastinit)
+-*init)
 	/bin/busybox mount /proc||mount /proc
 	/bin/busybox --install -s
 	mount /sys
-	mdev -M -b -s mem block
-
-	i=/sbin/modprobe
-	[[ -x "$i" ]] || i="/bin/busybox modprobe"
-	loadsh modprobe && i=/etc/modprobe.sh
-	echo "$i" >/proc/sys/kernel/modprobe
-
-	mount -a 2>/dev/null
+	mdev -b -s mem -i block
+	mount -a 2>$O
+	DROOT=true
 	SHLOADED=""
-	droot=true
-	if [[ "$1" == "-fastinit" ]]; then
-		echo /sbin/mdev >/proc/sys/kernel/hotplug
-		mdev -s -m -w -M block -l
-	else
-		i="-"
-		while j=`cat /proc/modules` && [[ "$i" != "$j" ]]; do
-			mdev -s -w -m block -M
-			i="$j"
-		done
-	fi
+	mkdir -p /temp/cache/modprobe
+	i="-"
+	while ! ( [[ $1 == -fastinit ]] && [[ -e /newroot ]] ) && j=`cat /proc/modules` && [[ "$i" != "$j" ]]; do
+		mdev -m -w -s block 2>$O
+		i="$j"
+	done
 	[[ -e /sys/module/drm_kms_helper ]] && modprobe $Q fbcon
+	j=0
+	for i in /sys/module/*; do
+		let j=j+1
+	done
+	echo "$j modules"
 	cd /newroot && {
-		echo "" >/proc/sys/kernel/modprobe 2>/proc/sys/kernel/hotplug
-		umount /* 2>/dev/null
+		umount /* 2>$O
+		mount
 		exec /sbin/switch_root -c /dev/console /newroot /sbin/init
 	}
 	shift
 	[[ -z "$*" ]] && return
-	echo /sbin/mdev >/proc/sys/kernel/hotplug
+	ln -s $0 /sbin/hotplug
 	mdev -s "*" -i
 	exec "${@}"
 ;;
 -*)echo 'mdev replacement, (c) Denis Kaganovich, under Anarchy or GPLv2 license
+Named "hotplug" will detect /newroot, "mdev" - no, "*init|*rc" - initrc.
 Options:
 -s [c]	populate /dev from /sys/class/[c]
--v|q[s]	modprobe output
+-v|q[s]	output
 -b	modprobe new fs
 -m	scan+modprobe modaliases
 -i	install: modaliases to background
@@ -162,6 +161,7 @@ done
 }
 
 case $0 in
-*mdev*)mdev "${@}";;
 *rc|*init)mdev -init /bin/sh;;
+*hotplug*)DROOT=true;mdev "${@}";;
+*mdev*)mdev "${@}";;
 esac
