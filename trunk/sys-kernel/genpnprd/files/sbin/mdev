@@ -47,8 +47,8 @@ mods(){
 }
 
 tryroot(){
-	[[ "${t:=auto}" == auto ]] || grep -q "	$t$" /proc/filesystems || modprobe $Q -a $(mods "$t")
 	[[ -e $p ]] && return 1
+	[[ "${t:=auto}" == auto ]] || grep -q "	$t$" /proc/filesystems || modprobe $Q -a $(mods "$t")
 	$DROOT && mkdir -p $p && (
 		mount -o "${o:-ro}" -t "$t" "$d" $p && ( [[ -e $p/sbin/init ]] &&
 		( grep -q "^$d[ 	][ 	]*/[ 	]" $p/etc/fstab || ${1:-xroot} $p/etc/fstab / ) || (
