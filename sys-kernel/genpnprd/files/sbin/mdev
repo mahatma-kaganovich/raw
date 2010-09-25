@@ -47,12 +47,11 @@ mods(){
 }
 
 tryroot(){
-	[[ -e $p ]] && return 1
+	( $DROOT && mkdir -p $p ) || return 1
 	[[ "${t:=auto}" == auto ]] || grep -q "	$t$" /proc/filesystems || modprobe $Q -a $(mods "$t")
-	$DROOT && mkdir -p $p && (
-		mount -o "${o:-ro}" -t "$t" "$d" $p && ( [[ -e $p/sbin/init ]] &&
+	mount -o "${o:-ro}" -t "$t" "$d" $p && ( [[ -e $p/sbin/init ]] &&
 		( grep -q "^$d[ 	][ 	]*/[ 	]" $p/etc/fstab || ${1:-xroot} $p/etc/fstab / ) || (
-		umount $p;false ) ) || rmdir $p )
+		umount $p;false ) ) || rmdir $p
 	[[ -e $p ]]
 	return $?
 }
@@ -68,14 +67,12 @@ xroot(){
 		: ${t:=auto}
 		if [[ "$1" == /etc/fstab ]]; then
 			# nfs,...
-			case "$d" in
-			/dev/drbd*)modprobe $Q drbd;;
-			esac
 			tryroot 2>>$O
 		else
 			xroot /etc/fstab /newroot "$d"||continue
 		fi
 		case "$d" in
+		/dev/drbd*)modprobe $Q drbd;blk2=true;;
 		/dev/md*)
 			a=
 			mdadm --examine --scan -v|while read x; do
@@ -139,16 +136,15 @@ if [[ -n "$DEVNAME" ]] && ! [[ -e "/dev/$DEVNAME" ]]; then
 			mods "$i"
 		done)
 		modmdev $Q -a
-		for i in `echo "$id"|sed -e 's/^[^ ]*://' -e 's:\( [A-Z]*=\)\"\([^"]*\)\":\1\2\1"\2":g'`; do
-			sed -e "s:#.*$::g" </etc/fstab|while read d p t o x; do
-				[[ -n "$d" ]] && for i in $DEVNAME "${@}"; do
-					[[ -z "${i##$d}" ]] && if [[ "$p" == /newroot ]]; then
-						d="$DEVNAME"
-						tryroot 2>>$O
-					else
-						mount -o "${o:-ro}" -t "${t:-auto}" $DEVNAME $p
-					fi
-				done
+		id="$DEVNAME `echo "$id"|sed -e 's/^[^ ]*://' -e 's:\( [A-Z]*=\)\"\([^"]*\)\":\1\2\1"\2":g'`" #'
+		sed -e "s:#.*$::g" </etc/fstab|while read d p t o x; do
+			[[ -n "$d" ]] && for i in $id; do
+				[[ -z "${i##$d}" ]] && if [[ "$p" == /newroot ]]; then
+					d="$DEVNAME"
+					tryroot 2>>$O
+				else
+					mount -o "${o:-ro}" -t "${t:-auto}" $DEVNAME $p
+				fi
 			done
 		done
 	    fi
