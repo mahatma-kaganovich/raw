@@ -42,6 +42,65 @@ loadsh(){
 	return $?
 }
 
+mods(){
+	find /lib/modules/$KV/ /lib/modules/$KV/kernel/|grep "/$i/.*\.ko\$\|$i\.ko\$"|sed -e 's:^.*/::g' -e 's:\.ko$::g'|sort -u
+}
+
+tryroot(){
+	[[ "${t:=auto}" == auto ]] || grep -q "	$t$" /proc/filesystems || modprobe $Q -a $(mods "$t")
+	[[ -e $p ]] && return 1
+	$DROOT && mkdir -p $p && (
+		mount -o "${o:-ro}" -t "$t" "$d" $p && ( [[ -e $p/sbin/init ]] &&
+		( grep -q "^$d[ 	][ 	]*/[ 	]" $p/etc/fstab || ${1:-xroot} $p/etc/fstab / ) || (
+		umount $p;false ) ) || rmdir $p )
+	[[ -e $p ]]
+	return $?
+}
+
+xroot(){
+	local d p t o x a
+	sed -e "s:#.*$::g" <$1 | while read d p t o x; do
+		[[ "$p" == "$2" ]] || continue
+		[[ -n "$3" ]] && {
+			[[ -z "${3##$d}" ]] && return 0
+			continue
+		}
+		: ${t:=auto}
+		if [[ "$1" == /etc/fstab ]]; then
+			# nfs,...
+			case "$d" in
+			/dev/drbd*)modprobe $Q drbd;;
+			esac
+			tryroot 2>>$O
+		else
+			xroot /etc/fstab /newroot "$d"||continue
+		fi
+		case "$d" in
+		/dev/md*)
+			a=
+			mdadm --examine --scan -v|while read x; do
+				if [[ "${i#ARRAY $d }" != "$x" ]]; then
+					a=1
+				elif [[ "${x#ARRAY }" != "$x" ]]; then
+					a=
+				else
+					x=" $x"
+				fi
+				[[ -n "$a" ]] && echo "$x"
+			done >>/etc/mdadm.conf
+			modprobe $Q -a `grep " level=" /etc/mdadm.conf | sed -e 's:^.* level=\([^ ]*\) .*$:\1:g' | sort -u`
+			mdadm --assemble --scan
+			blk2=true
+		;;
+		/dev/mapper*)	[[ -e /dev/mapper/control ]] || {
+				modprobe $Q -a $(mods "md/dm-*")
+				blk2=true
+		};;
+		esac
+	done
+	return 1
+}
+
 _mdev(){
 local i t=c
 case "$1:$ACTION" in
@@ -56,33 +115,44 @@ if [[ -n "$DEVNAME" ]] && ! [[ -e "/dev/$DEVNAME" ]]; then
 	DEVNAME="/dev/$DEVNAME"
 	i="${DEVNAME%/*}"
 	[[ -e "$i" ]] || mkdir -p "$i"
-	mknod -m ${DEVMODE:-0600} "$DEVNAME" $t $MAJOR $MINOR && [[ $t == b ]] && [[ "`cat "/sys/block${DEVNAME#/dev}/size" 2>/dev/null`" != 0 ]] && if $DETECTBLK || [[ -d /etc/modalias ]]; then
+	mknod -m ${DEVMODE:-0600} "$DEVNAME" $t $MAJOR $MINOR && {
+		case "$DEVNAME" in
+		/dev/mapper/control)
+			vgchange -ay --ignorelockingfailure 2>>$O
+			dmraid -ay
+		;;
+		esac
+	    [[ $t == b ]] && [[ "`cat "/sys/block${DEVNAME#/dev}/size" 2>/dev/null`" != 0 ]] && if $DETECTBLK || [[ -d /etc/modalias ]]; then
 		loadsh blkid
 		: ${KV:=`uname -r`}
 		local id="`blkid $DEVNAME`" d p o t x
 		MODALIAS=$(for i in `echo "$id"|grep ":.* TYPE="|sed -e 's:^.* TYPE="\([^"]*\)".*$:\1:g'|sort -u`; do # "
 			grep -q "	$i$" /proc/filesystems && continue
-			find /lib/modules/$KV/ /lib/modules/$KV/kernel/|grep "/$i/.*\.ko\$\|$i\.ko\$"|sed -e 's:^.*/::g' -e 's:\.ko$::g'|sort -u
+			{
+			case "$i" in
+			lvm2*)	[[ -e /dev/mapper/control ]] && continue
+				i="/md/dm-.*"
+			;;
+			*)grep -q "	$i$" /proc/filesystems && continue;;
+			esac
+			}
+			mods "$i"
 		done)
 		modmdev $Q -a
-		echo "$id"|while read i; do
-			eval "set $i"
-			shift
-			while read d p t o x; do
-				[[ -n "${d%%\#*}" ]] && for i in $DEVNAME "${@}"; do
-					[[ "$d" == "$i" ]] || [[ "$d:$p" == "auto:/newroot" ]] || continue
-					if [[ "$p" == /newroot ]]; then
-					    ( $DROOT && mkdir $p && (
-						mount -o "${o:-ro}" -t "${t:-auto}" $DEVNAME $p && ( [[ -e $p/sbin/init ]] &&
-						grep -q "^$DEVNAME[ 	][ 	]*/[ 	]" $p/etc/fstab || (
-						umount $p;false ) ) || rmdir $p ) ) 2>>$O
+		for i in `echo "$id"|sed -e 's/^[^ ]*://' -e 's:\( [A-Z]*=\)\"\([^"]*\)\":\1\2\1"\2":g'`; do
+			sed -e "s:#.*$::g" </etc/fstab|while read d p t o x; do
+				[[ -n "$d" ]] && for i in $DEVNAME "${@}"; do
+					[[ -z "${i##$d}" ]] && if [[ "$p" == /newroot ]]; then
+						d="$DEVNAME"
+						tryroot 2>>$O
 					else
 						mount -o "${o:-ro}" -t "${t:-auto}" $DEVNAME $p
 					fi
 				done
-			done </etc/fstab
+			done
 		done
-	fi
+	    fi
+	}
 fi
 if [[ -n "$FIRMWARE" ]] && echo 1 >/sys/$DEVPATH/loading; then
 	[[ -e /lib/firmware/$FIRMWARE ]] && cat /lib/firmware/$FIRMWARE >/sys/$DEVPATH/data && echo 0 >/sys/$DEVPATH/loading || echo -1 >/sys/$DEVPATH/loading
@@ -121,6 +191,7 @@ case "$1" in
 -all)mdev -s mem -b "*" -m -i;;
 -*init)
 	DROOT=true
+	local blk2=false
 	/bin/busybox mount /proc||mount /proc
 	/bin/busybox --install -s
 	mount /sys
@@ -130,10 +201,21 @@ case "$1" in
 	mkdir -p /temp/cache/modprobe
 	i="-"
 	while ! ( [[ $1 == -fastinit ]] && [[ -e /newroot ]] ) && j=`cat /proc/modules` && [[ "$i" != "$j" ]]; do
-		mdev -m -w -s block
+		mdev -m -w -s block misc
+		while $blk2; do
+			blk2=false
+			mdev -s misc block
+		done
 		i="$j"
 	done
 	[[ -e /sys/module/drm_kms_helper ]] && modprobe $Q fbcon 2>>$O
+	[[ -e /newroot ]] || {
+		xroot /etc/fstab /newroot
+		while $blk2; do
+			blk2=false
+			mdev -s misc block
+		done
+	}
 	j=0
 	for i in /sys/module/*; do
 		let j=j+1
