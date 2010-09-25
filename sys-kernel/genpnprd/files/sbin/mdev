@@ -56,21 +56,33 @@ if [[ -n "$DEVNAME" ]] && ! [[ -e "/dev/$DEVNAME" ]]; then
 	DEVNAME="/dev/$DEVNAME"
 	i="${DEVNAME%/*}"
 	[[ -e "$i" ]] || mkdir -p "$i"
-	mknod -m ${DEVMODE:-0600} "$DEVNAME" $t $MAJOR $MINOR && [[ $t == b ]] && [[ "`cat "/sys/block${DEVNAME#/dev}/size"`" != 0 ]] && if $DETECTBLK || [[ -d /etc/modalias ]]; then
+	mknod -m ${DEVMODE:-0600} "$DEVNAME" $t $MAJOR $MINOR && [[ $t == b ]] && [[ "`cat "/sys/block${DEVNAME#/dev}/size" 2>$O`" != 0 ]] && if $DETECTBLK || [[ -d /etc/modalias ]]; then
 		loadsh blkid
 		: ${KV:=`uname -r`}
-		MODALIAS=$(for i in `blkid $DEVNAME|grep ":.* TYPE="|sed -e 's:^.* TYPE="\([^"]*\)".*$:\1:g'|sort -u`; do # "
+		local id="`blkid $DEVNAME`" d p o t x
+		MODALIAS=$(for i in `echo "$id"|grep ":.* TYPE="|sed -e 's:^.* TYPE="\([^"]*\)".*$:\1:g'|sort -u`; do # "
 			grep -q "	$i$" /proc/filesystems && continue
 			find /lib/modules/$KV/ /lib/modules/$KV/kernel/|grep "/$i/.*\.ko\$\|$i\.ko\$"|sed -e 's:^.*/::g' -e 's:\.ko$::g'|sort -u
 		done)
 		modmdev $Q -a
-		mount -a 2>$O
-		$DROOT && { i=/newroot
-			mkdir $i && (
-			mount -v -o ro $DEVNAME $i && ( [[ -e $i/sbin/init ]] &&
-			grep -q "^$DEVNAME[ 	]*/[ 	]" $i/etc/fstab || (
-			umount $i;false ) ) || rmdir $i )
-		} 2>$O
+		# mount:
+		echo "$id"|while read i; do
+			eval "set $i"
+			shift
+			while read d p t o x; do
+				[[ -n "${d%%\#*}" ]] && for i in $DEVNAME "${@}"; do
+					[[ "$d" == "$i" ]] || [[ "$d:$p" == "auto:/newroot" ]] || continue
+					if [[ "$p" == /newroot ]]; then
+					    ( $DROOT && mkdir $p && (
+						mount -o "${o:-ro}" -t "${t:-auto}" $DEVNAME $p && ( [[ -e $p/sbin/init ]] &&
+						grep -q "^$DEVNAME[ 	][ 	]*/[ 	]" $p/etc/fstab || (
+						umount $p;false ) ) || rmdir $p ) ) 2>$O
+					else
+						mount -o "${o:-ro}" -t "${t:-auto}" $DEVNAME $p
+					fi
+				done
+			done </etc/fstab
+		done
 	fi
 fi
 if [[ -n "$FIRMWARE" ]] && echo 1 >/sys/$DEVPATH/loading; then
