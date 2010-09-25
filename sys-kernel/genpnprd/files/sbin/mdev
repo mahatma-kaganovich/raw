@@ -56,7 +56,7 @@ if [[ -n "$DEVNAME" ]] && ! [[ -e "/dev/$DEVNAME" ]]; then
 	DEVNAME="/dev/$DEVNAME"
 	i="${DEVNAME%/*}"
 	[[ -e "$i" ]] || mkdir -p "$i"
-	mknod -m ${DEVMODE:-0600} "$DEVNAME" $t $MAJOR $MINOR && [[ $t == b ]] && if $DETECTBLK || [[ -d /etc/modalias ]]; then
+	mknod -m ${DEVMODE:-0600} "$DEVNAME" $t $MAJOR $MINOR && [[ $t == b ]] && [[ "`cat "/sys/block${DEVNAME#/dev}/size"`" != 0 ]] && if $DETECTBLK || [[ -d /etc/modalias ]]; then
 		loadsh blkid
 		: ${KV:=`uname -r`}
 		MODALIAS=$(for i in `blkid $DEVNAME|grep ":.* TYPE="|sed -e 's:^.* TYPE="\([^"]*\)".*$:\1:g'|sort -u`; do # "
@@ -109,12 +109,12 @@ case "$1" in
 ;;
 -all)mdev -s mem -b "*" -m -i;;
 -*init)
+	DROOT=true
 	/bin/busybox mount /proc||mount /proc
 	/bin/busybox --install -s
 	mount /sys
 	mdev -b -s mem -i block
 	mount -a 2>$O
-	DROOT=true
 	SHLOADED=""
 	mkdir -p /temp/cache/modprobe
 	i="-"
