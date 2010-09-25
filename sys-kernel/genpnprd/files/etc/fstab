@@ -3,5 +3,5 @@ proc		/proc	proc	defaults	0 0
 sysfs		/sys	sysfs	defaults	0 0
 /lib.loopfs	/lib	squashfs	loop,ro	0 0
 /root.loopfs	/root	squashfs	loop,ro	0 0
-auto		/newroot	auto	ro	0 0
+*		/newroot	auto	ro	0 0
 
