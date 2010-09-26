@@ -30,7 +30,8 @@ modprobe(){
 }
 
 modmdev(){
-	[[ -z "$MODALIAS" ]] || echo "$MODALIAS" 2>/dev/null >>/etc/modalias || {
+	[[ -z "$MODALIAS" ]] && return
+	! [[ -d /etc/modalias ]] && echo "$MODALIAS" >>/etc/modalias || {
 		loadsh modprobe
 		modprobe "${@}" $MODALIAS 2>>$O
 	}
@@ -47,10 +48,10 @@ mods(){
 }
 
 tryroot(){
-	( $DROOT && mkdir -p $p ) || return 1
+	$DROOT && mkdir $p || return 1
 	[[ "${t:=auto}" == auto ]] || grep -q "	$t$" /proc/filesystems || modprobe $Q -a $(mods "$t")
-	mount -o "${o:-ro}" -t "$t" "$d" $p && ( [[ -e $p/sbin/init ]] &&
-		( grep -q "^$d[ 	][ 	]*/[ 	]" $p/etc/fstab || ${1:-xroot} $p/etc/fstab / ) || (
+	mount -o "${o:-ro}" -t "$t" "$DEVNAME" $p && ( [[ -e $p/sbin/init ]] &&
+		( grep -q "^$DEVNAME[ 	][ 	]*/[ 	]" $p/etc/fstab || ${1:-xroot} $p/etc/fstab / ) || (
 		umount $p;false ) ) || rmdir $p
 	[[ -e $p ]]
 	return $?
@@ -67,6 +68,7 @@ xroot(){
 		: ${t:=auto}
 		if [[ "$1" == /etc/fstab ]]; then
 			# nfs,...
+			local DEVNAME="$d"
 			tryroot 2>>$O
 		else
 			xroot /etc/fstab /newroot "$d"||continue
@@ -119,7 +121,7 @@ if [[ -n "$DEVNAME" ]] && ! [[ -e "/dev/$DEVNAME" ]]; then
 			dmraid -ay
 		;;
 		esac
-	    [[ $t == b ]] && [[ "`cat "/sys/block${DEVNAME#/dev}/size" 2>/dev/null`" != 0 ]] && if $DETECTBLK || [[ -d /etc/modalias ]]; then
+	    [[ $t == b ]] && [[ "`cat "/sys/block${DEVNAME#/dev}/size" 2>/dev/null`" != 0 ]] && if $DETECTBLK || $DROOT || [[ -d /etc/modalias ]]; then
 		loadsh blkid
 		: ${KV:=`uname -r`}
 		local id="`blkid $DEVNAME`" d p o t x
@@ -135,16 +137,21 @@ if [[ -n "$DEVNAME" ]] && ! [[ -e "/dev/$DEVNAME" ]]; then
 			}
 			mods "$i"
 		done)
-		modmdev $Q -a
+		if $DROOT; then
+			modprobe $Q -a $MODALIAS 2>$O
+		else
+			modmdev $Q -a
+		fi
 		id="$DEVNAME `echo "$id"|sed -e 's/^[^ ]*://' -e 's:\( [A-Z]*=\)\"\([^"]*\)\":\1\2\1"\2":g'`" #'
 		sed -e "s:#.*$::g" </etc/fstab|while read d p t o x; do
 			[[ -n "$d" ]] && for i in $id; do
-				[[ -z "${i##$d}" ]] && if [[ "$p" == /newroot ]]; then
-					d="$DEVNAME"
+				[[ -n "${i##$d}" ]] && continue
+				if [[ "$p" == /newroot ]]; then
 					tryroot 2>>$O
 				else
-					mount -o "${o:-ro}" -t "${t:-auto}" $DEVNAME $p
+					mount -o "${o:-ro}" -t "${t:-auto}" "$DEVNAME" $p
 				fi
+				break
 			done
 		done
 	    fi
@@ -165,14 +172,15 @@ case "$1" in
 -m|-i|-M)
 	i=/etc/modalias
 	loadsh modprobe
-	[[ "$1" == "-m" ]] && modprobe $Q -a `echo ""|grep -sh "^MODALIAS=" $(find /sys -name uevent -print|sort)|sed -e 's:^MODALIAS=::g'|uniq` 2>>$O
+	[[ "$1" == "-m" ]] && modprobe $Q -a `echo ""|grep -sh "^MODALIAS=" $(grep -sL "^DRIVER=" $(find /sys -name uevent|sort))|sed -e 's:^MODALIAS=::g'|uniq` 2>>$O
 	while ! ( [[ "$1" == "-i" ]] && ln -s /sys $i 2>/dev/null ) && [[ -f $i ]] && mv $i ${i}_ ; do
 		modprobe $Q -a `cat ${i}_` 2>>$O
 		rm ${i}_
 	done
 ;;
--w)	MODALIAS=scsi_wait_scan
-	modmdev $Q
+-w)	modprobe $Q scsi_wait_scan
+	rmmod scsi_wait_scan
+	rm /temp/cache/modprobe/scsi_wait_scan.m -f
 ;;
 -s)
 	shift
@@ -192,11 +200,16 @@ case "$1" in
 	/bin/busybox --install -s
 	mount /sys
 	mdev -b -s mem -i block
+#	mdev -b -s mem
+#	modprobe $Q -a `cat /etc/modalias` 2>>$O
+#	mdev -s block
 	mount -a 2>>$O
 	SHLOADED=""
 	mkdir -p /temp/cache/modprobe
+#	mdev -i
 	i="-"
 	while ! ( [[ $1 == -fastinit ]] && [[ -e /newroot ]] ) && j=`cat /proc/modules` && [[ "$i" != "$j" ]]; do
+		echo -n .
 		mdev -m -w -s block misc
 		while $blk2; do
 			blk2=false
@@ -216,7 +229,8 @@ case "$1" in
 	for i in /sys/module/*; do
 		let j=j+1
 	done
-	echo "$j modules"
+	echo -n "$j modules / "
+	cat /proc/uptime
 	cd /newroot && {
 		umount /* 2>>$O
 		mount
@@ -244,7 +258,6 @@ return
 ;;
 *)_mdev $1;;
 esac
-[[ -e /sys/module/scsi_wait_scan ]] && rmmod scsi_wait_scan
 shift
 done
 }
