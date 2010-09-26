@@ -44,34 +44,84 @@ loadsh(){
 }
 
 mods(){
-	find /lib/modules/$KV/ /lib/modules/$KV/kernel/|grep "/$i/.*\.ko\$\|$i\.ko\$"|sed -e 's:^.*/::g' -e 's:\.ko$::g'|sort -u
+	find /lib/modules/$KV/ /lib/modules/$KV/kernel/|grep "/$*/.*\.ko\$\|$*\.ko\$"|sed -e 's:^.*/::g' -e 's:\.ko$::g'|sort -u
 }
 
-tryroot(){
-	$DROOT && mkdir $p || return 1
-	[[ "${t:=auto}" == auto ]] || grep -q "	$t$" /proc/filesystems || modprobe $Q -a $(mods "$t")
-	mount -o "${o:-ro}" -t "$t" "$DEVNAME" $p && ( [[ -e $p/sbin/init ]] &&
-		( grep -q "^$DEVNAME[ 	][ 	]*/[ 	]" $p/etc/fstab || ${1:-xroot} $p/etc/fstab / ) || (
-		umount $p;false ) ) || rmdir $p
-	[[ -e $p ]]
+_fs(){
+	local i
+	for i in `grep ":.* TYPE="|sed -e 's:^.* TYPE="\([^"]*\)".*$:\1:g'|sort -u`; do
+		grep -q "	$i$" /proc/filesystems && continue
+		case "$i" in
+		lvm2*)	[[ -e /dev/mapper/control ]] && continue
+			i="/md/dm-.*"
+		;;
+		*)grep -q "	$i$" /proc/filesystems && continue;;
+		esac
+		mods "$i"
+	done
+}
+
+mnt(){
+	local t="${t:-auto}"
+	[[ "$t" == auto ]] || grep -q "	$t$" /proc/filesystems || modprobe $Q -a `mods "$t"`
+	mount -o "${o:-ro}" -t "$t" "$DEVNAME" $p 2>>$O
 	return $?
 }
 
-xroot(){
+lofind(){
+	local i
+	grep -sF " $p " /etc/mtab /proc/mounts|grep -om1 "^/dev/loop[^ ]*" && return 0
+	for i in /dev/loop*; do
+		losetup "$i" "$DEVNAME" 2>>$O || continue
+		echo "$i"
+		return 0
+	done
+	return 1
+}
+
+try_mnt(){
+	if [[ "$p" == /newroot ]]; then
+		$DROOT && mkdir $p 2>>$O|| return 1
+		mnt && ( [[ -e $p/sbin/init ]] &&
+		    ( grep -q "^$DEVNAME[ 	][ 	]*/[ 	]" $p/etc/fstab || ${1:-fstab} "$p" / ) || (
+		    umount $p;false ) ) || rmdir $p
+		[[ -e $p ]]
+	else
+		mnt
+	fi
+	return $?
+}
+
+try_mnt_loop(){
+	[[ -f "$DEVNAME" ]] && {
+		[[ -e /sys/class/block/loop0 ]] || {
+			modprobe $Q loop 2>>$O
+			mdev -s block
+		}
+		DEVNAME=`lofind` && {
+			try_mnt && return 0
+			losetup -d "$DEVNAME" 2>>$O
+		}
+	}
+	try_mnt
+	return $?
+}
+
+fstab(){
 	local d p t o x a
-	sed -e "s:#.*$::g" <$1 | while read d p t o x; do
-		[[ "$p" == "$2" ]] || continue
+	sed -e "s:#.*$::g" <$1/etc/fstab | while read d p t o x; do
+		[[ -z "$p" ]] && continue
+		[[ -z "${p##$2}" ]] || continue
 		[[ -n "$3" ]] && {
 			[[ -z "${3##$d}" ]] && return 0
 			continue
 		}
-		: ${t:=auto}
-		if [[ "$1" == /etc/fstab ]]; then
-			# nfs,...
+		if [[ "${1:-/}" == / ]]; then
+			# loop,nfs,...
 			local DEVNAME="$d"
-			tryroot 2>>$O
+			try_mnt_loop && continue
 		else
-			xroot /etc/fstab /newroot "$d"||continue
+			fstab / /newroot "$d"||continue
 		fi
 		case "$d" in
 		/dev/drbd*)modprobe $Q drbd;blk2=true;;
@@ -125,33 +175,19 @@ if [[ -n "$DEVNAME" ]] && ! [[ -e "/dev/$DEVNAME" ]]; then
 		loadsh blkid
 		: ${KV:=`uname -r`}
 		local id="`blkid $DEVNAME`" d p o t x
-		MODALIAS=$(for i in `echo "$id"|grep ":.* TYPE="|sed -e 's:^.* TYPE="\([^"]*\)".*$:\1:g'|sort -u`; do # "
-			grep -q "	$i$" /proc/filesystems && continue
-			{
-			case "$i" in
-			lvm2*)	[[ -e /dev/mapper/control ]] && continue
-				i="/md/dm-.*"
-			;;
-			*)grep -q "	$i$" /proc/filesystems && continue;;
-			esac
-			}
-			mods "$i"
-		done)
+		MODALIAS=$(echo "$id"|_fs)
 		if $DROOT; then
-			modprobe $Q -a $MODALIAS 2>$O
+			modprobe $Q -a $MODALIAS 2>>$O
 		else
 			modmdev $Q -a
 		fi
 		id="$DEVNAME `echo "$id"|sed -e 's/^[^ ]*://' -e 's:\( [A-Z]*=\)\"\([^"]*\)\":\1\2\1"\2":g'`" #'
 		sed -e "s:#.*$::g" </etc/fstab|while read d p t o x; do
 			[[ -n "$d" ]] && for i in $id; do
-				[[ -n "${i##$d}" ]] && continue
-				if [[ "$p" == /newroot ]]; then
-					tryroot 2>>$O
-				else
-					mount -o "${o:-ro}" -t "${t:-auto}" "$DEVNAME" $p
-				fi
-				break
+				[[ -n "${i##$d}" ]] || {
+					try_mnt
+					break
+				}
 			done
 		done
 	    fi
@@ -163,10 +199,10 @@ fi
 }
 
 mdev(){
-local i j
+local i j x
 while [[ -n "$*" ]]; do
 case "$1" in
--v|-vs)Q=$1;O=/dev/console;;
+-v|-vs)Q=$1;O=/dev/stderr;[[ -e $O ]]||O=/dev/console;;
 -q|-qs)Q=$1;O=/dev/null;;
 -b)DETECTBLK=true;;
 -m|-i|-M)
@@ -192,18 +228,20 @@ case "$1" in
 	done
 	return
 ;;
--all)mdev -s mem -b "*" -m -i;;
+-a)mdev -s mem -i -b -m -w "*";;
 -*init)
 	DROOT=true
 	local blk2=false
 	/bin/busybox mount /proc||mount /proc
 	/bin/busybox --install -s
 	mount /sys
-	mdev -b -s mem -i block
+	mdev -b -s mem -i
+	fstab / "*"
+	mdev -s block
 #	mdev -b -s mem
 #	modprobe $Q -a `cat /etc/modalias` 2>>$O
 #	mdev -s block
-	mount -a 2>>$O
+#	mount -a 2>>$O
 	SHLOADED=""
 	mkdir -p /temp/cache/modprobe
 #	mdev -i
@@ -219,7 +257,7 @@ case "$1" in
 	done
 	[[ -e /sys/module/drm_kms_helper ]] && modprobe $Q fbcon 2>>$O
 	[[ -e /newroot ]] || {
-		xroot /etc/fstab /newroot
+		fstab / /newroot
 		while $blk2; do
 			blk2=false
 			mdev -s misc block
@@ -232,15 +270,19 @@ case "$1" in
 	echo -n "$j modules / "
 	cat /proc/uptime
 	cd /newroot && {
-		umount /* 2>>$O
+		i=`ls /dev/loop*`
+		umount `grep -vh "^[^ ]* /newroot[/ ]\|^[^ ]* / " /proc/mounts /etc/mtab|sed -e 's:^[^ ]* \([^ ]*\) .*$:\1:'|sort -u`
+		for i in $i; do
+			losetup -d "$i"
+		done 2>>/dev/null
 		mount
 		exec /sbin/switch_root -c /dev/console /newroot /sbin/init
 	}
 	shift
-	[[ -z "$*" ]] && return
 	ln -s $0 /sbin/hotplug
-	mdev -s "*" -i
-	exec "${@}"
+	mdev -m -s "*" -i
+	rm -Rf /temp/cache/modprobe
+	[[ -n "$*" ]] && exec "${@}"
 ;;
 -*)echo 'mdev replacement, (c) Denis Kaganovich, under Anarchy or GPLv2 license
 Named "hotplug" will detect /newroot, "mdev" - no, "*init|*rc" - initrc.
@@ -249,9 +291,9 @@ Options:
 -v|q[s]	output
 -b	modprobe new fs
 -m	scan+modprobe modaliases
--i	install: modaliases to background
+-i	install: modaliases ASAP|background
 -w	scsi_wait_scan
--all	= mdev -s mem -b "*" -m -i
+-a	= mdev -s mem -i -b -m -w "*"
 -[fast]init	initrc
 Example: mdev -s "*" -m'
 return
