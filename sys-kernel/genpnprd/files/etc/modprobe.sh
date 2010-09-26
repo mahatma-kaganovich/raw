@@ -7,7 +7,7 @@ modparam(){ return;}
 [[ -e /etc/modparam.sh ]] && . /etc/modparam.sh
 
 modverbose(){
-	echo "insmod $i $PARAM"
+	echo "insmod $i $PARAM" >&2
 }
 
 modprobe(){
@@ -32,8 +32,8 @@ for m in $m; do
 	modalias "$m" && for i in $ALIAS ; do
 		modparam $i
 		$INSMOD
+		insmod $i $PARAM "${@}" || { r=1;continue;}
 		$V
-		insmod $i $PARAM "${@}" || r=1
 	done || rr=1
 	if [[ $r == 0 ]]; then
 		touch "$a" 2>/dev/null
