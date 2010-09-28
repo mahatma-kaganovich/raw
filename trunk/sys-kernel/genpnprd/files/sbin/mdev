@@ -2,17 +2,20 @@
 # some of busyboxes dont have mdev, some - mdev.conf|/dev/input/
 # mdev -h
 
-DROOT=false
 DETECTBLK=false
 Q=-qs
 O=/dev/null
 
 mdevs(){
+	local i
 	[[ -e "$1" ]] && for i in $*; do
 		local DEVNAME="" MAJOR="" MINOR="" FIRMWARE="" DEVPATH="" DEVMODE=""
 		eval "$(sed -e 's:^\(.*\)=\([^"].*[^"]\)$:\1="\2":g' -e 's/^[^=]*$//g' <"$i")" || echo "! $i"
 		i="${i#/sys/class/}"
-		[[ -e "/dev/$DEVNAME" ]] || _mdev "${i%%/*}"
+		case $ACTION in
+		*change)_mdev "${i%%/*}";;
+		*)[[ -e "/dev/$DEVNAME" ]] || _mdev "${i%%/*}";;
+		esac
 	done
 }
 
@@ -69,10 +72,11 @@ mnt(){
 }
 
 lofind(){
-	local i
+	local i ACTION=_change
 	grep -sF " $p " /etc/mtab /proc/mounts|grep -om1 "^/dev/loop[^ ]*" && return 0
 	for i in /dev/loop*; do
 		losetup "$i" "$DEVNAME" 2>>$O || continue
+		mdevs /sys/class/block/loop*/uevent
 		echo "$i"
 		return 0
 	done
@@ -80,8 +84,8 @@ lofind(){
 }
 
 try_mnt(){
-	if [[ "$p" == /newroot ]]; then
-		$DROOT && mkdir $p 2>>$O|| return 1
+	if [[ "$p" == /newroot ]] && ! grep -sq "^/dev/[^ ]* / " /proc/mounts /etc/mtab; then
+		mkdir $p 2>>$O || return 1
 		mnt && ( [[ -e $p/sbin/init ]] &&
 		    ( grep -q "^$DEVNAME[ 	][ 	]*/[ 	]" $p/etc/fstab || ${1:-fstab} "$p" / ) || (
 		    umount $p;false ) ) || rmdir $p
@@ -96,16 +100,21 @@ try_mnt_loop(){
 	[[ -f "$DEVNAME" ]] && {
 		[[ -e /sys/class/block/loop0 ]] || {
 			modprobe $Q loop 2>>$O
-			mdev -s block
+			local ACTION=add
+			mdevs /sys/class/block/loop*/uevent
+
 		}
-		DEVNAME=`lofind` && {
-			try_mnt && return 0
+#		mnt && return 0
+		local i="$DEVNAME"
+		DEVNAME=`lofind` || {
 			losetup -d "$DEVNAME" 2>>$O
+			DEVNAME="$i"
 		}
 	}
-	try_mnt
+	mnt
 	return $?
 }
+
 
 fstab(){
 	local d p t o x a
@@ -151,36 +160,41 @@ fstab(){
 }
 
 _mdev(){
-local i t=c
+local i t=c new=false
 case "$1:$ACTION" in
+#block:change)t=b;rm -f "/dev/$DEVNAME";;
+#*:change)rm -f "/dev/$DEVNAME";;
 block:*)t=b;;
 *:remove)
 	rm "/dev/$DEVNAME"
 	return
 ;;
-*:add)modmdev --;;
+*:add)
+	modmdev --
+	new=true
+;;
 esac
-if [[ -n "$DEVNAME" ]] && ! [[ -e "/dev/$DEVNAME" ]]; then
+if [[ -n "$FIRMWARE" ]] && echo 1 >/sys/$DEVPATH/loading; then
+	[[ -e /lib/firmware/$FIRMWARE ]] && cat /lib/firmware/$FIRMWARE >/sys/$DEVPATH/data && echo 0 >/sys/$DEVPATH/loading || echo -1 >/sys/$DEVPATH/loading
+fi
+if [[ -n "$DEVNAME" ]]; then
 	DEVNAME="/dev/$DEVNAME"
-	i="${DEVNAME%/*}"
-	[[ -e "$i" ]] || mkdir -p "$i"
-	mknod -m ${DEVMODE:-0600} "$DEVNAME" $t $MAJOR $MINOR && {
-		case "$DEVNAME" in
-		/dev/mapper/control)
-			vgchange -ay --ignorelockingfailure 2>>$O
-			dmraid -ay
-		;;
-		esac
-	    [[ $t == b ]] && [[ "`cat "/sys/block${DEVNAME#/dev}/size" 2>/dev/null`" != 0 ]] && if $DETECTBLK || $DROOT || [[ -d /etc/modalias ]]; then
+	mkdir -p "${DEVNAME%/*}"
+	! [[ -e "$DEVNAME" ]] && mknod -m ${DEVMODE:-0600} "$DEVNAME" $t $MAJOR $MINOR && new=true
+fi
+case "$DEVNAME" in
+/dev/mapper/control)
+	vgchange -ay --ignorelockingfailure 2>>$O
+	dmraid -ay
+;;
+/dev/loop*)new=false;; # vs "fixed" umount
+esac
+[[ -b "$DEVNAME" ]] && [[ "`cat "/sys/block${DEVNAME#/dev}/size" 2>/dev/null`" != 0 ]] && if $DETECTBLK || [[ -d /etc/modalias ]]; then
 		loadsh blkid
 		: ${KV:=`uname -r`}
 		local id="`blkid $DEVNAME`" d p o t x
-		MODALIAS=$(echo "$id"|_fs)
-		if $DROOT; then
-			modprobe $Q -a $MODALIAS 2>>$O
-		else
-			modmdev $Q -a
-		fi
+		modprobe $Q -a $(echo "$id"|_fs) 2>>$O
+		$new && {
 		id="$DEVNAME `echo "$id"|sed -e 's/^[^ ]*://' -e 's:\( [A-Z]*=\)\"\([^"]*\)\":\1\2\1"\2":g'`" #'
 		sed -e "s:#.*$::g" </etc/fstab|while read d p t o x; do
 			[[ -n "$d" ]] && for i in $id; do
@@ -190,11 +204,7 @@ if [[ -n "$DEVNAME" ]] && ! [[ -e "/dev/$DEVNAME" ]]; then
 				}
 			done
 		done
-	    fi
-	}
-fi
-if [[ -n "$FIRMWARE" ]] && echo 1 >/sys/$DEVPATH/loading; then
-	[[ -e /lib/firmware/$FIRMWARE ]] && cat /lib/firmware/$FIRMWARE >/sys/$DEVPATH/data && echo 0 >/sys/$DEVPATH/loading || echo -1 >/sys/$DEVPATH/loading
+		}
 fi
 }
 
@@ -218,7 +228,9 @@ case "$1" in
 	rmmod scsi_wait_scan
 	rm /temp/cache/modprobe/scsi_wait_scan.m -f
 ;;
--s)
+-s|-S)
+	local ACTION
+	[[ "$1" == "-S" ]] && ACTION=_change || ACTION=_add
 	shift
 	for i in "${@:-"*"}"; do
 		case "$i" in
@@ -230,7 +242,6 @@ case "$1" in
 ;;
 -a)mdev -s mem -i -b -m -w "*";;
 -*init)
-	DROOT=true
 	local blk2=false
 	/bin/busybox mount /proc||mount /proc
 	/bin/busybox --install -s
@@ -306,6 +317,6 @@ done
 
 case $0 in
 *rc|*init)mdev -init /bin/sh;;
-*hotplug*)DROOT=true;mdev "${@}";;
-*mdev*)mdev "${@}";;
+*mdev)mdev "${@}";;
+*hotplug)mdev -b "${@}";;
 esac
