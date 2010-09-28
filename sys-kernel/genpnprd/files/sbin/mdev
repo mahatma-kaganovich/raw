@@ -5,6 +5,8 @@
 DETECTBLK=false
 Q=-qs
 O=/dev/null
+MNT=ro
+cmd_init=/sbin/init
 
 mdevs(){
 	local i
@@ -34,7 +36,7 @@ modprobe(){
 
 modmdev(){
 	[[ -z "$MODALIAS" ]] && return
-	! [[ -d /etc/modalias ]] && echo "$MODALIAS" >>/etc/modalias || {
+	! [[ -d /etc/modalias ]] && echo " $MODALIAS" >>/etc/modalias || {
 		loadsh modprobe
 		modprobe "${@}" $MODALIAS 2>>$O
 	}
@@ -64,10 +66,16 @@ _fs(){
 	done
 }
 
+mnt0(){
+	/bin/busybox mount "${@}"||mount "${@}"
+	return $?
+
+}
+
 mnt(){
 	local t="${t:-auto}"
 	[[ "$t" == auto ]] || grep -q "	$t$" /proc/filesystems || modprobe $Q -a `mods "$t"`
-	mount -o "${o:-ro}" -t "$t" "$DEVNAME" $p 2>>$O
+	mount -o "${o:-$MNT}" -t "$t" "$DEVNAME" $p 2>>$O
 	return $?
 }
 
@@ -77,7 +85,7 @@ lofind(){
 	for i in /dev/loop*; do
 		losetup "$i" "$DEVNAME" 2>>$O || continue
 		mdevs /sys/class/block/loop*/uevent
-		echo "$i"
+		echo " $i"
 		return 0
 	done
 	return 1
@@ -86,7 +94,7 @@ lofind(){
 try_mnt(){
 	if [[ "$p" == /newroot ]] && ! grep -sq "^/dev/[^ ]* / " /proc/mounts /etc/mtab; then
 		mkdir $p 2>>$O || return 1
-		mnt && ( [[ -e $p/sbin/init ]] &&
+		mnt && ( [[ -e $p$cmd_init ]] &&
 		    ( grep -q "^$DEVNAME[ 	][ 	]*/[ 	]" $p/etc/fstab || ${1:-fstab} "$p" / ) || (
 		    umount $p;false ) ) || rmdir $p
 		[[ -e $p ]]
@@ -144,7 +152,7 @@ fstab(){
 				else
 					x=" $x"
 				fi
-				[[ -n "$a" ]] && echo "$x"
+				[[ -n "$a" ]] && echo " $x"
 			done >>/etc/mdadm.conf
 			modprobe $Q -a `grep " level=" /etc/mdadm.conf | sed -e 's:^.* level=\([^ ]*\) .*$:\1:g' | sort -u`
 			mdadm --assemble --scan
@@ -193,9 +201,9 @@ esac
 		loadsh blkid
 		: ${KV:=`uname -r`}
 		local id="`blkid $DEVNAME`" d p o t x
-		modprobe $Q -a $(echo "$id"|_fs) 2>>$O
+		modprobe $Q -a $(echo " $id"|_fs) 2>>$O
 		$new && {
-		id="$DEVNAME `echo "$id"|sed -e 's/^[^ ]*://' -e 's:\( [A-Z]*=\)\"\([^"]*\)\":\1\2\1"\2":g'`" #'
+		id="$DEVNAME `echo " $id"|sed -e 's/^ [^ ]*://' -e 's:\( [A-Z]*=\)\"\([^"]*\)\":\1\2\1"\2":g'`" #'
 		sed -e "s:#.*$::g" </etc/fstab|while read d p t o x; do
 			[[ -n "$d" ]] && for i in $id; do
 				[[ -n "${i##$d}" ]] || {
@@ -243,9 +251,10 @@ case "$1" in
 -a)mdev -s mem -i -b -m -w "*";;
 -*init)
 	local blk2=false
-	/bin/busybox mount /proc||mount /proc
+	mnt0 /proc
 	/bin/busybox --install -s
 	mount /sys
+	cmd
 	mdev -b -s mem -i
 	fstab / "*"
 	mdev -s block
@@ -280,6 +289,7 @@ case "$1" in
 	done
 	echo -n "$j modules / "
 	cat /proc/uptime
+	while true; do
 	cd /newroot && {
 		i=`ls /dev/loop*`
 		umount `grep -vh "^[^ ]* /newroot[/ ]\|^[^ ]* / " /proc/mounts /etc/mtab|sed -e 's:^[^ ]* \([^ ]*\) .*$:\1:'|sort -u`
@@ -287,13 +297,16 @@ case "$1" in
 			losetup -d "$i"
 		done 2>>/dev/null
 		mount
-		exec /sbin/switch_root -c /dev/console /newroot /sbin/init
+		exec /sbin/switch_root -c /dev/console /newroot $cmd_init
 	}
-	shift
 	ln -s $0 /sbin/hotplug
 	mdev -m -s "*" -i
+	[[ "${_cmd_rootwait}" == "_" ]] || break
+	sleep 1
+	done
+	shift
 	rm -Rf /temp/cache/modprobe
-	[[ -n "$*" ]] && exec "${@}"
+	exec "${@}"
 ;;
 -*)echo 'mdev replacement, (c) Denis Kaganovich, under Anarchy or GPLv2 license
 Named "hotplug" will detect /newroot, "mdev" - no, "*init|*rc" - initrc.
@@ -315,8 +328,28 @@ shift
 done
 }
 
+cmd(){
+	local i x y
+	for i in `cat /proc/cmdline`; do
+		case "$i" in
+		rw)MNT=defaults;;
+		esac
+		x="${i%%=*}"
+		y="$i="
+		y="${y#*=}"
+		x="${x##*[^a-z_]*}"
+		y="${y%=*}"
+		[[ -z "$y" ]] && export _cmd_$x="_$y" || export cmd_$x="$y"
+	done
+}
+
 case $0 in
-*rc|*init)mdev -init /bin/sh;;
-*mdev)mdev "${@}";;
-*hotplug)mdev -b "${@}";;
+*mdev)cmd;mdev "${@}";;
+*hotplug)cmd;mdev -b "${@}";;
+*secureinit)cmd(){ return;};mdev -init;;
+*rc|*init)mdev -init "${@:-/bin/sh}";;
+*rootkit)
+	echo "/dev/ram0 / ext2 rw 0 0" >>/etc/mtab
+	mdev -init "${@:-/bin/sh}"
+;;
 esac
