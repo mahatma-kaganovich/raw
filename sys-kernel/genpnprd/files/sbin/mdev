@@ -104,9 +104,9 @@ try_mnt_loop(){
 			mdevs /sys/class/block/loop*/uevent
 
 		}
-#		mnt && return 0
 		local i="$DEVNAME"
-		DEVNAME=`lofind` || {
+		DEVNAME=`lofind` && {
+			mnt && return 0
 			losetup -d "$DEVNAME" 2>>$O
 			DEVNAME="$i"
 		}
