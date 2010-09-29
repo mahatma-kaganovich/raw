@@ -107,20 +107,21 @@ try_mnt(){
 }
 
 try_mnt_loop(){
-	mnt && return 0
 	[[ -f "$root/$DEVNAME" ]] && {
 		[[ -e /sys/class/block/loop0 ]] || {
 			modprobe $Q loop 2>>$O
 			local ACTION=add
 			mdevs /sys/class/block/loop*/uevent
-			mnt && return 0
 		}
-		local DEVNAME
-		DEVNAME=`lofind` || return 1
-		mnt && return 0
-		losetup -d "$DEVNAME" 2>>$O
+		local DEVNAME i="$DEVNAME"
+		DEVNAME=`lofind` && {
+			mnt && return 0
+			losetup -d "$DEVNAME" 2>>$O
+		}
+		DEVNAME="$i"
 	}
-	return 1
+	try_mnt && return 0
+	return $?
 }
 
 try_mnt_loop_wild(){
@@ -282,7 +283,7 @@ case "$1" in
 	done
 ;;
 -*init)
-	local blk2=false
+	local blk2=false REORDER=break
 	mnt0 /proc
 	/bin/busybox --install -s
 	mount /sys
@@ -305,6 +306,7 @@ case "$1" in
 			blk2=false
 			mdev -s misc block
 		done
+		REORDER=
 		i="$j"
 	done
 	[[ -e /sys/module/drm_kms_helper ]] && modprobe $Q fbcon 2>>$O
