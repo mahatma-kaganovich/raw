@@ -182,16 +182,12 @@ fstab(){
 }
 
 _mdev(){
-local i t=c new=false
-case "$1:$ACTION" in
-#block:change)t=b;rm -f "/dev/$DEVNAME";;
-#*:change)rm -f "/dev/$DEVNAME";;
-block:*)t=b;;
-*:remove)
-	rm "/dev/$DEVNAME"
-	return
-;;
-*:add)
+local i j t=c new=false
+case "$1" in
+block)t=b;;
+esac
+case "$ACTION" in
+add)
 	modmdev --
 	new=true
 ;;
@@ -199,28 +195,42 @@ esac
 if [[ -n "$FIRMWARE" ]] && echo 1 >/sys/$DEVPATH/loading; then
 	[[ -e /lib/firmware/$FIRMWARE ]] && cat /lib/firmware/$FIRMWARE >/sys/$DEVPATH/data && echo 0 >/sys/$DEVPATH/loading || echo -1 >/sys/$DEVPATH/loading
 fi
-if [[ -n "$DEVNAME" ]]; then
-	DEVNAME="/dev/$DEVNAME"
-	mkdir -p "${DEVNAME%/*}"
-	! [[ -e "$DEVNAME" ]] && mknod -m ${DEVMODE:-0600} "$DEVNAME" $t $MAJOR $MINOR && new=true
-fi
-case "$DEVNAME" in
+[[ -n "$DEVNAME" ]] && {
+DEVNAME="/dev/$DEVNAME"
+i="$DEVNAME"
+case "$ACTION" in
+change)
+	[[ -n "$MAJOR$MINOR" ]] && rm "$i"
+#	[[ $t == b ]] && ( sync;mount "$i" -o remount 2>>&$O )
+;;
+remove)
+	rm "$i"
+	grep -s "^$i " /proc/mounts /etc/mtab|sort -u|while read j; do
+		umount "$i" -l
+	done
+	return
+;;
+#online|offline|move);;
+esac
+mkdir -p "${i%/*}"
+! [[ -e "$i" ]] && mknod -m ${DEVMODE:-0600} "$i" $t "$MAJOR" "$MINOR" && new=true
+case "$i" in
 /dev/mapper/control)
 	vgchange -ay --ignorelockingfailure 2>>$O
 	dmraid -ay
 ;;
 /dev/loop*)new=false;; # vs "fixed" umount
 esac
-[[ -b "$DEVNAME" ]] && [[ "`cat "/sys/block${DEVNAME#/dev}/size" 2>/dev/null`" != 0 ]] && if $DETECTBLK || [[ -d /etc/modalias ]]; then
+[[ -b "$i" ]] && [[ "`cat "/sys$DEVPATH/size" 2>/dev/null`" != 0 ]] && if $DETECTBLK || [[ -d /etc/modalias ]]; then
 		loadsh blkid
 		: ${KV:=`uname -r`}
-		local id="`blkid $DEVNAME`" d p o t x
+		local id="`blkid $i`" d p o t x
 		modprobe $Q -a $(echo " $id"|_fs) 2>>$O
 		$new && {
-		id="$DEVNAME `echo " $id"|sed -e 's/^ [^ ]*://' -e 's:\( [A-Z]*=\)\"\([^"]*\)\":\1\2\1"\2":g'`" #'
+		id="$i `echo " $id"|sed -e 's/^ [^ ]*://' -e 's:\( [A-Z]*=\)\"\([^"]*\)\":\1\2\1"\2":g'`" #'
 		sed -e "s:#.*$::g" </etc/fstab|while read d p t o x; do
-			[[ -n "$d" ]] && for i in $id; do
-				[[ -n "${i##$d}" ]] || {
+			[[ -n "$d" ]] && for j in $id; do
+				[[ -n "${j##$d}" ]] || {
 					try_mnt
 					break
 				}
@@ -228,6 +238,7 @@ esac
 		done
 		}
 fi
+} # /DEVNAME
 }
 
 mdev(){
