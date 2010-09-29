@@ -8,6 +8,8 @@ O=/dev/null
 MNT=ro
 cmd_init=/sbin/init
 
+root=
+
 mdevs(){
 	local i
 	[[ -e "$1" ]] && for i in $*; do
@@ -83,7 +85,7 @@ lofind(){
 	local i ACTION=_change
 	grep -sF " $p " /etc/mtab /proc/mounts|grep -om1 "^/dev/loop[^ ]*" && return 0
 	for i in /dev/loop*; do
-		losetup "$i" "$DEVNAME" 2>>$O || continue
+		losetup "$i" "$root/$DEVNAME" 2>>$O || continue
 		mdevs /sys/class/block/loop*/uevent
 		echo " $i"
 		return 0
@@ -105,27 +107,36 @@ try_mnt(){
 }
 
 try_mnt_loop(){
-	[[ -f "$DEVNAME" ]] && {
+	mnt && return 0
+	[[ -f "$root/$DEVNAME" ]] && {
 		[[ -e /sys/class/block/loop0 ]] || {
 			modprobe $Q loop 2>>$O
 			local ACTION=add
 			mdevs /sys/class/block/loop*/uevent
-
-		}
-		local i="$DEVNAME"
-		DEVNAME=`lofind` && {
 			mnt && return 0
-			losetup -d "$DEVNAME" 2>>$O
-			DEVNAME="$i"
 		}
+		local DEVNAME
+		DEVNAME=`lofind` || return 1
+		mnt && return 0
+		losetup -d "$DEVNAME" 2>>$O
 	}
-	mnt
-	return $?
+	return 1
+}
+
+try_mnt_loop_wild(){
+	try_mnt_loop && return 0
+	local DEVNAME i
+	[[ -n "${DEVNAME##/dev/*}" ]] && DEVNAME="$root/$DEVNAME"
+	i="$DEVNAME"
+	for DEVNAME in $i; do
+		[[ "$DEVNAME" != "$i" ]] && ( [[ -f "$DEVNAME" ]] || [[ -b "$DEVNAME" ]] ) && try_mnt_loop && return 0
+	done
+	return 1
 }
 
 
 fstab(){
-	local d p t o x a
+	local d p t o x a root="$1"
 	sed -e "s:#.*$::g" <$1/etc/fstab | while read d p t o x; do
 		[[ -z "$p" ]] && continue
 		[[ -z "${p##$2}" ]] || continue
@@ -133,7 +144,10 @@ fstab(){
 			[[ -z "${3##$d}" ]] && return 0
 			continue
 		}
-		if [[ "${1:-/}" == / ]]; then
+		if [[ -z "$1" ]]; then
+			local DEVNAME="$d"
+			try_mnt_loop_wild && continue
+		elif [[ "$1" == / ]]; then
 			# loop,nfs,...
 			local DEVNAME="$d"
 			try_mnt_loop && continue
@@ -248,7 +262,14 @@ case "$1" in
 	done
 	return
 ;;
--a)mdev -s mem -i -b -m -w "*";;
+-a)
+	local blk2=true
+	while $blk2; do
+		blk2=false
+		mdev -s mem -i -b -m -w "*"
+		fstab
+	done
+;;
 -*init)
 	local blk2=false
 	mnt0 /proc
@@ -317,7 +338,7 @@ Options:
 -m	scan+modprobe modaliases
 -i	install: modaliases ASAP|background
 -w	scsi_wait_scan
--a	= mdev -s mem -i -b -m -w "*"
+-a	= (mdev -s mem -i -b -m -w "*");mounts
 -[fast]init	initrc
 Example: mdev -s "*" -m'
 return
