@@ -9,16 +9,17 @@ MNT=ro
 cmd_init=/sbin/init
 
 root=
+RW_RO_FAIL=0
 
 mdevs(){
 	local i
 	[[ -e "$1" ]] && for i in $*; do
-		local DEVNAME="" MAJOR="" MINOR="" FIRMWARE="" DEVPATH="" DEVMODE=""
+		local DEVNAME="" MAJOR="" MINOR="" FIRMWARE="" DEVPATH="$i" DEVMODE=""
 		eval "$(sed -e 's:^\(.*\)=\([^"].*[^"]\)$:\1="\2":g' -e 's/^[^=]*$//g' <"$i")" || echo "! $i"
 		i="${i#/sys/class/}"
 		case $ACTION in
-		*change)_mdev "${i%%/*}";;
-		*)[[ -e "/dev/$DEVNAME" ]] || _mdev "${i%%/*}";;
+		*add)[[ -e "/dev/$DEVNAME" ]] || _mdev "${i%%/*}";;
+		*)_mdev "${i%%/*}";;
 		esac
 	done
 }
@@ -75,9 +76,12 @@ mnt0(){
 }
 
 mnt(){
-	local t="${t:-auto}"
-	[[ "$t" == auto ]] || grep -q "	$t$" /proc/filesystems || modprobe $Q -a `mods "$t"`
-	mount -o "${o:-$MNT}" -t "$t" "$DEVNAME" $p 2>>$O
+	local t="${t:-auto}" m=
+	[[ "$t" == auto ]] || {
+		grep -q "	$t$" /proc/filesystems || modprobe $Q -a `mods "$t"`
+		[[ -x "/sbin/mount.$t" ]] && m="/sbin/mount.$t"
+	}
+	${m:-mount -t "$t"} -o "${o:-$MNT}" "$DEVNAME" $p 2>>$O
 	return $?
 }
 
@@ -87,7 +91,7 @@ lofind(){
 	for i in /dev/loop*; do
 		losetup "$i" "$root/$DEVNAME" 2>>$O || continue
 		mdevs /sys/class/block/loop*/uevent
-		echo " $i"
+		echo "$i"
 		return 0
 	done
 	return 1
@@ -96,9 +100,7 @@ lofind(){
 try_mnt(){
 	if [[ "$p" == /newroot ]] && ! grep -sq "^/dev/[^ ]* / " /proc/mounts /etc/mtab; then
 		mkdir $p 2>>$O || return 1
-		mnt && ( [[ -e $p$cmd_init ]] &&
-		    ( grep -q "^$DEVNAME[ 	][ 	]*/[ 	]" $p/etc/fstab || ${1:-fstab} "$p" / ) || (
-		    umount $p;false ) ) || rmdir $p
+		mnt && ( [[ -x $p$cmd_init ]] && fstab "$p" / || ( umount $p;false ) ) || rmdir $p
 		[[ -e $p ]]
 	else
 		mnt
@@ -116,7 +118,7 @@ try_mnt_loop(){
 		local DEVNAME i="$DEVNAME"
 		DEVNAME=`lofind` && {
 			mnt && return 0
-			losetup -d "$DEVNAME" 2>>$O
+			losetup -d "$DEVNAME"
 		}
 		DEVNAME="$i"
 	}
@@ -135,27 +137,40 @@ try_mnt_loop_wild(){
 	return 1
 }
 
-
-fstab(){
+_fstab(){
 	local d p t o x a root="$1"
-	sed -e "s:#.*$::g" <$1/etc/fstab | while read d p t o x; do
-		[[ -z "$p" ]] && continue
-		[[ -z "${p##$2}" ]] || continue
-		[[ -n "$3" ]] && {
-			[[ -z "${3##$d}" ]] && return 0
-			continue
-		}
-		if [[ -z "$1" ]]; then
+	while read d p t o x; do
+		[[ -n "${p##$2}" ]] || if [[ -n "$3" ]]; then
+			[[ -n "${3##$d}" ]] || return 0
+		elif [[ -z "$1" ]]; then
 			local DEVNAME="$d"
-			try_mnt_loop_wild && continue
+			try_mnt_loop_wild
 		elif [[ "$1" == / ]]; then
 			# loop,nfs,...
 			local DEVNAME="$d"
-			try_mnt_loop && continue
+			try_mnt_loop
+		elif [[ -z "${DEVNAME##$d}" ]]; then
+			[[ "$MNT" == ro ]] || {
+				# /newroot rw: handle differences in ro/fsck
+				o="remount,${o:-$MNT}"
+				while read d a t x; do
+					[[ "$d:$a" == "$DEVNAME:$p" ]] && {
+						x="/sbin/fsck.$t"
+						[[ -x "$x" ]] && case $RW_RO_FAIL in
+						1) umount "$p" && $x -p "$DEVNAME" 2>>$O && o="${o:-$MNT}" || return 1 ;;
+						0) (yes n|$x -p "$DEVNAME" 2>>$O) || $x -n "$DEVNAME" || return 0 ;;
+						esac
+						mnt || return $RW_RO_FAIL
+						return 0
+					}
+				done </proc/mounts
+				t=
+				mnt || return $RW_RO_FAIL
+			}
+			return 0
 		else
-			fstab / /newroot "$d"||continue
-		fi
-		case "$d" in
+			! fstab / /newroot "$d"
+		fi || case "$d" in
 		/dev/drbd*)modprobe $Q drbd;blk2=true;;
 		/dev/md*)
 			a=
@@ -182,13 +197,18 @@ fstab(){
 	return 1
 }
 
+fstab(){
+	sed -e 's:#.*$::g' -e '/^$/d' <$1/etc/fstab|_fstab "${@}"
+	return $?
+}
+
 _mdev(){
 local i j t=c new=false
 case "$1" in
 block)t=b;;
 esac
 case "$ACTION" in
-add)
+*add)
 	modmdev --
 	new=true
 ;;
@@ -229,8 +249,8 @@ esac
 		modprobe $Q -a $(echo " $id"|_fs) 2>>$O
 		$new && {
 		id="$i `echo " $id"|sed -e 's/^ [^ ]*://' -e 's:\( [A-Z]*=\)\"\([^"]*\)\":\1\2\1"\2":g'`" #'
-		sed -e "s:#.*$::g" </etc/fstab|while read d p t o x; do
-			[[ -n "$d" ]] && for j in $id; do
+		sed -e 's:#.*$::g' -e '/^$/d' </etc/fstab|while read d p t o x; do
+			for j in $id; do
 				[[ -n "${j##$d}" ]] || {
 					try_mnt
 					break
@@ -279,7 +299,7 @@ case "$1" in
 	while $blk2; do
 		blk2=false
 		mdev -s mem -i -b -m -w "*"
-		fstab
+		fstab "" "*"
 	done
 ;;
 -*init)
