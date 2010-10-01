@@ -9,7 +9,7 @@ MNT=ro
 cmd_init=/sbin/init
 
 root=
-RW_RO_FAIL=0
+RW_RO_FAIL=1
 
 mdevs(){
 	local i
@@ -137,6 +137,17 @@ try_mnt_loop_wild(){
 	return 1
 }
 
+_fsck(){
+	case $?:$RW_RO_FAIL in
+	[0|1]:*)true;;
+	[23]:*)reboot -f;;
+#	16:1) [[ -n "$*" ]] && ( "${@}" || _fsck );; # ocfs2 -y
+	8:*|16:*)$x -n "$DEVNAME";;
+	*)false;;
+	esac
+	return $?
+}
+
 _fstab(){
 	local d p t o x a root="$1"
 	while read d p t o x; do
@@ -150,19 +161,19 @@ _fstab(){
 			local DEVNAME="$d"
 			try_mnt_loop
 		elif [[ -z "${DEVNAME##$d}" ]]; then
-			[[ "$MNT" == ro ]] || {
-				# /newroot rw: handle differences in ro/fsck
+			[[ "$MNT" == ro ]] || [[ -w "$p" ]] || {
 				o="remount,${o:-$MNT}"
 				while read d a t x; do
-					[[ "$d:$a" == "$DEVNAME:$p" ]] && {
-						x="/sbin/fsck.$t"
-						[[ -x "$x" ]] && case $RW_RO_FAIL in
-						1) umount "$p" && $x -p "$DEVNAME" 2>>$O && o="${o:-$MNT}" || return 1 ;;
-						0) (yes n|$x -p "$DEVNAME" 2>>$O) || $x -n "$DEVNAME" || return 0 ;;
-						esac
-						mnt || return $RW_RO_FAIL
-						return 0
+					[[ "$d:$a" == "$DEVNAME:$p" ]] || continue
+					x="/sbin/fsck.$t"
+					[[ -x "$x" ]] || break
+					[[ $RW_RO_FAIL == 1 ]] && {
+						umount "$p"
+						o="${o:-$MNT}"
 					}
+					yes n|$x -p "$DEVNAME" 2>>$O
+					_fsck $x -y "$DEVNAME" 2>>$O && mnt && return 0
+					return $RW_RO_FAIL
 				done </proc/mounts
 				t=
 				mnt || return $RW_RO_FAIL
