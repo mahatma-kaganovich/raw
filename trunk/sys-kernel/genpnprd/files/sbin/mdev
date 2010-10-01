@@ -14,7 +14,8 @@ RW_RO_FAIL=1
 mdevs(){
 	local i
 	[[ -e "$1" ]] && for i in $*; do
-		local DEVNAME="" MAJOR="" MINOR="" FIRMWARE="" DEVPATH="$i" DEVMODE=""
+		local DEVNAME="" MAJOR="" MINOR="" FIRMWARE="" DEVPATH="${i#/sys}" DEVMODE=""
+		DEVPATH="${DEVPATH%/uevent}"
 		eval "$(sed -e 's:^\(.*\)=\([^"].*[^"]\)$:\1="\2":g' -e 's/^[^=]*$//g' <"$i")" || echo "! $i"
 		i="${i#/sys/class/}"
 		case $ACTION in
@@ -141,7 +142,7 @@ _fsck(){
 	case $?:$RW_RO_FAIL in
 	[0|1]:*)true;;
 	[23]:*)reboot -f;;
-#	16:1) [[ -n "$*" ]] && ( "${@}" || _fsck );; # ocfs2 -y
+	16:2) [[ -n "$*" ]] && ( "${@}" || _fsck );; # ocfs2 -y
 	8:*|16:*)$x -n "$DEVNAME";;
 	*)false;;
 	esac
@@ -167,7 +168,7 @@ _fstab(){
 					[[ "$d:$a" == "$DEVNAME:$p" ]] || continue
 					x="/sbin/fsck.$t"
 					[[ -x "$x" ]] || break
-					[[ $RW_RO_FAIL == 1 ]] && {
+					[[ $RW_RO_FAIL != 0 ]] && {
 						umount "$p"
 						o="${o:-$MNT}"
 					}
