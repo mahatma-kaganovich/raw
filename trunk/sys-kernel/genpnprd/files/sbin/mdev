@@ -210,7 +210,7 @@ _fstab(){
 }
 
 fstab(){
-	sed -e 's:#.*$::g' -e '/^$/d' <$1/etc/fstab|_fstab "${@}"
+	sed -e 's:#.*$::g' -e '/^[ 	]*$/d' <$1/etc/fstab|_fstab "${@}"
 	return $?
 }
 
@@ -261,7 +261,7 @@ esac
 		modprobe $Q -a $(echo " $id"|_fs) 2>>$O
 		$new && {
 		id="$i `echo " $id"|sed -e 's/^ [^ ]*://' -e 's:\( [A-Z]*=\)\"\([^"]*\)\":\1\2\1"\2":g'`" #'
-		sed -e 's:#.*$::g' -e '/^$/d' </etc/fstab|while read d p t o x; do
+		sed -e 's:#.*$::g' -e '/^[ 	]*$/d' </etc/fstab|while read d p t o x; do
 			for j in $id; do
 				[[ -n "${j##$d}" ]] || {
 					try_mnt
