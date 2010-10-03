@@ -318,7 +318,7 @@ case "$1" in
 	mnt0 /proc
 	/bin/busybox --install -s
 	mount /sys
-	cmd
+	cmd true
 	mdev -b -s mem -i
 	fstab / "*"
 	mdev -s block
@@ -394,7 +394,13 @@ done
 }
 
 cmd(){
-	local i x y
+	local i x y d=/etc/kernel.cmdline
+	${1:-false} && rm "$d" -Rf
+	[[ -e $d/cmd ]] && {
+		. $d/cmd
+		return
+	}
+	mkdir -p $d
 	for i in `cat /proc/cmdline`; do
 		case "$i" in
 		rw)MNT=defaults;;
@@ -402,10 +408,11 @@ cmd(){
 		x="${i%%=*}"
 		y="$i="
 		y="${y#*=}"
-		x="${x##*[^a-z_]*}"
+		x="${x##*[^a-zA-Z._-]*}"
 		y="${y%=*}"
-		export _cmd_$x="_$y" cmd_$x="$y"
-	done
+		export _cmd_$x="_$y" cmd_$x="$y" || echo -ne " ${x#*.}=$y" >"$d/$x"
+	done 2>/dev/null
+	export|grep " [_]*cmd_" >$d/cmd
 }
 
 case $0 in
