@@ -5,7 +5,7 @@
 DETECTBLK=false
 Q=-qs
 O=/dev/null
-MNT=ro
+__cmd_rw=ro
 cmd_init=/sbin/init
 C=/etc/kernel.cmdline
 
@@ -82,7 +82,7 @@ mnt(){
 		grep -q "	$t$" /proc/filesystems || modprobe $Q -a `mods "$t"`
 		[[ -x "/sbin/mount.$t" ]] && m="/sbin/mount.$t"
 	}
-	${m:-mount -t "$t"} -o "${o:-$MNT}" "$DEVNAME" $p 2>>$O
+	${m:-mount -t "$t"} -o "${o:-${__cmd_rw}}" "$DEVNAME" $p 2>>$O
 	return $?
 }
 
@@ -162,15 +162,15 @@ _fstab(){
 			local DEVNAME="$d"
 			try_mnt_loop
 		elif [[ -z "${DEVNAME##$d}" ]]; then
-			[[ "$MNT" == ro ]] || [[ -w "$p" ]] || {
-				o="remount,${o:-$MNT}"
+			[[ "${__cmd_rw}" == ro ]] || [[ -w "$p" ]] || {
+				o="remount,${o:-${__cmd_rw}}"
 				while read d a t x; do
 					[[ "$d:$a" == "$DEVNAME:$p" ]] || continue
 					x="/sbin/fsck.$t"
 					[[ -x "$x" ]] || break
 					[[ $RW_RO_FAIL != 0 ]] && {
 						umount "$p"
-						o="${o:-$MNT}"
+						o="${o:-${__cmd_rw}}"
 					}
 					yes n|$x -p "$DEVNAME" 2>>$O
 					_fsck $x -y "$DEVNAME" 2>>$O && mnt && return 0
@@ -396,31 +396,26 @@ done
 }
 
 cmd(){
-	local i x y
+	local x y
 	read x </proc/cmdline
 	[[ -e $C/cmdline ]] && read y <$C/cmdline && [[ "$x" != "$y" ]] && rm "$C" -Rf
-	[[ -e $C/cmd ]] && {
-		. $C/cmd
-		return
-	}
+	[[ -e $C/cmd ]] && . $C/cmd || {
 	mkdir -p $C
 	cp /proc/cmdline $C/cmdline
-	for i in $x; do
-		case "$i" in
-		rw)MNT=defaults;;
-		esac
-		x="${i%%=*}"
-		y="$i="
-		y="${y#*=}"
-		x="${x##*[^a-zA-Z0-9._-]*}"
-		y="${y%=*}"
+	for x in $x; do
+		y=
 		case "$x" in
-		.);;
-		*[.-]*)echo -ne " ${x#*.}${y:+=}$y" >"$C/$x";;
-		*)export _cmd_$x="_$y" cmd_$x="$y";;
+		rw)export __cmd_rw=defaults;;
+		*=*)y="=${x#*=}";x="${x%%=*}";;
+		esac
+		case "$x" in
+		*[^a-zA-Z0-9._-]*|.|..);;
+		*[.-]*)echo -ne " ${x#*.}$y" >"$C/$x";;
+		*)export _cmd_$x="_$y" cmd_$x="${y#=}";;
 		esac
 	done
 	export|grep " [_]*cmd_" >$C/cmd
+	}
 }
 
 case $0 in
