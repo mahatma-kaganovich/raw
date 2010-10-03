@@ -318,8 +318,9 @@ case "$1" in
 	mnt0 /proc
 	/bin/busybox --install -s
 	mount /sys
+	mdev -b -s mem
 	cmd true
-	mdev -b -s mem -i
+	mdev -i
 	fstab / "*"
 	mdev -s block
 #	mdev -b -s mem
