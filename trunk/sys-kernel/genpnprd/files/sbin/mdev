@@ -7,6 +7,7 @@ Q=-qs
 O=/dev/null
 MNT=ro
 cmd_init=/sbin/init
+C=/etc/kernel.cmdline
 
 root=
 RW_RO_FAIL=1
@@ -283,7 +284,7 @@ case "$1" in
 -m|-i|-M)
 	i=/etc/modalias
 	loadsh modprobe
-	[[ "$1" == "-m" ]] && modprobe $Q -a `echo ""|grep -sh "^MODALIAS=" $(grep -sL "^DRIVER=" $(find /sys -name uevent|sort))|sed -e 's:^MODALIAS=::g'|uniq` 2>>$O
+	[[ "$1" == "-m" ]] && modprobe $Q -a `ls -1 $C/*. 2>/dev/null|sed -e 's:.*/\(.*\).:\1:'` `echo ""|grep -sh "^MODALIAS=" $(grep -sL "^DRIVER=" $(find /sys -name uevent|sort))|sed -e 's:^MODALIAS=::g'|uniq` 2>>$O
 	while ! ( [[ "$1" == "-i" ]] && ln -s /sys $i 2>/dev/null ) && [[ -f $i ]] && mv $i ${i}_ ; do
 		modprobe $Q -a `cat ${i}_` 2>>$O
 		rm ${i}_
@@ -318,9 +319,9 @@ case "$1" in
 	mnt0 /proc
 	/bin/busybox --install -s
 	mount /sys
-	mdev -b -s mem
-	cmd true
-	mdev -i
+	rm "$C" -Rf
+	cmd
+	mdev -b -s mem -i
 	fstab / "*"
 	mdev -s block
 #	mdev -b -s mem
@@ -395,14 +396,16 @@ done
 }
 
 cmd(){
-	local i x y d=/etc/kernel.cmdline
-	${1:-false} && rm "$d" -Rf
-	[[ -e $d/cmd ]] && {
-		. $d/cmd
+	local i x y
+	read x </proc/cmdline
+	[[ -e $C/cmdline ]] && read y <$C/cmdline && [[ "$x" != "$y" ]] && rm "$C" -Rf
+	[[ -e $C/cmd ]] && {
+		. $C/cmd
 		return
 	}
-	mkdir -p $d
-	for i in `cat /proc/cmdline`; do
+	mkdir -p $C
+	cp /proc/cmdline $C/cmdline
+	for i in $x; do
 		case "$i" in
 		rw)MNT=defaults;;
 		esac
@@ -411,9 +414,13 @@ cmd(){
 		y="${y#*=}"
 		x="${x##*[^a-zA-Z0-9._-]*}"
 		y="${y%=*}"
-		export _cmd_$x="_$y" cmd_$x="$y" || echo -ne " ${x#*.}=$y" >"$d/$x"
-	done 2>/dev/null
-	export|grep " [_]*cmd_" >$d/cmd
+		case "$x" in
+		.);;
+		*[.-]*)echo -ne " ${x#*.}${y:+=}$y" >"$C/$x";;
+		*)export _cmd_$x="_$y" cmd_$x="$y";;
+		esac
+	done
+	export|grep " [_]*cmd_" >$C/cmd
 }
 
 case $0 in
