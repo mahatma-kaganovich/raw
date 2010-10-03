@@ -12,11 +12,10 @@ root=
 RW_RO_FAIL=1
 
 mdevs(){
-	local i
+	local i pid
 	[[ -e "$1" ]] && for i in $*; do
-		local DEVNAME="" MAJOR="" MINOR="" FIRMWARE="" DEVPATH="${i#/sys}" DEVMODE=""
-		DEVPATH="${DEVPATH%/uevent}"
-		eval "$(sed -e 's:^\(.*\)=\([^"].*[^"]\)$:\1="\2":g' -e 's/^[^=]*$//g' <"$i")" || echo "! $i"
+		local DEVNAME="" MAJOR="" MINOR="" FIRMWARE="" DEVPATH="/../${i%/uevent}" DEVMODE=""
+		eval "$(sed -e 's:^\(.*\)=\([^"].*[^"]\)$:\1="\2":g' -e 's/^[^=]*$//g' <"$i")" # || echo "! $i"
 		i="${i#/sys/class/}"
 		case $ACTION in
 		*add)[[ -e "/dev/$DEVNAME" ]] || _mdev "${i%%/*}";;
@@ -91,7 +90,7 @@ lofind(){
 	grep -sF " $p " /etc/mtab /proc/mounts|grep -om1 "^/dev/loop[^ ]*" && return 0
 	for i in /dev/loop*; do
 		losetup "$i" "$root/$DEVNAME" 2>>$O || continue
-		mdevs /sys/class/block/loop*/uevent
+		mdevs /sys/class/block/${i#/dev/}/uevent
 		echo "$i"
 		return 0
 	done
@@ -123,7 +122,7 @@ try_mnt_loop(){
 		}
 		DEVNAME="$i"
 	}
-	try_mnt && return 0
+	try_mnt
 	return $?
 }
 
@@ -140,7 +139,7 @@ try_mnt_loop_wild(){
 
 _fsck(){
 	case $?:$RW_RO_FAIL in
-	[0|1]:*)true;;
+	[01]:*)true;;
 	[23]:*)reboot -f;;
 	16:2) [[ -n "$*" ]] && ( "${@}" || _fsck );; # ocfs2 -y
 	8:*|16:*)$x -n "$DEVNAME";;
@@ -357,11 +356,10 @@ case "$1" in
 	cat /proc/uptime
 	while true; do
 	cd /newroot && {
-		i=`ls /dev/loop*`
 		umount `grep -vh "^[^ ]* /newroot[/ ]\|^[^ ]* / " /proc/mounts /etc/mtab|sed -e 's:^[^ ]* \([^ ]*\) .*$:\1:'|sort -u`
-		for i in $i; do
+		for i in /dev/loop*; do
 			losetup -d "$i"
-		done 2>>/dev/null
+		done 2>/dev/null
 		mount
 		exec /sbin/switch_root -c /dev/console /newroot $cmd_init
 	}
@@ -372,6 +370,7 @@ case "$1" in
 	done
 	shift
 	rm -Rf /temp/cache/modprobe
+	cd
 	exec "${@}"
 ;;
 -*)echo 'mdev replacement, (c) Denis Kaganovich, under Anarchy or GPLv2 license
@@ -405,7 +404,7 @@ cmd(){
 		y="${y#*=}"
 		x="${x##*[^a-z_]*}"
 		y="${y%=*}"
-		[[ -z "$y" ]] && export _cmd_$x="_$y" || export cmd_$x="$y"
+		export _cmd_$x="_$y" cmd_$x="$y"
 	done
 }
 
