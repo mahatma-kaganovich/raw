@@ -3,7 +3,10 @@
 modalias(){ ALIAS=`find -name "$1.ko"`;return $?;}
 cd /lib/modules/${KV:=`uname -r`}
 [[ -e ./modules.alias.sh ]] && . ./modules.alias.sh # || return 1
-modparam(){ return;}
+modparam(){
+	PARAM="${1##*/}"
+	PARAM=`cat "/etc/kernel.cmdline/${PARAM%.ko}".* 2>/dev/null`
+}
 [[ -e /etc/modparam.sh ]] && . /etc/modparam.sh
 
 modverbose(){
@@ -11,7 +14,7 @@ modverbose(){
 }
 
 modprobe(){
-local rr=0 r=1 INSMOD="" a=false V=
+local rr=0 r=1 INSMOD= a=false V=
 while true; do
 case "$1" in
 --)shift;break;;
