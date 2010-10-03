@@ -417,7 +417,7 @@ cmd(){
 }
 
 case $0 in
-*mdev)cmd;mdev "${@}";;
+*mdev)mdev "${@}";;
 *hotplug)cmd;mdev -b "${@}";;
 *secureinit)cmd(){ return;};mdev -init;;
 *rc|*init)mdev -init "${@:-/bin/sh}";;
