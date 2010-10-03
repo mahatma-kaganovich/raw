@@ -409,7 +409,7 @@ cmd(){
 		x="${i%%=*}"
 		y="$i="
 		y="${y#*=}"
-		x="${x##*[^a-zA-Z._-]*}"
+		x="${x##*[^a-zA-Z0-9._-]*}"
 		y="${y%=*}"
 		export _cmd_$x="_$y" cmd_$x="$y" || echo -ne " ${x#*.}=$y" >"$d/$x"
 	done 2>/dev/null
