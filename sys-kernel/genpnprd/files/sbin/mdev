@@ -7,6 +7,7 @@ Q=-qs
 O=/dev/null
 __cmd_rw=ro
 cmd_init=/sbin/init
+cmd_root="/dev/*"
 C=/etc/kernel.cmdline
 
 root=
@@ -209,8 +210,13 @@ _fstab(){
 	return 1
 }
 
+fstab_(){
+	[[ -n "$cmd_root" ]] && [[ "${1:-/}" == / ]] && echo " $cmd_root /newroot"
+	sed -e 's:#.*$::g' -e '/^[ 	]*$/d' <$1/etc/fstab
+}
+
 fstab(){
-	sed -e 's:#.*$::g' -e '/^[ 	]*$/d' <$1/etc/fstab|_fstab "${@}"
+	fstab_ $1|_fstab "${@}"
 	return $?
 }
 
@@ -261,7 +267,7 @@ esac
 		modprobe $Q -a $(echo " $id"|_fs) 2>>$O
 		$new && {
 		id="$i `echo " $id"|sed -e 's/^ [^ ]*://' -e 's:\( [A-Z]*=\)\"\([^"]*\)\":\1\2\1"\2":g'`" #'
-		sed -e 's:#.*$::g' -e '/^[ 	]*$/d' </etc/fstab|while read d p t o x; do
+		fstab_|while read d p t o x; do
 			for j in $id; do
 				[[ -n "${j##$d}" ]] || {
 					try_mnt
@@ -301,6 +307,7 @@ case "$1" in
 	for i in "${@:-"*"}"; do
 		case "$i" in
 		-*)mdev $i;;
+		*/*)mdevs /sys/class/$i/uevent;;
 		*)mdevs /sys/class/$i/*/uevent;;
 		esac
 	done
@@ -319,9 +326,8 @@ case "$1" in
 	mnt0 /proc
 	/bin/busybox --install -s
 	mount /sys
-	rm "$C" -Rf
 	cmd
-	mdev -b -s mem -i
+	mdev -b -s mem tty/console -i
 	fstab / "*"
 	mdev -s block
 #	mdev -b -s mem
@@ -401,8 +407,9 @@ cmd(){
 	[[ -e $C/cmdline ]] && read y <$C/cmdline && [[ "$x" != "$y" ]] && rm "$C" -Rf
 	[[ -e $C/cmd ]] && . $C/cmd || {
 	mkdir -p $C
+	xargs -n1 </proc/cmdline >$C/cmdline_
 	cp /proc/cmdline $C/cmdline
-	for x in $x; do
+	while read x; do
 		y=
 		case "$x" in
 		rw)export __cmd_rw=defaults;;
@@ -413,7 +420,7 @@ cmd(){
 		*[.-]*)echo -ne " ${x#*.}$y" >"$C/$x";;
 		*)export _cmd_$x="_$y" cmd_$x="${y#=}";;
 		esac
-	done
+	done <$C/cmdline_
 	export|grep " [_]*cmd_" >$C/cmd
 	}
 }
