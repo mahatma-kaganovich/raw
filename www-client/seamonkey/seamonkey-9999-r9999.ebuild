@@ -258,6 +258,7 @@ src_prepare(){
 
 	sed -i -e 's%^#elif$%#elif 1%g' "${S1}"/toolkit/xre/nsAppRunner.cpp
 	use X || sed -i -e 's:gtk-2\.0:gtk-directfb-2.0:g' -e 's:GDK_PACKAGES=directfb:GDK_PACKAGES="directfb gdk-directfb-2.0":g' `find "${S}" -name configure.in` `find "${S}" -name "Makefile*"`
+	use moznosystem || sed -i -e '/^PR_STATIC_ASSERT.*CAIRO_SURFACE_TYPE_SKIA/d' "${S1}"/gfx/thebes/gfxASurface.cpp
 
 	eend $?
 
