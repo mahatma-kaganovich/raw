@@ -489,14 +489,15 @@ src_configure(){
 	mozconfig_use_with system-nss
 	mozconfig_use_with system-nspr
 
-	case "${MY_PN}" in
-	firefox) mozconfig_annotate '' --enable-faststripe ;;
-	esac
+#	case "${MY_PN}" in
+#	firefox) mozconfig_annotate '' --enable-faststripe ;;
+#	esac
 
 	echo "" >>"${S}"/.mozconfig
 
 	case "${PN}" in
 	*minefield*)
+		mozconfig_annotate '' --enable-faststripe
 		mozconfig_annotate '' --with-branding=browser/branding/nightly
 	;;
 	*bonecho*|*shiretoko*)
