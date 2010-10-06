@@ -39,7 +39,8 @@ esac
 IUSE="-java mozdevelop moznoirc moznoroaming postgres restrict-javascript startup-notification
 	debug minimal directfb moznosystem +threads jssh wifi python mobile static
 	moznomemory accessibility system-sqlite vanilla xforms gio +alsa
-	+custom-cflags +custom-optimization system-xulrunner +ipc system-nss system-nspr X"
+	+custom-cflags +custom-optimization system-xulrunner +ipc system-nss system-nspr X
+	bindist"
 #	qt-experimental"
 
 #RESTRICT="nomirror"
@@ -505,7 +506,7 @@ src_configure(){
 		mozconfig_annotate '' --with-branding=browser/branding/unofficial
 	;;
 	*firefox*)
-		mozconfig_annotate '' --enable-official-branding
+		mozconfig_use_enable !bindist official-branding
 		einfo
 		elog "You may not redistribute this build to any users on your network"
 		elog "or the internet. Doing so puts yourself into"
@@ -753,7 +754,7 @@ src_unpack() {
 	SM && use !moznomail && use crypt && _cvs enigmail/src "${S}"/mailnews/extensions/enigmail crypt
 	# branches: LDAPCSDK_6_0_6_RTM LDAPCSDK_6_0_6D_MOZILLA_RTM
 	SM && ECVS_BRANCH="HEAD" _cvs_m mozilla/directory/c-sdk "${S}/directory/c-sdk" ldap
-	local l EHG_EXTRA_OPT="${EHG_EXTRA_OPT} --rev tip"
+	local l # EHG_EXTRA_OPT="${EHG_EXTRA_OPT} --rev tip"
 	mkdir "${WORKDIR}/l10n"
 	for l in $(langs) ; do
 		[[ "${l}" == "en-US" ]] ||
