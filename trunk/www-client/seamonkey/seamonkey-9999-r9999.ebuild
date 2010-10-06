@@ -243,7 +243,7 @@ src_prepare(){
 	sed -i -e '1s,usr/local/bin/perl,usr/bin/perl,' "${S1}"/security/nss/cmd/smimetools/smime
 	eend $? || die "sed failed"
 
-	ebegin "Other misc. patches"
+	elog "Other misc. patches"
 	## gentoo install dirs
 	sed -i -e 's%-$.MOZ_APP_VERSION.$%%g' "${S}"/config/autoconf.mk.in
 	# search +minimal
@@ -260,8 +260,7 @@ src_prepare(){
 	use X || sed -i -e 's:gtk-2\.0:gtk-directfb-2.0:g' -e 's:GDK_PACKAGES=directfb:GDK_PACKAGES="directfb gdk-directfb-2.0":g' `find "${S}" -name configure.in` `find "${S}" -name "Makefile*"`
 	use moznosystem || sed -i -e '/^PR_STATIC_ASSERT.*CAIRO_SURFACE_TYPE_SKIA/d' 
 	sed -i -e 's:^\(PR_STATIC_ASSERT.*CAIRO_SURFACE_TYPE_SKIA.*\)$:#if CAIRO_HAS_SKIA_SURFACE\n\1\n#endif:' "${S1}"/gfx/thebes/gfxASurface.cpp
-
-	eend $?
+	use ldap || sed -i -e 's:^#ifdef MOZ_LDAP_XPCOM$:ifdef MOZ_LDAP_XPCOM:' -e 's:^#endif$:endif:' "${S}"/bridge/bridge.mk
 
 	local i i1 i2
 	for i in "${WORKDIR}"/l10n/*/toolkit/chrome/global/*; do
@@ -750,10 +749,8 @@ src_unpack() {
 	_hg pyxpcom "${S1}"/extensions/python python
 	_hg chatzilla "${S1}"/extensions/irc !moznoirc
 	SM && use !moznomail && use crypt && _cvs enigmail/src "${S}"/mailnews/extensions/enigmail crypt
-	SM && ! [[ -e "${S}"/directory/c-sdk/Makefile.in ]] && {
-		ECVS_BRANCH="LDAPCSDK_6_0_6_RTM" _cvs_m mozilla/directory/c-sdk "${S}/directory/c-sdk" ldap
-		[[ -e "${S}"/directory/c-sdk/Makefile.in ]] || rm -Rf "${S}"/directory/c-sdk
-	}
+	SM && ! [[ -e "${S}"/directory/c-sdk/Makefile.in ]] &&  ECVS_BRANCH="LDAPCSDK_6_0_6_RTM" _cvs_m mozilla/directory/c-sdk "${S}/directory/c-sdk" ldap
+#		use ldap || rm -Rf "${S}"/directory/c-sdk
 	local l EHG_EXTRA_OPT="${EHG_EXTRA_OPT} --rev tip"
 	mkdir "${WORKDIR}/l10n"
 	for l in $(langs) ; do
