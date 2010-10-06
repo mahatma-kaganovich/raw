@@ -140,7 +140,7 @@ seamonkey)
 	HOMEPAGE="http://www.seamonkey-project.org/"
 	export MOZ_CO_PROJECT=suite
 	IUSE="${IUSE} ldap moznocompose moznomail crypt moznocalendar"
-	SRC_URI="${SRC_URI} crypt? ( !moznomail? ( http://dev.gentoo.org/~anarchy/dist/enigmail-${EMVER}.tar.gz ) )"
+	[[ -z "${hg}" ]] && SRC_URI="${SRC_URI} crypt? ( !moznomail? ( http://dev.gentoo.org/~anarchy/dist/enigmail-${EMVER}.tar.gz ) )"
 	RDEPEND="${RDEPEND} crypt? ( !moznomail? ( >=app-crypt/gnupg-1.4 ) )"
 	S1="${S}/mozilla"
 	#[[ -n "${hg}" ]] && 
@@ -261,6 +261,7 @@ src_prepare(){
 	use moznosystem || sed -i -e '/^PR_STATIC_ASSERT.*CAIRO_SURFACE_TYPE_SKIA/d' 
 	sed -i -e 's:^\(PR_STATIC_ASSERT.*CAIRO_SURFACE_TYPE_SKIA.*\)$:#if CAIRO_HAS_SKIA_SURFACE\n\1\n#endif:' "${S1}"/gfx/thebes/gfxASurface.cpp
 	use ldap || sed -i -e 's:^#ifdef MOZ_LDAP_XPCOM$:ifdef MOZ_LDAP_XPCOM:' -e 's:^#endif$:endif:' "${S}"/bridge/bridge.mk
+	touch "${S}"/directory/xpcom/datasource/nsLDAPDataSource.manifest
 
 	local i i1 i2
 	for i in "${WORKDIR}"/l10n/*/toolkit/chrome/global/*; do
@@ -749,8 +750,8 @@ src_unpack() {
 	_hg pyxpcom "${S1}"/extensions/python python
 	_hg chatzilla "${S1}"/extensions/irc !moznoirc
 	SM && use !moznomail && use crypt && _cvs enigmail/src "${S}"/mailnews/extensions/enigmail crypt
-	SM && ! [[ -e "${S}"/directory/c-sdk/Makefile.in ]] &&  ECVS_BRANCH="LDAPCSDK_6_0_6_RTM" _cvs_m mozilla/directory/c-sdk "${S}/directory/c-sdk" ldap
-#		use ldap || rm -Rf "${S}"/directory/c-sdk
+	# branches: LDAPCSDK_6_0_6_RTM LDAPCSDK_6_0_6D_MOZILLA_RTM
+	SM && ECVS_BRANCH="HEAD" _cvs_m mozilla/directory/c-sdk "${S}/directory/c-sdk" ldap
 	local l EHG_EXTRA_OPT="${EHG_EXTRA_OPT} --rev tip"
 	mkdir "${WORKDIR}/l10n"
 	for l in $(langs) ; do
