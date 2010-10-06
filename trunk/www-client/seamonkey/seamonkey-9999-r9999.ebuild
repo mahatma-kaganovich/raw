@@ -118,7 +118,7 @@ xf_v=b4b01fd808f2
 ;;
 esac
 
-SRC_URI="${SRC_URI}
+[[ -z "${hg}" ]] && SRC_URI="${SRC_URI}
 		xforms? ( http://hg.mozilla.org/schema-validation/archive/${sv_v}.tar.bz2 -> schema-validation-${sv_v}.tar.bz2
 		http://hg.mozilla.org/xforms/archive/${xf_v}.tar.bz2 -> xforms-${xf_v}.tar.bz2 )"
 
