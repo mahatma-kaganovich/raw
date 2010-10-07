@@ -259,11 +259,10 @@ src_prepare(){
 
 	sed -i -e 's%^#elif$%#elif 1%g' "${S1}"/toolkit/xre/nsAppRunner.cpp
 	use X || sed -i -e 's:gtk-2\.0:gtk-directfb-2.0:g' -e 's:GDK_PACKAGES=directfb:GDK_PACKAGES="directfb gdk-directfb-2.0":g' `find "${S}" -name configure.in` `find "${S}" -name "Makefile*"`
-	use moznosystem || sed -i -e '/^PR_STATIC_ASSERT.*CAIRO_SURFACE_TYPE_SKIA/d' 
 	sed -i -e 's:^\(PR_STATIC_ASSERT.*CAIRO_SURFACE_TYPE_SKIA.*\)$:#if CAIRO_HAS_SKIA_SURFACE\n\1\n#endif:' "${S1}"/gfx/thebes/gfxASurface.cpp
 	use ldap || sed -i -e 's:^#ifdef MOZ_LDAP_XPCOM$:ifdef MOZ_LDAP_XPCOM:' -e 's:^#endif$:endif:' "${S}"/bridge/bridge.mk
 	touch "${S}"/directory/xpcom/datasource/nsLDAPDataSource.manifest
-	sed -i -e 's:\(return XRE_InitEmbedding.*\), nsnull, 0:\1:' "${S1}"/extensions/java/xpcom/src/nsJavaInterfaces.cpp
+#	sed -i -e 's:\(return XRE_InitEmbedding.*\), nsnull, 0:\1:' "${S1}"/extensions/java/xpcom/src/nsJavaInterfaces.cpp
 
 	local i i1 i2
 	for i in "${WORKDIR}"/l10n/*/toolkit/chrome/global/*; do
@@ -359,6 +358,9 @@ src_configure(){
 #	mozconfig_use_extension python python
 	if [[ "${MY_PN}" == "mobile" ]] && [[ -z "${hg}" ]]; then
 		( use java || use python ) && ewarn "Useflags 'java' & 'python' ignored here"
+	elif use java && grep -q "XRE_InitEmbedding(" "${S1}"/extensions/java/xpcom/src/nsJavaInterfaces.cpp && ! grep -q "XRE_InitEmbedding(" "${S1}"/toolkit/xre/nsEmbedFunctions.cpp; then
+		ewarn "JavaXPCOM extension is broken in this version and will be skipped"
+		ewarn "Useflag 'java' ignored"
 	else
 		mozconfig_use_enable java javaxpcom
 	fi
