@@ -260,7 +260,7 @@ case "$i" in
 ;;
 /dev/loop*)new=false;; # vs "fixed" umount
 esac
-[[ -b "$i" ]] && [[ "`cat "/sys$DEVPATH/size" 2>/dev/null`" != 0 ]] && if $DETECTBLK || [[ -d /etc/modalias ]]; then
+[[ -b "$i" ]] && ( $DETECTBLK || [[ -d /etc/modalias ]] ) && [[ "`cat "/sys$DEVPATH/size" 2>/dev/null`" != 0 ]] && {
 		loadsh blkid
 		: ${KV:=`uname -r`}
 		local id="`blkid $i`" d p o t x
@@ -276,8 +276,19 @@ esac
 			done
 		done
 		}
-fi
+}
 } # /DEVNAME
+}
+
+plug(){
+	local i
+	[[ -e /etc/rdinit.d/$1 ]] && for i in `ls -1 /etc/rdinit.d/$1/`; do
+		i="/etc/rdinit.d/$1/$i"
+		[[ -f "$i" ]] && case "$i" in
+		*.sh). "$i";;
+		*)"$i";;
+		esac
+	done
 }
 
 mdev(){
@@ -322,6 +333,7 @@ case "$1" in
 	done
 ;;
 -*init)
+	plug init
 	local blk2=false REORDER=break
 	mnt0 /proc
 	/bin/busybox --install -s
@@ -336,7 +348,8 @@ case "$1" in
 #	mount -a 2>>$O
 	SHLOADED=""
 	mkdir -p /temp/cache/modprobe
-#	mdev -i
+	mdev -i
+	plug load0
 	i="-"
 	while ! ( [[ $1 == -fastinit ]] && [[ -e /newroot ]] ) && j=`cat /proc/modules` && [[ "$i" != "$j" ]]; do
 		echo -n .
@@ -345,10 +358,13 @@ case "$1" in
 			blk2=false
 			mdev -s misc block
 		done
+		plug load
+		[[ -n "${_cmd_rootwait}" ]] && sleep "${_cmd_rootwait}"
 		REORDER=
 		i="$j"
 	done
 	[[ -e /sys/module/drm_kms_helper ]] && modprobe $Q fbcon 2>>$O
+	plug load1
 	[[ -e /newroot ]] || {
 		fstab / /newroot
 		while $blk2; do
@@ -368,12 +384,13 @@ case "$1" in
 		for i in /dev/loop*; do
 			losetup -d "$i"
 		done 2>/dev/null
+		plug root
 		mount
 		exec /sbin/switch_root -c /dev/console /newroot $cmd_init
 	}
 	ln -s $0 /sbin/hotplug
 	mdev -m -s "*" -i
-	[[ "${_cmd_rootwait}" == "_" ]] || break
+	[[ "${__cmd_rootwait}" == "_" ]] || break
 	sleep 1
 	done
 	shift
@@ -391,7 +408,7 @@ Options:
 -i	install: modaliases ASAP|background
 -w	scsi_wait_scan
 -a	= (mdev -s mem -i -b -m -w "*");mounts
--[fast]init	initrc
+-[fast]init	initrc (+/etc/rdinit.d/{init,load0,load,load1,root})
 Example: mdev -s "*" -m'
 return
 ;;
@@ -413,6 +430,7 @@ cmd(){
 		y=
 		case "$x" in
 		rw)export __cmd_rw=defaults;;
+		root=/dev/ram0)continue;;
 		*=*)y="=${x#*=}";x="${x%%=*}";;
 		esac
 		case "$x" in
