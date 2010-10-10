@@ -16,9 +16,10 @@ RW_RO_FAIL=1
 mdevs(){
 	local i pid
 	[[ -e "$1" ]] && for i in $*; do
-		local DEVNAME="" MAJOR="" MINOR="" FIRMWARE="" DEVPATH="/../${i%/uevent}" DEVMODE=""
+		local DEVNAME="" MAJOR="" MINOR="" FIRMWARE="" DEVPATH="/../${i%/uevent}" DEVMODE="" MODALIAS=""
 		eval "$(sed -e 's:^\(.*\)=\([^"].*[^"]\)$:\1="\2":g' -e 's/^[^=]*$//g' <"$i")" # || echo "! $i"
 		i="${i#/sys/class/}"
+		MODALIAS=""
 		case $ACTION in
 		*add)[[ -e "/dev/$DEVNAME" ]] || _mdev "${i%%/*}";;
 		*)_mdev "${i%%/*}";;
