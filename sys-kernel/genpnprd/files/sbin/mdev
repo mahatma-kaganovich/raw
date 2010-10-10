@@ -340,16 +340,12 @@ case "$1" in
 	/bin/busybox --install -s
 	mount /sys
 	cmd
-	mdev -b -s mem tty/console -i
+	mdev -b -s mem tty/console -M
 	fstab / "*"
 	mdev -s block
-#	mdev -b -s mem
-#	modprobe $Q -a `cat /etc/modalias` 2>>$O
-#	mdev -s block
-#	mount -a 2>>$O
 	SHLOADED=""
 	mkdir -p /temp/cache/modprobe
-	mdev -i
+	mdev -M
 	plug load0
 	i="-"
 	while ! ( [[ $1 == -fastinit ]] && [[ -e /newroot ]] ) && j=`cat /proc/modules` && [[ "$i" != "$j" ]]; do
