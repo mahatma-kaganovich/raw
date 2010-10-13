@@ -1,5 +1,5 @@
 #! /usr/bin/perl
-# p-patch v0.06, by mahatma
+# p-patch v0.09, by mahatma
 
 my $s;
 my %f;
@@ -125,8 +125,8 @@ err("'$_[0]' write")
 
 sub rdir{
 my @d;
-for(sort <$_[0]>){
-print " + $_\n";
+for(<$_[0]>){
+#print " + $_\n";
 push @d,rf("<$_")
 }
 @d
@@ -147,7 +147,7 @@ $d
 }
 
 my %wild;
-   
+
 sub wild{
 my $p=shift;
 my @x=();
@@ -173,7 +173,6 @@ sub wlog{print "$_[0]\n"}
 
 sub p_patch{
 for(@_){
-print " .\n";
 ev($_);
 if($@){
  err($@);
@@ -183,11 +182,44 @@ flush();
 }
 }
 
+sub p_patch2{
+my $ok=1;
+my $strict=$_[0];
+shift;
+my @lst=sort @_;
+while($#lst>-1){
+	my $i=pop @lst;
+	my $cmd;
+	if(-d $i){p_patch2($strict+1,<$i/*>) or return 0}
+	elsif(! -e $i){$ok=0}
+	elsif(substr($i,-8) eq '.p-patch'){print " + $i\n";p_patch(rf($i));}
+	elsif(substr($i,-6) eq '.patch'){$cmd="patch -i \"$i\""}
+	elsif(substr($i,-10) eq '.patch.bz2'){$cmd="bzip2 -dc \"$i\" | patch"}
+	else{$ok=0}
+	if(defined($cmd)){
+		print " +".($strict>1?'!':'')." $i\n";
+		$cmd.=" >&2 -tN -d \"$ENV{S}\" -p";
+		for my $p (1,0){
+			next if(system("$cmd$p -s --dry-run") || system("$cmd$p"));
+			print "OK (-p$p)\n";
+			return 1 if($strict>1);
+			last;
+		}
+	}
+}
+$strict<2
+}
+
 open STDERR,">&2";
 select(STDERR);
 $|=1;
 my $ok=1;
 local %ENV0=%ENV;
-for(@ARGV){print "ppatch: $_\n";p_patch(substr($_,0,2) eq '--'?substr($_,2):-d $_?rdir("$_/*.p-patch"):rf("<$_")||($ok=0))}
+for(@ARGV){
+	print "ppatch: $_\n";
+	if(substr($_,0,2) eq '--'){p_patch(substr($_,2))}
+	elsif(-e $_){p_patch2(0,$_) or exit 1}
+	else{$ok=0}
+}
 while(my ($k,$v)=each %ENV){print STDOUT "eval $k=".quotemeta($v)."\n" if($v ne $ENV0{$k})}
-$ok
+exit 0

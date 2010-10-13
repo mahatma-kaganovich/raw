@@ -2,11 +2,17 @@ $etc||="$ENV{SS}/etc";
 $rc="$etc/portage/bashrc";
 wf(">$rc",'') if(!-e $rc);
 addon($rc,'#',"ppatch auto",qq(_ppatch(){
-local p i PPATCH PPATCHDIR
-PPATCHDIR="\${PPATCH_ROOT:-\${PORTAGE_CONFIGROOT:-\$ROOT}}/usr/ppatch"
+local p i PPATCH PPATCHLIST="" PPATCHDIR="\${PPATCH_ROOT:-\${PORTAGE_CONFIGROOT:-\$ROOT}}/usr/ppatch"
 for PPATCH in \$CATEGORY/\$PN \$PN \$PROVIDE ; do\
 PPATCH="\$PPATCHDIR/\$PPATCH/\$EBUILD_PHASE/"
 if [[ -n "\$EBUILD_PHASE" ]]; then
+	i="`readlink -f \$PPATCH`"
+	p=""
+	for p in \$PPATCHLIST; do
+		[[ "\$p" == "\$i" ]] && break;
+	done
+	[[ "\$p" == "\$i" ]] && continue
+	PPATCHLIST="\$PPATCHLIST \$i"
 	p="\$PPATCH"
 	while true; do
 		for i in "\$p"/*bashrc ; do
@@ -16,9 +22,9 @@ if [[ -n "\$EBUILD_PHASE" ]]; then
 		p="\${p%/*}"
 		[[ "\$p" < "\$PPATCHDIR" || "\$p" == "\$i" ]] && break
 	done
-        if [[ -e "\$PPATCH" ]] && ! ( [[ \${EAPI:-1} -gt 1 ]] && [[ \$EBUILD_PHASE == compile ]] && [[ "`readlink -f "\$PPATCH"`" == "`readlink -f "\$PPATCH/../prepare"`" ]] ) ; then
+	if [[ -e "\$PPATCH" ]] && ! ( [[ \${EAPI:-1} -gt 1 ]] && [[ \$EBUILD_PHASE == compile ]] && [[ "`readlink -f "\$PPATCH"`" == "`readlink -f "\$PPATCH/../prepare"`" ]] ) ; then
 		export PPATCH PPATCHDIR S
-		`p-patch \$PPATCH`
+		`p-patch \$PPATCH || die "ppatch failed: \$PPATCH"`
 	fi
 fi
 done

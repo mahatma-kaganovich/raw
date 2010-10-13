@@ -1,13 +1,13 @@
-
 inherit eutils raw
 
+EAPI="2"
 DESCRIPTION="Asyncronous patchshield for Gentoo"
 LICENSE="GPL-2"
 SLOT="0"
 KEYWORDS="alpha amd64 arm hppa ia64 mips ppc ppc64 s390 sh sparc x86"
 RDEPEND="dev-lang/perl"
 DEPEND="${RDEPEND}"
-IUSE=""
+IUSE="strict"
 PDEPEND=""
 
 : ${FILESDIR:=${EBUILD%/*}/files}
@@ -30,17 +30,28 @@ ppinit(){
 ppinit
 
 src_install(){
-    local d
-    dodir /usr/sbin
+    local d s t
+    cd "${FILESDIR}"||die
+    exeinto /usr/sbin
+    doexe p-patch
+    insinto /usr/ppatch
+    doins *.p-patch
     dodir /usr/ppatch/virtual
     dosym linux-sources /usr/ppatch/virtual/linux-kernel
-    cp "${FILESDIR}"/p-patch-${PV} "${TMPDIR}"/p-patch
-    cp "${FILESDIR}"/*.p-patch "${D}"/usr/ppatch/
     for d in $IUSE ; do
-	( use !"${d}" || ! [[ -d "${FILESDIR}/${d}" ]] ) && continue
-	cp "${FILESDIR}/${d}"/* "${D}"/usr/ppatch/ -Rf
+	( use !"${d}" || ! [[ -d "${d}" ]] ) && continue
+	d="${FILESDIR}/${d}"
+	find "${d}"|egrep -v "/\."|while read s; do
+		t="${s#${d}/}"
+		[[ "${t}" == "${s}" ]] && continue
+		use strict || t="`echo "$t"|sed -e 's:^\([^/]*/[^/]*/[^/]*/\)[^/]*/\([^/]*\):\1\2:'`"
+		t="${D}/usr/ppatch/${t}"
+		if ! [[ -d "${s}" ]] || [[ -L "${s}" ]]; then
+			mkdir -p "${t%/*}"
+			cp -a "${s}" "${t}" || die
+		fi
+	done
     done
-    rm `find ${D} -name .svn` -Rf
     install "${TMPDIR}"/p-patch "${D}"/usr/sbin
 }
 
