@@ -52,10 +52,9 @@ src_install(){
 		fi
 	done
     done
-    install "${TMPDIR}"/p-patch "${D}"/usr/sbin
 }
 
 pkg_postinst(){
-    SS="${PORTAGE_CONFIGROOT}" p-patch ${FILESDIR}/bashrc.p-patch
+    SS="${PORTAGE_CONFIGROOT}" "${ROOT}"/usr/sbin/p-patch "${ROOT}"/usr/ppatch/bashrc.p-patch
     raw_pkg_postinst
 }
