@@ -1,2 +1,2 @@
-my $n="$ENV{S}/devtools/Site/site.config.m4");
+my $n="$ENV{S}/devtools/Site/site.config.m4";
 $f{$n}.="\nAPPENDDEF(`confENVDEF', `-DBROKEN_PTHREAD_SLEEP')\n";
