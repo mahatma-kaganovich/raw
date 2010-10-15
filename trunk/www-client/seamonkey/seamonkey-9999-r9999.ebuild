@@ -36,7 +36,7 @@ seamonkey)
 ;;
 esac
 
-IUSE="-java mozdevelop moznoirc moznoroaming postgres restrict-javascript startup-notification
+IUSE="-java mozdevelop moznoirc moznoroaming postgres startup-notification
 	debug minimal directfb moznosystem +threads jssh wifi python mobile static
 	moznomemory accessibility system-sqlite vanilla xforms gio +alsa
 	+custom-cflags +custom-optimization system-xulrunner +ipc system-nss system-nspr X
@@ -73,8 +73,6 @@ RDEPEND="java? ( >=virtual/jre-1.4 )
 	directfb? ( dev-libs/DirectFB )
 	gnome? ( !gio? ( >=gnome-base/gnome-vfs-2.3.5 )
 		>=gnome-base/libgnomeui-2.2.0 )"
-
-PDEPEND="restrict-javascript? ( x11-plugins/noscript )"
 
 S="${WORKDIR}/comm-${MOZVER}"
 
