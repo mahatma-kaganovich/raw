@@ -330,7 +330,7 @@ setconfig(){
 # Kernel-config CPU from CFLAGS and|or /proc/cpuinfo (native)
 # use smp: when 'native' = single/multi cpu, ht/mc will be forced ON
 cpu2K(){
-local i v V="" CF="" march=$(march)
+local i v V="" CF="" march=$(march) m64g="HIGHMEM64G -HIGHMEM4G -NOHIGHMEM"
 local vendor_id="" model_name="" flags="" cpu_family="" model="" cache_alignment="" fpu="" siblings="" cpu_cores="" processor=""
 CF1 -SMP -X86_BIGSMP -X86_GENERIC X86_X2APIC
 use xen && CF1 -HIGHMEM64G -HIGHMEM4G NOHIGHMEM X86_PAE
@@ -343,7 +343,7 @@ if [[ -z "${march}" ]]; then
 fi
 case "${march}" in
 native)
-	CF1 -SCHED_SMT -SCHED_MC -X86_UP_APIC -X86_TSC -X86_PAT -X86_MSR -X86_MCE -MTRR -X86_CMOV -X86_X2APIC -HIGHMEM64G -X86_PAE
+	CF1 -SCHED_SMT -SCHED_MC -X86_UP_APIC -X86_TSC -X86_PAT -X86_MSR -X86_MCE -MTRR -X86_CMOV -X86_X2APIC
 	case "${CTARGET:-${CHOST}}" in
 	x86*|i?86*)use 32-64 && CF1 -64BIT;;
 	esac
@@ -371,7 +371,7 @@ native)
 			esac
 		;;
 		tsc)CF1 X86_TSC;;
-		pae)CF1 X86_PAE -NOHIGHMEM -HIGHMEM4G HIGHMEM64G;;
+		pae)CF1 X86_PAE $m64g;;
 		pat)CF1 X86_PAT;;
 		msr)CF1 X86_MSR;;
 		mce)CF1 X86_MCE;;
@@ -476,16 +476,13 @@ pentiumpro)CF1 M686;;
 pentium2)CF1 MPENTIUMII;;
 pentium3|pentium3m)CF1 MPENTIUMIII;;
 pentium-m)CF1 MPENTIUMM;;
-*)CF1 HIGHMEM64G -HIGHMEM4G -NOHIGHMEM;;&
-pentium4|pentium4m|prescott|nocona)[[ "$(march mtune)" == generic ]] && CF1 MPENTIUMIII X86_GENERIC GENERIC_CPU || CF1 MPENTIUM4 MPSC;;
-core2)CF1 MCORE2;;
-k6-3)CF1 MK6;;
-athlon|athlon-tbird|athlon-4|athlon-xp|athlon-mp)CF1 MK7;;
-k8|opteron|athlon64|athlon-fx|k8-sse3|opteron-sse3|athlon64-sse3|amdfam10|barcelona)CF1 MK8;;
-*)
-	CF1 GENERIC_CPU X86_GENERIC -HIGHMEM64G
-	use xen && CF1 NOHIGHMEM
-;;
+# sure 64G
+pentium4|pentium4m|prescott|nocona)[[ "$(march mtune)" == generic ]] && CF1 MPENTIUMIII X86_GENERIC GENERIC_CPU $m64g || CF1 MPENTIUM4 MPSC $m64g;;
+core2)CF1 MCORE2 $m64g;;
+k6-3)CF1 MK6 $m64g;;
+athlon|athlon-tbird|athlon-4|athlon-xp|athlon-mp)CF1 MK7 $m64g;;
+k8|opteron|athlon64|athlon-fx|k8-sse3|opteron-sse3|athlon64-sse3|amdfam10|barcelona)CF1 MK8 $m64g;;
+*)CF1 GENERIC_CPU X86_GENERIC;;
 esac
 case "${CTARGET:-${CHOST}}:$CF" in
 	x86_64*|*\ 64BIT\ *)CF1 -MPENTIUM4 -PENTIUMIII -X86_GENERIC;;
