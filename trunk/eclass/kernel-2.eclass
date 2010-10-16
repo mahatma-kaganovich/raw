@@ -319,7 +319,6 @@ setconfig(){
 	use kernel-alsa || cfg +SOUND_PRIME
 	cfg_use lzma KERNEL_LZMA
 	cfg_use !lzma KERNEL_BZIP2
-	cfg_use xen HIGHMEM64G X86_PAE
 	# framebuffer enabled anymore, but "fbcon" support for more devices, exclude [external] nouveau drm
 	if use fbcon; then
 		cfg FB FRAMEBUFFER_CONSOLE FB_BOOT_VESA_SUPPORT "LOGO_LINUX_[\w\d]*"
@@ -334,6 +333,7 @@ cpu2K(){
 local i v V="" CF="" march=$(march)
 local vendor_id="" model_name="" flags="" cpu_family="" model="" cache_alignment="" fpu="" siblings="" cpu_cores="" processor=""
 CF1 -SMP -X86_BIGSMP -X86_GENERIC X86_X2APIC
+use xen && CF1 -HIGHMEM64G -HIGHMEM4G NOHIGHMEM X86_PAE
 use smp && CF1 SMP X86_BIGSMP SCHED_SMT SCHED_MC
 [[ "$(march mtune)" == generic ]] && CF1 X86_GENERIC
 if [[ -z "${march}" ]]; then
@@ -342,27 +342,8 @@ if [[ -z "${march}" ]]; then
 	march="${march%%-*}"
 fi
 case "${march}" in
-i386)CF1 M386 MATH_EMULATION;;
-i486)CF1 M486 MATH_EMULATION;;
-i586|pentium)CF1 M586;;
-pentium-mmx)CF1 M586MMX;;
-pentiumpro)CF1 M686;;
-i686)CF1 X86_GENERIC M686;;
-pentium2)CF1 MPENTIUMII;;
-pentium3|pentium3m)CF1 MPENTIUMIII;;
-pentium-m)CF1 MPENTIUMM;;
-pentium4|pentium4m|prescott|nocona)[[ "$(march mtune)" == generic ]] && CF1 MPENTIUMIII X86_GENERIC GENERIC_CPU || CF1 MPENTIUM4 MPSC;;
-core2)CF1 MCORE2;;
-k6|k6-2|k6-3)CF1 MK6;;
-athlon|athlon-tbird|athlon-4|athlon-xp|athlon-mp)CF1 MK7;;
-k8|opteron|athlon64|athlon-fx|k8-sse3|opteron-sse3|athlon64-sse3|amdfam10|barcelona)CF1 MK8;;
-winchip-c6)CF1 MWINCHIPC6;;
-winchip2)CF1 MWINCHIP3D;;
-c3)CF1 MCYRIXIII;;
-c3-2)CF1 MVIAC3_2;;
-geode)CF1 MGEODE_LX;;
 native)
-	CF1 -SCHED_SMT -SCHED_MC -X86_UP_APIC -X86_TSC -X86_PAT -X86_MSR -X86_MCE -MTRR -X86_CMOV -X86_X2APIC -X86_PAE
+	CF1 -SCHED_SMT -SCHED_MC -X86_UP_APIC -X86_TSC -X86_PAT -X86_MSR -X86_MCE -MTRR -X86_CMOV -X86_X2APIC -HIGHMEM64G -X86_PAE
 	case "${CTARGET:-${CHOST}}" in
 	x86*|i?86*)use 32-64 && CF1 -64BIT;;
 	esac
@@ -390,7 +371,7 @@ native)
 			esac
 		;;
 		tsc)CF1 X86_TSC;;
-		pae)use xen && CF1 X86_PAE;;
+		pae)CF1 X86_PAE -NOHIGHMEM -HIGHMEM4G HIGHMEM64G;;
 		pat)CF1 X86_PAT;;
 		msr)CF1 X86_MSR;;
 		mce)CF1 X86_MCE;;
@@ -479,7 +460,32 @@ native)
 	;;
 	esac
 ;;
-*)CF1 GENERIC_CPU X86_GENERIC;;
+i386)CF1 M386 MATH_EMULATION;;
+i486)CF1 M486 MATH_EMULATION;;
+i586|pentium)CF1 M586;;
+pentium-mmx)CF1 M586MMX;;
+i686)CF1 X86_GENERIC M686;;
+winchip-c6)CF1 MWINCHIPC6;;
+winchip2)CF1 MWINCHIP3D;;
+c3)CF1 MCYRIXIII;;
+c3-2)CF1 MVIAC3_2;;
+geode)CF1 MGEODE_LX;;
+k6|k6-2)CF1 MK6;;
+# compat: pentium-m sometimes have no PAE/64G
+pentiumpro)CF1 M686;;
+pentium2)CF1 MPENTIUMII;;
+pentium3|pentium3m)CF1 MPENTIUMIII;;
+pentium-m)CF1 MPENTIUMM;;
+*)CF1 HIGHMEM64G -HIGHMEM4G -NOHIGHMEM;;&
+pentium4|pentium4m|prescott|nocona)[[ "$(march mtune)" == generic ]] && CF1 MPENTIUMIII X86_GENERIC GENERIC_CPU || CF1 MPENTIUM4 MPSC;;
+core2)CF1 MCORE2;;
+k6-3)CF1 MK6;;
+athlon|athlon-tbird|athlon-4|athlon-xp|athlon-mp)CF1 MK7;;
+k8|opteron|athlon64|athlon-fx|k8-sse3|opteron-sse3|athlon64-sse3|amdfam10|barcelona)CF1 MK8;;
+*)
+	CF1 GENERIC_CPU X86_GENERIC -HIGHMEM64G
+	use xen && CF1 NOHIGHMEM
+;;
 esac
 case "${CTARGET:-${CHOST}}:$CF" in
 	x86_64*|*\ 64BIT\ *)CF1 -MPENTIUM4 -PENTIUMIII -X86_GENERIC;;
