@@ -57,11 +57,13 @@ IUSE="${IUSE_VIDEO_CARDS}
 	xlib
 	osmesa
 	llvm
-	X"
+	X
+	+fbdev
+	d3d"
 
 RDEPEND="app-admin/eselect-opengl
 	dev-libs/expat
-	x11-libs/libX11[xcb?]
+	|| ( <x11-libs/libX11-1.3.99.901[xcb?] >=x11-libs/libX11-1.3.99.901 )
 	x11-libs/libXext
 	x11-libs/libXxf86vm
 	x11-libs/libXi
@@ -71,7 +73,9 @@ RDEPEND="app-admin/eselect-opengl
 	x11-libs/libICE
 	motif? ( x11-libs/openmotif )
 	doc? ( app-doc/opengl-manpages )
+	d3d? ( app-emulation/wine )
 	llvm? (
+		dev-libs/udis86
 		>=sys-devel/llvm-2.7
 		x11-libs/libdrm
 	)
@@ -159,16 +163,15 @@ src_configure() {
 	driver_enable video_cards_trident trident
 	driver_enable video_cards_via unichrome
 	if use gallium || use llvm || use video_cards_vmware || use video_cards_nouveau; then
-		myconf="--enable-gallium --enable-gallium-swrast"
+		use myconf="--enable-gallium --enable-gallium-swrast"
 	fi
 	if use gallium; then
 		driver_enable video_cards_intel i810
-		myconf="${myconf} $(use_enable video_cards_intel gallium-intel)"
 		myconf="${myconf} $(use_enable video_cards_intel gallium-i915)"
 		myconf="${myconf} $(use_enable video_cards_intel gallium-i965)"
 		myconf="${myconf} $(use_enable video_cards_radeon gallium-radeon)"
 		myconf="${myconf} $(use_enable video_cards_radeon gallium-r600)"
-		myconf="${myconf} --with-state-trackers=dri,egl,glx,xorg"
+		myconf="${myconf} --with-state-trackers=dri,egl,glx,xorg,vega$(use d3d && echo ",d3d1x")"
 		ewarn "This gallium configuration required 'xorg-server' headers installed."
 		ewarn "To avoid circular dependences install mesa without gallium before and re-emerge after."
 	else
@@ -201,7 +204,7 @@ src_configure() {
 		$(use_enable motif) \
 		--enable-gles1 --enable-gles2 --enable-gles-overlay \
 		$(use_with X x) \
-		--with-egl-platforms=x11,kms \
+		--with-egl-platforms=x11,drm$(use fbdev && echo ,fbdev) \
 		|| die
 }
 
