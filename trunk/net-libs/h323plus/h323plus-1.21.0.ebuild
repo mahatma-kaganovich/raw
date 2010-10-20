@@ -4,7 +4,7 @@
 
 EAPI="2"
 
-inherit eutils autotools
+inherit eutils autotools multilib
 
 DESCRIPTION="Open Source implementation of the ITU H.323 teleconferencing protocol, new fork"
 HOMEPAGE="http://www.h323plus.org/"
@@ -45,7 +45,8 @@ src_compile() {
 src_install() {
 	emake PREFIX=/usr DESTDIR="${D}" $(use debug||echo NOTRACE=1) install || die
 	emake PREFIX=/usr DESTDIR="${D}" -C "${S}"/plugins install || die
-	cd "${D}"/usr/$(get_libdir) || die
+	libdir=$(get_libdir)
+	cd "${D}"/usr/"${libdir}" || die
 	local i f=""
 	for i in libh323_linux_*; do
 		[[ -L "$i" ]] && continue
@@ -59,4 +60,11 @@ src_install() {
 		rm "$i"
 		ln -s "$f" "$i"
 	done
+#	ln -s openh323 "${D}"/usr/share/h323plus
+	dosed "s:^OH323_LIBDIR = \$(OPENH323DIR).*:OH323_LIBDIR = /usr/${libdir}:" \
+		/usr/share/openh323/openh323u.mak
+	dosed "s:^OH323_INCDIR = \$(OPENH323DIR).*:OH323_INCDIR = /usr/include/openh323:" \
+		/usr/share/openh323/openh323u.mak
+	dosed "s:^\(OPENH323DIR[ \t]\+=\) ${S}:\1 /usr/share/openh323:" \
+		/usr/share/openh323/openh323u.mak
 }
