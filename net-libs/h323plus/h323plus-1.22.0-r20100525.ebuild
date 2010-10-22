@@ -4,23 +4,33 @@
 
 EAPI="2"
 
-inherit eutils autotools multilib
+cvs=""
+case "${PVR}" in
+9999*)
+	cvs=cvs
+	ECVS_SERVER="h323plus.cvs.sourceforge.net:/cvsroot/h323plus"
+	ECVS_MODULE="h323plus"
+	ECVS_USER="anonymous"
+	ECVS_PASS=""
+;;
+*-r*)
+	SRC_URI="http://prdownloads.sourceforge.net/openh323gk/h323plus-${PVR#*-r}.tar.gz?download -> ${PN}-${PVR}.tar.gz"
+;;
+*)
+	SRC_URI="http://www.h323plus.org/source/download/${PN}-v${PV//./_}.tar.gz
+	http://www.h323plus.org/source/download/plugins-v${PV//./_}.tar.gz"
+;;
+esac
 
-r="${PVR#*-r}"
+inherit flag-o-matic eutils autotools multilib ${cvs}
 
 DESCRIPTION="Open Source implementation of the ITU H.323 teleconferencing protocol, new fork"
 HOMEPAGE="http://www.h323plus.org/"
-if [[ -z "$r" ]]; then
-	SRC_URI="http://www.h323plus.org/source/download/${PN}-v${PV//./_}.tar.gz
-	http://www.h323plus.org/source/download/plugins-v${PV//./_}.tar.gz"
-else
-	SRC_URI="http://prdownloads.sourceforge.net/openh323gk/h323plus-${PVR#*-r}.tar.gz?download -> ${PN}-${PVR}.tar.gz"
-fi
 LICENSE="MPL-1.1"
 SLOT="0"
 KEYWORDS="~x86 ~amd64"
 IUSE="debug ssl x264 theora"
-DEPEND="net-libs/ptlib
+DEPEND="|| ( <net-libs/ptlib-2.8[-dtmf,debug] >net-libs/ptlib-2.8 )
 	media-video/ffmpeg
 	ssl? ( dev-libs/openssl )
 	x264? ( media-libs/x264 )
@@ -33,14 +43,17 @@ S="${WORKDIR}/${PN}"
 src_prepare(){
 	use x264 && export ac_cv_lib_x264_x264_encoder_open=yes
 	export with_ffmpeg_src_dir=/usr/include
-	sed -i -e 's:../include/codecs.h:codecs.h:' include/h323caps.h
+	egrep -q '"codecs.h"' include/h323caps.h || sed -i -e 's:../include/codecs.h:codecs.h:' include/h323caps.h
 	mv "${WORKDIR}"/plugins "${S}"
-	epatch "${FILESDIR}"/h323plus-install.patch
+	epatch "${FILESDIR}"/h323plus-{install,notrace}.patch
 	eautoreconf
 }
 
 src_configure(){
-	HAS_PTLIB=/usr PTLIB_CONFIG=/usr/bin/ptlib-config econf $(use_enable x264) $(use_enable theora) || die
+	export HAS_PTLIB="${ROOT}/usr"
+	export PTLIB_CONFIG="${HAS_PTLIB}/bin/ptlib-config"
+	append-cflags `$PTLIB_CONFIG --ccflags`
+	econf $(use_enable x264) $(use_enable theora) || die
 }
 
 opt(){
