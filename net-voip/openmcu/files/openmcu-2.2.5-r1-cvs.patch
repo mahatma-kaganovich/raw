@@ -1,4 +1,5 @@
 OpenMCU SF CVS snapshotted 22.10.2010
+MPL-1.0
 --- a/conference.h
 +++ b/conference.h
 @@ -30,6 +30,9 @@
