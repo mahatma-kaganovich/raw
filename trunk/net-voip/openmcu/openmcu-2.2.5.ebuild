@@ -19,8 +19,8 @@ SLOT="0"
 KEYWORDS="~x86"
 IUSE="debug"
 
-DEPEND="net-libs/h323plus
-	>net-libs/ptlib-2.8" # [ssl=]
+DEPEND="=net-libs/h323plus-1.21.0*
+	=net-libs/ptlib-2.4.5*[-ssl,-odbc]" # [ssl=]
 RDEPEND="${DEPEND}"
 
 S="${WORKDIR}/${PN}"
@@ -28,8 +28,10 @@ S="${WORKDIR}/${PN}"
 src_prepare() {
 	append-cflags `${ROOT}/usr/bin/ptlib-config --ccflags --libs`
 	sed -i -e 's:"server.pem":"/etc/openmcu/server.pem":' -e 's:"data", "data":"data", "/usr/share/openmcu/data":' -e 's:"html", "html":"html", "/usr/share/openmcu/html":' -e 's:"mcu_log.txt":"/var/log/openmcu/mcu_log.txt":' mcu.cxx
-	ewarn "Removing LogFileName support to compatibility with latest net-libs/ptlib"
-	epatch "${FILESDIR}"/openmcu-nolog.patch
+	egrep -q systemLogFileName "${ROOT}"/include/svcproc.h || {
+		ewarn "Removing LogFileName support to compatibility with latest net-libs/ptlib"
+		epatch "${FILESDIR}"/openmcu-nolog.patch
+	}
 }
 
 src_compile() {
