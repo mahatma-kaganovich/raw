@@ -28,7 +28,7 @@ S="${WORKDIR}/${PN}"
 src_prepare() {
 	append-cflags `${ROOT}/usr/bin/ptlib-config --ccflags --libs`
 	sed -i -e 's:"server.pem":"/etc/openmcu/server.pem":' -e 's:"data", "data":"data", "/usr/share/openmcu/data":' -e 's:"html", "html":"html", "/usr/share/openmcu/html":' -e 's:"mcu_log.txt":"/var/log/openmcu/mcu_log.txt":' mcu.cxx
-	grep -q systemLogFileName "${ROOT}"/usr/include/svcproc.h || {
+	grep -q systemLogFileName "${ROOT}"/usr/include/ptlib/svcproc.h || {
 		ewarn "Removing LogFileName support to compatibility with latest net-libs/ptlib"
 		epatch "${FILESDIR}"/openmcu-nolog.patch
 	}
@@ -39,7 +39,7 @@ src_compile() {
 }
 
 src_install() {
-	dosbin obj_*_*_*/${PN} || die "dosbin failed"
+	dosbin obj_*/${PN} || die "dosbin failed"
 
 	keepdir /usr/share/${PN}/data /usr/share/${PN}/html
 
