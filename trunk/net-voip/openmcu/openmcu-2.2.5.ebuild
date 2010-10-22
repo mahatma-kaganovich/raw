@@ -20,7 +20,7 @@ KEYWORDS="~x86"
 IUSE="debug"
 
 DEPEND="=net-libs/h323plus-1.21.0*
-	=net-libs/ptlib-2.4.5*[-ssl,-odbc]" # [ssl=]
+	=net-libs/ptlib-2.4.5*[http,-ssl,-odbc]" # [ssl=]
 RDEPEND="${DEPEND}"
 
 S="${WORKDIR}/${PN}"
