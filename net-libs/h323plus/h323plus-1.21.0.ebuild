@@ -30,7 +30,7 @@ LICENSE="MPL-1.1"
 SLOT="0"
 KEYWORDS="~x86 ~amd64"
 IUSE="debug ssl x264 theora"
-DEPEND="net-libs/ptlib
+DEPEND="net-libs/ptlib[snmp]
 	media-video/ffmpeg
 	ssl? ( dev-libs/openssl )
 	x264? ( media-libs/x264 )
