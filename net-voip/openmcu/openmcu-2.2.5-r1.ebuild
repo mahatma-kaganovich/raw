@@ -34,7 +34,9 @@ S="${WORKDIR}/${ECVS_MODULE:-${PN}}"
 
 src_prepare() {
 	append-cflags `${ROOT}/usr/bin/ptlib-config --ccflags --libs` -DP_SSL$(use ssl && echo 1 || echo 0)
+	ebegin "Fixing pathes"
 	sed -i -e 's:"server.pem":"/etc/openmcu/server.pem":' -e 's:"data", "data":"data", "/usr/share/openmcu/data":' -e 's:"html", "html":"html", "/usr/share/openmcu/html":' -e 's:"mcu_log.txt":"/var/log/openmcu/mcu_log.txt":' mcu.cxx
+	eend $?
 	local i
 	for i in "${FILESDIR}"/${P}-*.patch; do
 		[[ -e "$i" ]] && epatch "$i"
