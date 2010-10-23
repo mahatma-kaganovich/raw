@@ -55,7 +55,7 @@ S="${WORKDIR}/${PN}"
 
 src_prepare(){
 	use x264 && export ac_cv_lib_x264_x264_encoder_open=yes
-	export with_ffmpeg_src_dir=/usr/include
+	export with_ffmpeg_src_dir="$ROOT"/usr/include
 	egrep -q '"codecs.h"' include/h323caps.h || sed -i -e 's:../include/codecs.h:codecs.h:' include/h323caps.h
 	mv "${WORKDIR}"/plugins "${S}"
 	epatch "${FILESDIR}"/h323plus-{install,notrace}.patch
