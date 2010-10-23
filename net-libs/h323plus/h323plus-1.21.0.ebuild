@@ -29,7 +29,7 @@ HOMEPAGE="http://www.h323plus.org/"
 LICENSE="MPL-1.1"
 SLOT="0"
 KEYWORDS="~x86 ~amd64"
-IUSE="debug ssl x264 theora celt ffmpeg sbc capi vpb local full embedded ixj fax"
+IUSE="debug ssl x264 theora celt ffmpeg sbc capi vpb local +full embedded ixj fax"
 DEPEND="net-libs/ptlib[snmp]
 	ffmpeg? ( media-video/ffmpeg[encode] )
 	ssl? ( dev-libs/openssl )
@@ -77,7 +77,7 @@ src_configure(){
 	force ffmpeg H263P MPEG4
 	append-cflags `$PTLIB_CONFIG --ccflags`
 	econf \
-		--enable-libavcodec-stackalign-hack \
+		$(use_enable x86 libavcodec-stackalign-hack) \
 		--with-libavcodec-source-dir="${ROOT}"/usr/include \
 		$(use_enable debug) \
 		$(use_enable x264) \
