@@ -4,3 +4,6 @@
 =sys-fs/ocfs2-tools-1.4.9999
 =sys-fs/ocfs2-tools-9999
 =sys-kernel/genpnprd-9999
+# Sirius
+>=net-libs/ptlib-2.8
+>=net-libs/h323plus-1.22
