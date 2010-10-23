@@ -78,6 +78,7 @@ src_configure(){
 	append-cflags `$PTLIB_CONFIG --ccflags`
 	econf \
 		--enable-libavcodec-stackalign-hack \
+		--with-libavcodec-source-dir="${ROOT}"/usr/include \
 		$(use_enable debug) \
 		$(use_enable x264) \
 		$(use_enable theora) \
