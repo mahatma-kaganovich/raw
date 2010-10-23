@@ -29,12 +29,25 @@ HOMEPAGE="http://www.h323plus.org/"
 LICENSE="MPL-1.1"
 SLOT="0"
 KEYWORDS="~x86 ~amd64"
-IUSE="debug ssl x264 theora"
+IUSE="debug ssl x264 theora celt ffmpeg sbc capi vpb local full embedded ixj fax"
 DEPEND="net-libs/ptlib[snmp]
-	media-video/ffmpeg
+	ffmpeg? ( media-video/ffmpeg[encode] )
 	ssl? ( dev-libs/openssl )
-	x264? ( media-libs/x264 )
+	!local? (
+		media-sound/gsm
+		>=media-libs/speex-1.2_beta
+		dev-libs/ilbc-rfc3951
+	)
+	x264? (
+		media-video/ffmpeg
+		media-libs/x264
+	)
 	theora? ( media-libs/libtheora )
+	celt? ( >=media-libs/celt-0.5.0 )
+	sbc? ( media-libs/libsamplerate )
+	capi? ( net-dialup/capi4k-utils )
+	ixj? ( sys-kernel/linux-headers )
+	fax? ( media-libs/spandsp )
 	!net-libs/openh323
 	media-libs/speex"
 RDEPEND="${DEPEND}"
@@ -49,11 +62,38 @@ src_prepare(){
 	eautoreconf
 }
 
+force(){
+	use $1 && return
+	shift
+	while [[ -n "$*" ]]; do
+		sed -i -e "s:HAVE_$1=yes:HAVE_$1=no:g" plugins/configure
+		shift
+	done
+}
+
 src_configure(){
 	export HAS_PTLIB="${ROOT}/usr"
 	export PTLIB_CONFIG="${HAS_PTLIB}/bin/ptlib-config"
+	force ffmpeg H263P MPEG4
 	append-cflags `$PTLIB_CONFIG --ccflags`
-	econf $(use_enable x264) $(use_enable theora) || die
+	econf \
+		--enable-libavcodec-stackalign-hack \
+		$(use_enable debug) \
+		$(use_enable x264) \
+		$(use_enable theora) \
+		$(use_enable sbc) \
+		$(use_enable celt) \
+		$(use_enable capi) \
+		$(use_enable vpb) \
+		$(use_enable ixj) \
+		$(use_enable fax spandsp) \
+		$(use_enable local localgsm) \
+		$(use_enable local localspeex) \
+		$(use_enable local localilbc) \
+		$(use_enable full default-to-full-capabilties) \
+		$(use_enable embedded x264-link-static) \
+		$(use_enable embedded embeddedgsm) \
+		|| die
 }
 
 opt(){
