@@ -92,8 +92,8 @@ src_configure(){
 		$(use_enable local localilbc) \
 		$(use_enable full default-to-full-capabilties) \
 		$(use_enable embedded x264-link-static) \
-		$(use_enable embedded embeddedgsm) \
 		|| die
+#		$(use_enable embedded embeddedgsm)
 }
 
 opt(){
