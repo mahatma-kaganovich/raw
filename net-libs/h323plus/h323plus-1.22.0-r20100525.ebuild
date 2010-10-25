@@ -107,11 +107,14 @@ src_compile() {
 }
 
 src_install() {
+	local i f=""
 	emake PREFIX=/usr DESTDIR="${D}" install || die
 	emake PREFIX=/usr DESTDIR="${D}" -C "${S}"/plugins install || die
 	libdir=$(get_libdir)
+	i="/usr/${libdir}/ptlib-`$PTLIB_CONFIG --version`"
+	dodir "${i}"
+	dosym ../pwlib/codecs "${i}"/plugins
 	cd "${D}"/usr/"${libdir}" || die
-	local i f=""
 	for i in libh323_linux_*; do
 		[[ -L "$i" ]] && continue
 		[[ -f "$i" ]] || continue
