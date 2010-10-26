@@ -5,16 +5,16 @@
 EAPI="2"
 
 cvs=""
-case "${PVR}" in
+case "${PV}" in
 9999*)
 	cvs=cvs
-	ECVS_SERVER="h323plus.cvs.sourceforge.net:/cvsroot/h323plus"
-	ECVS_MODULE="h323plus"
+	ECVS_SERVER="${PN}.cvs.sourceforge.net:/cvsroot/${PN}"
+	ECVS_MODULE="${PN}"
 	ECVS_USER="anonymous"
 	ECVS_PASS=""
 ;;
-*-r*)
-	SRC_URI="http://prdownloads.sourceforge.net/openh323gk/h323plus-${PVR#*-r}.tar.gz?download -> ${PN}-${PVR}.tar.gz"
+*_pre*)
+	SRC_URI="mirror://sourceforge/openh323gk/${PN}-${PV#*_pre}.tar.gz?download -> ${P}.tar.gz"
 ;;
 *)
 	SRC_URI="http://www.h323plus.org/source/download/${PN}-v${PV//./_}.tar.gz
@@ -30,8 +30,7 @@ LICENSE="MPL-1.1"
 SLOT="0"
 KEYWORDS="~x86 ~amd64"
 IUSE="debug ssl x264 theora celt ffmpeg sbc capi vpb local +full embedded ixj fax"
-DEPEND="net-libs/ptlib[snmp]
-	ffmpeg? ( media-video/ffmpeg[encode] )
+DEPEND="ffmpeg? ( media-video/ffmpeg[encode] )
 	ssl? ( dev-libs/openssl )
 	!local? (
 		media-sound/gsm
@@ -49,7 +48,13 @@ DEPEND="net-libs/ptlib[snmp]
 	ixj? ( sys-kernel/linux-headers )
 	fax? ( media-libs/spandsp )
 	!net-libs/openh323
-	media-libs/speex"
+	media-libs/speex
+	"
+if [[ "${PV}" > 1.21.0 ]]; then
+	DEPEND+="|| ( <net-libs/ptlib-2.8[-dtmf,debug,snmp] >net-libs/ptlib-2.8[snmp] )"
+else
+	DEPEND+="net-libs/ptlib"
+fi
 RDEPEND="${DEPEND}"
 S="${WORKDIR}/${PN}"
 
@@ -59,6 +64,7 @@ src_prepare(){
 	egrep -q '"codecs.h"' include/h323caps.h || sed -i -e 's:../include/codecs.h:codecs.h:' include/h323caps.h
 	mv "${WORKDIR}"/plugins "${S}"
 	epatch "${FILESDIR}"/h323plus-install.patch
+	[[ "${PV}" > 1.21.0 ]] && epatch "${FILESDIR}"/h323plus-notrace.patch
 	eautoreconf
 }
 
@@ -110,7 +116,7 @@ src_install() {
 	local i f=""
 	emake PREFIX=/usr DESTDIR="${D}" install || die
 	emake PREFIX=/usr DESTDIR="${D}" -C "${S}"/plugins install || die
-	libdir=$(get_libdir)
+	libdir="$(get_libdir)"
 	i="/usr/${libdir}/ptlib-`$PTLIB_CONFIG --version`"
 	dodir "${i}"
 	dosym ../pwlib/codecs "${i}"/plugins
