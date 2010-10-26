@@ -29,7 +29,7 @@ HOMEPAGE="http://www.h323plus.org/"
 LICENSE="MPL-1.1"
 SLOT="0"
 KEYWORDS="~x86 ~amd64"
-IUSE="debug ssl x264 theora celt ffmpeg sbc capi vpb local +full embedded ixj fax"
+IUSE="debug ssl ffmpeg local +full embedded"
 DEPEND="ffmpeg? ( media-video/ffmpeg[encode] )
 	ssl? ( dev-libs/openssl )
 	!local? (
@@ -37,20 +37,21 @@ DEPEND="ffmpeg? ( media-video/ffmpeg[encode] )
 		>=media-libs/speex-1.2_beta
 		dev-libs/ilbc-rfc3951
 	)
+	!net-libs/openh323
+	"
+if [[ "${PV}" > 1.21.0 ]]; then
+	DEPEND+="|| ( <net-libs/ptlib-2.8[-dtmf,debug,snmp] >net-libs/ptlib-2.8[snmp] )
 	x264? (
 		media-video/ffmpeg
 		media-libs/x264
 	)
-	theora? ( media-libs/libtheora )
 	celt? ( >=media-libs/celt-0.5.0 )
-	sbc? ( media-libs/libsamplerate )
-	capi? ( net-dialup/capi4k-utils )
-	ixj? ( sys-kernel/linux-headers )
-	fax? ( media-libs/spandsp )
-	!net-libs/openh323
-	"
-if [[ "${PV}" > 1.21.0 ]]; then
-	DEPEND+="|| ( <net-libs/ptlib-2.8[-dtmf,debug,snmp] >net-libs/ptlib-2.8[snmp] )"
+	sbc? ( media-libs/libsamplerate )"
+#	capi? ( net-dialup/capi4k-utils )
+#	ixj? ( sys-kernel/linux-headers )
+#	fax? ( media-libs/spandsp )
+#	theora? ( media-libs/libtheora )
+	IUSE+=" x264 celt sbc" # theora fax ixj capi vpb
 else
 	DEPEND+="<net-libs/ptlib-2.8[snmp]"
 fi
