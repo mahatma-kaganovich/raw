@@ -48,7 +48,6 @@ DEPEND="ffmpeg? ( media-video/ffmpeg[encode] )
 	ixj? ( sys-kernel/linux-headers )
 	fax? ( media-libs/spandsp )
 	!net-libs/openh323
-	media-libs/speex
 	"
 if [[ "${PV}" > 1.21.0 ]]; then
 	DEPEND+="|| ( <net-libs/ptlib-2.8[-dtmf,debug,snmp] >net-libs/ptlib-2.8[snmp] )"
