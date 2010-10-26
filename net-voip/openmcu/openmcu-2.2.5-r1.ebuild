@@ -38,7 +38,7 @@ src_prepare() {
 	sed -i -e 's:"server.pem":"/etc/openmcu/server.pem":' -e 's:"data", "data":"data", "/usr/share/openmcu/data":' -e 's:"html", "html":"html", "/usr/share/openmcu/html":' -e 's:"mcu_log.txt":"/var/log/openmcu/mcu_log.txt":' mcu.cxx
 	eend $?
 	local i
-	for i in "${FILESDIR}"/${P}-*.patch; do
+	for i in "${FILESDIR}"/${PN}-${PVR}-*.patch; do
 		[[ -e "$i" ]] && epatch "$i"
 	done
 }
