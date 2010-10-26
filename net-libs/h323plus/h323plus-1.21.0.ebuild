@@ -53,7 +53,7 @@ DEPEND="ffmpeg? ( media-video/ffmpeg[encode] )
 if [[ "${PV}" > 1.21.0 ]]; then
 	DEPEND+="|| ( <net-libs/ptlib-2.8[-dtmf,debug,snmp] >net-libs/ptlib-2.8[snmp] )"
 else
-	DEPEND+="net-libs/ptlib"
+	DEPEND+="<net-libs/ptlib-2.8[snmp]"
 fi
 RDEPEND="${DEPEND}"
 S="${WORKDIR}/${PN}"
@@ -83,6 +83,7 @@ src_configure(){
 	force ffmpeg H263P MPEG4
 	append-cflags `$PTLIB_CONFIG --ccflags`
 	econf \
+		--with-plugin-installdir="ptlib-`$PTLIB_CONFIG --version`" \
 		$(use_enable x86 libavcodec-stackalign-hack) \
 		--with-libavcodec-source-dir="${ROOT}"/usr/include \
 		$(use_enable debug) \
@@ -113,14 +114,12 @@ src_compile() {
 }
 
 src_install() {
-	local i f=""
+	local i j f=""
 	emake PREFIX=/usr DESTDIR="${D}" install || die
 	emake PREFIX=/usr DESTDIR="${D}" -C "${S}"/plugins install || die
 	libdir="$(get_libdir)"
-	i="/usr/${libdir}/ptlib-`$PTLIB_CONFIG --version`"
-	dodir "${i}"
-	dosym ../pwlib/codecs "${i}"/plugins
 	cd "${D}"/usr/"${libdir}" || die
+	[[ -e "pwlib" ]] && dosym ../pwlib "/usr/${libdir}/ptlib-`$PTLIB_CONFIG --version`/pwlib"
 	for i in libh323_linux_*; do
 		[[ -L "$i" ]] && continue
 		[[ -f "$i" ]] || continue
