@@ -114,7 +114,7 @@ src_compile() {
 }
 
 src_install() {
-	local i j f=""
+	local i f=""
 	emake PREFIX=/usr DESTDIR="${D}" install || die
 	emake PREFIX=/usr DESTDIR="${D}" -C "${S}"/plugins install || die
 	libdir="$(get_libdir)"
