@@ -20,8 +20,12 @@ upcf(){
 		[[ -f "$i1" ]] || continue
 		cmp -s "$i1" "$i" && continue
 		if iscurrent "$i1"; then
-			echo "$c Replacing: $i1"
-			cp "$i" "$i1" -a
+			if head -n1 "$i"|grep -q "^# empty"; then
+				echo "$c Empty: $i"
+			else
+				echo "$c Replacing: $i1"
+				cp "$i" "$i1" -a
+			fi
 			continue
 		fi
 		d="${i1%/*}"
