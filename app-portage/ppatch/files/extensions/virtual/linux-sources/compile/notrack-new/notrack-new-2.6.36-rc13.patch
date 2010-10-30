@@ -1,7 +1,7 @@
-diff -pruN a/net/netfilter/Kconfig b/net/netfilter/Kconfig
---- a/net/netfilter/Kconfig	2010-06-02 21:05:28.000000000 +0300
-+++ b/net/netfilter/Kconfig	2010-06-02 22:11:50.000000000 +0300
-@@ -492,6 +492,12 @@ config NETFILTER_XT_TARGET_NOTRACK
+diff -pruN linux-2.6.36-git13/net/netfilter/Kconfig b/net/netfilter/Kconfig
+--- linux-2.6.36-git13/net/netfilter/Kconfig	2010-10-30 23:33:06.550989187 +0300
++++ b/net/netfilter/Kconfig	2010-10-30 23:37:23.540989187 +0300
+@@ -499,6 +499,12 @@ config NETFILTER_XT_TARGET_NOTRACK
  	  If you want to compile it as a module, say M here and read
  	  <file:Documentation/kbuild/modules.txt>.  If unsure, say `N'.
  
@@ -14,12 +14,12 @@ diff -pruN a/net/netfilter/Kconfig b/net/netfilter/Kconfig
  config NETFILTER_XT_TARGET_RATEEST
  	tristate '"RATEEST" target support'
  	depends on NETFILTER_ADVANCED
-diff -pruN a/net/netfilter/nf_conntrack_core.c b/net/netfilter/nf_conntrack_core.c
---- a/net/netfilter/nf_conntrack_core.c	2010-06-02 21:05:28.000000000 +0300
-+++ b/net/netfilter/nf_conntrack_core.c	2010-06-02 22:13:12.000000000 +0300
-@@ -768,6 +774,19 @@ resolve_normal_ct(struct net *net, struc
- 	/* look for tuple match */
- 	h = nf_conntrack_find_get(net, zone, &tuple);
+diff -pruN linux-2.6.36-git13/net/netfilter/nf_conntrack_core.c b/net/netfilter/nf_conntrack_core.c
+--- linux-2.6.36-git13/net/netfilter/nf_conntrack_core.c	2010-10-30 23:33:06.560989187 +0300
++++ b/net/netfilter/nf_conntrack_core.c	2010-10-30 23:37:23.540989187 +0300
+@@ -818,6 +818,19 @@ resolve_normal_ct(struct net *net, struc
+ 	hash = hash_conntrack_raw(&tuple, zone);
+ 	h = __nf_conntrack_find_get(net, zone, &tuple, hash);
  	if (!h) {
 +#ifdef CONFIG_NETFILTER_XT_TARGET_NOTRACK_NEW
 +		if(skb->nfctinfo == IP_CT_NEW) {
@@ -35,9 +35,9 @@ diff -pruN a/net/netfilter/nf_conntrack_core.c b/net/netfilter/nf_conntrack_core
 +		}
 +#endif
  		h = init_conntrack(net, tmpl, &tuple, l3proto, l4proto,
- 				   skb, dataoff);
+ 				   skb, dataoff, hash);
  		if (!h)
-@@ -856,6 +873,12 @@ nf_conntrack_in(struct net *net, u_int8_
+@@ -906,6 +919,12 @@ nf_conntrack_in(struct net *net, u_int8_
  	ct = resolve_normal_ct(net, tmpl, skb, dataoff, pf, protonum,
  			       l3proto, l4proto, &set_reply, &ctinfo);
  	if (!ct) {
@@ -50,9 +50,9 @@ diff -pruN a/net/netfilter/nf_conntrack_core.c b/net/netfilter/nf_conntrack_core
  		/* Not valid part of a connection */
  		NF_CT_STAT_INC_ATOMIC(net, invalid);
  		ret = NF_ACCEPT;
-diff -pruN a/net/netfilter/xt_NOTRACK.c b/net/netfilter/xt_NOTRACK.c
---- a/net/netfilter/xt_NOTRACK.c	2010-06-02 21:05:28.000000000 +0300
-+++ b/net/netfilter/xt_NOTRACK.c	2010-06-02 22:11:50.000000000 +0300
+diff -pruN linux-2.6.36-git13/net/netfilter/xt_NOTRACK.c b/net/netfilter/xt_NOTRACK.c
+--- linux-2.6.36-git13/net/netfilter/xt_NOTRACK.c	2010-10-20 23:30:22.000000000 +0300
++++ b/net/netfilter/xt_NOTRACK.c	2010-10-30 23:37:23.540989187 +0300
 @@ -19,6 +19,9 @@ notrack_tg(struct sk_buff *skb, const st
  	if (skb->nfct != NULL)
  		return XT_CONTINUE;
@@ -64,7 +64,7 @@ diff -pruN a/net/netfilter/xt_NOTRACK.c b/net/netfilter/xt_NOTRACK.c
  	   If there is a real ct entry correspondig to this packet,
  	   it'll hang aroun till timing out. We don't deal with it
 @@ -26,6 +29,7 @@ notrack_tg(struct sk_buff *skb, const st
- 	skb->nfct = &nf_conntrack_untracked.ct_general;
+ 	skb->nfct = &nf_ct_untracked_get()->ct_general;
  	skb->nfctinfo = IP_CT_NEW;
  	nf_conntrack_get(skb->nfct);
 +#endif
