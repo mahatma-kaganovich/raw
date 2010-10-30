@@ -11,7 +11,7 @@ if [[ -n "\$EBUILD_PHASE" ]]; then
 	for p in \$PPATCHLIST; do
 		[[ "\$p" == "\$i" ]] && break;
 	done
-	[[ "\$p" == "\$i" ]] && continue
+	[[ "\$p" == "\$i" ]] && [[ -n "\$p" ]] && continue
 	PPATCHLIST="\$PPATCHLIST \$i"
 	p="\$PPATCH"
 	while true; do
