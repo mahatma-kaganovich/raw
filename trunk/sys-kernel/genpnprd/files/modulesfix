@@ -1,6 +1,6 @@
 #!/bin/bash
 ## (c) Denis Kaganovich
-## v3.2
+## v3.3
 
 #BUS="pci"
 BUS="\w+"
@@ -22,6 +22,10 @@ grep -Prhl "${STR}${BUS}_device_id\s+" $1 --include="*.c" | while read i ; do
 	ii="${ii#/}"
 	case $ii in
 	*/scx200_acb.c|*/mdio-gpio.c|*/pch_dma.c) # ,{0, 0}
+		echo "BROKEN: $bus: $ii"
+		continue
+	;;
+	*/rtc-mc13xxx.c)
 		echo "BROKEN: $bus: $ii"
 		continue
 	;;
