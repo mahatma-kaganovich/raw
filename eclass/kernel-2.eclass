@@ -420,7 +420,7 @@ native)
 		4:*)CF1 M586;;
 		5:*)CF1 MK6;;
 		6:*)CF1 MK7;;
-		7:*|*\ k8\ *)CF1 MK8;;
+		7:*|*\ k8\ *|*\ lm\ *)CF1 MK8;;
 		*Geode*)CF1 GEODE_LX;;
 		*)CF1 GENERIC_CPU X86_GENERIC;;
 		esac
