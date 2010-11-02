@@ -1,0 +1,50 @@
+http://gcc.gnu.org/bugzilla/show_bug.cgi?id=45359
+
+--- a/gcc/config/i386/driver-i386.c	2010-10-31 22:17:24.900000001 +0200
++++ b/gcc/config/i386/driver-i386.c	2010-11-01 06:14:40.360000003 +0200
+@@ -351,7 +351,8 @@ detect_caches_intel (bool xeon_mp, unsig
+ enum vendor_signatures
+ {
+   SIG_INTEL =	0x756e6547 /* Genu */,
+-  SIG_AMD =	0x68747541 /* Auth */
++  SIG_AMD =	0x68747541 /* Auth */,
++  SIG_VIA =	0x746e6543 /* Cent */
+ };
+ 
+ enum processor_signatures
+@@ -468,7 +469,8 @@ const char *host_detect_local_cpu (int a
+ 
+   if (!arch)
+     {
+-      if (vendor == SIG_AMD)
++      if (vendor == SIG_AMD || vendor == SIG_VIA)
++	/* FIXME: + transmeta + cyrix fam5/mod5 */
+ 	cache = detect_caches_amd (ext_level);
+       else if (vendor == SIG_INTEL)
+ 	{
+@@ -501,6 +503,25 @@ const char *host_detect_local_cpu (int a
+       else
+ 	processor = PROCESSOR_PENTIUM;
+     }
++  else if (vendor == SIG_VIA)
++     if (family == 6)
++	if (has_longmode)
++	  cpu = "core2";
++	else if (model > 9)
++	  cpu = arch ? "prescott" : "core2";
++	else if (model == 9)
++	  /* -mtune vs. NOPL */
++	  cpu = arch ? "c3-2" : "c3";
++	else if (model >= 6)
++	  cpu = "c3";
++	else
++	  processor = PROCESSOR_GENERIC32;
++     else if (has_3dnow)
++	cpu = "winchip2";
++     else if (has_mmx)
++	cpu = "winchip-c6";
++     else
++	processor = PROCESSOR_GENERIC32;
+   else
+     {
+       switch (family)
