@@ -121,8 +121,8 @@ kernel-2_src_compile() {
 	use build-kernel || return
 	einfo "Compiling kernel"
 	kmake bzImage
-	einfo "Compiling kernel modules"
-	kmake modules ${KERNEL_MODULES_MAKEOPT}
+	einfo "Compiling kernel [modules]"
+	kmake all ${KERNEL_MODULES_MAKEOPT}
 	grep -q "=m$" .config && [[ -z "`find . -name "*.ko" -print`" ]] && die "Modules configured, but not built"
 	if use tools; then
 		einfo "Compiling tools"
