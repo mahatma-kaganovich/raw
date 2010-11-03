@@ -319,7 +319,6 @@ setconfig(){
 	use kernel-alsa || cfg +SOUND_PRIME
 	cfg_use lzma KERNEL_LZMA
 	cfg_use !lzma KERNEL_BZIP2
-	use x86 && cfg -KVM # bug
 	# framebuffer enabled anymore, but "fbcon" support for more devices, exclude [external] nouveau drm
 	if use fbcon; then
 		cfg FB FRAMEBUFFER_CONSOLE FB_BOOT_VESA_SUPPORT "LOGO_LINUX_[\w\d]*"
