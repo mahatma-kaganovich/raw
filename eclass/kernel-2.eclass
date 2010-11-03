@@ -429,7 +429,7 @@ native)
 		V=CENTAUR
 		case "${cpu_family}:${model}:${model_name}" in
 #		*C7*)CF1 MVIAC7;;
-		*C7*)CF1 MPENTIUMIII X86_GENERIC GENERIC_CPU;;
+		*C7*)CF1 MPENTIUMM X86_GENERIC GENERIC_CPU;;
 		*Winchip*C6*)CF1 MWINCHIPC6;;
 		*Winchip*)CF1 MWINCHIP3D;;
 		6:[0-8]:*)CF1 MCYRIXIII;;
@@ -477,7 +477,7 @@ pentium2)CF1 MPENTIUMII;;
 pentium3|pentium3m)CF1 MPENTIUMIII;;
 pentium-m)CF1 MPENTIUMM;;
 # sure 64G
-pentium4|pentium4m|prescott|nocona)[[ "$(march mtune)" == generic ]] && CF1 MPENTIUMIII X86_GENERIC GENERIC_CPU $m64g || CF1 MPENTIUM4 MPSC $m64g;;
+pentium4|pentium4m|prescott|nocona)[[ "$(march mtune)" == generic ]] && CF1 MPENTIUMM X86_GENERIC GENERIC_CPU $m64g || CF1 MPENTIUM4 MPSC $m64g;;
 core2)CF1 MCORE2 $m64g;;
 k6-3)CF1 MK6 $m64g;;
 athlon|athlon-tbird|athlon-4|athlon-xp|athlon-mp)CF1 MK7 $m64g;;
@@ -485,7 +485,7 @@ k8|opteron|athlon64|athlon-fx|k8-sse3|opteron-sse3|athlon64-sse3|amdfam10|barcel
 *)CF1 GENERIC_CPU X86_GENERIC;;
 esac
 case "${CTARGET:-${CHOST}}:$CF" in
-	x86_64*|*\ 64BIT\ *)CF1 -MPENTIUM4 -PENTIUMIII -X86_GENERIC;;
+	x86_64*|*\ 64BIT\ *)CF1 -MPENTIUM4 -PENTIUMM -X86_GENERIC;;
 	*)CF1 -MPSC -GENERIC_CPU;;
 esac
 [[ -n "${V}" ]] && CF1 "-CPU_SUP_[\w\d_]*" CPU_SUP_${V}
