@@ -582,8 +582,7 @@ kernel-2_src_prepare(){
 	for i in drivers/media/radio/radio-aimslab arch/x86/kvm/vmx; do
 echo "
 ifeq (\$(CONFIG_X86_32),y)
-CFLAGS_${i##*/}.o += \$(call cc-ifversion, -ge, 0405, \\
-				\$(call cc-option,-fno-inline-functions))
+CFLAGS_${i##*/}.o += \$(call cc-ifversion, -ge, 0405, -fno-inline-functions)
 endif
 " >>${i%/*}/Makefile
 	done
