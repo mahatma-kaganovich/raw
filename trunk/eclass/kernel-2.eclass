@@ -119,9 +119,11 @@ kernel-2_src_compile() {
 	local KV0="${KV}"
 	check_kv
 	use build-kernel || return
-	einfo "Compiling kernel"
-	kmake bzImage
-	einfo "Compiling kernel [modules]"
+	if [[ -n "${KERNEL_MODULES_MAKEOPT}" ]]; then
+		einfo "Compiling kernel (bzImage)"
+		kmake bzImage
+	fi
+	einfo "Compiling kernel (all)"
 	kmake all ${KERNEL_MODULES_MAKEOPT}
 	grep -q "=m$" .config && [[ -z "`find . -name "*.ko" -print`" ]] && die "Modules configured, but not built"
 	if use tools; then
