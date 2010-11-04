@@ -578,6 +578,15 @@ kernel-2_src_prepare(){
 	use custom-arch && sed -i -e 's/-march=[a-z0-9\-]*//g' -e 's/-mtune=[a-z0-9\-]*//g' arch/*/Makefile*
 	# prevent to build twice
 #	sed -i -e 's%-I$(srctree)/arch/$(hdr-arch)/include%%' Makefile
+	# gcc 4.5+ -O3
+	for i in drivers/media/radio/radio-aimslab arch/x86/kvm/vmx; do
+echo "
+ifeq (\$(CONFIG_X86_32),y)
+CFLAGS_${i##*/}.o += \$(call cc-ifversion, -ge, 0405, \\
+				\$(call cc-option,-fno-inline-functions))
+endif
+" >>${i%/*}/Makefile
+	done
 	# pnp
 	use pnp || return
 	einfo "Fixing modules hardware info exports (forced mode, waiting for bugs!)"
