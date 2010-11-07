@@ -667,7 +667,7 @@ ofast_modalias(){
 }
 
 etc_modalias(){
-	mv /etc/modalias /etc/modalias_ 2>/dev/null || return 1
+	[[ -f /etc/modalias ]] && mv /etc/modalias /etc/modalias_ || return 1
 	mod `cat /etc/modalias_`
 	rm /etc/modalias_
 	return 0
