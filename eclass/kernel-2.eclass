@@ -87,13 +87,15 @@ kernel-2_src_configure() {
 	[[ ${ETYPE} == sources ]] || return
 	cd "${S}"
 	cpu2K
-	local cflags="${KERNEL_CFLAGS}"
+	local cflags="${KERNEL_CFLAGS}" aflags="${KERNEL_ASFLAGS}"
 	if use custom-cflags; then
 		use custom-arch || filter-flags "-march=*"
 		filter-flags "-msse*" -mmmx -m3dnow
 		cflags="${CFLAGS} ${cflags}"
+		aflags="${ASFLAGS} ${aflags}"
 	fi
-	[[ -n ${cflags} ]] && sed -i -e "s/^\(KBUILD_CFLAGS.*-O.\)/\1 ${cflags}/g" Makefile
+	[[ -n "${cflags}" ]] && sed -i -e "s/^\(KBUILD_CFLAGS.*-O.\)/\1 ${cflags}/g" Makefile
+	[[ -n "${aflags}" ]] && sed -i -e "s/^\(AFLAGS_KERNEL	=\)$/\1 ${aflags}/" Makefile
 	use build-kernel || return
 	config_defaults
 }
