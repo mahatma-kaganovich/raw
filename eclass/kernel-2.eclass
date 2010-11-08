@@ -431,13 +431,14 @@ native)
 	;;
 	*Centaur*)
 		V=CENTAUR
-		case "${cpu_family}:${model}:${model_name}" in
-#		*C7*)CF1 MVIAC7;;
-		*C7*)CF1 MPENTIUMM X86_GENERIC GENERIC_CPU;;
-		*Winchip*C6*)CF1 MWINCHIPC6;;
-		*Winchip*)CF1 MWINCHIP3D;;
+		case "${cpu_family}:${model}:${flags}" in
 		6:[0-8]:*)CF1 MCYRIXIII;;
-		6:*)CF1 MVIAC3_2;;
+		6:9:*)CF1 MVIAC3_2;;
+		6:*\ lm\ *)CF1 MCORE2;;
+#		6:*)CF1 MVIAC7;;
+		6:*)CF1 MPENTIUMM X86_GENERIC;; # C7: core2 w/o ssse3
+		*\ 3dnow\ *)CF1 MWINCHIP3D;;
+		*\ mmx\ *)CF1 MWINCHIPC6;;
 		*)CF1 GENERIC_CPU X86_GENERIC;;
 		esac
 	;;
