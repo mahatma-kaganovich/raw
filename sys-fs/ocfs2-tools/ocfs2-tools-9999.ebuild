@@ -50,7 +50,10 @@ src_prepare(){
 		export ac_config_files="ocfs2cdsl/ocfs2cdsl.8"
 		sed -i -e 's:^\(SUBDIRS = .*\)$:\1 ocfs2cdsl:' Makefile
 	fi
-	epatch "${FILESDIR}"/*.patch
+	local i
+	for i in "${FILESDIR}"/${P}*.patch; do
+		[[ -e "$i" ]] && epatch "$i"
+	done
 }
 
 src_configure(){
