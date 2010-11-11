@@ -11,7 +11,7 @@ if [[ "${PV}" == *.9999 ]]; then
 	EGIT_HAS_SUBMODULES=true
 fi
 
-inherit eutils `[[ "${PVR}" == *9999* ]] && echo "git autotools"`
+inherit flag-o-matic eutils `[[ "${PVR}" == *9999* ]] && echo "git autotools"`
 
 EAPI=3
 
@@ -26,13 +26,19 @@ SRC_URI="http://oss.oracle.com/projects/ocfs2-tools/dist/files/source/v${PV_MAJO
 LICENSE="GPL-2"
 SLOT="0"
 KEYWORDS="~x86 ~amd64"
-IUSE="X static doc"
+IUSE="X static doc pacemaker"
 # (#142216) build system's broke, always requires glib for debugfs utility
 RDEPEND="X? (
 		=x11-libs/gtk+-2*
 		>=dev-lang/python-2
 		>=dev-python/pygtk-2
 	)
+	pacemaker? (
+			sys-cluster/corosync
+			sys-cluster/pacemaker
+			sys-cluster/cluster
+			dev-libs/libxml2
+		)
 	>=dev-libs/glib-2.2.3
 	sys-fs/e2fsprogs"
 DEPEND="${RDEPEND}"
@@ -68,11 +74,16 @@ src_prepare(){
 }
 
 src_configure(){
+	if use pacemaker; then
+		append-ldflags -Wl,--no-as-needed
+		export OPTS="${CFLAGS} -I"${ROOT}"/usr/include/libxml2"
+	else
+		sed -i -e s:BUILD_OCFS2_CONTROLD=yes:BUILD_OCFS2_CONTROLD=no:g configure{,.in}
+	fi
 	econf \
 		$(use_enable X ocfs2console) \
 		$(use_enable !static dynamic-fsck) \
 		$(use_enable !static dynamic-ctl) \
-		${myconf} \
 		|| die "Failed to configure"
 }
 
