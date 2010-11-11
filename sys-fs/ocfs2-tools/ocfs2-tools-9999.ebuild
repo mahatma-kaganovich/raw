@@ -15,16 +15,18 @@ inherit eutils `[[ "${PVR}" == *9999* ]] && echo "git autotools"`
 
 EAPI=3
 
+vv="${PV%.*}"
 PV_MAJOR="${PV%%.*}"
 PV_MINOR="${PV#*.}"
 PV_MINOR="${PV_MINOR%%.*}"
 DESCRIPTION="Support programs for the Oracle Cluster Filesystem 2"
 HOMEPAGE="http://oss.oracle.com/projects/ocfs2-tools/"
-SRC_URI="http://oss.oracle.com/projects/ocfs2-tools/dist/files/source/v${PV_MAJOR}.${PV_MINOR}/${P}.tar.gz"
+SRC_URI="http://oss.oracle.com/projects/ocfs2-tools/dist/files/source/v${PV_MAJOR}.${PV_MINOR}/${P}.tar.gz
+	doc? ( http://oss.oracle.com/projects/ocfs2/dist/documentation/v${vv}/ocfs2-${vv//./_}-usersguide.pdf )"
 LICENSE="GPL-2"
 SLOT="0"
 KEYWORDS="~x86 ~amd64"
-IUSE="X static"
+IUSE="X static doc"
 # (#142216) build system's broke, always requires glib for debugfs utility
 RDEPEND="X? (
 		=x11-libs/gtk+-2*
@@ -41,6 +43,15 @@ if [[ "${PVR}" == *9999* ]]; then
 	SRC_URI=""
 	EGIT_REPO_URI="git://oss.oracle.com/git/ocfs2-tools.git"
 	epatch(){ cat $*|patch -tNp1; }
+else
+	src_unpack(){
+		for i in ${A}; do
+			case ${i} in
+				*.pdf)cp "${DISTDIR}/$i" "${WORKDIR}";;
+				*)unpack "$i";;
+			esac
+		done
+	}
 fi
 
 src_prepare(){
@@ -76,6 +87,7 @@ src_install() {
 		documentation/users_guide.txt documentation/samples/cluster.conf \
 		documentation/ocfs2_faq.txt "${FILESDIR}"/INSTALL.GENTOO \
 		vendor/common/o2cb.init vendor/common/o2cb.sysconfig
+	use doc && dodoc "${WORKDIR}/"*.pdf
 
 	# Move programs not needed before /usr is mounted to /usr/sbin/
 	mkdir -p "${D}"/usr/sbin
