@@ -20,6 +20,7 @@ DEPEND=">=sys-kernel/linux-headers-2.6.24
 	!sys-cluster/cman-lib
 	sys-cluster/corosync
 	dev-python/pexpect
+	dev-python/pycurl
 	xen? ( app-emulation/libvirt )
 	"
 
