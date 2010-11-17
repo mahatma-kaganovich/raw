@@ -1,0 +1,97 @@
+diff -pruN a/gcc/config/i386/driver-i386.c b/gcc/config/i386/driver-i386.c
+--- a/gcc/config/i386/driver-i386.c	2010-11-17 14:29:55.000000000 +0200
++++ b/gcc/config/i386/driver-i386.c	2010-11-17 17:51:25.000000000 +0200
+@@ -399,7 +399,8 @@ const char *host_detect_local_cpu (int a
+   unsigned int has_fma4 = 0, has_xop = 0;
+   unsigned int has_bmi = 0, has_tbm = 0;
+ 
+-  bool arch;
++  bool arch, tune, astune;
++#define _ASTUNE
+ 
+   unsigned int l2sizekb = 0;
+ 
+@@ -407,8 +408,10 @@ const char *host_detect_local_cpu (int a
+     return NULL;
+ 
+   arch = !strcmp (argv[0], "arch");
++  tune = !strcmp (argv[0], "tune");
++  astune = !strcmp (argv[0], "astune");
+ 
+-  if (!arch && strcmp (argv[0], "tune"))
++  if (!arch && !tune && !astune)
+     return NULL;
+ 
+   max_level = __get_cpuid_max (0, &vendor);
+@@ -475,7 +478,7 @@ const char *host_detect_local_cpu (int a
+       has_bmi = ebx & bit_BMI;
+     }
+ 
+-  if (!arch)
++  if (tune)
+     {
+       if (vendor == SIG_AMD)
+ 	cache = detect_caches_amd (ext_level);
+@@ -554,7 +557,7 @@ const char *host_detect_local_cpu (int a
+ 	case 0x1c:
+ 	case 0x26:
+ 	  /* Atom.  */
+-	  cpu = "atom";
++	  cpu = astune ? "core2" : "atom";
+ 	  break;
+ 	case 0x1a:
+ 	case 0x1e:
+@@ -585,8 +588,11 @@ const char *host_detect_local_cpu (int a
+ 		/* If it is an unknown CPU with SSSE3, assume Core 2.  */
+ 		cpu = "core2";
+ 	      else if (has_sse3)
+-		/* It is Core Duo.  */
+-		cpu = "pentium-m";
++	        {
++		  /* It is Core Duo.  */
++		  cpu = "pentium-m";
++		  options = concat (options, " -msse3", NULL);
++	        }
+ 	      else if (has_sse2)
+ 		/* It is Pentium M.  */
+ 		cpu = "pentium-m";
+@@ -623,6 +629,8 @@ const char *host_detect_local_cpu (int a
+     case PROCESSOR_K6:
+       if (arch && has_3dnow)
+ 	cpu = "k6-3";
++      else if (astune && has_3dnow)
++	cpu = "k6_2";
+       else
+ 	cpu = "k6";
+       break;
+@@ -707,7 +715,9 @@ const char *host_detect_local_cpu (int a
+     }
+ 
+ done:
+-  return concat (cache, "-m", argv[0], "=", cpu, options, NULL);
++  return astune ?
++	concat (cache, "-mtune=", cpu, NULL) :
++	concat (cache, "-m", argv[0], "=", cpu, options, NULL);
+ }
+ #else
+ 
+diff -pruN a/gcc/config/i386/linux64.h b/gcc/config/i386/linux64.h
+--- a/gcc/config/i386/linux64.h	2010-11-01 15:47:04.000000000 +0200
++++ b/gcc/config/i386/linux64.h	2010-11-17 17:51:53.000000000 +0200
+@@ -70,8 +70,16 @@ see the files COPYING3 and COPYING.RUNTI
+ #define SPEC_64 "m64"
+ #endif
+ 
++#undef ASM_SPEC_MTUNE
++#if defined(HAVE_LOCAL_CPU_DETECT) && defined(HAVE_GNU_AS)
++#define ASM_SPEC_MTUNE "%{march=native:%{!mtune=*:%{!Wa,mtune=*:%<Wa,mtune=native %:local_cpu_detect(astune)}}} \
++ %{mtune=native:%{!Wa,mtune=*:%<Wa,mtune=native %:local_cpu_detect(astune)}} \
++ %{Wa,mtune=native:%<Wa,mtune=native %:local_cpu_detect(astune)}"
++#endif
++
+ #undef ASM_SPEC
+ #define ASM_SPEC "%{v:-V} %{Qy:} %{!Qn:-Qy} %{n} %{T} %{Ym,*} %{Yd,*} \
++ " ASM_SPEC_MTUNE "\
+  %{Wa,*:%*} %{" SPEC_32 ":--32} %{" SPEC_64 ":--64} \
+  %{!mno-sse2avx:%{mavx:-msse2avx}} %{msse2avx:%{!mavx:-msse2avx}}"
+ 
