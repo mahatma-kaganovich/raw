@@ -1,6 +1,6 @@
 diff -pruN a/gcc/config/i386/driver-i386.c b/gcc/config/i386/driver-i386.c
 --- a/gcc/config/i386/driver-i386.c	2010-11-17 14:29:55.000000000 +0200
-+++ b/gcc/config/i386/driver-i386.c	2010-11-17 17:51:25.000000000 +0200
++++ b/gcc/config/i386/driver-i386.c	2010-11-17 20:00:12.000000000 +0200
 @@ -399,7 +399,8 @@ const char *host_detect_local_cpu (int a
    unsigned int has_fma4 = 0, has_xop = 0;
    unsigned int has_bmi = 0, has_tbm = 0;
@@ -55,6 +55,15 @@ diff -pruN a/gcc/config/i386/driver-i386.c b/gcc/config/i386/driver-i386.c
  	      else if (has_sse2)
  		/* It is Pentium M.  */
  		cpu = "pentium-m";
+@@ -602,7 +608,7 @@ const char *host_detect_local_cpu (int a
+ 	    }
+ 	  else
+ 	    /* For -mtune, we default to -mtune=generic.  */
+-	    cpu = "generic";
++	    cpu = astune ? NULL : "generic";
+ 	  break;
+ 	}
+       break;
 @@ -623,6 +629,8 @@ const char *host_detect_local_cpu (int a
      case PROCESSOR_K6:
        if (arch && has_3dnow)
@@ -64,14 +73,24 @@ diff -pruN a/gcc/config/i386/driver-i386.c b/gcc/config/i386/driver-i386.c
        else
  	cpu = "k6";
        break;
-@@ -707,7 +715,9 @@ const char *host_detect_local_cpu (int a
+@@ -668,7 +676,7 @@ const char *host_detect_local_cpu (int a
+ 	    cpu = "pentium";
+ 	}
+       else
+-	cpu = "generic";
++	cpu = astune ? NULL : "generic";
+     }
+ 
+   if (arch)
+@@ -707,7 +715,10 @@ const char *host_detect_local_cpu (int a
      }
  
  done:
 -  return concat (cache, "-m", argv[0], "=", cpu, options, NULL);
-+  return astune ?
++  return cpu ? (astune ?
 +	concat (cache, "-mtune=", cpu, NULL) :
-+	concat (cache, "-m", argv[0], "=", cpu, options, NULL);
++	concat (cache, "-m", argv[0], "=", cpu, options, NULL)) :
++		cache;
  }
  #else
  
