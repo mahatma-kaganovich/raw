@@ -1,6 +1,6 @@
-diff -pruN a/gcc/config/i386/driver-i386.c b/gcc/config/i386/driver-i386.c
+diff -pruN a/gcc/config/i386/driver-i386.c d/gcc/config/i386/driver-i386.c
 --- a/gcc/config/i386/driver-i386.c	2010-11-17 14:29:55.000000000 +0200
-+++ b/gcc/config/i386/driver-i386.c	2010-11-17 20:00:12.000000000 +0200
++++ d/gcc/config/i386/driver-i386.c	2010-11-17 20:52:25.000000000 +0200
 @@ -399,7 +399,8 @@ const char *host_detect_local_cpu (int a
    unsigned int has_fma4 = 0, has_xop = 0;
    unsigned int has_bmi = 0, has_tbm = 0;
@@ -41,21 +41,7 @@ diff -pruN a/gcc/config/i386/driver-i386.c b/gcc/config/i386/driver-i386.c
  	  break;
  	case 0x1a:
  	case 0x1e:
-@@ -585,8 +588,11 @@ const char *host_detect_local_cpu (int a
- 		/* If it is an unknown CPU with SSSE3, assume Core 2.  */
- 		cpu = "core2";
- 	      else if (has_sse3)
--		/* It is Core Duo.  */
--		cpu = "pentium-m";
-+	        {
-+		  /* It is Core Duo.  */
-+		  cpu = "pentium-m";
-+		  options = concat (options, " -msse3", NULL);
-+	        }
- 	      else if (has_sse2)
- 		/* It is Pentium M.  */
- 		cpu = "pentium-m";
-@@ -602,7 +608,7 @@ const char *host_detect_local_cpu (int a
+@@ -602,7 +605,7 @@ const char *host_detect_local_cpu (int a
  	    }
  	  else
  	    /* For -mtune, we default to -mtune=generic.  */
@@ -64,16 +50,7 @@ diff -pruN a/gcc/config/i386/driver-i386.c b/gcc/config/i386/driver-i386.c
  	  break;
  	}
        break;
-@@ -623,6 +629,8 @@ const char *host_detect_local_cpu (int a
-     case PROCESSOR_K6:
-       if (arch && has_3dnow)
- 	cpu = "k6-3";
-+      else if (astune && has_3dnow)
-+	cpu = "k6_2";
-       else
- 	cpu = "k6";
-       break;
-@@ -668,7 +676,7 @@ const char *host_detect_local_cpu (int a
+@@ -668,7 +671,7 @@ const char *host_detect_local_cpu (int a
  	    cpu = "pentium";
  	}
        else
@@ -82,7 +59,7 @@ diff -pruN a/gcc/config/i386/driver-i386.c b/gcc/config/i386/driver-i386.c
      }
  
    if (arch)
-@@ -707,7 +715,10 @@ const char *host_detect_local_cpu (int a
+@@ -707,7 +710,10 @@ const char *host_detect_local_cpu (int a
      }
  
  done:
@@ -94,9 +71,9 @@ diff -pruN a/gcc/config/i386/driver-i386.c b/gcc/config/i386/driver-i386.c
  }
  #else
  
-diff -pruN a/gcc/config/i386/linux64.h b/gcc/config/i386/linux64.h
+diff -pruN a/gcc/config/i386/linux64.h d/gcc/config/i386/linux64.h
 --- a/gcc/config/i386/linux64.h	2010-11-01 15:47:04.000000000 +0200
-+++ b/gcc/config/i386/linux64.h	2010-11-17 17:51:53.000000000 +0200
++++ d/gcc/config/i386/linux64.h	2010-11-17 20:52:25.000000000 +0200
 @@ -70,8 +70,16 @@ see the files COPYING3 and COPYING.RUNTI
  #define SPEC_64 "m64"
  #endif

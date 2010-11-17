@@ -1,0 +1,17 @@
+diff -pruN a/gcc/config/i386/driver-i386.c b/gcc/config/i386/driver-i386.c
+--- a/gcc/config/i386/driver-i386.c	2010-11-17 14:29:55.000000000 +0200
++++ b/gcc/config/i386/driver-i386.c	2010-11-17 20:46:26.000000000 +0200
+@@ -585,8 +588,11 @@ const char *host_detect_local_cpu (int a
+ 		/* If it is an unknown CPU with SSSE3, assume Core 2.  */
+ 		cpu = "core2";
+ 	      else if (has_sse3)
+-		/* It is Core Duo.  */
+-		cpu = "pentium-m";
++	        {
++		  /* It is Core Duo.  */
++		  cpu = "pentium-m";
++		  options = concat (options, " -msse3", NULL);
++	        }
+ 	      else if (has_sse2)
+ 		/* It is Pentium M.  */
+ 		cpu = "pentium-m";
