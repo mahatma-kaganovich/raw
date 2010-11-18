@@ -73,8 +73,8 @@ diff -pruN a/gcc/config/i386/driver-i386.c d/gcc/config/i386/driver-i386.c
  
 diff -pruN a/gcc/config/i386/linux64.h d/gcc/config/i386/linux64.h
 --- a/gcc/config/i386/linux64.h	2010-11-01 15:47:04.000000000 +0200
-+++ d/gcc/config/i386/linux64.h	2010-11-17 20:52:25.000000000 +0200
-@@ -70,8 +70,16 @@ see the files COPYING3 and COPYING.RUNTI
++++ d/gcc/config/i386/linux64.h	2010-11-18 14:21:37.000000000 +0200
+@@ -70,8 +70,18 @@ see the files COPYING3 and COPYING.RUNTI
  #define SPEC_64 "m64"
  #endif
  
@@ -83,18 +83,20 @@ diff -pruN a/gcc/config/i386/linux64.h d/gcc/config/i386/linux64.h
 +#define ASM_SPEC_MTUNE "%{march=native:%{!mtune=*:%{!Wa,mtune=*:%<Wa,mtune=native %:local_cpu_detect(astune)}}} \
 + %{mtune=native:%{!Wa,mtune=*:%<Wa,mtune=native %:local_cpu_detect(astune)}} \
 + %{Wa,mtune=native:%<Wa,mtune=native %:local_cpu_detect(astune)}"
++#else
++#define ASM_SPEC_MTUNE ""
 +#endif
 +
  #undef ASM_SPEC
  #define ASM_SPEC "%{v:-V} %{Qy:} %{!Qn:-Qy} %{n} %{T} %{Ym,*} %{Yd,*} \
-+ " ASM_SPEC_MTUNE "\
++ " ASM_SPEC_MTUNE " \
   %{Wa,*:%*} %{" SPEC_32 ":--32} %{" SPEC_64 ":--64} \
   %{!mno-sse2avx:%{mavx:-msse2avx}} %{msse2avx:%{!mavx:-msse2avx}}"
  
 diff -pruN a/gcc/config/i386/linux.h d/gcc/config/i386/linux.h
 --- a/gcc/config/i386/linux.h	2010-11-01 15:47:04.000000000 +0200
-+++ d/gcc/config/i386/linux.h	2010-11-18 11:35:36.000000000 +0200
-@@ -102,9 +102,17 @@ along with GCC; see the file COPYING3.
++++ d/gcc/config/i386/linux.h	2010-11-18 14:21:18.000000000 +0200
+@@ -102,9 +102,19 @@ along with GCC; see the file COPYING3.
  #define LINK_EMULATION "elf_i386"
  #define GLIBC_DYNAMIC_LINKER "/lib/ld-linux.so.2"
  
@@ -103,13 +105,108 @@ diff -pruN a/gcc/config/i386/linux.h d/gcc/config/i386/linux.h
 +#define ASM_SPEC_MTUNE "%{march=native:%{!mtune=*:%{!Wa,mtune=*:%<Wa,mtune=native %:local_cpu_detect(astune)}}} \
 + %{mtune=native:%{!Wa,mtune=*:%<Wa,mtune=native %:local_cpu_detect(astune)}} \
 + %{Wa,mtune=native:%<Wa,mtune=native %:local_cpu_detect(astune)}"
++#else
++#define ASM_SPEC_MTUNE ""
 +#endif
 +
  #undef  ASM_SPEC
  #define ASM_SPEC \
 -  "%{v:-V} %{Qy:} %{!Qn:-Qy} %{n} %{T} %{Ym,*} %{Yd,*} %{Wa,*:%*} --32 \
-+ ASM_SPEC_MTUNE\
++ ASM_SPEC_MTUNE \
 + "%{v:-V} %{Qy:} %{!Qn:-Qy} %{n} %{T} %{Ym,*} %{Yd,*} %{Wa,*:%*} --32 \
    %{!mno-sse2avx:%{mavx:-msse2avx}} %{msse2avx:%{!mavx:-msse2avx}}"
  
  #undef  SUBTARGET_EXTRA_SPECS
+diff -pruN a/gcc/config/i386/mingw-w64.h d/gcc/config/i386/mingw-w64.h
+--- a/gcc/config/i386/mingw-w64.h	2010-05-13 13:13:28.000000000 +0300
++++ d/gcc/config/i386/mingw-w64.h	2010-11-18 14:21:32.000000000 +0200
+@@ -33,10 +33,20 @@ along with GCC; see the file COPYING3.
+   %{pg:gcrt2%O%s} \
+   crtbegin.o%s"
+ 
++#undef ASM_SPEC_MTUNE
++#if defined(HAVE_LOCAL_CPU_DETECT) && defined(HAVE_GNU_AS)
++#define ASM_SPEC_MTUNE "%{march=native:%{!mtune=*:%{!Wa,mtune=*:%<Wa,mtune=native %:local_cpu_detect(astune)}}} \
++ %{mtune=native:%{!Wa,mtune=*:%<Wa,mtune=native %:local_cpu_detect(astune)}} \
++ %{Wa,mtune=native:%<Wa,mtune=native %:local_cpu_detect(astune)}"
++#else
++#define ASM_SPEC_MTUNE ""
++#endif
++
+ /* Enable multilib.  */
+ 
+ #undef ASM_SPEC
+ #define ASM_SPEC "%{v:-v} %{n} %{T} %{Ym,*} %{Yd,*} \
++ " ASM_SPEC_MTUNE " \
+  %{Wa,*:%*} %{m32:--32} %{m64:--64}"
+ 
+ #undef SPEC_32
+diff -pruN a/gcc/config/i386/sol2-10.h d/gcc/config/i386/sol2-10.h
+--- a/gcc/config/i386/sol2-10.h	2010-11-01 15:47:04.000000000 +0200
++++ d/gcc/config/i386/sol2-10.h	2010-11-18 14:21:28.000000000 +0200
+@@ -22,11 +22,21 @@ along with GCC; see the file COPYING3.
+ #undef ASM_COMMENT_START
+ #define ASM_COMMENT_START "/"
+ 
++#undef ASM_SPEC_MTUNE
++#if defined(HAVE_LOCAL_CPU_DETECT) && defined(HAVE_GNU_AS)
++#define ASM_SPEC_MTUNE "%{march=native:%{!mtune=*:%{!Wa,mtune=*:%<Wa,mtune=native %:local_cpu_detect(astune)}}} \
++ %{mtune=native:%{!Wa,mtune=*:%<Wa,mtune=native %:local_cpu_detect(astune)}} \
++ %{Wa,mtune=native:%<Wa,mtune=native %:local_cpu_detect(astune)}"
++#else
++#define ASM_SPEC_MTUNE ""
++#endif
++
+ /* binutils' GNU as understands --32 and --64, but the native Solaris
+    assembler requires -xarch=generic or -xarch=generic64 instead.  */
+ #undef ASM_SPEC
+ #ifdef USE_GAS
+ #define ASM_SPEC "%{v:-V} %{Qy:} %{!Qn:-Qy} %{n} %{T} %{Ym,*} %{Yd,*} " \
++		ASM_SPEC_MTUNE \
+ 		 "%{Wa,*:%*} %{m32:--32} %{m64:--64} -s %(asm_cpu)"
+ #else
+ #define ASM_SPEC "%{v:-V} %{Qy:} %{!Qn:-Qy} %{n} %{T} %{Ym,*} %{Yd,*} " \
+diff -pruN a/gcc/config/i386/vxworks.h d/gcc/config/i386/vxworks.h
+--- a/gcc/config/i386/vxworks.h	2009-09-25 18:56:39.000000000 +0300
++++ d/gcc/config/i386/vxworks.h	2010-11-18 14:21:14.000000000 +0200
+@@ -23,8 +23,17 @@ along with GCC; see the file COPYING3.
+ #undef  TARGET_VERSION
+ #define TARGET_VERSION fprintf (stderr, " (80586, VxWorks syntax)");
+ 
++#undef ASM_SPEC_MTUNE
++#if defined(HAVE_LOCAL_CPU_DETECT) && defined(HAVE_GNU_AS)
++#define ASM_SPEC_MTUNE "%{march=native:%{!mtune=*:%{!Wa,mtune=*:%<Wa,mtune=native %:local_cpu_detect(astune)}}} \
++ %{mtune=native:%{!Wa,mtune=*:%<Wa,mtune=native %:local_cpu_detect(astune)}} \
++ %{Wa,mtune=native:%<Wa,mtune=native %:local_cpu_detect(astune)}"
++#else
++#define ASM_SPEC_MTUNE ""
++#endif
++
+ #undef  ASM_SPEC
+-#define ASM_SPEC "%{v:-v} %{Qy:} %{n} %{T} %{Ym,*} %{Yd,*} %{Wa,*:%*}"
++#define ASM_SPEC ASM_SPEC_MTUNE "%{v:-v} %{Qy:} %{n} %{T} %{Ym,*} %{Yd,*} %{Wa,*:%*}"
+ 
+ #define TARGET_OS_CPP_BUILTINS()			\
+   do							\
+diff -pruN a/gcc/config/i386/x86-64.h d/gcc/config/i386/x86-64.h
+--- a/gcc/config/i386/x86-64.h	2009-09-25 18:56:39.000000000 +0300
++++ d/gcc/config/i386/x86-64.h	2010-11-18 14:22:34.000000000 +0200
+@@ -51,8 +51,18 @@ see the files COPYING3 and COPYING.RUNTI
+ #undef CC1_SPEC
+ #define CC1_SPEC "%(cc1_cpu) %{profile:-p}"
+ 
++#undef ASM_SPEC_MTUNE
++#if defined(HAVE_LOCAL_CPU_DETECT) && defined(HAVE_GNU_AS)
++#define ASM_SPEC_MTUNE "%{march=native:%{!mtune=*:%{!Wa,mtune=*:%<Wa,mtune=native %:local_cpu_detect(astune)}}} \
++ %{mtune=native:%{!Wa,mtune=*:%<Wa,mtune=native %:local_cpu_detect(astune)}} \
++ %{Wa,mtune=native:%<Wa,mtune=native %:local_cpu_detect(astune)}"
++#else
++#define ASM_SPEC_MTUNE ""
++#endif
++
+ #undef ASM_SPEC
+ #define ASM_SPEC "%{v:-V} %{Qy:} %{!Qn:-Qy} %{n} %{T} %{Ym,*} %{Yd,*} \
++ " ASM_SPEC_MTUNE " \
+  %{Wa,*:%*} %{m32:--32} %{m64:--64}"
+ 
+ #undef ASM_OUTPUT_ALIGNED_BSS
