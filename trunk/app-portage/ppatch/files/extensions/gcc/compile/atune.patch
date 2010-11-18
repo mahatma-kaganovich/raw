@@ -93,7 +93,7 @@ diff -pruN a/gcc/config/i386/linux64.h d/gcc/config/i386/linux64.h
  
 diff -pruN a/gcc/config/i386/linux.h d/gcc/config/i386/linux.h
 --- a/gcc/config/i386/linux.h	2010-11-01 15:47:04.000000000 +0200
-+++ d/gcc/config/i386/linux.h	2010-11-18 11:05:18.000000000 +0200
++++ d/gcc/config/i386/linux.h	2010-11-18 11:35:36.000000000 +0200
 @@ -102,9 +102,17 @@ along with GCC; see the file COPYING3.
  #define LINK_EMULATION "elf_i386"
  #define GLIBC_DYNAMIC_LINKER "/lib/ld-linux.so.2"
@@ -108,7 +108,7 @@ diff -pruN a/gcc/config/i386/linux.h d/gcc/config/i386/linux.h
  #undef  ASM_SPEC
  #define ASM_SPEC \
 -  "%{v:-V} %{Qy:} %{!Qn:-Qy} %{n} %{T} %{Ym,*} %{Yd,*} %{Wa,*:%*} --32 \
-+ " ASM_SPEC_MTUNE "\
++ ASM_SPEC_MTUNE\
 + "%{v:-V} %{Qy:} %{!Qn:-Qy} %{n} %{T} %{Ym,*} %{Yd,*} %{Wa,*:%*} --32 \
    %{!mno-sse2avx:%{mavx:-msse2avx}} %{msse2avx:%{!mavx:-msse2avx}}"
  
