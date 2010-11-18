@@ -91,3 +91,25 @@ diff -pruN a/gcc/config/i386/linux64.h d/gcc/config/i386/linux64.h
   %{Wa,*:%*} %{" SPEC_32 ":--32} %{" SPEC_64 ":--64} \
   %{!mno-sse2avx:%{mavx:-msse2avx}} %{msse2avx:%{!mavx:-msse2avx}}"
  
+diff -pruN a/gcc/config/i386/linux.h d/gcc/config/i386/linux.h
+--- a/gcc/config/i386/linux.h	2010-11-01 15:47:04.000000000 +0200
++++ d/gcc/config/i386/linux.h	2010-11-18 11:05:18.000000000 +0200
+@@ -102,9 +102,17 @@ along with GCC; see the file COPYING3.
+ #define LINK_EMULATION "elf_i386"
+ #define GLIBC_DYNAMIC_LINKER "/lib/ld-linux.so.2"
+ 
++#undef ASM_SPEC_MTUNE
++#if defined(HAVE_LOCAL_CPU_DETECT) && defined(HAVE_GNU_AS)
++#define ASM_SPEC_MTUNE "%{march=native:%{!mtune=*:%{!Wa,mtune=*:%<Wa,mtune=native %:local_cpu_detect(astune)}}} \
++ %{mtune=native:%{!Wa,mtune=*:%<Wa,mtune=native %:local_cpu_detect(astune)}} \
++ %{Wa,mtune=native:%<Wa,mtune=native %:local_cpu_detect(astune)}"
++#endif
++
+ #undef  ASM_SPEC
+ #define ASM_SPEC \
+-  "%{v:-V} %{Qy:} %{!Qn:-Qy} %{n} %{T} %{Ym,*} %{Yd,*} %{Wa,*:%*} --32 \
++ " ASM_SPEC_MTUNE "\
++ "%{v:-V} %{Qy:} %{!Qn:-Qy} %{n} %{T} %{Ym,*} %{Yd,*} %{Wa,*:%*} --32 \
+   %{!mno-sse2avx:%{mavx:-msse2avx}} %{msse2avx:%{!mavx:-msse2avx}}"
+ 
+ #undef  SUBTARGET_EXTRA_SPECS
