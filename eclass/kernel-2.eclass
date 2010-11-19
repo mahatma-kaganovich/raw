@@ -138,7 +138,7 @@ kernel-2_src_compile() {
 	local p=""
 	use netboot && p="${p} --netboot"
 	[[ -e "${BDIR}" ]] || mkdir "${BDIR}"
-	kmake INSTALL_MOD_PATH="${BDIR}" modules_install
+	kmake INSTALL_MOD_PATH="${BDIR}" -j1 modules_install
 	local r="${BDIR}/lib/modules/${REAL_KV}"
 	rm "${r}"/build "${r}"/source
 	cd "${WORKDIR}"
