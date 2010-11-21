@@ -1,0 +1,72 @@
+--- a/drivers/video/via/via-core.c	2010-11-21 20:37:19.870000499 +0200
++++ b/drivers/video/via/via-core.c	2010-11-21 21:08:00.789998871 +0200
+@@ -2,6 +2,7 @@
+  * Copyright 1998-2009 VIA Technologies, Inc. All Rights Reserved.
+  * Copyright 2001-2008 S3 Graphics, Inc. All Rights Reserved.
+  * Copyright 2009 Jonathan Corbet <corbet@lwn.net>
++ * Copyright 2010 Dzianis Kahanovich <mahatma@eu.by>
+  */
+ 
+ /*
+@@ -575,6 +576,53 @@ static void via_teardown_subdevs(void)
+ 		}
+ }
+ 
++static void via_i2c_detect(void){
++	u8 *edid;
++	struct fb_var_screeninfo var;
++	int i, n=0;
++	struct i2c_adapter *adapter;
++
++	if (viafb_platform_epia_dvi != STATE_OFF ||
++		viafb_display_hardware_layout != HW_LAYOUT_LCD_DVI ||
++		viafb_DeviceStatus != CRT_Device ||
++		viafb_lcd_mode != LCD_OPENLDI ||
++		viafb_CRT_ON != 1 ||
++		viafb_primary_dev != None_Device)
++			return;
++	for (i = 0; i < VIAFB_NUM_PORTS; i++) {
++		adapter = viafb_find_i2c_adapter(i);
++		if (!adapter || !adapter->algo_data ||
++		    !(edid = fb_ddc_read(adapter)))
++			continue;
++		if (fb_parse_edid(edid, &var))
++			goto free_edid;
++		if(n)
++			fb_edid_to_monspecs(edid, &viafbinfo1->monspecs);
++		else {
++			fb_edid_to_monspecs(edid, &viafbinfo->monspecs);
++			/* I fix only DDC+RGB (notebook LCD). FIXME */
++			if (viafbinfo->monspecs.input ==
++			    (FB_DISP_DDI | FB_DISP_RGB)) {
++				viafb_display_hardware_layout =
++				    HW_LAYOUT_LCD_ONLY;
++				viafb_DeviceStatus = LCD_Device;
++				viafb_primary_dev = LCD_Device;
++				viafb_LCD_ON = 1;
++				viafb_DVI_ON = 0;
++				viaparinfo->lvds_setting_info->lcd_panel_hres =
++				    var.xres;
++				viaparinfo->lvds_setting_info->lcd_panel_vres =
++				    var.yres;
++			}
++		}
++		n++;
++free_edid:
++		kfree(edid);
++		if (n > 1)
++			break;
++	}
++}
++
+ 
+ static int __devinit via_pci_probe(struct pci_dev *pdev,
+ 		const struct pci_device_id *ent)
+@@ -607,6 +655,7 @@ static int __devinit via_pci_probe(struc
+ 	ret = via_fb_pci_probe(&global_dev);
+ 	if (ret)
+ 		goto out_subdevs;
++	via_i2c_detect();
+ 	return 0;
+ 
+ out_subdevs:
