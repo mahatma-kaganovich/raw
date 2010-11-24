@@ -336,7 +336,7 @@ setconfig(){
 cpu2K(){
 local i v V="" CF="" march=$(march) m64g="HIGHMEM64G -HIGHMEM4G -NOHIGHMEM"
 local vendor_id="" model_name="" flags="" cpu_family="" model="" cache_alignment="" fpu="" siblings="" cpu_cores="" processor=""
-CF1 -SMP -X86_BIGSMP -X86_GENERIC X86_X2APIC
+CF1 -SMP -X86_BIGSMP -X86_GENERIC X86_X2APIC X86_UP_APIC X86_UP_IOAPIC
 use xen && CF1 -HIGHMEM64G -HIGHMEM4G NOHIGHMEM X86_PAE
 use smp && CF1 SMP X86_BIGSMP SCHED_SMT SCHED_MC
 [[ "$(march mtune)" == generic ]] && CF1 X86_GENERIC
