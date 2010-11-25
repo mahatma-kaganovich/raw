@@ -362,7 +362,7 @@ native)
 
 	for i in ${flags}; do
 		case $i in
-		apic)CF1 X86_UP_APIC X86_UP_IOAPIC;;
+		apic)CF1 X86_UP_APIC;;
 		ht)	case "${model_name}" in
 			*Celeron*);;
 			*)
@@ -482,7 +482,13 @@ pentium2)CF1 MPENTIUMII;;
 pentium3|pentium3m)CF1 MPENTIUMIII;;
 pentium-m)CF1 MPENTIUMM;;
 # sure 64G
-pentium4|pentium4m|prescott|nocona)[[ "$(march mtune)" == generic ]] && CF1 MPENTIUMM X86_GENERIC GENERIC_CPU $m64g || CF1 MPENTIUM4 MPSC $m64g;;
+pentium4|pentium4m|prescott|nocona)
+	case "$(march mtune)" in
+	pentium4|pentium4m|prescott|nocona)CF1 MPENTIUM4 MPSC $m64g;;
+	?*)CF1 MPENTIUMM X86_GENERIC GENERIC_CPU $m64g;;
+	*)CF1 MPENTIUM4 MPSC $m64g;;
+	esac
+;;
 core2)CF1 MCORE2 $m64g;;
 k6-3)CF1 MK6 $m64g;;
 athlon|athlon-tbird|athlon-4|athlon-xp|athlon-mp)CF1 MK7 $m64g;;
