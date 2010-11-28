@@ -10,10 +10,7 @@
              pDRIInfo->clientDriverName = "swrast";
 --- xf86-video-openchrome-0.2.904_p853/src/via_xvmc.c	2010-05-06 21:28:29.000000000 +0300
 +++ xf86-video-openchrome-0.2.904_p853.fixed/src/via_xvmc.c	2010-06-16 02:29:25.000000000 +0300
-@@ -327,8 +327,7 @@ ViaInitXVMC(ScreenPtr pScreen)
-         (pVia->Chipset == VIA_CX700) ||
-         (pVia->Chipset == VIA_VX800) ||
-         (pVia->Chipset == VIA_VX855) ||
+@@ -330,5 +330,4 @@ ViaInitXVMC(ScreenPtr pScreen)
 -        (pVia->Chipset == VIA_K8M890) ||
 -        (pVia->Chipset == VIA_P4M900)) {
 +        (pVia->Chipset == VIA_K8M890)) {
