@@ -123,6 +123,7 @@ mnt_loop(){
 mod_unload(){
 	local i="$NEW_ROOT/lib/modules/$KV" l="$NEW_ROOT/usr/src/linux-$KV" m=""
 	cd /
+	echo "$SAVE_HOTPLUG" >/proc/sys/kernel/hotplug
 	if [[ -L $i/kernel ]] && i=`ls $l.*fs 2>/dev/null` && [[ -f "$i" ]]; then
 		echo -ne "(mount $i)"
 		mnt_loop /dev/loop3 "$i" $l
@@ -239,6 +240,7 @@ link_dir(){
 pnp_init(){
 	eval "pnp_options $(cat /proc/cmdline)" # parsing
 	local l
+	read SAVE_HOTPLUG </proc/sys/kernel/hotplug
 	for l in /*.loopfs; do
 	if [[ -f "$l" ]]; then
 		echo -ne "\033[15;1f"
