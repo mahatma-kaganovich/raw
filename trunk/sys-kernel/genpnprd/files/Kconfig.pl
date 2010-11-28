@@ -15,6 +15,8 @@ $ENV{KERNEL_CONFIG}||='
 	ASYNC_TX_DMA NET_DMA DMAR INTR_REMAP BLK_DEV_INTEGRITY
 	AMD_IOMMU
 	SPARSEMEM_MANUAL MEMTEST [\d\w_]*FS_XATTR
+	MEMORY_HOTPLUG MEMORY_HOTREMOVE
+	EXT2_FS_XIP OLPC NFSD_V4 CIFS_POSIX +[\d\w_]*_FSCACHE
 	VMI KVM_CLOCK KVM_GUEST XEN LGUEST_GUEST
 	USB_LIBUSUAL -BLK_DEV_UB USB_EHCI_ROOT_HUB_TT USB_EHCI_TT_NEWSCHED USB_SISUSBVGA_CON
 	KEYBOARD_ATKBD
@@ -81,8 +83,8 @@ sub Kcload{
 		$s=~s/^\s*(?:def_)?tristate(?:\s+\S*|$)/$tristate{$v}=1;next/se;
 		$s=~s/^\s*(?:def_)?bool(?:\s+\S*|$)/if($c eq 'menuconfig'){$menu{$v}=1}else{$bool{$v}=1};next/se;
 		$s=~s/^\s*select\s*(\S*)/push @{$select{$1}},$v;next/se;
-		$s=~s/If\s+(?:unsure|in\s+doubt),\s+say\s+Y\./$yes{$v}=1;next/se;
-		$s=~s/If\s+(?:unsure|in\s+doubt),\s+say\s+N\./$no{$v}=1;next/se;
+		$s=~s/(?:If\s+unsure,\s+s|If\s+in\s+doubt,\s+s|S)ay\s+Y\./$yes{$v}=1;next/se;
+		$s=~s/(?:If\s+unsure,\s+s|If\s+in\s+doubt,\s+s|S)ay\s+N\./$no{$v}=1;next/se;
 	}
 	close($F);
 }
