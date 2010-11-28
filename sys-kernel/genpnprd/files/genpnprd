@@ -308,6 +308,7 @@ if $SQUASH ; then
 	fi
 else
 	preserve_start loop cramfs
+	[[ -x /sbin/mkfs.cramfs ]] && mkcramfs(){ /sbin/mkfs.cramfs "${@}";}
 	if $LIBLOOP; then
 		mkcramfs "$rcdir/lib" "$rcdir/lib.loopfs" || die "mkcramfs"
 	else
