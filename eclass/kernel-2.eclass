@@ -83,19 +83,26 @@ check_kv(){
 	[ -z "${KV}" ] && set_kv ${REAL_KV}
 }
 
+flags_nosp(){
+	local x="${@# }"
+	echo "${x% }"
+}
+
 kernel-2_src_configure() {
 	[[ ${ETYPE} == sources ]] || return
 	cd "${S}"
 	cpu2K
-	local cflags="${KERNEL_CFLAGS}" aflags="${KERNEL_ASFLAGS}"
+	local cflags="${KERNEL_CFLAGS}" aflags="${KERNEL_ASFLAGS}" ldflags="${KERNEL_LDFLAGS}"
 	if use custom-cflags; then
 		use custom-arch || filter-flags "-march=*"
 		filter-flags "-msse*" -mmmx -m3dnow
-		cflags="${CFLAGS} ${cflags}"
-		aflags="${ASFLAGS} ${aflags}"
+		cflags="$(flags_nosp "${CFLAGS} ${cflags}")"
+		aflags="$(flags_nosp "$(extract_aflags) ${aflags}")"
+		ldflags="$(flags_nosp "$(LDFLAGS) ${ldflags}")"
 	fi
 	[[ -n "${cflags}" ]] && sed -i -e "s/^\(KBUILD_CFLAGS.*-O.\)/\1 ${cflags}/g" Makefile
-	[[ -n "${aflags}" ]] && sed -i -e "s/^\(AFLAGS_KERNEL	=\)$/\1 ${aflags}/" Makefile
+	[[ -n "${aflags}" ]] && sed -i -e "s/^\(AFLAGS_[A-Z]*	=\)$/\1 ${aflags}/" Makefile
+	[[ -n "${ldflags}" ]] && sed -i -e "s/^\(LDFLAGS_[A-Z]*	=\)$/\1 ${LDflags}/" Makefile
 	use build-kernel || return
 	config_defaults
 }
@@ -645,4 +652,21 @@ kernel-2_pkg_postinst() {
 	[[ ${ETYPE} == sources ]] && postinst_sources
 	####
 	[[ ${ETYPE} == sources ]] && use build-kernel && use pnp && use compressed && mount -o loop,ro "${ROOT}"/usr/src/linux-"${REAL_KV}"{.squashfs,} && elog "Mounted sources: ${REAL_KV}"
+}
+
+extract_aflags(){
+# ASFLAGS used for yasm too, -mtune is unsure
+local i a aflags="${ASFLAGS}"
+for i in ${CFLAGS}; do
+	a="${i#-Wa,}"
+	[[ "$a" == "$i" ]] && continue
+	i="${a//,/ }"
+	aflags="${aflags% ${i}} ${i}"
+done
+for i in $(echo "int main(){}"|gcc ${CFLAGS} "${@}" -x c - -v -o /dev/null |& grep "^[ ]*[^ ]*/as"); do
+	case "${i}" in
+	-mtune=*)aflags="${aflags% ${i}} ${i}";;
+	esac
+done
+echo "${aflags# }"
 }
