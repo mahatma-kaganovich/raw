@@ -1,0 +1,26 @@
+Index: libxvmc/viaLowLevel.c
+===================================================================
+--- libxvmc/viaLowLevel.c	(revision 883)
++++ libxvmc/viaLowLevel.c	(working copy)
+@@ -1006,7 +1006,7 @@
+     int ret;
+     XvMCLowLevel *xl;
+ 
+-    if (chipId == PCI_CHIP_VT3259 || chipId == PCI_CHIP_VT3364) {
++    if (chipId == PCI_CHIP_VT3259) {
+ 	fprintf(stderr, "You are using an XvMC driver for the wrong chip.\n");
+ 	fprintf(stderr, "Chipid is 0x%04x.\n", chipId);
+ 	return NULL;
+Index: libxvmc/viaLowLevelPro.c
+===================================================================
+--- libxvmc/viaLowLevelPro.c	(revision 883)
++++ libxvmc/viaLowLevelPro.c	(working copy)
+@@ -1516,7 +1516,7 @@
+ {
+     XvMCLowLevel *xl;
+     
+-    if (chipId != PCI_CHIP_VT3259 && chipId != PCI_CHIP_VT3364) {
++    if (chipId != PCI_CHIP_VT3259) {
+ 	fprintf(stderr, "You are using an XvMC driver for the wrong chip.\n");
+ 	fprintf(stderr, "Chipid is 0x%04x.\n", chipId);
+ 	return NULL;

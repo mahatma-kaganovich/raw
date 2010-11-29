@@ -1,0 +1,14 @@
+Index: src/via_driver.c
+===================================================================
+--- src/via_driver.c	(revision 883)
++++ src/via_driver.c	(working copy)
+@@ -2048,7 +2048,8 @@
+         }
+ 
+         /* Save Preemptive Arbiter Control Register */
+-        Regs->SR4C = hwp->readSeq(hwp, 0x4D);
++        if (pVia->Chipset == VIA_VX900)
++            Regs->SR4C = hwp->readSeq(hwp, 0x4D);
+         DEBUG(xf86DrvMsg(pScrn->scrnIndex, X_INFO, "Crtc...\n"));
+ 
+         Regs->CR13 = hwp->readCrtc(hwp, 0x13);
