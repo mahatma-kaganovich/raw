@@ -92,17 +92,18 @@ kernel-2_src_configure() {
 	[[ ${ETYPE} == sources ]] || return
 	cd "${S}"
 	cpu2K
+	## ldflags unsure
 	local cflags="${KERNEL_CFLAGS}" aflags="${KERNEL_ASFLAGS}" ldflags="${KERNEL_LDFLAGS}"
 	if use custom-cflags; then
 		use custom-arch || filter-flags "-march=*"
 		filter-flags "-msse*" -mmmx -m3dnow
 		cflags="$(flags_nosp "${CFLAGS} ${cflags}")"
 		aflags="$(flags_nosp "$(extract_aflags) ${aflags}")"
-		ldflags="$(flags_nosp "$(LDFLAGS) ${ldflags}")"
+		ldflags="$(flags_nosp "$(extract_flags -Wl, "${LDFLAGS}") ${ldflags}")"
 	fi
 	[[ -n "${cflags}" ]] && sed -i -e "s/^\(KBUILD_CFLAGS.*-O.\)/\1 ${cflags}/g" Makefile
 	[[ -n "${aflags}" ]] && sed -i -e "s/^\(AFLAGS_[A-Z]*[	 ]*=\)$/\1 ${aflags}/" Makefile
-	[[ -n "${ldflags}" ]] && sed -i -e "s/^\(LDFLAGS_[A-Z]*[	 ]*=\)$/\1 ${LDflags}/" Makefile
+	[[ -n "${ldflags}" ]] && sed -i -e "s/^\(LDFLAGS_[A-Z]*[	 ]*=\)$/\1 ${ldflags}/" Makefile
 	use build-kernel || return
 	config_defaults
 }
@@ -654,10 +655,20 @@ kernel-2_pkg_postinst() {
 	[[ ${ETYPE} == sources ]] && use build-kernel && use pnp && use compressed && mount -o loop,ro "${ROOT}"/usr/src/linux-"${REAL_KV}"{.squashfs,} && elog "Mounted sources: ${REAL_KV}"
 }
 
+extract_flags(){
+local pref="$1"
+shift
+for i in "${@}"; do
+	a="${i#${pref}}"
+	[[ "$a" == "$i" ]] && continue
+	echo -n " ${a//,/ }"
+done
+}
+
 extract_aflags(){
 # ASFLAGS used for yasm too, -mtune is unsure
 local i a aflags="${ASFLAGS}"
-for i in ${CFLAGS}; do
+for i in $(extract_flags -Wa, ${CFLAGS}); do
 	a="${i#-Wa,}"
 	[[ "$a" == "$i" ]] && continue
 	i="${a//,/ }"
