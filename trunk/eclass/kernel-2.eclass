@@ -669,12 +669,12 @@ extract_aflags(){
 # ASFLAGS used for yasm too, -mtune is unsure
 local i a aflags="${ASFLAGS}"
 for i in $(extract_flags -Wa, ${CFLAGS}); do
-	a="${i#-Wa,}"
-	[[ "$a" == "$i" ]] && continue
-	i="${a//,/ }"
+	case "${i}" in
+	-mtune=native)continue;;
+	esac
 	aflags="${aflags% ${i}} ${i}"
 done
-for i in $(echo "int main(){}"|gcc ${CFLAGS} "${@}" -x c - -v -o /dev/null |& grep "^[ ]*[^ ]*/as"); do
+for i in $(echo "int main(){}"|$(tc-getBUILD_CC) ${CFLAGS} "${@}" -x c - -v -o /dev/null |& grep "^[ ]*[^ ]*/as"); do
 	case "${i}" in
 	-mtune=*)aflags="${aflags% ${i}} ${i}";;
 	esac
