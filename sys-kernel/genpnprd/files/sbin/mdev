@@ -432,11 +432,15 @@ cmd(){
 		esac
 		case "$x" in
 		*[^a-zA-Z0-9._-]*|.|..);;
-		*[.-]*)echo -ne " ${x#*.}$y" >"$C/$x";;
+		*[.-]*)y=" ${x#*.}$y";echo -ne "${y:+ }$y" >"$C/$x";;
 		*)export _cmd_$x="_$y" cmd_$x="${y#=}";;
 		esac
 	done <$C/cmdline_
 	export|grep " [_]*cmd_" >$C/cmd
+	[[ -w /etc/modprobe.d/ ]] && for x in $C/*.*; do
+		y="${x#$C/}"
+		[[ -s "$x" ]] && echo "options ${y%%.*}$(cat "$x")"
+	done >/etc/modprobe.d/cmdline.conf
 	}
 }
 
