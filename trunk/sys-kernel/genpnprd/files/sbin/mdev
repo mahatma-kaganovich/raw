@@ -432,7 +432,7 @@ cmd(){
 		esac
 		case "$x" in
 		*[^a-zA-Z0-9._-]*|.|..);;
-		*[.-]*)y=" ${x#*.}$y";echo -ne "${y:+ }$y" >"$C/$x";;
+		*[.-]*)y="${x#*.}$y";echo -ne "${y:+ }$y" >"$C/$x";;
 		*)export _cmd_$x="_$y" cmd_$x="${y#=}";;
 		esac
 	done <$C/cmdline_
