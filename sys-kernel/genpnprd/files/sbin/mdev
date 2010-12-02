@@ -55,7 +55,7 @@ loadsh(){
 }
 
 mods(){
-	find /lib/modules/$KV/ /lib/modules/$KV/kernel/|grep "/$*/.*\.ko\$\|$*\.ko\$"|sed -e 's:^.*/::g' -e 's:\.ko$::g'|sort -u
+	find /lib/modules/$KV/ /lib/modules/$KV/kernel/|grep "/$*/.*\.ko\|$*\.ko"|sed -e 's:^.*/::g' -e 's:\.ko.*$::g'|sort -u
 }
 
 _fs(){
@@ -420,7 +420,7 @@ cmd(){
 	read x </proc/cmdline
 	[[ -e $C/cmdline ]] && read y <$C/cmdline && [[ "$x" != "$y" ]] && rm "$C" -Rf
 	[[ -e $C/cmd ]] && . $C/cmd || {
-	mkdir -p $C
+	mkdir -p $C # /etc/modules/ /etc/modprobe.d/
 	xargs -n1 </proc/cmdline >$C/cmdline_
 	cp /proc/cmdline $C/cmdline
 	while read x; do
@@ -437,10 +437,15 @@ cmd(){
 		esac
 	done <$C/cmdline_
 	export|grep " [_]*cmd_" >$C/cmd
-	[[ -w /etc/modprobe.d/ ]] && for x in $C/*.*; do
+	rm -Rf /etc/modules/* # genkernel
+	for x in $C/*.*; do
+		[[ -s "$x" ]] || continue
 		y="${x#$C/}"
-		[[ -s "$x" ]] && echo "options ${y%%.*}$(cat "$x")"
-	done >/etc/modprobe.d/cmdline.conf
+		y="${y%%.*}"
+		read x <"$x"
+		[[ -w /etc/modules/ ]] && echo -ne " $x" >>"/etc/modules/$y"
+		[[ -w /etc/modprobe.d/ ]] && echo "options $y $x" >>/etc/modprobe.d/cmdline.conf
+	done
 	}
 }
 
