@@ -437,7 +437,7 @@ cmd(){
 		esac
 	done <$C/cmdline_
 	export|grep " [_]*cmd_" >$C/cmd
-	rm -Rf /etc/modules/* # genkernel
+#	rm -Rf /etc/modules/* # genkernel
 	for x in $C/*.*; do
 		[[ -s "$x" ]] || continue
 		y="${x#$C/}"
