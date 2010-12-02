@@ -432,19 +432,18 @@ cmd(){
 		esac
 		case "$x" in
 		*[^a-zA-Z0-9._-]*|.|..);;
-		*[.-]*)y="${x#*.}$y";echo -ne "${y:+ }$y" >"$C/$x";;
+		*[.-]*)echo -ne " ${x#*.}$y" >"$C/$x";;
 		*)export _cmd_$x="_$y" cmd_$x="${y#=}";;
 		esac
 	done <$C/cmdline_
 	export|grep " [_]*cmd_" >$C/cmd
 #	rm -Rf /etc/modules/* # genkernel
 	for x in $C/*.*; do
-		[[ -s "$x" ]] || continue
-		y="${x#$C/}"
-		y="${y%%.*}"
-		read x <"$x"
-		[[ -w /etc/modules/ ]] && echo -ne " $x" >>"/etc/modules/$y"
-		[[ -w /etc/modprobe.d/ ]] && echo "options $y $x" >>/etc/modprobe.d/cmdline.conf
+		[[ -e "$x" ]] && read y <"$x" && [[ -n "$y" ]] || continue
+		x="${x#$C/}"
+		x="${x%%.*}"
+		[[ -w /etc/modules/ ]] && echo -ne " $y" >>"/etc/modules/$x"
+		[[ -w /etc/modprobe.d/ ]] && echo "options $x $y" >>/etc/modprobe.d/cmdline.conf
 	done
 	}
 }
