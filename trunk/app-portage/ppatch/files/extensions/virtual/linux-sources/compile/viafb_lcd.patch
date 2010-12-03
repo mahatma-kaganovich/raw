@@ -1,6 +1,6 @@
 diff -pruN a/drivers/video/via/via-core.c b/drivers/video/via/via-core.c
---- a/drivers/video/via/via-core.c	2010-11-24 00:12:22.000000000 +0200
-+++ b/drivers/video/via/via-core.c	2010-11-24 04:52:15.410000005 +0200
+--- a/drivers/video/via/via-core.c	2010-12-03 13:44:48.000000000 +0200
++++ b/drivers/video/via/via-core.c	2010-12-03 13:16:14.000000000 +0200
 @@ -2,6 +2,7 @@
   * Copyright 1998-2009 VIA Technologies, Inc. All Rights Reserved.
   * Copyright 2001-2008 S3 Graphics, Inc. All Rights Reserved.
@@ -9,16 +9,7 @@ diff -pruN a/drivers/video/via/via-core.c b/drivers/video/via/via-core.c
   */
  
  /*
-@@ -16,6 +17,8 @@
- #include <linux/interrupt.h>
- #include <linux/platform_device.h>
- 
-+extern char *viafb_active_dev;
-+
- /*
-  * The default port config.
-  */
-@@ -575,6 +578,69 @@ static void via_teardown_subdevs(void)
+@@ -559,6 +560,69 @@ static void via_teardown_subdevs(void)
  		}
  }
  
@@ -28,24 +19,23 @@ diff -pruN a/drivers/video/via/via-core.c b/drivers/video/via/via-core.c
 +	struct fb_var_screeninfo var;
 +	int i, n = 0;
 +	struct i2c_adapter *adapter;
++	struct lvds_setting_information *inf;
 +
 +	for (i = 0; i < VIAFB_NUM_PORTS; i++) {
 +		adapter = viafb_find_i2c_adapter(i);
 +		if (!adapter || !adapter->algo_data ||
 +		    !(edid = fb_ddc_read(adapter)))
 +			continue;
++		memset(&var, 0, sizeof(var));
 +		if (fb_parse_edid(edid, &var))
 +			goto free_edid;
-+		DEBUG_MSG(KERN_INFO "viafb i2c #%i EDID (%i)\n", i, stage);
 +		if (!stage) {
 +			if (n && !viafb_active_dev)
 +				viafb_dual_fb = STATE_ON;
++			inf = NULL;
 +		} else if (!n || !viafb_LCD_ON) {
 +			fb_edid_to_monspecs(edid, &viafbinfo->monspecs);
-+			viaparinfo->lvds_setting_info->lcd_panel_hres =
-+			    var.xres;
-+			viaparinfo->lvds_setting_info->lcd_panel_vres =
-+			    var.yres;
++			inf = viaparinfo->lvds_setting_info;
 +			if (!viafb_active_dev) {
 +				viafb_DVI_ON =
 +				    viaparinfo->tmds_setting_info->max_hres ?
@@ -59,22 +49,22 @@ diff -pruN a/drivers/video/via/via-core.c b/drivers/video/via/via-core.c
 +			}
 +		} else if (viafb_dual_fb) {
 +			fb_edid_to_monspecs(edid, &viafbinfo1->monspecs);
-+			viaparinfo1->lvds_setting_info->lcd_panel_hres =
-+			    var.xres;
-+			viaparinfo1->lvds_setting_info->lcd_panel_vres =
-+			    var.yres;
++			inf = viaparinfo1->lvds_setting_info;
 +			if (!viafb_active_dev &&
 +			    (viafbinfo1->monspecs.input & FB_DISP_DDI))
 +				viafb_LCD2_ON = STATE_ON;
 +		} else {
 +			fb_edid_to_monspecs(edid, &viafbinfo->monspecs);
-+			viaparinfo->lvds_setting_info2->lcd_panel_hres =
-+			    var.xres;
-+			viaparinfo->lvds_setting_info2->lcd_panel_vres =
-+			    var.yres;
++			inf = viaparinfo->lvds_setting_info2;
 +			if (!viafb_active_dev &&
 +			    (viafbinfo->monspecs.input & FB_DISP_DDI))
 +				viafb_LCD2_ON = STATE_ON;
++		}
++		if (inf) {
++			if (var.xres)
++			    inf->lcd_panel_hres = var.xres;
++			if (var.yres)
++			    inf->lcd_panel_vres = var.yres;
 +		}
 +		n++;
 +free_edid:
@@ -82,40 +72,45 @@ diff -pruN a/drivers/video/via/via-core.c b/drivers/video/via/via-core.c
 +		if (n > 1)
 +			break;
 +	}
-+	if (stage && !viafb_active_dev)
++	if (stage && n && !viafb_active_dev)
 +		viafb_set_iga_path();
 +}
++
  
  static int __devinit via_pci_probe(struct pci_dev *pdev,
  		const struct pci_device_id *ent)
-@@ -604,9 +670,11 @@ static int __devinit via_pci_probe(struc
+@@ -585,12 +649,16 @@ static int __devinit via_pci_probe(struc
+ 	 */
+ 	viafb_int_init();
+ 	via_setup_subdevs(&global_dev);
++	/* dual? */
++	via_i2c_detect(0);
  	/*
  	 * Set up the framebuffer device
  	 */
-+	via_i2c_detect(0);
  	ret = via_fb_pci_probe(&global_dev);
  	if (ret)
  		goto out_subdevs;
++	/* LCD size & present */
 +	via_i2c_detect(1);
  	return 0;
  
  out_subdevs:
-diff -pruN a/drivers/video/via/viafbdev.c b/drivers/video/via/viafbdev.c
---- a/drivers/video/via/viafbdev.c	2010-11-21 11:34:11.000000000 +0200
-+++ b/drivers/video/via/viafbdev.c	2010-11-24 00:14:48.070000002 +0200
-@@ -43,7 +43,7 @@ static int viafb_second_size;
- static int viafb_accel = 1;
+diff -pruN a/drivers/video/via/viafbdev.h b/drivers/video/via/viafbdev.h
+--- a/drivers/video/via/viafbdev.h	2010-12-03 13:44:48.000000000 +0200
++++ b/drivers/video/via/viafbdev.h	2010-12-03 13:13:50.000000000 +0200
+@@ -88,6 +88,7 @@ extern int viafb_LCD2_ON;
+ extern int viafb_LCD_ON;
+ extern int viafb_DVI_ON;
+ extern int viafb_hotplug;
++extern char *viafb_active_dev;
  
- /* Added for specifying active devices.*/
--char *viafb_active_dev;
-+char *viafb_active_dev = NULL;
- 
- /*Added for specify lcd output port*/
- char *viafb_lcd_port = "";
+ extern int strict_strtoul(const char *cp, unsigned int base,
+ 	unsigned long *res);
 diff -pruN a/drivers/video/via/via_i2c.c b/drivers/video/via/via_i2c.c
---- a/drivers/video/via/via_i2c.c	2010-11-21 11:34:11.000000000 +0200
-+++ b/drivers/video/via/via_i2c.c	2010-11-24 00:14:48.070000002 +0200
-@@ -188,7 +188,7 @@ struct i2c_adapter *viafb_find_i2c_adapt
+--- a/drivers/video/via/via_i2c.c	2010-12-03 13:44:48.000000000 +0200
++++ b/drivers/video/via/via_i2c.c	2010-12-03 13:10:26.000000000 +0200
+@@ -167,7 +167,7 @@ struct i2c_adapter *viafb_find_i2c_adapt
  {
  	struct via_i2c_stuff *stuff = &via_i2c_par[which];
  
@@ -124,3 +119,4 @@ diff -pruN a/drivers/video/via/via_i2c.c b/drivers/video/via/via_i2c.c
  }
  EXPORT_SYMBOL_GPL(viafb_find_i2c_adapter);
  
+--
