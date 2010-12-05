@@ -1,5 +1,8 @@
 #!/bin/sh
 # (c) Denis Kaganovich, under Anarchy or GPLv2 license
+#
+# special TYPEs: broken, outdate - to detect broken suspend/swap
+# - too different signatures, try only PAGE_SIZE=4096
 
 lsblk(){
 	local i
@@ -11,16 +14,26 @@ lsblk(){
 	done </proc/partitions
 }
 
+b_id_chk(){
+	[[ "$t:$x" == "broken:$ID" ]] && t=outdate
+}
+
 b_id(){
 	local x y t="$1" l=
 	[[ -n "$2" ]] && {
 		let x=i+$2
-		l="$l UUID=\"`hexdump -v -s $x -n ${4:-16} -e '"" 4/1 "%02x" "-" 2/1 "%02x" "-" 2/1 "%02x" "-" 2/1 "%02x" "-" 6/1 "%02x" ""' $d`\""
+		x="UUID=\"`hexdump -v -s $x -n ${4:-16} -e '"" 4/1 "%02x" "-" 2/1 "%02x" "-" 2/1 "%02x" "-" 2/1 "%02x" "-" 6/1 "%02x" ""' $d`\""
+		l="$l $x"
+		b_id_chk
 	}
 	[[ -n "$3" ]] && {
 		let x=i+$3
 		x=`hexdump -v -s $x -n ${5:-80} -e '"" /1 "%s" ""' $d`
-		[[ -n "$x" ]] && l=" LABEL=\"$x\"$l"
+		[[ -n "$x" ]] && {
+			x="LABEL=\"$x\""
+			b_id_chk
+			l=" $x$l"
+		}
 	}
 	[[ -n "$6" ]] && {
 		shift 5
@@ -33,16 +46,22 @@ b_id(){
 		done
 	}
 	for x in $t; do
-		x="$d:$l TYPE=\"$x\""
+		x="TYPE=\"$x\""
+		b_id_chk
+		[[ "$t" == broken ]] && return
+		x="$d:$l $x"
 		echo "$x"
 		echo "$x" >>$blkid_cache
 	done
+	OK=true
 }
 
-_blkid(){
+__blkid(){
+local OK=false
 ! grep -s "^$d:" ${blkid_cache:=/dev/null} &&
 ! ( $blkid "$d"|grep " TYPE=" ) &&
-( [[ -b "$d" ]] || [[ -f "$d" ]] ) && for i in 0 3 4 8 24 32 54 82 510 536 1016 1024 1030 1040 1048 1080 1560 2048 4086 4096 8182 8192 8212 8244 9564 16374 32758 32768 32769 32777 65526 65536 65588 65600 270336; do
+( [[ -b "$d" ]] || [[ -f "$d" ]] ) && {
+for i in 0 3 4 8 24 32 54 82 510 536 1016 1024 1030 1040 1048 1080 1560 2048 4086 4096 8182 8192 8212 8244 9564 16374 32758 32768 32769 32777 65526 65536 65588 65600 270336; do
 case "`hexdump -v -s $i -n 10 -e '"'$i:'" 10/1 "%x" ""' $d`" in
 32:4f52434c4449534b*)b_id oracleasm;;
 3:4e54465320202020*)b_id ntfs 69 "" 8;;
@@ -75,7 +94,7 @@ case "`hexdump -v -s $i -n 10 -e '"'$i:'" 10/1 "%x" ""' $d`" in
 8192:49e895f9*)b_id hpfs;;
 1016:107e18fd*)b_id sysv;;
 4086:535741502d5350414345*|4086:53574150535041434532*|8182:535741502d5350414345*|8182:53574150535041434532*|16374:535741502d5350414345*|16374:53574150535041434532*|32758:535741502d5350414345*|32758:53574150535041434532*|65526:535741502d5350414345*|65526:53574150535041434532*)i=0;b_id swap 1036 1052 16 16;;
-4086:533[12]53555350454e44*|4086:554c53555350454e44*|4086:4c494e48494230303031*|8182:533[12]53555350454e44*|8182:554c53555350454e44*|8182:4c494e48494230303031*|16374:533[12]53555350454e44*|16374:554c53555350454e44*|16374:4c494e48494230303031*|32758:533[12]53555350454e44*|32758:554c53555350454e44*|32558:4c494e48494230303031|65526:533[12]53555350454e44*|65526:554c53555350454e44*|65526:4c494e48494230303031)i=0;b_id swsuspend 1036 1052 16 16;;
+4086:533[12]53555350454e44*|4086:554c53555350454e44*|4086:4c494e48494230303031*|8182:533[12]53555350454e44*|8182:554c53555350454e44*|8182:4c494e48494230303031*|16374:533[12]53555350454e44*|16374:554c53555350454e44*|16374:4c494e48494230303031*|32758:533[12]53555350454e44*|32758:554c53555350454e44*|32558:4c494e48494230303031|65526:533[12]53555350454e44*|65526:554c53555350454e44*|65526:4c494e48494230303031)i=0;b_id swsuspend 1036 1052 16 163;;
 8:4f7261636c65434653*)b_id ocfs;;
 1024:4f4346535632*|2048:4f4346535632*|4096:4f4346535632*|8192:4f4346535632*)b_id ocfs2 336 272 16 64;;
 0:4c554b53babe*)b_id crypt_LUKS 168 "" 40;;
@@ -83,30 +102,57 @@ case "`hexdump -v -s $i -n 10 -e '"'$i:'" 10/1 "%x" ""' $d`" in
 536:4c564d3220303031*|24:4c564d3220303031*|1048:4c564d3220303031*|1560:4c564d3220303031*|8192:4f4346535632*)b_id lvm2pv 8 "" 32 "" "LABELONE=-24:8:%s";;
 65600:5f42485266535f4d*)b_id btrfs 203 235 16 256;;
 1030:3434*)b_id nilfs2 146 226;;
+4086:*|8182:*|16374:*|32758:*|65526:*)i=0;b_id broken 1036 1052 16 163;;
 esac
 done
+$OK || {
+	i=0
+	[[ "$ID" == "TYPE=\"broken\"" ]] && b_id broken 1036 1052 16 163
+	[[ "$ID" == "TYPE=\"outdate\"" ]] && b_id outdate 1036 1052 16 163
+}
+}
 }
 
-blkid(){
-local r=1 blkid_cache
-[[ -z "$blkid" ]] && {
-	blkid="$(which blkid 2>/dev/null || ( [[ -e /bin/blkid ]] && echo /bin/blkid ) || ( [[ -e /sbin/blkid ]] && echo /sbin/blkid ) || echo blkid)"
-	[[ -e "$blkid" ]] && ( i="$(readlink $blkid)";[[ "${i%busybox}" == "$i" ]] ) || blkid=false
+_blk_ID(){
+	ID="$1"
+	i=$(_blkid|grep -F "$ID")
+	d=""
 }
+
+_blkid(){
 [[ -z "$*" ]] && set `lsblk` ""
 while [[ -n "$*" ]]; do
 local d="$1" i="" u
 shift
 case "$d" in
--t)	i=$(blkid|grep -F "${1%%=*}=\"${1#*=}\"")
+-p)	blkid_cache="";
+	[[ -n "$blkid" ]] && blkid="$blkid $d"
+	_blkid "${@}"
+	break
+;;
+-t)	_blk_ID "$(echo "$1"|sed -e 's:^\([A-Z]*=\)\(.*\)$:\1"\2":')"
 	shift
-	d=""
+;;
+-L)	_blk_ID "LABEL=\"$1\""
+	shift
+;;
+-U)	_blk_ID "UUID=\"$1\""
+	shift
 ;;
 esac
-[[ -n "$d" ]] && i=`_blkid`
+[[ -n "$d" ]] && i=`__blkid`
 [[ -n "$i" ]] && echo "$i" && r=0
 done 2>/dev/null
 return $r
+}
+
+blkid(){
+local blkid_cache ID= r=1
+[[ -z "$blkid" ]] && {
+	blkid="$(which blkid 2>/dev/null || ( [[ -e /bin/blkid ]] && echo /bin/blkid ) || ( [[ -e /sbin/blkid ]] && echo /sbin/blkid ) || echo blkid)"
+	[[ -e "$blkid" ]] && ( i="$(readlink $blkid)";[[ "${i%busybox}" == "$i" ]] ) || blkid=false
+}
+_blkid "${@}"
 }
 
 case $0 in
