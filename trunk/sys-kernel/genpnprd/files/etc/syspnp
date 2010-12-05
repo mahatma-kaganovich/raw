@@ -462,7 +462,7 @@ detect_fs(){
 				fstype $cmd_detect_root
 			fi
 			[[ -n "$REAL_ROOT" ]] && [[ "$REAL_ROOT" != "$cmd_detect_root" ]] && fstype $REAL_ROOT
-	    } 2>/dev/null | sed -e 's%^/dev/\([^ ]*\):.* TYPE="swsuspend".*$%\1:susp%' -e 's:^.* TYPE="\([^"]*\)".*$:\1:g'| sort -u ); do
+	    } 2>/dev/null | sed -e 's%^/dev/\([^ ]*\):.* TYPE="swsuspend".*$%0susp:\1%' -e 's:^.* TYPE="\([^"]*\)".*$:\1:g'| sort -u ); do
 		case $i in
 		linux_raid_member|mdraid|/dev/md*) md=1 ;; # use right blkid
 		/dev/mapper*|/dev/dm*) dm=1 ;;
@@ -485,9 +485,9 @@ detect_fs(){
 			[[ "$REAL_ROOT" == "$i" ]] && REAL_ROOT=/dev/nfs # compat
 		;;
 		swap) ;;
-		*:susp)
+		0susp:*)
 			[[ "$cmd_resume:`cat /sys/power/resume`" == ":0:0" ]] || continue
-			i="${i%:susp}"
+			i="${i#0susp:}"
 			for i in "/sys/class/block/$i/" `grep -ls "^DEVNAME=$i$" /sys/class/block/*/uevent`; do
 				cat "${i%uevent}dev" >/sys/power/resume
 			done
