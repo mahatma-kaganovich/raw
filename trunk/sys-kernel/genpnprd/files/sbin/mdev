@@ -60,12 +60,14 @@ mods(){
 
 _fs(){
 	local i
-	for i in `grep ":.* TYPE="|sed -e 's:^.* TYPE="\([^"]*\)".*$:\1:g'|sort -u`; do
+	for i in `grep ":.* TYPE="|sed -e 's%^/dev/\([^ ]*\):.* TYPE="swsuspend".*$%\1:susp%' -e 's:^.* TYPE="\([^"]*\)".*$:\1:g'|sort -u`; do
 		grep -q "	$i$" /proc/filesystems && continue
 		case "$i" in
 		lvm2*)	[[ -e /dev/mapper/control ]] && continue
 			i="/md/dm-.*"
 		;;
+		# fixme:suspend mapper
+		*:susp)[[ "${_cmd_resume:-0:0}:`cat /sys/power/resume`" == "0:0:0:0" ]] && cat "/sys/class/block/${i%:susp}/dev" >/sys/power/resume;;
 		*)grep -q "	$i$" /proc/filesystems && continue;;
 		esac
 		mods "$i"
