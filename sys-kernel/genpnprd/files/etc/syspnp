@@ -610,6 +610,7 @@ load_hand_made(){
 		ioatdma) mod i7300_idle ;;
 		esac
 	done </proc/modules
+	[[ -e /dev/freefall ]] && [[ -x /bin/hpfall ]] && /bin/hpfall /dev/sda
 }
 
 load_hand_made0(){
