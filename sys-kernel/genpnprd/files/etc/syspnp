@@ -120,10 +120,19 @@ mnt_loop(){
 	return $?
 }
 
+root_fsck_rw(){
+	[[ -w /newroot ]] && ( [[ "$root_checked" != 1 ]] && [[ -x /sbin/fsck ]] && [[ -b "${NEWROOT}" ]] && /sbin/fsck -C0 -T -p ${NEWROOT} ) && {
+		root_checked=1
+		mount -o remount,rw ${NEW_ROOT}
+	}
+	return $?
+}
+
 mod_unload(){
 	local i="$NEW_ROOT/lib/modules/$KV" l="$NEW_ROOT/usr/src/linux-$KV" m=""
 	cd /
 	echo "$SAVE_HOTPLUG" >/proc/sys/kernel/hotplug
+	${cmd_fsck:-false} && root_fsck_rw
 	if [[ -L $i/kernel ]] && i=`ls $l.*fs 2>/dev/null` && [[ -f "$i" ]]; then
 		echo -ne "(mount $i)"
 		mnt_loop /dev/loop3 "$i" $l
