@@ -7,9 +7,14 @@ ex(){
 	exit ${1:-8}
 }
 
+cmd=
+for i in "${@}"; do
+	[[ "$i" == /newroot ]] && i=/
+	cmd="$cmd $i"
+done
 mount -t proc proc /newroot/proc || ex
 mount -t sysfs sysfs /newroot/sys || ex
-chroot /newroot /sbin/fsck "${@}"
+chroot /newroot /sbin/fsck $cmd
 ex  $?
 
 

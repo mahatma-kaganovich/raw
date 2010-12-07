@@ -121,11 +121,13 @@ mnt_loop(){
 }
 
 root_fsck_rw(){
-	[[ -w /newroot ]] && ( [[ "$root_checked" != 1 ]] && [[ -x /sbin/fsck ]] && [[ -b "${NEWROOT}" ]] && /sbin/fsck -C0 -T -p ${NEWROOT} ) && {
-		root_checked=1
-		mount -o remount,rw ${NEW_ROOT}
+	! [[ -w /newroot ]] && [[ -b "${NEWROOT}" ]] && {
+		/sbin/fsck -C0 -T -p ${NEWROOT}
+		case $? in
+		0|1)mount -o remount,rw /newroot;;
+		2|3)sync;echo b >/proc/sysrq-trigger;;
+		esac
 	}
-	return $?
 }
 
 mod_unload(){

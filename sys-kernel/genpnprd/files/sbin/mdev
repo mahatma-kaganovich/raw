@@ -67,7 +67,7 @@ _fs(){
 			i="/md/dm-.*"
 		;;
 		# fixme:suspend2dm
-		0susp:*)[[ "${_cmd_resume:-0:0}:`cat /sys/power/resume`" == "0:0:0:0" ]] && cat "/sys/class/block/${i#0susp:}/dev" >/sys/power/resume;;
+		0susp:*)[[ "${cmd_resume:-0:0}:`cat /sys/power/resume`" == "0:0:0:0" ]] && cat "/sys/class/block/${i#0susp:}/dev" >/sys/power/resume;;
 		*)grep -q "	$i$" /proc/filesystems && continue;;
 		esac
 		mods "$i"
@@ -379,6 +379,13 @@ case "$1" in
 	cat /proc/uptime
 	while true; do
 	cd /newroot && {
+		! [[ -w /newroot ]] && [[ "${_cmd_fsck}" ==  _ ]] && {
+			/sbin/fsck -C0 -T -p /newroot
+			case $? in
+			0|1)mount /newroot -o remount,rw;;
+			2|3)sync;echo b >/proc/sysrq-trigger;;
+			esac
+		}
 		umount `grep -vh "^[^ ]* /newroot[/ ]\|^[^ ]* / " /proc/mounts /etc/mtab|sed -e 's:^[^ ]* \([^ ]*\) .*$:\1:'|sort -u`
 		for i in /dev/loop*; do
 			losetup -d "$i"
@@ -408,6 +415,7 @@ Options:
 -w	scsi_wait_scan
 -a	= (mdev -s mem -i -b -m -w "*");mounts
 -[fast]init	initrc (+/etc/rdinit.d/{init,load0,load,load1,root})
+init cmdline: kernel doc + "fsck" (fsck+rw)
 Example: mdev -s "*" -m'
 return
 ;;
