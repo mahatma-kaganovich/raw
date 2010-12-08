@@ -4,12 +4,14 @@ Adding defaults & legacy I2C/DDC support for VIA framebuffer.
 Detecting legacy I2C/DDC outputs (if undetected else) and
 set autodetected defaults on empty "viafb_active_dev".
 
+v2: fixed configurable way LCD order
+
 Signed-off-by: Dzianis Kahanovich <mahatma@eu.by>
 ---
 diff -pruN a/viafbdev.c c/viafbdev.c
 --- a/drivers/video/via/viafbdev.c	2010-12-07 18:35:22.000000000 +0200
-+++ c/drivers/video/via/viafbdev.c	2010-12-08 17:15:54.000000000 +0200
-@@ -1485,6 +1485,123 @@ static int parse_mode(const char *str, u
++++ c/drivers/video/via/viafbdev.c	2010-12-08 18:24:18.000000000 +0200
+@@ -1485,6 +1485,125 @@ static int parse_mode(const char *str, u
  	return 0;
  }
  
@@ -20,7 +22,7 @@ diff -pruN a/viafbdev.c c/viafbdev.c
 +{
 +	u8 *edid;
 +	struct fb_var_screeninfo var;
-+	int i, t, ndev = 0;
++	int i, t, ndev = 0, nlcd = 0;
 +	struct i2c_adapter *adapter;
 +	struct lvds_setting_information *inf;
 +
@@ -33,11 +35,13 @@ diff -pruN a/viafbdev.c c/viafbdev.c
 +	}
 +	if (viaparinfo->chip_info->lvds_chip_info.lvds_chip_name) {
 +		ndev++;
++		nlcd = 1;
 +		if (i)
 +			viafb_LCD_ON = STATE_ON;
 +	}
 +	if (viaparinfo->chip_info->lvds_chip_info2.lvds_chip_name) {
 +		ndev++;
++		nlcd = 2;
 +		if (i)
 +			viafb_LCD2_ON = STATE_ON;
 +	}
@@ -69,32 +73,32 @@ diff -pruN a/viafbdev.c c/viafbdev.c
 +		memset(&var, 0, sizeof(var));
 +		if (fb_parse_edid(edid, &var))
 +			goto free_edid;
-+		if (!viafb_active_dev)
-+			printk(KERN_INFO "viafb: %48s\n", adapter->name);
++		printk(KERN_INFO "viafb: %48s\n", adapter->name);
++		inf = NULL;
 +		if (!stage) {
-+			inf = NULL;
-+		} else if (!viafb_LCD_ON) {
++		} else if (!nlcd) {
 +			fb_edid_to_monspecs(edid, &viafbinfo->monspecs);
-+			inf = viaparinfo->lvds_setting_info;
-+			if (!viafb_active_dev &&
-+			    (viafbinfo->monspecs.input & FB_DISP_DDI))
-+				viafb_LCD_ON = STATE_ON;
-+		} else if (viafb_LCD2_ON) {
-+			/* ??? */
++			if (viafbinfo->monspecs.input & FB_DISP_DDI)
++				inf = viaparinfo->lvds_setting_info;
++		} else if (nlcd > 1) {
++			printk(KERN_ERR "viafb: too many LCD\n");
 +		} else if (viafb_dual_fb) {
 +			fb_edid_to_monspecs(edid, &viafbinfo1->monspecs);
-+			inf = viaparinfo1->lvds_setting_info;
-+			if (!viafb_active_dev &&
-+			    (viafbinfo1->monspecs.input & FB_DISP_DDI))
-+				viafb_LCD2_ON = STATE_ON;
++			if (viafbinfo1->monspecs.input & FB_DISP_DDI)
++				inf = viaparinfo1->lvds_setting_info;
 +		} else {
 +			fb_edid_to_monspecs(edid, &viafbinfo->monspecs);
-+			inf = viaparinfo->lvds_setting_info2;
-+			if (!viafb_active_dev &&
-+			    (viafbinfo->monspecs.input & FB_DISP_DDI))
-+				viafb_LCD2_ON = STATE_ON;
++			if (viafbinfo->monspecs.input & FB_DISP_DDI)
++				inf = viaparinfo->lvds_setting_info2;
 +		}
 +		if (inf) {
++			if (!viafb_active_dev) {
++				if (nlcd)
++					viafb_LCD2_ON = STATE_ON;
++				else
++					viafb_LCD_ON = STATE_ON;
++			}
++			nlcd++;
 +			if (var.xres)
 +				inf->lcd_panel_hres = var.xres;
 +			if (var.yres)
@@ -133,7 +137,7 @@ diff -pruN a/viafbdev.c c/viafbdev.c
  
  int __devinit via_fb_pci_probe(struct viafb_dev *vdev)
  {
-@@ -1526,6 +1643,10 @@ int __devinit via_fb_pci_probe(struct vi
+@@ -1526,6 +1645,10 @@ int __devinit via_fb_pci_probe(struct vi
  	parse_dvi_port();
  
  	viafb_init_chip_info(vdev->chip_type);
@@ -144,7 +148,7 @@ diff -pruN a/viafbdev.c c/viafbdev.c
  	/*
  	 * The framebuffer will have been successfully mapped by
  	 * the core (or we'd not be here), but we still need to
-@@ -1675,6 +1796,8 @@ int __devinit via_fb_pci_probe(struct vi
+@@ -1675,6 +1798,8 @@ int __devinit via_fb_pci_probe(struct vi
  	viafb_init_proc(&viaparinfo->shared->proc_entry);
  #endif
  	viafb_init_dac(IGA2);
