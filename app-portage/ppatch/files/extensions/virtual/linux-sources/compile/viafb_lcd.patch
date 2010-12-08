@@ -1,52 +1,86 @@
-diff -pruN a/drivers/video/via/via-core.c b/drivers/video/via/via-core.c
---- a/drivers/video/via/via-core.c	2010-12-03 13:44:48.000000000 +0200
-+++ b/drivers/video/via/via-core.c	2010-12-03 13:16:14.000000000 +0200
-@@ -2,6 +2,7 @@
-  * Copyright 1998-2009 VIA Technologies, Inc. All Rights Reserved.
-  * Copyright 2001-2008 S3 Graphics, Inc. All Rights Reserved.
-  * Copyright 2009 Jonathan Corbet <corbet@lwn.net>
-+ * Copyright 2010 Dzianis Kahanovich <mahatma@eu.by>
-  */
- 
- /*
-@@ -559,6 +560,69 @@ static void via_teardown_subdevs(void)
- 		}
+I2C/DDC defaults & I2C/DDC detection for VIA framebuffer.
+
+Adding defaults & legacy I2C/DDC support for VIA framebuffer.
+Detecting legacy I2C/DDC outputs (if undetected else) and
+set autodetected defaults on empty "viafb_active_dev".
+
+Signed-off-by: Dzianis Kahanovich <mahatma@eu.by>
+---
+diff -pruN a/viafbdev.c c/viafbdev.c
+--- a/drivers/video/via/viafbdev.c	2010-12-07 18:35:22.000000000 +0200
++++ c/drivers/video/via/viafbdev.c	2010-12-08 17:15:54.000000000 +0200
+@@ -1485,6 +1485,123 @@ static int parse_mode(const char *str, u
+ 	return 0;
  }
  
-+static void via_i2c_detect(int stage)
++/* stage=0: count devices to set dual and/or SAMM;
++   stage=1: add devices, detected only via i2c legacy;
++   set LCD/DVI/CRT if viafb_active_dev unset */
++static void viafb_detect_dev(int stage, struct viafb_dev *vdev)
 +{
 +	u8 *edid;
 +	struct fb_var_screeninfo var;
-+	int i, n = 0;
++	int i, t, ndev = 0;
 +	struct i2c_adapter *adapter;
 +	struct lvds_setting_information *inf;
 +
++	/* FIXME: viaparinfo1->chip_info looks equal to viaparinfo */
++	i = !viafb_active_dev && stage;
++	if (viaparinfo->chip_info->tmds_chip_info.tmds_chip_name) {
++		ndev++;
++		if (i)
++			viafb_DVI_ON = STATE_ON;
++	}
++	if (viaparinfo->chip_info->lvds_chip_info.lvds_chip_name) {
++		ndev++;
++		if (i)
++			viafb_LCD_ON = STATE_ON;
++	}
++	if (viaparinfo->chip_info->lvds_chip_info2.lvds_chip_name) {
++		ndev++;
++		if (i)
++			viafb_LCD2_ON = STATE_ON;
++	}
++	/* enabling CRT in textmode is at least no bad */
++	if (viafb_CRT_ON) {
++		ndev++;
++		viafb_crt_enable();
++	}
 +	for (i = 0; i < VIAFB_NUM_PORTS; i++) {
-+		adapter = viafb_find_i2c_adapter(i);
-+		if (!adapter || !adapter->algo_data ||
++		t = vdev->port_cfg[i].type;
++		/* detect only i2c ports, undetected in other places */
++		if ((viaparinfo && viaparinfo->chip_info && (
++		    (viaparinfo->chip_info->tmds_chip_info.tmds_chip_name &&
++		    viaparinfo->chip_info->tmds_chip_info.i2c_port == t) ||
++		    (viaparinfo->chip_info->lvds_chip_info.lvds_chip_name &&
++		    viaparinfo->chip_info->lvds_chip_info.i2c_port == t) ||
++		    (viaparinfo->chip_info->lvds_chip_info2.lvds_chip_name &&
++		    viaparinfo->chip_info->lvds_chip_info2.i2c_port == t)
++		    )) || (viaparinfo1 && viaparinfo1->chip_info && (
++		    (viaparinfo1->chip_info->tmds_chip_info.tmds_chip_name &&
++		    viaparinfo1->chip_info->tmds_chip_info.i2c_port == t) ||
++		    (viaparinfo1->chip_info->lvds_chip_info.lvds_chip_name &&
++		    viaparinfo1->chip_info->lvds_chip_info.i2c_port == t) ||
++		    (viaparinfo1->chip_info->lvds_chip_info2.lvds_chip_name &&
++		    viaparinfo1->chip_info->lvds_chip_info2.i2c_port == t)
++		    )) || !(adapter = viafb_find_i2c_adapter(i)) ||
 +		    !(edid = fb_ddc_read(adapter)))
 +			continue;
 +		memset(&var, 0, sizeof(var));
 +		if (fb_parse_edid(edid, &var))
 +			goto free_edid;
++		if (!viafb_active_dev)
++			printk(KERN_INFO "viafb: %48s\n", adapter->name);
 +		if (!stage) {
-+			if (n && !viafb_active_dev)
-+				viafb_dual_fb = STATE_ON;
 +			inf = NULL;
-+		} else if (!n || !viafb_LCD_ON) {
++		} else if (!viafb_LCD_ON) {
 +			fb_edid_to_monspecs(edid, &viafbinfo->monspecs);
 +			inf = viaparinfo->lvds_setting_info;
-+			if (!viafb_active_dev) {
-+				viafb_DVI_ON =
-+				    viaparinfo->tmds_setting_info->max_hres ?
-+				    STATE_ON : STATE_OFF;
-+				if (viafbinfo->monspecs.input & FB_DISP_DDI) {
-+					viafb_LCD_ON = STATE_ON;
-+					viafb_DeviceStatus = LCD_Device;
-+					if (!n)
-+						viafb_primary_dev = LCD_Device;
-+				}
-+			}
++			if (!viafb_active_dev &&
++			    (viafbinfo->monspecs.input & FB_DISP_DDI))
++				viafb_LCD_ON = STATE_ON;
++		} else if (viafb_LCD2_ON) {
++			/* ??? */
 +		} else if (viafb_dual_fb) {
 +			fb_edid_to_monspecs(edid, &viafbinfo1->monspecs);
 +			inf = viaparinfo1->lvds_setting_info;
@@ -62,54 +96,66 @@ diff -pruN a/drivers/video/via/via-core.c b/drivers/video/via/via-core.c
 +		}
 +		if (inf) {
 +			if (var.xres)
-+			    inf->lcd_panel_hres = var.xres;
++				inf->lcd_panel_hres = var.xres;
 +			if (var.yres)
-+			    inf->lcd_panel_vres = var.yres;
++				inf->lcd_panel_vres = var.yres;
 +		}
-+		n++;
++		ndev++;
 +free_edid:
 +		kfree(edid);
-+		if (n > 1)
-+			break;
 +	}
-+	if (stage && n && !viafb_active_dev)
-+		viafb_set_iga_path();
++	if (!viafb_active_dev) {
++		/* SAMM on Chrome9 LCD+CRT is wrong here
++		   then keep CRT OFF & dual detection together */
++#if 1		
++		if (ndev > 1 && viafb_CRT_ON) {
++			viafb_CRT_ON = STATE_OFF;
++			viafb_crt_disable();
++			ndev--;
++		}
++		/* SAMM may be detected on stage 1,
++		   but troubles coming together */
++		if (ndev > 1 && !stage)
++			viafb_SAMM_ON = viafb_dual_fb = STATE_ON;
++#endif
++		if (viafb_DVI_ON)
++			viafb_primary_dev = DVI_Device;
++		else if (viafb_LCD_ON)
++			viafb_primary_dev = LCD_Device;
++		else if (viafb_CRT_ON)
++			viafb_primary_dev = CRT_Device;
++		viafb_DeviceStatus = viafb_primary_dev;
++		if (stage)
++			viafb_set_iga_path();
++	}
 +}
 +
  
- static int __devinit via_pci_probe(struct pci_dev *pdev,
- 		const struct pci_device_id *ent)
-@@ -585,12 +649,16 @@ static int __devinit via_pci_probe(struc
- 	 */
- 	viafb_int_init();
- 	via_setup_subdevs(&global_dev);
-+	/* dual? */
-+	via_i2c_detect(0);
+ int __devinit via_fb_pci_probe(struct viafb_dev *vdev)
+ {
+@@ -1526,6 +1643,10 @@ int __devinit via_fb_pci_probe(struct vi
+ 	parse_dvi_port();
+ 
+ 	viafb_init_chip_info(vdev->chip_type);
++	/* detect dual_fb & SAMM_ON, but let's keep it to options */
++#if 0
++	viafb_detect_dev(0, vdev);
++#endif
  	/*
- 	 * Set up the framebuffer device
- 	 */
- 	ret = via_fb_pci_probe(&global_dev);
- 	if (ret)
- 		goto out_subdevs;
-+	/* LCD size & present */
-+	via_i2c_detect(1);
+ 	 * The framebuffer will have been successfully mapped by
+ 	 * the core (or we'd not be here), but we still need to
+@@ -1675,6 +1796,8 @@ int __devinit via_fb_pci_probe(struct vi
+ 	viafb_init_proc(&viaparinfo->shared->proc_entry);
+ #endif
+ 	viafb_init_dac(IGA2);
++	/* update from legacy i2c DDC info */
++	viafb_detect_dev(1, vdev);
  	return 0;
  
- out_subdevs:
-diff -pruN a/drivers/video/via/viafbdev.h b/drivers/video/via/viafbdev.h
---- a/drivers/video/via/viafbdev.h	2010-12-03 13:44:48.000000000 +0200
-+++ b/drivers/video/via/viafbdev.h	2010-12-03 13:13:50.000000000 +0200
-@@ -88,6 +88,7 @@ extern int viafb_LCD2_ON;
- extern int viafb_LCD_ON;
- extern int viafb_DVI_ON;
- extern int viafb_hotplug;
-+extern char *viafb_active_dev;
- 
- extern int strict_strtoul(const char *cp, unsigned int base,
- 	unsigned long *res);
-diff -pruN a/drivers/video/via/via_i2c.c b/drivers/video/via/via_i2c.c
---- a/drivers/video/via/via_i2c.c	2010-12-03 13:44:48.000000000 +0200
-+++ b/drivers/video/via/via_i2c.c	2010-12-03 13:10:26.000000000 +0200
+ out_fb_unreg:
+diff -pruN a/via_i2c.c c/via_i2c.c
+--- a/drivers/video/via/via_i2c.c	2010-12-08 15:12:05.000000000 +0200
++++ c/drivers/video/via/via_i2c.c	2010-11-29 18:04:24.000000000 +0200
 @@ -167,7 +167,7 @@ struct i2c_adapter *viafb_find_i2c_adapt
  {
  	struct via_i2c_stuff *stuff = &via_i2c_par[which];
