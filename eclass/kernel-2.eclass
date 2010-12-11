@@ -99,7 +99,7 @@ kernel-2_src_configure() {
 		filter-flags "-msse*" -mmmx -m3dnow
 		cflags="$(flags_nosp "${CFLAGS} ${cflags}")"
 		aflags="$(flags_nosp "$(extract_aflags) ${aflags}")"
-		ldflags="$(flags_nosp "$(extract_flags -Wl, "${LDFLAGS}") ${ldflags}")"
+		ldflags="$(flags_nosp "$(extract_flags -Wl, ${LDFLAGS}) ${ldflags}")"
 	fi
 	[[ -n "${cflags}" ]] && sed -i -e "s/^\(KBUILD_CFLAGS.*-O.\)/\1 ${cflags}/g" Makefile
 	[[ -n "${aflags}" ]] && sed -i -e "s/^\(AFLAGS_[A-Z]*[	 ]*=\)$/\1 ${aflags}/" Makefile
