@@ -75,7 +75,7 @@ refresh(){
 	cat `grep -ls "^DRIVER=" $(find $SYS_FIND -name uevent -print 2>/dev/null) </dev/null` </dev/null |grep "^DRIVER=\|^MODALIAS="|sed -e 's%-%_%g' -e 's%^.*=\(.*\)$%>\1<%g' >>"${PNP_TMP}".1
 	if [[ "$(cat ${PNP_TMP}.1 $checks)" == "$(cat ${PNP_TMP}.2)" ]] ; then
 		cat "${PNP_TMP}".3 "${PNP_TMP}".4 >"${PNP_TMP}".0
-		if ps ax|grep -q "[ 	]/sbin/mdev"; then
+		if grep -q "[/]sbin/mdev" /proc/*/cmdline; then
 			REFRESH_SAME=''
 			[[ "$1" == "n" ]] && REFRESH_SAME=1
 			return 0
