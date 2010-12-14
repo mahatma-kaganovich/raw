@@ -497,7 +497,7 @@ detect_fs(){
 		;;
 		swap) ;;
 		0susp:*)
-			[[ "$cmd_resume:`cat /sys/power/resume`" == ":0:0" ]] || continue
+			[[ "$cmd_resume:`cat /sys/power/resume`" == "true:0:0" ]] || continue
 			i="${i#0susp:}"
 			for i in "/sys/class/block/$i/" `grep -ls "^DEVNAME=$i$" /sys/class/block/*/uevent`; do
 				cat "${i%uevent}dev" >/sys/power/resume
