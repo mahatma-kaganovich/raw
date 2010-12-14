@@ -452,6 +452,20 @@ fstype(){
 	blkid "${@}" 2>/dev/null || blkid -t "${@}" 2>/dev/null || echo "${@}"
 }
 
+resume(){
+	local i
+	[[ -n "$*" ]] && for i in "${@}"; do
+		[[ "$i" == true ]] && {
+			cat $(grep -l "[1-9]" /sys/class/block/*/size|grep -v /loop|sed -e 's:size$:dev:') >/sys/power/resume
+			continue
+		}
+		i="${i#/dev/}"
+		for i in "/sys/class/block/$i/" `grep -ls "^DEVNAME=$i$" /sys/class/block/*/uevent`; do
+			cat "${i%uevent}dev" >/sys/power/resume
+		done
+	done 2>/dev/null </dev/null
+}
+
 detect_fs(){
 	local i m="" md="$USE_MDADM" dm="$USE_DMRAID_NORMAL" t="" nfs="$cmd_nfsroot" lvm="$USE_LVM_NORMAL" evms="$USE_EVMS_NORMAL"
 	if $waitscan; then
@@ -465,8 +479,7 @@ detect_fs(){
 		rmmod scsi_wait_scan 2>/dev/null
 		/sbin/mdev -s block
 	fi
-	# try resume before mounts
-	[[ "$cmd_resume" == true ]] && cat /sys/class/block/*/dev >/sys/power/resume </dev/null
+	resume "$cmd_resume"
 	# dmraid/lvm/evms unsure
 	for i in $( {
 			if [[ "${cmd_detect_root:-true}" == true ]]; then
@@ -475,7 +488,7 @@ detect_fs(){
 				fstype $cmd_detect_root
 			fi
 			[[ -n "$REAL_ROOT" ]] && [[ "$REAL_ROOT" != "$cmd_detect_root" ]] && fstype $REAL_ROOT
-	    } 2>/dev/null | sed -e 's%^/dev/\([^ ]*\):.* TYPE="swsuspend".*$%0susp:\1%' -e 's:^.* TYPE="\([^"]*\)".*$:\1:g'| sort -u ); do
+	    } 2>/dev/null | sed -e 's%^\(/dev/[^ ]*\):.* TYPE="swsuspend".*$%0susp:\1%' -e 's:^.* TYPE="\([^"]*\)".*$:\1:g'| sort -u ); do
 		case $i in
 		linux_raid_member|mdraid|/dev/md*) md=1 ;; # use right blkid
 		/dev/mapper*|/dev/dm*) dm=1 ;;
@@ -498,13 +511,7 @@ detect_fs(){
 			[[ "$REAL_ROOT" == "$i" ]] && REAL_ROOT=/dev/nfs # compat
 		;;
 		swap) ;;
-		0susp:*)
-			[[ "$cmd_resume:`cat /sys/power/resume`" == "true:0:0" ]] || continue
-			i="${i#0susp:}"
-			for i in "/sys/class/block/$i/" `grep -ls "^DEVNAME=$i$" /sys/class/block/*/uevent`; do
-				cat "${i%uevent}dev" >/sys/power/resume
-			done
-		;;
+		0susp:*)[[ -z "$cmd_resume" ]] && resume "${i#0susp:}";;
 		*) m="$m $(wild "/$i/") $i" ;;
 		esac
 	done
@@ -594,6 +601,7 @@ detect_fs(){
 			dmraid -ay$t ${DMRAID_OPTS} && USE_DMRAID_NORMAL_=""
 		fi
 	fi
+	resume "$cmd_resume"
 	detect_root
 	return 0
 }
