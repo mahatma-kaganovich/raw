@@ -67,7 +67,7 @@ _fs(){
 			i="/md/dm-.*"
 		;;
 		# fixme:suspend2dm
-		0susp:*)[[ "${_cmd_resume}:`cat /sys/power/resume`" == "_:0:0" ]] && cat "/sys/class/block/${i#0susp:}/dev" >/sys/power/resume;;
+		0susp:*)[[ "${_cmd_resume}" == _ ]] && cat "/sys/class/block/${i#0susp:}/dev" >/sys/power/resume;;
 		*)grep -q "	$i$" /proc/filesystems && continue;;
 		esac
 		mods "$i"
@@ -223,10 +223,36 @@ fstab(){
 	return $?
 }
 
+cpufreq(){
+	local i c g f j min max mid
+	if grep -sq 1 /sys/class/power_supply/*/present && grep -sq 0 /sys/class/power_supply/*/online; then
+		f=min
+	else
+		f=max
+	fi
+	for c in /sys/devices/system/cpu/cpu*/cpufreq; do
+		g="$c/scaling_available_governors"
+		[[ -e "$g" ]] || continue
+		i=
+#		i=userspace
+#		[[ $f == max ]] && i="perfomance $i" || i="powersave $i"
+		if grep -q ondemand $g; then
+			[[ $f == max ]] && i="ondemand $i" || i="conservative $i"
+		elif [[ $f == max ]] && grep -q conservative $g; then # amd?
+			 i="conservative $i"
+		fi
+		for i in $i; do
+			grep -q $i $g && echo $i >$c/scaling_governor && break
+		done
+#		cat $c/scaling_${f}_freq >$c/scaling_setspeed
+	done 2>/dev/null
+}
+
 _mdev(){
 local i j t=c new=false
 case "$1" in
 block)t=b;;
+power_supply)cpufreq;;
 esac
 case "$ACTION" in
 add)
