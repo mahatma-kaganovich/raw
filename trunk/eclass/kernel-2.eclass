@@ -27,6 +27,7 @@ DEPEND="${DEPEND}
 : ${KERNEL_UTILS_CFLAGS:="${CFLAGS}"}
 
 eval "`/usr/bin/perl ${UROOT}/usr/share/genpnprd/Kconfig.pl -config`"
+KERNEL_CONFIG+="+TR" #fixed
 
 PROVIDE="sources? ( virtual/linux-sources )
 	!sources? ( virtual/linux-kernel )
@@ -605,6 +606,8 @@ CFLAGS_${i##*/}.o += \$(call cc-ifversion, -ge, 0405, -fno-inline-functions)
 endif
 " >>${i%/*}/Makefile
 	done
+	# ;)
+	sed -i -e 's:^#if 0$:#if 1:' drivers/net/tokenring/tms380tr.c
 	# pnp
 	use pnp || return
 	einfo "Fixing modules hardware info exports (forced mode, waiting for bugs!)"
