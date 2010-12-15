@@ -27,7 +27,8 @@ DEPEND="${DEPEND}
 : ${KERNEL_UTILS_CFLAGS:="${CFLAGS}"}
 
 eval "`/usr/bin/perl ${UROOT}/usr/share/genpnprd/Kconfig.pl -config`"
-KERNEL_CONFIG+="+TR" #fixed
+
+KERNEL_CONFIG+=" +TR"
 
 PROVIDE="sources? ( virtual/linux-sources )
 	!sources? ( virtual/linux-kernel )
