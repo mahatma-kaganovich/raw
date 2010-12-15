@@ -626,7 +626,7 @@ _umount(){
 	[[ ${ETYPE} == sources ]] &&  use build-kernel && use pnp && use compressed || return
 	override_postinst
 	local i x y z
-	for i in `portageq contents "${ROOT:-/}" "${CATEGORY}/${P}"|grep "^${ROOT%/}/usr/src/linux-[^/]*$"`; do
+	for i in `portageq contents "${ROOT:-/}" "${CATEGORY}/${PF}"|grep "^${ROOT%/}/usr/src/linux-[^/]*$"`; do
 		[[ -d "${i}" ]] || continue
 		while read x y z; do
 			[[ "${y}" == "${i}" ]] || continue
