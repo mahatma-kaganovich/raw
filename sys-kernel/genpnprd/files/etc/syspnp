@@ -581,9 +581,9 @@ detect_fs(){
 		fi
 		if [[ -n "$md" ]]; then
 			msg_
-			# busybox | mdadm | all raid modules
+			# busybox | mdadm | all raid modules; raidautorun - wrong
 			( $cmd_noraid || mdadm --assemble || mdadm --assemble --scan ||
-				( mod $(wild "/md/") ; ( mdadm --assemble || mdadm --assemble --scan ) ) ) && USE_MDADM_=""
+				( mod $(wild "/md/") ; ( mdadm --assemble || mdadm --assemble --scan || raidautorun $i ) ) ) && USE_MDADM_=""
 		fi
 	fi
 	if [[ -e /sbin/dmraid ]] || [[ -e /usr/sbin/dmraid ]]; then
