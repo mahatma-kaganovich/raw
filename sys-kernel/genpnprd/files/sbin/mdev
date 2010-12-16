@@ -67,7 +67,8 @@ _fs(){
 			i="/md/dm-.*"
 		;;
 		# fixme:suspend2dm
-		0susp:*)[[ "${_cmd_resume}" == _ ]] && cat "/sys/class/block/${i#0susp:}/dev" >/sys/power/resume;;
+		0susp:*)[[ "${_cmd_resume}" == _ ]] && cat "/sys/class/block/${i#0susp:}/dev" >/sys/power/resume && echo "0:0" >/sys/power/resume
+		;;
 		*)grep -q "	$i$" /proc/filesystems && continue;;
 		esac
 		mods "$i"

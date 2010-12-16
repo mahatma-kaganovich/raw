@@ -464,6 +464,7 @@ resume(){
 			cat "${i%uevent}dev" >/sys/power/resume
 		done
 	done 2>/dev/null </dev/null
+	echo "0:0" >/sys/power/resume 2>/dev/null
 }
 
 detect_fs(){
