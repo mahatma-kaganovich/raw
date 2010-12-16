@@ -201,7 +201,10 @@ _fstab(){
 				[[ -n "$a" ]] && echo " $x"
 			done >>/etc/mdadm.conf
 			modprobe $Q -a `grep " level=" /etc/mdadm.conf | sed -e 's:^.* level=\([^ ]*\) .*$:\1:g' | sort -u`
-			mdadm --assemble --scan
+			mdadm --assemble --scan || {
+				modprobe $Q -a $(mods "md/*")
+				raidautorun $d
+			}
 			blk2=true
 		;;
 		/dev/mapper*)	[[ -e /dev/mapper/control ]] || {
@@ -234,17 +237,16 @@ cpufreq(){
 		g="$c/scaling_available_governors"
 		[[ -e "$g" ]] || continue
 		i=
-#		i=userspace
-#		[[ $f == max ]] && i="perfomance $i" || i="powersave $i"
-		if grep -q ondemand $g; then
-			[[ $f == max ]] && i="ondemand $i" || i="conservative $i"
-		elif [[ $f == max ]] && grep -q conservative $g; then # amd?
-			 i="conservative $i"
-		fi
-		for i in $i; do
-			grep -q $i $g && echo $i >$c/scaling_governor && break
-		done
-#		cat $c/scaling_${f}_freq >$c/scaling_setspeed
+		case "$f:`cat $g`$cmd_cpufreq" in
+		max*ondemand*)i=ondemand;;
+		min*ondemand*|max*conservative*)i=conservative;;
+		min*powersave*)i=powersave;;
+		max*perfomance*)i=perfomance;;
+		esac
+		echo "$i" >$c/scaling_governor || [[ "${_cmd_cpufreq}" != _ ]] && {
+			cat $c/cpuinfo_${f}_freq >$c/scaling_setspeed ||
+			cat $c/cpuinfo_${f}_freq >$c/scaling_max_freq
+		}
 	done 2>/dev/null
 }
 
@@ -485,7 +487,7 @@ cmd(){
 }
 
 case $0 in
-*mdev)mdev "${@}";;
+*mdev)cmd_root='';mdev "${@}";;
 *hotplug)cmd;mdev -b "${@}";;
 *secureinit)cmd(){ return;};mdev -init;;
 *rc|*init)mdev -init "${@:-/bin/sh}";;
