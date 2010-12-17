@@ -781,9 +781,10 @@ syspnp(){
 		else
 			$cmd_fast || fast_modalias
 		fi
-		etc_modalias && ln -s /proc /etc/modalias 2>/dev/null
+		etc_modalias
 		$cmd_unload && refresh
 		load_misc
+		etc_modalias && ln -s /proc /etc/modalias 2>/dev/null
 		refresh n || break
 	done
 
