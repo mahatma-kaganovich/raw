@@ -592,7 +592,7 @@ detect_fs(){
 		$mddef || rm /etc/mdadm.conf
 	fi
 	if [[ -n "$dm" ]]; then
-		mod $(dmraid -r --sep " " -c,f,r,t $t 2>/dev/null)
+		mod $(dmraid -r --sep " " -cf,r,t $t 2>/dev/null)
 		if ! $cmd_noraid; then
 			msg_ "Activating Device-Mapper RAID(s)"
 			dmraid -ay ${DMRAID_OPTS} || {

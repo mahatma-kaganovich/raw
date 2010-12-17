@@ -209,7 +209,7 @@ _fstab(){
 			blk2=true
 		;;
 		/dev/dm*)
-			modprobe $Q -a $(dmraid -r --sep " " -c,f,r,t 2>/dev/null)
+			modprobe $Q -a $(dmraid -r --sep " " -cf,r,t 2>/dev/null)
 			dmraid -ay || {
 				modprobe $Q -a $(mods "md")
 				dmraid -ay || {
