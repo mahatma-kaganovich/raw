@@ -586,7 +586,7 @@ detect_fs(){
 			msg_
 			# busybox | mdadm | all raid modules; raidautorun - wrong
 			mdadm --assemble || mdadm --assemble --scan ||
-			    ( mod $(wild "/md/") ; ( mdadm --assemble || mdadm --assemble --scan || raidautorun $i ) ) &&
+			    ( mod $(wild "/md/") ; ( mdadm --assemble || mdadm --assemble --scan || raidautorun $REAL_ROOT ) ) &&
 			    USE_MDADM_=""
 		fi
 		$mddef || rm /etc/mdadm.conf
