@@ -487,7 +487,7 @@ detect_fs(){
 	# dmraid/lvm/evms unsure
 	for i in $( {
 			fstype $t
-			[[ -n "$REAL_ROOT" ]] && [[ "$REAL_ROOT" != "$t" ]] && fstype $REAL_ROOT
+			[[ -n "$REAL_ROOT" ]] && [[ -n "$t" ]] && [[ "$REAL_ROOT" != "$t" ]] && fstype $REAL_ROOT
 	    } 2>/dev/null | sed -e 's%^\(/dev/[^ ]*\):.* TYPE="swsuspend".*$%0susp:\1%' -e 's:^.* TYPE="\([^"]*\)".*$:\1:g'| sort -u ); do
 		case $i in
 		linux_raid_member|mdraid|/dev/md*) md=1 ;; # use right blkid
@@ -563,12 +563,14 @@ detect_fs(){
 			mod `( grep " level=" /etc/mdadm.conf || ( mdadm --examine --scan -v|grep " level=" ) ) | sed -e 's:^.* level=\([^ ]*\) .*$:\1:g' | sort -u`
 		else
 			mddef=false
-			if [[ "$cmd_detect_root" == true ]]; then
-				mdadm --examine --scan -v >/etc/mdadm.conf
-			else # do not assemble other raids
+			[[ -n "$t" ]] && echo "DEVICE $t" >/etc/mdadm.conf
+			mdadm --examine --scan -v >/etc/mdadm.conf.all
+			mod `grep " level=" /etc/mdadm.conf.all | sed -e 's:^.* level=\([^ ]*\) .*$:\1:g' | sort -u`
+			cp /etc/mdadm.conf.all /etc/mdadm.conf
+			if [[ "$cmd_detect_root" != true ]] && [[ -n "$USE_MDADM" ]]; then
+				# do not assemble other raids
 				local a=""
-				[[ -z "$USE_MDADM" ]] && [[ -n "$t" ]] && echo "DEVICE $t" >/etc/mdadm.conf
-				mdadm --examine --scan -v|while read i; do
+				while read i; do
 					if [[ "${i#ARRAY $REAL_ROOT }" != "$i" ]] || [[ "${i#ARRAY $cmd_detect_root }" != "$i" ]]; then
 						a=1
 					elif [[ "${i#ARRAY }" != "$i" ]]; then
@@ -577,27 +579,27 @@ detect_fs(){
 						i=" $i"
 					fi
 					[[ -n "$a" ]] && echo "$i"
-				done >>/etc/mdadm.conf
+				done </etc/mdadm.conf.all >/etc/mdadm.conf
 			fi
-			mod `grep " level=" /etc/mdadm.conf | sed -e 's:^.* level=\([^ ]*\) .*$:\1:g' | sort -u`
 		fi
-		if [[ -n "$md" ]] || grep -q ARRAY /etc/mdadm.conf; then
+		if ! $cmd_noraid && ( [[ -n "$md" ]] || grep -q ARRAY /etc/mdadm.conf ); then
 			msg_
 			# busybox | mdadm | all raid modules; raidautorun - wrong
-			( $cmd_noraid || mdadm --assemble || mdadm --assemble --scan ||
-			    ( mod $(wild "/md/") ; ( mdadm --assemble || mdadm --assemble --scan || raidautorun $i ) ) ) && USE_MDADM_=""
-			$mddef || rm /etc/mdadm.conf
+			mdadm --assemble || mdadm --assemble --scan ||
+			    ( mod $(wild "/md/") ; ( mdadm --assemble || mdadm --assemble --scan || raidautorun $i ) ) &&
+			    USE_MDADM_=""
 		fi
+		$mddef || rm /etc/mdadm.conf
 	fi
-	if [[ -e /sbin/dmraid ]] || [[ -e /usr/sbin/dmraid ]]; then
-		if $cmd_noraid; then
-			msg_ "Testing Device-Mapper RAID(s)"
-			# parse?
-			dmraid -r ${DMRAID_OPTS} $t >/dev/null 2>&1 && mod $(wild "/md/\|raid")
-		else
-			mod $(wild "/md/\|raid")
+	if [[ -n "$dm" ]]; then
+		mod $(dmraid -r --sep " " -c,f,r,t $t 2>/dev/null)
+		if ! $cmd_noraid; then
 			msg_ "Activating Device-Mapper RAID(s)"
-			dmraid -ay ${DMRAID_OPTS} && USE_DMRAID_NORMAL_=""
+			dmraid -ay ${DMRAID_OPTS} || {
+				mod $(wild "/md/\|raid")
+				msg_
+				dmraid -ay ${DMRAID_OPTS}
+			} && USE_DMRAID_NORMAL_=""
 		fi
 	fi
 	resume "$cmd_resume"
