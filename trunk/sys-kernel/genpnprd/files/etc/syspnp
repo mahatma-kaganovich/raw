@@ -468,7 +468,7 @@ resume(){
 }
 
 detect_fs(){
-	local i m="" md="$USE_MDADM" dm="$USE_DMRAID_NORMAL" t="" nfs="$cmd_nfsroot" lvm="$USE_LVM_NORMAL" evms="$USE_EVMS_NORMAL"
+	local i m="" md="$USE_MDADM" dm="$USE_DMRAID_NORMAL" t="" nfs="$cmd_nfsroot" lvm="$USE_LVM_NORMAL" evms="$USE_EVMS_NORMAL" mddef=true
 	if $waitscan; then
 		[[ -e /etc/modules/waitscan ]] || mod scsi_wait_scan
 		empty_hwopts waitscan
@@ -563,6 +563,7 @@ detect_fs(){
 		if [[ -e '/etc/mdadm.conf' ]]; then
 			mod `( grep " level=" /etc/mdadm.conf || ( mdadm --examine --scan -v|grep " level=" ) ) | sed -e 's:^.* level=\([^ ]*\) .*$:\1:g' | sort -u`
 		else
+			mddef=false
 			if [[ "$cmd_detect_root" == true ]]; then
 				mdadm --examine --scan -v >/etc/mdadm.conf
 			else # do not assemble other raids
@@ -579,15 +580,16 @@ detect_fs(){
 						i=" $i"
 					fi
 					[[ -n "$a" ]] && echo "$i"
-				done >/etc/mdadm.conf
+				done >>/etc/mdadm.conf
 			fi
 			mod `grep " level=" /etc/mdadm.conf | sed -e 's:^.* level=\([^ ]*\) .*$:\1:g' | sort -u`
 		fi
-		if [[ -n "$md" ]]; then
+		if [[ -n "$md" ]] || grep -q ARRAY /etc/mdadm.conf; then
 			msg_
 			# busybox | mdadm | all raid modules; raidautorun - wrong
 			( $cmd_noraid || mdadm --assemble || mdadm --assemble --scan ||
-				( mod $(wild "/md/") ; ( mdadm --assemble || mdadm --assemble --scan || raidautorun $i ) ) ) && USE_MDADM_=""
+			    ( mod $(wild "/md/") ; ( mdadm --assemble || mdadm --assemble --scan || raidautorun $i ) ) ) && USE_MDADM_=""
+			$mddef || rm /etc/mdadm.conf
 		fi
 	fi
 	if [[ -e /sbin/dmraid ]] || [[ -e /usr/sbin/dmraid ]]; then
