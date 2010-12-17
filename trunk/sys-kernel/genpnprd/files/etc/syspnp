@@ -468,7 +468,8 @@ resume(){
 }
 
 detect_fs(){
-	local i m="" md="$USE_MDADM" dm="$USE_DMRAID_NORMAL" t="" nfs="$cmd_nfsroot" lvm="$USE_LVM_NORMAL" evms="$USE_EVMS_NORMAL" mddef=true
+	local i m="" md="$USE_MDADM" dm="$USE_DMRAID_NORMAL" t="${cmd_detect_root:-false}" nfs="$cmd_nfsroot" lvm="$USE_LVM_NORMAL" evms="$USE_EVMS_NORMAL" mddef=true
+	[[ "$t" == true ]] && t=
 	if $waitscan; then
 		[[ -e /etc/modules/waitscan ]] || mod scsi_wait_scan
 		empty_hwopts waitscan
@@ -483,11 +484,7 @@ detect_fs(){
 	resume "$cmd_resume"
 	# dmraid/lvm/evms unsure
 	for i in $( {
-			if [[ "${cmd_detect_root:-true}" == true ]]; then
-				fstype
-			else
-				fstype $cmd_detect_root
-			fi
+			[[ "$t" == false ]] || fstype $t
 			[[ -n "$REAL_ROOT" ]] && [[ "$REAL_ROOT" != "$cmd_detect_root" ]] && fstype $REAL_ROOT
 	    } 2>/dev/null | sed -e 's%^\(/dev/[^ ]*\):.* TYPE="swsuspend".*$%0susp:\1%' -e 's:^.* TYPE="\([^"]*\)".*$:\1:g'| sort -u ); do
 		case $i in
@@ -564,13 +561,13 @@ detect_fs(){
 			mod `( grep " level=" /etc/mdadm.conf || ( mdadm --examine --scan -v|grep " level=" ) ) | sed -e 's:^.* level=\([^ ]*\) .*$:\1:g' | sort -u`
 		else
 			mddef=false
-			if [[ "$cmd_detect_root" == true ]]; then
+			if [[ -z "$t" ]]; then
 				mdadm --examine --scan -v >/etc/mdadm.conf
 			else # do not assemble other raids
 				local a=""
-				[[ "$cmd_detect_root" == false ]] ||
+				[[ "$t" == false ]] ||
 				 [[ -n ""$USE_MDADM"" ]] ||
-				 echo "DEVICE $cmd_detect_root" >/etc/mdadm.conf
+				 echo "DEVICE $t" >/etc/mdadm.conf
 				mdadm --examine --scan -v|while read i; do
 					if [[ "${i#ARRAY $REAL_ROOT }" != "$i" ]] || [[ "${i#ARRAY $cmd_detect_root }" != "$i" ]]; then
 						a=1
@@ -594,17 +591,15 @@ detect_fs(){
 	fi
 	if [[ -e /sbin/dmraid ]] || [[ -e /usr/sbin/dmraid ]]; then
 		if $cmd_noraid; then
-			t=t
-			msg_ "Testing Device-Mapper RAID(s)"
-		else
-			msg_ "Activating Device-Mapper RAID(s)"
-		fi
-		if dmraid -ay$t ${DMRAID_OPTS} >/dev/null ; then
-			USE_DMRAID_NORMAL_=""
+			[[ "$t" == false ]] || {
+				msg_ "Testing Device-Mapper RAID(s)"
+				# parse?
+				dmraid -r ${DMRAID_OPTS} $t >/dev/null 2>&1 && mod $(wild "/md/\|raid")
+			}
 		else
 			mod $(wild "/md/\|raid")
-			msg_
-			dmraid -ay$t ${DMRAID_OPTS} && USE_DMRAID_NORMAL_=""
+			msg_ "Activating Device-Mapper RAID(s)"
+			dmraid -ay ${DMRAID_OPTS} && USE_DMRAID_NORMAL_=""
 		fi
 	fi
 	resume "$cmd_resume"
