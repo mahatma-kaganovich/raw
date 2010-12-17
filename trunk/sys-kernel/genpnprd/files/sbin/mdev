@@ -203,8 +203,19 @@ _fstab(){
 			done >>/etc/mdadm.conf
 			modprobe $Q -a `grep " level=" /etc/mdadm.conf | sed -e 's:^.* level=\([^ ]*\) .*$:\1:g' | sort -u`
 			mdadm --assemble --scan || {
-				modprobe $Q -a $(mods "md/*")
+				modprobe $Q -a $(mods "md")
 				raidautorun $d
+			}
+			blk2=true
+		;;
+		/dev/dm*)
+			modprobe $Q -a $(dmraid -r --sep " " -c,f,r,t 2>/dev/null)
+			dmraid -ay || {
+				modprobe $Q -a $(mods "md")
+				dmraid -ay || {
+					modprobe $Q -a $(mods "*raid*")
+					dmraid -ay
+				}
 			}
 			blk2=true
 		;;
@@ -286,10 +297,7 @@ esac
 mkdir -p "${i%/*}"
 ! [[ -e "$i" ]] && mknod -m ${DEVMODE:-0600} "$i" $t "$MAJOR" "$MINOR" && new=true
 case "$i" in
-/dev/mapper/control)
-	vgchange -ay --ignorelockingfailure 2>>$O
-	dmraid -ay
-;;
+/dev/mapper/control)vgchange -ay --ignorelockingfailure 2>>$O;;
 /dev/loop*)new=false;; # vs "fixed" umount
 esac
 [[ -b "$i" ]] && ( $DETECTBLK || [[ -d /etc/modalias ]] ) && [[ "`cat "/sys$DEVPATH/size" 2>/dev/null`" != 0 ]] && {
