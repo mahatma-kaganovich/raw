@@ -14,7 +14,8 @@ modverbose(){
 }
 
 modprobe(){
-local i m m1 rr=0 r=1 INSMOD= a=false V= c=/temp/cache/modprobe/
+local i m m1 rr=0 r=1 INSMOD= a=false V= c=/cache.modprobe/
+[[ -w $c ]] || c=/sys/module/
 while true; do
 case "$1" in
 --)shift;break;;
@@ -37,14 +38,16 @@ shift
 [[ "$a${_cmd_fastboot}" == true_ ]] && {
 	r=0
 	for m in $m; do
-	[[ -e "$c$m.m" ]] || {
+	[[ -e "$c$m" ]] || {
 		modalias "$m" && for i in $ALIAS ; do
+			[[ -e "$c$i" ]] && continue
 			modparam $i
 			$INSMOD
 			insmod $i $PARAM || { r=1;continue;}
+			mkdir -p "$c$i" 2>/dev/null
 			$V
 		done
-		[[ $r == 0 ]] && touch "$c$m.m" 2>/dev/null
+		[[ $r == 0 ]] && touch "$c$m" 2>/dev/null
 	} &
 	p="$p $!"
 	{ read i m i && read i m1 i;} </proc/meminfo && {
@@ -58,16 +61,18 @@ shift
 	return $?
 }
 for m in $m; do
-	[[ -e "$c$m.m" ]] && continue
+	[[ -e "$c$m" ]] && continue
 	r=0
 	modalias "$m" && for i in $ALIAS ; do
+		[[ -e "$c$i" ]] && continue
 		modparam $i
 		$INSMOD
 		insmod $i $PARAM "${@}" || { r=1;continue;}
+		mkdir -p "$c$i" 2>/dev/null
 		$V
 	done || rr=1
 	if [[ $r == 0 ]]; then
-		touch "$c$m.m" 2>/dev/null
+		touch "$c$m" 2>/dev/null
 	else
 		rr=1
 	fi

@@ -349,7 +349,7 @@ case "$1" in
 ;;
 -w)	modprobe $Q scsi_wait_scan
 	rmmod scsi_wait_scan
-	rm /temp/cache/modprobe/scsi_wait_scan.m -f
+	rm /cache.modprobe/scsi_wait_scan -f
 ;;
 -s|-S)
 	local ACTION
@@ -383,7 +383,7 @@ case "$1" in
 	fstab / "*"
 	mdev -s block
 	SHLOADED=""
-	mkdir -p /temp/cache/modprobe
+	mkdir -p /cache.modprobe
 	mdev -M
 	plug load0
 	i="-"
@@ -437,7 +437,7 @@ case "$1" in
 	sleep 1
 	done
 	shift
-	rm -Rf /temp/cache/modprobe
+	rm -Rf /cache.modprobe
 	cd
 	exec "${@}"
 ;;
