@@ -518,7 +518,7 @@ detect_fs(){
 	[[ -n "$dm" ]] && m="$m dm-mod"
 	# FIXME: IMHO it will be loaded after dmraid failure
 #	[[ -n "$dm" ]] && m=$m $(wild "/md/dm-\|raid_class")"
-	mod $m
+	mod $(for i in $m;do echo "$i";done|sort -u)
 	if [[ -n "$evms" ]]; then
 		msg_ "Activating EVMS"
 		if evms_activate ; then
