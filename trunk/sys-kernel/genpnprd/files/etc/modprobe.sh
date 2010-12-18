@@ -14,19 +14,25 @@ modverbose(){
 }
 
 modprobe(){
-local rr=0 r=1 INSMOD= a=false V= c=/temp/cache/modprobe/
+local i m m1 rr=0 r=1 INSMOD= a=false V= c=/temp/cache/modprobe/
 while true; do
 case "$1" in
 --)shift;break;;
--*a*)a=true;;
--*v*)V=modverbose;;
--*);;
+-*)	i="$1"
+	while [[ -n "$i" ]]; do
+		i="${i#?}"
+		case "$i" in
+		a*)a=true;;
+		v*)V=modverbose;;
+		esac
+	done
+;;
 *)break;;
 esac
 shift
 done
 $a && set "$*"
-local m="$(echo -ne "$1" | sed -e s/[*?/-]/_/g)" i m1
+m="$(echo -ne "$1" | sed -e s/[*?/-]/_/g)"
 shift
 [[ "$a${_cmd_fastboot}" == true_ ]] && {
 	r=0
