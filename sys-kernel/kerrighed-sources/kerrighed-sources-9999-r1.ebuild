@@ -14,7 +14,7 @@ HOMEPAGE="http://www.kerrighed.org/"
 DESCRIPTION="Kerrighed SSI cluster kernel"
 KEYWORDS="-* ~amd64 ~x86"
 #PDEPEND="=sys-cluster/kerrighed-${PVR}"
-IUSE="+build-kernel +pnp"
+IUSE="+build-kernel +pnp -multilib"
 
 KERNEL_CONFIG="${KERNEL_CONFIG}
 	===kerrighed: PREEMPT_NONE -KEYS -NUMA -IA32_EMULATION

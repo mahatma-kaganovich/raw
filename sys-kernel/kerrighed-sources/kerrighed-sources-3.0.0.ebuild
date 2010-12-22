@@ -17,7 +17,7 @@ KEYWORDS="-* ~amd64"
 
 # for build-kernel feature only
 # default: building default kernel, including all modules compressed in initrd
-IUSE="+build-kernel +pnp"
+IUSE="+build-kernel +pnp -multilib"
 
 KERNEL_CONFIG="${KERNEL_CONFIG} PREEMPT_NONE -KEYS -NUMA -IA32_EMULATION"
 
