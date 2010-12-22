@@ -12,7 +12,7 @@ if [[ ${ETYPE} == sources ]]; then
 IUSE="${IUSE} build-kernel debug custom-cflags pnp compressed integrated ipv6
 	netboot nls unicode +acl minimal selinux custom-arch
 	+kernel-drm +kernel-alsa kernel-firmware +sources fbcon staging pnponly lzma
-	external-firmware xen +smp 32-64 tools"
+	external-firmware xen +smp tools multilib multitarget"
 DEPEND="${DEPEND}
 	!<app-portage/ppatch-0.08-r16
 	pnp? ( sys-kernel/genpnprd )
@@ -339,6 +339,7 @@ setconfig(){
 	else
 		cfg -FB_UVESA
 	fi
+	use multilib || use multitarget || cfg -IA32_EMULATION
 }
 
 # Kernel-config CPU from CFLAGS and|or /proc/cpuinfo (native)
@@ -359,7 +360,7 @@ case "${march}" in
 native)
 	CF1 -SCHED_SMT -SCHED_MC -X86_UP_APIC -X86_TSC -X86_PAT -X86_MSR -X86_MCE -MTRR -X86_CMOV -X86_X2APIC
 	case "${CTARGET:-${CHOST}}" in
-	x86*|i?86*)use 32-64 && CF1 -64BIT;;
+	x86*|i?86*)use multitarget && CF1 -64BIT;;
 	esac
 
 	while read i ; do
@@ -393,7 +394,7 @@ native)
 		cmov)CF1 X86_CMOV;;
 		x2apic)CF1 X86_X2APIC;;
 		mp)CF1 SMP;; # ?
-		lm)use 32-64 && CF1 64BIT;;
+		lm)use multitarget && CF1 64BIT;;
 		cmp_legacy)CF1 SMP SCHED_MC;;
 		up)ewarn "Running SMP on UP. Recommended useflag '-smp' and '-SMP' in ${KERNEL_CONF}";;
 		esac
@@ -546,10 +547,10 @@ arch(){
 	local h="${1:-${CTARGET:-${CHOST}}}"
 	case ${h} in
 		# x86 profile sometimes buggy. to kernel when not 32/64 - do old
-		i?86*) ( [[ -n "$2" ]] || ( use 32-64 && [[ "$(march)" == native ]] ) ) &&
+		i?86*) ( [[ -n "$2" ]] || ( use multitarget && [[ "$(march)" == native ]] ) ) &&
 			echo "x86" || echo "i386"
 		;;
-		x86_64*) [[ -z "$2" ]] && use 32-64 && [[ "$(march)" == native ]] &&
+		x86_64*) [[ -z "$2" ]] && grep -q "^CONFIG_IA32_EMULATION=y" "${S}"/.config && [[ "$(march)" == native ]] &&
 			echo "x86" || echo "x86_64"
 		;;
 		*) tc-ninja_magic_to_arch kern ${h};;
