@@ -339,7 +339,7 @@ setconfig(){
 	else
 		cfg -FB_UVESA
 	fi
-	use multilib || use multitarget || cfg -IA32_EMULATION
+	use multilib || ( use multitarget && use x86 ) || cfg -IA32_EMULATION
 }
 
 # Kernel-config CPU from CFLAGS and|or /proc/cpuinfo (native)
