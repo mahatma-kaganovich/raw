@@ -550,7 +550,7 @@ arch(){
 		i?86*) ( [[ -n "$2" ]] || ( use multitarget && [[ "$(march)" == native ]] ) ) &&
 			echo "x86" || echo "i386"
 		;;
-		x86_64*) [[ -z "$2" ]] && grep -q "^CONFIG_IA32_EMULATION=y" "${S}"/.config && [[ "$(march)" == native ]] &&
+		x86_64*) [[ -z "$2" ]] && use multitarget && [[ "$(march)" == native ]] &&
 			echo "x86" || echo "x86_64"
 		;;
 		*) tc-ninja_magic_to_arch kern ${h};;
