@@ -22,6 +22,7 @@ OVERLAY=""
 IMAGE=""
 CLEAN=""
 CRAMFS=""
+LZMA=""
 susp_sig=""
 
 : ${TMPDIR:="$ROOT/var/tmp"}
@@ -184,7 +185,7 @@ else
 		echo "Using '$OVERLAY/lib/modules'"
 	elif [[ -z "$S" ]]; then
 		m="$ROOT/lib/modules/${KV:=`uname -r`}"
-		S="$S/source"
+		S="$m/source"
 		echo "Copying modules from $m"
 		[[ -e "$m/modules.dep" ]] || die "No $m/modules.dep"
 		mkdir -p "$rcdir/lib/modules/$KV"
@@ -227,7 +228,10 @@ else
 	    echo "Installing kernel modules from $S"
 	    kmake INSTALL_MOD_PATH="$rcdir" modules_install
 	fi
-	[[ -d "$S" ]] && susp_sig=`grep -s '#define[ 	]*[A-Z]*_SIG[ 	]*".*"$' ${S}/kernel/power/swap.c|sed -e 's:^.*"\(.*\)":\1:'|hexdump -e '"" /1 "%x" ""'`
+	if [[ -d "$S" ]]; then
+		susp_sig=`grep -s '#define[ 	]*[A-Z]*_SIG[ 	]*".*"$' ${S}/kernel/power/swap.c|sed -e 's:^.*"\(.*\)":\1:'|hexdump -e '"" /1 "%x" ""'`
+		grep -q "^CONFIG_KERNEL_LZMA=y" "$S/.config" && : ${LZMA:=1}
+	fi
 	[[ -z "$PNPMODE" ]] && PNPONLY=true
 	GENKERNEL=false
 	LIBLOOP=false
@@ -305,10 +309,12 @@ done
 rm "$rcdir/lib.loopfs" 2>/dev/null
 if $SQUASH ; then
 	preserve_start loop squashfs
+	i="-all-root -no-recovery -no-progress"
+	[[ "$LZMA" == 1 ]] && i="$i -comp lzma"
 	if $LIBLOOP; then
-		mksquashfs "$rcdir/lib/" "$rcdir/lib.loopfs" -all-root -no-recovery -no-progress || die "mksquashfs"
+		mksquashfs "$rcdir/lib/" "$rcdir/lib.loopfs" $i || die "mksquashfs"
 	else
-		mksquashfs "$rcdir/" "$tmp/rd.loopfs" -all-root -no-recovery -no-progress || die "mksquashfs"
+		mksquashfs "$rcdir/" "$tmp/rd.loopfs" $i || die "mksquashfs"
 	fi
 else
 	preserve_start loop cramfs
