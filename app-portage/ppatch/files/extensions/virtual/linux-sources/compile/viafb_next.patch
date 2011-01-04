@@ -1,6 +1,6 @@
 diff -pruN a/drivers/video/via/viafbdev.c b/drivers/video/via/viafbdev.c
---- a/drivers/video/via/viafbdev.c	2010-12-18 06:42:37.000000000 +0200
-+++ b/drivers/video/via/viafbdev.c	2010-12-20 20:17:42.000000000 +0200
+--- a/drivers/video/via/viafbdev.c	2011-01-04 13:10:20.000000000 +0200
++++ b/drivers/video/via/viafbdev.c	2011-01-04 13:12:34.000000000 +0200
 @@ -1670,6 +1670,119 @@ static int parse_mode(const char *str, u
  	return 0;
  }
@@ -58,7 +58,7 @@ diff -pruN a/drivers/video/via/viafbdev.c b/drivers/video/via/viafbdev.c
 +		    (viaparinfo1->chip_info->lvds_chip_info2.lvds_chip_name &&
 +		    viaparinfo1->chip_info->lvds_chip_info2.i2c_port == t)
 +		    )) || !(adapter = viafb_find_i2c_adapter(i)) ||
-+		    !(edid = fb_ddc_read(adapter)))
++		    !adapter->algo_data || !(edid = fb_ddc_read(adapter)))
 +			continue;
 +		memset(&var, 0, sizeof(var));
 +		if (fb_parse_edid(edid, &var))
@@ -129,15 +129,3 @@ diff -pruN a/drivers/video/via/viafbdev.c b/drivers/video/via/viafbdev.c
  
  #ifdef CONFIG_PM
  	viafb_pm_register(&viafb_fb_pm_hooks);
-diff -pruN a/drivers/video/via/via_i2c.c b/drivers/video/via/via_i2c.c
---- a/drivers/video/via/via_i2c.c	2010-12-18 06:42:37.000000000 +0200
-+++ b/drivers/video/via/via_i2c.c	2010-12-20 19:55:17.000000000 +0200
-@@ -188,7 +188,7 @@ struct i2c_adapter *viafb_find_i2c_adapt
- {
- 	struct via_i2c_stuff *stuff = &via_i2c_par[which];
- 
--	return &stuff->adapter;
-+	return stuff->is_active ? &stuff->adapter : NULL;
- }
- EXPORT_SYMBOL_GPL(viafb_find_i2c_adapter);
- 
