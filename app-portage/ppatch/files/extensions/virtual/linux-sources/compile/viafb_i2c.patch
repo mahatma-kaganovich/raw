@@ -1,0 +1,11 @@
+--- a/drivers/video/via/via_i2c.c	2010-12-08 15:12:05.000000000 +0200
++++ c/drivers/video/via/via_i2c.c	2010-11-29 18:04:24.000000000 +0200
+@@ -167,7 +167,7 @@ struct i2c_adapter *viafb_find_i2c_adapt
+ {
+ 	struct via_i2c_stuff *stuff = &via_i2c_par[which];
+ 
+-	return &stuff->adapter;
++	return stuff->is_active ? &stuff->adapter : NULL;
+ }
+ EXPORT_SYMBOL_GPL(viafb_find_i2c_adapter);
+ 

@@ -1,0 +1,15 @@
+--- b/drivers/media/video/via-camera.c	2011-01-04 13:08:18.000000000 +0200
++++ c/drivers/media/video/via-camera.c	2011-01-04 13:35:45.000000000 +0200
+@@ -1344,8 +1344,9 @@ static __devinit int viacam_probe(struct
+ 	 * is OLPC-specific.  0x42 assumption is ov7670-specific.
+ 	 */
+ 	sensor_adapter = viafb_find_i2c_adapter(VIA_PORT_31);
+-	cam->sensor = v4l2_i2c_new_subdev(&cam->v4l2_dev, sensor_adapter,
+-			"ov7670", 0x42 >> 1, NULL);
++	if (sensor_adapter != NULL)
++		cam->sensor = v4l2_i2c_new_subdev(&cam->v4l2_dev,
++			sensor_adapter, "ov7670", 0x42 >> 1, NULL);
+ 	if (cam->sensor == NULL) {
+ 		dev_err(&pdev->dev, "Unable to find the sensor!\n");
+ 		ret = -ENODEV;
+--
