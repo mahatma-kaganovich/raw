@@ -1,4 +1,3 @@
-diff -pruN a/drivers/video/via/viafbdev.c b/drivers/video/via/viafbdev.c
 --- a/drivers/video/via/viafbdev.c	2011-01-04 13:10:20.000000000 +0200
 +++ b/drivers/video/via/viafbdev.c	2011-01-04 13:12:34.000000000 +0200
 @@ -1670,6 +1670,119 @@ static int parse_mode(const char *str, u
