@@ -21,7 +21,7 @@ grep -Prhl "${STR}${BUS}_device_id\s+" $1 --include="*.c" | while read i ; do
 	local ii="${i#$1}"
 	ii="${ii#/}"
 	case $ii in
-	*/scx200_acb.c|*/pch_dma.c) if ! grep -q "^[ 	]*{ 0, }[,]*$" "$i"; then
+	*/scx200_acb.c|*/pch_dma.c) if ! grep -q "^[ 	]*{[ 	]0,[ 	0]*}[,]*$" "$i"; then
 		echo "BROKEN: $bus: $ii"
 		continue
 	fi

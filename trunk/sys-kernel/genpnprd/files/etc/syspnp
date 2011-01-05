@@ -190,7 +190,7 @@ pnp_options(){
 	;;
 	*=*)	v="${i%%=*}"
 		case "$v" in
-		*.*) echo "${i#*.}" >"$d/${i%%[=/]*}";;
+		*.*) echo "${i#*.}" >"$d/${v%%/*}";;
 		*) export cmd_`echo "$v"|sed -e 's:[^a-zA-Z0-9_]:_:g'`="${i#*=}" ;;
 		esac
 	;;
