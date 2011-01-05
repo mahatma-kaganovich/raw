@@ -37,7 +37,7 @@
 +	/* enabling CRT in textmode is at least no bad */
 +	if (viafb_CRT_ON) {
 +		ndev++;
-+		viafb_crt_enable();
++		via_set_state(VIA_CRT, VIA_STATE_ON);
 +	}
 +	for (i = 0; i < VIAFB_NUM_PORTS; i++) {
 +		t = vdev->port_cfg[i].type;
@@ -107,7 +107,7 @@
 +		/* prefer CRT OFF if other devices */
 +		if (!unknown && ndev > 1) {
 +			viafb_CRT_ON = STATE_OFF;
-+			viafb_crt_disable();
++			via_set_state(VIA_CRT, VIA_STATE_OFF);
 +		}
 +		viafb_DeviceStatus = viafb_primary_dev =
 +		    viafb_CRT_ON ? CRT_Device :
