@@ -1,6 +1,14 @@
---- a/drivers/video/via/viafbdev.c	2011-01-04 13:10:20.000000000 +0200
-+++ b/drivers/video/via/viafbdev.c	2011-01-04 13:12:34.000000000 +0200
-@@ -1670,6 +1670,119 @@ static int parse_mode(const char *str, u
+--- a/drivers/video/via/viafbdev.c	2011-01-09 17:36:25.081606855 +0200
++++ b/drivers/video/via/viafbdev.c	2011-01-09 17:36:40.791606856 +0200
+@@ -24,6 +24,7 @@
+ #include <linux/slab.h>
+ #include <linux/stat.h>
+ #include <linux/via-core.h>
++#include <linux/via_i2c.h>
+ 
+ #define _MASTER_FILE
+ #include "global.h"
+@@ -1670,6 +1671,119 @@ static int parse_mode(const char *str, u
  	return 0;
  }
  
@@ -120,7 +128,7 @@
  
  #ifdef CONFIG_PM
  static int viafb_suspend(void *unused)
-@@ -1891,6 +2004,7 @@ int __devinit via_fb_pci_probe(struct vi
+@@ -1891,6 +2005,7 @@ int __devinit via_fb_pci_probe(struct vi
  
  	viafb_init_proc(viaparinfo->shared);
  	viafb_init_dac(IGA2);
