@@ -127,7 +127,7 @@
 +		    viafb_LCD_ON ? LCD_Device : None_Device;
 +		if (stage) {
 +			if (!viafb_CRT_ON)
-+				viafb_crt_disable();
++				via_crt_disable();
 +			viafb_set_iga_path();
 +		}
 +	}
@@ -156,3 +156,8 @@
  	return 0;
  
  out_fb_unreg:
+--- a/drivers/video/via/hw.c	2011-01-11 19:52:14.000000000 +0200
++++ b/drivers/video/via/hw.c	2011-01-11 19:52:19.000000000 +0200
+@@ -2549 +2549 @@ void viafb_crt_disable(void)
+-void viafb_crt_enable(void)
++void  viafb_crt_enable(void)
