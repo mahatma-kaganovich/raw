@@ -254,7 +254,7 @@ pnp_init(){
 	read SAVE_HOTPLUG </proc/sys/kernel/hotplug
 	for l in /*.loopfs; do
 	if [[ -f "$l" ]]; then
-		echo -ne "\033[15;1f"
+#		echo -ne "\033[15;1f"
 		for i in `find /lib/modules -name "*.ko"` ; do
 			insmod $i
 		done
@@ -487,7 +487,7 @@ detect_fs(){
 	# dmraid/lvm/evms unsure
 	for i in $( {
 			fstype $t
-			[[ -n "$REAL_ROOT" ]] && [[ -n "$t" ]] && [[ "$REAL_ROOT" != "$t" ]] && fstype $REAL_ROOT
+			[[ -n "$REAL_ROOT" ]] && ( [[ -n "$t" ]] || ! [[ -b "$REAL_ROOT" ]] ) && [[ "$REAL_ROOT" != "$t" ]] && fstype $REAL_ROOT
 	    } 2>/dev/null | sed -e 's%^\(/dev/[^ ]*\):.* TYPE="swsuspend".*$%0susp:\1%' -e 's:^.* TYPE="\([^"]*\)".*$:\1:g'| sort -u ); do
 		case $i in
 		linux_raid_member|mdraid|/dev/md*) md=1 ;; # use right blkid
