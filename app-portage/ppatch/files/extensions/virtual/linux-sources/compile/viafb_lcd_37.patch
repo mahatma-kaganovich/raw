@@ -156,3 +156,8 @@
  	return 0;
  
  out_fb_unreg:
+--- a/drivers/video/via/hw.c	2011-01-14 20:06:35.330000001 +0200
++++ c/drivers/video/via/hw.c	2011-01-14 20:09:01.630000001 +0200
+@@ -1135 +1135 @@ static void set_lvds2_state(u8 state)
+-void via_set_state(u32 devices, u8 state)
++void  via_set_state(u32 devices, u8 state)
