@@ -309,7 +309,8 @@ done
 rm "$rcdir/lib.loopfs" 2>/dev/null
 if $SQUASH ; then
 	preserve_start loop squashfs
-	i="-comp gzip"
+	i=
+#	i="-comp gzip"
 #	[[ "$LZMA" == 1 ]] && i="-comp lzma"
 	i="$i -all-root -no-recovery -no-progress"
 	if $LIBLOOP; then
