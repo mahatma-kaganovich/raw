@@ -135,7 +135,7 @@ root_fsck_rw(){
 }
 
 mod_unload(){
-	local i="$NEW_ROOT/lib/modules/$KV" l="$NEW_ROOT/usr/src/linux-$KV" m=""
+	local h i="$NEW_ROOT/lib/modules/$KV" l="$NEW_ROOT/usr/src/linux-$KV" m=""
 	cd /
 	echo "$SAVE_HOTPLUG" >/proc/sys/kernel/hotplug
 	${cmd_fsck:-false} && root_fsck_rw
@@ -419,7 +419,11 @@ findnfsmount() {
 	if [[ -n "${IP#dhcp}" ]] || busybox udhcpc -n -T 15 -q ; then
 		[ -e /rootpath ] && cmd_nfsroot=`cat /rootpath`
 		local d=`grep -s "^domain " /etc/resolv.conf`
-		[[ -n "$d" ]] && echo "${d#domain }" >/proc/sys/kernel/domainname
+		[[ -n "$d" ]] && {
+			d="${d#domain }"
+			grep -q "^search" /etc/resolv.conf || echo "search $d" >>/etc/resolv.conf
+			echo "$d" >/proc/sys/kernel/domainname
+		}
 		if [[ -z "${cmd_nfsroot:=$(dhcp_get rootserver):$(dhcp_get rootpath)}" ]]; then
 			bad_msg "The DHCP Server did not send a valid root-path."
 			bad_msg "Please check your DHCP setup, or provide a nfsroot=<...> parameter."
