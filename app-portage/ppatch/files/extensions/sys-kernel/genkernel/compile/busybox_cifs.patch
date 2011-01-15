@@ -1,0 +1,5 @@
+--- a/defaults/busy-config	2011-01-15 15:12:37.000000000 +0200
++++ b/defaults/busy-config	2011-01-15 15:18:45.000000000 +0200
+@@ -466 +466 @@
+-# CONFIG_FEATURE_MOUNT_CIFS is not set
++CONFIG_FEATURE_MOUNT_CIFS=y
