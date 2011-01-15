@@ -127,7 +127,7 @@
 +		    viafb_LCD_ON ? LCD_Device : None_Device;
 +		if (stage) {
 +			if (!viafb_CRT_ON)
-+				via_crt_disable();
++				viafb_crt_disable();
 +			viafb_set_iga_path();
 +		}
 +	}
