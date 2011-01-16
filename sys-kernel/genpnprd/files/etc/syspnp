@@ -139,7 +139,7 @@ mod_unload(){
 	cd /
 	echo "$SAVE_HOTPLUG" >/proc/sys/kernel/hotplug
 	${cmd_fsck:-false} && root_fsck_rw
-	[[ -d $NEW_ROOT/mnt/ram ]] && mount -t ramfs none $NEW_ROOT/mnt/ram -o rw,noatime,nodiratime && cp /etc/resolv.conf $NEW_ROOT/mnt/ram
+	[[ -d $NEW_ROOT/mnt/ram ]] && mount -t ramfs none $NEW_ROOT/mnt/ram -o rw,noatime,nodiratime && sort -u /etc/resolv.conf >$NEW_ROOT/mnt/ram/resolv.conf
 	if [[ -L $i/kernel ]] && i=`ls $l.*fs 2>/dev/null` && [[ -f "$i" ]]; then
 		echo -ne "(mount $i)"
 		mnt_loop /dev/loop3 "$i" $l
@@ -339,17 +339,25 @@ empty_hwopts(){
 	done
 }
 
-# params: part [loop]
+# params: part loop net?
 # out: $DETECTED_LOOPS++, $DETECTED_ROOTS++
 detect_part(){
 	grep -qF ">$*<" "${PNP_TMP}.5" && return 0
-	local l
+	local l o=ro
 	wait $pid $pids
 	pid=""
 	pids=""
 	$cmd_quiet || echo -ne "\033[0G\033[0K$LCOUNT	Inspecting: $1"
 	mkdir /DETECT_ROOT || return 1
-	mount -o ro "$1" /DETECT_ROOT >/dev/null 2>&1 || {
+	[[ -n "$3" ]] && {
+		o="$o,nolock,rsize=1024,wsize=1024"
+		case "$3:$1" in
+		cifs:*|auto://*)o="$o,user=,guest -t cifs";;
+		auto:*|nfs:*)o="$o -t nfs";;
+		*)o="$o,user=,guest -t $3";;
+		esac
+	}
+	mount -o $o "$1" /DETECT_ROOT >/dev/null 2>&1 || {
 		rmdir /DETECT_ROOT
 		return 1
 	}
@@ -399,6 +407,45 @@ detect_root(){
 	if [[ -n "$REAL_ROOT" ]] && [[ "${cmd_loop:-false}" != false ]]; then
 		detect_part "$(part_ "$REAL_ROOT")" "$cmd_loop"
 	fi
+	[[ -n "$cmd_nfsroot" ]] && {
+		detect_part "$cmd_nfsroot" "$cmd_loop" "${NFSLIKE_FS:-auto}"
+	}
+}
+
+# autoconfig works only with built-in card?
+ip_config(){
+local cmd_ip dev s d h
+: ${cmd_ip:=$*}
+[[ -z "$cmd_ip" ]] || [[ -n "`ifconfig`" ]] && return
+for cmd_ip in $cmd_ip; do
+    msg_ "Configuring IP $cmd_ip"
+    eval "set `echo "'$cmd_ip'"|sed -e "s/:/' '/g"` ''"
+    for dev in ${6:-$(ls -1 /sys/class/net/ 2>/dev/null|grep -v "^lo$")}; do
+	d=
+	case "$7" in
+	on|any|dhcp)
+		busybox udhcpc -i $dev -n -T 15 -q || continue
+		d=`grep -s "^domain " /etc/resolv.conf|sed -e 's:^domain ::'`
+		[ -e /rootpath ] && cmd_nfsroot=`cat /rootpath`
+	;;
+	esac
+	[[ -n "$1$4" ]] && ifconfig $dev $1 ${4:+netmask $4}
+	i="${5%%.*}"
+	[[ -n "$i" ]] && echo "$i" >/proc/sys/kernel/hostname
+	[[ "$i" != "$5" ]] && d="${5#*.}"
+	[[ -n "$d" ]] && for d in $d; do
+		echo "search $d" >>/etc/resolv.conf
+		echo "$d" >/proc/sys/kernel/domainname
+	done
+	[[ -n "$3" ]] && route add default gw $3 dev $dev
+	case "$NFSLIKE_FS" in
+	cifs)i="//$2/";;
+	*)i="$2:";;
+	esac
+	cmd_nfsroot="${2:+$s}$cmd_nfsroot"
+	break
+    done
+done
 }
 
 dhcp_get(){
@@ -415,26 +462,22 @@ dhcp_get(){
 
 # modifyed genkernel's function to support other network filesystems (/dev/<filsystem>)
 findnfsmount() {
-	grep -q "[ 	]${NFSLIKE_FS:=nfs}\$" /proc/filesystems || return 1
-	if [[ -n "${IP#dhcp}" ]] || busybox udhcpc -n -T 15 -q ; then
-		[ -e /rootpath ] && cmd_nfsroot=`cat /rootpath`
-		local d=`grep -s "^domain " /etc/resolv.conf`
-		[[ -n "$d" ]] && {
-			d="${d#domain }"
-			grep -q "^search" /etc/resolv.conf || echo "search $d" >>/etc/resolv.conf
-			echo "$d" >/proc/sys/kernel/domainname
-		}
+	( [[ -z "$NFSLIKE_FS" ]] && [[ -n "$cmd_nfsroot" ]] ) ||
+	    grep -q "[ 	]${NFSLIKE_FS:=nfs}\$" /proc/filesystems || return 1
+	ip_config ::::::on
+	if [[ -n "`ifconfig`" ]]; then
 		if [[ -z "${cmd_nfsroot:=$(dhcp_get rootserver):$(dhcp_get rootpath)}" ]]; then
 			bad_msg "The DHCP Server did not send a valid root-path."
 			bad_msg "Please check your DHCP setup, or provide a nfsroot=<...> parameter."
 		else
 			local o="ro,nolock,rsize=1024,wsize=1024" m="$NEW_ROOT"
 			[[ "$CDROOT" != '0' ]] && m="$m/mnt/cdrom"
-			case "$NFSLIKE_FS" in
-			cifs)o="$o,user=,guest";;
-			nfs);;
+			case "$NFSLIKE_FS:$cmd_nfsroot" in
+			cifs:*|://*)o="$o,user=,guest";NFSLIKE_FS=cifs;;
+			:*|nfs:*)NFSLIKE_FS=nfs;;
 			*)o="$o,user=,guest $o,user= $o";;
 			esac
+			grep -q "[ 	]${NFSLIKE_FS:=nfs}\$" /proc/filesystems || return 1
 			for o in $o; do
 				good_msg "Attempting to mount $NFSLIKE_FS on $cmd_nfsroot into $m -o $o"
 				if mount -t $NFSLIKE_FS -o $o $cmd_nfsroot $m ; then
@@ -697,6 +740,7 @@ load_misc(){
 		mod $(wild "$i1" "$i2")
 	done
 	[[ -z "$cmd_loadall" ]] && [[ "$NODETECT" != '1' ]] && gentoo_compat_hwopts # deprecated
+	ip_config
 	detect_fs
 }
 
@@ -749,6 +793,8 @@ syspnp(){
 	local PNP_TMP="${TMPDIR}/pnp.found" NOTLOADED="" CHK=single i i1 i2 gov="" freq="" pid="" LCOUNT="" REORDER=break USE_MDADM_="${USE_MDADM:=$cmd_domdadm}" USE_DMRAID_NORMAL_="${USE_DMRAID_NORMAL:=$cmd_dodmraid}" USE_EVMS_NORMAL_="${USE_EVMS_NORMAL:=$cmd_doevms}" USE_LVM_NORMAL_="${USE_LVM_NORMAL:=$cmd_dolvm}" LOOPS_="" REFRESH_SAME waitscan=true checks=""
 	[[ "${USE_DMRAID_NORMAL:-true}" != true ]] && DMRAID_OPTS="$USE_DMRAID_NORMAL"
 	: ${REAL_ROOT:=$cmd_real_root}
+	: ${LOOP:=$cmd_loop}
+	: ${LOOPTYPE:=$cmd_loop_type}
 	for i in ${LOOPS:-"/*"}; do
 		LOOPS_="${LOOPS_} /DETECT_ROOT$i"
 	done
@@ -880,10 +926,7 @@ while true; do
 		[[ "$NEW_ROOT" == /dev/nfs ]] && [[ -e /newroot ]] && NEW_ROOT="/newroot"
 		if [[ -e "$NEW_ROOT" ]] && [[ -n "$LOOP" ]]; then
 			LOOP_ROOT="$NEW_ROOT/mnt/livecd"
-			if ! [[ -e "$LOOP_ROOT" ]]; then
-				LOOP_ROOT="$NEW_ROOT.loop"
-				mkdir "$LOOP_ROOT"
-			fi
+			[[ -e "$LOOP_ROOT" ]] || LOOP_ROOT="$NEW_ROOT"
 			if ! ( [[ -e "$LOOP_ROOT" ]] && mnt_loop /dev/loop0 "/newroot/$LOOP" "$LOOP_ROOT" && [[ -e "$LOOP_ROOT$cmd_real_init" ]] ) ; then
 				umount "$LOOP_ROOT"
 				losetup -d /dev/loop0
@@ -894,7 +937,8 @@ while true; do
 			fi
 		fi
 	fi
-	if [[ -n "$LOOP_ROOT" ]] && [[ -e "$LOOP_ROOT" ]]; then
+	if [[ -n "$LOOP_ROOT" ]] && [[ -e "$LOOP_ROOT" ]] &&
+	    [[ "$LOOP_ROOT" != "$NEW_ROOT" ]]; then
 		mod_unload
 		umount /sys
 		umount /proc
