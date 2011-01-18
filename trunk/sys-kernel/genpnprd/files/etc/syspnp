@@ -117,8 +117,10 @@ count(){
 mnt_loop(){
 	local i
 	if losetup $1 $2; then
-		mount -o ro $1 $3 && return 0
-		sleep 3
+		for i in 0 1 1 1 1 1; do
+			mount -o ro $1 $3 2>/dev/null && return 0
+			sleep $i
+		done
 		mount -o ro $1 $3 && return 0
 		losetup -d $1
 		return 1
@@ -394,7 +396,7 @@ detect_part(){
 		if [[ "$2" == true ]]; then
 			fstype ${LOOPS_}
 		else
-			fstype $2
+			fstype /DETECT_ROOT/$2
 		fi
 		} |sed -e 's%^\(.*:\).* TYPE="\([^"]*\)".*$%\1\2%g'
 	    ) ; do
@@ -474,6 +476,7 @@ for cmd_ip in $cmd_ip; do
 	break
     done
 done
+[[ ${cmd_telnetd:-false} != false ]] && [[ -n "`ifconfig`" ]] && telnetd ${cmd_telnetd#true}
 }
 
 dhcp_get(){
@@ -814,6 +817,29 @@ loadsh(){
 	return $?
 }
 
+mntnewroot(){
+	if mkdir "$NEW_ROOT" 2>/dev/null ; then
+		if [[ -z "$NFSLIKE_FS" ]] || ! findnfsmount; then
+			mount -t "${NEW_ROOT_TYPE:-auto}" -o ro "$REAL_ROOT" "$NEW_ROOT" || rmdir "$NEW_ROOT"
+		fi
+		[[ "$NEW_ROOT" == /dev/nfs ]] && [[ -e /newroot ]] && NEW_ROOT="/newroot"
+		if [[ -e "$NEW_ROOT" ]] && [[ -n "$LOOP" ]]; then
+			LOOP_ROOT="$NEW_ROOT"
+			for i in mnt/livecd; do
+				[[ -d $NEW_ROOT/$i ]] && LOOP_ROOT="$NEW_ROOT/$i" && break
+			done
+			if ! ( [[ -d "$LOOP_ROOT" ]] && mnt_loop /dev/loop0 "/newroot/$LOOP" "$LOOP_ROOT" && [[ -e "$LOOP_ROOT$cmd_real_init" ]] ) ; then
+				umount "$LOOP_ROOT"
+				losetup -d /dev/loop0
+				rmdir "$LOOP_ROOT"
+				umount "$NEW_ROOT"
+				rmdir "$NEW_ROOT"
+				LOOP_ROOT=""
+			fi
+		fi
+	fi
+}
+
 syspnp(){
 	[[ -e "/lib/modules/${KV}/modules.alias.sh" ]] || return
 	$cmd_nopnp && return
@@ -826,6 +852,8 @@ syspnp(){
 	for i in ${LOOPS:-"/*"}; do
 		LOOPS_="${LOOPS_} /DETECT_ROOT$i"
 	done
+	[[ ${cmd_passwd:-false} != false ]] && [[ -n /etc/passwd ]] &&
+		echo "$cmd_passwd" >/etc/passwd
 
 	good_msg "Searching pnp"
 	override_modprobe
@@ -899,6 +927,20 @@ syspnp(){
 		fi
 	fi
 
+	# genkernel
+	if ! ${1:-false} && [[ -n "$REAL_ROOT" ]] && [[ -n "$LOOP" ]] ; then
+		mntnewroot
+		if grep -q "^/dev/loop0 $NEW_ROOT " /proc/mounts; then
+			LOOP=
+			LOOPTYPE=
+			REAL_ROOT=/dev/loop0
+			REAL_ROOTFLAGS="$REAL_ROOTFLAGS,remount"
+		elif [[ -d $NEW_ROOT ]]; then
+			umount $NEW_ROOT
+			rmdir $NEW_ROOT
+		fi
+	fi
+
 	good_msg "Boot time: $(cat /proc/uptime)"
 	if [[ -n "${NOTLOADED}" ]] ; then
 		good_msg "Not loaded:$NOTLOADED"
@@ -944,49 +986,22 @@ KV=`uname -r`
 pnp_init
 rm /sbin/modprobe 2>/dev/null
 override_modprobe
-syspnp
+syspnp true
 cd /
 while true; do
-	if [[ -n "$REAL_ROOT" ]] && mkdir "$NEW_ROOT" 2>/dev/null ; then
-		if [[ -z "$NFSLIKE_FS" ]] || ! findnfsmount; then
-			mount -t "$NEW_ROOT_TYPE" -o ro "$REAL_ROOT" "$NEW_ROOT" || rmdir "$NEW_ROOT"
-		fi
-		[[ "$NEW_ROOT" == /dev/nfs ]] && [[ -e /newroot ]] && NEW_ROOT="/newroot"
-		if [[ -e "$NEW_ROOT" ]] && [[ -n "$LOOP" ]]; then
-			LOOP_ROOT="$NEW_ROOT"
-#			for i in loop mnt/livecd mnt/cdrom mnt; do
-#				[[ -d $NEW_ROOT/$i ]] && LOOP_ROOT="$NEW_ROOT/$i" && break
-#			done
-			if ! ( [[ -d "$LOOP_ROOT" ]] && mnt_loop /dev/loop0 "/newroot/$LOOP" "$LOOP_ROOT" && [[ -e "$LOOP_ROOT$cmd_real_init" ]] ) ; then
-				umount "$LOOP_ROOT"
-				losetup -d /dev/loop0
-				rmdir "$LOOP_ROOT"
-				umount "$NEW_ROOT"
-				rmdir "$NEW_ROOT"
-				LOOP_ROOT=""
-			fi
-		fi
-	fi
+	[[ -n "$REAL_ROOT" ]] && mntnewroot
 	if [[ -n "$LOOP_ROOT" ]] && [[ -d "$LOOP_ROOT" ]] &&
 	    [[ "$LOOP_ROOT" != "$NEW_ROOT" ]]; then
-#		mount --bind $NEW_ROOT $LOOP_ROOT/mnt/system
-		mount --bind $NEW_ROOT $LOOP_ROOT/mnt/cdrom
-		mount --bind $LOOP_ROOT $NEW_ROOT
-		ash
-	fi
-#		mod_unload
-#		umount /sys
-#		umount /proc
-#		mkdir /rd 2>/dev/null
-#		( mnt_loop /dev/loop1 /lib.loopfs /rd && link_dir /rd /lib ) ||
-#		( mnt_loop /dev/loop1 /rd.loopfs /rd && link_dir /rd )
-#		link_dir "$LOOP_ROOT"
-#		exec "$cmd_real_init" "$cmd_init_opts"
-#	el
-	if [[ -e "$NEW_ROOT" ]]; then
+		mkdir /rd 2>/dev/null
+		( mnt_loop /dev/loop1 /lib.loopfs /rd && link_dir /rd /lib ) ||
+		( mnt_loop /dev/loop1 /rd.loopfs /rd && link_dir /rd )
+		link_dir "$LOOP_ROOT"
 		mod_unload
-		umount /sys
-		umount /proc
+		umount /proc /sys
+		exec "$cmd_real_init" "$cmd_init_opts"
+	elif [[ -d "$NEW_ROOT" ]]; then
+		mod_unload
+		umount /proc /sys
 		exec /sbin/switch_root -c /dev/console "$NEW_ROOT" "$cmd_real_init" "$cmd_init_opts"
 	else
 		bad_msg "failed to mount root"
