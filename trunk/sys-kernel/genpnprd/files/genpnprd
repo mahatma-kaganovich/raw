@@ -282,7 +282,7 @@ find .|sort|while read i ; do
 	[[ -L "$i" ]] && continue
 	[[ -f "$i" ]] || continue
 	case "$i" in
-	*/busybox|*/init|*/etc/*|./lib*|*/mount) continue ;;
+	*/busybox|*/init|*/etc/*|./lib*|*/mount|*/mdev) continue ;;
 	*/*/*) ;;
 	*) continue ;;
 	esac
