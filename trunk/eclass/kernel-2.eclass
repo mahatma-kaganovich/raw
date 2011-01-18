@@ -600,14 +600,9 @@ kernel-2_src_prepare(){
 	use custom-arch && sed -i -e 's/-march=[a-z0-9\-]*//g' -e 's/-mtune=[a-z0-9\-]*//g' arch/*/Makefile*
 	# prevent to build twice
 #	sed -i -e 's%-I$(srctree)/arch/$(hdr-arch)/include%%' Makefile
-	# gcc 4.5+ -O3
-	for i in drivers/media/radio/radio-aimslab arch/x86/kvm/vmx; do
-echo "
-ifeq (\$(CONFIG_X86),y)
-CFLAGS_${i##*/}.o += \$(call cc-ifversion, -ge, 0405, -fno-inline-functions)
-endif
-" >>${i%/*}/Makefile
-	done
+	# gcc 4.5+ -O3 -ftracer
+	sed -i -e 's:^static unsigned long vmcs_readl:static noinline unsigned long vmcs_readl:' arch/x86/kvm/vmx.c
+	sed -i -e 's:^static void sleep_delay:static noinline void sleep_delay:' drivers/media/radio/radio-aimslab.c
 	# ;)
 	sed -i -e 's:^#if 0$:#if 1:' drivers/net/tokenring/tms380tr.c
 	# pnp
