@@ -170,7 +170,7 @@ mod_unload(){
 			chmod 755 $r$x
 			mount --bind $r$x $NEW_ROOT$x
 		done
-		sort -u /etc/resolv.conf >>$NEW_ROOT/mnt/ram/resolv.conf 2>/dev/null
+		sort -u /etc/resolv.conf >$NEW_ROOT/mnt/ram/resolv.conf 2>/dev/null
 	fi
 	if [[ -L $i/kernel ]] && i=`ls $l.*fs 2>/dev/null` && [[ -f "$i" ]]; then
 		echo -ne "(mount $i)"
