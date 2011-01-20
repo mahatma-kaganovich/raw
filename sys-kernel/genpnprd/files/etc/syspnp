@@ -440,26 +440,31 @@ detect_root(){
 	if [[ -n "$REAL_ROOT" ]] && [[ "${cmd_loop:-false}" != false ]]; then
 		detect_part "$(part_ "$REAL_ROOT")" "$cmd_loop"
 	fi
-	[[ -n "$cmd_nfsroot" ]] && {
-		detect_part "$cmd_nfsroot" "$cmd_loop" "${NFSLIKE_FS:-auto}"
+	[[ -n "$NFSROOT" ]] && {
+		detect_part "$NFSROOT" "$cmd_loop" "${NFSLIKE_FS:-auto}"
 	}
 }
 
 # autoconfig works only with built-in card?
 ip_config(){
-local cmd_ip dev s d h
-: ${cmd_ip:=$*}
-[[ -z "$cmd_ip" ]] || [[ -n "`ifconfig`" ]] && return
-for cmd_ip in $cmd_ip; do
-    msg_ "Configuring IP $cmd_ip"
-    eval "set `echo "'$cmd_ip'"|sed -e "s/:/' '/g"` ''"
+local ip dev s d h
+[[ -n "`ifconfig`" ]] && {
+	[[ -z "$NFSROOT" ]] && {
+		NFSROOT="$(dhcp_get rootserver):$(dhcp_get rootpath)"
+		[[ "$NFSROOT" == : ]] && NFSROOT=
+	}
+	return
+}
+for ip in "${@}"; do
+    msg_ "Configuring IP $ip"
+    eval "set `echo "'$ip'"|sed -e "s/:/' '/g"` ''"
     for dev in ${6:-$(ls -1 /sys/class/net/ 2>/dev/null|grep -v "^lo$")}; do
 	d=
 	case "$7" in
 	on|any|dhcp)
 		busybox udhcpc -i $dev -n -T 15 -q || continue
 		d=`grep -s "^domain " /etc/resolv.conf|sed -e 's:^domain ::'`
-		[ -e /rootpath ] && cmd_nfsroot=`cat /rootpath`
+		[ -e /rootpath ] && NFSROOT=`cat /rootpath`
 	;;
 	esac
 	[[ -n "$1$4" ]] && ifconfig $dev $1 ${4:+netmask $4}
@@ -475,7 +480,7 @@ for cmd_ip in $cmd_ip; do
 	cifs)i="//$2/";;
 	*)i="$2:";;
 	esac
-	cmd_nfsroot="${2:+$s}$cmd_nfsroot"
+	NFSROOT="${2:+$s}$cmd_nfsroot"
 	break
     done
 done
@@ -496,28 +501,29 @@ dhcp_get(){
 
 # modifyed genkernel's function to support other network filesystems (/dev/<filsystem>)
 findnfsmount() {
-	( [[ -z "$NFSLIKE_FS" ]] && [[ -n "$cmd_nfsroot" ]] ) ||
+	( [[ -z "$NFSLIKE_FS" ]] && [[ -n "$NFSROOT" ]] ) ||
 	    grep -q "[ 	]${NFSLIKE_FS:=nfs}\$" /proc/filesystems || return 1
 	ip_config ::::::dhcp
 	if [[ -n "`ifconfig`" ]]; then
-		if [[ -z "${cmd_nfsroot:=$(dhcp_get rootserver):$(dhcp_get rootpath)}" ]]; then
+		if [[ -z "$NFSROOT" ]]; then
 			bad_msg "The DHCP Server did not send a valid root-path."
 			bad_msg "Please check your DHCP setup, or provide a nfsroot=<...> parameter."
 		else
 			local o="ro,nolock,rsize=1024,wsize=1024,$cmd_real_rootflags" m="$NEW_ROOT"
 			[[ "$CDROOT" != '0' ]] && m="$m/mnt/cdrom"
-			case "$NFSLIKE_FS:$cmd_nfsroot" in
+			case "$NFSLIKE_FS:$NFSROOT" in
 			cifs:*|://*)o="$o,user=,guest";NFSLIKE_FS=cifs;;
 			:*|nfs:*)NFSLIKE_FS=nfs;;
 			*)o="$o,user=,guest $o,user= $o";;
 			esac
 			grep -q "[ 	]${NFSLIKE_FS:=nfs}\$" /proc/filesystems || return 1
 			for o in $o; do
-				good_msg "Attempting to mount $NFSLIKE_FS on $cmd_nfsroot into $m -o $o"
-				if mount -t $NFSLIKE_FS -o $o $cmd_nfsroot $m ; then
+				good_msg "Attempting to mount $NFSLIKE_FS on $NFSROOT into $m -o $o"
+				if mount -t $NFSLIKE_FS -o $o $NFSROOT $m ; then
 					# FIXME: Need to start portmap and the other rpc daemons in
 					# order to remount rw.
 					REAL_ROOT="/dev/nfs"
+					REAL_ROOTFLAGS="$o"
 					return 0
 				fi
 			done
@@ -559,7 +565,7 @@ resume(){
 }
 
 detect_fs(){
-	local i m="" md="$USE_MDADM" dm="$USE_DMRAID_NORMAL" t="$cmd_detect_root" nfs="$cmd_nfsroot" lvm="$USE_LVM_NORMAL" evms="$USE_EVMS_NORMAL" mddef=true
+	local i m="" md="$USE_MDADM" dm="$USE_DMRAID_NORMAL" t="$cmd_detect_root" lvm="$USE_LVM_NORMAL" evms="$USE_EVMS_NORMAL" mddef=true
 	case "$t" in
 	true|false)t="";
 	esac
@@ -774,7 +780,7 @@ load_misc(){
 		mod $(wild "$i1" "$i2")
 	done
 	[[ -z "$cmd_loadall" ]] && [[ "$NODETECT" != '1' ]] && gentoo_compat_hwopts # deprecated
-	ip_config
+	ip_config $cmd_ip
 	detect_fs
 }
 
@@ -840,6 +846,16 @@ mntnewroot(){
 				LOOP_ROOT=""
 			fi
 		fi
+		# around genkernel
+		[[ -d "$NEW_ROOT" ]] && {
+			REAL_ROOTFLAGS="$REAL_ROOTFLAGS,remount"
+			if grep -q "^/dev/loop0 $NEW_ROOT " /proc/mounts; then
+				LOOP=
+				LOOPTYPE=
+				REAL_ROOT=/dev/loop0
+#				REAL_ROOTFLAGS="loop,remount,ro"
+			fi
+		}
 	fi
 }
 
@@ -852,6 +868,7 @@ syspnp(){
 	: ${REAL_ROOT:=$cmd_real_root}
 	: ${LOOP:=$cmd_loop}
 	: ${LOOPTYPE:=$cmd_loop_type}
+	: ${NFSROOT:=$cmd_nfsroot}
 	for i in ${LOOPS:-"/*"}; do
 		LOOPS_="${LOOPS_} /DETECT_ROOT$i"
 	done
@@ -904,7 +921,6 @@ syspnp(){
 	done
 	[[ $pnpass != 1 ]] && break
 	mntnewroot
-	[[ -d $NEW_ROOT ]] && REAL_ROOTFLAGS="remount"
 	mount --bind $NEW_ROOT/lib/modules /lib/modules || break
 	mount --bind $NEW_ROOT/lib/firmware /lib/firmware
 	good_msg "Thin boot, pass 2"
@@ -939,18 +955,8 @@ syspnp(){
 	fi
 
 	# genkernel
-	if ! ${1:-false} && [[ -n "$REAL_ROOT" ]] && [[ -n "$LOOP" ]] ; then
+	! ${1:-false} && [[ -n "$REAL_ROOT" ]] && [[ -n "$LOOP" ]] &&
 		mntnewroot
-		if grep -q "^/dev/loop0 $NEW_ROOT " /proc/mounts; then
-			LOOP=
-			LOOPTYPE=
-			REAL_ROOT=/dev/loop0
-			REAL_ROOTFLAGS="remount"
-		elif [[ -d $NEW_ROOT ]]; then
-			umount $NEW_ROOT
-			rmdir $NEW_ROOT
-		fi
-	fi
 
 	good_msg "Boot time: $(cat /proc/uptime)"
 	if [[ -n "${NOTLOADED}" ]] ; then
