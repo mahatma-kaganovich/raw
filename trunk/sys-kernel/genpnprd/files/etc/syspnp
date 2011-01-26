@@ -141,36 +141,54 @@ root_fsck_rw(){
 	}
 }
 
+upcase(){
+	echo "$*"|tr [a-z] [A-Z]
+	return $?
+}
+
 mod_unload(){
-	local h i="$NEW_ROOT/lib/modules/$KV" l="$NEW_ROOT/usr/src/linux-$KV" m="" x r=$NEW_ROOT/mnt/ram
+	local h i="$NEW_ROOT/lib/modules/$KV" l="$NEW_ROOT/usr/src/linux-$KV" m="" x y yy r=$NEW_ROOT/mnt/ram
 	cd /
 	echo "$SAVE_HOTPLUG" >/proc/sys/kernel/hotplug
 	${cmd_fsck:-false} && root_fsck_rw
 	if grep -q "^[^ ]* $NEW_ROOT squashfs" /proc/mounts; then
 		echo -ne "(squashfs)"
-		mkdir /mnt.tmp
-		cp -a $NEW_ROOT/mnt/* /mnt.tmp
-		mount -t ramfs none $NEW_ROOT/mnt -o rw,noatime,nodiratime && cp -a /mnt.tmp/* $NEW_ROOT/mnt && rm -Rf /mnt.tmp
-		local RAM1="/tmp /var/tmp"
-		local RAM2="/var/run /var/log /var/lock"
-		local CP="/var/lib/xkb /var/lib/samba /var/cache /media /home"
-		for x in $CP; do
-			mkdir -p $r${x%/*}
-			cp -a $NEW_ROOT$x $r$x
-			mount --bind $r$x $NEW_ROOT$x
-		done
-		rm -Rf $m/var/cache/genkernel
-		for x in $RAM1; do
-			mkdir -p $r$x
-			chmod 777 $r$x
-			mount --bind $r$x $NEW_ROOT$x
-		done
-		for x in $RAM2; do
-			mkdir -p $r$x
-			chmod 755 $r$x
-			mount --bind $r$x $NEW_ROOT$x
-		done
-		sort -u /etc/resolv.conf >$NEW_ROOT/mnt/ram/resolv.conf 2>/dev/null
+		mkdir -p /etc/mnt
+		cp -a $NEW_ROOT/mnt/* /etc/mnt
+		mount -t ramfs none $NEW_ROOT/mnt -o rw,noatime,nodiratime && cp -a /etc/mnt/* $NEW_ROOT/mnt
+		[[ -e /etc/resolv.conf ]] && {
+			sort -u /etc/resolv.conf >$r/resolv.conf
+			h="${NFSROOT:-$REAL_ROOT}"
+			x="${h##//}"
+			x="${x%%[:/]*}"
+			read y </proc/sys/kernel/domainname
+			y="${y#(none)}"
+			[[ -n "$y" ]] && [[ "$x" != "$h" ]] && {
+				echo "(server=$x domain=$y)"
+				sed -i \
+				-e "s:dc1\.domain\.local:$x:" \
+				-e "s:domain\.local:$y:" \
+				-e "s:=domain:=${y%%.*}:" \
+				-e "s:=local:=${y#*.}:" \
+				$r/* $r/*/* 2>/dev/null
+				y=`upcase "$y"` && sed -i \
+				-e "s:DC1\.DOMAIN\.LOCAL:$(upcase $x):" \
+				-e "s:DOMAIN\.LOCAL:$y:" \
+				-e "s:= DOMAIN:= ${y%%.*}:" \
+				$r/* $r/*/* 2>/dev/null
+			}
+		}
+		# /mnt/ram/ram.lst: <dir>[/] [<mode>]
+		while read x y; do
+			if [[ -z "$y" ]]; then
+				mkdir -p $r${x%/*}
+				cp -a $NEW_ROOT$x $r$x
+			else
+				mkdir -p $r$x
+				chmod $y $r$x
+			fi
+			[[ -n "${x##*/}" ]] && mount --bind $r$x $NEW_ROOT$x
+		done <$r/ram.lst
 	fi
 	if [[ -L $i/kernel ]] && i=`ls $l.*fs 2>/dev/null` && [[ -f "$i" ]]; then
 		echo -ne "(mount $i)"
@@ -440,7 +458,7 @@ detect_root(){
 	if [[ -n "$REAL_ROOT" ]] && [[ "${cmd_loop:-false}" != false ]]; then
 		detect_part "$(part_ "$REAL_ROOT")" "$cmd_loop"
 	fi
-	[[ -n "$NFSROOT" ]] && {
+	[[ -n "$NFSROOT" ]] && [[ -n "`ifconfig`" ]] && {
 		detect_part "$NFSROOT" "$cmd_loop" "${NFSLIKE_FS:-auto}"
 	}
 }
@@ -1038,3 +1056,7 @@ while true; do
 	run_shell
 done
 fi
+
+
+r=/mnt/ram
+t=/var/tmp/lst

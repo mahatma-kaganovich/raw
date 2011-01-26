@@ -1,0 +1,4 @@
+# /etc/conf.d/ntp-client
+
+NTPCLIENT_CMD="ntpdate"
+NTPCLIENT_OPTS="-s -b -u dc1.domain.local"

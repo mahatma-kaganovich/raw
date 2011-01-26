@@ -1,0 +1,5 @@
+--- a/defaults/busy-config	2010-11-29 12:16:55.000000000 +0200
++++ b/defaults/busy-config	2011-01-26 16:05:53.000000000 +0200
+@@ -222 +222 @@
+-# CONFIG_TR is not set
++CONFIG_TR=y
