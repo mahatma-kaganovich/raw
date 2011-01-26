@@ -170,12 +170,12 @@ mod_unload(){
 				-e "s:domain\.local:$y:" \
 				-e "s:=domain:=${y%%.*}:" \
 				-e "s:=local:=${y#*.}:" \
-				$r/* $r/*/* 2>/dev/null
+				$r/etc/* $r/etc/*/* 2>/dev/null
 				y=`upcase "$y"` && sed -i \
 				-e "s:DC1\.DOMAIN\.LOCAL:$(upcase $x):" \
 				-e "s:DOMAIN\.LOCAL:$y:" \
 				-e "s:= DOMAIN:= ${y%%.*}:" \
-				$r/* $r/*/* 2>/dev/null
+				$r/etc/* $r/etc/*/* 2>/dev/null
 			}
 		}
 		# /mnt/ram/ram.lst: <dir>[/] [<mode>]
