@@ -157,7 +157,7 @@ mod_unload(){
 		cp -a $NEW_ROOT/mnt/* /etc/mnt
 		mount -t ramfs none $NEW_ROOT/mnt -o rw,noatime,nodiratime && cp -a /etc/mnt/* $NEW_ROOT/mnt
 		[[ -e /etc/resolv.conf ]] && {
-			sort -u /etc/resolv.conf >$r/resolv.conf
+			sort -u /etc/resolv.conf >$r/etc/resolv.conf
 			h="${NFSROOT:-$REAL_ROOT}"
 			x="${h##//}"
 			x="${x%%[:/]*}"
