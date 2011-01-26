@@ -142,7 +142,7 @@ root_fsck_rw(){
 }
 
 upcase(){
-	echo "$*"|tr [a-z] [A-Z]
+	echo "$*"|tr a-z A-Z
 	return $?
 }
 
@@ -166,15 +166,15 @@ mod_unload(){
 			[[ -n "$y" ]] && [[ "$x" != "$h" ]] && {
 				echo "(server=$x domain=$y)"
 				sed -i \
-				-e "s:dc1\.domain\.local:$x:" \
-				-e "s:domain\.local:$y:" \
-				-e "s:=domain:=${y%%.*}:" \
-				-e "s:=local:=${y#*.}:" \
+				-e "s:dc1\.domain\.local:$x:g" \
+				-e "s:domain\.local:$y:g" \
+				-e "s:=domain:=${y%%.*}:g" \
+				-e "s:=local:=${y#*.}:g" \
 				$r/etc/* $r/etc/*/* 2>/dev/null
 				y=`upcase "$y"` && sed -i \
-				-e "s:DC1\.DOMAIN\.LOCAL:$(upcase $x):" \
-				-e "s:DOMAIN\.LOCAL:$y:" \
-				-e "s:= DOMAIN:= ${y%%.*}:" \
+				-e "s:DC1\.DOMAIN\.LOCAL:$(upcase $x):g" \
+				-e "s:DOMAIN\.LOCAL:$y:g" \
+				-e "s:= DOMAIN:= ${y%%.*}:g" \
 				$r/etc/* $r/etc/*/* 2>/dev/null
 			}
 		}
