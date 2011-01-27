@@ -263,7 +263,7 @@ cd $rcdir || die
 [[ "$PNPMODE" == "pnponly" ]] && PNPONLY=true
 for i in etc sbin; do
 	for j in $DATA/$i/*; do
-		cp -aT $j $rcdir/$i
+		cp -a $j $rcdir/$i
 		chmod 755 "$rcdir/$i${j#$DATA/$i}"
 	done
 done
