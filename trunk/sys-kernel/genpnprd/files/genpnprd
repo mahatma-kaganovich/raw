@@ -48,7 +48,7 @@ _modlst(){
 			modalias $m
 			echo "$ALIAS"
 		else
-			grep "/$m\..*:" "${mm}/modules.dep" >>"$tmp/modules.lst" || find "${mm}" -name "$m.ko"
+			grep "/$m\..*:" "${mm}/modules.dep" || find "${mm}" -name "$m.ko"
 		fi
 	done|sort -u
 }
