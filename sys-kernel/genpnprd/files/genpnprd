@@ -24,9 +24,12 @@ CLEAN=""
 CRAMFS=""
 LZMA=""
 susp_sig=""
+THIN="/drivers/net/\|/cifs/\|/nfs/\|/unix"
+THIN_INFO="/fs/\|^alias:.*:"
 
 : ${TMPDIR:="$ROOT/var/tmp"}
 tmp="$TMPDIR/genpnprd.$$"
+#tmp=`mktemp -d`
 
 
 die(){
@@ -39,18 +42,27 @@ genpkg(){
 	"$1" "$2" "$3" "$4" "$5"
 }
 
+_modlst(){
+	for m in $* ; do
+		if $PNPONLY; then
+			modalias $m
+			echo "$ALIAS"
+		else
+			grep "/$m\..*:" "${mm}/modules.dep" >>"$tmp/modules.lst" || find "${mm}" -name "$m.ko"
+		fi
+	done|sort -u
+}
+
 preserve_start(){
 	echo "Preserving unpacked /lib"
 	local m mm="$rcdir/lib/modules/${KV}"
 	$PNPONLY && source "$mm/modules.alias.sh"
-	for m in $* ; do
-		if $PNPONLY; then
-			modalias $m
-			echo "$ALIAS" >>"$tmp/modules.lst"
-		else
-			grep "/$m\..*:" "${mm}/modules.dep" >>"$tmp/modules.lst" || find "${mm}" -name "$m.ko" >>"$tmp/modules.lst"
-		fi
-	done
+	_modlst "${@}" >>"$tmp/modules.lst"
+	if [[ -n "${THIN#-}" ]]; then
+		_modlst $(find "$mm" -name "*.ko*"|grep "$THIN"|while read m; do
+				modinfo "$m"|grep -q "$THIN_INFO" && echo "$m"
+			done|sed -e 's:^.*/::g' -e 's:\..*$::g') >>"$tmp/modules2.lst"
+	fi
 	cd "$rcdir" || die
 	mkdir "$tmp/preserve" || die
 	cd "lib/modules/$KV"
@@ -65,7 +77,7 @@ preserve_start(){
 	$PNPONLY || /usr/bin/perl "$UROOT/usr/share/genpnprd/mod2sh.pl" "$tmp/preserve/lib/modules/${KV}"
 	cd "$rcdir"
 	if ! $LIBLOOP; then
-		mv "$rcdir"/{etc,sys,proc,sbin/mdev} "$tmp/preserve/" || die
+		mv "$rcdir"/{etc,sys,proc} "$tmp/preserve/" || die
 		find .|sort|while read m; do
 			[[ "$m" == ./* ]] || continue
 			m="${m#./}"
@@ -307,51 +319,64 @@ eval \"\`zcat /$i.gz\`\"">$i
 done
 
 rm "$rcdir/lib.loopfs" 2>/dev/null
+
 if $SQUASH ; then
 	preserve_start loop squashfs
+else
+	preserve_start loop cramfs
+fi
+$LIBLOOP && ldir='lib' || ldir=
+N=
+while true; do
+    if $SQUASH ; then
 	i=
 #	i="-comp gzip"
 #	[[ "$LZMA" == 1 ]] && i="-comp lzma"
 	i="$i -all-root -no-recovery -no-progress"
-	if $LIBLOOP; then
-		mksquashfs "$rcdir/lib/" "$rcdir/lib.loopfs" $i || die "mksquashfs"
-	else
-		mksquashfs "$rcdir/" "$tmp/rd.loopfs" $i || die "mksquashfs"
-	fi
-else
-	preserve_start loop cramfs
+	mksquashfs "$rcdir/$ldir" "$tmp/${ldir:-rd}$N.loopfs" $i || die "mksquashfs"
+    else
 	[[ -x /sbin/mkfs.cramfs ]] && mkcramfs(){ /sbin/mkfs.cramfs "${@}";}
-	if $LIBLOOP; then
-		mkcramfs "$rcdir/lib" "$rcdir/lib.loopfs" || die "mkcramfs"
-	else
-		mkcramfs "$rcdir/" "$tmp/rd.loopfs" || die "mkcramfs"
-	fi
-fi
-rm "$rcdir"/lib/* -Rf
+	mkcramfs "$rcdir/$ldir" "$tmp/${ldir:-rd}$N.loopfs" || die "mkcramfs"
+    fi
+    [[ -e "$tmp/modules2.lst" ]] || break
+    find "$rcdir" -name "*.ko*"|while read i; do
+	grep -qF "/${i##*/}" "$tmp/modules2.lst" || {
+		rm "$i"
+		while true; do
+			i="${i%/*}"
+			rmdir "$i" 2>/dev/null || break
+		done
+	}
+    done
+    rm "$tmp/modules2.lst"
+    N=2
+done
 cd "$rcdir" || die
 if $LIBLOOP; then
+	rm "$rcdir"/lib/* -Rf
 	preserve_end
 else
 	rm "$rcdir" -Rf || die
 	mv "$tmp/preserve" "$rcdir"
-	mv "$tmp/rd.loopfs" "$rcdir/"
 fi
+mv "$tmp/${ldir:-rd}.loopfs" "$rcdir/"
 
 [[ -e "$rcdir/dev" ]] && for i in 0 1 2 3; do
 	mknod -m 660 "$rcdir/dev/loop${i}" b 7 ${i}
 done
 
-cd $rcdir || die
-find . -print | cpio --quiet -o -H newc -F "$tmp/initrd-${KV}.cpio" || die
-cd "$tmp" || die
-rm "$rcdir" -Rf
-cd "$home"
-if [[ "$IMAGE" == *.cpio ]]; then
-	mv "$tmp/initrd-${KV}.cpio" "$IMAGE" || die
-else
-	gzip -c9 "$tmp/initrd-${KV}.cpio" >"$IMAGE" || die
-fi
-rm "$tmp" -Rf
+for i in "" ".thin"; do
+	cd $rcdir || die
+	find . -print | cpio --quiet -o -H newc -F "$tmp/initrd-${KV}$i.cpio" || die
+	cd "$home" || die
+	if [[ "$IMAGE" == *.cpio ]]; then
+		mv "$tmp/initrd-${KV}$i.cpio" "$IMAGE$i" || die
+	else
+		gzip -c9 "$tmp/initrd-${KV}$i.cpio" >"$IMAGE$i" || die
+	fi
+	mv "$tmp/${ldir:-rd}2.loopfs" "$rcdir/${ldir:-rd}.loopfs" 2>/dev/null || break
+done
+rm "$tmp" "$rcdir" -Rf
 echo "initrd updated."
 
 exit 0
