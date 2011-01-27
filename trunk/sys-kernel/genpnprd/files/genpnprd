@@ -271,6 +271,10 @@ if squashfs_enabled; then
 fi
 
 cd $rcdir || die
+for i in $rcdir/lib/modules/*/modules.alias; do
+	sort -u $i >$i.1 || break
+	mv $i.1 $i
+done
 [[ "$PNPMODE" != "nopnp" ]] && /usr/bin/perl ${UROOT}/usr/share/genpnprd/mod2sh.pl $rcdir/lib/modules/* || die
 [[ "$PNPMODE" == "pnponly" ]] && PNPONLY=true
 for i in etc sbin; do
