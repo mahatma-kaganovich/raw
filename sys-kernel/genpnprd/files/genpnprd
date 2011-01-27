@@ -25,7 +25,7 @@ CRAMFS=""
 LZMA=""
 susp_sig=""
 THIN="/drivers/net/\|/cifs/\|/nfs/\|/unix"
-THIN_INFO="/fs/\|^alias:.*:"
+THIN_INFO="/fs/\|^alias:.*:\|/unix"
 
 : ${TMPDIR:="$ROOT/var/tmp"}
 tmp="$TMPDIR/genpnprd.$$"
