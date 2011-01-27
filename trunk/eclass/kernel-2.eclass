@@ -12,7 +12,7 @@ if [[ ${ETYPE} == sources ]]; then
 IUSE="${IUSE} build-kernel debug custom-cflags pnp compressed integrated ipv6
 	netboot nls unicode +acl minimal selinux custom-arch
 	+kernel-drm +kernel-alsa kernel-firmware +sources fbcon staging pnponly lzma
-	external-firmware xen +smp tools multilib multitarget"
+	external-firmware xen +smp tools multilib multitarget thin"
 DEPEND="${DEPEND}
 	!<app-portage/ppatch-0.08-r16
 	pnp? ( sys-kernel/genpnprd )
@@ -172,7 +172,7 @@ kernel-2_src_compile() {
 		_cc $i
 	done
 	einfo "Preparing boot image"
-	bash "${UROOT}/usr/share/genpnprd/genpnprd" "${S}/initrd-${REAL_KV}.img" "$( (use !pnp && echo nopnp)||(use pnponly && echo pnponly) )" "${TMPDIR}"/overlay-rd $(use lzma && echo --LZMA 1) || die
+	bash "${UROOT}/usr/share/genpnprd/genpnprd" "${S}/initrd-${REAL_KV}.img" "$( (use !pnp && echo nopnp)||(use pnponly && echo pnponly) )" "${TMPDIR}"/overlay-rd $(use lzma && echo --LZMA 1) $(use thin|| echo --THIN -)|| die
 	# integrated: do not compress twice;
 	# others: +~700K, but faster boot & less RAM to uncompress.
 	# "integrated" still minimal
@@ -199,7 +199,7 @@ kernel-2_src_install() {
 		mkdir "${D}/boot"
 		if ! use integrated; then
 			insinto "/boot"
-			doins "initrd-${REAL_KV}.img"
+			doins initrd-"${REAL_KV}"{,.thin}.img
 		fi
 		local f f1
 		if use kernel-firmware; then
