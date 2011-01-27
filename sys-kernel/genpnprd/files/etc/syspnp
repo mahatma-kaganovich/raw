@@ -584,6 +584,7 @@ resume(){
 
 detect_fs(){
 	local i m="" md="$USE_MDADM" dm="$USE_DMRAID_NORMAL" t="$cmd_detect_root" lvm="$USE_LVM_NORMAL" evms="$USE_EVMS_NORMAL" mddef=true
+	[[ -n "$NFSLIKE_FS" ]] && [[ "$REAL_ROOT" == /dev/nfs ]] && REAL_ROOT="/dev/$NFSLIKE_FS"
 	case "$t" in
 	true|false)t="";
 	esac
@@ -907,6 +908,7 @@ syspnp(){
 	# first pass - strict bus order
 #	CHK=true # try twice?
     for pnpass in 0 0; do
+	REORDER=break
 	mod $MDOLIST unix
 	load_hand_made0
 	$cmd_fast && ofast_modalias || ordered_modalias $SYS_FIND
