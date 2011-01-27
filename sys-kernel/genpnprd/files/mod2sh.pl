@@ -9,7 +9,8 @@ my %dep;
 
 # to load second/last
 # will be delimited by "1" (to easy "break/continue" integration)
-my $reorder='\/ide\/|usb-storage|\/oss\/';
+#my $reorder='\/ide\/|usb-storage|\/oss\/|\/drivers\/video\/';
+my $reorder='\/ide\/|usb-storage|\/oss\/|\/nvidia\/|\/radeon\/|\/intelfb\/';
 
 # 0-old (alias-per-case), 1-"or", 2-slow/multi-match
 my $JOIN=2;
@@ -93,7 +94,7 @@ sub check_info{
 	while($m){
 		$m=0;
 		for(keys %alias){
-			my @a=@{$alias{$_}};
+			my @a=sort @{$alias{$_}};
 			delete($alias{$_});
 			for my $i (@a){
 				for(@{$alias{$_}}){
