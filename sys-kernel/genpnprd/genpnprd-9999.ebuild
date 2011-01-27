@@ -12,11 +12,11 @@ S="${FILESDIR}"
 src_install(){
 	insinto /etc/kernels
 	doins kernel.conf
-	for i in $(find|sort); do
-		[[ "/$i" != */.* ]] && if [[ -d "$i" ]]; then
-			dodir "/usr/share/$PN${i#.}"
+	for i in $(find|sort|egrep -v "/\.\|^\.$" ); do
+		i="${i#.}"
+		if [[ -d ".$i" ]]; then
+			dodir "/usr/share/$PN$i"
 		else
-			i="${i#.}"
 			insinto "/usr/share/${PN}${i%/*}"
 			doins "${i#/}"
 		fi
