@@ -10,17 +10,15 @@ RDEPEND="|| ( sys-fs/cramfs sys-apps/util-linux[cramfs] )
 S="${FILESDIR}"
 
 src_install(){
-#	cd "${S}"
 	insinto /etc/kernels
 	doins kernel.conf
-	insinto /usr/share/${PN}
 	for i in $(find|sort); do
-		i="${i#.}"
-		[[ "$i" != */.* ]] && [[ -n "$i" ]] && if [[ -d ".$i" ]]; then
-			dodir "/usr/share/$PN$i"
+		[[ "/$i" != */.* ]] && if [[ -d "$i" ]]; then
+			dodir "/usr/share/$PN${i#.}"
 		else
+			i="${i#.}"
 			insinto "/usr/share/${PN}${i%/*}"
-			doins "${i#/}" || einfo " - $i"
+			doins "${i#/}"
 		fi
 	done
 	dobin ${PN}
