@@ -12,7 +12,7 @@ S="${FILESDIR}"
 src_install(){
 	insinto /etc/kernels
 	doins kernel.conf
-	for i in $(find|sort|egrep -v "/\.\|^\.$" ); do
+	for i in $(find|sort|grep -v "/\.\|^\.$" ); do
 		i="${i#.}"
 		if [[ -d ".$i" ]]; then
 			dodir "/usr/share/$PN$i"
