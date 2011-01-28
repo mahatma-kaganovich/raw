@@ -836,7 +836,7 @@ etc_modalias(){
 	[[ -f /etc/modalias ]] && mv /etc/modalias /etc/modalias_ || return 1
 	mod `cat /etc/modalias_`
 	rm /etc/modalias_
-	return 0
+	return $pnpass
 }
 
 loadsh(){
@@ -898,19 +898,19 @@ syspnp(){
 	override_modprobe
 	[[ "${SHLOADED##* modprobe }" == "${SHLOADED}" ]] && mod(){ modprobe -q -a "${@}";}
 	loadsh blkid
+	empty_hwopts firewire net pata pcmcia sata scsi usb   ataraid dmraid evms lvm mdadm fs
+    for pnpass in 0 0; do
 	for i in 0 1 2 3 4 5; do
 		echo -ne "" >"${PNP_TMP}.$i"
 	done
-
-	empty_hwopts firewire net pata pcmcia sata scsi usb   ataraid dmraid evms lvm mdadm fs
+	REORDER=break
+	REFRESH_SAME=
+	CHK=true
 	etc_modalias
 	refresh n
-	# first pass - strict bus order
-#	CHK=true # try twice?
-    for pnpass in 0 0; do
-	REORDER=break
 	mod $MDOLIST unix
 	load_hand_made0
+	# first pass - strict bus order
 	$cmd_fast && ofast_modalias || ordered_modalias $SYS_FIND
 	CHK=single
 	etc_modalias
