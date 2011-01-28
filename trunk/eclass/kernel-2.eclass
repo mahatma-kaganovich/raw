@@ -176,18 +176,25 @@ kernel-2_src_compile() {
 	# integrated: do not compress twice;
 	# others: +~700K, but faster boot & less RAM to uncompress.
 	# "integrated" still minimal
-	( use pnp || use compressed || use integrated ) &&
-		gzip -dc "initrd-${REAL_KV}.img" >"initrd-${REAL_KV}.cpio" &&
-		rm "initrd-${REAL_KV}.img"
+	# integrated+thin = integrated thin
+	# standalone "thin" image still compressed
+	local i="initrd-${REAL_KV}.cpio" i1="initrd-${REAL_KV}.img"
+	( use pnp || use compressed || (use integrated && use !thin) ) &&
+		gzip -dc "$i1"  >"$i" && rm "$i1"
 	if use integrated; then
-		echo "CONFIG_INITRAMFS_SOURCE=\"initrd-${REAL_KV}.cpio\"
+		use thin && {
+			i="initrd-${REAL_KV}.thin.cpio"
+			i1="$i1.thin"
+			gzip -dc "$i1" >"$i" && rm "$i1"
+		}
+		echo "CONFIG_INITRAMFS_SOURCE=\"$i\"
 CONFIG_INITRAMFS_ROOT_UID=0
 CONFIG_INITRAMFS_ROOT_GID=0
 CONFIG_INITRAMFS_COMPRESSION_NONE=y" >>.config
 		yes '' 2>/dev/null | kmake oldconfig &>/dev/null
 		kmake bzImage
 	else
-		[[ -e "initrd-${REAL_KV}.cpio" ]] && rename .cpio .img "initrd-${REAL_KV}.cpio"
+		[[ -e "$i" ]] && rename .cpio .img "$i"
 	fi
 	rm .config.old
 }
@@ -223,8 +230,9 @@ kernel-2_src_install() {
 		[[ -e "$f" ]] || cp "${S}/.config" "$f"
 		if [[ "${SLOT}" != "${PVR}" ]] ; then
 			use sources && dosym linux-${KV_FULL} /usr/src/linux-${SLOT}
-			use integrated || dosym initrd-${REAL_KV}.img /boot/initrd-${SLOT}.img
-			use thin && dosym initrd-${REAL_KV}.img.thin /boot/initrd-${SLOT}.img.thin
+			for i in .img .img.thin; do
+				[[ -e "${D}/boot/initrd-${REAL_KV}$i" ]] && dosym initrd-${REAL_KV}$i /boot/initrd-${SLOT}$i
+			done
 		fi
 		if use sources ; then
 			find "${S}" -name "*.cmd" | while read f ; do
