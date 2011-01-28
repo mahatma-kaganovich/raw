@@ -473,7 +473,6 @@ local ip dev s d h
 	}
 	return
 }
-mod af_packet
 for ip in "${@}"; do
     msg_ "Configuring IP $ip"
     eval "set `echo "'$ip'"|sed -e "s/:/' '/g"` ''"
@@ -481,6 +480,8 @@ for ip in "${@}"; do
 	d=
 	case "$7" in
 	on|any|dhcp)
+		mod af_packet
+		msg_
 		busybox udhcpc -i $dev -n -T 15 -q || continue
 		d=`grep -s "^domain " /etc/resolv.conf|sed -e 's:^domain ::'`
 		[ -e /rootpath ] && NFSROOT=`cat /rootpath`
