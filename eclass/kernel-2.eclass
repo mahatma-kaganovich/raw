@@ -224,6 +224,7 @@ kernel-2_src_install() {
 		if [[ "${SLOT}" != "${PVR}" ]] ; then
 			use sources && dosym linux-${KV_FULL} /usr/src/linux-${SLOT}
 			use integrated || dosym initrd-${REAL_KV}.img /boot/initrd-${SLOT}.img
+			use thin && dosym initrd-${REAL_KV}.img.thin /boot/initrd-${SLOT}.img.thin
 		fi
 		if use sources ; then
 			find "${S}" -name "*.cmd" | while read f ; do
