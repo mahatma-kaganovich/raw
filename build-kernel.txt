@@ -93,6 +93,11 @@ Useflag "netboot" make Gentoo's netboot image (not yet verifyed,
 todo: include Kerrighed modules and tools too, but tools must be
 static).
 
+Useflag "thin" make additional "thin" image (network drivers, cifs, nfs),
+having priority to be "integrated". TODO: strip drivers to PXE agents list.
+Loader will continue hw detection after mounting root if at least one module
+not found.
+
 Kernel cmdline options: "nopnp", "unload" (try to rmmod after mounting root),
 "loadall" (try to load all possible drivers, slow), "slow" (fixed v0.1 mode,
 deprecated, now vs. new bugs), "parallel-startup[={0|1|2}]" (module parallel
