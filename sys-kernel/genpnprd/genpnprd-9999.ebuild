@@ -11,7 +11,7 @@ S="${FILESDIR}"
 
 src_install(){
 	insinto /etc/kernels
-	doins kernel.conf
+	doins kernel.conf genkernel.conf
 	for i in $(find|sort|grep -v "/\.\|^\.$" ); do
 		i="${i#.}"
 		if [[ -d ".$i" ]]; then
