@@ -12,7 +12,8 @@ if [[ ${ETYPE} == sources ]]; then
 IUSE="${IUSE} build-kernel debug custom-cflags pnp compressed integrated ipv6
 	netboot nls unicode +acl minimal selinux custom-arch
 	+kernel-drm +kernel-alsa kernel-firmware +sources fbcon staging pnponly lzma
-	external-firmware xen +smp tools multilib multitarget thin"
+	external-firmware xen +smp tools multilib multitarget thin
+	lvm device-mapper unionfs iscsi"
 DEPEND="${DEPEND}
 	!<app-portage/ppatch-0.08-r16
 	pnp? ( sys-kernel/genpnprd )
@@ -110,6 +111,10 @@ kernel-2_src_configure() {
 	config_defaults
 }
 
+use__(){
+	use $1 && echo "--${2:-$1}"
+}
+
 kernel-2_src_compile() {
 	if [[ "${EAPI}" == 1 ]]; then
 		kernel-2_src_prepare
@@ -145,7 +150,7 @@ kernel-2_src_compile() {
 	einfo "Generating initrd image"
 	KV="${KV0}"
 	check_kv
-	local p=""
+	local p="$(use__ lvm lvm2) $(use__ iscsi) $(use__ device-mapper dmraid) $(use__ unionfs)"
 	use netboot && p="${p} --netboot"
 	[[ -e "${BDIR}" ]] || mkdir "${BDIR}"
 	kmake INSTALL_MOD_PATH="${BDIR}" -j1 modules_install
