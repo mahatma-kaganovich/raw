@@ -473,6 +473,7 @@ local ip dev s d h
 	}
 	return
 }
+mod af_packet
 for ip in "${@}"; do
     msg_ "Configuring IP $ip"
     eval "set `echo "'$ip'"|sed -e "s/:/' '/g"` ''"
