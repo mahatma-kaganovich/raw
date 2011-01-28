@@ -901,6 +901,7 @@ syspnp(){
 	[[ "${SHLOADED##* modprobe }" == "${SHLOADED}" ]] && mod(){ modprobe -q -a "${@}";}
 	loadsh blkid
 	empty_hwopts firewire net pata pcmcia sata scsi usb   ataraid dmraid evms lvm mdadm fs
+	[[ -z "$ISCSI_INITIATORNAME$ISCSI_TARGET$ISCSI_ADDRESS" ]] && empty_hwopts iscsi
     for pnpass in 0 0; do
 	for i in 0 1 2 3 4 5; do
 		echo -ne "" >"${PNP_TMP}.$i"
