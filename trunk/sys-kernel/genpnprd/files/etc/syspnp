@@ -532,14 +532,14 @@ findnfsmount() {
 			local o="ro,nolock,rsize=1024,wsize=1024,$cmd_real_rootflags" m="$NEW_ROOT"
 			[[ "$CDROOT" != '0' ]] && m="$m/mnt/cdrom"
 			case "$NFSLIKE_FS:$NFSROOT" in
-			cifs:*|://*)o="$o,user=,guest";NFSLIKE_FS=cifs;;
+			cifs:*|://*)o="$o,user=,guest,serverino";NFSLIKE_FS=cifs;;
 			:*|nfs:*)NFSLIKE_FS=nfs;;
 			*)o="$o,user=,guest $o,user= $o";;
 			esac
 			grep -q "[ 	]${NFSLIKE_FS:=nfs}\$" /proc/filesystems || return 1
 			for o in $o; do
 				good_msg "Attempting to mount $NFSLIKE_FS on $NFSROOT into $m -o $o"
-				if mount -t $NFSLIKE_FS -o $o $NFSROOT $m ; then
+				if mount -t $NFSLIKE_FS $NFSROOT $m -o $o ; then
 					# FIXME: Need to start portmap and the other rpc daemons in
 					# order to remount rw.
 					REAL_ROOT="/dev/nfs"
@@ -854,10 +854,12 @@ mntnewroot(){
 		fi
 		[[ "$NEW_ROOT" == /dev/nfs ]] && [[ -e /newroot ]] && NEW_ROOT="/newroot"
 		if [[ -e "$NEW_ROOT" ]] && [[ -n "$LOOP" ]]; then
-			LOOP_ROOT="$NEW_ROOT"
+			LOOP_ROOT=
+#			LOOP_ROOT="$NEW_ROOT"
 			for i in mnt/livecd; do
 				[[ -d $NEW_ROOT/$i ]] && LOOP_ROOT="$NEW_ROOT/$i" && break
 			done
+			[[ -z "$LOOP_ROOT" ]] && mkdir ${LOOP_ROOT:=/newroot.loop}
 			if ! ( [[ -d "$LOOP_ROOT" ]] && mnt_loop /dev/loop0 "/newroot/$LOOP" "$LOOP_ROOT" && [[ -e "$LOOP_ROOT$cmd_real_init" ]] ) ; then
 				umount "$LOOP_ROOT"
 				losetup -d /dev/loop0
@@ -866,7 +868,12 @@ mntnewroot(){
 				rmdir "$NEW_ROOT"
 				LOOP_ROOT=""
 			fi
+			if [[ "$LOOP_ROOT" != "$NEW_ROOT" ]] && [[ -n "${LOOP_ROOT##$NEW_ROOT/*}" ]] && [[ -e "$LOOP_ROOT" ]] && mount --move $NEW_ROOT $LOOP_ROOT/boot; then
+				mount --move $LOOP_ROOT $NEW_ROOT
+				rmdir $LOOP_ROOT && LOOP_ROOT="$NEW_ROOT"
+			fi
 		fi
+		cp /proc/mounts /etc/mtab
 		# around genkernel
 		[[ -d "$NEW_ROOT" ]] && {
 			REAL_ROOTFLAGS="$REAL_ROOTFLAGS,remount"
@@ -874,7 +881,7 @@ mntnewroot(){
 				LOOP=
 				LOOPTYPE=
 				REAL_ROOT=/dev/loop0
-#				REAL_ROOTFLAGS="loop,remount,ro"
+				REAL_ROOTFLAGS="loop,remount,ro"
 			fi
 		}
 	fi
@@ -1061,7 +1068,3 @@ while true; do
 	run_shell
 done
 fi
-
-
-r=/mnt/ram
-t=/var/tmp/lst
