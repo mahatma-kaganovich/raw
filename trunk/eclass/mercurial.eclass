@@ -98,7 +98,7 @@ function mercurial_fetch {
 	cd "${hg_src_dir}/${EHG_PROJECT}" || \
 		die "failed to cd to ${hg_src_dir}/${EHG_PROJECT}"
 
-	rm "${hg_src_dir}/${EHG_PROJECT}/${module}"/.hg/{undo.,}{branch,dirstate} -f
+	rm "${hg_src_dir}/${EHG_PROJECT}/${module}"/.hg/{undo.,}{branch,dirstate,cache} -f
 
 	# Clone/update repository:
 	if [[ ! -d "${module}" ]]; then
