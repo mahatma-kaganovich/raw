@@ -737,6 +737,7 @@ if [[ -n "${hg}" ]]; then
 src_unpack() {
 	use static && use jssh && die 'Useflags "static" & "jssh" incompatible'
 	local hg_mod=""
+	use release-branch || use release-tag || local EHG_BRANCH=default
 	if [[ "${PVR}" == *-r9999* ]]; then
 		[[ "${S}" != "${S1}" ]] && _hg "${S##*/}"
 		_hg mozilla-central "${S1}"
