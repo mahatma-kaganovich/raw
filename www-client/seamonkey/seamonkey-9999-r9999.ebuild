@@ -39,8 +39,8 @@ esac
 IUSE="-java mozdevelop moznoirc moznoroaming postgres startup-notification
 	debug minimal directfb moznosystem +threads jssh wifi python mobile static
 	moznomemory accessibility system-sqlite vanilla xforms gio +alsa
-	+custom-cflags +custom-optimization system-xulrunner +ipc system-nss system-nspr X
-	bindist"
+	+custom-cflags +custom-optimization system-xulrunner +libxul system-nss system-nspr X
+	bindist flatfile"
 #	qt-experimental"
 
 #RESTRICT="nomirror"
@@ -90,7 +90,7 @@ case "${PV}" in
 esac
 if [[ -n "${hg}" ]]; then
 	LANGS=""
-	IUSE="${IUSE} faststart"
+	IUSE="${IUSE} faststart nspr-repo"
 	force vanilla
 	SRC_URI=""
 	if [[ "${PVR}" == *-r9999* ]]; then
@@ -142,8 +142,7 @@ seamonkey)
 	[[ -z "${hg}" ]] && SRC_URI="${SRC_URI} crypt? ( !moznomail? ( http://dev.gentoo.org/~anarchy/dist/enigmail-${EMVER}.tar.gz ) )"
 	RDEPEND="${RDEPEND} crypt? ( !moznomail? ( >=app-crypt/gnupg-1.4 ) )"
 	S1="${S}/mozilla"
-	#[[ -n "${hg}" ]] && 
-	force -ipc
+	[[ -n "${hg}" ]] && force -libxul
 	: ${EHG_TAG_seamonkey:=SEAMONKEY}
 ;;
 firefox)
@@ -376,7 +375,7 @@ src_configure(){
 	mozconfig_use_enable mobile mobile-optimize
 	mozconfig_use_enable !moznocalendar calendar
 	if use static; then
-		use ipc || mozconfig_use_enable static
+		use libxul || mozconfig_use_enable static
 		mozconfig_use_enable static static-mail
 		[[ "${PVR}" == *9999 ]] && mozconfig_use_enable static js-static-build
 	fi
@@ -394,10 +393,12 @@ src_configure(){
 
 	mozconfig_use_enable alsa ogg
 	mozconfig_use_enable alsa wave
-	if isopt '\--disable-ipc'; then
-		mozconfig_use_enable ipc
-		mozconfig_use_enable ipc libxul
-	fi
+
+	isopt '\--disable-ipc' && mozconfig_use_enable libxul ipc
+	mozconfig_use_enable libxul
+	use !libxul && use !flatfile && mozconfig_annotate "-libxul" --enable-chrome-format=jar
+	use flatfile && mozconfig_annotate "flatfile" --enable-chrome-format=symlink
+
 	mozconfig_use_enable startup-notification libnotify
 
 	if use moznoirc; then
@@ -755,6 +756,7 @@ src_unpack() {
 	SM && use !moznomail && use crypt && _cvs enigmail/src "${S}"/mailnews/extensions/enigmail crypt
 	# branches: LDAPCSDK_6_0_6_RTM LDAPCSDK_6_0_6D_MOZILLA_RTM
 	SM && ECVS_BRANCH="HEAD" _cvs_m mozilla/directory/c-sdk "${S}/directory/c-sdk" ldap
+	use nspr-repo && _cvs_m mozilla/nsprpub "${S1}/nsprpub"
 	local l # EHG_EXTRA_OPT="${EHG_EXTRA_OPT} --rev tip"
 	mkdir "${WORKDIR}/l10n"
 	for l in $(langs) ; do
