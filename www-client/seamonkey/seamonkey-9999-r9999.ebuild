@@ -90,7 +90,7 @@ case "${PV}" in
 esac
 if [[ -n "${hg}" ]]; then
 	LANGS=""
-	IUSE="${IUSE} faststart nspr-repo"
+	IUSE="${IUSE} faststart +nspr-repo"
 	force vanilla
 	SRC_URI=""
 	if [[ "${PVR}" == *-r9999* ]]; then
@@ -349,7 +349,7 @@ src_configure(){
 	mozconfig_annotate 'galeon' --enable-oji --enable-mathml
 
 	# Other moz-specific settings
-	mozconfig_use_enable mozdevelop jsd
+#	mozconfig_use_enable mozdevelop jsd
 	mozconfig_use_enable mozdevelop xpctools
 	[[ -e "${S1}"/extensions/python ]] && mozconfig_use_extension python python/xpcom
 #	mozconfig_use_extension python python
