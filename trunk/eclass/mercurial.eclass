@@ -63,6 +63,12 @@ DEPEND="dev-vcs/mercurial"
 # users.
 EHG_OFFLINE="${EHG_OFFLINE:-${ESCM_OFFLINE}}"
 
+# @ECLASS-VARIABLE: @EHG_BRANCH
+# @DESCRIPTION:
+# if set, commit/pull only specified branch, not all repo
+# for example, mozilla-central needs "default" now to avoid unresolved patch
+# (+reduce traffic)
+
 # @FUNCTION: mercurial_fetch
 # @USAGE: [repository_uri] [module]
 # @DESCRIPTION:
@@ -103,7 +109,7 @@ function mercurial_fetch {
 	# Clone/update repository:
 	if [[ ! -d "${module}" ]]; then
 		einfo "Cloning ${EHG_REPO_URI} to ${hg_src_dir}/${EHG_PROJECT}/${module}"
-		${EHG_CLONE_CMD} "${EHG_REPO_URI}" "${module}" || {
+		${EHG_CLONE_CMD} "${EHG_REPO_URI}" "${module}" ${EHG_BRANCH:+-b $EHG_BRANCH} || {
 			rm -rf "${module}"
 			die "failed to clone ${EHG_REPO_URI}"
 		}
@@ -111,7 +117,7 @@ function mercurial_fetch {
 	elif [[ -z "${EHG_OFFLINE}" ]]; then
 		einfo "Updating ${hg_src_dir}/${EHG_PROJECT}/${module} from ${EHG_REPO_URI}"
 		cd "${module}" || die "failed to cd to ${module}"
-		${EHG_PULL_CMD} || die "update failed"
+		${EHG_PULL_CMD} ${EHG_BRANCH:+-b $EHG_BRANCH} || die "update failed"
 	fi
 
 	local EHG_REVISION
