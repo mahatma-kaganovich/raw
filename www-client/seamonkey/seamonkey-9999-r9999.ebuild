@@ -537,8 +537,8 @@ src_configure(){
 #		mozconfig_annotate '' --enable-application=${a}
 #	else
 		[[ "${a//xulrunner}" != "${a}" ]] && export LD_RUN_PATH="${MOZILLA_FIVE_HOME}/xulrunner:${LD_RUN_PATH}"
-		echo "mk_add_options MOZ_BUILD_PROJECTS=\"${a}\"
-mk_add_options MOZ_OBJDIR=@TOPSRCDIR@/../base" >>"${S}"/.mozconfig
+		echo "mk_add_options MOZ_BUILD_PROJECTS=\"${a}\"" >>"${S}"/.mozconfig
+		[[ "${a// }" == "${a}" ]] || echo "mk_add_options MOZ_OBJDIR=@TOPSRCDIR@/../base" >>"${S}"/.mozconfig
 		for i in ${a}; do
 			echo "ac_add_app_options ${i} --enable-application=${i}" >>"${S}"/.mozconfig
 			[[ "${a//xulrunner}" != "${a}" ]] && [[ "${i}" != "xulrunner" ]] &&
@@ -576,15 +576,12 @@ src_compile() {
 	local E="${S}/mailnews/extensions/enigmail"
 	if grep -q "^mk_" "${S}"/.mozconfig; then
 		emake -f client.mk build || die
-		if [[ -e "$E" ]]; then
-			emake DEPTH=../../../../base/"$MOZ_CO_PROJECT" -C "$E" || die
-		fi
 	else
 		# sometimes parallel build breaks
 		emake || emake -j1 || die
-		if [[ -e "$E" ]]; then
-			emake -C "$E" || die
-		fi
+	fi
+	if [[ -e "$E" ]]; then
+		emake -C "$E" || die
 	fi
 }
 
