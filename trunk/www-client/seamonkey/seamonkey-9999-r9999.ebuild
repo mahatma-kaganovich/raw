@@ -624,13 +624,13 @@ src_install() {
 	done
 
 	# Most of the installation happens here
-#	dodir "${MOZILLA_FIVE_HOME}"
-#	cp -RL "${S1}"/dist/bin/* "${D}"/"${MOZILLA_FIVE_HOME}"/ ||
-#	    cp -RL "${WORKDIR}"/base/${MOZ_CO_PROJECT##* }/dist/bin/* "${D}"/"${MOZILLA_FIVE_HOME}"/ ||
-#	    die "cp failed"
+	dodir "${MOZILLA_FIVE_HOME}"
+	cp -RL "${S1}"/dist/bin/* "${D}"/"${MOZILLA_FIVE_HOME}"/ ||
+	    cp -RL "${WORKDIR}"/base/${MOZ_CO_PROJECT##* }/dist/bin/* "${D}"/"${MOZILLA_FIVE_HOME}"/ ||
+	    die "cp failed"
 
-	grep -q "^mk_" "${S}"/.mozconfig && i="-f client.mk" || i=
-	emake $i DESTDIR="${D}" install
+#	grep -q "^mk_" "${S}"/.mozconfig && i="-f client.mk" || i=
+#	emake $i DESTDIR="${D}" install
 
 	if [[ -n ${LANG} && ${LANG} != "en-US" ]]; then
 		elog "Setting default locale to ${LANG}"
