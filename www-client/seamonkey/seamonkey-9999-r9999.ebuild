@@ -142,7 +142,7 @@ seamonkey)
 	[[ -z "${hg}" ]] && SRC_URI="${SRC_URI} crypt? ( !moznomail? ( http://dev.gentoo.org/~anarchy/dist/enigmail-${EMVER}.tar.gz ) )"
 	RDEPEND="${RDEPEND} crypt? ( !moznomail? ( >=app-crypt/gnupg-1.4 ) )"
 	S1="${S}/mozilla"
-	[[ -n "${hg}" ]] && force -libxul
+	[[ -z "${hg}" ]] && force -libxul
 	: ${EHG_TAG_seamonkey:=SEAMONKEY}
 ;;
 firefox)
@@ -256,6 +256,12 @@ src_prepare(){
 
 	sed -i -e 's%^#elif$%#elif 1%g' "${S1}"/toolkit/xre/nsAppRunner.cpp
 	use X || sed -i -e 's:gtk-2\.0:gtk-directfb-2.0:g' -e 's:GDK_PACKAGES=directfb:GDK_PACKAGES="directfb gdk-directfb-2.0":g' `find "${S}" -name configure.in` `find "${S}" -name "Makefile*"`
+	if use !moznosystem; then
+		sed -i -e 's:^\(#include <limits.h>\)$:\1\n#define cairo_surface_set_subpixel_antialiasing(x,y)\n#define cairo_surface_get_subpixel_antialiasing(x) 1\n#define CAIRO_SUBPIXEL_ANTIALIASING_ENABLED 1:' "${S1}"/gfx/thebes/gfxASurface.cpp
+		sed -i -e 's:^\(#include "cairo.h"\)$:\1\n#include <cairo-tee.h>:' "${S1}"/gfx/thebes/gfxTeeSurface.cpp
+		sed -i -e 's:^cairo-pdf\.h$:cairo-pdf.h\ncairo-tee.h:' "${S1}/config/system-headers" "${S1}/js/src/config/system-headers"
+		rm -Rf "${S1}/gfx/cairo"
+	fi
 	sed -i -e 's:^\(PR_STATIC_ASSERT.*CAIRO_SURFACE_TYPE_SKIA.*\)$:#if CAIRO_HAS_SKIA_SURFACE\n\1\n#endif:' "${S1}"/gfx/thebes/gfxASurface.cpp
 	use ldap || sed -i -e 's:^#ifdef MOZ_LDAP_XPCOM$:ifdef MOZ_LDAP_XPCOM:' -e 's:^#endif$:endif:' "${S}"/bridge/bridge.mk
 	touch "${S}"/directory/xpcom/datasource/nsLDAPDataSource.manifest
@@ -393,6 +399,8 @@ src_configure(){
 
 	mozconfig_use_enable alsa ogg
 	mozconfig_use_enable alsa wave
+	isopt '\--disable-webm' && mozconfig_use_enable alsa webm
+#	use alsa && mozconfig_annotate "alsa" --with-system-libvpx
 
 	isopt '\--disable-ipc' && mozconfig_use_enable libxul ipc
 	mozconfig_use_enable libxul
@@ -521,9 +529,9 @@ src_configure(){
 		use system-${i} || a="${a} ${i}"
 	done
 	a="${a# }"
-	if [[ "${a// }" == "${a}" ]]; then
-		mozconfig_annotate '' --enable-application=${a}
-	else
+#	if [[ "${a// }" == "${a}" ]]; then
+#		mozconfig_annotate '' --enable-application=${a}
+#	else
 		[[ "${a//xulrunner}" != "${a}" ]] && export LD_RUN_PATH="${MOZILLA_FIVE_HOME}/xulrunner:${LD_RUN_PATH}"
 		echo "mk_add_options MOZ_BUILD_PROJECTS=\"${a}\"
 mk_add_options MOZ_OBJDIR=@TOPSRCDIR@/../base" >>"${S}"/.mozconfig
@@ -532,7 +540,7 @@ mk_add_options MOZ_OBJDIR=@TOPSRCDIR@/../base" >>"${S}"/.mozconfig
 			[[ "${a//xulrunner}" != "${a}" ]] && [[ "${i}" != "xulrunner" ]] &&
 				echo "ac_add_app_options ${i} --with-libxul-sdk=../xulrunner/dist"" ">>"${S}"/.mozconfig
 		done
-	fi
+#	fi
 
 	# Finalize and report settings
 	mozconfig_final
@@ -566,9 +574,9 @@ src_compile() {
 		emake -f client.mk build || die
 	else
 		emake || emake -j1 || die
-		if [[ -e "${S}"/mailnews/extensions/enigmail ]]; then
-			emake -C "${S}"/mailnews/extensions/enigmail || die
-		fi
+	fi
+	if [[ -e "${S}"/mailnews/extensions/enigmail ]]; then
+		emake -C "${S}"/mailnews/extensions/enigmail || die
 	fi
 }
 
