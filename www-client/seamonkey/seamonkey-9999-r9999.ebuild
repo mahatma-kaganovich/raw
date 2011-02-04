@@ -40,7 +40,7 @@ IUSE="-java mozdevelop moznoirc moznoroaming postgres startup-notification
 	debug minimal directfb moznosystem +threads jssh wifi python mobile static
 	moznomemory accessibility system-sqlite vanilla xforms gio +alsa
 	+custom-cflags +custom-optimization system-xulrunner +libxul system-nss system-nspr X
-	bindist flatfile"
+	bindist flatfile dbus"
 #	qt-experimental"
 
 #RESTRICT="nomirror"
@@ -63,6 +63,7 @@ RDEPEND="java? ( >=virtual/jre-1.4 )
 		x11-libs/cairo[directfb=]
 		x11-libs/pango
 		dev-libs/libevent
+		alsa? ( media-libs/libvpx )
 	)
 	X? ( >=x11-libs/gtk+-2.8.6 )
 	!X? ( x11-libs/gtk+-directfb )
@@ -90,7 +91,7 @@ case "${PV}" in
 esac
 if [[ -n "${hg}" ]]; then
 	LANGS=""
-	IUSE="${IUSE} faststart +nspr-repo"
+	IUSE="${IUSE} faststart extra-repo"
 	force vanilla
 	SRC_URI=""
 	if [[ "${PVR}" == *-r9999* ]]; then
@@ -138,7 +139,7 @@ seamonkey)
 	DESCRIPTION="Mozilla Application Suite - web browser, email, HTML editor, IRC"
 	HOMEPAGE="http://www.seamonkey-project.org/"
 	export MOZ_CO_PROJECT=suite
-	IUSE="${IUSE} ldap moznocompose moznomail crypt moznocalendar"
+	IUSE="${IUSE} +ldap moznocompose moznomail crypt moznocalendar"
 	[[ -z "${hg}" ]] && SRC_URI="${SRC_URI} crypt? ( !moznomail? ( http://dev.gentoo.org/~anarchy/dist/enigmail-${EMVER}.tar.gz ) )"
 	RDEPEND="${RDEPEND} crypt? ( !moznomail? ( >=app-crypt/gnupg-1.4 ) )"
 	S1="${S}/mozilla"
@@ -230,7 +231,7 @@ src_prepare(){
 
 	if [[ -e "${S}"/mailnews/extensions/enigmail ]]; then
 		cd "${S}"/mailnews/extensions/enigmail || die
-		makemake2
+		./makemake -r
 	fi
 
 	mv "${WORKDIR}"/xforms* "${S1}"/extensions/xforms
@@ -281,13 +282,15 @@ src_prepare(){
 		done
 	done
 
-	for i in "${S1}/js/src" "${S1}" "${S}" ; do
+	for i in "${S1}/js/src" "${S1}" "${S}" "${S}/ldap/sdks/c-sdk" "${S}/directory/c-sdk" ; do
 		cd "${i}" && eautoreconf
 	done
 }
 
 src_configure(){
 	declare MOZILLA_FIVE_HOME="/usr/$(get_libdir)/${PN}"
+
+	use ldap && SM || ewarn 'Seamonkey love LDAP, then strongly recommended USE="ldap" if you got error!'
 
 	export LD_RUN_PATH=":${LD_RUN_PATH}"
 
@@ -377,6 +380,7 @@ src_configure(){
 	mozconfig_use_enable ldap ldap-experimental
 	mozconfig_use_with threads pthreads
 	mozconfig_use_with X x
+	mozconfig_use_enable dbus
 	mozconfig_use_enable X plugins
 	mozconfig_use_enable mobile mobile-optimize
 	mozconfig_use_enable !moznocalendar calendar
@@ -400,7 +404,7 @@ src_configure(){
 	mozconfig_use_enable alsa ogg
 	mozconfig_use_enable alsa wave
 	isopt '\--disable-webm' && mozconfig_use_enable alsa webm
-#	use alsa && mozconfig_annotate "alsa" --with-system-libvpx
+	use alsa && mozconfig_annotate "alsa" --with-system-libvpx
 
 	isopt '\--disable-ipc' && mozconfig_use_enable libxul ipc
 	mozconfig_use_enable libxul
@@ -569,14 +573,18 @@ mk_add_options MOZ_OBJDIR=@TOPSRCDIR@/../base" >>"${S}"/.mozconfig
 }
 
 src_compile() {
-	# sometimes parallel build breaks
+	local E="${S}/mailnews/extensions/enigmail"
 	if grep -q "^mk_" "${S}"/.mozconfig; then
 		emake -f client.mk build || die
+		if [[ -e "$E" ]]; then
+			emake DEPTH=../../../../base/"$MOZ_CO_PROJECT" -C "$E" || die
+		fi
 	else
+		# sometimes parallel build breaks
 		emake || emake -j1 || die
-	fi
-	if [[ -e "${S}"/mailnews/extensions/enigmail ]]; then
-		emake -C "${S}"/mailnews/extensions/enigmail || die
+		if [[ -e "$E" ]]; then
+			emake -C "$E" || die
+		fi
 	fi
 }
 
@@ -745,7 +753,7 @@ if [[ -n "${hg}" ]]; then
 
 src_unpack() {
 	use static && use jssh && die 'Useflags "static" & "jssh" incompatible'
-	local hg_mod=""
+	local hg_mod="" d
 	use release-branch || use release-tag || local EHG_BRANCH=default
 	if [[ "${PVR}" == *-r9999* ]]; then
 		[[ "${S}" != "${S1}" ]] && _hg "${S##*/}"
@@ -762,9 +770,19 @@ src_unpack() {
 	_hg pyxpcom "${S1}"/extensions/python python
 	_hg chatzilla "${S1}"/extensions/irc !moznoirc
 	SM && use !moznomail && use crypt && _cvs enigmail/src "${S}"/mailnews/extensions/enigmail crypt
-	# branches: LDAPCSDK_6_0_6_RTM LDAPCSDK_6_0_6D_MOZILLA_RTM
-	SM && ECVS_BRANCH="HEAD" _cvs_m mozilla/directory/c-sdk "${S}/directory/c-sdk" ldap
-	use nspr-repo && _cvs_m mozilla/nsprpub "${S1}/nsprpub"
+	SM && use ldap && {
+		[[ -e "${S}/ldap" ]] && d="${S}/ldap/sdks" || d="${S}/directory"
+		EHG_REVISION=LDAPCSDK_6_0_7_RTM _cvs_m mozilla/directory/c-sdk "$d/c-sdk"
+	}
+	use extra-repo && {
+		use moznosystem || use !system-nspr && _cvs_m mozilla/nsprpub "${S1}/nsprpub"
+		use moznosystem || use !system-nss && for d in dbm security/nss security/coreconf security/dbm; do
+			_cvs_m "mozilla/$d" "${S1}/$d"
+		done
+		_cvs_m mozilla/js/src "${S1}/js/src"
+#		_cvs_m libffi "${S1}/js/src/ctypes/libffi" "" :pserver:anoncvs@sources.redhat.com:/cvs/libffi
+#		ln -s src/libffi "${S1}/js/libffi" # ?
+	}
 	local l # EHG_EXTRA_OPT="${EHG_EXTRA_OPT} --rev tip"
 	mkdir "${WORKDIR}/l10n"
 	for l in $(langs) ; do
@@ -800,7 +818,8 @@ _hg(){
 	rm "${WORKDIR}/${m}/.hg" -Rf
 	[[ -z "$2" ]] && return
 	[[ "`readlink -f $2`" == "${WORKDIR}/${m}" ]] && return
-	[[ -e "$2" ]] && rm "$2" -Rf
+	mkdir -p "$2"
+	rm "$2" -Rf
 	mv "${WORKDIR}/${m}" "$2"
 }
 
@@ -817,18 +836,20 @@ _cvs(){
 		cvs_src_unpack
 	[[ -z "$2" ]] && return
 	[[ "`readlink -f $2`" == "${WORKDIR}/$1" ]] && return
-	[[ -e "$2" ]] && rm "$2" -Rf
+	mkdir -p "$2"
+	rm "$2" -Rf
 	mv "${WORKDIR}/$1" "$2"
 }
 
 _cvs_m(){
 	[[ -n "$3" ]] && ! use $3 && return
-	ECVS_SERVER="cvs-mirror.mozilla.org:/cvsroot" \
+	ECVS_SERVER="${4:-cvs-mirror.mozilla.org:/cvsroot}" \
 		ECVS_MODULE="$1" \
 		cvs_src_unpack
 	[[ -z "$2" ]] && return
 	[[ "`readlink -f $2`" == "${WORKDIR}/$1" ]] && return
-	[[ -e "$2" ]] && rm "$2" -Rf
+	mkdir -p "$2"
+	rm "$2" -Rf
 	mv "${WORKDIR}/$1" "$2"
 }
 
