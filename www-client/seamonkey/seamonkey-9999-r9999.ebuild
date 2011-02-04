@@ -40,7 +40,7 @@ IUSE="-java mozdevelop moznoirc moznoroaming postgres startup-notification
 	debug minimal directfb moznosystem +threads jssh wifi python mobile static
 	moznomemory accessibility system-sqlite vanilla xforms gio +alsa
 	+custom-cflags +custom-optimization system-xulrunner +libxul system-nss system-nspr X
-	bindist flatfile dbus"
+	bindist flatfile dbus profiled"
 #	qt-experimental"
 
 #RESTRICT="nomirror"
@@ -408,8 +408,11 @@ src_configure(){
 
 	isopt '\--disable-ipc' && mozconfig_use_enable libxul ipc
 	mozconfig_use_enable libxul
-	use !libxul && use !flatfile && mozconfig_annotate "-libxul" --enable-chrome-format=jar
-	use flatfile && mozconfig_annotate "flatfile" --enable-chrome-format=symlink
+	if use flatfile; then
+		mozconfig_annotate "flatfile" --enable-chrome-format=symlink
+	elif !use libxul; then
+		mozconfig_annotate "-libxul,-flatfile" --enable-chrome-format=jar
+	fi
 
 	mozconfig_use_enable startup-notification libnotify
 
@@ -479,7 +482,7 @@ src_configure(){
 
 	# required for sse prior to gcc 4.4.3, may be faster in other cases
 	[[ "${ARCH}" == "x86" ]] && append-flags -mstackrealign
-	append-flags -fno-unroll-loops
+#	append-flags -fno-unroll-loops
 
 #	! SM && use directfb && sed -i -e 's%--enable-default-toolkit=cairo-gtk2%--enable-default-toolkit=cairo-gtk2-dfb%g' "${S}"/.mozconfig
 
@@ -533,7 +536,7 @@ src_configure(){
 		use system-${i} || a="${a} ${i}"
 	done
 	a="${a# }"
-	if [[ "${a// }" == "${a}" ]]; then
+	if [[ "${a// }" == "${a}" ]] && use !profiled; then
 		mozconfig_annotate '' --enable-application=${a}
 	else
 		[[ "${a//xulrunner}" != "${a}" ]] && export LD_RUN_PATH="${MOZILLA_FIVE_HOME}/xulrunner:${LD_RUN_PATH}"
@@ -575,16 +578,17 @@ mk_add_options MOZ_OBJDIR=@TOPSRCDIR@/../base" >>"${S}"/.mozconfig
 }
 
 src_compile() {
-	local E="${S}/mailnews/extensions/enigmail"
+	local E="${S}/mailnews/extensions/enigmail" o= o1=
 	if grep -q "^mk_" "${S}"/.mozconfig; then
-		emake -f client.mk build || die
-	else
-		# sometimes parallel build breaks
-		emake || emake -j1 || die
+		o="-f client.mk"
+		use profiled && o1=profiledbuild || o1=build
 	fi
+	# sometimes parallel build breaks
+	emake $o $o1 || emake -j1 $o $o1 || die
 	if [[ -e "$E" ]]; then
 		emake -C "$E" || die
 	fi
+	use libxul && use !flatfile && emake $o package
 }
 
 rmopt(){
@@ -620,10 +624,13 @@ src_install() {
 	done
 
 	# Most of the installation happens here
-	dodir "${MOZILLA_FIVE_HOME}"
-	cp -RL "${S1}"/dist/bin/* "${D}"/"${MOZILLA_FIVE_HOME}"/ ||
-	    cp -RL "${WORKDIR}"/base/${MOZ_CO_PROJECT##* }/dist/bin/* "${D}"/"${MOZILLA_FIVE_HOME}"/ ||
-	    die "cp failed"
+#	dodir "${MOZILLA_FIVE_HOME}"
+#	cp -RL "${S1}"/dist/bin/* "${D}"/"${MOZILLA_FIVE_HOME}"/ ||
+#	    cp -RL "${WORKDIR}"/base/${MOZ_CO_PROJECT##* }/dist/bin/* "${D}"/"${MOZILLA_FIVE_HOME}"/ ||
+#	    die "cp failed"
+
+	grep -q "^mk_" "${S}"/.mozconfig && i="-f client.mk" || i=
+	emake $i DESTDIR="${D}" install
 
 	if [[ -n ${LANG} && ${LANG} != "en-US" ]]; then
 		elog "Setting default locale to ${LANG}"
@@ -778,7 +785,7 @@ src_unpack() {
 		use moznosystem || use !system-nss && for d in dbm security/nss security/coreconf security/dbm; do
 			_cvs_m "mozilla/$d" "${S1}/$d"
 		done
-		_cvs_m mozilla/js/src "${S1}/js/src"
+#		_cvs_m mozilla/js/src "${S1}/js/src"
 #		_cvs_m libffi "${S1}/js/src/ctypes/libffi" "" :pserver:anoncvs@sources.redhat.com:/cvs/libffi
 #		ln -s src/libffi "${S1}/js/libffi" # ?
 	}
