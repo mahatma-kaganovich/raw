@@ -533,18 +533,20 @@ src_configure(){
 		use system-${i} || a="${a} ${i}"
 	done
 	a="${a# }"
-#	if [[ "${a// }" == "${a}" ]]; then
-#		mozconfig_annotate '' --enable-application=${a}
-#	else
+	if [[ "${a// }" == "${a}" ]]; then
+		mozconfig_annotate '' --enable-application=${a}
+	else
 		[[ "${a//xulrunner}" != "${a}" ]] && export LD_RUN_PATH="${MOZILLA_FIVE_HOME}/xulrunner:${LD_RUN_PATH}"
-		echo "mk_add_options MOZ_BUILD_PROJECTS=\"${a}\"" >>"${S}"/.mozconfig
-		[[ "${a// }" == "${a}" ]] || echo "mk_add_options MOZ_OBJDIR=@TOPSRCDIR@/../base" >>"${S}"/.mozconfig
+		echo "mk_add_options MOZ_BUILD_PROJECTS=\"${a}\"
+mk_add_options MOZ_MAKE_FLAGS=\"$MAKEOPTS\"
+mk_add_options MOZ_OBJDIR=@TOPSRCDIR@/../base" >>"${S}"/.mozconfig
+		[[ "${a// }" == "${a}" ]] && ln -s "${S}" "${WORKDIR}/base/$a"
 		for i in ${a}; do
 			echo "ac_add_app_options ${i} --enable-application=${i}" >>"${S}"/.mozconfig
 			[[ "${a//xulrunner}" != "${a}" ]] && [[ "${i}" != "xulrunner" ]] &&
 				echo "ac_add_app_options ${i} --with-libxul-sdk=../xulrunner/dist"" ">>"${S}"/.mozconfig
 		done
-#	fi
+	fi
 
 	# Finalize and report settings
 	mozconfig_final
