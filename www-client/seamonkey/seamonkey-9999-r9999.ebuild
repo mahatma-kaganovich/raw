@@ -57,7 +57,7 @@ RDEPEND="java? ( >=virtual/jre-1.4 )
 	>=sys-devel/binutils-2.16.1
 	!moznosystem? (
 		!static? ( >=app-text/hunspell-1.2 )
-		system-sqlite? ( dev-db/sqlite[fts3,secure-delete] )
+		system-sqlite? ( dev-db/sqlite[fts3,secure-delete,unlock-notify] )
 		>=media-libs/lcms-1.17
 		app-arch/bzip2
 		x11-libs/cairo[directfb=]
