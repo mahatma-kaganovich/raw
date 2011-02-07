@@ -545,7 +545,7 @@ src_configure(){
 		use system-${i} || a="${a} ${i}"
 	done
 	a="${a# }"
-	if [[ "${a// }" == "${a}" ]] && !seamonkey; then
+	if [[ "${a// }" == "${a}" ]]; then
 		mozconfig_annotate '' --enable-application=${a}
 	else
 		[[ "${a//xulrunner}" != "${a}" ]] && export LD_RUN_PATH="${MOZILLA_FIVE_HOME}/xulrunner:${LD_RUN_PATH}"
