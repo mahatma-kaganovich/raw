@@ -139,7 +139,7 @@ seamonkey)
 	DESCRIPTION="Mozilla Application Suite - web browser, email, HTML editor, IRC"
 	HOMEPAGE="http://www.seamonkey-project.org/"
 	export MOZ_CO_PROJECT=suite
-	IUSE="${IUSE} +ldap moznocompose moznomail crypt moznocalendar"
+	IUSE="${IUSE} moznocompose moznomail crypt moznocalendar"
 	[[ -z "${hg}" ]] && SRC_URI="${SRC_URI} crypt? ( !moznomail? ( http://dev.gentoo.org/~anarchy/dist/enigmail-${EMVER}.tar.gz ) )"
 	RDEPEND="${RDEPEND} crypt? ( !moznomail? ( >=app-crypt/gnupg-1.4 ) )"
 	S1="${S}/mozilla"
@@ -189,6 +189,11 @@ export BUILD_OFFICIAL=1
 export MOZILLA_OFFICIAL=1
 export PERL="/usr/bin/perl"
 
+LDAP(){
+#	use ldap || return 1
+	return 0
+}
+
 src_unpack() {
 	use static && use jssh && die 'Useflags "static" & "jssh" incompatible'
 	use !X && use startup-notification && die 'Useflags "-X" & "startup-notification" incompatibe'
@@ -231,6 +236,7 @@ src_prepare(){
 
 	if [[ -e "${S}"/mailnews/extensions/enigmail ]]; then
 		cd "${S}"/mailnews/extensions/enigmail || die
+		sed -i -e 's:^\(#include "mimehdrs2.h"\)$:#include <ctype.h>\n\1:' src/mimehdrs2.cpp
 		./makemake -r
 	fi
 
@@ -264,7 +270,7 @@ src_prepare(){
 		rm -Rf "${S1}/gfx/cairo"
 	fi
 	sed -i -e 's:^\(PR_STATIC_ASSERT.*CAIRO_SURFACE_TYPE_SKIA.*\)$:#if CAIRO_HAS_SKIA_SURFACE\n\1\n#endif:' "${S1}"/gfx/thebes/gfxASurface.cpp
-	use ldap || sed -i -e 's:^#ifdef MOZ_LDAP_XPCOM$:ifdef MOZ_LDAP_XPCOM:' -e 's:^#endif$:endif:' "${S}"/bridge/bridge.mk
+	LDAP || sed -i -e 's:^#ifdef MOZ_LDAP_XPCOM$:ifdef MOZ_LDAP_XPCOM:' -e 's:^#endif$:endif:' "${S}"/bridge/bridge.mk
 	touch "${S}"/directory/xpcom/datasource/nsLDAPDataSource.manifest
 #	sed -i -e 's:\(return XRE_InitEmbedding.*\), nsnull, 0:\1:' "${S1}"/extensions/java/xpcom/src/nsJavaInterfaces.cpp
 
@@ -289,8 +295,6 @@ src_prepare(){
 
 src_configure(){
 	declare MOZILLA_FIVE_HOME="/usr/$(get_libdir)/${PN}"
-
-	use ldap && SM || ewarn 'Seamonkey love LDAP, then strongly recommended USE="ldap" if you got error!'
 
 	export LD_RUN_PATH=":${LD_RUN_PATH}"
 
@@ -360,7 +364,7 @@ src_configure(){
 	# Other moz-specific settings
 #	mozconfig_use_enable mozdevelop jsd
 	mozconfig_use_enable mozdevelop xpctools
-	[[ -e "${S1}"/extensions/python ]] && mozconfig_use_extension python python/xpcom
+	[[ -e "${S1}"/extensions/python ]] && mozconfig_use_extension python # python/xpcom
 #	mozconfig_use_extension python python
 	if [[ "${MY_PN}" == "mobile" ]] && [[ -z "${hg}" ]]; then
 		( use java || use python ) && ewarn "Useflags 'java' & 'python' ignored here"
@@ -376,8 +380,11 @@ src_configure(){
 	mozconfig_use_extension mozdevelop layout-debug
 #	mozconfig_use_extension accessibility access-builtin
 	mozconfig_use_enable wifi necko-wifi
-	mozconfig_use_enable ldap
-	mozconfig_use_enable ldap ldap-experimental
+	if LDAP; then
+		mozconfig_annotate +ldap --enable-ldap --enable-ldap-experimental
+	else
+		mozconfig_annotate -ldap --disable-ldap --disable-ldap-experimental
+	fi
 	mozconfig_use_with threads pthreads
 	mozconfig_use_with X x
 	mozconfig_use_enable dbus
@@ -410,7 +417,7 @@ src_configure(){
 	mozconfig_use_enable libxul
 	if use flatfile; then
 		mozconfig_annotate "flatfile" --enable-chrome-format=symlink
-	elif !use libxul; then
+	elif SM || !use libxul; then
 		mozconfig_annotate "-libxul,-flatfile" --enable-chrome-format=jar
 	fi
 
@@ -482,7 +489,7 @@ src_configure(){
 
 	# required for sse prior to gcc 4.4.3, may be faster in other cases
 	[[ "${ARCH}" == "x86" ]] && append-flags -mstackrealign
-#	append-flags -fno-unroll-loops
+	append-flags -fno-unroll-loops
 
 #	! SM && use directfb && sed -i -e 's%--enable-default-toolkit=cairo-gtk2%--enable-default-toolkit=cairo-gtk2-dfb%g' "${S}"/.mozconfig
 
@@ -530,13 +537,15 @@ src_configure(){
 	;;
 	esac
 
+	export MAKEOPTS="$MAKEOPTS installdir=$MOZILLA_FIVE_HOME sdkdir=$MOZILLA_FIVE_HOME-devel includedir=/usr/include/${PN} idldir=/usr/share/idl/${PN}"
+
 	# prepare to standard configure/make if single project or to "make -f client.mk" if multiple
 	local i a=""
 	for i in ${MOZ_CO_PROJECT}; do
 		use system-${i} || a="${a} ${i}"
 	done
 	a="${a# }"
-	if [[ "${a// }" == "${a}" ]] && use !profiled; then
+	if [[ "${a// }" == "${a}" ]] && !seamonkey; then
 		mozconfig_annotate '' --enable-application=${a}
 	else
 		[[ "${a//xulrunner}" != "${a}" ]] && export LD_RUN_PATH="${MOZILLA_FIVE_HOME}/xulrunner:${LD_RUN_PATH}"
@@ -571,24 +580,44 @@ mk_add_options MOZ_OBJDIR=@TOPSRCDIR@/../base" >>"${S}"/.mozconfig
 			"${S1}"/config/autoconf.mk
 	fi
 
+
 	# This removes extraneous CFLAGS from the Makefiles to reduce RAM
 	# requirements while compiling
 	edit_makefiles
 
 }
 
+_package(){
+	local i i1
+
+	for i in "${WORKDIR}"/base/*; do
+		i1="$i"
+		[[ -e "$i" ]] || {
+			i="${S}"
+			i1="${S1}/dist"
+		}
+		if [[ -n "$1" && "$1" != en-US ]]; then
+			elog "Setting default locale to $1"
+			sed -i -e "s:\"en-US\":\"$1\":g" \
+			    ${i1}/bin/defaults/pref*/*-l10n.js &&
+			    mv "${D}/${MOZILLA_FIVE_HOME}"/* "${i1}/bin/"
+		fi
+		emake -C "$i" package
+	done
+}
+
 src_compile() {
-	local E="${S}/mailnews/extensions/enigmail" o= o1=
-	if grep -q "^mk_" "${S}"/.mozconfig; then
-		o="-f client.mk"
-		use profiled && o1=profiledbuild || o1=build
-	fi
+	local E="${S}/mailnews/extensions/enigmail" o= o1= o2=
+	grep -q "^mk_" "${S}"/.mozconfig && o="-f client.mk" && o1=build
+	use profiled && o2="MOZ_PROFILE_GENERATE=1"
 	# sometimes parallel build breaks
-	emake $o $o1 || emake -j1 $o $o1 || die
-	if [[ -e "$E" ]]; then
-		emake -C "$E" || die
-	fi
-	use libxul && use !flatfile && emake $o package
+	emake $o $o1 $o2 || emake -j1 $o $o1 $o2 || die
+	use profiled && {
+		_package
+		emake $o maybe_clobber_profiledbuild
+		emake $o $o1 MOZ_PROFILE_USE=1 || die
+	}
+	[[ -e "$E" ]] && ( emake -C "$E" || die )
 }
 
 rmopt(){
@@ -623,28 +652,27 @@ src_install() {
 		done
 	done
 
+	_package ${LANG}
+
 	# Most of the installation happens here
+	if SM; then
 	dodir "${MOZILLA_FIVE_HOME}"
 	cp -RL "${S1}"/dist/bin/* "${D}"/"${MOZILLA_FIVE_HOME}"/ ||
 	    cp -RL "${WORKDIR}"/base/${MOZ_CO_PROJECT##* }/dist/bin/* "${D}"/"${MOZILLA_FIVE_HOME}"/ ||
 	    die "cp failed"
-
-#	grep -q "^mk_" "${S}"/.mozconfig && i="-f client.mk" || i=
-#	emake $i DESTDIR="${D}" install
-
-	if [[ -n ${LANG} && ${LANG} != "en-US" ]]; then
-		elog "Setting default locale to ${LANG}"
-		sed -i -e "s:\"en-US\":\"${LANG}\":g" \
-			"${D}${MOZILLA_FIVE_HOME}"/defaults/pref*/*-l10n.js ||
-			die "sed failed to change locale"
+	else
+	grep -q "^mk_" "${S}"/.mozconfig && i="-f client.mk" || i=
+	emake $i DESTDIR="${D}" install
+	# do you need this?
+	use !mozdevelop && rm -Rf "${D}"/usr/{include,share/idl}
 	fi
 
 	# Create directory structure to support portage-installed extensions.
 	# See update_chrome() in mozilla-launcher
-	keepdir ${MOZILLA_FIVE_HOME}/chrome.d
-	keepdir ${MOZILLA_FIVE_HOME}/extensions.d
-	cp "${D}"${MOZILLA_FIVE_HOME}/chrome/installed-chrome.txt \
-		"${D}"${MOZILLA_FIVE_HOME}/chrome.d/0_base-chrome.txt
+#	keepdir ${MOZILLA_FIVE_HOME}/chrome.d
+#	keepdir ${MOZILLA_FIVE_HOME}/extensions.d
+#	cp "${D}"${MOZILLA_FIVE_HOME}/chrome/installed-chrome.txt \
+#		"${D}"${MOZILLA_FIVE_HOME}/chrome.d/0_base-chrome.txt
 
 	local Title="${PN}"
 	local Comment="Web Browser"
@@ -776,7 +804,7 @@ src_unpack() {
 	_hg pyxpcom "${S1}"/extensions/python python
 	_hg chatzilla "${S1}"/extensions/irc !moznoirc
 	SM && use !moznomail && use crypt && _cvs enigmail/src "${S}"/mailnews/extensions/enigmail crypt
-	SM && use ldap && {
+	SM && LDAP && {
 		[[ -e "${S}/ldap" ]] && d="${S}/ldap/sdks" || d="${S}/directory"
 		EHG_REVISION=LDAPCSDK_6_0_7_RTM _cvs_m mozilla/directory/c-sdk "$d/c-sdk"
 	}
@@ -860,4 +888,3 @@ _cvs_m(){
 }
 
 fi
-
