@@ -40,7 +40,7 @@ IUSE="-java mozdevelop moznoirc moznoroaming postgres startup-notification
 	debug minimal directfb moznosystem +threads jssh wifi python mobile static
 	moznomemory accessibility system-sqlite vanilla xforms gio +alsa
 	+custom-cflags +custom-optimization system-xulrunner +libxul system-nss system-nspr X
-	bindist flatfile dbus profiled"
+	bindist flatfile dbus profiled ipv6"
 #	qt-experimental"
 
 #RESTRICT="nomirror"
@@ -387,8 +387,9 @@ src_configure(){
 	fi
 	mozconfig_use_with threads pthreads
 	mozconfig_use_with X x
-	mozconfig_use_enable dbus
 	mozconfig_use_enable X plugins
+	mozconfig_use_enable dbus
+	mozconfig_use_enable ipv6
 	mozconfig_use_enable mobile mobile-optimize
 	mozconfig_use_enable !moznocalendar calendar
 	if use static; then
@@ -810,9 +811,7 @@ src_unpack() {
 	}
 	use extra-repo && {
 		use moznosystem || use !system-nspr && _cvs_m mozilla/nsprpub "${S1}/nsprpub"
-		use moznosystem || use !system-nss &&
-		    for d in dbm security; do
-#		    for d in dbm security/nss security/coreconf security/dbm; do
+		use moznosystem || use !system-nss && for d in dbm security/nss security/coreconf security/dbm; do
 			_cvs_m "mozilla/$d" "${S1}/$d"
 		done
 #		_cvs_m mozilla/js/src "${S1}/js/src"
