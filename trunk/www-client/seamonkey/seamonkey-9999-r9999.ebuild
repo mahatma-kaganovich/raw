@@ -806,11 +806,13 @@ src_unpack() {
 	SM && use !moznomail && use crypt && _cvs enigmail/src "${S}"/mailnews/extensions/enigmail crypt
 	SM && LDAP && {
 		[[ -e "${S}/ldap" ]] && d="${S}/ldap/sdks" || d="${S}/directory"
-		EHG_REVISION=LDAPCSDK_6_0_7_RTM _cvs_m mozilla/directory/c-sdk "$d/c-sdk"
+		EHG_REVISION=LDAPCSDK_6_0_7_RTM _hg projects/ldap-sdks "$d"
 	}
 	use extra-repo && {
 		use moznosystem || use !system-nspr && _cvs_m mozilla/nsprpub "${S1}/nsprpub"
-		use moznosystem || use !system-nss && for d in dbm security/nss security/coreconf security/dbm; do
+		use moznosystem || use !system-nss &&
+		    for d in dbm security; do
+#		    for d in dbm security/nss security/coreconf security/dbm; do
 			_cvs_m "mozilla/$d" "${S1}/$d"
 		done
 #		_cvs_m mozilla/js/src "${S1}/js/src"
