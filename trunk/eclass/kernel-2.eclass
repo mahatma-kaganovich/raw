@@ -13,7 +13,8 @@ IUSE="${IUSE} build-kernel debug custom-cflags pnp compressed integrated ipv6
 	netboot nls unicode +acl minimal selinux custom-arch
 	+kernel-drm +kernel-alsa kernel-firmware +sources fbcon staging pnponly lzma
 	external-firmware xen +smp tools multilib multitarget thin
-	lvm device-mapper unionfs iscsi e2fsprogs mdadm"
+	lvm device-mapper unionfs iscsi e2fsprogs mdadm modules"
+# modules: force modules with lost functionality, like mdraid
 DEPEND="${DEPEND}
 	!<app-portage/ppatch-0.08-r16
 	pnp? ( sys-kernel/genpnprd )
@@ -348,6 +349,9 @@ setconfig(){
 	use kernel-alsa || cfg +SOUND_PRIME
 	cfg_use lzma KERNEL_LZMA
 	cfg_use !lzma KERNEL_BZIP2
+	# raid autodetect, video=, etc
+	use modules || cfg BLK_DEV_MD FB CONNECTOR RTC_CLASS
+	use modules || cfg USB{,_SERIAL,_SERIAL_CONSOLE} BLK_CGROUP BLK_DEV_THROTTLING
 	# framebuffer enabled anymore, but "fbcon" support for more devices, exclude [external] nouveau drm
 	if use fbcon; then
 		cfg FB FRAMEBUFFER_CONSOLE FB_BOOT_VESA_SUPPORT "LOGO_LINUX_[\w\d]*"
