@@ -38,6 +38,7 @@ if [[ -n "${GIT}" ]] ; then
 fi
 
 src_configure() {
+	sed -i -e "s: -o : $LDFLAGS -o :" "${S}"/user/Makefile{,.in}
 	econf \
 		--localstatedir=/var \
 		--with-utils \
