@@ -77,7 +77,8 @@ get_v(){
 gen_KV(){
 	local KV KERNEL_DIR="${S}" g
 	get_KV(){ KV="$(get_v VERSION).$(get_v PATCHLEVEL).$(get_v SUBLEVEL)$(get_v EXTRAVERSION)";}
-	for g in ${UROOT}/usr/share/genkernel/gen_{configkernel,determineargs}.sh; do
+	determine_config_file(){ KERNEL_CONFIG="${S}/.config";}
+	for g in ${UROOT}/usr/share/genkernel/gen_determineargs.sh; do
 		[ -e "${g}" ] && source "${g}"
 	done
 	get_KV
