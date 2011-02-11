@@ -14,7 +14,7 @@ IUSE="${IUSE} build-kernel debug custom-cflags pnp compressed integrated ipv6
 	+kernel-drm +kernel-alsa kernel-firmware +sources fbcon staging pnponly lzma
 	external-firmware xen +smp tools multilib multitarget thin
 	lvm device-mapper unionfs iscsi e2fsprogs mdadm force-modules"
-# modules: force modules with lost functionality, like mdraid
+# force-modules: force modules with lost functionality
 DEPEND="${DEPEND}
 	!<app-portage/ppatch-0.08-r16
 	pnp? ( sys-kernel/genpnprd )
@@ -352,8 +352,7 @@ setconfig(){
 	use kernel-alsa || cfg +SOUND_PRIME
 	cfg_use lzma KERNEL_LZMA
 	cfg_use !lzma KERNEL_BZIP2
-	# raid autodetect, video=, etc
-	use force-modules || cfg BLK_DEV_MD FB CONNECTOR RTC_CLASS
+	use force-modules || cfg FB CONNECTOR RTC_CLASS
 	use force-modules || cfg USB{,_SERIAL,_SERIAL_CONSOLE} BLK_CGROUP BLK_DEV_THROTTLING
 	# framebuffer enabled anymore, but "fbcon" support for more devices, exclude [external] nouveau drm
 	if use fbcon; then
