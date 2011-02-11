@@ -9,16 +9,15 @@
 ## /var/db/pkg/*/*/CONTENTS md5 are strange and may be incorrect,
 ## using own /var/cache/conf.bashrc/...
 
-iscurrent(){
-	local m=`md5sum "$1"`
-	grep -qsF " ${m%% *} ${i1r} " "$mf"
-	return $?
-}
-
-upcf(){
-	local i i1 i1r d c=" [conf]" p="$ROOT/var/cache/conf.ppatch/$CATEGORY/$PN/$SLOT"
-	local mf="$p/md5" m
+conf_bashrc(){
+[[ -e "${D}/etc" ]] || return
+local p="$ROOT/var/cache/conf.ppatch/$CATEGORY/$PN/$SLOT"
+local mf="$p/md5" t="$p/rm.tmp"
+case "$EBUILD_PHASE" in
+preinst)
+	local i i1 i1r d c=" [conf]" m
 	mkdir -p "$p"
+	rm "$t" -f
 	echo -n "" >"$mf.merge" || return 1
 	find "${D}"/etc -print|while read i; do
 		i1r="${i#$D}"
@@ -26,7 +25,8 @@ upcf(){
 		[[ -f "$i1" ]] && m=`md5sum "$i"` || continue
 		echo " ${m%% *} $i1r " >>"$mf.merge"
 		cmp -s "$i1" "$i" && continue
-		if iscurrent "$i1"; then
+		m=`md5sum "$i1"` || continue
+		if grep -qsF " ${m%% *} ${i1r} " "$mf"; then
 			if head -n1 "$i"|grep -q "^# empty"; then
 				echo "$c Empty: $i"
 			else
@@ -41,7 +41,7 @@ upcf(){
 			if patch -stNd "${i%/*}" -i "$i1.patch" -o - -r - | cmp -s - "$i1" ||
 			    ( echo "$c Upgrading: $i1"; patch -sRtNd "$d" -i "$i1.patch" -o - -r - ${ETC_PATCH} | iscurrent - &&
 			    ( patch -sRtNd "$d" -i "$i1.patch" -o - -r - ${ETC_PATCH} |diff -pruN - "$i" ${ETC_DIFF} |patch -stNd "$d" ${ETC_PATCH} ) ); then
-				echo "$i" >>"$p/rm.tmp"
+				echo "$i" >>"$t"
 				continue
 			fi
 			echo "$c Upgrading failed"
@@ -49,23 +49,23 @@ upcf(){
 #		if iscurrent "$i"; then
 			echo "$c diff: $i1.diff"
 			diff -pruN "$i" "$i1" ${ETC_DIFF} >"$i1.diff"
-			echo "$i" >>"$p/rm.tmp"
+			echo "$i" >>"$t"
 #		fi
 	done
 	mv "$mf.merge" "$mf"
-}
-
-rmcf(){
-	local i i1 t="$ROOT/var/cache/conf.ppatch/$CATEGORY/$PN/$SLOT/rm.tmp"
-	[[ -e "$t" ]] && cat "$t"|while read i; do
+;;
+postinst)
+	local i i1
+	[[ -e "$t" ]] || return
+	cat "$t"|while read i; do
 		i1="${ROOT}${i#$D}"
 		for i1 in "${i1%/*}"/._cfg????_"${i1##*/}"; do
 			cmp -s "$i" "$i1" && rm "$i1"
 		done
 	done
+	rm "$t" -f
+;;
+esac
 }
 
-[[ -e "${D}/etc" ]] && case "$EBUILD_PHASE" in
-preinst)upcf;;
-postinst)rmcf;;
-esac
+conf_bashrc
