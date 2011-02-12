@@ -50,6 +50,10 @@ CF1(){
 #done | md5sum)"
 #IUSE="${IUSE} md5cfg:${USEKEY%% *}"
 
+for i in "${UROOT}"/usr/share/genpnprd/*.use; do
+	i="${i##*/}"
+	IUSE="$IUSE ${i%.use}"
+done
 
 fi
 
@@ -360,6 +364,11 @@ setconfig(){
 	else
 		cfg -FB_UVESA
 	fi
+	for i in "${UROOT}"/usr/share/genpnprd/*.use; do
+		o="${i##*/}"
+		o="${o%.use}"
+		use "${o#+}" && source "$i"
+	done
 	use multilib || ( use multitarget && use x86 ) || cfg -IA32_EMULATION
 }
 
