@@ -13,8 +13,7 @@ IUSE="${IUSE} build-kernel debug custom-cflags pnp compressed integrated ipv6
 	netboot nls unicode +acl minimal selinux custom-arch
 	+kernel-drm +kernel-alsa kernel-firmware +sources fbcon staging pnponly lzma
 	external-firmware xen +smp tools multilib multitarget thin
-	lvm device-mapper unionfs iscsi e2fsprogs mdadm force-modules"
-# force-modules: force modules with lost functionality
+	lvm device-mapper unionfs iscsi e2fsprogs mdadm"
 DEPEND="${DEPEND}
 	!<app-portage/ppatch-0.08-r16
 	pnp? ( sys-kernel/genpnprd )
@@ -50,9 +49,11 @@ CF1(){
 #done | md5sum)"
 #IUSE="${IUSE} md5cfg:${USEKEY%% *}"
 
-for i in "${UROOT}"/usr/share/genpnprd/*.use; do
+for i in "${UROOT}"/usr/share/genpnprd/*.{-use,use}; do
 	i="${i##*/}"
-	IUSE="$IUSE ${i%.use}"
+	i="${i%.use}"
+	i="${i%.-use}"
+	IUSE="$IUSE $i"
 done
 
 fi
@@ -356,18 +357,22 @@ setconfig(){
 	use kernel-alsa || cfg +SOUND_PRIME
 	cfg_use lzma KERNEL_LZMA
 	cfg_use !lzma KERNEL_BZIP2
-	use force-modules || cfg FB CONNECTOR RTC_CLASS
-	use force-modules || cfg USB{,_SERIAL,_SERIAL_CONSOLE} BLK_CGROUP BLK_DEV_THROTTLING
 	# framebuffer enabled anymore, but "fbcon" support for more devices, exclude [external] nouveau drm
 	if use fbcon; then
 		cfg FB FRAMEBUFFER_CONSOLE FB_BOOT_VESA_SUPPORT "LOGO_LINUX_[\w\d]*"
 	else
 		cfg -FB_UVESA
 	fi
-	for i in "${UROOT}"/usr/share/genpnprd/*.use; do
+	for i in "${UROOT}"/usr/share/genpnprd/*use; do
 		o="${i##*/}"
-		o="${o%.use}"
-		use "${o#+}" && source "$i"
+		o="${o%.*}"
+		o="${o#[+~-]}"
+		case "$i" in
+		*.-use)o="!$o";;
+		*.use);;
+		*)continue;;
+		esac
+		use "$o" && source "$i"
 	done
 	use multilib || ( use multitarget && use x86 ) || cfg -IA32_EMULATION
 }
