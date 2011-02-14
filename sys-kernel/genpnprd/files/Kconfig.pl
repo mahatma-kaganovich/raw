@@ -169,7 +169,7 @@ sub modules{
 			cfg($_,'m');
 		}elsif($c eq '-'){
 			cfg($_,$defconfig{$_});
-		}else{
+		}elsif($c ne '=' || !defined($config{$_})){
 			cfg($_,$defconfig{$_}?$defconfig{$_}:'m')
 		}
 	}
@@ -238,9 +238,7 @@ sub conf{
 			cfg($_);
 		}elsif($c eq '~'){
 			cfg($_,$oldconfig{$_});
-		}elsif($c eq '=' && !exists($tristate{$_})){
-			cfg($_,$y) if(!defined($config{$_}));
-		}else{
+		}elsif($c ne '=' || !defined($config{$_})){
 			cfg($_,$y);
 		}
 	}
