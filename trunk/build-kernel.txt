@@ -47,8 +47,9 @@ genkernel, some of default built-in modules needs to still built-in).
 Radical solution: KERNEL_MODULES="+."
 
 KERNEL_CONFIG contains kernel configuration options, prefixed by
-none ("y"), "-" ("n"), "+" ("m"), "~" (remove/oldconfig-default).
-Also perl regular expressions (for "grep -P") may be used.
+none ("y"), "-" ("n"), "+" ("m"), "~" (remove/oldconfig-default),
+"=" ("y" if undefined bool).
+Also perl regular expressions may be used.
 
 First reading "/etc/make.conf" values. If empty - using defaults. Then
 trying "/etc/kernels/kernel.conf".
