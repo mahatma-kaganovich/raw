@@ -48,7 +48,7 @@ Radical solution: KERNEL_MODULES="+."
 
 KERNEL_CONFIG contains kernel configuration options, prefixed by
 none ("y"), "-" ("n"), "+" ("m"), "~" (remove/oldconfig-default),
-"=" ("y" if undefined bool).
+"=" ("y" if undefined).
 Also perl regular expressions may be used.
 
 First reading "/etc/make.conf" values. If empty - using defaults. Then
