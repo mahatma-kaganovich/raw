@@ -74,6 +74,7 @@ src_configure() {
 	# and it is recommanded in the online manual
 	export PTLIB_CONFIG="${ROOT}/usr/bin/ptlib-config"
 	export PW_LIBDIR="/usr/$(get_libdir)"
+	
 	append-cflags `$PTLIB_CONFIG --ccflags --libs` -fexceptions
 	econf \
 		$(use_enable h46018) \
@@ -98,7 +99,7 @@ src_compile() {
 	emake optshared || die "emake optshared failed"
 
 	# build tool addpasswd
-	emake addpasswd || die "emake addpasswd failed"
+	emake PTLIBDIR="${ROOT}"/usr/share/ptlib -C addpasswd || die "emake addpasswd failed"
 
 	if use doc; then
 		cd docs/manual
@@ -120,7 +121,7 @@ src_compile() {
 
 src_install() {
 	dosbin obj_*/${PN} || die "dosbin failed"
-	dosbin obj_*/addpasswd || die "dosbin failed"
+	dosbin addpasswd/obj_*/addpasswd || die "dosbin failed"
 
 	dodir /etc/${PN}
 	insinto /etc/${PN}
@@ -146,4 +147,8 @@ src_install() {
 
 	newinitd "${FILESDIR}"/${PN}.rc6 ${PN}
 	newconfd "${FILESDIR}"/${PN}.confd ${PN}
+
+	dodir /usr/share/${PN}
+	rm "${S}"/contrib/WinInstaller -Rf
+	mv "${S}"/contrib "${D}/usr/share/${PN}/"
 }
