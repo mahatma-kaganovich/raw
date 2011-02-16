@@ -7,10 +7,11 @@ HOMEPAGE="http://www.ioremap.net/projects/elliptics"
 LICENSE="GPL-2"
 SLOT="0"
 KEYWORDS="~x86 ~amd64"
-IUSE="ssl fastcgi tokyocabinet"
+# not built without ssl but may be devel
+IUSE="+ssl fastcgi"
 RDEPEND="ssl? ( dev-libs/openssl )
 	fastcgi? ( dev-libs/fcgi )
-	tokyocabinet? ( dev-db/tokyocabinet )
+	dev-db/kyotocabinet
 	dev-libs/libatomic
 	dev-libs/libevent"
 DEPEND="${RDEPEND}"
@@ -22,11 +23,7 @@ src_prepare(){
 }
 
 src_configure(){
-	local myconf
-	mkdir -p ${TMPDIR}/include
-	use !tokyocabinet && myconf="${myconf} --with-tokyocabinet-path=${TMPDIR}"
-	use !fastcgi && myconf="${myconf} --with-libfcgi-path=${TMPDIR}"
-	econf $(use_enable ssl openssl) ${myconf}
+	econf $(use_enable ssl openssl)
 }
 
 src_install(){
