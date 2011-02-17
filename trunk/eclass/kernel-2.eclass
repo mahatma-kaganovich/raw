@@ -12,7 +12,7 @@ if [[ ${ETYPE} == sources ]]; then
 IUSE="${IUSE} build-kernel debug custom-cflags pnp compressed integrated ipv6
 	netboot nls unicode +acl minimal selinux custom-arch
 	+kernel-drm +kernel-alsa kernel-firmware +sources fbcon staging pnponly lzma
-	external-firmware xen +smp tools multilib multitarget thin
+	external-firmware xen +smp tools multilib multitarget +multislot thin
 	lvm device-mapper unionfs iscsi e2fsprogs mdadm"
 DEPEND="${DEPEND}
 	!<app-portage/ppatch-0.08-r16
@@ -24,6 +24,14 @@ DEPEND="${DEPEND}
 		kernel-alsa? ( !media-sound/alsa-driver )
 		kernel-firmware? ( !sys-kernel/linux-firmware )
 	) "
+
+if use multislot ; then
+	SLOT="${CTARGET}-${PF}"
+elif [[ ${CTARGET} != ${CHOST} ]]; then
+	SLOT="${CTARGET}-${PN%-sources}"
+else
+	SLOT="${PN%-sources}"
+fi
 
 : ${KERNEL_UTILS_CFLAGS:="${CFLAGS}"}
 
@@ -237,12 +245,11 @@ kernel-2_src_install() {
 				mv "$(readlink -f ${f1})" "${f1}-${REAL_KV}"
 				rm "${f1}" -f &>/dev/null
 			fi
-			[[ ${SLOT} == 0 ]] && use symlink && dosym "${f}-${REAL_KV}" "${f}"
-			[[ "${SLOT}" != "${PVR}" ]] && dosym "${f}-${REAL_KV}" /boot/"${f}-${SLOT}"
+			use !multislot && dosym "${f}-${REAL_KV}" /boot/"${f}-${SLOT}"
 		done
 		f="${D}/boot/config-${REAL_KV}"
 		[[ -e "$f" ]] || cp "${S}/.config" "$f"
-		if [[ "${SLOT}" != "${PVR}" ]] ; then
+		if use !multislot; then
 			use sources && dosym linux-${KV_FULL} /usr/src/linux-${SLOT}
 			for i in .img .img.thin; do
 				[[ -e "${D}/boot/initrd-${REAL_KV}$i" ]] && dosym initrd-${REAL_KV}$i /boot/initrd-${SLOT}$i
