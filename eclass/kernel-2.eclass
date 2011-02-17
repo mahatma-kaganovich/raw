@@ -523,12 +523,12 @@ i486)CF1 M486 MATH_EMULATION;;
 i586|pentium)CF1 M586;;
 pentium-mmx)CF1 M586MMX;;
 i686)CF1 X86_GENERIC M686;;
-winchip-c6)CF1 MWINCHIPC6;;
-winchip2)CF1 MWINCHIP3D;;
-c3)CF1 MCYRIXIII;;
-c3-2)CF1 MVIAC3_2;;
-geode)CF1 MGEODE_LX;;
-k6|k6-2)CF1 MK6;;
+winchip-c6)CF1 MWINCHIPC6 -SCHED_SMT;;
+winchip2)CF1 MWINCHIP3D -SCHED_SMT;;
+c3)CF1 MCYRIXIII -SCHED_SMT;;
+c3-2)CF1 MVIAC3_2 -SCHED_SMT;;
+geode)CF1 MGEODE_LX -SCHED_SMT;;
+k6|k6-2)CF1 MK6 -SCHED_SMT;;
 # compat: pentium-m sometimes have no PAE/64G
 pentiumpro)CF1 M686;;
 pentium2)CF1 MPENTIUMII;;
@@ -543,9 +543,9 @@ pentium4|pentium4m|prescott|nocona)
 	esac
 ;;
 core2)CF1 MCORE2 $m64g;;
-k6-3)CF1 MK6 $m64g;;
-athlon|athlon-tbird|athlon-4|athlon-xp|athlon-mp)CF1 MK7 $m64g;;
-k8|opteron|athlon64|athlon-fx|k8-sse3|opteron-sse3|athlon64-sse3|amdfam10|barcelona)CF1 MK8 $m64g;;
+k6-3)CF1 MK6 $m64g -SCHED_SMT;;
+athlon|athlon-tbird|athlon-4|athlon-xp|athlon-mp)CF1 MK7 $m64g -SCHED_SMT;;
+k8|opteron|athlon64|athlon-fx|k8-sse3|opteron-sse3|athlon64-sse3|amdfam10|barcelona)CF1 MK8 $m64g -SCHED_SMT;;
 *)CF1 GENERIC_CPU X86_GENERIC;;
 esac
 case "${CTARGET:-${CHOST}}:$CF" in
