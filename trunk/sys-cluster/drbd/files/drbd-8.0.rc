@@ -210,8 +210,12 @@ wait_sync(){
 
 
 remerge(){
-	EGIT_OFFLINE=1 KERNEL_DIR="/usr/src/linux-`uname -r`" emerge -1q --nodeps "${1:+=}sys-cluster/drbd-kernel$1"
+	EGIT_OFFLINE=1 KERNEL_DIR="/usr/src/linux-`uname -r`" emerge -1q --nodeps "${1:+=}sys-cluster/drbd-kernel${1:+-$1}"
 	return $?
+}
+
+v3(){
+	echo ".$1."|sed -e 's:\.:\..:g' -e 's:\.\([0-9]\)\.:.00\1.:g' -e 's:\.\([0-9][0-9]\)\.:.0\1.:g'
 }
 
 # try to rebuild & reload most equal module version
@@ -223,15 +227,15 @@ chk_ver(){
 		v="${v#version: }"
 		v1=`$DRBDADM -V|grep "^DRBDADM_VERSION="`
 		v1="${v1#*=}"
-		( [[ -z "$v" ]] || [[ -z "$v1" ]] || ! [[ "$v1" > "$v" ]] ) && return 0
+		( [[ -z "$v" ]] || [[ -z "$v1" ]] || ! [[ "$(v3 $v1)" > "$(v3 $v)" ]] ) && return 0
 	else
-		v=`$DRBDADM sh-nop 2>&1|grep "userland version:"|sed -e 's%^.*userland version: %-%'`
-		[[ -z "$v" ]] && return 0
+		v1=`$DRBDADM sh-nop 2>&1|grep "userland version:"|sed -e 's%^.*userland version: %-%'`
+		[[ -z "$v1" ]] && return 0
 	fi
 	$RMMOD drbd || return 0
 	if [[ -z "$1" ]]; then
-		einfo "Trying to emerge equal module version..."
-		remerge "$v-*" || remerge "$v" || return 1
+		einfo "Trying to emerge equal module version ($v1)..."
+		remerge "$v1-*" || remerge "$v1" || return 1
 	else
 		einfo "Trying to emerge latest module version..."
 		remerge || return 1
@@ -249,9 +253,9 @@ start() {
 		if ! assure_module_is_loaded ; then
 			einfo "modprobe drbd failed. Trying to emerge..."
 			remerge
-			chk_ver
+			chk_ver || chk_ver 1
 		else
-			chk_ver 1 || chk_ver
+			chk_ver
 		fi
 	fi
 	assure_module_is_loaded || return $?

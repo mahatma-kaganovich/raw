@@ -1,4 +1,5 @@
 >=sys-cluster/drbd-8.3.9999
+>=sys-cluster/drbd-kernel-8.3.9999
 >=www-client/seamonkey-9999
 >=www-client/fennec-9999
 =sys-fs/ocfs2-tools-1.4.9999
