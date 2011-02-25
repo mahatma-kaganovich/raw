@@ -24,3 +24,8 @@ src_install(){
 	dobin ${PN}
 	dosym ../../bin/${PN} /usr/share/${PN}
 }
+
+pkg_postinst(){
+	local c="${FILESDIR}"/../../../eclass/kernel-2.eclass
+	[[ -e "$c" ]] && touch "$c"
+}
