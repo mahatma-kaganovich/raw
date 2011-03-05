@@ -1,4 +1,4 @@
-cgroups for mpm-itk for Apache
+cgroups for mpm-itk for Apache (v0.2)
 
 Usage: AssignUserID USER GROUP [/dev/cgroup/CGROUP/tasks]
 Too simple: user or group must be changed to change cgroup.
@@ -37,7 +37,7 @@ Signed-off-by: Denis Kaganovich <mahatma@eu.by>
 +                    _DBG("fprintf(%s): %s", dconf->pidfile, strerror(errno));
 +                    err = 1;
 +                 }
-+                 close(pidf);
++                 fclose(pidf);
 +            }
 +        }
          if (setgid(wanted_gid)) {
