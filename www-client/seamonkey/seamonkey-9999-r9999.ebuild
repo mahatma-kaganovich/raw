@@ -490,7 +490,7 @@ src_configure(){
 
 	# required for sse prior to gcc 4.4.3, may be faster in other cases
 	[[ "${ARCH}" == "x86" ]] && append-flags -mstackrealign
-	append-flags -fno-unroll-loops
+#	append-flags -fno-unroll-loops
 
 #	! SM && use directfb && sed -i -e 's%--enable-default-toolkit=cairo-gtk2%--enable-default-toolkit=cairo-gtk2-dfb%g' "${S}"/.mozconfig
 
