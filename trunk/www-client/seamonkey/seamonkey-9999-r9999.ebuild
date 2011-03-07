@@ -40,7 +40,7 @@ IUSE="-java mozdevelop moznoirc moznoroaming postgres startup-notification
 	debug minimal directfb moznosystem +threads jssh wifi python mobile static
 	moznomemory accessibility system-sqlite vanilla xforms gio +alsa
 	+custom-cflags +custom-optimization system-xulrunner +libxul system-nss system-nspr X
-	bindist flatfile dbus profiled ipv6"
+	bindist flatfile dbus profiled ipv6 opengl"
 #	qt-experimental"
 
 #RESTRICT="nomirror"
@@ -65,6 +65,7 @@ RDEPEND="java? ( >=virtual/jre-1.4 )
 		dev-libs/libevent
 		alsa? ( media-libs/libvpx )
 	)
+	opengl? ( media-libs/mesa !media-libs/mesa[-gles] )
 	X? ( >=x11-libs/gtk+-2.8.6 )
 	!X? ( x11-libs/gtk+-directfb )
 	system-nspr? ( >=dev-libs/nspr-4.7.3 )
@@ -485,12 +486,13 @@ src_configure(){
 	mozconfig_use_enable !debug install-strip
 
 	use custom-cflags && export CFLAGS="${CF}"
-	export CXXFLAGS="${CFLAGS}"
+	use opengl && append-flags -DUSE_GLES2
 	is-flag -O3 && sed -i -e 's:\=\-O2:=-O3:g' .mozconfig
 
 	# required for sse prior to gcc 4.4.3, may be faster in other cases
 	[[ "${ARCH}" == "x86" ]] && append-flags -mstackrealign
 #	append-flags -fno-unroll-loops
+	export CXXFLAGS="${CFLAGS}"
 
 #	! SM && use directfb && sed -i -e 's%--enable-default-toolkit=cairo-gtk2%--enable-default-toolkit=cairo-gtk2-dfb%g' "${S}"/.mozconfig
 
