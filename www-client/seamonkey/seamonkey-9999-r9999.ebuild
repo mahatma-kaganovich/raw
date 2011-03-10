@@ -274,7 +274,7 @@ src_prepare(){
 	LDAP || sed -i -e 's:^#ifdef MOZ_LDAP_XPCOM$:ifdef MOZ_LDAP_XPCOM:' -e 's:^#endif$:endif:' "${S}"/bridge/bridge.mk
 	touch "${S}"/directory/xpcom/datasource/nsLDAPDataSource.manifest
 #	sed -i -e 's:\(return XRE_InitEmbedding.*\), nsnull, 0:\1:' "${S1}"/extensions/java/xpcom/src/nsJavaInterfaces.cpp
-	use opengl && sed -i -e 's: = GLX$: = EGL:' "${S}"/{gfx/thebes,content/canvas/src}/Makefile*
+	use opengl && sed -i -e 's: = GLX$: = EGL:' "${S1}"/{gfx/thebes,content/canvas/src}/Makefile*
 
 	local i i1 i2
 	for i in "${WORKDIR}"/l10n/*/toolkit/chrome/global/*; do
