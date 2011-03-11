@@ -40,7 +40,7 @@ IUSE="-java mozdevelop moznoirc moznoroaming postgres startup-notification
 	debug minimal directfb moznosystem +threads jssh wifi python mobile static
 	moznomemory accessibility system-sqlite vanilla xforms gio +alsa
 	+custom-cflags +custom-optimization system-xulrunner +libxul system-nss system-nspr X
-	bindist flatfile dbus profiled ipv6 opengl"
+	bindist flatfile dbus profiled ipv6 opengl moznopango"
 #	qt-experimental"
 
 #RESTRICT="nomirror"
@@ -61,7 +61,8 @@ RDEPEND="java? ( >=virtual/jre-1.4 )
 		>=media-libs/lcms-1.17
 		app-arch/bzip2
 		x11-libs/cairo[directfb=]
-		x11-libs/pango
+		!moznopango? ( x11-libs/pango )
+		x11-libs/pixman
 		dev-libs/libevent
 		alsa? ( media-libs/libvpx )
 	)
@@ -326,18 +327,17 @@ src_configure(){
 
 	use alpha && append-ldflags "-Wl,--no-relax"
 
-	###### --disable-pango work in seamonkey-1.1.14, but broken here
-#	if use moznopango; then
-#		rmopt able-pango
-#		mozconfig_annotate -pango \
-#			--disable-pango
-#	fi
+	if use moznopango; then
+		rmopt able-pango
+		mozconfig_annotate -pango --disable-pango
+	fi
 
 	mozconfig_annotate 'gentoo' \
 		--with-system-bz2 \
 		--enable-canvas \
 		--enable-image-encoder=all \
 		--enable-system-lcms \
+		--enable-system-pixman \
 		--with-default-mozilla-five-home=${MOZILLA_FIVE_HOME} \
 		--with-user-appdir=.mozilla \
 		--without-system-png \
