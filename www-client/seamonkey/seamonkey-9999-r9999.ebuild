@@ -720,8 +720,15 @@ Categories=Network;WebBrowser;">"${WORKDIR}/${PN}.desktop"
 	domenu "${WORKDIR}/${PN}.desktop"
 
 	# Create /usr/bin/${PN}
-	make_wrapper ${PN} "${MOZILLA_FIVE_HOME}/${R}"
+	i="${D}/usr/bin"
+	if [[ -e "$i/$R" ]]; then
+		# respect install
+		[[ "$i/$R" != "$i/$PN" ]] && mv "$i/$R" "$i/$PN"
+	else
+		make_wrapper ${PN} "${MOZILLA_FIVE_HOME}/${R}"
+	fi
 
+	# seamonkey/mail may do illegal output
 	echo '#!/bin/sh
 # prevent to stalled terminal outputs (seamonkey, etc)
 exec /usr/bin/'"${PN}"' "$@" &>/dev/null' >"${WORKDIR}/${PN}-X"
