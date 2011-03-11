@@ -226,11 +226,13 @@ kernel-2_src_install() {
 	cd "${S}" || die
 	if [[ ${ETYPE} == sources ]] && use build-kernel; then
 		mkdir "${D}/boot"
+		local f f1
 		if ! use integrated; then
 			insinto "/boot"
-			doins initrd-"${REAL_KV}".img{,.thin}
+			for f in initrd-"${REAL_KV}".img{,.thin}; do
+				[[ -e "$f" ]] && doins "$f"
+			done
 		fi
-		local f f1
 		if use kernel-firmware; then
 			ewarn "Useflag 'kernel-firmware' must be enabled one branch to avoid collisions"
 		else
