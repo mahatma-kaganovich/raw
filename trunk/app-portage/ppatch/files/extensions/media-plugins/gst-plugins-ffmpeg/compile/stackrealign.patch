@@ -1,0 +1,13 @@
+--- a/gst-libs/ext/ffmpeg/common.mak	2011-03-13 17:57:45.000000000 +0200
++++ b/gst-libs/ext/ffmpeg/common.mak	2011-03-13 18:24:47.000000000 +0200
+@@ -36,6 +36,10 @@
+ CPPFLAGS := -I$(BUILD_ROOT_REL) -I$(SRC_PATH) $(CPPFLAGS)
+ CFLAGS   += $(ECFLAGS)
+ 
++%/mpegvideo_mmx.o: %/mpegvideo_mmx.c
++	$(CCDEP)
++	$(CC) $(CPPFLAGS) $(CFLAGS) $(CC_DEPFLAGS) -mno-stackrealign -c $(CC_O) $<
++
+ %.o: %.c
+ 	$(CCDEP)
+ 	$(CC) $(CPPFLAGS) $(CFLAGS) $(CC_DEPFLAGS) -c $(CC_O) $<
