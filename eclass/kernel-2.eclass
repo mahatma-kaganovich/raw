@@ -652,7 +652,9 @@ kernel-2_src_prepare(){
 	#
 	echo "CFLAGS_events.o += -fno-selective-scheduling2" >>drivers/xen/Makefile
 	echo "CFLAGS_mballoc.o += -fno-selective-scheduling2" >>fs/ext4/Makefile
+	echo "CFLAGS_virtio_balloon.o += -fno-selective-scheduling2" >>drivers/virtio/Makefile
 	echo "CFLAGS_ba_action.o += -fno-selective-scheduling2" >>drivers/staging/rt2860/Makefile
+	echo "CFLAGS_ba_action.o += -fno-selective-scheduling2" >>drivers/staging/rt2870/Makefile
 	# pnp
 	use pnp || return
 	einfo "Fixing modules hardware info exports (forced mode, waiting for bugs!)"
