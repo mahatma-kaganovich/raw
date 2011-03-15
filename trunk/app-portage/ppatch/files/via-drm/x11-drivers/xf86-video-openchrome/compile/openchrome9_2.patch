@@ -1,0 +1,22 @@
+diff -pruN a/src/via_dri.c b/src/via_dri.c
+--- a/src/via_dri.c	2011-03-16 01:20:09.000000000 +0200
++++ b/src/via_dri.c	2011-03-16 01:27:25.000000000 +0200
+@@ -591,7 +591,6 @@ VIADRIScreenInit(ScreenPtr pScreen)
+     pDRIInfo->drmDriverName = VIAKernelDriverName;
+     switch (pVia->Chipset) {
+         case VIA_K8M890:
+-        case VIA_P4M900:
+         case VIA_VX800:
+         case VIA_VX855:
+         case VIA_VX900:
+diff -pruN a/src/via_xvmc.c b/src/via_xvmc.c
+--- a/src/via_xvmc.c	2011-03-16 01:20:09.000000000 +0200
++++ b/src/via_xvmc.c	2011-03-16 01:27:40.000000000 +0200
+@@ -326,7 +326,6 @@ ViaInitXVMC(ScreenPtr pScreen)
+     if ((pVia->Chipset == VIA_KM400) ||
+         (pVia->Chipset == VIA_CX700) ||
+         (pVia->Chipset == VIA_K8M890) ||
+-        (pVia->Chipset == VIA_P4M900) ||
+         (pVia->Chipset == VIA_VX800) ||
+         (pVia->Chipset == VIA_VX855) ||
+         (pVia->Chipset == VIA_VX900)) {
