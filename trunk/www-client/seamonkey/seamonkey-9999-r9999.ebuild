@@ -66,7 +66,7 @@ RDEPEND="java? ( >=virtual/jre-1.4 )
 		dev-libs/libevent
 		alsa? ( media-libs/libvpx )
 	)
-	opengl? ( media-libs/mesa !media-libs/mesa[-gles] )
+	opengl? ( media-libs/mesa[gles] )
 	X? ( >=x11-libs/gtk+-2.8.6 )
 	!X? ( x11-libs/gtk+-directfb )
 	system-nspr? ( >=dev-libs/nspr-4.7.3 )

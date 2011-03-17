@@ -59,6 +59,11 @@ IUSE="${IUSE_VIDEO_CARDS}
 	llvm
 	X
 	+fbdev
+	+gles
+	dricore
+	selinux
+	32bit
+	64bit
 	d3d"
 
 RDEPEND="app-admin/eselect-opengl
@@ -202,7 +207,13 @@ src_configure() {
 		$(use_enable xcb) \
 		$(use_enable motif glw) \
 		$(use_enable motif) \
-		--enable-gles1 --enable-gles2 --enable-gles-overlay \
+		$(use_enable gles gles1) \
+		$(use_enable gles gles2) \
+		$(use_enable gles gles-overlay) \
+		$(use_enable dricore shared-dricore) \
+		$(use_enable selinux) \
+		$(use_enable 32bit 32bit) \
+		$(use_enable 64bit 64bit) \
 		$(use_with X x) \
 		--with-egl-platforms=x11,drm$(use fbdev && echo ,fbdev) \
 		|| die
