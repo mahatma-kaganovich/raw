@@ -200,6 +200,8 @@ src_configure() {
 	if use xlib || use osmesa; then
 		sed -i -e 's%DRIVER_DIRS="dri"%DRIVER_DIRS="x11 dri"%g' configure{,.ac}
 	fi
+	use 32bit && myconf="${myconf} --enable-32bit"
+	use 64bit && myconf="${myconf} --enable-64bit"
 	econf ${myconf} \
 		$(use_enable nptl glx-tls) \
 		--with-driver=${drv} \
@@ -212,8 +214,6 @@ src_configure() {
 		$(use_enable gles gles-overlay) \
 		$(use_enable dricore shared-dricore) \
 		$(use_enable selinux) \
-		$(use_enable 32bit 32bit) \
-		$(use_enable 64bit 64bit) \
 		$(use_with X x) \
 		--with-egl-platforms=x11,drm$(use fbdev && echo ,fbdev) \
 		|| die
