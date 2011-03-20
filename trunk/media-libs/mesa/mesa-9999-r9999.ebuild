@@ -60,10 +60,8 @@ IUSE="${IUSE_VIDEO_CARDS}
 	X
 	+fbdev
 	+gles
-	dricore
+	+dricore
 	selinux
-	32bit
-	64bit
 	d3d"
 
 RDEPEND="app-admin/eselect-opengl
@@ -200,8 +198,6 @@ src_configure() {
 	if use xlib || use osmesa; then
 		sed -i -e 's%DRIVER_DIRS="dri"%DRIVER_DIRS="x11 dri"%g' configure{,.ac}
 	fi
-	use 32bit && myconf="${myconf} --enable-32bit"
-	use 64bit && myconf="${myconf} --enable-64bit"
 	econf ${myconf} \
 		$(use_enable nptl glx-tls) \
 		--with-driver=${drv} \
