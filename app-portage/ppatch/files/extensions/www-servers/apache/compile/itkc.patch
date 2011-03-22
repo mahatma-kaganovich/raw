@@ -1,4 +1,4 @@
-cgroups for mpm-itk for Apache (v0.3)
+cgroups for mpm-itk for Apache 2.2.17-01 v0.4
 
 Usage: AssignUserID USER GROUP [/dev/cgroup/CGROUP/tasks]
 Too simple: user or group must be changed to change cgroup.
@@ -87,15 +87,15 @@ diff -pruN a/server/mpm/experimental/itk/itk.c b/server/mpm/experimental/itk/itk
  }
  
 @@ -1706,10 +1726,12 @@ static void *itk_merge_dir_config(apr_po
-       c->username = apr_pstrdup(p, child->username);
+       c->username = child->username;
        c->uid = child->uid;
        c->gid = child->gid;
-+      c->pidfile = child->pidfile ? apr_pstrdup(p, child->pidfile) : NULL;
-     } else if (parent->username != NULL) {
-       c->username = apr_pstrdup(p, parent->username);
++      c->pidfile = child->pidfile;
+     } else {
+       c->username = parent->username;
        c->uid = parent->uid;
        c->gid = parent->gid;
-+      c->pidfile = parent->pidfile ? apr_pstrdup(p, parent->pidfile) : NULL;
++      c->pidfile = parent->pidfile;
      }
      if (child->nice_value != UNSET_NICE_VALUE) {
        c->nice_value = child->nice_value;
