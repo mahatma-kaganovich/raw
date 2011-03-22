@@ -233,6 +233,7 @@ chk_ver(){
 		[[ -z "$v1" ]] && return 0
 	fi
 	$RMMOD drbd || return 0
+	$RMMOD lru_cache
 	if [[ -z "$1" ]]; then
 		einfo "Trying to emerge equal module version ($v1)..."
 		remerge "$v1-*" || remerge "$v1" || return 1
@@ -241,6 +242,7 @@ chk_ver(){
 		remerge || return 1
 	fi
 	$RMMOD drbd
+	$RMMOD lru_cache
 	assure_module_is_loaded
 	return 1
 }
