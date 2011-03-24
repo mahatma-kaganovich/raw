@@ -639,7 +639,7 @@ kernel-2_src_prepare(){
 	sed -i -e 's/_proxy_pda = 0/_proxy_pda = 1/g' "${S}"/arch/*/kernel/vmlinux.lds.S
 	[[ -e "${S}"arch/x86_64/kernel/x8664_ksyms.c ]] && ( grep -q "_proxy_pda" "${S}"arch/x86_64/kernel/x8664_ksyms.c || echo "EXPORT_SYMBOL(_proxy_pda);" >>arch/x86_64/kernel/x8664_ksyms.c )
 	# unicode by default/only for fat
-	use unicode && sed -i -e 's/sbi->options\.utf8/1/g' fs/fat/dir.c
+	use unicode && sed -i -e 's/(sbi->options\.utf8)\|(utf8)/(1)/g' fs/fat/{dir,namei_vfat}.c
 	# custom-arch
 	use custom-arch && sed -i -e 's/-march=[a-z0-9\-]*//g' -e 's/-mtune=[a-z0-9\-]*//g' arch/*/Makefile*
 	# prevent to build twice
