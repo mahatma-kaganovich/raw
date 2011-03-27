@@ -1,0 +1,118 @@
+Re-enable nonce (shared memory) for auth_digest, apache 2.2.17.
+
+Signed-off-by: Denis Kaganovich <mahatma@eu.by>
+
+--- a/modules/aaa/mod_auth_digest.c	2011-03-27 14:33:52.000000000 +0300
++++ b/modules/aaa/mod_auth_digest.c	2011-03-27 14:41:40.000000000 +0300
+@@ -80,12 +80,6 @@
+ 
+ #include "mod_auth.h"
+ 
+-/* Disable shmem until pools/init gets sorted out
+- * remove following two lines when fixed
+- */
+-#undef APR_HAS_SHARED_MEMORY
+-#define APR_HAS_SHARED_MEMORY 0
+-
+ /* struct to hold the configuration info */
+ 
+ typedef struct digest_config_struct {
+@@ -204,6 +198,11 @@ static apr_status_t cleanup_tables(void
+                   "Digest: cleaning up shared memory");
+     fflush(stderr);
+ 
++    if (client_rmm) {
++        apr_rmm_destroy(client_rmm);
++        client_rmm = NULL;
++    }
++
+     if (client_shm) {
+         apr_shm_destroy(client_shm);
+         client_shm = NULL;
+@@ -257,6 +256,11 @@ static void log_error_and_cleanup(char *
+     cleanup_tables(NULL);
+ }
+ 
++static void *apr_rmm_malloc_(apr_rmm_t *rmm, apr_size_t reqsize)
++{
++	return apr_rmm_addr_get(rmm, apr_rmm_malloc(rmm, reqsize));
++}
++
+ #if APR_HAS_SHARED_MEMORY
+ 
+ static void initialize_tables(server_rec *s, apr_pool_t *ctx)
+@@ -266,13 +270,20 @@ static void initialize_tables(server_rec
+ 
+     /* set up client list */
+ 
+-    sts = apr_shm_create(&client_shm, shmem_size, tmpnam(NULL), ctx);
++    sts = apr_shm_create(&client_shm, APR_ALIGN_DEFAULT(shmem_size), tmpnam(NULL), ctx);
+     if (sts != APR_SUCCESS) {
+         log_error_and_cleanup("failed to create shared memory segments", sts, s);
+         return;
+     }
+ 
+-    client_list = apr_rmm_malloc(client_rmm, sizeof(*client_list) +
++    sts = apr_rmm_init(&client_rmm, NULL, apr_shm_baseaddr_get(client_shm),
++                       apr_shm_size_get(client_shm), ctx);
++    if (sts != APR_SUCCESS) {
++        log_error_and_cleanup("failed to init RMM", sts, s);
++        return;
++    }
++
++    client_list = apr_rmm_malloc_(client_rmm, sizeof(*client_list) +
+                                             sizeof(client_entry*)*num_buckets);
+     if (!client_list) {
+         log_error_and_cleanup("failed to allocate shared memory", -1, s);
+@@ -298,7 +309,7 @@ static void initialize_tables(server_rec
+ 
+     /* setup opaque */
+ 
+-    opaque_cntr = apr_rmm_malloc(client_rmm, sizeof(*opaque_cntr));
++    opaque_cntr = apr_rmm_malloc_(client_rmm, sizeof(*opaque_cntr));
+     if (opaque_cntr == NULL) {
+         log_error_and_cleanup("failed to allocate shared memory", -1, s);
+         return;
+@@ -318,7 +329,7 @@ static void initialize_tables(server_rec
+ 
+     /* setup one-time-nonce counter */
+ 
+-    otn_counter = apr_rmm_malloc(client_rmm, sizeof(*otn_counter));
++    otn_counter = apr_rmm_malloc_(client_rmm, sizeof(*otn_counter));
+     if (otn_counter == NULL) {
+         log_error_and_cleanup("failed to allocate shared memory", -1, s);
+         return;
+@@ -547,11 +558,14 @@ static const char *set_nonce_format(cmd_
+ 
+ static const char *set_nc_check(cmd_parms *cmd, void *config, int flag)
+ {
+-    if (flag && !client_shm)
++#if !APR_HAS_SHARED_MEMORY
++    /* client_shm init later */
++    /* if (flag && !client_shm) */
+         ap_log_error(APLOG_MARK, APLOG_WARNING, 0,
+                      cmd->server, "Digest: WARNING: nonce-count checking "
+                      "is not supported on platforms without shared-memory "
+                      "support - disabling check");
++#endif
+ 
+     ((digest_config_rec *) config)->check_nc = flag;
+     return NULL;
+@@ -810,7 +824,7 @@ static client_entry *add_client(unsigned
+ 
+     /* try to allocate a new entry */
+ 
+-    entry = (client_entry *)apr_rmm_malloc(client_rmm, sizeof(client_entry));
++    entry = (client_entry *)apr_rmm_malloc_(client_rmm, sizeof(client_entry));
+     if (!entry) {
+         long num_removed = gc();
+         ap_log_error(APLOG_MARK, APLOG_INFO, 0, s,
+@@ -819,7 +833,7 @@ static client_entry *add_client(unsigned
+                      "%ld", num_removed,
+                      client_list->num_created - client_list->num_renewed,
+                      client_list->num_removed, client_list->num_renewed);
+-        entry = (client_entry *)apr_rmm_malloc(client_rmm, sizeof(client_entry));
++        entry = (client_entry *)apr_rmm_malloc_(client_rmm, sizeof(client_entry));
+         if (!entry) {
+             return NULL;       /* give up */
+         }
