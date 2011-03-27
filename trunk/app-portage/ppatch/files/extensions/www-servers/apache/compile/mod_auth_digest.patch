@@ -3,7 +3,7 @@ Re-enable nonce (shared memory) for auth_digest, apache 2.2.17.
 Signed-off-by: Denis Kaganovich <mahatma@eu.by>
 
 --- a/modules/aaa/mod_auth_digest.c	2011-03-27 14:33:52.000000000 +0300
-+++ b/modules/aaa/mod_auth_digest.c	2011-03-27 14:41:40.000000000 +0300
++++ b/modules/aaa/mod_auth_digest.c	2011-03-27 16:02:39.000000000 +0300
 @@ -80,12 +80,6 @@
  
  #include "mod_auth.h"
@@ -116,3 +116,12 @@ Signed-off-by: Denis Kaganovich <mahatma@eu.by>
          if (!entry) {
              return NULL;       /* give up */
          }
+@@ -1092,7 +1106,7 @@ static client_entry *gen_client(const re
+ 
+     apr_global_mutex_lock(opaque_lock);
+     op = (*opaque_cntr)++;
+-    apr_global_mutex_lock(opaque_lock);
++    apr_global_mutex_unlock(opaque_lock);
+ 
+     if (!(entry = add_client(op, &new_entry, r->server))) {
+         ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r,
