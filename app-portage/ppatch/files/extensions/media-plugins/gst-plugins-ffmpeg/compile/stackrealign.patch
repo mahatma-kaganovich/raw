@@ -6,7 +6,7 @@
  
 +%/mpegvideo_mmx.o: %/mpegvideo_mmx.c
 +	$(CCDEP)
-+	$(CC) $(CPPFLAGS) $(CFLAGS) $(CC_DEPFLAGS) -mno-stackrealign -mno-sse -c $(CC_O) $<
++	$(CC) $(CPPFLAGS) $(CFLAGS) $(CC_DEPFLAGS) -mno-stackrealign -c $(CC_O) $<
 +
  %.o: %.c
  	$(CCDEP)
