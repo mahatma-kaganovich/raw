@@ -77,6 +77,7 @@ $ENV{KERNEL_CONFIG}||='
 	=(?:JOYSTICK|USB|ISDN|JFFS2|MOUSE|RTC|SQUASHFS|ROMFS)_[\w\d_]+
 	=[\w\d_]+_PARTITION
 	===bugs: -TR -ECONET
+	===udev: -IDE
 	=======
 	';
 
