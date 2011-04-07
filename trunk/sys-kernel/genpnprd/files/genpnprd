@@ -15,15 +15,16 @@ GENKERNEL=true
 LIBLOOP=true
 MAKEOPTS="-j2 -s"
 
-PNPMODE=""
-PKGFILES=""
-PACKAGES=""
-OVERLAY=""
-IMAGE=""
-CLEAN=""
-CRAMFS=""
-LZMA=""
-susp_sig=""
+PNPMODE=
+PKGFILES=
+PACKAGES=
+OVERLAY=
+IMAGE=
+CLEAN=
+CRAMFS=
+LZMA=
+KCOMPRESS=
+susp_sig=
 THIN="/drivers/net/\|/cifs/\|/nfs/\|/unix\|/packet/af_packet"
 THIN_INFO="/fs/\|^alias:.*:\|/unix\|/packet/af_packet"
 
@@ -242,7 +243,9 @@ else
 	fi
 	if [[ -d "$S" ]]; then
 		susp_sig=`grep -s '#define[ 	]*[A-Z]*_SIG[ 	]*".*"$' ${S}/kernel/power/swap.c|sed -e 's:^.*"\(.*\)":\1:'|hexdump -e '"" /1 "%x" ""'`
-		grep -q "^CONFIG_KERNEL_LZMA=y" "$S/.config" && : ${LZMA:=1}
+		for i in lzo lzma xz; do
+			grep -qi "^CONFIG_KERNEL_$i=y" "$S/.config" && grep -qi "^CONFIG_SQUASHFS_$i=y" "$S/.config" && (mksquashfs |& grep -q "^\s*$i\s*$") && KCOMPRESS="$i"
+		done
 	fi
 	[[ -z "$PNPMODE" ]] && PNPONLY=true
 	GENKERNEL=false
@@ -333,11 +336,7 @@ $LIBLOOP && ldir='lib' || ldir=
 N=
 while true; do
     if $SQUASH ; then
-	i=
-#	i="-comp gzip"
-#	[[ "$LZMA" == 1 ]] && i="-comp lzma"
-	i="$i -all-root -no-recovery -no-progress"
-	mksquashfs "$rcdir/$ldir" "$tmp/${ldir:-rd}$N.loopfs" $i || die "mksquashfs"
+	mksquashfs "$rcdir/$ldir" "$tmp/${ldir:-rd}$N.loopfs" ${KCOMPRESS:+-comp $KCOMPRESS }-all-root -no-recovery -no-progress || die "mksquashfs"
     else
 	[[ -x /sbin/mkfs.cramfs ]] && mkcramfs(){ /sbin/mkfs.cramfs "${@}";}
 	mkcramfs "$rcdir/$ldir" "$tmp/${ldir:-rd}$N.loopfs" || die "mkcramfs"
