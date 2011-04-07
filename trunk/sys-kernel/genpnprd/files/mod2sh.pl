@@ -216,6 +216,12 @@ sub order3{
 	$#l+1;
 }
 
+sub fix_{
+	my $i=$_[0];
+	$i=~s/ /\\ /g;
+	$i
+}
+
 sub mk_sh{
 	my %res=();
 	my %pnp=();
@@ -263,9 +269,9 @@ local i=""
 			}
 		}else{
 			if($re){
-				$res{$k}.="$_)i=\"$m\";;\n";
+				$res{$k}.=fix_($_).")i=\"$m\";;\n";
 			}else{
-				$res{$k}="$_)i=\"$m\";;\n$res{$k}";
+				$res{$k}=fix_($_).")i=\"$m\";;\n$res{$k}";
 			}
 		}
 	}
@@ -289,7 +295,7 @@ local i=""
 	my $tail;
 	if ($MULTI && $JOIN){
 		my @r=();
-		$r[substr($_,0,4)].=join('|',@{$res{$_}}).')i="$i '.substr($_,5)."\";;\n" for (sort keys %res);
+		$r[substr($_,0,4)].=fix_(join('|',@{$res{$_}})).')i="$i '.substr($_,5)."\";;\n" for (sort keys %res);
 		while($#r>=0){
 			my $s=pop @r;
 			next if(!defined($s));
@@ -303,7 +309,7 @@ local i=""
 		print FS 'case "$1" in
 ';
 		if ($JOIN) {
-			print FS join('|',@{$res{$_}}).')i="'.substr($_,5)."\";;\n" for (sort keys %res);
+			print FS fix_(join('|',@{$res{$_}})).')i="'.substr($_,5)."\";;\n" for (sort keys %res);
 		} else {
 			print FS "$res{$_}" for (sort keys %res);
 		}
