@@ -163,6 +163,7 @@ kernel-2_src_compile() {
 	if use embed-hardware; then
 		einfo "Detecting hardware to embed"
 		bash "${UROOT}/usr/share/genpnprd/unmodule" "${S}" -y
+		yes '' 2>/dev/null | kmake oldconfig &>/dev/null
 		einfo "Compiling kernel (all)"
 		kmake all ${KERNEL_MODULES_MAKEOPT}
 	fi
