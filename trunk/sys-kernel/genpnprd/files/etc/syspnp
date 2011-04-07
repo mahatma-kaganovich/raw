@@ -831,11 +831,11 @@ ordered_modalias(){
 
 fast_modalias(){
 	# ssb (b43) have no modalias
-	mod $MDOLIST `grep -sh "^MODALIAS=" $(find $SYS_FIND -name uevent -print) </dev/null|sed -e 's:^MODALIAS=::g'|sort -u`
+	mod $MDOLIST `grep -sh "^MODALIAS=" $(find $SYS_FIND -name uevent -print) </dev/null|sed -e 's:^MODALIAS=::g' -e 's:[ -]:_:g'|sort -u`
 }
 
 ofast_modalias(){
-	mod `grep -sh "^MODALIAS=" $(find $SYS_FIND -name uevent -print|sort) </dev/null|sed -e 's:^MODALIAS=::g'|uniq`
+	mod `grep -sh "^MODALIAS=" $(find $SYS_FIND -name uevent -print|sort) </dev/null|sed -e 's:^MODALIAS=::g' -e 's:[ -]:_:g'|uniq`
 }
 
 etc_modalias(){
