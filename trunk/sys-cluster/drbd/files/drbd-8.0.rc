@@ -41,9 +41,13 @@ function assure_module_is_loaded() {
 	ebegin "Loading drbd module"
 	ret=0
 
+	if [[ "$1" == 1 ]]; then
+		insmod /lib/modules/`uname -r`/block/drbd/drbd.ko `$DRBDADM sh-mod-parms` $ADD_MOD_PARAM || ret 20
+	else
 	$MODPROBE -s drbd `$DRBDADM sh-mod-parms` $ADD_MOD_PARAM || 
 	    insmod /lib/modules/`uname -r`/kernel/drivers/block/drbd/drbd.ko `$DRBDADM sh-mod-parms` $ADD_MOD_PARAM ||
 	    ret=20
+	fi
 	eend $ret
 	return $ret
 }
@@ -258,6 +262,13 @@ start() {
 			chk_ver || chk_ver 1
 		else
 			chk_ver
+		fi
+	elif [[ "$DRBD_EMERGE_MODULE" == "force" ]]; then
+		local v=$(echo /var/db/pkg/sys-cluster/drbd-8*|sed -e 's:^/var/db/pkg/sys-cluster/drbd-::')
+		if ! ( [[ -e "/lib/modules/`uname -r`/block/drbd.ko" ]] && assure_module_is_loaded 1 ); then
+			remerge "$v"
+			$RMMOD drbd
+			assure_module_is_loaded 1 || return $?
 		fi
 	fi
 	assure_module_is_loaded || return $?
