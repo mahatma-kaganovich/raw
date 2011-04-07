@@ -10,7 +10,7 @@ UROOT=""
 if [[ ${ETYPE} == sources ]]; then
 
 IUSE="${IUSE} build-kernel debug custom-cflags pnp compressed integrated ipv6
-	netboot nls unicode +acl minimal selinux custom-arch
+	netboot nls unicode +acl minimal selinux custom-arch embed-hardware
 	+kernel-drm +kernel-alsa kernel-firmware +sources fbcon staging pnponly lzma
 	external-firmware xen +smp tools multilib multitarget +multislot thin
 	lvm device-mapper unionfs iscsi e2fsprogs mdadm"
@@ -160,6 +160,12 @@ kernel-2_src_compile() {
 	einfo "Compiling kernel (all)"
 	kmake all ${KERNEL_MODULES_MAKEOPT}
 	grep -q "=m$" .config && [[ -z "`find . -name "*.ko" -print`" ]] && die "Modules configured, but not built"
+	if use embed-hardware; then
+		einfo "Detecting hardware to embed"
+		bash "${UROOT}/usr/share/genpnprd/unmodule" "${S}" -y
+		einfo "Compiling kernel (all)"
+		kmake all ${KERNEL_MODULES_MAKEOPT}
+	fi
 	if use tools; then
 		einfo "Compiling tools"
 		mktools
@@ -650,12 +656,14 @@ kernel-2_src_prepare(){
 	# ;)
 	sed -i -e 's:^#if 0$:#if 1:' drivers/net/tokenring/tms380tr.c
 	# amdfam10 (???)
+	if [[ "$a" == i?86-* ]] || [[ "$a" == x86_* ]]; then
 	echo "CFLAGS_events.o += -fno-selective-scheduling2" >>drivers/xen/Makefile
 	echo "CFLAGS_mballoc.o += -fno-selective-scheduling2" >>fs/ext4/Makefile
 	echo "CFLAGS_virtio_balloon.o += -fno-selective-scheduling2" >>drivers/virtio/Makefile
 	echo "CFLAGS_ba_action.o += -fno-selective-scheduling2" >>drivers/staging/rt2860/Makefile
 	echo "CFLAGS_ba_action.o += -fno-selective-scheduling2" >>drivers/staging/rt2870/Makefile
 	echo "CFLAGS_tail_conversion.o += -fno-selective-scheduling2" >>fs/reiser4/Makefile
+	fi
 	# core2+
 	echo "CFLAGS_ti_usb_3410_5052.o += -fno-tree-loop-distribution" >>drivers/usb/serial/Makefile
 	# pnp

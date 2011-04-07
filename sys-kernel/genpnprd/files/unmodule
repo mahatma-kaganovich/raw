@@ -1,0 +1,57 @@
+#!/bin/sh
+# simple dirty detect & embed modules for actual hardware
+# v1.0
+# (c) Denis Kaganovich, under Anarchy license
+
+findconf(){
+for i in "${@}"; do
+grep -Rh "^\s*obj\-\$[(]CONFIG_.*\s*\+=.* ${i//[_-]/[_-]}.o" "$S" --include Makefile|while read i; do
+	i=${i#*(}
+	i=${i%%)*}
+	grep -q "^$i=m$" .config || continue
+	echo $i
+	$Y && sed -i -e "s:^$i=m\$:$i=y:" .config
+done
+done
+}
+
+modaliases(){
+grep -sh "^MODALIAS=" $(find /sys -name uevent)|sed -e 's:^MODALIAS=::'|sort -u|while read i; do
+	modalias "$i"&&echo "${ALIAS// /
+}"
+$Y && rm -f $ALIAS
+done|sed -e 's:^.*/::g' -e 's:\.ko$::g' -e 's/-/_/g'|sort -u
+}
+
+help(){
+echo "$0 <path_to_kernel/modules> {[-y|-r]}
+	-y - actually fix .config
+	-r - runtime modules (loaded)
+	-a - all (hardware & runtime) modules"
+exit 1
+}
+
+[[ -z "$1" ]] && help
+S="$1"
+shift
+R=false
+A=false
+Y=false
+for i in "${@}"; do
+	case "$i" in
+	-y)Y=true;;
+	-r)R=true;;
+	-a)R=true;A=true;;
+	*)help >&2;;
+	esac
+done
+if $R; then
+	findconf `ls -1 /sys/module`
+	$A || exit
+fi
+[[ -e "$S/modules.alias.sh" ]] || perl /usr/share/genpnprd/mod2sh.pl "$S" >/dev/null || {
+	echo "Unable to run '/usr/share/genpnprd/mod2sh.pl'" >&2
+	exit 1
+}
+. "$S/modules.alias.sh"
+findconf `modaliases`
