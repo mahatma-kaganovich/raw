@@ -18,3 +18,9 @@ DRBD_HIDE_WAIT="no"
 
 # config
 #DRBDADM="/sbin/drbdadm -c /etc/drbd.conf"
+
+# yes|upgrade|force - rebuild module:
+# yes - if userspace version differ
+# upgrade - if userspace version >
+# force - try to force current module (good for current 8.3.9999)
+#DRBD_EMERGE_MODULE="force"
