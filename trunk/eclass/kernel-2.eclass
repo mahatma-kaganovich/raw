@@ -162,7 +162,7 @@ kernel-2_src_compile() {
 	grep -q "=m$" .config && [[ -z "`find . -name "*.ko" -print`" ]] && die "Modules configured, but not built"
 	if use embed-hardware; then
 		einfo "Detecting hardware to embed"
-		bash "${UROOT}/usr/share/genpnprd/unmodule" "${S}" -y
+		bash "${UROOT}/usr/share/genpnprd/unmodule" "${WORKDIR}" -y
 		yes '' 2>/dev/null | kmake oldconfig &>/dev/null
 		einfo "Compiling kernel (all)"
 		kmake all ${KERNEL_MODULES_MAKEOPT}
