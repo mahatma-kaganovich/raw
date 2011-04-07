@@ -218,7 +218,7 @@ sub order3{
 
 sub fix_{
 	my $i=$_[0];
-	$i=~s/ /\\ /g;
+	$i=~s/ /[\\ _]/g;
 	$i
 }
 

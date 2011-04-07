@@ -33,7 +33,7 @@ esac
 shift
 done
 $a && set "$*"
-m="$(echo -ne "$1" | sed -e s/[*?/-]/_/g)"
+m="$(echo -ne "$1" | sed -e "s/[*?/ -]/_/g")"
 shift
 [[ "$a${_cmd_fastboot}" == true_ ]] && {
 	r=0

@@ -341,7 +341,7 @@ case "$1" in
 -m|-i|-M)
 	i=/etc/modalias
 	loadsh modprobe
-	[[ "$1" == "-m" ]] && modprobe $Q -a `ls -1 $C/*. 2>/dev/null|sed -e 's:.*/\(.*\).:\1:'` `echo ""|grep -sh "^MODALIAS=" $(grep -sL "^DRIVER=" $(find /sys -name uevent|sort))|sed -e 's:^MODALIAS=::g'|uniq` 2>>$O
+	[[ "$1" == "-m" ]] && modprobe $Q -a `ls -1 $C/*. 2>/dev/null|sed -e 's:.*/\(.*\).:\1:'` `echo ""|grep -sh "^MODALIAS=" $(grep -sL "^DRIVER=" $(find /sys -name uevent|sort))|sed -e 's:^MODALIAS=::g' -e 's:[ -]:_:g'|uniq` 2>>$O
 	while ! ( [[ "$1" == "-i" ]] && ln -s /sys $i 2>/dev/null ) && [[ -f $i ]] && mv $i ${i}_ ; do
 		modprobe $Q -a `cat ${i}_` 2>>$O
 		rm ${i}_
