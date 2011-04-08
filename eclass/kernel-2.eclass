@@ -17,8 +17,8 @@ IUSE="${IUSE} build-kernel debug custom-cflags pnp compressed integrated ipv6
 DEPEND="${DEPEND}
 	!<app-portage/ppatch-0.08-r16
 	pnp? ( sys-kernel/genpnprd )
-	lzma? ( xz-utils )
-	xz? ( xz-utils )
+	lzma? ( app-arch/xz-utils )
+	xz? ( app-arch/xz-utils )
 	build-kernel? (
 		>=sys-kernel/genkernel-3.4.10.903
 		compressed? ( sys-kernel/genpnprd )
