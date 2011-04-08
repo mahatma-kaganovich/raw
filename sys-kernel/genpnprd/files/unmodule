@@ -1,6 +1,6 @@
 #!/bin/sh
 # simple dirty detect & embed modules for actual hardware
-# v1.1
+# v1.2
 # (c) Denis Kaganovich, under Anarchy license
 
 m2y(){
@@ -23,6 +23,13 @@ for i in "${@}"; do
 done
 }
 
+fs(){
+	local a b c d
+	while read a b c d; do
+		[[ "$b" == / ]] && [[ "$c" != rootfs ]] && echo "$c"
+	done </proc/mounts
+}
+
 modaliases(){
 grep -sh "^MODALIAS=" $(find /sys -name uevent)|sed -e 's:^MODALIAS=::'|sort -u|while read i; do
 modalias "$i"&&echo "${ALIAS// /
@@ -32,35 +39,41 @@ done|sed -e 's:^.*/::g' -e 's:\.ko$::g' -e 's/-/_/g'|sort -u
 }
 
 help(){
-echo "$0 <path_to_kernel/modules> {[-y|-r]}
+echo "$0 <path_to_kernel/modules> {options}
+	(default: -y -b -s)
 	-y - actually fix .config
-	-r - runtime modules (loaded)
-	-a - all (hardware & runtime) modules"
+	-s - /sys modaliases (hardware)
+	-b - root fs
+	-r - runtime modules (loaded)"
 exit 1
+}
+
+go(){
+for i in "${@}"; do
+	case "$i" in
+	-y)Y=true;;
+	-s)
+		[[ -e "$S/modules.alias.sh" ]] || perl /usr/share/genpnprd/mod2sh.pl "$S" >/dev/null || {
+			echo "Unable to run '/usr/share/genpnprd/mod2sh.pl'" >&2
+			exit 1
+		}
+		. "$S/modules.alias.sh"
+		findconf `modaliases`
+	;;
+	-b)findconf `fs`;;
+	-r)findconf `ls -1 /sys/module`;;
+	*)help >&2;;
+	esac
+done
 }
 
 [[ -z "$1" ]] && help
 S="$1"
 cd "${S}" || help
 shift
-R=false
-A=false
 Y=false
-for i in "${@}"; do
-	case "$i" in
-	-y)Y=true;;
-	-r)R=true;;
-	-a)R=true;A=true;;
-	*)help >&2;;
-	esac
-done
-if $R; then
-	findconf `ls -1 /sys/module`
-	$A || exit
-fi
-[[ -e "$S/modules.alias.sh" ]] || perl /usr/share/genpnprd/mod2sh.pl "$S" >/dev/null || {
-	echo "Unable to run '/usr/share/genpnprd/mod2sh.pl'" >&2
-	exit 1
-}
-. "$S/modules.alias.sh"
-findconf `modaliases`
+case "$*" in
+-y)go -y -s -b;;
+?*)go "${@}";;
+*)go -s -b;;
+esac
