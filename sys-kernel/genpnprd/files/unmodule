@@ -33,6 +33,7 @@ exit 1
 
 [[ -z "$1" ]] && help
 S="$1"
+cd "${S}" || help
 shift
 R=false
 A=false
