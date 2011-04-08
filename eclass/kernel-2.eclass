@@ -124,8 +124,13 @@ kernel-2_src_configure() {
 	[[ -n "${cflags}" ]] && sed -i -e "s/^\(KBUILD_CFLAGS.*-O.\)/\1 ${cflags}/g" Makefile
 	[[ -n "${aflags}" ]] && sed -i -e "s/^\(AFLAGS_[A-Z]*[	 ]*=\)$/\1 ${aflags}/" Makefile
 	[[ -n "${ldflags}" ]] && sed -i -e "s/^\(LDFLAGS_[A-Z]*[	 ]*=\)$/\1 ${ldflags}/" Makefile
+	export comp=''
 	use build-kernel || return
 	config_defaults
+	for i in `grep "^CONFIG_KERNEL_.*=y$" "$S/.config"|sed -e 's:^CONFIG_KERNEL_::' -e 's:=y$::' -e 's:^LZMA$:LZMA XZ:'`; do
+		grep -q "^CONFIG_SQUASHFS_$i=y" "$S/.config" && (mksquashfs |& grep -q "^\s*$i\s*$") && comp="${i,,}"
+	done
+	export comp
 }
 
 use__(){
@@ -201,7 +206,7 @@ kernel-2_src_compile() {
 		_cc $i
 	done
 	einfo "Preparing boot image"
-	bash "${UROOT}/usr/share/genpnprd/genpnprd" "${S}/initrd-${REAL_KV}.img" "$( (use !pnp && echo nopnp)||(use pnponly && echo pnponly) )" "${TMPDIR}"/overlay-rd $(use thin||echo --THIN -)|| die
+	bash "${UROOT}/usr/share/genpnprd/genpnprd" "${S}/initrd-${REAL_KV}.img" "$( (use !pnp && echo nopnp)||(use pnponly && echo pnponly) )" "${TMPDIR}"/overlay-rd ${comp:+--COMPRESS $comp} $(use thin||echo --THIN -)|| die
 	# integrated: do not compress twice;
 	# others: +~700K, but faster boot & less RAM to uncompress.
 	# "integrated" still minimal
@@ -278,7 +283,7 @@ kernel-2_src_install() {
 				cd "${WORKDIR}"
 				keepdir /usr/src/"${f}"
 				f="${D}/usr/src/${f}.squashfs"
-				mksquashfs "${S}" "${f}" -no-recovery -no-progress || die
+				mksquashfs "${S}" "${f}" ${comp:+-comp $comp }-no-recovery -no-progress || die
 				chmod 755 "${f}"
 				rm "${S}" -Rf
 			fi
