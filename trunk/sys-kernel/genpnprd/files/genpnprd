@@ -280,6 +280,13 @@ for i in $rcdir/lib/modules/*/modules.alias; do
 done
 [[ "$PNPMODE" != "nopnp" ]] && /usr/bin/perl ${UROOT}/usr/share/genpnprd/mod2sh.pl $rcdir/lib/modules/* || die
 [[ "$PNPMODE" == "pnponly" ]] && PNPONLY=true
+# some aliases have spaces. may be single sed, but try multi-spaces
+grep "^alias .* .* .*" $rcdir/lib/modules/modules.alias|while read i; do
+	j="${i#* }"
+	j="${i% *}"
+	echo "${i%% *} ${j// /_} ${i##* }" >>$rcdir/lib/modules/modules.alias
+done
+rm "$rcdir/lib/modules/modules.alias.bin" -f
 for i in etc sbin; do
 	for j in $DATA/$i/*; do
 		cp -a $j $rcdir/$i

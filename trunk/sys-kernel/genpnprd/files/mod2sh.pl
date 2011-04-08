@@ -23,7 +23,7 @@ sub read_aliases{
 	open FA,$_[0] || return;
 	while(defined($s=<FA>)){
 		chomp($s);
-		$s=~s/^alias\s(\S*)\s(\S*)$/$id=$1;$m=$2;""/e;
+		$s=~s/^alias\s(.*)\s(\S*)$/$id=$1;$m=$2;""/e;
 		defined($id)||next;
 		push @{$alias{$_}},$m for (lines($id));
 	}
