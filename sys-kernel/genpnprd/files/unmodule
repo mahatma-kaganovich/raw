@@ -16,7 +16,7 @@ m2y(){
 findconf(){
 local i
 for i in "${@}"; do
-	grep -Rh "^\s*obj\-\$[(]CONFIG_.*\s*\+=.* ${i//[_-]/[_-]}\.o" "$S" --include Makefile|while read i; do
+	grep -Rh "^\s*obj\-\$[(]CONFIG_.*\s*\+=.*\s${i//[_-]/[_-]}\.o" "$S" --include Makefile|while read i; do
 		i="${i#*(}"
 		m2y "${i%%)*}"
 	done
