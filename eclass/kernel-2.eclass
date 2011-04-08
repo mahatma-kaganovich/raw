@@ -402,6 +402,7 @@ setconfig(){
 		use "$o" && source "$i"
 	done
 	use multilib || ( use multitarget && use x86 ) || cfg -IA32_EMULATION
+	use embed-hardware && use compressed && use pnp && use sources && cfg BLK_DEV_LOOP SQUASHFS
 }
 
 # Kernel-config CPU from CFLAGS and|or /proc/cpuinfo (native)
