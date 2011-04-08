@@ -380,7 +380,7 @@ setconfig(){
 	cfg KERNEL_BZIP2
 	if use lzma; then
 		cfg KERNEL_LZMA KERNEL_XZ
-	else if use xz; then
+	elif use xz; then
 		cfg KERNEL_XZ
 	fi
 	# framebuffer enabled anymore, but "fbcon" support for more devices, exclude [external] nouveau drm
