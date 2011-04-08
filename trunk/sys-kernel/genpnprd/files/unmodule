@@ -1,28 +1,31 @@
 #!/bin/sh
 # simple dirty detect & embed modules for actual hardware
-# v1.0
+# v1.1
 # (c) Denis Kaganovich, under Anarchy license
+
+m2y(){
+	grep -q "^$1=m$" .config || return
+	echo $1
+	$Y && sed -i -e "s:^$1=m\$:$1=y:" .config
+	# buggy dependences only
+	case "$1" in
+	CONFIG_ACPI_VIDEO)m2y CONFIG_VIDEO_OUTPUT_CONTROL;;
+	esac
+}
 
 findconf(){
 local i
 for i in "${@}"; do
-grep -Rh "^\s*obj\-\$[(]CONFIG_.*\s*\+=.* ${i//[_-]/[_-]}.o" "$S" --include Makefile|while read i; do
-	i=${i#*(}
-	i=${i%%)*}
-	grep -q "^$i=m$" .config || continue
-	echo $i
-	$Y && sed -i -e "s:^$i=m\$:$i=y:" .config
-	# buggy dependences only
-	case "$i" in
-	CONFIG_ACPI_VIDEO)findconf CONFIG_VIDEO_OUTPUT_CONTROL;;
-	esac
-done
+	grep -Rh "^\s*obj\-\$[(]CONFIG_.*\s*\+=.* ${i//[_-]/[_-]}\.o" "$S" --include Makefile|while read i; do
+		i="${i#*(}"
+		m2y "${i%%)*}"
+	done
 done
 }
 
 modaliases(){
 grep -sh "^MODALIAS=" $(find /sys -name uevent)|sed -e 's:^MODALIAS=::'|sort -u|while read i; do
-	modalias "$i"&&echo "${ALIAS// /
+modalias "$i"&&echo "${ALIAS// /
 }"
 $Y && rm -f $ALIAS
 done|sed -e 's:^.*/::g' -e 's:\.ko$::g' -e 's/-/_/g'|sort -u
