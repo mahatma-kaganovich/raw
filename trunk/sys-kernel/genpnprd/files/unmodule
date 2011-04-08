@@ -4,6 +4,7 @@
 # (c) Denis Kaganovich, under Anarchy license
 
 findconf(){
+local i
 for i in "${@}"; do
 grep -Rh "^\s*obj\-\$[(]CONFIG_.*\s*\+=.* ${i//[_-]/[_-]}.o" "$S" --include Makefile|while read i; do
 	i=${i#*(}
@@ -11,6 +12,10 @@ grep -Rh "^\s*obj\-\$[(]CONFIG_.*\s*\+=.* ${i//[_-]/[_-]}.o" "$S" --include Make
 	grep -q "^$i=m$" .config || continue
 	echo $i
 	$Y && sed -i -e "s:^$i=m\$:$i=y:" .config
+	# buggy dependences only
+	case "$i" in
+	CONFIG_ACPI_VIDEO)findconf CONFIG_VIDEO_OUTPUT_CONTROL;;
+	esac
 done
 done
 }
