@@ -128,7 +128,7 @@ kernel-2_src_configure() {
 	use build-kernel || return
 	config_defaults
 	for i in `grep "^CONFIG_KERNEL_.*=y$" "$S/.config"|sed -e 's:^CONFIG_KERNEL_::' -e 's:=y$::' -e 's:^LZMA$:LZMA XZ:'`; do
-		grep -q "^CONFIG_SQUASHFS_$i=y" "$S/.config" && (mksquashfs |& grep -q "^\s*$i\s*$") && comp="${i,,}"
+		grep -q "^CONFIG_SQUASHFS_$i=y" "$S/.config" && (mksquashfs |& grep -qi "^\s*$i\s*$") && comp="${i,,}"
 	done
 	export comp
 }
