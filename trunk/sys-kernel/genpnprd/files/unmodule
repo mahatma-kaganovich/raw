@@ -16,7 +16,7 @@ m2y(){
 findconf(){
 local i
 for i in "${@}"; do
-	grep -Rh "^\s*obj\-\$[(]CONFIG_.*\s*\+=.*\s${i//[_-]/[_-]}\.o" "$S" --include Makefile|while read i; do
+	grep -Rh "^\s*obj\-\$[(]CONFIG_.*\s*\+=.*\s${i//[_-]/[_-]}\.o" . --include Makefile|while read i; do
 		i="${i#*(}"
 		m2y "${i%%)*}"
 	done
@@ -31,6 +31,7 @@ fs(){
 }
 
 modaliases(){
+local i
 grep -sh "^MODALIAS=" $(find /sys -name uevent)|sed -e 's:^MODALIAS=::'|sort -u|while read i; do
 modalias "$i"&&echo "${ALIAS// /
 }"
@@ -49,27 +50,30 @@ exit 1
 }
 
 go(){
+local i
 for i in "${@}"; do
 	case "$i" in
 	-y)Y=true;;
 	-s)
-		[[ -e "$S/modules.alias.sh" ]] || perl /usr/share/genpnprd/mod2sh.pl "$S" >/dev/null || {
+		[[ -e modules.alias.sh ]] || perl /usr/share/genpnprd/mod2sh.pl . >/dev/null || {
 			echo "Unable to run '/usr/share/genpnprd/mod2sh.pl'" >&2
 			exit 1
 		}
-		. "$S/modules.alias.sh"
+		. ./modules.alias.sh
 		findconf `modaliases`
 	;;
-	-b)findconf `fs`;;
+	-b)
+		i=`fs`
+		findconf "$i"
+		m2y "CONFIG_${i^^}_FS"
+	;;
 	-r)findconf `ls -1 /sys/module`;;
 	*)help >&2;;
 	esac
 done
 }
 
-[[ -z "$1" ]] && help
-S="$1"
-cd "${S}" || help
+[[ -n "$1" ]] && cd "$1" || help
 shift
 Y=false
 case "$*" in
