@@ -185,12 +185,12 @@ sub order2{
 
 #todo: try to resolve "[...]" matches to best result
 sub order3{
-	my $a=$_;
+	my $a=$_[0];
 	$a=~s/\*/.*/g;
 #	$a=~s/\?/./g;
 	$a=~s/\[.*?\]|\?/(?:\\\[.*?\\\]|.)/g;
-	my @l=$a ne $_?grep(/^$a$/,@k_alias):($_);
-	print "$_=$#l\n" if($#l<0);
+	my @l=$a ne $_[0]?grep(/^$a$/,@k_alias):($_[0]);
+	print "$_[0]=$#l\n" if($#l<0);
 	if($#l>0){
 		my %ll;
 		for (@l){
@@ -199,10 +199,10 @@ sub order3{
 		if($VERBOSE){
 		    my @l1=keys %ll;
 		    if($#l1>0){
-			print "$_ -> ";
+			print "$_[0] -> ";
 			for(@l1){
-				print "$_ (";
-				for(split(/ /,$_)){
+				print "$_[0] (";
+				for(split(/ /,$_[0])){
 					print join(",",@{$dep{$_}});
 				}
 				print ") ";
@@ -260,7 +260,9 @@ local i=""
 				$pnp{$_}=1 for (lines(mod($_)));
 			}
 		}
-		my $k=$re eq 2?'0000':sprintf("%04i",$JOIN==2?order3($_):order2($_));
+		my $k=
+		#	$re eq 2?'0000':
+			sprintf("%04i",$JOIN==2?order3($_):order2($_));
 		my $m=join(' ',@d);
 		if($JOIN){
 			$k.=" $m";
@@ -298,9 +300,13 @@ local i=""
 	my $tail;
 	if ($MULTI && $JOIN){
 		my @r=();
-		$r[substr($_,0,4)].=fix_(join('|',@{$res{$_}})).')i="$i '.substr($_,5)."\";;\n" for (sort keys %res);
+		$r[substr($_,0,4)].=fix_(join('|',@{$res{$_}})).')i="$i '.substr($_,5)."\";; # $_\n" for (sort keys %res);
 		while($#r>=0){
-			my $s=pop @r;
+			## sorting from precise to common is right vs. common (ata_generic, etc)
+			my $s=shift @r;
+			## but sorting back IMHO was better for some pnp (2remember)
+			## but IMHO it produce less iterations on boot only
+#			my $s=pop @r;
 			next if(!defined($s));
 			print FS $tail.'case "$1" in
 '.$s;
