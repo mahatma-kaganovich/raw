@@ -277,6 +277,7 @@ pnp_options(){
 INSMOD=""
 case \$1 in
 1)INSMOD=${REORDER:-continue};;
+2)INSMOD=continue;;
 $p
 *)PARAM='';;
 esac
