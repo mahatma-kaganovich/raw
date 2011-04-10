@@ -1,6 +1,6 @@
 #!/bin/sh
 # simple dirty detect & embed modules for actual hardware
-# v1.2
+# v1.3
 # (c) Denis Kaganovich, under Anarchy license
 
 m2y(){
@@ -33,9 +33,15 @@ fs(){
 modaliases(){
 local i
 grep -sh "^MODALIAS=" $(find /sys -name uevent)|sed -e 's:^MODALIAS=::'|sort -u|while read i; do
-modalias "$i"&&echo "${ALIAS// /
+modalias "$i"||continue
+# strip "later" concurrent drivers
+i="$ALIAS"
+i="${ALIAS%%1 *}"
+#[[ "$i" != "$ALIAS" ]] && [[ -n "$i" ]] && echo "strip: $ALIAS" >&2
+i="${i:-${ALIAS#1 }}"
+echo "${i// /
 }"
-$Y && rm -f $ALIAS
+$Y && rm -f $i
 done|sed -e 's:^.*/::g' -e 's:\.ko$::g' -e 's/-/_/g'|sort -u
 }
 
