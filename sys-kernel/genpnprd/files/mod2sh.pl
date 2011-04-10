@@ -300,7 +300,7 @@ local i=""
 	my $tail;
 	if ($MULTI && $JOIN){
 		my @r=();
-		$r[substr($_,0,4)].=fix_(join('|',@{$res{$_}})).')i="$i '.substr($_,5)."\";; # $_\n" for (sort keys %res);
+		$r[substr($_,0,4)].=fix_(join('|',@{$res{$_}})).')i="$i '.substr($_,5)."\";;\n" for (sort keys %res);
 		while($#r>=0){
 			## sorting from precise to common is right vs. common (ata_generic, etc)
 			my $s=shift @r;
