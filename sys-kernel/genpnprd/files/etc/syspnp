@@ -766,7 +766,6 @@ load_hand_made0(){
 	case "$(grep "^vendor_id" /proc/cpuinfo)" in
 	*AMD*)
 		cpufreq powernow
-		: ${gov:=conservative ondemand}
 	;;
 	*Intel*)
 		mod intel_idle
@@ -781,7 +780,7 @@ load_hand_made0(){
 	cpufreq cpufreq "drivers/cpufreq/\|powernow"
 	[[ -z "$freq" ]] && return
 	${cmd_nopowersave:-false} && return
-	[[ -z "$gov" ]] && if grep -sq 1 /sys/class/power_supply/BAT*/present && ! grep -sq 1 /sys/class/power_supply/AC*/online ; then
+	[[ -z "$gov" ]] && if [[ "$freq" == powernow-k8 ]] || ( grep -sq 1 /sys/class/power_supply/BAT*/present && ! grep -sq 1 /sys/class/power_supply/AC*/online ) ; then
 		gov="conservative ondemand"
 	else
 		gov="ondemand conservative"
