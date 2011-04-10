@@ -8,9 +8,10 @@ my %alias;
 my %dep;
 
 # to load second/last
-# will be delimited by "1" (to easy "break/continue" integration)
-#my $reorder='\/ide\/|usb-storage|\/oss\/|\/drivers\/video\/';
-my $reorder='\/ide\/|usb-storage|\/oss\/|\/nvidia\/|\/radeon\/|\/intelfb\/|\/snd-pcsp';
+my @reorder=(
+ '\/ide\/|usb-storage|\/oss\/|\/nvidia\/|\/radeon\/|\/intelfb\/|\/snd-pcsp',
+ '/pata_acpi|/ata_generic'
+);
 
 # 0-old (alias-per-case), 1-"or", 2-slow/multi-match
 my $JOIN=2;
@@ -55,7 +56,7 @@ sub read_deps{
 
 sub read_modinfo{
 	my ($id,$m,$i,$s,%v);
-	open FM,"modinfo `find $_[0] -name '*.ko' -print`|" || return;
+	open FM,"modinfo `find $_[0] -name '*.ko' -print|sort`|" || return;
 	while(defined($s=<FM>)||exists($v{filename})){
 		chomp($s);
 		my ($x,$y);
@@ -245,19 +246,21 @@ local i=""
 		my @d=();
 		my @a=@{$alias{$_}};
 		for (@{$alias{$_}}){
-			if(grep(/$reorder/,@{$dep{$_}})){
-				push @d,'1',@{$dep{$_}};
-				$re=1;
-			}else{
-				unshift @d,@{$dep{$_}};
+			for my $r (0..$#reorder){
+				if(grep(/$reorder[$r]/,@{$dep{$_}})){
+					push(@d,$re=$r+1,@{$dep{$_}});
+					goto NN;
+				}
 			}
+			unshift @d,@{$dep{$_}};
+			NN:
 		}
 		if(isPNP($_)){
 			for(@d){
 				$pnp{$_}=1 for (lines(mod($_)));
 			}
 		}
-		my $k=sprintf("%04i",$JOIN==2?order3($_):order2($_));
+		my $k=$re eq 2?'0000':sprintf("%04i",$JOIN==2?order3($_):order2($_));
 		my $m=join(' ',@d);
 		if($JOIN){
 			$k.=" $m";
