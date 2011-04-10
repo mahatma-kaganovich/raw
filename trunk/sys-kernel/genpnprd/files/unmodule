@@ -36,7 +36,7 @@ grep -sh "^MODALIAS=" $(find /sys -name uevent)|sed -e 's:^MODALIAS=::'|sort -u|
 modalias "$i"||continue
 # strip "later" concurrent drivers
 i="$ALIAS"
-i="${ALIAS%%1 *}"
+i="${ALIAS%% 1 *}"
 #[[ "$i" != "$ALIAS" ]] && [[ -n "$i" ]] && echo "strip: $ALIAS" >&2
 i="${i:-${ALIAS#1 }}"
 echo "${i// /
