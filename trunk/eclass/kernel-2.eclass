@@ -408,7 +408,7 @@ setconfig(){
 # Kernel-config CPU from CFLAGS and|or /proc/cpuinfo (native)
 # use smp: when 'native' = single/multi cpu, ht/mc will be forced ON
 cpu2K(){
-local i v V="" CF="" march=$(march) m64g="HIGHMEM64G -HIGHMEM4G -NOHIGHMEM"
+local i v V="" CF="" march=$(march) m64g="HIGHMEM64G -HIGHMEM4G -NOHIGHMEM" freq='' gov='ONDEMAND'
 local vendor_id="" model_name="" flags="" cpu_family="" model="" cache_alignment="" fpu="" siblings="" cpu_cores="" processor=""
 CF1 -SMP -X86_BIGSMP -X86_GENERIC X86_X2APIC X86_UP_APIC X86_UP_IOAPIC
 use xen && CF1 -HIGHMEM64G -HIGHMEM4G NOHIGHMEM X86_PAE
@@ -477,13 +477,16 @@ native)
 	*Intel*)
 		V=INTEL
 		case "${cpu_family}:${model}:${flags}:${model_name}" in
-		*Atom*)CF1 MATOM;;
+		*Atom*)CF1 MATOM;freq=X86_ACPI_CPUFREQ;;
 		5:*\ mmx\ *)CF1 M586MMX;;
 		5:*\ tsc\ *)CF1 M586TSC;;
-		15:*)CF1 MPENTIUM4 MPSC;;
-		6:*\ ssse3\ *)CF1 MCORE2;;
+		15:*\ M\ *)CF1 MPENTIUM4 MPSC;freq=X86_SPEEDSTEP_ICH;;
+		15:*)CF1 MPENTIUM4 MPSC;freq=X86_P4_CLOCKMOD;gov='';;
+		6:*\ ssse3\ *)CF1 MCORE2;freq=X86_ACPI_CPUFREQ;;
 		6:*\ sse2\ *)CF1 MPENTIUMM;;
-		6:*\ sse\ *)CF1 MPENTIUMIII;;
+		6:*\ sse\ *Mobile*|6:*\ sse\ *-S\ *)CF1 MPENTIUMIII;freq=X86_SPEEDSTEP_SMI;;
+		6:*\ sse\ *Coppermine*)CF1 MPENTIUMIII;freq="X86_SPEEDSTEP_SMI X86_SPEEDSTEP_ICH";;
+		6:*\ sse\ *)CF1 MPENTIUMIII;freq=X86_SPEEDSTEP_ICH;;
 		6:*\ mmx\ *)CF1 MPENTIUMII;;
 		[3-6]:*)CF1 M${cpu_family}86;;
 		*)CF1 GENERIC_CPU X86_GENERIC;;
@@ -496,9 +499,9 @@ native)
 		4:*\ mmx\ *)CF1 M586MMX;;
 		4:*\ tsc\ *)CF1 M586TSC;;
 		4:*)CF1 M586;;
-		5:*)CF1 MK6;;
-		6:*)CF1 MK7;;
-		7:*|*\ k8\ *|*\ lm\ *)CF1 MK8;;
+		5:*)CF1 MK6;freq=X86_POWERNOW_K6;;
+		6:*)CF1 MK7;freq="X86_POWERNOW_K7 X86_CPUFREQ_NFORCE2";;
+		7:*|*\ k8\ *|*\ lm\ *)CF1 MK8;freq=X86_POWERNOW_K8;gov=CONSERVATIVE;;
 		*Geode*)CF1 GEODE_LX;;
 		*)CF1 GENERIC_CPU X86_GENERIC;;
 		esac
@@ -506,11 +509,15 @@ native)
 	*Centaur*)
 		V=CENTAUR
 		case "${cpu_family}:${model}:${flags}" in
-		6:[0-8]:*)CF1 MCYRIXIII;;
+		6:[0-8]:*)CF1 MCYRIXIII;freq=X86_LONGHAUL;;
 		6:9:*)CF1 MVIAC3_2;;
-		6:*\ lm\ *)CF1 MCORE2;;
+		6:*\ lm\ *)CF1 MCORE2;freq=X86_ACPI_CPUFREQ;;
 #		6:*)CF1 MVIAC7;;
-		6:*)CF1 MPENTIUMM X86_GENERIC;; # C7: core2 w/o ssse3
+		6:*)
+			CF1 MPENTIUMM X86_GENERIC
+			freq=X86_ACPI_CPUFREQ
+			#freq=X86_E_POWERSAVER
+		;; # C7: core2 w/o ssse3
 		*\ 3dnow\ *)CF1 MWINCHIP3D;;
 		*\ mmx\ *)CF1 MWINCHIPC6;;
 		*)CF1 GENERIC_CPU X86_GENERIC;;
@@ -522,14 +529,14 @@ native)
 			*6x86*|M\ II)CF1 M686;;
 			*5x86*)CF1 M586;;
 			*486*)CF1 M486;;
-			*Geode*|*MediaGX*)CF1 MGEODEGX1 -X86_GENERIC;;
+			*Geode*|*MediaGX*)CF1 MGEODEGX1 -X86_GENERIC;freq=X86_GX_SUSPMOD;;
 			esac
 	;;
 	*)	#CF1 -CPU_SUP_{INTEL,AMD,CENTAUR}
 		case "${model_name}" in
-		*Geode*|*MediaGX*)CF1 MGEODEGX1;V=CYRIX;;
-		*Efficeon*)CF1 MEFFICEON;V=TRANSMETA_32;;
-		*Crusoe*)CF1 MCRUSOE;V=TRANSMETA_32;;
+		*Geode*|*MediaGX*)CF1 MGEODEGX1;V=CYRIX;freq=X86_GX_SUSPMOD;;
+		*Efficeon*)CF1 MEFFICEON;V=TRANSMETA_32;freq=X86_LONGRUN;;
+		*Crusoe*)CF1 MCRUSOE;V=TRANSMETA_32;freq=X86_LONGRUN;;
 		*386*)CF1 GENERIC_CPU X86_GENERIC M386;;
 		*486*)CF1 GENERIC_CPU X86_GENERIC M486;;
 		*586*|*5x86*)CF1 GENERIC_CPU X86_GENERIC M586;;
@@ -573,6 +580,7 @@ case "${CTARGET:-${CHOST}}:$CF" in
 	x86_64*|*\ 64BIT\ *)CF1 -MPENTIUM4 -PENTIUMM -X86_GENERIC;;
 	*)CF1 -MPSC -GENERIC_CPU;;
 esac
+use embed-hardware && [[ -n "$freq" ]] && CF1 $freq CPU_FREQ_GOV_${gov} CPU_FREQ_DEFAULT_GOV_${gov}
 [[ -n "${V}" ]] && CF1 "-CPU_SUP_[\w\d_]*" CPU_SUP_${V}
 KERNEL_CONFIG="#-march=${march}# ${CF//  / }
 ${KERNEL_CONFIG}"
