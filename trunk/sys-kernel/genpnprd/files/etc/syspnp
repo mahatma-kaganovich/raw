@@ -599,6 +599,9 @@ detect_fs(){
 		pid=""
 		pids=""
 		rmmod scsi_wait_scan 2>/dev/null
+		[[ -n "$cmd_elevator" ]] && for i in /sys/class/block/*/queue/scheduler; do # embed
+			echo "$cmd_elevator" >$i
+		done
 		/sbin/mdev -s block
 	fi
 	resume "$cmd_resume"
@@ -925,7 +928,7 @@ syspnp(){
 	CHK=true
 	etc_modalias
 	refresh n
-	mod $MDOLIST unix
+	mod $MDOLIST unix ${cmd_elevator:+${cmd_elevator}_iosched}
 	load_hand_made0
 	# first pass - strict bus order
 	$cmd_fast && ofast_modalias || ordered_modalias $SYS_FIND
