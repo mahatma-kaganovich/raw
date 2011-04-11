@@ -6,6 +6,7 @@
 
 my %alias;
 my %dep;
+my %ord3;
 
 # to load second/last
 my @reorder=(
@@ -14,6 +15,7 @@ my @reorder=(
 );
 
 my $SUBST=1;
+my $BARRIER=3; # separate concurrent from precursors (precursors have too many siblings)
 
 sub read_aliases{
 	my ($s,$id,$m);
@@ -182,16 +184,31 @@ sub order2{
 #todo: try to resolve "[...]" matches to best result
 sub order3{
 	my $a=$_[0];
+	$a=~s/([^a-zA-Z0-9\[\]*?] )/\\$1/g;
+	my $s=$a;
 	$a=~s/\*/.*/g;
-#	$a=~s/\?/./g;
 	$a=~s/\[.*?\]|\?/(?:\\\[.*?\\\]|.)/g;
-	return 1 if($a eq $_[0]);
-	my @l=grep(/^$a$/,@k_alias);
-	die "ERROR $_[0]=$#l" if($#l<0);
-	my %ll;
-	$ll{join(' ',@{$alias{$_}})}=1 for (@l);
-	@l=keys %ll;
-	$#l+1;
+	return $ord3{$a} if(exists($ord3{$a}));
+	if($a ne $s){
+		my @l=grep(/^$a$/,@k_alias);
+		if($#l){
+			die "ERROR $s=$#l" if($#l<0);
+			my %ll;
+			$ll{join(' ',@{$alias{$_}})}=1 for (@l);
+			my @r=keys %ll;
+			return $ord3{$a}=0 if ($#r>$BARRIER);
+			$ord3{$a}=$#r+1;
+			my $n=0;
+			for(@r){
+				if($_ ne $_[0]){
+					my $n1=order3($_);
+					$n=$n1 if($n1>$n);
+				}
+			}
+			return $ord3{$a}=$n+1;
+		}
+	}
+	$ord3{$a}=1;
 }
 
 sub fix_{
@@ -260,17 +277,21 @@ local i=""
 
 	my $tail;
 	my @r=();
-	$r[substr($_,0,4)].=fix_(join('|',@{$res{$_}})).')i="$i '.substr($_,5)."\";;\n" for (sort keys %res);
-	while($#r>=0){
-		## sorting from precise to common is right vs. common (ata_generic, etc)
-		my $s=shift @r;
-		## but sorting back IMHO was better for some pnp (2remember)
-		## but IMHO it produce less iterations on boot only
-#		my $s=pop @r;
+	for (sort keys %res){
+		$r[substr($_,0,4)].=fix_(join('|',@{$res{$_}})).')i="$i '.substr($_,5)."\";;\n"
+	}
+	for(0..$#r){
+		my $s=$r[$_];
 		next if(!defined($s));
+		if($_<2){
+			$s=~s/ 2 / /g;
+		}else{
+			$s=~s/ 2 /\$r /g;
+		}
 		print FS $tail.'case "$1" in
 '.$s;
 		$tail="esac\n";
+		$tail.="local r=\${i:+ 1}\n" if($_==1);
 	}
 	print FS 'case "$1" in
 '		if(!$tail);
