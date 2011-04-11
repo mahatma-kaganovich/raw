@@ -277,7 +277,6 @@ pnp_options(){
 INSMOD=""
 case \$1 in
 1)INSMOD=${REORDER:-continue};;
-2)INSMOD=continue;;
 $p
 *)PARAM='';;
 esac
@@ -746,7 +745,7 @@ gentoo_compat_hwopts(){
 load_hand_made(){
 	## some hand-made autoloads
 #	$cmd_nofb || [[ -z "$(cat /proc/fb 2>/dev/null)" ]] || mod fbcon
-	while read i i1 ; do
+	for i in `ls /sys/module`; do
 		case $i in
 		drm_kms_helper)mod fbcon;;
 #		usual_tables) mod usb_storage ;; # on demand
@@ -754,7 +753,7 @@ load_hand_made(){
 		thermal_sys) mod fan ;;
 		ioatdma) mod i7300_idle ;;
 		esac
-	done </proc/modules
+	done
 	[[ -e /dev/freefall ]] && [[ -x /bin/hpfall ]] && /bin/hpfall /dev/sda
 }
 
