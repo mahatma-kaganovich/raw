@@ -9,15 +9,11 @@ my %dep;
 
 # to load second/last
 my @reorder=(
- '\/ide\/|usb-storage|\/oss\/|\/nvidia\/|\/radeon\/|\/intelfb\/|\/snd-pcsp',
+ '/ide/|usb-storage|/oss/|/nvidia/|\/radeon/|/intelfb/|/snd-pcsp',
  '/pata_acpi|/ata_generic'
 );
 
-# 0-old (alias-per-case), 1-"or", 2-slow/multi-match
-my $JOIN=2;
-my $SUBST=$JOIN;
-my $MULTI=$JOIN==2;
-my $VERBOSE=0;
+my $SUBST=1;
 
 sub read_aliases{
 	my ($s,$id,$m);
@@ -189,31 +185,12 @@ sub order3{
 	$a=~s/\*/.*/g;
 #	$a=~s/\?/./g;
 	$a=~s/\[.*?\]|\?/(?:\\\[.*?\\\]|.)/g;
-	my @l=$a ne $_[0]?grep(/^$a$/,@k_alias):($_[0]);
-	print "$_[0]=$#l\n" if($#l<0);
-	if($#l>0){
-		my %ll;
-		for (@l){
-			$ll{join(' ',@{$alias{$_}})}=1;
-		}
-		if($VERBOSE){
-		    my @l1=keys %ll;
-		    if($#l1>0){
-			print "$_[0] -> ";
-			for(@l1){
-				print "$_[0] (";
-				for(split(/ /,$_[0])){
-					print join(",",@{$dep{$_}});
-				}
-				print ") ";
-			}
-			print "\n";
-		    }
-		    @l=@l1;
-		}else{
-		    @l=keys %ll;
-		}
-	}
+	return 1 if($a eq $_[0]);
+	my @l=grep(/^$a$/,@k_alias);
+	die "ERROR $_[0]=$#l" if($#l<0);
+	my %ll;
+	$ll{join(' ',@{$alias{$_}})}=1 for (@l);
+	@l=keys %ll;
 	$#l+1;
 }
 
@@ -236,15 +213,9 @@ local i=""
 
 	@k_alias=keys %alias;
 	my $n=0;
-	print "\n" if($VERBOSE);
 	for (@k_alias) {
-		if($VERBOSE){
-			$n++;
-			print "$n/$#k_alias \r";
-		}
 		my $re=0;
 		my @d=();
-		my @a=@{$alias{$_}};
 		for (@{$alias{$_}}){
 			for my $r (0..$#reorder){
 				if(grep(/$reorder[$r]/,@{$dep{$_}})){
@@ -260,24 +231,14 @@ local i=""
 				$pnp{$_}=1 for (lines(mod($_)));
 			}
 		}
-		my $k=
+		my $k=join(' ',
 		#	$re eq 2?'0000':
-			sprintf("%04i",$JOIN==2?order3($_):order2($_));
-		my $m=join(' ',@d);
-		if($JOIN){
-			$k.=" $m";
-			$k=~s/\/([^\/.]+)/'\/'.($_ eq $1?'$1':$1)/ge if($SUBST && !exists($res{$k}));
-			if($re){
-				push @{$res{$k}},$_;
-			}else{
-				unshift @{$res{$k}},$_;
-			}
+			sprintf("%04i",order3($_)),@d);
+		$k=~s/\/([^\/.]+)/'\/'.($_ eq $1?'$1':$1)/ge if($SUBST && !exists($res{$k}));
+		if($re){
+			push @{$res{$k}},$_;
 		}else{
-			if($re){
-				$res{$k}.=fix_($_).")i=\"$m\";;\n";
-			}else{
-				$res{$k}=fix_($_).")i=\"$m\";;\n$res{$k}";
-			}
+			unshift @{$res{$k}},$_;
 		}
 	}
 
@@ -298,31 +259,21 @@ local i=""
 	print FO join("\n",sort keys %nopnp,'');
 
 	my $tail;
-	if ($MULTI && $JOIN){
-		my @r=();
-		$r[substr($_,0,4)].=fix_(join('|',@{$res{$_}})).')i="$i '.substr($_,5)."\";;\n" for (sort keys %res);
-		while($#r>=0){
-			## sorting from precise to common is right vs. common (ata_generic, etc)
-			my $s=shift @r;
-			## but sorting back IMHO was better for some pnp (2remember)
-			## but IMHO it produce less iterations on boot only
-#			my $s=pop @r;
-			next if(!defined($s));
-			print FS $tail.'case "$1" in
+	my @r=();
+	$r[substr($_,0,4)].=fix_(join('|',@{$res{$_}})).')i="$i '.substr($_,5)."\";;\n" for (sort keys %res);
+	while($#r>=0){
+		## sorting from precise to common is right vs. common (ata_generic, etc)
+		my $s=shift @r;
+		## but sorting back IMHO was better for some pnp (2remember)
+		## but IMHO it produce less iterations on boot only
+#		my $s=pop @r;
+		next if(!defined($s));
+		print FS $tail.'case "$1" in
 '.$s;
-			$tail="esac\n";
-		}
-		print FS 'case "$1" in
-'			if(!$tail);
-	}else{
-		print FS 'case "$1" in
-';
-		if ($JOIN) {
-			print FS fix_(join('|',@{$res{$_}})).')i="'.substr($_,5)."\";;\n" for (sort keys %res);
-		} else {
-			print FS "$res{$_}" for (sort keys %res);
-		}
+		$tail="esac\n";
 	}
+	print FS 'case "$1" in
+'		if(!$tail);
 	print FS 'esac
 ALIAS="$i"
 [[ -n "$i" ]]
