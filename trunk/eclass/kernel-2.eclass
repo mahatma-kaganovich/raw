@@ -46,9 +46,21 @@ PROVIDE="sources? ( virtual/linux-sources )
 	kernel-alsa? ( virtual/alsa )"
 
 CF1(){
-	for i in $*; do
-		CF="${CF// -${i#-} }"
-		CF="${CF// ${i#-} } ${i} "
+	local i
+	for i in "${@}"; do
+		CF="${CF// [+-]${i#[+-]} }"
+		CF="${CF// ${i#[+-]} } ${i} "
+	done
+}
+
+CF2(){
+	local i
+	for i in "${@}"; do
+		if use embed-hardware; then
+			CF1 "$i"
+		else
+			CF1 "+$i"
+		fi
 	done
 }
 
@@ -421,7 +433,7 @@ if [[ -z "${march}" ]]; then
 fi
 case "${march}" in
 native)
-	CF1 -SCHED_SMT -SCHED_MC -X86_UP_APIC -X86_TSC -X86_PAT -X86_MSR -X86_MCE -MTRR -X86_CMOV -X86_X2APIC
+	CF1 -SCHED_SMT -SCHED_MC -X86_UP_APIC -X86_TSC -X86_PAT -X86_MSR -X86_MCE -MTRR -X86_CMOV -X86_X2APIC "-CRYPTO_DEV_PADLOCK[_\w]*" -HW_RANDOM_VIA
 	case "${CTARGET:-${CHOST}}" in
 	x86*|i?86*)use multitarget && CF1 -64BIT;;
 	esac
@@ -460,6 +472,9 @@ native)
 		lm)use multitarget && CF1 64BIT;;
 		cmp_legacy)CF1 SMP SCHED_MC;;
 		up)ewarn "Running SMP on UP. Recommended useflag '-smp' and '-SMP' in ${KERNEL_CONF}";;
+		ace*_en)CF2 "CRYPTO_DEV_PADLOCK[_\w]*";;
+		rng_en)CF2 HW_RANDOM_VIA;;
+		est)freq=X86_ACPI_CPUFREQ;;
 		esac
 	done
 
@@ -477,16 +492,16 @@ native)
 	*Intel*)
 		V=INTEL
 		case "${cpu_family}:${model}:${flags}:${model_name}" in
-		*Atom*)CF1 MATOM;freq=X86_ACPI_CPUFREQ;;
+		*Atom*)CF1 MATOM;;
 		5:*\ mmx\ *)CF1 M586MMX;;
 		5:*\ tsc\ *)CF1 M586TSC;;
-		15:*\ M\ *)CF1 MPENTIUM4 MPSC;freq=X86_SPEEDSTEP_ICH;;
-		15:*)CF1 MPENTIUM4 MPSC;freq=X86_P4_CLOCKMOD;gov='';;
-		6:*\ ssse3\ *)CF1 MCORE2;freq=X86_ACPI_CPUFREQ;;
+		15:*\ M\ *)CF1 MPENTIUM4 MPSC;: ${freq:=X86_SPEEDSTEP_ICH};;
+		15:*)CF1 MPENTIUM4 MPSC;[[ -z "$freq" ]] && freq=X86_P4_CLOCKMOD && gov='';;
+		6:*\ ssse3\ *)CF1 MCORE2;;
 		6:*\ sse2\ *)CF1 MPENTIUMM;;
-		6:*\ sse\ *Mobile*|6:*\ sse\ *-S\ *)CF1 MPENTIUMIII;freq=X86_SPEEDSTEP_SMI;;
-		6:*\ sse\ *Coppermine*)CF1 MPENTIUMIII;freq="X86_SPEEDSTEP_SMI X86_SPEEDSTEP_ICH";;
-		6:*\ sse\ *)CF1 MPENTIUMIII;freq=X86_SPEEDSTEP_ICH;;
+		6:*\ sse\ *Mobile*|6:*\ sse\ *-S\ *)CF1 MPENTIUMIII;: ${freq:=X86_SPEEDSTEP_SMI};;
+		6:*\ sse\ *Coppermine*)CF1 MPENTIUMIII;: ${freq:="X86_SPEEDSTEP_SMI X86_SPEEDSTEP_ICH"};;
+		6:*\ sse\ *)CF1 MPENTIUMIII;: ${freq:=X86_SPEEDSTEP_ICH};;
 		6:*\ mmx\ *)CF1 MPENTIUMII;;
 		[3-6]:*)CF1 M${cpu_family}86;;
 		*)CF1 GENERIC_CPU X86_GENERIC;;
@@ -511,11 +526,10 @@ native)
 		case "${cpu_family}:${model}:${flags}" in
 		6:[0-8]:*)CF1 MCYRIXIII;freq=X86_LONGHAUL;;
 		6:9:*)CF1 MVIAC3_2;;
-		6:*\ lm\ *)CF1 MCORE2;freq=X86_ACPI_CPUFREQ;;
-#		6:*)CF1 MVIAC7;;
+		6:*\ lm\ *)CF1 MCORE2;;
 		6:*)
 			CF1 MPENTIUMM X86_GENERIC
-			freq=X86_ACPI_CPUFREQ
+			#CF1 MVIAC7
 			#freq=X86_E_POWERSAVER
 		;; # C7: core2 w/o ssse3
 		*\ 3dnow\ *)CF1 MWINCHIP3D;;
@@ -556,7 +570,7 @@ winchip2)CF1 MWINCHIP3D -SCHED_SMT;;
 c3)CF1 MCYRIXIII -SCHED_SMT;;
 c3-2)CF1 MVIAC3_2 -SCHED_SMT;;
 geode)CF1 MGEODE_LX -SCHED_SMT;;
-k6|k6-2)CF1 MK6 -SCHED_SMT;;
+k6|k6-2)CF1 MK6 -SCHED_SMT;freq=X86_POWERNOW_K6;;
 # compat: pentium-m sometimes have no PAE/64G
 pentiumpro)CF1 M686;;
 pentium2)CF1 MPENTIUMII;;
@@ -569,11 +583,12 @@ pentium4|pentium4m|prescott|nocona)
 	?*)CF1 MPENTIUMM X86_GENERIC GENERIC_CPU $m64g;;
 	*)CF1 MPENTIUM4 MPSC $m64g;;
 	esac
+	freq=X86_ACPI_CPUFREQ
 ;;
-core2)CF1 MCORE2 $m64g;;
-k6-3)CF1 MK6 $m64g -SCHED_SMT;;
-athlon|athlon-tbird|athlon-4|athlon-xp|athlon-mp)CF1 MK7 $m64g -SCHED_SMT;;
-k8|opteron|athlon64|athlon-fx|k8-sse3|opteron-sse3|athlon64-sse3|amdfam10|barcelona)CF1 MK8 $m64g -SCHED_SMT;;
+core2|atom)CF1 M${^^march} $m64g;freq=X86_ACPI_CPUFREQ;;
+k6-3)CF1 MK6 $m64g -SCHED_SMT;freq=X86_POWERNOW_K6;;
+athlon|athlon-tbird|athlon-4|athlon-xp|athlon-mp)CF1 MK7 $m64g -SCHED_SMT;freq=X86_POWERNOW_K7;;
+bdver1|k8|opteron|athlon64|athlon-fx|k8-sse3|opteron-sse3|athlon64-sse3|amdfam10|barcelona)CF1 MK8 $m64g -SCHED_SMT;freq=X86_POWERNOW_K8;gov=CONSERVATIVE;;
 *)CF1 GENERIC_CPU X86_GENERIC;;
 esac
 case "${CTARGET:-${CHOST}}:$CF" in
