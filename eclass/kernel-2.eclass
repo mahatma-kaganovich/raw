@@ -140,7 +140,8 @@ kernel-2_src_configure() {
 	[[ -n "${ldflags}" ]] && sed -i -e "s/^\(LDFLAGS_[A-Z]*[	 ]*=\)$/\1 ${ldflags}/" Makefile
 	export comp=''
 	use build-kernel || return
-	config_defaults
+	useconfig
+	kconfig
 	for i in `grep "^CONFIG_KERNEL_.*=y$" "$S/.config"|sed -e 's:^CONFIG_KERNEL_::' -e 's:=y$::' -e 's:^LZMA$:LZMA XZ:'`; do
 		grep -q "^CONFIG_SQUASHFS_$i=y" "$S/.config" && (mksquashfs |& grep -qi "^\s*$i\s*$") && comp="${i,,}"
 	done
@@ -181,9 +182,7 @@ kernel-2_src_compile() {
 		kmake all ${KERNEL_MODULES_MAKEOPT}
 		grep -q "=m$" .config && [[ -z "`find . -name "*.ko" -print`" ]] && die "Modules configured, but not built"
 		$i && use embed-hardware || break
-		einfo "Detecting hardware to embed"
-		bash "${UROOT}/usr/share/genpnprd/unmodule" "${S}" -y
-		yes '' 2>/dev/null | kmake oldconfig &>/dev/null
+		kconfig 1
 	done
 	if use tools; then
 		einfo "Compiling tools"
@@ -366,9 +365,15 @@ cfg_loop(){
 	fi
 }
 
-setconfig(){
-	einfo "Applying KERNEL_CONFIG"
+useconfig(){
+	einfo "Preparing KERNEL_CONFIG"
 	local i o
+	if use minimal; then
+		KERNEL_CONFIG="${KERNEL_CONFIG} -IP_ADVANCED_ROUTER -NETFILTER ~IP_FIB_TRIE -NET_CLS_IND SLOB TINY_RCU -NAMESPACES -AUDIT -TASKSTATS CC_OPTIMIZE_FOR_SIZE -KALLSYMS -GROUP_SCHED -CGROUPS"
+		KERNEL_MODULES="${KERNEL_MODULES} -net +net/sched +net/irda +net/bluetooth"
+	fi
+	# staging submenu will be opened, but no auto-m
+	use staging || KERNEL_MODULES="${KERNEL_MODULES} -drivers/staging"
 	cfg EXT2_FS
 	if use pnp || use compressed; then
 		cfg +SQUASHFS +CRAMFS +BLK_DEV_LOOP
@@ -595,7 +600,7 @@ case "${CTARGET:-${CHOST}}:$CF" in
 	x86_64*|*\ 64BIT\ *)CF1 -MPENTIUM4 -PENTIUMM -X86_GENERIC;;
 	*)CF1 -MPSC -GENERIC_CPU;;
 esac
-use embed-hardware && [[ -n "$freq" ]] && CF1 $freq CPU_FREQ_GOV_${gov} CPU_FREQ_DEFAULT_GOV_${gov} CPU_FREQ_DEFAULT_GOV_USERSPACE
+use embed-hardware && [[ -n "$freq" ]] && CF1 $freq CPU_FREQ_GOV_${gov} CPU_FREQ_DEFAULT_GOV_${gov}
 [[ -n "${V}" ]] && CF1 "-CPU_SUP_[\w\d_]*" CPU_SUP_${V}
 KERNEL_CONFIG="#-march=${march}# ${CF//  / }
 ${KERNEL_CONFIG}"
@@ -607,20 +612,13 @@ a="${a##* -${1:-march}=}"
 echo "${a%% *}"
 }
 
-config_defaults(){
-	local i i1 o m x
+kconfig(){
 	einfo "Configuring kernel"
-	if use minimal; then
-		KERNEL_CONFIG="${KERNEL_CONFIG} -IP_ADVANCED_ROUTER -NETFILTER ~IP_FIB_TRIE -NET_CLS_IND SLOB TINY_RCU -NAMESPACES -AUDIT -TASKSTATS CC_OPTIMIZE_FOR_SIZE -KALLSYMS -GROUP_SCHED -CGROUPS"
-		KERNEL_MODULES="${KERNEL_MODULES} -net +net/sched +net/irda +net/bluetooth"
-	fi
-	# staging submenu will be opened, but no auto-m
-	use staging || KERNEL_MODULES="${KERNEL_MODULES} -drivers/staging"
-	kmake defconfig >/dev/null
-	setconfig
+	[[ "$1" == 1 ]] || kmake defconfig >/dev/null
 	export ${!KERNEL_@}
 	while cfg_loop .config.{3,4} ; do
 		/usr/bin/perl "${UROOT}/usr/share/genpnprd/Kconfig.pl"
+		[[ "$1" == 1 ]] && bash "${UROOT}/usr/share/genpnprd/unmodule" "${S}" -y
 		yes '' 2>/dev/null | kmake oldconfig >/dev/null
 	done
 }
