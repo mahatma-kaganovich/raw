@@ -61,7 +61,7 @@ if ! [[ -e .unmodule.tmp ]]; then
 	find . -name Makefile|while read i; do
 		while read i; do
 			i1="${i%\\}"
-			[[ "$i1" == "$i" ]] && echo "$i" || echo -n "$i1"
+			[[ "$i1" == "$i" ]] && echo "$i" || echo -n "$i1 "
 		done <$i
 	done |grep "^\s*obj-" >.unmodule.tmp.1
 	mv .unmodule.tmp.1 .unmodule.tmp
