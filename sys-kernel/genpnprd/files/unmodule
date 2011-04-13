@@ -1,11 +1,11 @@
 #!/bin/sh
 # simple dirty detect & embed modules for actual hardware
-# v1.3
+# v1.4
 # (c) Denis Kaganovich, under Anarchy license
 
 m2y(){
 	grep -q "^$1=m$" .config || return
-	echo $1
+	echo ${1#CONFIG_}
 	$Y && sed -i -e "s:^$1=m\$:$1=y:" .config
 	# buggy dependences only
 	case "$1" in
@@ -16,7 +16,7 @@ m2y(){
 findconf(){
 local i
 for i in "${@}"; do
-	grep -Rh "^\s*obj\-\$[(]CONFIG_.*\s*\+=.*\s${i//[_-]/[_-]}\.o" . --include Makefile|while read i; do
+	grep -Rh "^\s*obj\-\$[(]CONFIG_.*\s*\+=.*\s${i//[_-]/[_-]}\.o" .unmodule.tmp|while read i; do
 		i="${i#*(}"
 		m2y "${i%%)*}"
 	done
@@ -56,16 +56,28 @@ exit 1
 }
 
 go(){
-local i
+local i i1
+if ! [[ -e .unmodule.tmp ]]; then
+	find . -name Makefile|while read i; do
+		while read i; do
+			i1="${i%\\}"
+			[[ "$i1" == "$i" ]] && echo "$i" || echo -n "$i1"
+		done <$i
+	done |grep "^\s*obj-" >.unmodule.tmp.1
+	mv .unmodule.tmp.1 .unmodule.tmp
+fi
 for i in "${@}"; do
 	case "$i" in
 	-y)Y=true;;
 	-s)
-		[[ -e modules.alias.sh ]] || perl /usr/share/genpnprd/mod2sh.pl . >/dev/null || {
+		[[ -e .modules.alias.sh ]] || {
+		    perl /usr/share/genpnprd/mod2sh.pl . >/dev/null || {
 			echo "Unable to run '/usr/share/genpnprd/mod2sh.pl'" >&2
 			exit 1
+		    }
+		    mv modules.alias.sh .modules.alias.sh
 		}
-		. ./modules.alias.sh
+		. ./.modules.alias.sh
 		findconf `modaliases`
 	;;
 	-b)
