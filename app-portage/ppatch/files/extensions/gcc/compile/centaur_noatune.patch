@@ -1,7 +1,6 @@
-diff -pruN a/gcc/config/i386/driver-i386.c c/gcc/config/i386/driver-i386.c
---- a/gcc/config/i386/driver-i386.c	2010-11-17 14:29:55.000000000 +0200
-+++ c/gcc/config/i386/driver-i386.c	2010-11-17 18:03:39.000000000 +0200
-@@ -351,7 +351,8 @@ detect_caches_intel (bool xeon_mp, unsig
+--- a/gcc/config/i386/driver-i386.c	2011-01-07 00:59:46.000000000 +0200
++++ c/gcc/config/i386/driver-i386.c	2011-04-15 19:16:04.921861482 +0300
+@@ -350,7 +350,8 @@ detect_caches_intel (bool xeon_mp, unsig
  enum vendor_signatures
  {
    SIG_INTEL =	0x756e6547 /* Genu */,
@@ -11,7 +10,16 @@ diff -pruN a/gcc/config/i386/driver-i386.c c/gcc/config/i386/driver-i386.c
  };
  
  enum processor_signatures
-@@ -477,7 +478,8 @@ const char *host_detect_local_cpu (int a
+@@ -398,7 +399,7 @@ const char *host_detect_local_cpu (int a
+   unsigned int has_fma4 = 0, has_xop = 0;
+   unsigned int has_bmi = 0, has_tbm = 0;
+ 
+-  bool arch;
++  bool arch;
+ 
+   unsigned int l2sizekb = 0;
+ 
+@@ -476,7 +477,8 @@ const char *host_detect_local_cpu (int a
  
    if (!arch)
      {
@@ -21,7 +29,7 @@ diff -pruN a/gcc/config/i386/driver-i386.c c/gcc/config/i386/driver-i386.c
  	cache = detect_caches_amd (ext_level);
        else if (vendor == SIG_INTEL)
  	{
-@@ -512,6 +514,36 @@ const char *host_detect_local_cpu (int a
+@@ -513,6 +515,24 @@ const char *host_detect_local_cpu (int a
        else
  	processor = PROCESSOR_PENTIUM;
      }
@@ -32,17 +40,6 @@ diff -pruN a/gcc/config/i386/driver-i386.c c/gcc/config/i386/driver-i386.c
 +	else if (model > 9)
 +	  cpu = arch ? "prescott" : "core2";
 +	else if (model == 9)
-+#ifdef _ASTUNE
-+	  cpu = astune ? "generic32" : "c3-2";
-+	else if (model >= 6)
-+	  cpu = astune ? "generic32" : "c3";
-+	else
-+	  processor = PROCESSOR_GENERIC32;
-+     else if (has_3dnow)
-+	cpu = astune ? "generic32" : "winchip2";
-+     else if (has_mmx)
-+	cpu = astune ? "generic32" : "winchip-c6";
-+#else
 +	  cpu = "c3-2";
 +	else if (model >= 6)
 +	  cpu = "c3";
@@ -52,7 +49,6 @@ diff -pruN a/gcc/config/i386/driver-i386.c c/gcc/config/i386/driver-i386.c
 +	cpu = "winchip2";
 +     else if (has_mmx)
 +	cpu = "winchip-c6";
-+#endif
 +     else
 +	processor = PROCESSOR_GENERIC32;
    else

@@ -1,13 +1,12 @@
 diff -pruN a/gcc/config/i386/driver-i386.c d/gcc/config/i386/driver-i386.c
 --- a/gcc/config/i386/driver-i386.c	2010-11-17 14:29:55.000000000 +0200
 +++ d/gcc/config/i386/driver-i386.c	2010-11-17 20:52:25.000000000 +0200
-@@ -399,7 +399,8 @@ const char *host_detect_local_cpu (int a
+@@ -399,7 +399,7 @@ const char *host_detect_local_cpu (int a
    unsigned int has_fma4 = 0, has_xop = 0;
    unsigned int has_bmi = 0, has_tbm = 0;
  
 -  bool arch;
 +  bool arch, tune, astune;
-+#define _ASTUNE
  
    unsigned int l2sizekb = 0;
  
