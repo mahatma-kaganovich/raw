@@ -1,0 +1,56 @@
+--- a1/gcc/config/i386/driver-i386.c	2011-04-15 19:18:04.281861429 +0300
++++ c1/gcc/config/i386/driver-i386.c	2011-04-15 19:18:22.311861420 +0300
+@@ -350,7 +350,8 @@ detect_caches_intel (bool xeon_mp, unsig
+ enum vendor_signatures
+ {
+   SIG_INTEL =	0x756e6547 /* Genu */,
+-  SIG_AMD =	0x68747541 /* Auth */
++  SIG_AMD =	0x68747541 /* Auth */,
++  SIG_VIA =	0x746e6543 /* Cent */
+ };
+ 
+ enum processor_signatures
+@@ -398,7 +399,7 @@ const char *host_detect_local_cpu (int a
+   unsigned int has_fma4 = 0, has_xop = 0;
+   unsigned int has_bmi = 0, has_tbm = 0;
+ 
+-  bool arch, tune, astune;
++  bool arch, tune, astune;
+ 
+   unsigned int l2sizekb = 0;
+ 
+@@ -476,7 +477,8 @@ const char *host_detect_local_cpu (int a
+ 
+   if (!arch)
+     {
+-      if (vendor == SIG_AMD)
++      if (vendor == SIG_AMD || vendor == SIG_VIA)
++	/* FIXME: + transmeta + cyrix fam5/mod5 */
+ 	cache = detect_caches_amd (ext_level);
+       else if (vendor == SIG_INTEL)
+ 	{
+@@ -513,6 +515,24 @@ const char *host_detect_local_cpu (int a
+       else
+ 	processor = PROCESSOR_PENTIUM;
+     }
++  else if (vendor == SIG_VIA)
++     if (family == 6)
++	if (has_longmode)
++	  cpu = "core2";
++	else if (model > 9)
++	  cpu = arch ? "prescott" : "core2";
++	else if (model == 9)
++	  cpu = astune ? "generic32" : "c3-2";
++	else if (model >= 6)
++	  cpu = astune ? "generic32" : "c3";
++	else
++	  processor = PROCESSOR_GENERIC32;
++     else if (has_3dnow)
++	cpu = astune ? "generic32" : "winchip2";
++     else if (has_mmx)
++	cpu = astune ? "generic32" : "winchip-c6";
++     else
++	processor = PROCESSOR_GENERIC32;
+   else
+     {
+       switch (family)
