@@ -1,0 +1,208 @@
+diff -pruN a/gcc/config/i386/asm-tune.h b/gcc/config/i386/asm-tune.h
+--- a/gcc/config/i386/asm-tune.h	1970-01-01 03:00:00.000000000 +0300
++++ b/gcc/config/i386/asm-tune.h	2011-04-15 15:41:47.681867168 +0300
+@@ -0,0 +1,9 @@
++/* any header you want */
++#undef ASM_SPEC_MTUNE
++#if defined(HAVE_LOCAL_CPU_DETECT) && defined(HAVE_GNU_AS)
++#define ASM_SPEC_MTUNE "%{march=native:%{!mtune=*:%{!Wa,-mtune=*:%<Wa,-mtune=native %:local_cpu_detect(astune)}}} \
++ %{mtune=native:%{!Wa,-mtune=*:%<Wa,-mtune=native %:local_cpu_detect(astune)}} \
++ %{Wa,-mtune=native:%<Wa,-mtune=native %:local_cpu_detect(astune)}"
++#else
++#define ASM_SPEC_MTUNE ""
++#endif
+diff -pruN a/gcc/config/i386/driver-i386.c b/gcc/config/i386/driver-i386.c
+--- a/gcc/config/i386/driver-i386.c	2011-01-07 00:59:46.000000000 +0200
++++ b/gcc/config/i386/driver-i386.c	2011-04-15 15:41:47.681867168 +0300
+@@ -398,7 +398,8 @@ const char *host_detect_local_cpu (int a
+   unsigned int has_fma4 = 0, has_xop = 0;
+   unsigned int has_bmi = 0, has_tbm = 0;
+ 
+-  bool arch;
++  bool arch, tune, astune;
++#define _ASTUNE
+ 
+   unsigned int l2sizekb = 0;
+ 
+@@ -406,8 +407,10 @@ const char *host_detect_local_cpu (int a
+     return NULL;
+ 
+   arch = !strcmp (argv[0], "arch");
++  tune = !strcmp (argv[0], "tune");
++  astune = !strcmp (argv[0], "astune");
+ 
+-  if (!arch && strcmp (argv[0], "tune"))
++  if (!arch && !tune && !astune)
+     return NULL;
+ 
+   max_level = __get_cpuid_max (0, &vendor);
+@@ -474,7 +477,7 @@ const char *host_detect_local_cpu (int a
+       has_bmi = ebx & bit_BMI;
+     }
+ 
+-  if (!arch)
++  if (tune)
+     {
+       if (vendor == SIG_AMD)
+ 	cache = detect_caches_amd (ext_level);
+@@ -555,7 +558,7 @@ const char *host_detect_local_cpu (int a
+ 	case 0x1c:
+ 	case 0x26:
+ 	  /* Atom.  */
+-	  cpu = "atom";
++	  cpu = astune ? "core2" : "atom";
+ 	  break;
+ 	case 0x1a:
+ 	case 0x1e:
+@@ -607,7 +610,7 @@ const char *host_detect_local_cpu (int a
+ 	    }
+ 	  else
+ 	    /* For -mtune, we default to -mtune=generic.  */
+-	    cpu = "generic";
++	    cpu = astune ? NULL : "generic";
+ 	  break;
+ 	}
+       break;
+@@ -676,7 +679,7 @@ const char *host_detect_local_cpu (int a
+ 	    cpu = "pentium";
+ 	}
+       else
+-	cpu = "generic";
++	cpu = astune ? NULL : "generic";
+     }
+ 
+   if (arch)
+@@ -715,7 +718,10 @@ const char *host_detect_local_cpu (int a
+     }
+ 
+ done:
+-  return concat (cache, "-m", argv[0], "=", cpu, options, NULL);
++  return cpu ? (astune ?
++	concat (cache, "-mtune=", cpu, NULL) :
++	concat (cache, "-m", argv[0], "=", cpu, options, NULL)) :
++		cache;
+ }
+ #else
+ 
+diff -pruN a/gcc/config/i386/linux64.h b/gcc/config/i386/linux64.h
+--- a/gcc/config/i386/linux64.h	2011-03-03 00:35:36.000000000 +0200
++++ b/gcc/config/i386/linux64.h	2011-04-15 15:41:47.681867168 +0300
+@@ -24,6 +24,8 @@ a copy of the GCC Runtime Library Except
+ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
+ <http://www.gnu.org/licenses/>.  */
+ 
++#include "asm-tune.h"
++
+ #if TARGET_64BIT_DEFAULT
+ #define TARGET_VERSION fprintf (stderr, " (x86-64 Linux/ELF)");
+ #else
+@@ -74,7 +76,7 @@ see the files COPYING3 and COPYING.RUNTI
+ #endif
+ 
+ #undef ASM_SPEC
+-#define ASM_SPEC "%{" SPEC_32 ":--32} %{" SPEC_64 ":--64} \
++#define ASM_SPEC ASM_SPEC_MTUNE "%{" SPEC_32 ":--32} %{" SPEC_64 ":--64} \
+  %{!mno-sse2avx:%{mavx:-msse2avx}} %{msse2avx:%{!mavx:-msse2avx}}"
+ 
+ #undef	LINK_SPEC
+diff -pruN a/gcc/config/i386/linux.h b/gcc/config/i386/linux.h
+--- a/gcc/config/i386/linux.h	2011-01-14 20:45:06.000000000 +0200
++++ b/gcc/config/i386/linux.h	2011-04-15 15:41:47.681867168 +0300
+@@ -20,6 +20,8 @@ You should have received a copy of the G
+ along with GCC; see the file COPYING3.  If not see
+ <http://www.gnu.org/licenses/>.  */
+ 
++#include "asm-tune.h"
++
+ /* Output at beginning of assembler file.  */
+ /* The .file command should always begin the output.  */
+ #define TARGET_ASM_FILE_START_FILE_DIRECTIVE true
+@@ -96,6 +98,7 @@ along with GCC; see the file COPYING3.
+ 
+ #undef  ASM_SPEC
+ #define ASM_SPEC \
++  ASM_SPEC_MTUNE \
+   "--32 %{!mno-sse2avx:%{mavx:-msse2avx}} %{msse2avx:%{!mavx:-msse2avx}}"
+ 
+ #undef  SUBTARGET_EXTRA_SPECS
+diff -pruN a/gcc/config/i386/mingw-w64.h b/gcc/config/i386/mingw-w64.h
+--- a/gcc/config/i386/mingw-w64.h	2010-12-09 15:30:01.000000000 +0200
++++ b/gcc/config/i386/mingw-w64.h	2011-04-15 15:41:47.681867168 +0300
+@@ -20,6 +20,8 @@ You should have received a copy of the G
+ along with GCC; see the file COPYING3.  If not see
+ <http://www.gnu.org/licenses/>.  */
+ 
++#include "asm-tune.h"
++
+ /* Enable -municode feature.  */
+ 
+ #undef CPP_SPEC
+@@ -36,7 +38,7 @@ along with GCC; see the file COPYING3.
+ /* Enable multilib.  */
+ 
+ #undef ASM_SPEC
+-#define ASM_SPEC "%{m32:--32} %{m64:--64}"
++#define ASM_SPEC ASM_SPEC_MTUNE "%{m32:--32} %{m64:--64}"
+ 
+ #undef SPEC_32
+ #undef SPEC_64
+diff -pruN a/gcc/config/i386/sol2-10.h b/gcc/config/i386/sol2-10.h
+--- a/gcc/config/i386/sol2-10.h	2011-01-26 22:23:17.000000000 +0200
++++ b/gcc/config/i386/sol2-10.h	2011-04-15 15:41:47.681867168 +0300
+@@ -19,6 +19,8 @@ You should have received a copy of the G
+ along with GCC; see the file COPYING3.  If not see
+ <http://www.gnu.org/licenses/>.  */
+ 
++#include "asm-tune.h"
++
+ #undef ASM_COMMENT_START
+ #define ASM_COMMENT_START "/"
+ 
+@@ -26,7 +28,7 @@ along with GCC; see the file COPYING3.
+    assembler requires -xarch=generic or -xarch=generic64 instead.  */
+ #undef ASM_SPEC
+ #ifdef USE_GAS
+-#define ASM_SPEC "%{m32:--32} %{m64:--64} -s %(asm_cpu)"
++#define ASM_SPEC ASM_SPEC_MTUNE "%{m32:--32} %{m64:--64} -s %(asm_cpu)"
+ #else
+ #define ASM_SPEC "%{v:-V} %{Qy:} %{!Qn:-Qy} %{Ym,*} " \
+ 		 "%{m32:-xarch=generic} %{m64:-xarch=generic64} " \
+diff -pruN a/gcc/config/i386/vxworks.h b/gcc/config/i386/vxworks.h
+--- a/gcc/config/i386/vxworks.h	2010-12-09 15:30:01.000000000 +0200
++++ b/gcc/config/i386/vxworks.h	2011-04-15 15:41:47.681867168 +0300
+@@ -18,11 +18,13 @@ You should have received a copy of the G
+ along with GCC; see the file COPYING3.  If not see
+ <http://www.gnu.org/licenses/>.  */
+ 
++#include "asm-tune.h"
++
+ #undef  TARGET_VERSION
+ #define TARGET_VERSION fprintf (stderr, " (80586, VxWorks syntax)");
+ 
+ #undef  ASM_SPEC
+-#define ASM_SPEC ""
++#define ASM_SPEC ASM_SPEC_MTUNE
+ 
+ #define TARGET_OS_CPP_BUILTINS()			\
+   do							\
+diff -pruN a/gcc/config/i386/x86-64.h b/gcc/config/i386/x86-64.h
+--- a/gcc/config/i386/x86-64.h	2011-03-03 00:35:36.000000000 +0200
++++ b/gcc/config/i386/x86-64.h	2011-04-15 15:41:47.681867168 +0300
+@@ -24,6 +24,8 @@ a copy of the GCC Runtime Library Except
+ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
+ <http://www.gnu.org/licenses/>.  */
+ 
++#include "asm-tune.h"
++
+ #undef ASM_COMMENT_START
+ #define ASM_COMMENT_START "#"
+ 
+@@ -50,7 +52,7 @@ see the files COPYING3 and COPYING.RUNTI
+ #define WCHAR_TYPE_SIZE 32
+ 
+ #undef ASM_SPEC
+-#define ASM_SPEC "%{m32:--32} %{m64:--64}"
++#define ASM_SPEC ASM_SPEC_MTUNE "%{m32:--32} %{m64:--64}"
+ 
+ #undef ASM_OUTPUT_ALIGNED_BSS
+ #define ASM_OUTPUT_ALIGNED_BSS(FILE, DECL, NAME, SIZE, ALIGN) \

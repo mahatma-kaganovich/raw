@@ -80,9 +80,9 @@ diff -pruN a/gcc/config/i386/linux64.h d/gcc/config/i386/linux64.h
  
 +#undef ASM_SPEC_MTUNE
 +#if defined(HAVE_LOCAL_CPU_DETECT) && defined(HAVE_GNU_AS)
-+#define ASM_SPEC_MTUNE "%{march=native:%{!mtune=*:%{!Wa,mtune=*:%<Wa,mtune=native %:local_cpu_detect(astune)}}} \
-+ %{mtune=native:%{!Wa,mtune=*:%<Wa,mtune=native %:local_cpu_detect(astune)}} \
-+ %{Wa,mtune=native:%<Wa,mtune=native %:local_cpu_detect(astune)}"
++#define ASM_SPEC_MTUNE "%{march=native:%{!mtune=*:%{!Wa,-mtune=*:%<Wa,-mtune=native %:local_cpu_detect(astune)}}} \
++ %{mtune=native:%{!Wa,-mtune=*:%<Wa,-mtune=native %:local_cpu_detect(astune)}} \
++ %{Wa,-mtune=native:%<Wa,-mtune=native %:local_cpu_detect(astune)}"
 +#else
 +#define ASM_SPEC_MTUNE ""
 +#endif
@@ -102,9 +102,9 @@ diff -pruN a/gcc/config/i386/linux.h d/gcc/config/i386/linux.h
  
 +#undef ASM_SPEC_MTUNE
 +#if defined(HAVE_LOCAL_CPU_DETECT) && defined(HAVE_GNU_AS)
-+#define ASM_SPEC_MTUNE "%{march=native:%{!mtune=*:%{!Wa,mtune=*:%<Wa,mtune=native %:local_cpu_detect(astune)}}} \
-+ %{mtune=native:%{!Wa,mtune=*:%<Wa,mtune=native %:local_cpu_detect(astune)}} \
-+ %{Wa,mtune=native:%<Wa,mtune=native %:local_cpu_detect(astune)}"
++#define ASM_SPEC_MTUNE "%{march=native:%{!mtune=*:%{!Wa,-mtune=*:%<Wa,-mtune=native %:local_cpu_detect(astune)}}} \
++ %{mtune=native:%{!Wa,-mtune=*:%<Wa,-mtune=native %:local_cpu_detect(astune)}} \
++ %{Wa,-mtune=native:%<Wa,-mtune=native %:local_cpu_detect(astune)}"
 +#else
 +#define ASM_SPEC_MTUNE ""
 +#endif
@@ -126,9 +126,9 @@ diff -pruN a/gcc/config/i386/mingw-w64.h d/gcc/config/i386/mingw-w64.h
  
 +#undef ASM_SPEC_MTUNE
 +#if defined(HAVE_LOCAL_CPU_DETECT) && defined(HAVE_GNU_AS)
-+#define ASM_SPEC_MTUNE "%{march=native:%{!mtune=*:%{!Wa,mtune=*:%<Wa,mtune=native %:local_cpu_detect(astune)}}} \
-+ %{mtune=native:%{!Wa,mtune=*:%<Wa,mtune=native %:local_cpu_detect(astune)}} \
-+ %{Wa,mtune=native:%<Wa,mtune=native %:local_cpu_detect(astune)}"
++#define ASM_SPEC_MTUNE "%{march=native:%{!mtune=*:%{!Wa,-mtune=*:%<Wa,-mtune=native %:local_cpu_detect(astune)}}} \
++ %{mtune=native:%{!Wa,-mtune=*:%<Wa,-mtune=native %:local_cpu_detect(astune)}} \
++ %{Wa,-mtune=native:%<Wa,-mtune=native %:local_cpu_detect(astune)}"
 +#else
 +#define ASM_SPEC_MTUNE ""
 +#endif
@@ -150,9 +150,9 @@ diff -pruN a/gcc/config/i386/sol2-10.h d/gcc/config/i386/sol2-10.h
  
 +#undef ASM_SPEC_MTUNE
 +#if defined(HAVE_LOCAL_CPU_DETECT) && defined(HAVE_GNU_AS)
-+#define ASM_SPEC_MTUNE "%{march=native:%{!mtune=*:%{!Wa,mtune=*:%<Wa,mtune=native %:local_cpu_detect(astune)}}} \
-+ %{mtune=native:%{!Wa,mtune=*:%<Wa,mtune=native %:local_cpu_detect(astune)}} \
-+ %{Wa,mtune=native:%<Wa,mtune=native %:local_cpu_detect(astune)}"
++#define ASM_SPEC_MTUNE "%{march=native:%{!mtune=*:%{!Wa,-mtune=*:%<Wa,-mtune=native %:local_cpu_detect(astune)}}} \
++ %{mtune=native:%{!Wa,-mtune=*:%<Wa,-mtune=native %:local_cpu_detect(astune)}} \
++ %{Wa,-mtune=native:%<Wa,-mtune=native %:local_cpu_detect(astune)}"
 +#else
 +#define ASM_SPEC_MTUNE ""
 +#endif
@@ -175,9 +175,9 @@ diff -pruN a/gcc/config/i386/vxworks.h d/gcc/config/i386/vxworks.h
  
 +#undef ASM_SPEC_MTUNE
 +#if defined(HAVE_LOCAL_CPU_DETECT) && defined(HAVE_GNU_AS)
-+#define ASM_SPEC_MTUNE "%{march=native:%{!mtune=*:%{!Wa,mtune=*:%<Wa,mtune=native %:local_cpu_detect(astune)}}} \
-+ %{mtune=native:%{!Wa,mtune=*:%<Wa,mtune=native %:local_cpu_detect(astune)}} \
-+ %{Wa,mtune=native:%<Wa,mtune=native %:local_cpu_detect(astune)}"
++#define ASM_SPEC_MTUNE "%{march=native:%{!mtune=*:%{!Wa,-mtune=*:%<Wa,-mtune=native %:local_cpu_detect(astune)}}} \
++ %{mtune=native:%{!Wa,-mtune=*:%<Wa,-mtune=native %:local_cpu_detect(astune)}} \
++ %{Wa,-mtune=native:%<Wa,-mtune=native %:local_cpu_detect(astune)}"
 +#else
 +#define ASM_SPEC_MTUNE ""
 +#endif
@@ -197,9 +197,9 @@ diff -pruN a/gcc/config/i386/x86-64.h d/gcc/config/i386/x86-64.h
  
 +#undef ASM_SPEC_MTUNE
 +#if defined(HAVE_LOCAL_CPU_DETECT) && defined(HAVE_GNU_AS)
-+#define ASM_SPEC_MTUNE "%{march=native:%{!mtune=*:%{!Wa,mtune=*:%<Wa,mtune=native %:local_cpu_detect(astune)}}} \
-+ %{mtune=native:%{!Wa,mtune=*:%<Wa,mtune=native %:local_cpu_detect(astune)}} \
-+ %{Wa,mtune=native:%<Wa,mtune=native %:local_cpu_detect(astune)}"
++#define ASM_SPEC_MTUNE "%{march=native:%{!mtune=*:%{!Wa,-mtune=*:%<Wa,-mtune=native %:local_cpu_detect(astune)}}} \
++ %{mtune=native:%{!Wa,-mtune=*:%<Wa,-mtune=native %:local_cpu_detect(astune)}} \
++ %{Wa,-mtune=native:%<Wa,-mtune=native %:local_cpu_detect(astune)}"
 +#else
 +#define ASM_SPEC_MTUNE ""
 +#endif
