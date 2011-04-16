@@ -579,7 +579,7 @@ k6|k6-2)CF1 MK6 -SCHED_SMT;freq=X86_POWERNOW_K6;;
 # compat: pentium-m sometimes have no PAE/64G
 pentiumpro)CF1 M686;;
 pentium2)CF1 MPENTIUMII;;
-pentium3|pentium3m)CF1 MPENTIUMIII;;
+pentium3|pentium3m)CF1 MPENTIUMIII;freq="X86_SPEEDSTEP_SMI X86_SPEEDSTEP_ICH";;
 pentium-m)CF1 MPENTIUMM;;
 # sure 64G
 pentium4|pentium4m|prescott|nocona)
@@ -588,7 +588,7 @@ pentium4|pentium4m|prescott|nocona)
 	?*)CF1 MPENTIUMM X86_GENERIC GENERIC_CPU $m64g;;
 	*)CF1 MPENTIUM4 MPSC $m64g;;
 	esac
-	freq=X86_ACPI_CPUFREQ
+	freq="X86_ACPI_CPUFREQ X86_P4_CLOCKMOD"
 ;;
 core2|atom)CF1 M${^^march} $m64g;freq=X86_ACPI_CPUFREQ;;
 k6-3)CF1 MK6 $m64g -SCHED_SMT;freq=X86_POWERNOW_K6;;
