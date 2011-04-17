@@ -477,9 +477,10 @@ native)
 		lm)use multitarget && CF1 64BIT;;
 		cmp_legacy)CF1 SMP SCHED_MC;;
 		up)ewarn "Running SMP on UP. Recommended useflag '-smp' and '-SMP' in ${KERNEL_CONF}";;
-		ace*_en)CF2 "CRYPTO_DEV_PADLOCK[_\w]*";;
+		phe_en|ace*_en)CF2 "CRYPTO_DEV_PADLOCK[_\w]*";;
 		rng_en)CF2 HW_RANDOM_VIA;;
-		est)freq=X86_ACPI_CPUFREQ;;
+		est)freq+=" X86_ACPI_CPUFREQ";;
+		longrun)freq+=" X86_LONGRUN";;
 		esac
 	done
 
@@ -492,6 +493,9 @@ native)
 	[[ "${cpu_cores:-1}" -gt 1 ]] && CF1 SMP SCHED_MC
 	[[ "${siblings:-0}" -gt "${cpu_cores:-1}" ]] && CF1 SMP SCHED_SMT
 	[[ "${fpu}" != yes ]] && CF1 MATH_EMULATION
+
+	# a bit misconcept
+	grep -sq "^\\SB_\.PCCH" /sys/bus/acpi/devices/*/path && freq+=" PCC_CPUFREQ"
 
 	case "${vendor_id}" in
 	*Intel*)
@@ -535,12 +539,12 @@ native)
 		6:*)
 			CF1 MPENTIUMM X86_GENERIC
 			#CF1 MVIAC7
-			#freq=X86_E_POWERSAVER
 		;; # C7: core2 w/o ssse3
 		*\ 3dnow\ *)CF1 MWINCHIP3D;;
 		*\ mmx\ *)CF1 MWINCHIPC6;;
 		*)CF1 GENERIC_CPU X86_GENERIC;;
 		esac
+		[[ "$model" == 6 ]] && : ${freq:=X86_E_POWERSAVER}
 	;;
 	*Cyrix*)	V=CYRIX
 			CF1 GENERIC_CPU X86_GENERIC
@@ -554,8 +558,8 @@ native)
 	*)	#CF1 -CPU_SUP_{INTEL,AMD,CENTAUR}
 		case "${model_name}" in
 		*Geode*|*MediaGX*)CF1 MGEODEGX1;V=CYRIX;freq=X86_GX_SUSPMOD;;
-		*Efficeon*)CF1 MEFFICEON;V=TRANSMETA_32;freq=X86_LONGRUN;;
-		*Crusoe*)CF1 MCRUSOE;V=TRANSMETA_32;freq=X86_LONGRUN;;
+		*Efficeon*)CF1 MEFFICEON;V=TRANSMETA_32;;
+		*Crusoe*)CF1 MCRUSOE;V=TRANSMETA_32;;
 		*386*)CF1 GENERIC_CPU X86_GENERIC M386;;
 		*486*)CF1 GENERIC_CPU X86_GENERIC M486;;
 		*586*|*5x86*)CF1 GENERIC_CPU X86_GENERIC M586;;
