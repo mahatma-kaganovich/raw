@@ -1,0 +1,10 @@
+--- a/drivers/video/Kconfig	2011-04-26 11:28:02.000000000 +0300
++++ b/drivers/video/Kconfig	2011-04-27 00:25:34.000000000 +0300
+@@ -1585,6 +1585,7 @@
+        select I2C_ALGOBIT
+        select I2C
+        select GPIOLIB
++       select FB_DDC
+        help
+ 	  This is the frame buffer device driver for Graphics chips of VIA
+ 	  UniChrome (Pro) Family (CLE266,PM800/CN400,P4M800CE/P4M800Pro/
