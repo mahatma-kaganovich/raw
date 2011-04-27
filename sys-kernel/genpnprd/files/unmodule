@@ -32,7 +32,7 @@ fs(){
 
 modaliases(){
 local i
-grep -sh "^MODALIAS=" $(find /sys -name uevent)|sed -e 's:^MODALIAS=::'|sort -u|while read i; do
+grep -sh "^MODALIAS=" $(find /sys -name uevent)|sed -e 's:^MODALIAS=::' -e 's:-:_:g'|sort -u|while read i; do
 modalias "$i"||continue
 # strip "later" concurrent drivers
 i="$ALIAS"
