@@ -9,7 +9,7 @@ UROOT=""
 
 if [[ ${ETYPE} == sources ]]; then
 
-IUSE="${IUSE} build-kernel debug custom-cflags +pnp +compressed integrated ipv6
+IUSE="${IUSE} +build-kernel debug custom-cflags +pnp +compressed integrated ipv6
 	netboot nls unicode +acl minimal selinux custom-arch embed-hardware
 	+kernel-drm +kernel-alsa kernel-firmware +sources fbcon staging pnponly lzma xz
 	external-firmware xen +smp tools multilib multitarget +multislot thin
