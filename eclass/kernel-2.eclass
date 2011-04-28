@@ -182,7 +182,8 @@ kernel-2_src_compile() {
 		kmake all ${KERNEL_MODULES_MAKEOPT}
 		grep -q "=m$" .config && [[ -z "`find . -name "*.ko" -print`" ]] && die "Modules configured, but not built"
 		$i && use embed-hardware || break
-		kconfig 1
+		KERNEL_CONFIG+=" ===detect: $(detects)"
+		kconfig
 	done
 	if use tools; then
 		einfo "Compiling tools"
@@ -618,11 +619,10 @@ echo "${a%% *}"
 
 kconfig(){
 	einfo "Configuring kernel"
-	[[ "$1" == 1 ]] || kmake defconfig >/dev/null
+	[[ -e .config ]] || kmake defconfig >/dev/null
 	export ${!KERNEL_@}
 	while cfg_loop .config.{3,4} ; do
 		/usr/bin/perl "${UROOT}/usr/share/genpnprd/Kconfig.pl"
-		[[ "$1" == 1 ]] && bash "${UROOT}/usr/share/genpnprd/unmodule" "${S}" -y
 		yes '' 2>/dev/null | kmake oldconfig >/dev/null
 	done
 }
@@ -779,4 +779,48 @@ for i in $(echo "int main(){}"|$(tc-getBUILD_CC) ${CFLAGS} "${@}" -x c - -v -o /
 	esac
 done
 echo "${aflags# }"
+}
+
+detects(){
+	local i a b c d
+	find . -name Makefile|while read i; do
+		while read i; do
+			a="${i%\\}"
+			[[ "$a" == "$i" ]] && echo "$i" || echo -n "$a "
+		done <$i
+	done |grep "^obj-" >"${TMPDIR}"/unmodule.tmp
+	perl "${UROOT}"/usr/share/genpnprd/mod2sh.pl "${WORKDIR}" >&2 || die "Unable to run '/usr/share/genpnprd/mod2sh.pl'"
+	. "${WORKDIR}"/modules.alias.sh
+	{
+		# /sys
+		cat `find /sys -name modalias`
+		grep -sh "^MODALIAS=" $(find /sys -name uevent)|sed -e 's:^MODALIAS=::'
+		# rootfs
+		while read a b c d; do
+			[[ "$b" == / ]] && [[ "$c" != rootfs ]] && echo "$c"
+		done </proc/mounts
+	}|sed -e 's:-:_:g'|sort -u|while read i; do
+		modalias "$i"||continue
+		# strip "later" concurrent drivers
+		i="$ALIAS"
+		i="${ALIAS%% 1 *}"
+		#[[ "$i" != "$ALIAS" ]] && [[ -n "$i" ]] && echo "strip: $ALIAS" >&2
+		i="${i:-${ALIAS#1 }}"
+		echo "${i// /
+}"
+		rm -f $i
+	done|sed -e 's:^.*/::g' -e 's:\.ko$::g'|sort -u|while read i; do
+		grep -Rh "^\s*obj\-\$[(]CONFIG_.*\s*\+=.*\s${i//[_-]/[_-]}\.o" "${TMPDIR}"/unmodule.tmp|sed -e 's:).*$::g' -e 's:^.*(CONFIG_::'|while read i; do
+			m2y "$i"
+		done
+	done
+}
+
+m2y(){
+	grep -q "^CONFIG_$1=[my]$" .config || return
+	echo -ne " $1"
+	# buggy dependences only
+	case "$1" in
+	ACPI_VIDEO)m2y VIDEO_OUTPUT_CONTROL;;
+	esac
 }
