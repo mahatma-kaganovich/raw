@@ -8,4 +8,5 @@ if use embed-hardware; then
  (use mdadm || use evms) && KERNEL_CONFIG+=" MD_[\d\w_]*"
  (use device-mapper || use evms || use lvm) && KERNEL_CONFIG+=" BLK_DEV_DM DM_[\d\w_]*"
  use iscsi && KERNEL_CONFIG+=" ISCSI_TCP"
+ KERNEL_CONFIG+=" UNIX"
 fi
