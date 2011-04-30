@@ -376,7 +376,9 @@ useconfig(){
 	# staging submenu will be opened, but no auto-m
 	use staging || KERNEL_MODULES="${KERNEL_MODULES} -drivers/staging"
 	cfg EXT2_FS
-	if use pnp || use compressed; then
+	if use embed-hardware && use compressed && use pnp; then
+		cfg BLK_DEV_LOOP SQUASHFS
+	elif use pnp || use compressed; then
 		cfg +SQUASHFS +CRAMFS +BLK_DEV_LOOP
 	fi
 	local cfg_exclude=" HAVE_DMA_API_DEBUG "
@@ -420,7 +422,6 @@ useconfig(){
 		use "$o" && source "$i"
 	done
 	use multilib || ( use multitarget && use x86 ) || cfg -IA32_EMULATION
-	use embed-hardware && use compressed && use pnp && use sources && cfg BLK_DEV_LOOP SQUASHFS
 }
 
 # Kernel-config CPU from CFLAGS and|or /proc/cpuinfo (native)
