@@ -1,5 +1,11 @@
 KERNEL_CONFIG+="
 ==!force-modules: BLK_DEV_MD FB CONNECTOR RTC_CLASS BLK_CGROUP BLK_DEV_THROTTLING
 "
-# usb serial console vs. serial_generic
-# USB USB_SERIAL -USB_SERIAL_GENERIC
+# usb serial console vs. serial_generic?
+# USB USB_SERIAL USB_SERIAL_CONSOLE
+
+if use embed-hardware; then
+ (use mdadm || use evms) && KERNEL_CONFIG+=" MD_[\d\w_]*"
+ (use device-mapper || use evms || use lvm) && KERNEL_CONFIG+=" BLK_DEV_DM DM_[\d\w_]*"
+ use iscsi && KERNEL_CONFIG+=" ISCSI_TCP"
+fi
