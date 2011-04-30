@@ -537,10 +537,11 @@ native)
 		case "${cpu_family}:${model}:${flags}" in
 		6:[0-8]:*)CF1 MCYRIXIII;freq=X86_LONGHAUL;;
 		6:9:*)CF1 MVIAC3_2;;
-		6:*\ lm\ *)CF1 MCORE2;;
+		6:*\ lm\ *)CF1 MCORE2;CF2 SENSORS_VIA_CPUTEMP;;
 		6:*)
 			CF1 MPENTIUMM X86_GENERIC
 			#CF1 MVIAC7
+			CF2 SENSORS_VIA_CPUTEMP
 		;; # C7: core2 w/o ssse3
 		*\ 3dnow\ *)CF1 MWINCHIP3D;;
 		*\ mmx\ *)CF1 MWINCHIPC6;;
