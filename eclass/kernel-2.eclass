@@ -477,7 +477,7 @@ native)
 		x2apic)CF1 X86_X2APIC;;
 		mp)CF1 SMP;; # ?
 		lm)use multitarget && CF1 64BIT;;
-		cmp_legacy)CF1 SMP SCHED_MC;;
+		cmp_legacy)CF1 SMP SCHED_MC -SCHED_SMT;;
 		up)ewarn "Running SMP on UP. Recommended useflag '-smp' and '-SMP' in ${KERNEL_CONF}";;
 		phe_en|ace*_en)CF2 "CRYPTO_DEV_PADLOCK[_\w]*";;
 		rng_en)CF2 HW_RANDOM_VIA;;
