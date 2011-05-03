@@ -10,7 +10,7 @@ UROOT=""
 if [[ ${ETYPE} == sources ]]; then
 
 IUSE="${IUSE} +build-kernel debug custom-cflags +pnp +compressed integrated ipv6
-	netboot nls unicode +acl minimal selinux custom-arch embed-hardware
+	netboot nls unicode +acl selinux custom-arch embed-hardware
 	+kernel-drm +kernel-alsa kernel-firmware +sources fbcon staging pnponly lzma xz
 	external-firmware xen +smp tools multilib multitarget +multislot thin
 	lvm device-mapper unionfs iscsi e2fsprogs mdadm"
@@ -75,7 +75,7 @@ for i in "${UROOT}"/usr/share/genpnprd/*.{-use,use}; do
 	i="${i##*/}"
 	i="${i%.use}"
 	i="${i%.-use}"
-	IUSE="$IUSE $i"
+	IUSE="$IUSE ${i#[0-9]}"
 done
 
 fi
@@ -215,7 +215,7 @@ kernel-2_src_compile() {
 	run_genkernel ramdisk "--kerneldir=\"${S}\" --bootdir=\"${S}\" --module-prefix=\"${BDIR}\" --no-mountboot ${p}"
 	r=`ls initramfs*-${REAL_KV}`
 	rename "${r}" "initrd-${REAL_KV}.img" "${r}" || die "initramfs rename failed"
-	use !minimal && for i in `find Documentation -name "*.c"`; do
+	for i in `find Documentation -name "*.c"`; do
 		_cc $i
 	done
 	einfo "Preparing boot image"
@@ -369,10 +369,6 @@ cfg_loop(){
 useconfig(){
 	einfo "Preparing KERNEL_CONFIG"
 	local i o
-	if use minimal; then
-		KERNEL_CONFIG="${KERNEL_CONFIG} -IP_ADVANCED_ROUTER -NETFILTER ~IP_FIB_TRIE -NET_CLS_IND SLOB TINY_RCU -NAMESPACES -AUDIT -TASKSTATS CC_OPTIMIZE_FOR_SIZE -KALLSYMS -GROUP_SCHED -CGROUPS"
-		KERNEL_MODULES="${KERNEL_MODULES} -net +net/sched +net/irda +net/bluetooth"
-	fi
 	# staging submenu will be opened, but no auto-m
 	use staging || KERNEL_MODULES="${KERNEL_MODULES} -drivers/staging"
 	cfg EXT2_FS
@@ -413,6 +409,7 @@ useconfig(){
 	for i in "${UROOT}"/usr/share/genpnprd/*use; do
 		o="${i##*/}"
 		o="${o%.*}"
+		o="${o#[0-9]}"
 		o="${o#[+~-]}"
 		case "$i" in
 		*.-use)o="!$o";;
