@@ -40,7 +40,7 @@ IUSE="-java mozdevelop moznoirc moznoroaming postgres startup-notification
 	debug minimal directfb moznosystem +threads jssh wifi python mobile static
 	moznomemory accessibility system-sqlite vanilla xforms gio +alsa
 	+custom-cflags +custom-optimization system-xulrunner +libxul system-nss system-nspr X
-	bindist flatfile dbus profiled ipv6 opengl moznopango"
+	bindist flatfile dbus profile ipv6 opengl moznopango"
 #	qt-experimental"
 
 #RESTRICT="nomirror"
@@ -289,6 +289,11 @@ src_prepare(){
 		for i2 in "${WORKDIR}"/l10n/*; do
 			[[ -d "${i2}/${i1}" ]] && cp -an "${i}"/en-US/* "${i2}/${i1}"
 		done
+	done
+
+	[[ -e "${S1}/netwerk/protocol/device" ]] && for i in "${S}" "${S1}"; do
+		grep -q "^NECKO_PROTOCOLS_DEFAULT=.*device" "${i}"/configure.in ||
+			sed -i -e 's:^NECKO_PROTOCOLS_DEFAULT=":NECKO_PROTOCOLS_DEFAULT="device :' "${i}"/configure.in
 	done
 
 	for i in "${S1}/js/src" "${S1}" "${S}" "${S}/ldap/sdks/c-sdk" "${S}/directory/c-sdk" ; do
@@ -613,10 +618,10 @@ _package(){
 src_compile() {
 	local E="${S}/mailnews/extensions/enigmail" o= o1= o2=
 	grep -q "^mk_" "${S}"/.mozconfig && o="-f client.mk" && o1=build
-	use profiled && o2="MOZ_PROFILE_GENERATE=1"
+	use profile && o2="MOZ_PROFILE_GENERATE=1"
 	# sometimes parallel build breaks
 	emake $o $o1 $o2 || emake -j1 $o $o1 $o2 || die
-	use profiled && {
+	use profile && {
 		_package
 		emake $o maybe_clobber_profiledbuild
 		emake $o $o1 MOZ_PROFILE_USE=1 || die
