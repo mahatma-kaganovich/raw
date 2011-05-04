@@ -25,7 +25,7 @@ DEPEND="${DEPEND}
 		kernel-drm? ( !x11-base/x11-drm )
 		kernel-alsa? ( !media-sound/alsa-driver )
 		kernel-firmware? ( !sys-kernel/linux-firmware )
-		luks? ( sys-fs/cryptsetup[static] )
+		luks? ( sys-fs/cryptsetup )
 		evms? ( sys-fs/evms )
 	) "
 
