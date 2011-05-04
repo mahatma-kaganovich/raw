@@ -762,11 +762,13 @@ load_hand_made(){
 
 load_hand_made0(){
 	## some hand-made autoloads, stage0
-
-	# frost. save your silicon (and power): autoload best cpufreq driver
-	freq=`cat $(find /sys/devices/system/cpu -name scaling_driver 2>/dev/null) </dev/null`
 	local f="$(grep "^vendor_id\|^flags" /proc/cpuinfo|sort -u)"
 	mod $(cd /etc/modflags && cat $f </dev/null 2>/dev/null)
+	wait $pid
+	pid=""
+	pids=""
+	# frost. save your silicon (and power): autoload best cpufreq driver
+	freq=`cat $(find /sys/devices/system/cpu -name scaling_driver 2>/dev/null) </dev/null`
 	case "$f " in
 	*AuthenticAMD*\ lm\ *)
 		cpufreq powernow-k8
@@ -776,10 +778,8 @@ load_hand_made0(){
 		cpufreq cpufreq-nforce2
 		cpufreq powernow
 	;;
-	*\ est\ *)cpufreq acpi-cpufreq;;
-	*CentaurHauls*)cpufreq e_powersaver;;
 	esac
-	cpufreq cpufreq "drivers/cpufreq/\|powernow"
+	cpufreq cpufreq "drivers/cpufreq/\|powernow\|nforce2"
 	[[ -z "$freq" ]] && return
 	${cmd_nopowersave:-false} && return
 	[[ -z "$gov" ]] && if grep -sq 1 /sys/class/power_supply/BAT*/present && ! grep -sq 1 /sys/class/power_supply/AC*/online ; then
