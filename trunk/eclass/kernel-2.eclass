@@ -478,13 +478,8 @@ native)
 		lm)use multitarget && CF1 64BIT;;
 		cmp_legacy)CF1 SMP SCHED_MC -SCHED_SMT;;
 		up)ewarn "Running SMP on UP. Recommended useflag '-smp' and '-SMP' in ${KERNEL_CONF}";;
-		phe_en|ace*_en)CF2 "CRYPTO_DEV_PADLOCK[_\w]*";;
-		rng_en)CF2 HW_RANDOM_VIA;;
 		est)freq+=" X86_ACPI_CPUFREQ";;
 		longrun)freq+=" X86_LONGRUN";;
-		aes)CF2 CRYPTO_AES_NI_INTEL;;
-		sse4_2)CF2 CRYPTO_CRC32C_INTEL;;
-		pclmulqdq)CF2 CRYPTO_GHASH_CLMUL_NI_INTEL CRYPTO_FPU;;
 		esac
 	done
 
@@ -804,6 +799,8 @@ detects(){
 		while read a b c d; do
 			[[ "$b" == / ]] && [[ "$c" != rootfs ]] && echo "$c"
 		done </proc/mounts
+		# cpu flags
+		(cd "${UROOT}"/usr/share/genpnprd/etc/modflags && cat $(grep "^flags" /proc/cpuinfo) </dev/null 2>/dev/null)
 	}|sed -e 's:-:_:g'|sort -u|while read i; do
 		modalias "$i"||continue
 		# strip "later" concurrent drivers
