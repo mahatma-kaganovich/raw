@@ -483,7 +483,8 @@ native)
 		esac
 	done
 
-	[[ "${processor:-0}" -gt 0 ]] && CF1 SMP
+	[[ "${processor:=0}" -gt 0 ]] && CF1 SMP
+	[[ $((processor+1)) == "${cpu_cores:-1}" ]] && [[ "${siblings:-1}" == "${cpu_cores:-1}" ]] && CF1 -NUMA
 #	[[ "${processor:-0}" -gt 7 ]] && CF1 X86_BIGSMP
 #	[[ "${processor:-0}" -gt 511 ]] && CF1 MAXSMP
 #	let i=${processor:-0}+1
