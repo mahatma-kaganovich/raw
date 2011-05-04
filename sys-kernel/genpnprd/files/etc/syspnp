@@ -765,7 +765,9 @@ load_hand_made0(){
 
 	# frost. save your silicon (and power): autoload best cpufreq driver
 	freq=`cat $(find /sys/devices/system/cpu -name scaling_driver 2>/dev/null) </dev/null`
-	case "$(grep "^vendor_id\|^flags" /proc/cpuinfo)" in
+	local f="$(grep "^vendor_id\|^flags" /proc/cpuinfo|sort -u)"
+	mod $(cd /etc/modflags && cat $f </dev/null 2>/dev/null)
+	case "$f " in
 	*AuthenticAMD*\ lm\ *)
 		cpufreq powernow-k8
 		: {gov:=conservative ondemand}
@@ -774,15 +776,8 @@ load_hand_made0(){
 		cpufreq cpufreq-nforce2
 		cpufreq powernow
 	;;
-	*GenuineIntel*)
-		mod intel_idle
-		cpufreq acpi-cpufreq
-	;;
-	*CentaurHauls*)
-		mod via-cputemp padlock-aes padlock-sha via-rng
-		# e_powersaver not kosher & may affect msr/speedstep, I use "doload"
-		cpufreq acpi-cpufreq
-	;;
+	*\ est\ *)cpufreq acpi-cpufreq;;
+	*CentaurHauls*)cpufreq e_powersaver;;
 	esac
 	cpufreq cpufreq "drivers/cpufreq/\|powernow"
 	[[ -z "$freq" ]] && return

@@ -8,5 +8,6 @@ if use embed-hardware; then
  (use mdadm || use evms) && KERNEL_CONFIG+=" BLK_DEV_MD MD_[\d\w_]*"
  (use device-mapper || use evms || use lvm) && KERNEL_CONFIG+=" BLK_DEV_DM DM_[\d\w_]*"
  use iscsi && KERNEL_CONFIG+=" ISCSI_TCP"
+ use luks && KERNEL_CONFIG+=" BLK_DEV_DM DM_CRYPT CRYPTO_CBC CRYPTO_AES(?:X86_64|586)? CRYPTO_SHA256"
  KERNEL_CONFIG+=" UNIX PACKET"
 fi

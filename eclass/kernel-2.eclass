@@ -13,7 +13,7 @@ IUSE="${IUSE} +build-kernel debug custom-cflags +pnp +compressed integrated ipv6
 	netboot nls unicode +acl selinux custom-arch embed-hardware
 	+kernel-drm +kernel-alsa kernel-firmware +sources fbcon staging pnponly lzma xz
 	external-firmware xen +smp tools multilib multitarget +multislot thin
-	lvm evms device-mapper unionfs iscsi e2fsprogs mdadm"
+	lvm evms device-mapper unionfs luks gpg iscsi e2fsprogs mdadm"
 DEPEND="${DEPEND}
 	!<app-portage/ppatch-0.08-r16
 	pnp? ( sys-kernel/genpnprd )
@@ -25,6 +25,8 @@ DEPEND="${DEPEND}
 		kernel-drm? ( !x11-base/x11-drm )
 		kernel-alsa? ( !media-sound/alsa-driver )
 		kernel-firmware? ( !sys-kernel/linux-firmware )
+		luks? ( sys-fs/cryptsetup[static] )
+		evms? ( sys-fs/evms )
 	) "
 
 if use multislot ; then
@@ -192,7 +194,7 @@ kernel-2_src_compile() {
 	einfo "Generating initrd image"
 	KV="${KV0}"
 	check_kv
-	local p="$(use__ lvm lvm2) $(use__ evms) $(use__ iscsi) $(use__ device-mapper dmraid) $(use__ unionfs) $(use__ e2fsprogs disklabel) $(use__ mdadm)"
+	local p="$(use__ lvm lvm2) $(use__ evms) $(use__ luks) $(use__ gpg) $(use__ iscsi) $(use__ device-mapper dmraid) $(use__ unionfs) $(use__ e2fsprogs disklabel) $(use__ mdadm)"
 	use netboot && p="${p} --netboot"
 	[[ -e "${BDIR}" ]] || mkdir "${BDIR}"
 	kmake INSTALL_MOD_PATH="${BDIR}" -j1 modules_install
@@ -480,6 +482,9 @@ native)
 		rng_en)CF2 HW_RANDOM_VIA;;
 		est)freq+=" X86_ACPI_CPUFREQ";;
 		longrun)freq+=" X86_LONGRUN";;
+		aes)CF2 CRYPTO_AES_NI_INTEL;;
+		sse4_2)CF2 CRYPTO_CRC32C_INTEL;;
+		pclmulqdq)CF2 CRYPTO_GHASH_CLMUL_NI_INTEL CRYPTO_FPU;;
 		esac
 	done
 
