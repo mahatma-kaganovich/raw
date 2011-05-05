@@ -174,6 +174,12 @@ src_configure() {
 		myconf="${myconf} $(use_enable video_cards_intel gallium-i965)"
 		myconf="${myconf} $(use_enable video_cards_radeon gallium-radeon)"
 		myconf="${myconf} $(use_enable video_cards_radeon gallium-r600)"
+		use llvm && use video_cards_radeon &&
+			myconf="${myconf} --enable-gallium-r300" || {
+			ewarn "llvm disabled - disabling gallium-r300"
+			myconf="${myconf} --disable-gallium-r300"
+		}
+		myconf="${myconf} $(use_enable video_cards_radeon gallium-r300)"
 		myconf="${myconf} --with-state-trackers=dri,egl,glx,xorg,vega$(use d3d && echo ",d3d1x")"
 		ewarn "This gallium configuration required 'xorg-server' headers installed."
 		ewarn "To avoid circular dependences install mesa without gallium before and re-emerge after."
@@ -207,8 +213,8 @@ src_configure() {
 		$(use_enable motif) \
 		$(use_enable gles gles1) \
 		$(use_enable gles gles2) \
-		$(use_enable gles gles-overlay) \
 		$(use_enable dricore shared-dricore) \
+		$(use_enable dricore shared-glapi) \
 		$(use_enable selinux) \
 		$(use_with X x) \
 		--with-egl-platforms=x11,drm$(use fbdev && echo ,fbdev) \
