@@ -439,7 +439,7 @@ if [[ -z "${march}" ]]; then
 fi
 case "${march}" in
 native)
-	CF1 -SCHED_SMT -SCHED_MC -X86_UP_APIC -X86_TSC -X86_PAT -X86_MSR -X86_MCE -MTRR -X86_CMOV -X86_X2APIC "-CRYPTO_DEV_PADLOCK[_\w]*" -HW_RANDOM_VIA
+	CF1 -SCHED_SMT -SCHED_MC -X86_UP_APIC -X86_TSC -X86_PAT -X86_MSR -X86_MCE -MTRR -X86_CMOV -X86_X2APIC "-CRYPTO_DEV_PADLOCK[_\w]*" -HW_RANDOM_VIA -INTEL_IDLE
 	case "${CTARGET:-${CHOST}}" in
 	x86*|i?86*)use multitarget && CF1 -64BIT;;
 	esac
@@ -515,6 +515,7 @@ native)
 		[3-6]:*)CF1 M${cpu_family}86;;
 		*)CF1 GENERIC_CPU X86_GENERIC;;
 		esac
+		[[ "$family" == 6 ]] && [[ "$model" -gt 25 ]] && CF1 INTEL_IDLE
 	;;
 	*AMD*)
 		V=AMD
@@ -578,9 +579,9 @@ i686)CF1 X86_GENERIC M686;;
 winchip-c6)CF1 MWINCHIPC6 -SCHED_SMT;;
 winchip2)CF1 MWINCHIP3D -SCHED_SMT;;
 c3)CF1 MCYRIXIII -SCHED_SMT;;
-c3-2)CF1 MVIAC3_2 -SCHED_SMT;;
+c3-2)CF1 MVIAC3_2 -SCHED_SMT;V=CENTAUR;;
 geode)CF1 MGEODE_LX -SCHED_SMT;;
-k6|k6-2)CF1 MK6 -SCHED_SMT;freq=X86_POWERNOW_K6;;
+k6|k6-2)CF1 MK6 -SCHED_SMT;freq=X86_POWERNOW_K6;V=AMD;;
 # compat: pentium-m sometimes have no PAE/64G
 pentiumpro)CF1 M686;;
 pentium2)CF1 MPENTIUMII;;
@@ -596,9 +597,9 @@ pentium4|pentium4m|prescott|nocona)
 	freq="X86_ACPI_CPUFREQ X86_P4_CLOCKMOD"
 ;;
 core2|atom)CF1 M${^^march} $m64g;freq=X86_ACPI_CPUFREQ;;
-k6-3)CF1 MK6 $m64g -SCHED_SMT;freq=X86_POWERNOW_K6;;
-athlon|athlon-tbird|athlon-4|athlon-xp|athlon-mp)CF1 MK7 $m64g -SCHED_SMT;freq=X86_POWERNOW_K7;;
-bdver1|k8|opteron|athlon64|athlon-fx|k8-sse3|opteron-sse3|athlon64-sse3|amdfam10|barcelona)CF1 MK8 $m64g -SCHED_SMT;freq=X86_POWERNOW_K8;gov=CONSERVATIVE;;
+k6-3)CF1 MK6 $m64g -SCHED_SMT;freq=X86_POWERNOW_K6;V=AMD;;
+athlon|athlon-tbird|athlon-4|athlon-xp|athlon-mp)CF1 MK7 $m64g -SCHED_SMT;freq=X86_POWERNOW_K7;V=AMD;;
+bdver1|k8|opteron|athlon64|athlon-fx|k8-sse3|opteron-sse3|athlon64-sse3|amdfam10|barcelona)CF1 MK8 $m64g -SCHED_SMT;freq=X86_POWERNOW_K8;gov=CONSERVATIVE;V=AMD;;
 *)CF1 GENERIC_CPU X86_GENERIC;;
 esac
 case "${CTARGET:-${CHOST}}:$CF" in
