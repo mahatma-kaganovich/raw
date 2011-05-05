@@ -915,7 +915,7 @@ syspnp(){
 	CHK=true
 	etc_modalias
 	refresh n
-	mod $MDOLIST unix ${cmd_elevator:+${cmd_elevator}_iosched}
+	mod $MDOLIST unix ${cmd_elevator:+${cmd_elevator}_iosched} pcc-cpufreq
 	load_hand_made0
 	# first pass - strict bus order
 	$cmd_fast && ofast_modalias || ordered_modalias $SYS_FIND
