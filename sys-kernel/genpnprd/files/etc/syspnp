@@ -761,8 +761,8 @@ load_hand_made0(){
 	pids=""
 	# frost. save your silicon (and power): autoload best cpufreq driver
 	freq=`cat $(find /sys/devices/system/cpu -name scaling_driver 2>/dev/null) </dev/null`
-	case "$f " in
-	*AuthenticAMD*\ lm\ *)
+	case "$f" in
+	*\ lm\ *AuthenticAMD*)
 		cpufreq powernow-k8
 		: {gov:=conservative ondemand}
 	;;
