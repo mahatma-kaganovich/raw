@@ -755,7 +755,7 @@ load_hand_made(){
 load_hand_made0(){
 	## some hand-made autoloads, stage0
 	local f="$(grep "^vendor_id\|^flags" /proc/cpuinfo|sort -u)"
-	mod $(cd /etc/modflags && cat $f $(ls -1 /sys/module) </dev/null 2>/dev/null)
+	mod $MDOLIST ${cmd_elevator:+${cmd_elevator}_iosched} $(cd /etc/modflags && cat $f $(ls -1 /sys/module) </dev/null 2>/dev/null)
 	wait $pid
 	pid=""
 	pids=""
@@ -915,7 +915,6 @@ syspnp(){
 	CHK=true
 	etc_modalias
 	refresh n
-	mod $MDOLIST unix ${cmd_elevator:+${cmd_elevator}_iosched} pcc-cpufreq
 	load_hand_made0
 	# first pass - strict bus order
 	$cmd_fast && ofast_modalias || ordered_modalias $SYS_FIND
