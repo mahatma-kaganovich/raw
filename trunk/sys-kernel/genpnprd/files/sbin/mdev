@@ -341,7 +341,10 @@ case "$1" in
 -m|-i|-M)
 	i=/etc/modalias
 	loadsh modprobe
-	[[ "$1" == "-m" ]] && modprobe $Q -a `ls -1 $C/*. 2>/dev/null|sed -e 's:.*/\(.*\).:\1:'` `echo ""|grep -sh "^MODALIAS=" $(grep -sL "^DRIVER=" $(find /sys -name uevent|sort))|sed -e 's:^MODALIAS=::g' -e 's:[ -]:_:g'|uniq` 2>>$O
+	case "$1" in
+	-M)modprobe $Q -a  $(cd /etc/modflags && cat $(grep "^vendor_id\|^flags" /proc/cpuinfo|sort -u) $(ls -1 /sys/module) </dev/null 2>/dev/null) 2>>$O;;
+	-m)modprobe $Q -a `ls -1 $C/*. 2>/dev/null|sed -e 's:.*/\(.*\).:\1:'` `echo ""|grep -sh "^MODALIAS=" $(grep -sL "^DRIVER=" $(find /sys -name uevent|sort))|sed -e 's:^MODALIAS=::g' -e 's:[ -]:_:g'|uniq` 2>>$O;;
+	esac
 	while ! ( [[ "$1" == "-i" ]] && ln -s /sys $i 2>/dev/null ) && [[ -f $i ]] && mv $i ${i}_ ; do
 		modprobe $Q -a `cat ${i}_` 2>>$O
 		rm ${i}_
@@ -399,7 +402,7 @@ case "$1" in
 		REORDER=
 		i="$j"
 	done
-	[[ -e /sys/module/drm_kms_helper ]] && modprobe $Q fbcon 2>>$O
+	modprobe $Q -a $(cd /etc/modflags && cat $(ls -1 /sys/module) </dev/null 2>/dev/null) 2>>$O
 	plug load1
 	[[ -e /newroot ]] || {
 		fstab / /newroot
