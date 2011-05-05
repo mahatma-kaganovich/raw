@@ -748,22 +748,14 @@ gentoo_compat_hwopts(){
 load_hand_made(){
 	## some hand-made autoloads
 #	$cmd_nofb || [[ -z "$(cat /proc/fb 2>/dev/null)" ]] || mod fbcon
-	for i in `ls /sys/module`; do
-		case $i in
-		drm_kms_helper)mod fbcon;;
-#		usual_tables) mod usb_storage ;; # on demand
-		usbcore) mod usb_storage ;; # user-frendly
-		thermal_sys) mod fan ;;
-		ioatdma) mod i7300_idle ;;
-		esac
-	done
+	mod $(cd /etc/modflags && cat $(ls -1 /sys/module) </dev/null 2>/dev/null)
 	[[ -e /dev/freefall ]] && [[ -x /bin/hpfall ]] && /bin/hpfall /dev/sda
 }
 
 load_hand_made0(){
 	## some hand-made autoloads, stage0
 	local f="$(grep "^vendor_id\|^flags" /proc/cpuinfo|sort -u)"
-	mod $(cd /etc/modflags && cat $f </dev/null 2>/dev/null)
+	mod $(cd /etc/modflags && cat $f $(ls -1 /sys/module) </dev/null 2>/dev/null)
 	wait $pid
 	pid=""
 	pids=""
