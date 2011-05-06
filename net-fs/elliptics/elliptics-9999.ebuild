@@ -7,13 +7,13 @@ HOMEPAGE="http://www.ioremap.net/projects/elliptics"
 LICENSE="GPL-2"
 SLOT="0"
 KEYWORDS="~x86 ~amd64"
-# not built without ssl but may be devel
-IUSE="+ssl fastcgi"
-RDEPEND="ssl? ( dev-libs/openssl )
+IUSE="fastcgi python"
+RDEPEND="dev-libs/openssl
 	fastcgi? ( dev-libs/fcgi )
 	dev-db/kyotocabinet
-	dev-libs/libatomic
+	dev-libs/boost[python=]
 	dev-libs/libevent"
+#	dev-libs/libatomic
 DEPEND="${RDEPEND}"
 
 EGIT_REPO_URI="http://www.ioremap.net/git/${PN}.git"
@@ -23,7 +23,7 @@ src_prepare(){
 }
 
 src_configure(){
-	econf $(use_enable ssl openssl)
+	econf --with-libatomic-path=/dev/null
 }
 
 src_install(){
