@@ -217,6 +217,7 @@ src_configure() {
 		$(use_enable dricore shared-glapi) \
 		$(use_enable selinux) \
 		$(use_with X x) \
+		--enable-openvg \
 		--with-egl-platforms=x11,drm$(use fbdev && echo ,fbdev) \
 		|| die
 }
