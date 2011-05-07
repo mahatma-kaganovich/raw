@@ -471,14 +471,9 @@ native)
 			;;
 			esac
 		;;
-		tsc)CF1 X86_TSC;;
+		tsc|pat|msr|mce|cmov|x2apic)CF1 X86_${i^^};;
+		mtrr)CF1 ${i^^};;
 		pae)CF1 X86_PAE $m64g;;
-		pat)CF1 X86_PAT;;
-		msr)CF1 X86_MSR;;
-		mce)CF1 X86_MCE;;
-		mtrr)CF1 MTRR;;
-		cmov)CF1 X86_CMOV;;
-		x2apic)CF1 X86_X2APIC;;
 		mp)CF1 SMP;; # ?
 		lm)use multitarget && CF1 64BIT;;
 		cmp_legacy)CF1 SMP SCHED_MC -SCHED_SMT;;
