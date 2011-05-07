@@ -13,7 +13,8 @@ IUSE="${IUSE} +build-kernel debug custom-cflags +pnp +compressed integrated ipv6
 	netboot nls unicode +acl selinux custom-arch embed-hardware
 	+kernel-drm +kernel-alsa kernel-firmware +sources fbcon staging pnponly lzma xz
 	external-firmware xen +smp tools multilib multitarget +multislot thin
-	lvm evms device-mapper unionfs luks gpg iscsi e2fsprogs mdadm"
+	lvm evms device-mapper unionfs luks gpg iscsi e2fsprogs mdadm
+	lguest"
 DEPEND="${DEPEND}
 	!<app-portage/ppatch-0.08-r16
 	pnp? ( sys-kernel/genpnprd )
@@ -443,7 +444,8 @@ native)
 	case "${CTARGET:-${CHOST}}" in
 	x86*|i?86*)
 		use multitarget && CF1 -64BIT
-		CF1 -KVM
+		CF1 -XEN # -KVM
+		use lguest || CF1 -{PARAVIRT,LGUEST}{,_GUEST} -VIRTUALIZATION
 	;;
 	esac
 
@@ -483,8 +485,9 @@ native)
 		up)ewarn "Running SMP on UP. Recommended useflag '-smp' and '-SMP' in ${KERNEL_CONF}";;
 		est)freq+=" X86_ACPI_CPUFREQ";;
 		longrun)freq+=" X86_LONGRUN";;
-		vmx)CF1 +KVM{,_INTEL};;
-		svm)CF1 +KVM{,_AMD};;
+		vmx)CF1 XEN +KVM{,_INTEL} PARAVIRT{,_GUEST} VIRTUALIZATION;;
+		svm)CF1 XEN +KVM{,_AMD} PARAVIRT{,_GUEST} VIRTUALIZATION;;
+		hypervisor)CF1 XEN PARAVIRT{,_GUEST} VIRTUALIZATION;;
 		esac
 	done
 
@@ -611,6 +614,7 @@ case "${CTARGET:-${CHOST}}:$CF" in
 	x86_64*|*\ 64BIT\ *)CF1 -MPENTIUM4 -PENTIUMM -X86_GENERIC;;
 	*)CF1 -MPSC -GENERIC_CPU;;
 esac
+use lguest && CF1 -HIGHMEM64G
 use embed-hardware && [[ -n "$freq" ]] && CF1 $freq CPU_FREQ_GOV_${gov} CPU_FREQ_DEFAULT_GOV_${gov}
 [[ -n "${V}" ]] && CF1 "-CPU_SUP_[\w\d_]*" CPU_SUP_${V}
 KERNEL_CONFIG="#-march=${march}# ${CF//  / }
