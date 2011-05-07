@@ -13,7 +13,8 @@ IUSE="${IUSE} +build-kernel debug custom-cflags +pnp +compressed integrated ipv6
 	netboot nls unicode +acl selinux custom-arch embed-hardware
 	+kernel-drm +kernel-alsa kernel-firmware +sources fbcon staging pnponly lzma xz
 	external-firmware xen +smp tools multilib multitarget +multislot thin
-	lvm evms device-mapper unionfs luks gpg iscsi e2fsprogs mdadm"
+	lvm evms device-mapper unionfs luks gpg iscsi e2fsprogs mdadm
+	lguest"
 DEPEND="${DEPEND}
 	!<app-portage/ppatch-0.08-r16
 	pnp? ( sys-kernel/genpnprd )
@@ -439,9 +440,13 @@ if [[ -z "${march}" ]]; then
 fi
 case "${march}" in
 native)
-	CF1 -SCHED_SMT -SCHED_MC -X86_UP_APIC -X86_TSC -X86_PAT -X86_MSR -X86_MCE -MTRR -X86_CMOV -X86_X2APIC "-CRYPTO_DEV_PADLOCK[_\w]*" -HW_RANDOM_VIA -INTEL_IDLE
+	CF1 -SCHED_SMT -SCHED_MC -X86_UP_APIC -X86_TSC -X86_PAT -X86_MSR -X86_MCE -MTRR -X86_CMOV -X86_X2APIC "-CRYPTO_DEV_PADLOCK[_\w]*" -HW_RANDOM_VIA -INTEL_IDLE -KVM_INTEL -KVM_AMD
 	case "${CTARGET:-${CHOST}}" in
-	x86*|i?86*)use multitarget && CF1 -64BIT;;
+	x86*|i?86*)
+		use multitarget && CF1 -64BIT
+		CF1 -KVM -XEN
+		use lguest || CF1 -{PARAVIRT,LGUEST}{,_GUEST} -VIRTUALISATION
+	;;
 	esac
 
 	while read i ; do
@@ -480,6 +485,8 @@ native)
 		up)ewarn "Running SMP on UP. Recommended useflag '-smp' and '-SMP' in ${KERNEL_CONF}";;
 		est)freq+=" X86_ACPI_CPUFREQ";;
 		longrun)freq+=" X86_LONGRUN";;
+		vmx)CF1 XEN +KVM{,_INTEL} PARAVIRT{,_GUEST} VIRTUALISATION;;
+		svm)CF1 XEN +KVM{,_AMD} PARAVIRT{,_GUEST} VIRTUALISATION;;
 		esac
 	done
 
@@ -606,6 +613,7 @@ case "${CTARGET:-${CHOST}}:$CF" in
 	x86_64*|*\ 64BIT\ *)CF1 -MPENTIUM4 -PENTIUMM -X86_GENERIC;;
 	*)CF1 -MPSC -GENERIC_CPU;;
 esac
+use lguest && CF1 -HIGHMEM64G
 use embed-hardware && [[ -n "$freq" ]] && CF1 $freq CPU_FREQ_GOV_${gov} CPU_FREQ_DEFAULT_GOV_${gov}
 [[ -n "${V}" ]] && CF1 "-CPU_SUP_[\w\d_]*" CPU_SUP_${V}
 KERNEL_CONFIG="#-march=${march}# ${CF//  / }
