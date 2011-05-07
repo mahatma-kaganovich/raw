@@ -186,7 +186,7 @@ src_configure() {
 	else
 		driver_enable video_cards_radeon radeon r200 r300 r600
 		driver_enable video_cards_intel i810 i915 i965
-		myconf="${myconf} --disable-gallium-intel --disable-gallium-i915 --disable-gallium-i965 --disable-gallium-radeon --disable-gallium-r300 --disable-gallium-r600 --with-state-trackers=dri,egl,glx"
+		myconf="${myconf} --disable-gallium-intel --disable-gallium-i915 --disable-gallium-i965 --disable-gallium-radeon --disable-gallium-r300 --disable-gallium-r600 --with-state-trackers=dri,egl,glx,vega$(use d3d && echo ",d3d1x")"
 	fi
 	# unique gallium features: gallium will be locally enabled
 	myconf="${myconf} $(use_enable video_cards_vmware gallium-svga)"
