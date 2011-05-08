@@ -1,5 +1,15 @@
 #!/usr/bin/perl
 
+%_ARCH=(
+i386=>x86,
+x86_64=>x86,
+sparc32=>sparc,
+sparc64=>sparc,
+sh64=>sh,
+);
+
+$ENV{SRCARCH}=$_ARCH{$ENV{SRCARCH}}||$ENV{SRCARCH};
+
 $|=1;
 $ENV{KERNEL_MODULES}||='+.';
 # prefer: "-." - defconfig, "." - defconfig for "y|m", "+." - Kconfig/oldconfig
@@ -17,7 +27,7 @@ $ENV{KERNEL_CONFIG}||='
 	SPARSEMEM_MANUAL MEMTEST [\d\w_]*FS_XATTR
 	MEMORY_HOTPLUG MEMORY_HOTREMOVE
 	EXT2_FS_XIP OLPC NFSD_V4 CIFS_POSIX CIFS_EXPERIMENTAL [\d\w_]*_FSCACHE
-	VMI KVM_CLOCK KVM_GUEST XEN LGUEST_GUEST
+	VMI =KVM_CLOCK =KVM_GUEST =XEN =LGUEST_GUEST
 	-BLK_DEV_UB
 	KEYBOARD_ATKBD
 	CRC_T10DIF
@@ -82,9 +92,10 @@ $ENV{KERNEL_CONFIG}||='
 	';
 
 sub Kcload{
+	die "Unresolved Kconfig: $_[0]\n" if(index($_[0],'$')>=0);
 	my ($c,$v);
 	my $d=$_[0];
-	open(my $F,"<$d") || die $!;
+	open(my $F,"<$d") || return; # || die "$! ($d)";
 	die "Invalid dereference\n" if(index($d,$ENV{S}.'/')!=0);
 	substr($d,0,length($ENV{S})+1)='';
 	while(defined(my $s=<$F>)){
@@ -96,6 +107,11 @@ sub Kcload{
 		$s=~s/^\s*select\s*(\S*)/push @{$select{$1}},$v;next/se;
 		$s=~s/(?:If\s+unsure,\s+s|If\s+in\s+doubt,\s+s|S)ay\s+Y\./$yes{$v}=1;next/se;
 		$s=~s/(?:If\s+unsure,\s+s|If\s+in\s+doubt,\s+s|S)ay\s+N\./$no{$v}=1;next/se;
+		$s=~s/^\s*option\s+env="(\w+)"/$env{$1}=1;next/se;
+		$s=~s/\$(\w+)/$env{$1}?$ENV{$1}:"\$$1"/se;
+		next if(!$ENV{SRCARCH});
+		$s=~s/^\s*source\s+"(.*)"/Kcload("$ENV{S}\/$1");next/se;
+		$s=~s/^\s*source\s+(.*)/Kcload("$ENV{S}\/$1");next/se;
 	}
 	close($F);
 }
@@ -247,7 +263,14 @@ sub conf{
 
 sub Kconfig{
 	our (%tristate,%bool,%select,%menu,%yes,%no,%config,%oldconfig,%defconfig,%off,%unset,%vars,%set)=();
-	Kclist($ENV{S});
+	if($ENV{SRCARCH} && -e "$ENV{S}/Kconfig" && -e "$ENV{S}/arch/$ENV{SRCARCH}/Kconfig"){
+		print "SRCARCH=$ENV{SRCARCH}\n";
+		Kcload("$ENV{S}/Kconfig");
+	}else{
+		print "!SRCARCH\n";
+		delete($ENV{SRCARCH});
+		Kclist($ENV{S});
+	}
 	my $c="$ENV{S}/.config";
 	if(load_config("$c.default")){
 		%defconfig=%config;
