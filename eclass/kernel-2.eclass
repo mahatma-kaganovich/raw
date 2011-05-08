@@ -624,10 +624,13 @@ echo "${a%% *}"
 
 kconfig(){
 	einfo "Configuring kernel"
+	local a
 	[[ -e .config ]] || kmake defconfig >/dev/null
 	export ${!KERNEL_@}
 	while cfg_loop .config.{3,4} ; do
-		/usr/bin/perl "${UROOT}/usr/share/genpnprd/Kconfig.pl"
+		for a in "$(arch)" ''; do
+			SRCARCH="$a" /usr/bin/perl "${UROOT}/usr/share/genpnprd/Kconfig.pl" && break
+		done
 		yes '' 2>/dev/null | kmake oldconfig >/dev/null
 	done
 }
