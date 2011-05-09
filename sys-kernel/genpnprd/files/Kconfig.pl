@@ -1,15 +1,5 @@
 #!/usr/bin/perl
 
-%_ARCH=(
-i386=>x86,
-x86_64=>x86,
-sparc32=>sparc,
-sparc64=>sparc,
-sh64=>sh,
-);
-
-$ENV{SRCARCH}=$_ARCH{$ENV{SRCARCH}}||$ENV{SRCARCH};
-
 $|=1;
 $ENV{KERNEL_MODULES}||='+.';
 # prefer: "-." - defconfig, "." - defconfig for "y|m", "+." - Kconfig/oldconfig
@@ -107,9 +97,9 @@ sub Kcload{
 		$s=~s/^\s*select\s*(\S*)/push @{$select{$1}},$v;next/se;
 		$s=~s/(?:If\s+unsure,\s+s|If\s+in\s+doubt,\s+s|S)ay\s+Y\./$yes{$v}=1;next/se;
 		$s=~s/(?:If\s+unsure,\s+s|If\s+in\s+doubt,\s+s|S)ay\s+N\./$no{$v}=1;next/se;
+		next if(!$ENV{SRCARCH});
 		$s=~s/^\s*option\s+env="(\w+)"/$env{$1}=1;next/se;
 		$s=~s/\$(\w+)/$env{$1}?$ENV{$1}:"\$$1"/se;
-		next if(!$ENV{SRCARCH});
 		$s=~s/^\s*source\s+"(.*)"/Kcload("$ENV{S}\/$1");next/se;
 		$s=~s/^\s*source\s+(.*)/Kcload("$ENV{S}\/$1");next/se;
 	}
@@ -261,9 +251,20 @@ sub conf{
 	}
 }
 
+sub arch{
+	open(my $F,"<$ENV{S}/Makefile") or die $!;
+	sysread($F,my $s,-s $F);
+	close($F);
+	$s=~s/
+\s*ifeq\s+\(\s*\$\(ARCH\)\s*,\s*(\S*?)\s*\)\s*
+\s*SRCARCH\s*:=\s*(\S*)\s*
+\s*endif/$_ARCH{$1}=$2;''/gse;
+	$ENV{SRCARCH}=$_ARCH{$ENV{SRCARCH}}||$ENV{SRCARCH};
+}
+
 sub Kconfig{
 	our (%tristate,%bool,%select,%menu,%yes,%no,%config,%oldconfig,%defconfig,%off,%unset,%vars,%set)=();
-	if($ENV{SRCARCH} && -e "$ENV{S}/Kconfig" && -e "$ENV{S}/arch/$ENV{SRCARCH}/Kconfig"){
+	if($ENV{SRCARCH} && arch() && -e "$ENV{S}/Kconfig" && -e "$ENV{S}/arch/$ENV{SRCARCH}/Kconfig"){
 		print "SRCARCH=$ENV{SRCARCH}\n";
 		Kcload("$ENV{S}/Kconfig");
 	}else{
