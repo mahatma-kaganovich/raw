@@ -220,7 +220,7 @@ sub cfg{
 	$config{$_[0]}='';
 	$off{$_[0]}=1;
 	for(@{$select{$_[0]}}){
-		my $i=$_[0];
+		my $i=$_;
 		$i=~s/.*://;
 		if(defined($config{$i})){
 			print "KERNEL_CONFIG: -$_[0] -> -$i\n";
