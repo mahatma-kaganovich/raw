@@ -166,9 +166,9 @@ sub spl{
 }
 
 sub modules{
-	return if($_ eq '');
-	print "Applying modules: $_\n";
-	my ($c,$d)=spl($_);
+	return if($_[0] eq '');
+	print "Applying modules: $_[0]\n";
+	my ($c,$d)=spl($_[0]);
 	my @l=grep(/^$d/,keys %tristate);
 	for(@l){
 		$_=~s/.*://;
@@ -183,9 +183,9 @@ sub modules{
 }
 
 sub defaults{
-	return if($_ eq '');
-	print "Applying defaults: $_\n";
-	my ($c,$d)=spl($_);
+	return if($_[0] eq '');
+	print "Applying defaults: $_[0]\n";
+	my ($c,$d)=spl($_[0]);
 	my @l=grep(/^$d/,keys %menu);
 	for(@l){
 		$_=~s/.*://;
@@ -211,7 +211,7 @@ sub defaults{
 }
 
 sub cfg{
-	$set{$_}=1;
+	$set{$_[0]}=1;
 	if(defined($_[1])){
 		$config{$_[0]}=$_[1];
 		return
@@ -220,7 +220,7 @@ sub cfg{
 	$config{$_[0]}='';
 	$off{$_[0]}=1;
 	for(@{$select{$_[0]}}){
-		my $i=$_;
+		my $i=$_[0];
 		$i=~s/.*://;
 		if(defined($config{$i})){
 			print "KERNEL_CONFIG: -$_[0] -> -$i\n";
@@ -230,12 +230,13 @@ sub cfg{
 }
 
 sub conf{
-	return if($_ eq '');
+    return if($_[0] eq '');
+    for(split(/,/,$_[0])){
 	my ($c,$d)=spl($_);
 	my $y='y';
 	$d=~s/(.*?)=(.*)/$y=$2;$1/se;
 	my @l=grep(/^$d$/,keys %vars);
-	@l=($d) if($#l eq -1);
+	@l=($d) if($#l==-1);
 	for(@l){
 		$_=~s/.*://;
 		if($c eq '+'){
@@ -249,6 +250,8 @@ sub conf{
 			cfg($_,$y);
 		}
 	}
+	return if($#l>=0);
+    }
 }
 
 sub arch{
