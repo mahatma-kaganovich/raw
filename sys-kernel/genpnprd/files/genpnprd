@@ -25,6 +25,7 @@ CRAMFS=
 LZMA=
 COMPRESS=
 susp_sig=
+SQUASH=false
 THIN="/drivers/net/\|/cifs/\|/nfs/\|/unix\|/packet/af_packet"
 THIN_INFO="/fs/\|^alias:.*:\|/unix\|/packet/af_packet"
 
@@ -97,8 +98,10 @@ preserve_end(){
 }
 
 squashfs_enabled(){
-	[[ "$CRAMFS" != 1 ]] && [[ -e "$rcdir/lib/modules/$KV/kernel/fs/squashfs" ]] && return 0
-	return 1
+	[[ "$CRAMFS" != 1 ]] &&
+	    ( [[ -e "$rcdir/lib/modules/$KV/kernel/fs/squashfs" ]] ||
+	    ( [[ -d "$S" ]] && grep -sq "^CONFIG_SQUASHFS" "$S/.config" ) )
+	return $?
 }
 
 kmake(){
@@ -151,7 +154,6 @@ Examples: $0 initrd.cpio
 	exit
 }
 
-SQUASH=false
 [[ -e "$tmp" ]] && rm "$tmp" -Rf
 mkdir $tmp || die
 rcdir="$tmp/rc"
@@ -269,9 +271,7 @@ fi
 
 : ${KV:=`ls $rcdir/lib/modules`}
 
-if squashfs_enabled; then
-	SQUASH=true
-fi
+$SQUASH || squashfs_enabled && SQUASH=true
 
 cd $rcdir || die
 for i in $rcdir/lib/modules/*/modules.alias; do
