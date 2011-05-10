@@ -231,7 +231,7 @@ sub cfg{
 
 sub conf{
     return if($_[0] eq '');
-    for(split(/,/,$_[0])){
+    for(split(/;/,$_[0])){
 	my ($c,$d)=spl($_);
 	my $y='y';
 	$d=~s/(.*?)=(.*)/$y=$2;$1/se;
