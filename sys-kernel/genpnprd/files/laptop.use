@@ -1,4 +1,4 @@
-KERNEL_CONFIG="
+KERNEL_CONFIG+="
 ==laptop: RCU_FAST_NO_HZ"
 
 use embed-hardware && KERNEL_CONFIG+=" CPU_FREQ_GOV_CONSERVATIVE"
