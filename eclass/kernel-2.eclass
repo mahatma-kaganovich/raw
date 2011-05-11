@@ -427,6 +427,7 @@ useconfig(){
 # experemental
 acpi_detect(){
 	local i n=0
+	[[ -d /sys/bus/acpi ]] || return
 	CF1 -PCI -ACPI_THERMAL -PCC_CPUFREQ -SMP -X86_BIGSMP -MAXSMP -ACPI_HED
 	for i in $(cat /sys/bus/acpi/devices/*/path|sed -e 's:^\\::'); do
 		case "$i" in
@@ -434,8 +435,10 @@ acpi_detect(){
 		_SB_.PCI*)CF1 PCI;;
 		_SB_.PCCH)CF2 PCC_CPUFREQ;freq+=" PCC_CPUFREQ";;
 		_PR_.CPU*)n=$[n+1];;
+		_SB_.WERR)CF2 ACPI_HED;;
 		esac
 	done
+	[[ $n == 0 ]] && die "ACPI CPU enumeration wrong. Say 'USE=-acpi'"
 	[[ $n -gt 1 ]] && CF1 SMP
 	[[ $n -gt 8 ]] && CF1 X86_BIGSMP
 	[[ $n -gt 512 ]] && CF1 MAXSMP
@@ -623,9 +626,9 @@ case "${CTARGET:-${CHOST}}:$CF" in
 	*)CF1 -MPSC -GENERIC_CPU;;
 esac
 use lguest && CF1 -HIGHMEM64G
+use acpi && use embed-hardware && acpi_detect
 use embed-hardware && [[ -n "$freq" ]] && CF1 $freq CPU_FREQ_GOV_${gov} CPU_FREQ_DEFAULT_GOV_${gov}
 [[ -n "${V}" ]] && CF1 "-CPU_SUP_[\w\d_]*" CPU_SUP_${V}
-use acpi && use embed-hardware && acpi_detect
 KERNEL_CONFIG="#-march=${march}# ${CF//  / }
 ${KERNEL_CONFIG}"
 }
