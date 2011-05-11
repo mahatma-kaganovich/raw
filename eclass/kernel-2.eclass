@@ -14,7 +14,7 @@ IUSE="${IUSE} +build-kernel debug custom-cflags +pnp +compressed integrated ipv6
 	+kernel-drm +kernel-alsa kernel-firmware +sources fbcon staging pnponly lzma xz
 	external-firmware xen +smp tools multilib multitarget +multislot thin
 	lvm evms device-mapper unionfs luks gpg iscsi e2fsprogs mdadm
-	lguest"
+	lguest _acpi"
 DEPEND="${DEPEND}
 	!<app-portage/ppatch-0.08-r16
 	pnp? ( sys-kernel/genpnprd )
@@ -424,6 +424,21 @@ useconfig(){
 	use multilib || ( use multitarget && use x86 ) || cfg -IA32_EMULATION
 }
 
+# experemental
+acpi_detect(){
+	local i
+	CF1 -PCI -USB -ACPI_THERMAL -PCC_CPUFREQ -SMP -ACPI_HED
+	for i in $(cat /sys/bus/acpi/devices/*/path|sed -e 's:^\\::'); do
+		case "$i" in
+		_TZ_.THRM)CF1 ACPI_THERMAL;;
+		_SB_.PCI*)CF1 PCI;;
+		_SB_.PCCH)CF1 PCC_CPUFREQ;;
+		_SB_.*.USB*)CF1 USB;;
+		_PR_.CPU[1-9]*)CF1 SMP;;
+		esac
+	done
+}
+
 # Kernel-config CPU from CFLAGS and|or /proc/cpuinfo (native)
 # use smp: when 'native' = single/multi cpu, ht/mc will be forced ON
 cpu2K(){
@@ -498,7 +513,7 @@ native)
 	[[ "${fpu}" != yes ]] && CF1 MATH_EMULATION
 
 	# a bit misconcept
-	grep -sq "^\\SB_\.PCCH" /sys/bus/acpi/devices/*/path && freq+=" PCC_CPUFREQ"
+	grep -sq "^\\_SB_\.PCCH" /sys/bus/acpi/devices/*/path && freq+=" PCC_CPUFREQ"
 
 	case "${vendor_id}" in
 	*Intel*)
@@ -612,6 +627,7 @@ esac
 use lguest && CF1 -HIGHMEM64G
 use embed-hardware && [[ -n "$freq" ]] && CF1 $freq CPU_FREQ_GOV_${gov} CPU_FREQ_DEFAULT_GOV_${gov}
 [[ -n "${V}" ]] && CF1 "-CPU_SUP_[\w\d_]*" CPU_SUP_${V}
+use _acpi && use embed_hardware && acpi_detect
 KERNEL_CONFIG="#-march=${march}# ${CF//  / }
 ${KERNEL_CONFIG}"
 }
