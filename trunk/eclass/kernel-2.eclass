@@ -627,7 +627,7 @@ esac
 use lguest && CF1 -HIGHMEM64G
 use embed-hardware && [[ -n "$freq" ]] && CF1 $freq CPU_FREQ_GOV_${gov} CPU_FREQ_DEFAULT_GOV_${gov}
 [[ -n "${V}" ]] && CF1 "-CPU_SUP_[\w\d_]*" CPU_SUP_${V}
-use acpi && use embed_hardware && acpi_detect
+use acpi && use embed-hardware && acpi_detect
 KERNEL_CONFIG="#-march=${march}# ${CF//  / }
 ${KERNEL_CONFIG}"
 }
