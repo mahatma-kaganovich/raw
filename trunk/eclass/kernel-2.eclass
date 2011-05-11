@@ -432,7 +432,7 @@ acpi_detect(){
 		case "$i" in
 		_TZ_.THRM)CF1 ACPI_THERMAL;;
 		_SB_.PCI*)CF1 PCI;;
-		_SB_.PCCH)CF2 PCC_CPUFREQ;;
+		_SB_.PCCH)CF2 PCC_CPUFREQ;freq+=" PCC_CPUFREQ";;
 		_PR_.CPU*)n=$[n+1];;
 		esac
 	done
@@ -511,8 +511,7 @@ native)
 	[[ "${siblings:-0}" -gt "${cpu_cores:-1}" ]] && CF1 SMP SCHED_SMT
 	[[ "${fpu}" != yes ]] && CF1 MATH_EMULATION
 
-	# a bit misconcept
-	grep -sq "^\\_SB_\.PCCH" /sys/bus/acpi/devices/*/path && freq+=" PCC_CPUFREQ"
+	use acpi && acpi_detect
 
 	case "${vendor_id}" in
 	*Intel*)
