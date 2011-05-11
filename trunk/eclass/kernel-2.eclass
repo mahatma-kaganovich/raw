@@ -427,13 +427,12 @@ useconfig(){
 # experemental
 acpi_detect(){
 	local i n=0
-	CF1 -PCI -USB -ACPI_THERMAL -PCC_CPUFREQ -SMP -X86_BIGSMP -MAXSMP -ACPI_HED
+	CF1 -PCI -ACPI_THERMAL -PCC_CPUFREQ -SMP -X86_BIGSMP -MAXSMP -ACPI_HED
 	for i in $(cat /sys/bus/acpi/devices/*/path|sed -e 's:^\\::'); do
 		case "$i" in
 		_TZ_.THRM)CF1 ACPI_THERMAL;;
 		_SB_.PCI*)CF1 PCI;;
 		_SB_.PCCH)CF2 PCC_CPUFREQ;;
-		_SB_.*.USB*)CF2 USB;;
 		_PR_.CPU*)n=$[n+1];;
 		esac
 	done
