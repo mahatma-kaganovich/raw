@@ -14,7 +14,7 @@ IUSE="${IUSE} +build-kernel debug custom-cflags +pnp +compressed integrated ipv6
 	+kernel-drm +kernel-alsa kernel-firmware +sources fbcon staging pnponly lzma xz
 	external-firmware xen +smp tools multilib multitarget +multislot thin
 	lvm evms device-mapper unionfs luks gpg iscsi e2fsprogs mdadm
-	lguest _acpi"
+	lguest acpi"
 DEPEND="${DEPEND}
 	!<app-portage/ppatch-0.08-r16
 	pnp? ( sys-kernel/genpnprd )
@@ -426,17 +426,21 @@ useconfig(){
 
 # experemental
 acpi_detect(){
-	local i
-	CF1 -PCI -USB -ACPI_THERMAL -PCC_CPUFREQ -SMP -ACPI_HED
+	local i n=0
+	CF1 -PCI -USB -ACPI_THERMAL -PCC_CPUFREQ -SMP -X86_BIGSMP -MAXSMP -ACPI_HED
 	for i in $(cat /sys/bus/acpi/devices/*/path|sed -e 's:^\\::'); do
 		case "$i" in
 		_TZ_.THRM)CF1 ACPI_THERMAL;;
 		_SB_.PCI*)CF1 PCI;;
-		_SB_.PCCH)CF1 PCC_CPUFREQ;;
-		_SB_.*.USB*)CF1 USB;;
-		_PR_.CPU[1-9]*)CF1 SMP;;
+		_SB_.PCCH)CF2 PCC_CPUFREQ;;
+		_SB_.*.USB*)CF2 USB;;
+		_PR_.CPU*)n=$[n+1];;
 		esac
 	done
+	[[ $n -gt 1 ]] && CF1 SMP
+	[[ $n -gt 8 ]] && CF1 X86_BIGSMP
+	[[ $n -gt 512 ]] && CF1 MAXSMP
+	CF1 NR_CPUS=$n
 }
 
 # Kernel-config CPU from CFLAGS and|or /proc/cpuinfo (native)
@@ -503,10 +507,6 @@ native)
 
 	[[ "${processor:=0}" -gt 0 ]] && CF1 SMP
 	[[ $((processor+1)) == "${cpu_cores:-1}" ]] && [[ "${siblings:-1}" == "${cpu_cores:-1}" ]] && CF1 -NUMA
-#	[[ "${processor:-0}" -gt 7 ]] && CF1 X86_BIGSMP
-#	[[ "${processor:-0}" -gt 511 ]] && CF1 MAXSMP
-#	let i=${processor:-0}+1
-#	CF1 NR_CPUS=${i}
 	# xtopology & other flags present only on SMP running anymore
 	[[ "${cpu_cores:-1}" -gt 1 ]] && CF1 SMP SCHED_MC
 	[[ "${siblings:-0}" -gt "${cpu_cores:-1}" ]] && CF1 SMP SCHED_SMT
@@ -627,7 +627,7 @@ esac
 use lguest && CF1 -HIGHMEM64G
 use embed-hardware && [[ -n "$freq" ]] && CF1 $freq CPU_FREQ_GOV_${gov} CPU_FREQ_DEFAULT_GOV_${gov}
 [[ -n "${V}" ]] && CF1 "-CPU_SUP_[\w\d_]*" CPU_SUP_${V}
-use _acpi && use embed_hardware && acpi_detect
+use acpi && use embed_hardware && acpi_detect
 KERNEL_CONFIG="#-march=${march}# ${CF//  / }
 ${KERNEL_CONFIG}"
 }
