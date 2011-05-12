@@ -428,7 +428,7 @@ useconfig(){
 acpi_detect(){
 	local i n=0
 	[[ -d /sys/bus/acpi ]] || return
-	CF1 -PCI -ACPI_THERMAL -PCC_CPUFREQ -SMP -X86_BIGSMP -MAXSMP -ACPI_HED
+	CF1 -PCI -PCC_CPUFREQ -SMP -X86_BIGSMP -MAXSMP
 	for i in $(cat /sys/bus/acpi/devices/*/path|sed -e 's:^\\::'); do
 		case "$i" in
 		_SB_.PCI*)CF1 PCI;;
