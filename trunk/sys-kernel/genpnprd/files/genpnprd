@@ -63,6 +63,9 @@ preserve_start(){
 	for m in `cat $rcdir/etc/modflags/*`; do
 		[[ -z "`_modlst "$m"`" ]] && sed -i -e "/^$m\$/d" $rcdir/etc/modflags/*
 	done
+	for m in $rcdir/etc/modflags/*; do
+		[[ -s "$m" ]] || rm "$m"
+	done
 	if [[ -n "${THIN#-}" ]]; then
 		_modlst $(find "$mm" -name "*.ko*"|grep "$THIN"|while read m; do
 				modinfo "$m"|grep -q "$THIN_INFO" && echo "$m"
