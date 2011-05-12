@@ -431,11 +431,9 @@ acpi_detect(){
 	CF1 -PCI -ACPI_THERMAL -PCC_CPUFREQ -SMP -X86_BIGSMP -MAXSMP -ACPI_HED
 	for i in $(cat /sys/bus/acpi/devices/*/path|sed -e 's:^\\::'); do
 		case "$i" in
-		_TZ_.THRM)CF1 ACPI_THERMAL;;
 		_SB_.PCI*)CF1 PCI;;
 		_SB_.PCCH)CF2 PCC_CPUFREQ;freq+=" PCC_CPUFREQ";;
 		_PR_.CPU*)n=$[n+1];;
-		_SB_.WERR)CF2 ACPI_HED;;
 		esac
 	done
 	[[ $n == 0 ]] && die "ACPI CPU enumeration wrong. Say 'USE=-acpi'"
