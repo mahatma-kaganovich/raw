@@ -47,9 +47,9 @@ genpkg(){
 _modlst(){
 	for m in $* ; do
 		if $PNPONLY; then
-			modalias $m
-			echo "$ALIAS"
+			modalias "${m//-/_}" && echo "$ALIAS"
 		else
+			m="${m//[_-]/[_-]}"
 			grep "/$m\..*:" "${mm}/modules.dep" || find "${mm}" -name "$m.ko"
 		fi
 	done|sort -u
@@ -60,6 +60,9 @@ preserve_start(){
 	local m mm="$rcdir/lib/modules/${KV}"
 	$PNPONLY && source "$mm/modules.alias.sh"
 	_modlst "${@}" >>"$tmp/modules.lst"
+	for m in `cat $rcdir/etc/modflags/*`; do
+		[[ -z "`_modlst "$m"`" ]] && sed -i -e "/^$m\$/d" $rcdir/etc/modflags/*
+	done
 	if [[ -n "${THIN#-}" ]]; then
 		_modlst $(find "$mm" -name "*.ko*"|grep "$THIN"|while read m; do
 				modinfo "$m"|grep -q "$THIN_INFO" && echo "$m"

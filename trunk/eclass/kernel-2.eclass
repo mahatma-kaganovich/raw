@@ -825,7 +825,7 @@ detects(){
 			[[ "$b" == / ]] && [[ "$c" != rootfs ]] && echo "$c"
 		done </proc/mounts
 		# cpu flags
-		(cd "${UROOT}"/usr/share/genpnprd/etc/modflags && cat $(grep "^flags" /proc/cpuinfo|sed -e 's/^.*://') </dev/null 2>/dev/null)
+		(cd "${UROOT}"/usr/share/genpnprd/etc/modflags && cat $(grep "^flags" /proc/cpuinfo|sed -e 's/^.*://') $(cat /sys/bus/acpi/devices/*/path|sed -e 's:^\\::') </dev/null 2>/dev/null)
 	}|sed -e 's:-:_:g'|sort -u|while read i; do
 		modalias "$i"||continue
 		# strip "later" concurrent drivers
