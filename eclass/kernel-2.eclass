@@ -434,6 +434,7 @@ acpi_detect(){
 		_SB_.PCI*)CF1 PCI;;
 		_SB_.PCCH)CF2 PCC_CPUFREQ;freq+=" PCC_CPUFREQ";;
 		_PR_.CPU*)n=$[n+1];;
+		*.SRAT)CF1 NUMA;;
 		esac
 	done
 	[[ $n == 0 ]] && die "ACPI CPU enumeration wrong. Say 'USE=-acpi'"
