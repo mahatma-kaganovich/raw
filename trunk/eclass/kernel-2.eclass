@@ -222,7 +222,7 @@ kernel-2_src_compile() {
 		_cc $i
 	done
 	einfo "Preparing boot image"
-	bash "${UROOT}/usr/share/genpnprd/genpnprd" "${S}/initrd-${REAL_KV}.img" "$( (use !pnp && echo nopnp)||(use pnponly && echo pnponly) )" "${TMPDIR}"/overlay-rd ${comp:+--COMPRESS $comp} $(use thin||echo --THIN -)|| die
+	bash "${UROOT}/usr/share/genpnprd/genpnprd" "${S}/initrd-${REAL_KV}.img" "$( (use !pnp && echo nopnp)||(use pnponly && echo pnponly) )" "${TMPDIR}"/overlay-rd "${S}" ${comp:+--COMPRESS $comp} $(use thin||echo --THIN -)|| die
 	# integrated: do not compress twice;
 	# others: +~700K, but faster boot & less RAM to uncompress.
 	# "integrated" still minimal
