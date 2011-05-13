@@ -310,7 +310,7 @@ pnp_init(){
 	read SAVE_HOTPLUG </proc/sys/kernel/hotplug
 	for l in /*.loopfs; do
 	if [[ -f "$l" ]]; then
-		for i in `find /lib/modules -name "*.ko"` ; do
+		for i in `find /lib -name "*.ko"` ; do
 			insmod $i
 		done
 		local d="${l%.loopfs}"
