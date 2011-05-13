@@ -424,14 +424,6 @@ useconfig(){
 	use multilib || ( use multitarget && use x86 ) || cfg -IA32_EMULATION
 }
 
-acpicnt(){
-	local i n=0
-	grep "$1" /sys/bus/acpi/devices/*/$2|while read i; do
-		let n=n+1
-		echo $n
-	done|tail -n 1
-}
-
 # experemental
 acpi_detect(){
 	local i n=0
@@ -441,12 +433,11 @@ acpi_detect(){
 		case "$i" in
 		_SB_.PCI*)CF1 PCI;;
 		_SB_.PCCH)CF2 PCC_CPUFREQ;freq+=" PCC_CPUFREQ";;
-		_PR_.CPU[0-9]*)let n=n+1;;
+#		_PR_.*)let n=n+1;;
+		_PR_.C*)let n=n+1;;
 		*.SRAT)CF1 NUMA;;
 		esac
 	done
-	[[ $n == 0 ]] && n=$(acpicnt "^LNXCPU$" hid)
-	: ${n:=$(acpicnt "^acpi:LNXCPU" modalias)}
 	[[ ${n:-0} == 0 ]] && die "ACPI CPU enumeration wrong. Say 'USE=-acpi'"
 	[[ $n -gt 1 ]] && CF1 SMP
 	[[ $n -gt 8 ]] && CF1 X86_BIGSMP
