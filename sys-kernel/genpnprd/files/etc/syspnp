@@ -764,7 +764,7 @@ load_hand_made0(){
 	case "$f" in
 	*\ lm\ *AuthenticAMD*)
 		cpufreq powernow-k8
-		: {gov:=conservative ondemand}
+		: ${gov:=conservative ondemand}
 	;;
 	*AuthenticAMD*)
 		cpufreq cpufreq-nforce2
