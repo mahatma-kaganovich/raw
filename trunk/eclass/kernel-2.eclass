@@ -431,11 +431,11 @@ acpi_detect(){
 	CF1 -PCI -PCC_CPUFREQ -SMP -X86_BIGSMP -MAXSMP
 	for i in $(cat /sys/bus/acpi/devices/*/path|sed -e 's:^\\::'); do
 		case "$i" in
+		*.SRAT)CF1 NUMA;;
 		_SB_.PCI*)CF1 PCI;;
 		_SB_.PCCH)CF2 PCC_CPUFREQ;freq+=" PCC_CPUFREQ";;
 #		_PR_.*)let n=n+1;;
 		_PR_.C*)let n=n+1;;
-		*.SRAT)CF1 NUMA;;
 		esac
 	done
 	[[ ${n:-0} == 0 ]] && die "ACPI CPU enumeration wrong. Say 'USE=-acpi'"
