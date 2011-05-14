@@ -438,6 +438,7 @@ acpi_detect(){
 		_PR_.C*)let n=n+1;;
 		esac
 	done
+	[[ "$CF" == *-SCHED_SMT* ]] && grep -q "^flags\s*:.*\sht\s" /proc/cpuinfo && let n=n/2
 	[[ ${n:-0} == 0 ]] && die "ACPI CPU enumeration wrong. Say 'USE=-acpi'"
 	[[ $n -gt 1 ]] && CF1 SMP
 	[[ $n -gt 8 ]] && CF1 X86_BIGSMP
