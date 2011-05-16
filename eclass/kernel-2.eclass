@@ -513,6 +513,7 @@ native)
 	# xtopology & other flags present only on SMP running anymore
 	[[ "${cpu_cores:-1}" -gt 1 ]] && CF1 SMP SCHED_MC
 	[[ "${siblings:-0}" -gt "${cpu_cores:-1}" ]] && CF1 SMP SCHED_SMT
+	[[ "$(grep "^siblings\s*:\|^cpu cores\s*:" /proc/cpuinfo|sort -u|wc -l)" -gt 2 ]] && CF1 SMT SCHED_{SMT,MC} NUMA
 	[[ "${fpu}" != yes ]] && CF1 MATH_EMULATION
 
 	use acpi && acpi_detect
