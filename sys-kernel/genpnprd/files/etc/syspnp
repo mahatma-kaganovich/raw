@@ -763,6 +763,7 @@ load_hand_made0(){
 	freq=`cat $(find /sys/devices/system/cpu -name scaling_driver 2>/dev/null) </dev/null`
 	case "$f" in
 	*\ lm\ *AuthenticAMD*)
+		[[ -e /lib/firmware/amd-ucode/microcode_amd.bin ]] && mod microcode
 		cpufreq powernow-k8
 		: ${gov:=conservative ondemand}
 	;;
