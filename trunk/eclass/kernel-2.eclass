@@ -439,7 +439,7 @@ acpi_detect(){
 		esac
 	done
 	[[ "$CF" == *-SCHED_SMT* ]] && grep -q "^flags\s*:.*\sht\s" /proc/cpuinfo && let n=n/2
-	[[ ${n:-0} == 0 ]] && die "ACPI CPU enumeration wrong. Say 'USE=-acpi'"
+	[[ $n == 0 ]] && die "ACPI CPU enumeration wrong. Say 'USE=-acpi'"
 	[[ $n -gt 1 ]] && CF1 SMP
 	[[ $n -gt 8 ]] && CF1 X86_BIGSMP
 	[[ $n -gt 512 ]] && CF1 MAXSMP
@@ -451,9 +451,9 @@ acpi_detect(){
 cpu2K(){
 local i v V="" CF="" march=$(march) m64g="HIGHMEM64G -HIGHMEM4G -NOHIGHMEM" freq='' gov='ONDEMAND'
 local vendor_id="" model_name="" flags="" cpu_family="" model="" cache_alignment="" fpu="" siblings="" cpu_cores="" processor=""
-CF1 -SMP -X86_BIGSMP -X86_GENERIC X86_X2APIC X86_UP_APIC X86_UP_IOAPIC
+CF1 -SMP -X86{BIGSMP,GENERIC} X86_{X2APIC,UP_APIC,UP_IOAPIC}
 use xen && CF1 -HIGHMEM64G -HIGHMEM4G NOHIGHMEM X86_PAE
-use smp && CF1 SMP X86_BIGSMP SCHED_SMT SCHED_MC
+use smp && CF1 SMP X86_BIGSMP SCHED_{SMT,MC}
 [[ "$(march mtune)" == generic ]] && CF1 X86_GENERIC
 if [[ -z "${march}" ]]; then
 	CF1 GENERIC_CPU X86_GENERIC
@@ -462,7 +462,7 @@ if [[ -z "${march}" ]]; then
 fi
 case "${march}" in
 native)
-	CF1 -SCHED_SMT -SCHED_MC -X86_UP_APIC -X86_TSC -X86_PAT -X86_MSR -X86_MCE -MTRR -X86_CMOV -X86_X2APIC "-CRYPTO_DEV_PADLOCK[_\w]*" -HW_RANDOM_VIA -INTEL_IDLE -KVM_INTEL -KVM_AMD
+	CF1 -SCHED_{SMT,MC} -X86_{UP_APIC,TSC,PAT,MSR,MCE,CMOV,X2APIC} -MTRR "-CRYPTO_DEV_PADLOCK[_\w]*" -HW_RANDOM_VIA -INTEL_IDLE -KVM_INTEL -KVM_AMD
 	case "${CTARGET:-${CHOST}}" in
 	x86*|i?86*)
 		use multitarget && CF1 -64BIT
@@ -488,7 +488,7 @@ native)
 				if ! grep -q SMP /proc/version; then
 					ewarn "Trying to detect hyperthreading/cores under non-SMP kernel:"
 					ewarn "SMP+SMT+MC forced, recommended to re-ebuild kernel under new kernel."
-					CF1 SMP SCHED_SMT SCHED_MC
+					CF1 SMP SCHED_{SMT,MC}
 				fi
 			;;
 			esac
@@ -513,7 +513,7 @@ native)
 	# xtopology & other flags present only on SMP running anymore
 	[[ "${cpu_cores:-1}" -gt 1 ]] && CF1 SMP SCHED_MC
 	[[ "${siblings:-0}" -gt "${cpu_cores:-1}" ]] && CF1 SMP SCHED_SMT
-	[[ "$(grep "^siblings\s*:\|^cpu cores\s*:" /proc/cpuinfo|sort -u|wc -l)" -gt 2 ]] && CF1 SMT SCHED_{SMT,MC} NUMA
+	[[ "$(grep "^siblings\s*:\|^cpu cores\s*:" /proc/cpuinfo|sort -u|wc -l)" -gt 2 ]] && CF1 SMP SCHED_{SMT,MC} NUMA
 	[[ "${fpu}" != yes ]] && CF1 MATH_EMULATION
 
 	use acpi && acpi_detect
