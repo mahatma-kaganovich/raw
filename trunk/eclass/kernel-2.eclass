@@ -434,8 +434,7 @@ acpi_detect(){
 		*.SRAT)CF1 NUMA;;
 		_SB_.PCI*)CF1 PCI;;
 		_SB_.PCCH)CF2 PCC_CPUFREQ;freq+=" PCC_CPUFREQ";;
-#		_PR_.*)let n=n+1;;
-		_PR_.C*)let n=n+1;;
+		_PR_.*)let n=n+1;;
 		esac
 	done
 	[[ "$CF" == *-SCHED_SMT* ]] && grep -q "^flags\s*:.*\sht\s" /proc/cpuinfo && let n=n/2
