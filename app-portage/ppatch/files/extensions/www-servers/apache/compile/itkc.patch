@@ -1,4 +1,4 @@
-cgroups for mpm-itk for Apache 2.2.17-01 v0.4
+cgroups for mpm-itk for Apache 2.2.17-01 v0.5
 
 Usage: AssignUserID USER GROUP [/dev/cgroup/CGROUP/tasks]
 Too simple: user or group must be changed to change cgroup.
@@ -20,7 +20,7 @@ diff -pruN a/server/mpm/experimental/itk/itk.c b/server/mpm/experimental/itk/itk
      gid_t wanted_gid;
      const char *wanted_username;
      int err = 0;
-+    int pidf;
++    FILE *pidf;
      
      itk_server_conf *sconf =
          (itk_server_conf *) ap_get_module_config(r->server->module_config, &mpm_itk_module);
