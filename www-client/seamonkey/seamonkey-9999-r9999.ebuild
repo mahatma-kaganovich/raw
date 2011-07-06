@@ -500,6 +500,7 @@ src_configure(){
 #	append-flags -fno-unroll-loops
 	export CXXFLAGS="${CFLAGS}"
 
+
 #	! SM && use directfb && sed -i -e 's%--enable-default-toolkit=cairo-gtk2%--enable-default-toolkit=cairo-gtk2-dfb%g' "${S}"/.mozconfig
 
 	if use qt-experimental ; then
@@ -571,6 +572,7 @@ mk_add_options MOZ_OBJDIR=@TOPSRCDIR@/../base" >>"${S}"/.mozconfig
 
 	# Finalize and report settings
 	mozconfig_final
+	export MOZCONFIG="${S}/.mozconfig"
 
 	if [[ $(gcc-major-version) -lt 4 ]]; then
 		append-cxxflags -fno-stack-protector
