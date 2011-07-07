@@ -144,14 +144,19 @@ src_prepare() {
 	done
 
 #	use gallium && sed -i -e 's:GALLIUM_WINSYS_DIRS="":GALLIUM_WINSYS_DIRS="xlib":g' configure.ac
+	sed -i -e '/GALLIUM_DRIVERS_DIRS i915 i965 r300 svga/d' -e '/GALLIUM_WINSYS_DIRS i915\/sw/d' "${S}"/configure*
 
 	eautoreconf
 }
 
+cfg2(){
+	[[ -n "$1" ]] && sed -i -e "s:^$2=\":$2=\"$1 :g" configure{,.ac}
+}
+
 src_configure() {
-	local myconf altconf=""
+	local myconf altconf="" ga=""
 	local drv="dri"
-	local targets=""
+	local targets="" trackers=""
 	# Configurable DRI drivers
 	driver_enable swrast
 	driver_enable video_cards_mach64 mach64
@@ -165,47 +170,47 @@ src_configure() {
 	driver_enable video_cards_tdfx tdfx
 	driver_enable video_cards_trident trident
 	driver_enable video_cards_via unichrome
-	if use gallium || use llvm || use video_cards_vmware || use video_cards_nouveau; then
-		use myconf="--enable-gallium --enable-gallium-swrast"
-	fi
 	if use gallium; then
 		driver_enable video_cards_intel i810
-		myconf="${myconf} $(use_enable video_cards_intel gallium-i915)"
-		myconf="${myconf} $(use_enable video_cards_intel gallium-i965)"
-		myconf="${myconf} $(use_enable video_cards_radeon gallium-radeon)"
-		myconf="${myconf} $(use_enable video_cards_radeon gallium-r600)"
-		use llvm && use video_cards_radeon &&
-			myconf="${myconf} --enable-gallium-r300" || {
-			ewarn "llvm disabled - disabling gallium-r300"
-			myconf="${myconf} --disable-gallium-r300"
+		use video_cards_intel && ga+=" i915 i965"
+		use video_cards_radeon && {
+			ga+=" radeon r600"
+			use llvm && ga+=" r300"
 		}
 		ewarn "This gallium configuration required 'xorg-server' headers installed."
 		ewarn "To avoid circular dependences install mesa without gallium before and re-emerge after."
+		use X && myconf+=" --enable-xorg"
+		myconf+=" --enable-gallium-egl --enable-openvg"
 	else
 		driver_enable video_cards_radeon radeon r200 r300 r600
 		driver_enable video_cards_intel i810 i915 i965
-		myconf="${myconf} --disable-gallium-intel --disable-gallium-i915 --disable-gallium-i965 --disable-gallium-radeon --disable-gallium-r300 --disable-gallium-r600"
 	fi
-	myconf="${myconf} --with-state-trackers=dri,egl,glx,vega$(use gallium && echo ,xorg)$(use d3d && echo ,d3d1x)"
 	# unique gallium features: gallium will be locally enabled
-	myconf="${myconf} $(use_enable video_cards_vmware gallium-svga)"
-	myconf="${myconf} $(use_enable video_cards_nouveau gallium-nouveau)"
-	myconf="${myconf} $(use_enable llvm gallium-llvm)"
+	use video_cards_nouveau && ga+=" nouveau"
+	use vmware && ga+=" svga"
+	myconf+=" $(use_enable llvm gallium-llvm)"
 	# Deactivate assembly code for pic build
-	( use pic ) && myconf="${myconf} --disable-asm"
+	( use pic ) && myconf+=" --disable-asm"
 	# Get rid of glut includes
 	use glut || rm -f "${S}"/include/GL/glut*h
-	[[ "${drv}" == "dri" ]] && myconf="${myconf} --with-dri-drivers=${DRI_DRIVERS#,}"
+	[[ "${drv}" == "dri" ]] && myconf+=" --with-dri-drivers=${DRI_DRIVERS#,}"
 	# dirty
-	use osmesa && myconf="${myconf} --enable-gl-osmesa"
-	use xlib && targets="${targets} libgl-xlib"
-	[[ -n "${targets}" ]]  && sed -i -e 's:GALLIUM_TARGET_DIRS="":GALLIUM_TARGET_DIRS="'"${targets}"'":g' configure{,.ac}
+	use osmesa && myconf+=" --enable-gl-osmesa"
+	use xlib && targets+=" libgl-xlib" && trackers+=" glx"
+	cfg2 "$targets" GALLIUM_TARGET_DIRS
+	cfg2 "$trackers" GALLIUM_STATE_TRACKERS_DIRS
 	if use xlib || use osmesa; then
 		sed -i -e 's%DRIVER_DIRS="dri"%DRIVER_DIRS="x11 dri"%g' configure{,.ac}
 	fi
-	econf ${myconf} \
+	myconf+=" --with-gallium-drivers="
+	if use gallium || [[ -n "$ga" ]]; then
+		ga+=" swrast"
+	fi
+	for i in $ga; do
+		grep -q '^\s*x'"$i)" configure && myconf+="$i,"
+	done
+	econf ${myconf%,} \
 		$(use_enable nptl glx-tls) \
-		--with-driver=${drv} \
 		$(use_enable glut) \
 		$(use_enable xcb) \
 		$(use_enable motif glw) \
@@ -216,7 +221,8 @@ src_configure() {
 		$(use_enable dricore shared-glapi) \
 		$(use_enable selinux) \
 		$(use_with X x) \
-		--enable-openvg \
+		$(use_enable X xa) \
+		$(use_enable d3d d3d1x) \
 		--with-egl-platforms=x11,drm$(use fbdev && echo ,fbdev) \
 		|| die
 }
@@ -255,9 +261,9 @@ src_install() {
 	# libGLU doesn't get the plain .so symlink either
 	#dosym libGLU.so.1 /usr/$(get_libdir)/libGLU.so
 
-	local i d
-	d="/usr/$(get_libdir)/opengl/xorg-x11-xlib"
-	for i in "${D}"/usr/$(get_libdir)/opengl/xorg-x11/lib/libGL.so.1.5*; do
+	local i d l="/usr/$(get_libdir)/opengl"
+	d="$l/xorg-x11-xlib"
+	[[ -e "$D/$d" ]] || for i in "$D/$l"/xorg-x11/lib/libGL.so.1.5* $(get_libdir)/gallium/libGL.so.1.5*; do
 		[[ -e "${i}" ]] || continue
 		if ! [[ -d "${D}${d}"/lib ]]; then
 			if eselect opengl list|grep -q "xorg-x11-xlib"; then
@@ -270,12 +276,13 @@ src_install() {
 			dosym ../xorg-x11/extensions "${d}"/extensions
 			dosym ../xorg-x11/include "${d}"/include
 			ewarn "You selected 'xlib' and|or 'osmesa' flag. Installing multiple 'libGL.so.*'"
-			ewarn "into /usr/lib/opengl/*/lib/ and symlinks to it."
+			ewarn "into $l/*/lib/ and symlinks to it."
 			ewarn "To use 'dri' (hardware) lib - say 'eselect opengl set xorg-x11'"
 			ewarn "To use 'xlib/OSmesa' (software) - 'eselect opengl set xorg-x11-xlib'"
 			ewarn "xlib/OSmesa library must emulate compiz-related texture calls anyware."
 		fi
 		mv "${i}" "${D}${d}"/lib
+		break
 	done
 }
 
