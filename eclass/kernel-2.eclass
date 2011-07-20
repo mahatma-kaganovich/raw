@@ -461,7 +461,7 @@ if [[ -z "${march}" ]]; then
 fi
 case "${march}" in
 native)
-	CF1 -SCHED_{SMT,MC} -X86_{UP_APIC,TSC,PAT,MSR,MCE,CMOV,X2APIC} -MTRR "-CRYPTO_DEV_PADLOCK[_\w]*" -HW_RANDOM_VIA -INTEL_IDLE -KVM_INTEL -KVM_AMD
+	CF1 -SCHED_{SMT,MC} -X86_{UP_APIC,TSC,PAT,MSR,MCE,CMOV,X2APIC} -MTRR -INTEL_IDLE -KVM_INTEL -KVM_AMD
 	case "${CTARGET:-${CHOST}}" in
 	x86*|i?86*)
 		use multitarget && CF1 -64BIT
