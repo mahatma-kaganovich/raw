@@ -82,6 +82,8 @@ $ENV{KERNEL_CONFIG}||='
 	=======
 	';
 
+%cc=('+'=>1,'-'=>1,'~'=>1,'='=>1,'&'=>1);
+
 sub Kcload{
 	die "Unresolved Kconfig: $_[0]\n" if(index($_[0],'$')>=0);
 	my ($c,$v);
@@ -95,7 +97,8 @@ sub Kcload{
 		$s=~s/^\s*choice\s*$/$c=choice;$v=undef;next/se;
 		$s=~s/^\s*(?:def_)?tristate(?:\s+\S*|$)/$tristate{$v}=1;next/se;
 		$s=~s/^\s*(?:def_)?bool(?:\s+\S*|$)/if($c eq 'menuconfig'){$menu{$v}=1}else{$bool{$v}=1};next/se;
-		$s=~s/^\s*select\s*(\S*)/push @{$select{$1}},$v;next/se;
+		$s=~s/^\s*select\s+(\S*)/push @{$select{$1}},$v;next/se;
+		$s=~s/^\s*depends\s+on\s+(.*)$/push @{$depends{$v}},$1;next/se;
 		$s=~s/(?:If\s+unsure,\s+s|If\s+in\s+doubt,\s+s|S)ay\s+Y\./$yes{$v}=1;next/se;
 		$s=~s/(?:If\s+unsure,\s+s|If\s+in\s+doubt,\s+s|S)ay\s+N\./$no{$v}=1;next/se;
 		next if(!$ENV{SRCARCH});
@@ -159,7 +162,6 @@ sub set_config{
 }
 
 sub spl{
-	my %cc=('+'=>1,'-'=>1,'~'=>1,'='=>1);
 	my $d=$_[0];
 	my $c=substr($d,0,1);
 	substr($d,0,1)='' if(exists($cc{$c}));
@@ -230,6 +232,18 @@ sub cfg{
 	}
 }
 
+sub _and{
+	return if($config{$_[0]} ne 'm');
+	print "KERNEL_CONFIG: & $_[2] -> $_[0]\n" if($_[0] ne $_[2]);
+	cfg(@_);
+	for(grep(/.*:$_[0]$/,keys %depends)){
+		next if(!exists($tristate{$_}));
+		for(@{$depends{$_}}){
+			_and($_,@_[1,2]) for(split(/[ )(]/,$_));
+		}
+	}
+}
+
 sub conf{
     return if($_[0] eq '');
     for(split(/;/,$_[0])){
@@ -247,6 +261,8 @@ sub conf{
 			cfg($_);
 		}elsif($c eq '~'){
 			cfg($_,$oldconfig{$_});
+		}elsif($c eq '&'){
+			_and($_,$y,$_);
 		}elsif($c ne '=' || !defined($config{$_})){
 			cfg($_,$y);
 		}

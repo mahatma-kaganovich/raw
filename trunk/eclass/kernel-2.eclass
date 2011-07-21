@@ -846,7 +846,7 @@ detects(){
 
 m2y(){
 	grep -q "^CONFIG_$1=[my]$" .config || return
-	echo -ne " $1"
+	echo -ne " &$1"
 	# buggy dependences only
 	case "$1" in
 	ACPI_VIDEO)m2y VIDEO_OUTPUT_CONTROL;;
