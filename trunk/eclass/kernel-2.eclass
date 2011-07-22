@@ -9,9 +9,9 @@ UROOT=""
 
 if [[ ${ETYPE} == sources ]]; then
 
-IUSE="${IUSE} +build-kernel debug custom-cflags +pnp +compressed integrated ipv6
-	netboot nls unicode +acl selinux custom-arch embed-hardware
-	+kernel-drm +kernel-alsa kernel-firmware +sources fbcon staging pnponly lzma xz
+IUSE="${IUSE} +build-kernel debug custom-cflags +pnp +compressed integrated
+	netboot unicode selinux custom-arch embed-hardware
+	+kernel-drm +kernel-alsa kernel-firmware +sources staging pnponly lzma xz
 	external-firmware xen +smp tools multilib multitarget +multislot thin
 	lvm evms device-mapper unionfs luks gpg iscsi e2fsprogs mdadm
 	lguest acpi"
@@ -280,7 +280,7 @@ kernel-2_src_install() {
 		f="${D}/boot/config-${REAL_KV}"
 		[[ -e "$f" ]] || cp "${S}/.config" "$f"
 		if use !multislot; then
-			use sources && dosym linux-${KV_FULL} /usr/src/linux-${SLOT}
+			use sources && dosym "${S##*/}" /usr/src/linux-${SLOT}
 			for i in .img .img.thin; do
 				[[ -e "${D}/boot/initrd-${REAL_KV}$i" ]] && dosym initrd-${REAL_KV}$i /boot/initrd-${SLOT}$i
 			done
@@ -384,10 +384,7 @@ useconfig(){
 	cfg_use debug "(?:[^\n]*_)?DEBUG(?:GING)?(?:_[^\n]*)?" FRAME_POINTER OPTIMIZE_INLINING FUNCTION_TRACER OPROFILE KPROBES X86_VERBOSE_BOOTUP PROFILING MARKERS
 	use debug || cfg STRIP_ASM_SYMS -INPUT_EVBUG
 	local cfg_exclude=
-	cfg_use ipv6 IPV6
-	cfg_use acl "[\d\w_]*_ACL"
 	cfg_use selinux "[\d\w_]*FS_SECURITY SECURITY SECURITY_NETWORK SECURITY_SELINUX SECURITY_SELINUX_BOOTPARAM"
-	use nls && cfg "[\d\w_]*_NLS"
 	use unicode && cfg NLS_UTF8
 	if use kernel-drm ; then
 		cfg +DRM
@@ -403,12 +400,8 @@ useconfig(){
 	else
 		cfg KERNEL_BZIP2
 	fi
-	# framebuffer enabled anymore, but "fbcon" support for more devices, exclude [external] nouveau drm
-	if use fbcon; then
-		cfg FB FRAMEBUFFER_CONSOLE FB_BOOT_VESA_SUPPORT "LOGO_LINUX_[\w\d]*"
-	else
-		cfg -FB_UVESA
-	fi
+	KERNEL_CONFIG+="
+"
 	for i in "${UROOT}"/usr/share/genpnprd/*use; do
 		o="${i##*/}"
 		o="${o%.*}"
@@ -419,7 +412,11 @@ useconfig(){
 		*.use);;
 		*)continue;;
 		esac
-		use "$o" && source "$i"
+		use "$o" || continue
+		KERNEL_CONFIG+="===$o: "
+		source "$i"
+		KERNEL_CONFIG+="
+"
 	done
 	use multilib || ( use multitarget && use x86 ) || cfg -IA32_EMULATION
 }
