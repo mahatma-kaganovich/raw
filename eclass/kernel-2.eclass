@@ -377,11 +377,9 @@ useconfig(){
 	local i o
 	# staging submenu will be opened, but no auto-m
 	use staging || KERNEL_MODULES="${KERNEL_MODULES} -drivers/staging"
-	cfg EXT2_FS
-	if use embed-hardware && use compressed && use pnp; then
-		cfg BLK_DEV_LOOP SQUASHFS
-	elif use pnp || use compressed; then
-		cfg +SQUASHFS +CRAMFS +BLK_DEV_LOOP
+	if use !embed-hardware; then
+		cfg EXT2_FS
+		use compressed || use pnp && cfg +SQUASHFS +CRAMFS +BLK_DEV_LOOP
 	fi
 	local cfg_exclude=" HAVE_DMA_API_DEBUG "
 	cfg_use debug "(?:[^\n]*_)?DEBUG(?:GING)?(?:_[^\n]*)?" FRAME_POINTER OPTIMIZE_INLINING FUNCTION_TRACER OPROFILE KPROBES X86_VERBOSE_BOOTUP PROFILING MARKERS

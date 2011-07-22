@@ -1,1 +1,2 @@
-KERNEL_CONFIG+="[\d\w_]*_NLS"
+KERNEL_CONFIG+="=[\d\w_]*_NLS &NLS NLS"
+#use embed-hardware && KERNEL_CONFIG+=" &NLS_[\d\w_]*"
