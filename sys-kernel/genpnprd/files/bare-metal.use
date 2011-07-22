@@ -1,4 +1,2 @@
-KERNEL_CONFIG+="
-==bare-metal: -PARAVIRT -PARAVIRT_GUEST
-"
+KERNEL_CONFIG+="-PARAVIRT -PARAVIRT_GUEST"
 use xen && die "useflags 'xen' & 'bare-metal' are incompatible"
