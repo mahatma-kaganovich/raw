@@ -279,8 +279,9 @@ kernel-2_src_install() {
 		done
 		f="${D}/boot/config-${REAL_KV}"
 		[[ -e "$f" ]] || cp "${S}/.config" "$f"
+		local sym=''
 		if use !multislot; then
-			use sources && dosym "${S##*/}" /usr/src/linux-${SLOT}
+			use sources && sym="linux-${KV_FULL}"
 			for i in .img .img.thin; do
 				[[ -e "${D}/boot/initrd-${REAL_KV}$i" ]] && dosym initrd-${REAL_KV}$i /boot/initrd-${SLOT}$i
 			done
@@ -292,6 +293,7 @@ kernel-2_src_install() {
 			if use pnp && use compressed; then
 				einfo "Compressing with squashfs"
 				f="linux-${REAL_KV}"
+				sym="${sym:+$f}"
 				f1="/lib/modules/${REAL_KV}/kernel"
 				rm "${D}${f1}" -Rf
 				dosym "../../../usr/src/${f}" "${f1}"
@@ -307,6 +309,7 @@ kernel-2_src_install() {
 			cd "${WORKDIR}"
 			rm "${S}" -Rf
 		fi
+		[[ -n "$sym" ]] && dosym "$sym" /usr/src/linux-${SLOT}
 		ewarn "If your /boot is not mounted, copy next files by hands:"
 		ewarn `ls "${D}/boot"`
 	fi
