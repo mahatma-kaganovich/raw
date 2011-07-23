@@ -1,1 +1,2 @@
 KERNEL_CONFIG+="CLEANCACHE +ZCACHE +ZRAM +FRONTSWAP"
+LICENSE "drivers/staging/zcache/tmem.c" "Dual BSD/GPL"

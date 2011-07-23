@@ -797,7 +797,7 @@ for i in $(extract_flags -Wa, ${CFLAGS}); do
 	esac
 	aflags="${aflags% ${i}} ${i}"
 done
-for i in $(echo "int main(){}"|$(tc-getBUILD_CC) ${CFLAGS} "${@}" -x c - -v -o /dev/null |& grep "^[ ]*[^ ]*/as"); do
+for i in $(echo "int main(){}"|$(tc-getBUILD_CC) ${CFLAGS} "${@}" -x c - -v -o /dev/null |& grep "^[ ]*[^ ]*/as"); do #"
 	case "${i}" in
 	-mtune=*)aflags="${aflags% ${i}} ${i}";;
 	esac
@@ -849,4 +849,9 @@ m2y(){
 	case "$1" in
 	ACPI_VIDEO)m2y VIDEO_OUTPUT_CONTROL;;
 	esac
+}
+
+LICENSE(){
+	grep -qF "#include <linux/module.h>" $1 || sed -i -e 's:^#include:#include <linux/module.h>\n#include:' $1
+	grep -q "MODULE_LICENSE" $1 || echo "MODULE_LICENSE(\"${2:-GPL}\");" >>$1
 }
