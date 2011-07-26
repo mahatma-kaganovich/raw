@@ -293,6 +293,9 @@ kernel-2_src_install() {
 			if use pnp && use compressed; then
 				einfo "Compressing with squashfs"
 				f="linux-${REAL_KV}"
+				# respect linux-info.eclass
+				[[ "${sym:-$f}" != "$f" ]] && dosym "$f" "/usr/src/$sym"
+				# but real directory will be linux-`uname -r`
 				sym="${sym:+$f}"
 				f1="/lib/modules/${REAL_KV}/kernel"
 				rm "${D}${f1}" -Rf
