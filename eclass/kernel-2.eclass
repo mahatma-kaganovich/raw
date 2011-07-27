@@ -38,8 +38,6 @@ else
 	SLOT="${PN%-sources}"
 fi
 
-: ${KERNEL_UTILS_CFLAGS:="${CFLAGS}"}
-
 eval "`/usr/bin/perl ${UROOT}/usr/share/genpnprd/Kconfig.pl -config`"
 
 KERNEL_CONFIG+=" +TR"
@@ -130,6 +128,7 @@ kernel-2_src_configure() {
 	cd "${S}"
 	cpu2K
 	## ldflags unsure
+	: ${KERNEL_UTILS_CFLAGS:="${CFLAGS}"} # "
 	local cflags="${KERNEL_CFLAGS}" aflags="${KERNEL_ASFLAGS}" ldflags="${KERNEL_LDFLAGS}"
 	if use custom-cflags; then
 		use custom-arch || filter-flags "-march=*"
@@ -188,6 +187,7 @@ kernel-2_src_compile() {
 		KERNEL_CONFIG+=" ===detect: $(detects)"
 		kconfig
 	done
+	userspace
 	if use tools; then
 		einfo "Compiling tools"
 		mktools
@@ -857,4 +857,26 @@ m2y(){
 LICENSE(){
 	grep -qF "#include <linux/module.h>" $1 || sed -i -e 's:^#include:#include <linux/module.h>\n#include:' $1
 	grep -q "MODULE_LICENSE" $1 || echo "MODULE_LICENSE(\"${2:-GPL}\");" >>$1
+}
+
+userspace(){
+	# klibc in progress
+	[[ -n "$KERNEL_KLIBC" ]] && [[ -z "$KERNEL_KLIBC_DIR" ]] && {
+		KERNEL_KLIBC_DIR="${WORKDIR}/klibc-${KERNEL_KLIBC}"
+#		tar -xaf "${DISTDIR}/klibc-${KERNEL_KLIBC}.tar.bz2" -C "${WORKDIR}"
+		tar -xaf "${PORTDIR}/distfiles/klibc-${KERNEL_KLIBC}.tar.bz2" -C "${WORKDIR}"
+	}
+
+	[[ -n "$KERNEL_KLIBC" ]] && [[ -d "$KERNEL_KLIBC_DIR" ]] || die
+
+	if use sources || [[ -n "$KERNEL_KLIBC" ]]; then
+		einfo "Preparing kernel headers"
+		kmake headers_install #$(use compressed && echo _all)
+	fi
+	if [[ -n "$KERNEL_KLIBC" ]] && [[ -d "$KERNEL_KLIBC_DIR" ]]; then
+		einfo "Making KLIBC"
+#		export CFLAGS="$CFLAGS --sysroot=${S}"
+#		export KERNEL_UTILS_CFLAGS="$KERNEL_UTILS_CFLAGS --sysroot=${S}"
+		kmake -C "$KERNEL_KLIBC_DIR" KLIBCKERNELSRC="${S}" INSTALLDIR="/usr" INSTALLROOT="${S}" all install
+	fi
 }
