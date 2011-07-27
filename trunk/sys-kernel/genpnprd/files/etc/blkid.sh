@@ -5,24 +5,24 @@ lsblk(){
 	local i
 	while read i; do
 		i="${i##* }"
-		[[ -n "$i" ]] && [[ -e "/dev/$i" ]] && {
-			[[ "${i%[0-9]}" == "$i" ]] && grep -q " $i[0-9]*$" /proc/partitions || echo "/dev/$i"
+		[ -n "$i" ] && [ -e "/dev/$i" ] && {
+			[ "${i%[0-9]}" = "$i" ] && grep -q " $i[0-9]*$" /proc/partitions || echo "/dev/$i"
 		}
 	done </proc/partitions
 }
 
 b_id(){
 	local x y t="$1" l=
-	[[ -n "$2" ]] && {
+	[ -n "$2" ] && {
 		let x=i+$2
 		l="$l UUID=\"`hexdump -v -s $x -n ${4:-16} -e '"" 4/1 "%02x" "-" 2/1 "%02x" "-" 2/1 "%02x" "-" 2/1 "%02x" "-" 6/1 "%02x" ""' $d`\""
 	}
-	[[ -n "$3" ]] && {
+	[ -n "$3" ] && {
 		let x=i+$3
 		x=`hexdump -v -s $x -n ${5:-80} -e '"" /1 "%s" ""' $d`
-		[[ -n "$x" ]] && l=" LABEL=\"$x\"$l"
+		[ -n "$x" ] && l=" LABEL=\"$x\"$l"
 	}
-	[[ -n "$6" ]] && {
+	[ -n "$6" ] && {
 		shift 5
 		for x in "${@}"; do
 			l="$l ${x%%=*}=\""
@@ -42,7 +42,7 @@ b_id(){
 _blkid(){
 ! grep -s "^$d:" ${blkid_cache:=/dev/null} &&
 ! ( $blkid "$d"|grep " TYPE=" ) &&
-( [[ -b "$d" ]] || [[ -f "$d" ]] ) && for i in 0 3 4 8 24 32 54 82 510 536 1016 1024 1030 1040 1048 1080 1560 2048 4076 4086 4096 8172 8182 8192 8212 8244 9564 16364 16374 32748 32758 32768 32769 32777 65516 65526 65536 65588 65600 270336; do
+( [ -b "$d" ] || [ -f "$d" ] ) && for i in 0 3 4 8 24 32 54 82 510 536 1016 1024 1030 1040 1048 1080 1560 2048 4076 4086 4096 8172 8182 8192 8212 8244 9564 16364 16374 32748 32758 32768 32769 32777 65516 65526 65536 65588 65600 270336; do
 case "`hexdump -v -s $i -n 10 -e '"'$i:'" 10/1 "%x" ""' $d`" in
 32:4f52434c4449534b*)b_id oracleasm;;
 3:4e54465320202020*)b_id ntfs 69 "" 8;;
@@ -90,12 +90,12 @@ done
 
 blkid(){
 local r=1 blkid_cache
-[[ -z "$blkid" ]] && {
-	blkid="$(which blkid 2>/dev/null || ( [[ -e /bin/blkid ]] && echo /bin/blkid ) || ( [[ -e /sbin/blkid ]] && echo /sbin/blkid ) || echo blkid)"
-	[[ -e "$blkid" ]] && ( i="$(readlink $blkid)";[[ "${i%busybox}" == "$i" ]] ) || blkid=false
+[ -z "$blkid" ] && {
+	blkid="$(which blkid 2>/dev/null || ( [ -e /bin/blkid ] && echo /bin/blkid ) || ( [ -e /sbin/blkid ] && echo /sbin/blkid ) || echo blkid)"
+	[ -e "$blkid" ] && ( i="$(readlink $blkid)";[ "${i%busybox}" = "$i" ] ) || blkid=false
 }
-[[ -z "$*" ]] && set `lsblk` ""
-while [[ -n "$*" ]]; do
+[ -z "$*" ] && set `lsblk` ""
+while [ -n "$*" ]; do
 local d="$1" i="" u
 shift
 case "$d" in
@@ -104,8 +104,8 @@ case "$d" in
 	d=""
 ;;
 esac
-[[ -n "$d" ]] && i=`_blkid`
-[[ -n "$i" ]] && echo "$i" && r=0
+[ -n "$d" ] && i=`_blkid`
+[ -n "$i" ] && echo "$i" && r=0
 done 2>/dev/null
 return $r
 }

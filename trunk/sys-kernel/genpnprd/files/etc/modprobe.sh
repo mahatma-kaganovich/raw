@@ -1,13 +1,13 @@
 #!/bin/sh
 
 modalias(){ ALIAS=`find -name "$1.ko"`;return $?;}
-cd /lib/modules/${KV:=`uname -r`}
-[[ -e ./modules.alias.sh ]] && . ./modules.alias.sh # || return 1
+cd /lib/modules/${KV:=`uname -r||ls /lib//modules`}
+[ -e ./modules.alias.sh ] && . ./modules.alias.sh # || return 1
 modparam(){
 	PARAM="${1##*/}"
 	PARAM="`cat "/etc/kernel.cmdline/${PARAM%.ko}".* 2>/dev/null`"
 }
-[[ -e /etc/modparam.sh ]] && . /etc/modparam.sh
+[ -e /etc/modparam.sh ] && . /etc/modparam.sh
 
 modverbose(){
 	echo "insmod $i $PARAM" >&2
@@ -15,7 +15,7 @@ modverbose(){
 
 modprobe(){
 local i m m1 rr=0 r=1 INSMOD= a=false V= c=/cache.modprobe/
-[[ -w $c ]] || c=/sys/module/
+[ -w $c ] || c=/sys/module/
 while true; do
 case "$1" in
 --)shift;break;;
@@ -35,10 +35,10 @@ done
 $a && set "$*"
 m="$(echo -ne "$1" | sed -e "s/[*?/-]/_/g")"
 shift
-[[ "$a${_cmd_fastboot}" == true_ ]] && {
+[ "$a${_cmd_fastboot}" = true_ ] && {
 	r=0
 	for m in $m; do
-	[[ -e "$c$m" ]] || {
+	[ -e "$c$m" ] || {
 		modalias "$m" && for i in $ALIAS ; do
 			[[ -e "$c$i" ]] && continue
 			modparam $i
@@ -47,12 +47,12 @@ shift
 			mkdir -p "$c$i" 2>/dev/null
 			$V
 		done
-		[[ $r == 0 ]] && touch "$c$m" 2>/dev/null
+		[ $r -eq 0 ] && touch "$c$m" 2>/dev/null
 	} &
 	p="$p $!"
 	{ read i m i && read i m1 i;} </proc/meminfo && {
 		let i=m/m1
-		[[ $i -lt 2 ]] && continue
+		[ $i -lt 2 ] && continue
 	}
 	wait $p
 	p=
@@ -61,17 +61,17 @@ shift
 	return $?
 }
 for m in $m; do
-	[[ -e "$c$m" ]] && continue
+	[ -e "$c$m" ] && continue
 	r=0
 	modalias "$m" && for i in $ALIAS ; do
-		[[ -e "$c$i" ]] && continue
+		[ -e "$c$i" ] && continue
 		modparam $i
 		$INSMOD
 		insmod $i $PARAM "${@}" || { r=1;continue;}
 		mkdir -p "$c$i" 2>/dev/null
 		$V
 	done || rr=1
-	if [[ $r == 0 ]]; then
+	if [ $r -eq 0 ]; then
 		touch "$c$m" 2>/dev/null
 	else
 		rr=1
