@@ -213,6 +213,7 @@ sub order3{
 
 sub fix_{
 	my $i=$_[0];
+	$i=~s/_/[_-]/g; # no sed
 	$i=~s/ /[\\ _]/g;
 	$i
 }
@@ -291,13 +292,13 @@ local i=""
 		print FS $tail.'case "$1" in
 '.$s;
 		$tail="esac\n";
-		$tail.="local r=\${i:+ 1}\n" if($_==1);
+		$tail.="local r=\"\${i:+ 1}\"\n" if($_==1);
 	}
 	print FS 'case "$1" in
 '		if(!$tail);
 	print FS 'esac
 ALIAS="$i"
-[[ -n "$i" ]]
+[ -n "$i" ]
 return $?
 }
 ';
