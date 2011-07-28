@@ -7,15 +7,20 @@
 my %alias;
 my %dep;
 my %ord3;
+my %OPT=(
+	'subst'=>1,
+	'barrier'=>3, # separate concurrent from precursors (precursors have too many siblings)
+	'order'=>3,
+	'sed'=>0,
+);
+
+my @order=(\&order3,\&order1,\&order2,\&order3);
 
 # to load second/last
 my @reorder=(
  '/ide/|usb-storage|/oss/|/nvidia/|\/radeon/|/intelfb/|/snd-pcsp',
  '/pata_acpi|/ata_generic'
 );
-
-my $SUBST=1;
-my $BARRIER=3; # separate concurrent from precursors (precursors have too many siblings)
 
 sub read_aliases{
 	my ($s,$id,$m);
@@ -81,7 +86,7 @@ sub read_modinfo{
 				push @{$alias{$_}},$id;
 			}
 		}
-		%v={};
+		%v=();
 		push @{$v{$x}},$y if(defined($x));
 	}
 	close FM;
@@ -153,11 +158,7 @@ sub lines_{
 
 sub lines{
 	my $i=$_[0];
-	my $c='[^\[\]]*';
-	$i=~s/^($c\[)/lines_($1)/ge;
-	$i=~s/(\]$c\[)/lines_($1)/ge;
-	$i=~s/(\]$c)$/lines_($1)/ge;
-	$i=~s/^($c)$/lines_($1)/ge;
+	$i=~s/((?:^|\])[^\[\]]*(?:\[|$))/lines_($1)/ge;
 	($i)
 }
 
@@ -196,7 +197,7 @@ sub order3{
 			my %ll;
 			$ll{join(' ',@{$alias{$_}})}=1 for (@l);
 			my @r=keys %ll;
-			return $ord3{$a}=0 if ($#r>$BARRIER);
+			return $ord3{$a}=0 if ($#r>$OPT{'barrier'});
 			$ord3{$a}=$#r+1;
 			my $n=0;
 			for(@r){
@@ -211,10 +212,17 @@ sub order3{
 	$ord3{$a}=1;
 }
 
+sub lines1_{
+	my $i=$_[0];
+	$i=~s/[_-]/[_-]/g if(!$OPT{'sed'});
+	$i=~s/ /[ -]/g;
+	$i
+}
+
 sub fix_{
 	my $i=$_[0];
-	$i=~s/_/[_-]/g; # no sed
-	$i=~s/ /[\\ _]/g;
+	$i=~s/((?:^|\])[^\[\]]*(?:\[|$))/lines1_($1)/ge;
+	$i=~s/ /\\ /g;
 	$i
 }
 
@@ -251,8 +259,8 @@ local i=""
 		}
 		my $k=join(' ',
 		#	$re eq 2?'0000':
-			sprintf("%04i",order3($_)),@d);
-		$k=~s/\/([^\/.]+)/'\/'.($_ eq $1?'$1':$1)/ge if($SUBST && !exists($res{$k}));
+			sprintf("%04i",&{$order[$OPT{'order'}]}($_)),@d);
+		$k=~s/\/([^\/.]+)/'\/'.($_ eq $1?'$1':$1)/ge if($OPT{'subst'} && !exists($res{$k}));
 		if($re){
 			push @{$res{$k}},$_;
 		}else{
@@ -322,9 +330,14 @@ sub isPNP{
 
 $|=1;
 if($#ARGV<0){
-	print "Usage: $0 {[path]/lib/modules/<version>}\n"
+	print "Usage: $0 {--option=value} {[path]/lib/modules/<version>}\nDefaults:\n";
+	print "	--$_=$OPT{$_}\n" for(keys %OPT);
 }
 for my $MOD (@ARGV){
+	if(my($x,$y)=$MOD=~/^--(.*?)(?:=(.*))?$/){
+		$OPT{$x}=$y;
+		next;
+	}
 	%alias=();
 	%dep=();
 	print "mod2sh: $MOD ";
