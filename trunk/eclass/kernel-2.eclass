@@ -871,9 +871,8 @@ LICENSE(){
 userspace(){
 	# klibc in progress
 	[[ -n "$KERNEL_KLIBC" ]] && [[ -z "$KERNEL_KLIBC_DIR" ]] && {
-		KERNEL_KLIBC_DIR="${WORKDIR}/klibc-${KERNEL_KLIBC}"
-#		tar -xaf "${DISTDIR}/klibc-${KERNEL_KLIBC}.tar.bz2" -C "${WORKDIR}"
-		tar -xaf "${PORTDIR}/distfiles/klibc-${KERNEL_KLIBC}.tar.bz2" -C "${WORKDIR}"
+		KERNEL_KLIBC_DIR="${S}/usr/klibc-${KERNEL_KLIBC}"
+		tar -xaf "${PORTDIR}/distfiles/klibc-${KERNEL_KLIBC}.tar.bz2" -C "${S}/usr"
 	}
 
 	[[ -n "$KERNEL_KLIBC" ]] && ! [[ -d "$KERNEL_KLIBC_DIR" ]] && die
