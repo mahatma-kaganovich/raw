@@ -337,7 +337,7 @@ run_genkernel(){
 	local a="$(arch "" 1)"
 	# e2fsprogs & mdraid need more crosscompile info
 	ac_cv_target="${CTARGET:-${CHOST}}" ac_cv_build="${CBUILD}" ac_cv_host="${CHOST:-${CTARGET}}" CC="$(tc-getCC)" LD="$(tc-getLD)" CXX="$(tc-getCXX)" CPP="$(tc-getCPP)" AS="$(tc-getAS)" \
-	CFLAGS="${KERNEL_UTILS_CFLAGS}" LDFLAGS="${KERNEL_GENKERNEL_LDFLAGS}" "${S}/genkernel" \
+	CFLAGS="${KERNEL_UTILS_CFLAGS} `pkg-config libtirpc --cflags --libs`" LDFLAGS="${KERNEL_GENKERNEL_LDFLAGS}" "${S}/genkernel" \
 		--config=/etc/kernels/genkernel.conf \
 		--cachedir="${TMPDIR}/genkernel-cache" \
 		--tempdir="${TMPDIR}/genkernel" \
@@ -867,7 +867,7 @@ userspace(){
 		tar -xaf "${PORTDIR}/distfiles/klibc-${KERNEL_KLIBC}.tar.bz2" -C "${WORKDIR}"
 	}
 
-	[[ -n "$KERNEL_KLIBC" ]] && [[ -d "$KERNEL_KLIBC_DIR" ]] || die
+	[[ -n "$KERNEL_KLIBC" ]] && ! [[ -d "$KERNEL_KLIBC_DIR" ]] && die
 
 	if use sources || [[ -n "$KERNEL_KLIBC" ]]; then
 		einfo "Preparing kernel headers"
