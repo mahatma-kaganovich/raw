@@ -337,7 +337,11 @@ run_genkernel(){
 	local a="$(arch "" 1)"
 	# e2fsprogs & mdraid need more crosscompile info
 	ac_cv_target="${CTARGET:-${CHOST}}" ac_cv_build="${CBUILD}" ac_cv_host="${CHOST:-${CTARGET}}" CC="$(tc-getCC)" LD="$(tc-getLD)" CXX="$(tc-getCXX)" CPP="$(tc-getCPP)" AS="$(tc-getAS)" \
-	CFLAGS="${KERNEL_UTILS_CFLAGS} `pkg-config libtirpc --cflags --libs`" LDFLAGS="${KERNEL_GENKERNEL_LDFLAGS}" "${S}/genkernel" \
+	local RPC=""
+	chk_cc "#include <rpc/rpc.h>
+	int main(){}" -static || RPC=`pkg-config libtirpc --cflags --static --libs` || die "RPC or TI-RPC not found"
+	RPC="${RPC:+ $RPC}"
+	CFLAGS="${KERNEL_UTILS_CFLAGS}${RPC}" LDFLAGS="${KERNEL_GENKERNEL_LDFLAGS}${RPC}" "${S}/genkernel" \
 		--config=/etc/kernels/genkernel.conf \
 		--cachedir="${TMPDIR}/genkernel-cache" \
 		--tempdir="${TMPDIR}/genkernel" \
@@ -688,8 +692,13 @@ mktools(){
 
 _cc(){
 	einfo "Compiling '$1'"
-	$(tc-getCC) -I"${S}"/include ${KERNEL_UTILS_CFLAGS} ${LDFLAGS} $1 -o ${1%.c} &&
+	$(tc-getBUILD_CC) -I"${S}"/include ${KERNEL_UTILS_CFLAGS} ${LDFLAGS} $1 -o ${1%.c} &&
 	    [[ -n "$2" ]] && ( ( [[ -d "$2" ]] || mkdir -p "$2" ) && cp ${1%.c} "$2" )
+	return $?
+}
+
+chk_cc(){
+	echo "$1"|$(tc-getBUILD_CC) ${KERNEL_UTILS_CFLAGS} ${LDFLAGS} $2 -x c - -o /dev/null
 	return $?
 }
 
