@@ -6,6 +6,8 @@ EXPORT_FUNCTIONS src_configure src_prepare pkg_prerm
 
 #UROOT="${ROOT}"
 UROOT=""
+SHARE="${UROOT}/usr/share/genpnprd"
+COMP='GZIP,BZIP2'
 
 if [[ ${ETYPE} == sources ]]; then
 
@@ -38,7 +40,7 @@ else
 	SLOT="${PN%-sources}"
 fi
 
-eval "`/usr/bin/perl ${UROOT}/usr/share/genpnprd/Kconfig.pl -config`"
+eval "`/usr/bin/perl ${SHARE}/Kconfig.pl -config`"
 
 KERNEL_CONFIG+=" +TR"
 
@@ -72,7 +74,7 @@ CF2(){
 #done | md5sum)"
 #IUSE="${IUSE} md5cfg:${USEKEY%% *}"
 
-for i in "${UROOT}"/usr/share/genpnprd/*.{-use,use}; do
+for i in "${SHARE}"/*.{-use,use}; do
 	i="${i##*/}"
 	i="${i%.use}"
 	i="${i%.-use}"
@@ -187,18 +189,15 @@ kernel-2_src_compile() {
 		KERNEL_CONFIG+=" ===detect: $(detects)"
 		kconfig
 	done
-	userspace
-	if use tools; then
-		einfo "Compiling tools"
-		mktools
-	fi
-	einfo "Generating initrd image"
 	KV="${KV0}"
 	check_kv
-	local p="$(use__ lvm lvm2) $(use__ evms) $(use__ luks) $(use__ gpg) $(use__ iscsi) $(use__ device-mapper dmraid) $(use__ unionfs) $(use__ e2fsprogs disklabel) $(use__ mdadm)"
-	use netboot && p="${p} --netboot"
-	[[ -e "${BDIR}" ]] || mkdir "${BDIR}"
+
+	einfo "Preparing modules"
+	mkdir -p "${BDIR}" lib/modules/"${REAL_KV}"
 	kmake INSTALL_MOD_PATH="${BDIR}" -j1 modules_install
+	ln -s ../firmware lib/firmware
+	ln -s ../../.. "lib/modules/${REAL_KV}/kernel"
+	cp "${BDIR}/lib/modules/${REAL_KV}"/* "lib/modules/${REAL_KV}/"
 	local r="${BDIR}/lib/modules/${REAL_KV}"
 	rm "${r}"/build "${r}"/source
 	cd "${WORKDIR}"
@@ -211,6 +210,29 @@ kernel-2_src_compile() {
 		mkdir "${BDIR}"/lib 2>/dev/null
 		cp -na "$ROOT"/lib/firmware "${BDIR}"/lib
 	fi
+
+	if use sources || [[ -n "$KERNEL_KLIBC" ]]; then
+		einfo "Preparing kernel headers"
+		kmake headers_install #$(use compressed && echo _all)
+	fi
+
+	if use tools; then
+		einfo "Compiling tools"
+		mktools
+	fi
+
+	for i in `find Documentation -name "*.c"`; do
+		_cc $i
+	done
+
+	if [[ -n "$KERNEL_KLIBC" ]]; then
+		userspace
+		return
+	fi
+	
+	einfo "Generating initrd image"
+	local p="$(use__ lvm lvm2) $(use__ evms) $(use__ luks) $(use__ gpg) $(use__ iscsi) $(use__ device-mapper dmraid) $(use__ unionfs) $(use__ e2fsprogs disklabel) $(use__ mdadm)"
+	use netboot && p="${p} --netboot"
 	if use pnp || use compressed; then
 		p="${p} --all-ramdisk-modules"
 		[[ -e "${BDIR}/lib/firmware" ]] && p="${p} --firmware --firmware-dir=\"${BDIR}/lib/firmware\""
@@ -218,33 +240,39 @@ kernel-2_src_compile() {
 	run_genkernel ramdisk "--kerneldir=\"${S}\" --bootdir=\"${S}\" --module-prefix=\"${BDIR}\" --no-mountboot ${p}"
 	r=`ls initramfs*-${REAL_KV}`
 	rename "${r}" "initrd-${REAL_KV}.img" "${r}" || die "initramfs rename failed"
-	for i in `find Documentation -name "*.c"`; do
-		_cc $i
-	done
 	einfo "Preparing boot image"
-	bash "${UROOT}/usr/share/genpnprd/genpnprd" "${S}/initrd-${REAL_KV}.img" "$( (use !pnp && echo nopnp)||(use pnponly && echo pnponly) )" "${TMPDIR}"/overlay-rd "${S}" ${comp:+--COMPRESS $comp} $(use thin||echo --THIN -)|| die
-	# integrated: do not compress twice;
-	# others: +~700K, but faster boot & less RAM to uncompress.
-	# "integrated" still minimal
-	# integrated+thin = integrated thin
-	# standalone "thin" image still compressed
+	bash "${SHARE}/genpnprd" "${S}/initrd-${REAL_KV}.img" "$( (use !pnp && echo nopnp)||(use pnponly && echo pnponly) )" "${TMPDIR}"/overlay-rd "${S}" ${comp:+--COMPRESS $comp} $(use thin||echo --THIN -)|| die
 	local i="initrd-${REAL_KV}.cpio" i1="initrd-${REAL_KV}.img"
 	( use pnp || use compressed || (use integrated && use !thin) ) &&
 		gzip -dc "$i1"  >"$i" && rm "$i1"
+	if use integrated && use thin; then
+		i="initrd-${REAL_KV}.thin.cpio"
+		i1="$i1.thin"
+		gzip -dc "$i1" >"$i" && rm "$i1"
+	fi
+	initramfs "$i" NONE
+}
+
+# integrated: do not compress twice;
+# others: +~700K, but faster boot & less RAM to uncompress.
+# "integrated" still minimal
+# integrated+thin = integrated thin
+# standalone "thin" image still compressed
+initramfs(){
+	local c="${1:-${COMP##*,}}"
 	if use integrated; then
-		use thin && {
-			i="initrd-${REAL_KV}.thin.cpio"
-			i1="$i1.thin"
-			gzip -dc "$i1" >"$i" && rm "$i1"
-		}
-		echo "CONFIG_INITRAMFS_SOURCE=\"$i\"
+		einfo "Integrating initramfs"
+		echo "CONFIG_INITRAMFS_SOURCE=\"$1\"
 CONFIG_INITRAMFS_ROOT_UID=0
 CONFIG_INITRAMFS_ROOT_GID=0
-CONFIG_INITRAMFS_COMPRESSION_NONE=y" >>.config
+CONFIG_INITRAMFS_COMPRESSION_$c=y" >>.config
 		yes '' 2>/dev/null | kmake oldconfig &>/dev/null
 		kmake bzImage
+	elif [[ "$c" != NONE ]]; then
+		${c,,} -zc9 "$1" >"${1%.cpio}.img" || die
+		rm "$1"
 	else
-		[[ -e "$i" ]] && rename .cpio .img "$i"
+		[[ -e "$1" ]] && rename .cpio .img "$1"
 	fi
 	rm .config.old
 }
@@ -326,7 +354,7 @@ to_overlay(){
 	einfo "Generating boot image overlay (if configured)"
 	local i="${TMPDIR}/overlay-rd"
 	mkdir "${i}"
-	bash "${UROOT}/usr/share/genpnprd/genpkgrd" "${i}" "${KERNEL_IMAGE_FILES}" "${KERNEL_IMAGE_FILES2}" "${KERNEL_IMAGE_PACKAGES}"
+	bash "${SHARE}/genpkgrd" "${i}" "${KERNEL_IMAGE_FILES}" "${KERNEL_IMAGE_FILES2}" "${KERNEL_IMAGE_PACKAGES}"
 }
 
 run_genkernel(){
@@ -337,11 +365,7 @@ run_genkernel(){
 	local a="$(arch "" 1)"
 	# e2fsprogs & mdraid need more crosscompile info
 	ac_cv_target="${CTARGET:-${CHOST}}" ac_cv_build="${CBUILD}" ac_cv_host="${CHOST:-${CTARGET}}" CC="$(tc-getCC)" LD="$(tc-getLD)" CXX="$(tc-getCXX)" CPP="$(tc-getCPP)" AS="$(tc-getAS)" \
-	local RPC=""
-	chk_cc "#include <rpc/rpc.h>
-	int main(){}" -static || RPC=`pkg-config libtirpc --cflags --static --libs` || die "RPC or TI-RPC not found"
-	RPC="${RPC:+ $RPC}"
-	CFLAGS="${KERNEL_UTILS_CFLAGS}${RPC}" LDFLAGS="${KERNEL_GENKERNEL_LDFLAGS}${RPC}" "${S}/genkernel" \
+	CFLAGS="${KERNEL_UTILS_CFLAGS}" LDFLAGS="${KERNEL_GENKERNEL_LDFLAGS}" "${S}/genkernel" \
 		--config=/etc/kernels/genkernel.conf \
 		--cachedir="${TMPDIR}/genkernel-cache" \
 		--tempdir="${TMPDIR}/genkernel" \
@@ -401,16 +425,13 @@ useconfig(){
 	fi
 	cfg_use kernel-alsa SND
 	use kernel-alsa || cfg +SOUND_PRIME
-	if use lzma; then
-		cfg KERNEL_LZMA KERNEL_XZ
-	elif use xz; then
-		cfg KERNEL_XZ
-	else
-		cfg KERNEL_BZIP2
-	fi
+#	use lzo && COMP+=',LZO'
+	use lzma && COMP+=',LZMA,XZ'
+	use xz && COMP+=',XZ'
+	cfg KERNEL_{$c}
 	KERNEL_CONFIG+="
 "
-	for i in "${UROOT}"/usr/share/genpnprd/*use; do
+	for i in "${SHARE}"/*use; do
 		o="${i##*/}"
 		o="${o%.*}"
 		o="${o#[0-9]}"
@@ -652,7 +673,7 @@ kconfig(){
 	export ${!KERNEL_@}
 	while cfg_loop .config.{3,4} ; do
 		for a in "$(arch)" ''; do
-			SRCARCH="$a" /usr/bin/perl "${UROOT}/usr/share/genpnprd/Kconfig.pl" && break
+			SRCARCH="$a" /usr/bin/perl "${SHARE}/Kconfig.pl" && break
 		done
 		yes '' 2>/dev/null | kmake oldconfig >/dev/null
 	done
@@ -692,13 +713,8 @@ mktools(){
 
 _cc(){
 	einfo "Compiling '$1'"
-	$(tc-getBUILD_CC) -I"${S}"/include ${KERNEL_UTILS_CFLAGS} ${LDFLAGS} $1 -o ${1%.c} &&
+	$(tc-getCC) -I"${S}"/include ${KERNEL_UTILS_CFLAGS} ${LDFLAGS} $1 -o ${1%.c} &&
 	    [[ -n "$2" ]] && ( ( [[ -d "$2" ]] || mkdir -p "$2" ) && cp ${1%.c} "$2" )
-	return $?
-}
-
-chk_cc(){
-	echo "$1"|$(tc-getBUILD_CC) ${KERNEL_UTILS_CFLAGS} ${LDFLAGS} $2 -x c - -o /dev/null
 	return $?
 }
 
@@ -743,7 +759,7 @@ kernel-2_src_prepare(){
 	# pnp
 	use pnp || return
 	einfo "Fixing modules hardware info exports (forced mode, waiting for bugs!)"
-	sh "${UROOT}/usr/share/genpnprd/modulesfix" "${S}" f
+	sh "${SHARE}/modulesfix" "${S}" f
 }
 
 # around git-sources, etc (postinst_sources -> kernel-2_pkg_postinst)
@@ -825,7 +841,7 @@ detects(){
 			[[ "$a" == "$i" ]] && echo "$i" || echo -n "$a "
 		done <$i
 	done |grep "^obj-" >"${TMPDIR}"/unmodule.tmp
-	perl "${UROOT}"/usr/share/genpnprd/mod2sh.pl "${WORKDIR}" >&2 || die "Unable to run '/usr/share/genpnprd/mod2sh.pl'"
+	perl "${SHARE}"/mod2sh.pl "${WORKDIR}" >&2 || die "Unable to run '${SHARE}/mod2sh.pl'"
 	. "${WORKDIR}"/modules.alias.sh
 	{
 		# /sys
@@ -836,7 +852,7 @@ detects(){
 			[[ "$b" == / ]] && [[ "$c" != rootfs ]] && echo "$c"
 		done </proc/mounts
 		# cpu flags
-		(cd "${UROOT}"/usr/share/genpnprd/etc/modflags && cat $(grep "^flags" /proc/cpuinfo|sed -e 's/^.*://') $(cat /sys/bus/acpi/devices/*/path|sed -e 's:^\\::') </dev/null 2>/dev/null)
+		(cd "${SHARE}"/etc/modflags && cat $(grep "^flags" /proc/cpuinfo|sed -e 's/^.*://') $(cat /sys/bus/acpi/devices/*/path|sed -e 's:^\\::') </dev/null 2>/dev/null)
 	}|sed -e 's:-:_:g'|sort -u|while read i; do
 		modalias "$i"||continue
 		# strip "later" concurrent drivers
@@ -869,22 +885,59 @@ LICENSE(){
 }
 
 userspace(){
+	local i f t img='initramfs.lst' c=''
 	# klibc in progress
-	[[ -n "$KERNEL_KLIBC" ]] && [[ -z "$KERNEL_KLIBC_DIR" ]] && {
+	[[ -z "$KERNEL_KLIBC_DIR" ]] && {
 		KERNEL_KLIBC_DIR="${S}/usr/klibc-${KERNEL_KLIBC}"
-		tar -xaf "${PORTDIR}/distfiles/klibc-${KERNEL_KLIBC}.tar.bz2" -C "${S}/usr"
+		tar -xaf "${PORTDIR}/distfiles/klibc-${KERNEL_KLIBC}.tar.bz2" -C "${KERNEL_KLIBC_DIR%/*}"
 	}
 
-	[[ -n "$KERNEL_KLIBC" ]] && ! [[ -d "$KERNEL_KLIBC_DIR" ]] && die
+	[[ -d "$KERNEL_KLIBC_DIR" ]] || die
 
-	if use sources || [[ -n "$KERNEL_KLIBC" ]]; then
-		einfo "Preparing kernel headers"
-		kmake headers_install #$(use compressed && echo _all)
+	einfo "Making KLIBC"
+#	export CFLAGS="$CFLAGS --sysroot=${S}"
+#	export KERNEL_UTILS_CFLAGS="$KERNEL_UTILS_CFLAGS --sysroot=${S}"
+	kmake -C "$KERNEL_KLIBC_DIR" KLIBCKERNELSRC="${S}" INSTALLDIR="/usr" INSTALLROOT="${S}" all install
+
+	if use compressed; then
+		einfo "Compressing lib.loopfs"
+		mksquashfs "${BDIR}/lib" lib.loopfs $(use xz&&echo "-comp xz") -all-root -no-recovery -no-progress
+		c=NONE
 	fi
-	if [[ -n "$KERNEL_KLIBC" ]] && [[ -d "$KERNEL_KLIBC_DIR" ]]; then
-		einfo "Making KLIBC"
-#		export CFLAGS="$CFLAGS --sysroot=${S}"
-#		export KERNEL_UTILS_CFLAGS="$KERNEL_UTILS_CFLAGS --sysroot=${S}"
-		kmake -C "$KERNEL_KLIBC_DIR" KLIBCKERNELSRC="${S}" INSTALLDIR="/usr" INSTALLROOT="${S}" all install
+	einfo "Preparing initramfs"
+	mkdir "${S}/usr/sbin"
+	cp "${SHARE}/kpnp" "${S}/usr/sbin/init"
+	for i in "${BDIR}/" 'usr/lib/klibc*' '-L usr/'{bin,sbin,etc}/'*'; do
+		f="${i##*/}"
+		find ${i%/*} ${f:+-name} "${f}" 2>/dev/null
+	done | while read i; do
+		[[ -e "$i" ]] || [[ -L "$i" ]] || continue
+		f="${i#$BDIR/}"
+		case "$f" in
+		usr/lib*|*/loop.ko|*/squashfs.ko);;
+		lib*/*)use compressed && continue;;
+		usr/*)f="${f#usr/}";;
+		esac
+		if [[ -f "$i" ]]; then
+			if [[ -L "$i" ]]; then
+				echo "slink /$f $(readlink $f) 0755 0 0"
+			else
+				echo "file /$f $i 0755 0 0"
+			fi
+			f="${f%/*}"
+		fi
+		while [[ -n "$f" ]]; do
+			echo "dir /$f 0755 0 0"
+			f="${f%/*}"
+		done
+	done | sort -u >$img
+	use compressed && echo "file lib.loopfs lib.loopfs 0755 0 0" >>$img
+	if use integrated; then
+		use thin || c=NONE
+	else
+		f="initrd-${REAL_KV}.cpio"
+		"${S}"/usr/gen_init_cpio $img >$f || die
+		img="$f"
 	fi
+	initramfs $img $c
 }

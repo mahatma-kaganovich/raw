@@ -90,10 +90,13 @@ done
 
 blkid(){
 local r=1 blkid_cache
+[ "$blkid" = "$0" ] && blkid=false
 [ -z "$blkid" ] && {
 	blkid="$(which blkid 2>/dev/null || ( [ -e /bin/blkid ] && echo /bin/blkid ) || ( [ -e /sbin/blkid ] && echo /sbin/blkid ) || echo blkid)"
 	[ -e "$blkid" ] && ( i="$(readlink $blkid)";[ "${i%busybox}" = "$i" ] ) || blkid=false
+	[ "$blkid" = "$0" ] && blkid=false
 }
+export blkid
 [ -z "$*" ] && set `lsblk` ""
 while [ -n "$*" ]; do
 local d="$1" i="" u
