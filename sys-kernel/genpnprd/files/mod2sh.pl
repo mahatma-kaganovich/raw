@@ -11,7 +11,7 @@ my %OPT=(
 	'subst'=>1,
 	'barrier'=>3, # separate concurrent from precursors (precursors have too many siblings)
 	'order'=>3,
-	'sed'=>0,
+	'sed'=>1,
 );
 
 my @order=(\&order3,\&order1,\&order2,\&order3);
