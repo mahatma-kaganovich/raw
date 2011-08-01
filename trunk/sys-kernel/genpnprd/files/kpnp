@@ -168,7 +168,7 @@ for i in "${@}"; do
 	elif ! [ -e cmdline ]; then
 		xx=" ${x#*.}$yy"
 		yy="options/$x"
-		! [ -d options ] && xx="options$xx" && yy="/etc/modprobe.d/initrd_$x"
+		! [ -d options ] && xx="options ${x%%.*}$xx" && yy="/etc/modprobe.d/initrd_$x"
 		echo -n "$xx" >"$yy"
 	fi
 done
@@ -322,7 +322,7 @@ return $?
 
 modaliases(){
 local  mm="`cat /proc/modules`" m1='-' fs cnt=20
-mkdir -p "$tmp/sys/class/*/*/uevent"
+mkdir -p "$tmp/sys/class/*/*/uevent" "$tmp/options"
 cd $tmp||exit 1
 while [ "$m1" != "$mm" ]; do
 	$FIRST && cmdline
@@ -419,6 +419,8 @@ esac
 rm -Rf "$tmp/aa" "$tmp/aaa" "$tmp/a0" "$tmp/a9"
 cd $tmp
 }
+
+rm -rf "$tmp"
 
 case $0 in
 */modprobe)
