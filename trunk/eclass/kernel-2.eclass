@@ -886,7 +886,7 @@ LICENSE(){
 }
 
 userspace(){
-	local i f t img='initramfs.lst' c='' k k1 libdir="$(get_libdir)" klcc=klcc
+	local i f t img='initramfs.lst' c='' k libdir="$(get_libdir)" klcc
 	# klibc in progress
 	if [[ -n "$KERNEL_KLIBC_SRC" ]]; then
 		if [[ "$KERNEL_KLIBC_SRC" == "*" ]]; then
@@ -914,6 +914,7 @@ userspace(){
 		sed -i -e 's:^\(\$prefix = "\):\1$ENV{S}:' "$klcc"
 	else
 		k="$ROOT/usr/$libdir/klibc"
+		klcc=klcc
 	fi
 
 	mkdir -p "${S}/usr/"{bin,src}
@@ -926,22 +927,39 @@ userspace(){
 
 	if use compressed; then
 		einfo "Compressing lib.loopfs"
+		[[ -z "$KERNEL_KLIBC_DIR" ]] && for i in "$ROOT/$libdir/klibc"*; do
+			i="${i##*/}"
+			ln -s "/usr/lib/$i" "$BDIR/lib/$i"
+		done
 		mksquashfs "${BDIR}/lib" lib.loopfs $(use xz&&echo "-comp xz") -all-root -no-recovery -no-progress
+		rm "$BDIR/lib/klibc"* -f 2>/dev/null
 		c=NONE
 	fi
+
 	einfo "Preparing initramfs"
 	mkdir "${S}/usr/sbin"
 	cp "${SHARE}/kpnp" "${S}/usr/sbin/init"
 	{
 	[[ -e "$k/bin/sh" ]] || echo "slink /bin/sh sh.shared 0755 0 0"
 	use compressed && echo "file lib.loopfs lib.loopfs 0755 0 0"
-	for i in "${BDIR}/" "$k/lib/klibc*" "$k/bin/" '-L usr/'{bin,sbin,etc}/'*'; do
+	[[ "$libdir" != lib ]] && echo "slink /$libdir lib 0755 0 0
+slink /usr/$libdir lib 0755 0 0"
+	[[ -z "$KERNEL_KLIBC_DIR" ]] && for i in "$ROOT/$libdir/klibc"*; do
+		i="${i//\/\///}"
+		f="${i##*/}"
+		echo "file /usr/lib/$f $i 0755 0 0"
+		echo "slink /lib/$f /usr/lib/$f 0755 0 0"
+	done
+	for i in "${BDIR}/" "$k/bin/" "usr/lib/klibc*" '-L usr/'{bin,sbin,etc}/'*'; do
 		f="${i##*/}"
 		find ${i%/*} ${f:+-name} "${f}" 2>/dev/null
 	done | while read i; do
+		i="${i//\/\///}"
 		[[ -e "$i" ]] || [[ -L "$i" ]] || continue
 		f="${i#$BDIR}"
+		f="${f#$ROOT}"
 		f="/${f#/}"
+		f="${f//\/usr\/$libdir\///usr/lib/}"
 		case "$f" in
 		/usr/lib*|*/loop.ko|*/squashfs.ko);;
 		/lib*/*)use compressed && continue;;
@@ -949,18 +967,12 @@ userspace(){
 		/usr/*)f="${f#/usr}";;
 		esac
 		if [[ -f "$i" ]]; then
-			if [[ -L "$i" ]]; then
-				echo "slink $f $(readlink "$i") 0755 0 0"
-			else
-				echo "file $f $i 0755 0 0"
-			fi
+			[[ -L "$i" ]] &&
+			    echo "slink $f $(readlink "$i") 0755 0 0" ||
+			    echo "file $f $i 0755 0 0"
 			f="${f%/*}"
 		fi
 		while [[ -n "${f#/}" ]]; do
-			if [[ -z "${f%%*/$libdir}" ]] && [[ "$libdir" != lib ]]; then
-				echo "slink $f lib 0755 0 0"
-				f="${f%%$libdir}lib"
-			fi
 			echo "dir $f 0755 0 0"
 			f="${f%/*}"
 		done
