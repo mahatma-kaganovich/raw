@@ -935,7 +935,7 @@ userspace(){
 	{
 	[[ -e "$k/bin/sh" ]] || echo "slink /bin/sh sh.shared 0755 0 0"
 	use compressed && echo "file lib.loopfs lib.loopfs 0755 0 0"
-	for i in "${BDIR}/" "$k/lib/klibc*" "$k/bin/*" '-L usr/'{bin,sbin,etc}/'*'; do
+	for i in "${BDIR}/" "$k/lib/klibc*" "$k/bin/" '-L usr/'{bin,sbin,etc}/'*'; do
 		f="${i##*/}"
 		find ${i%/*} ${f:+-name} "${f}" 2>/dev/null
 	done | while read i; do
