@@ -963,7 +963,6 @@ slink /usr/$libdir lib 0755 0 0"
 		case "$f" in
 		/usr/lib*|*/loop.ko|*/squashfs.ko);;
 		/lib*/*)use compressed && continue;;
-		*/bin/*)f="/bin/${f##*/bin/}";;
 		/usr/*)f="${f#/usr}";;
 		esac
 		if [[ -f "$i" ]]; then
