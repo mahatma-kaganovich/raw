@@ -909,9 +909,9 @@ userspace(){
 #		export CFLAGS="$CFLAGS --sysroot=${S}"
 #		export KERNEL_UTILS_CFLAGS="$KERNEL_UTILS_CFLAGS --sysroot=${S}"
 		kmake -C "$KERNEL_KLIBC_DIR" KLIBCKERNELSRC="${S}" INSTALLDIR="/usr" INSTALLROOT="${S}" all install
-		k="${S}/usr"
+		k="usr"
 		k1="$k/bin"
-		klcc="$k1/klcc"
+		klcc="${S}/usr/bin/klcc"
 		sed -i -e 's:^\(\$prefix = "\):\1$ENV{S}:' "$klcc"
 	else
 		k="$ROOT/usr/$libdir"
@@ -937,7 +937,7 @@ userspace(){
 	{
 	[[ -e "$k1/sh" ]] || echo "slink /bin/sh sh.shared 0755 0 0"
 	use compressed && echo "file lib.loopfs lib.loopfs 0755 0 0"
-	for i in "${BDIR}/" 'usr/lib/klibc*' "$k"/{bin,lib,klibc/bin} '-L usr/'{bin,sbin,etc}/'*'; do
+	for i in "${BDIR}/" "$k/lib/klibc*" "$k1/*" '-L usr/'{bin,sbin,etc}/'*'; do
 		f="${i##*/}"
 		find ${i%/*} ${f:+-name} "${f}" 2>/dev/null
 	done | while read i; do
