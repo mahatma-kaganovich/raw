@@ -16,7 +16,7 @@ IUSE="${IUSE} +build-kernel debug custom-cflags +pnp +compressed integrated
 	+kernel-drm +kernel-alsa kernel-firmware +sources staging pnponly lzma xz
 	external-firmware xen +smp tools multilib multitarget +multislot thin
 	lvm evms device-mapper unionfs luks gpg iscsi e2fsprogs mdadm
-	lguest acpi"
+	lguest acpi klibc"
 DEPEND="${DEPEND}
 	!<app-portage/ppatch-0.08-r16
 	pnp? ( sys-kernel/genpnprd )
@@ -30,6 +30,7 @@ DEPEND="${DEPEND}
 		kernel-firmware? ( !sys-kernel/linux-firmware )
 		luks? ( sys-fs/cryptsetup )
 		evms? ( sys-fs/evms )
+		klibc? ( dev-libs/klibc )
 	) "
 
 if use multislot ; then
@@ -211,7 +212,7 @@ kernel-2_src_compile() {
 		cp -na "$ROOT"/lib/firmware "${BDIR}"/lib
 	fi
 
-	if use sources || [[ -n "$KERNEL_KLIBC" ]]; then
+	if use sources || use klibc; then
 		einfo "Preparing kernel headers"
 		kmake headers_install #$(use compressed && echo _all)
 	fi
@@ -225,7 +226,7 @@ kernel-2_src_compile() {
 		_cc $i
 	done
 
-	if [[ -n "$KERNEL_KLIBC" ]]; then
+	if use klibc; then
 		userspace
 		return
 	fi
@@ -259,7 +260,7 @@ kernel-2_src_compile() {
 # integrated+thin = integrated thin
 # standalone "thin" image still compressed
 initramfs(){
-	local c="${1:-${COMP##*,}}"
+	local c="${2:-${COMP##*,}}"
 	if use integrated; then
 		einfo "Integrating initramfs"
 		echo "CONFIG_INITRAMFS_SOURCE=\"$1\"
@@ -268,7 +269,7 @@ CONFIG_INITRAMFS_ROOT_GID=0
 CONFIG_INITRAMFS_COMPRESSION_$c=y" >>.config
 		yes '' 2>/dev/null | kmake oldconfig &>/dev/null
 		kmake bzImage
-	elif [[ "$c" != NONE ]]; then
+	elif [[ "${c:-NONE}" != NONE ]]; then
 		${c,,} -zc9 "$1" >"${1%.cpio}.img" || die
 		rm "$1"
 	else
@@ -885,19 +886,35 @@ LICENSE(){
 }
 
 userspace(){
-	local i f t img='initramfs.lst' c=''
+	local i f t img='initramfs.lst' c='' k k1 libdir="$(get_libdir)"
 	# klibc in progress
-	[[ -z "$KERNEL_KLIBC_DIR" ]] && {
-		KERNEL_KLIBC_DIR="${S}/usr/klibc-${KERNEL_KLIBC}"
-		tar -xaf "${PORTDIR}/distfiles/klibc-${KERNEL_KLIBC}.tar.bz2" -C "${KERNEL_KLIBC_DIR%/*}"
-	}
-
-	[[ -d "$KERNEL_KLIBC_DIR" ]] || die
-
-	einfo "Making KLIBC"
-#	export CFLAGS="$CFLAGS --sysroot=${S}"
-#	export KERNEL_UTILS_CFLAGS="$KERNEL_UTILS_CFLAGS --sysroot=${S}"
-	kmake -C "$KERNEL_KLIBC_DIR" KLIBCKERNELSRC="${S}" INSTALLDIR="/usr" INSTALLROOT="${S}" all install
+	if [[ -n "$KERNEL_KLIBC_SRC" ]]; then
+		if [[ "$KERNEL_KLIBC_SRC" == "*" ]]; then
+			i="$(best_version dev-libs/klibc)"
+			i="${i##*/}"
+			i="${i%%-r*}"
+			KERNEL_KLIBC_SRC="$PORTDIR/distfiles/$i.tar.bz2"
+			KERNEL_KLIBC_DIR="${KERNEL_KLIBC_DIR:-${S}/usr}/$i"
+		fi
+		if [[ -z "$KERNEL_KLIBC_DIR" ]]; then
+			i="${KERNEL_KLIBC_SRC##*/}"
+			i="${i%.tar.bz2}"
+			KERNEL_KLIBC_DIR="${S}/usr/$i"
+		fi
+		tar -xaf "$KERNEL_KLIBC_SRC" -C "${KERNEL_KLIBC_DIR%/*}"
+	fi
+	if [[ -n "$KERNEL_KLIBC_DIR" ]]; then
+		einfo "Making KLIBC from $KERNEL_KLIBC_SRC $KERNEL_KLIBC_DIR"
+		[[ -d "$KERNEL_KLIBC_DIR" ]] || die
+#		export CFLAGS="$CFLAGS --sysroot=${S}"
+#		export KERNEL_UTILS_CFLAGS="$KERNEL_UTILS_CFLAGS --sysroot=${S}"
+		kmake -C "$KERNEL_KLIBC_DIR" KLIBCKERNELSRC="${S}" INSTALLDIR="/usr" INSTALLROOT="${S}" all install
+		k="${S}/usr"
+		k1="$k/bin"
+	else
+		k="$ROOT/usr/$libdir"
+		k1="$k/klibc/bin"
+	fi
 
 	if use compressed; then
 		einfo "Compressing lib.loopfs"
@@ -907,7 +924,10 @@ userspace(){
 	einfo "Preparing initramfs"
 	mkdir "${S}/usr/sbin"
 	cp "${SHARE}/kpnp" "${S}/usr/sbin/init"
-	for i in "${BDIR}/" 'usr/lib/klibc*' '-L usr/'{bin,sbin,etc}/'*'; do
+	{
+	[[ -e "$k1/sh" ]] || echo "slink /bin/sh sh.shared 0755 0 0"
+	use compressed && echo "file lib.loopfs lib.loopfs 0755 0 0"
+	for i in "${BDIR}/" 'usr/lib/klibc*' "$k"/{bin,lib,klibc/bin} '-L usr/'{bin,sbin,etc}/'*'; do
 		f="${i##*/}"
 		find ${i%/*} ${f:+-name} "${f}" 2>/dev/null
 	done | while read i; do
@@ -917,6 +937,7 @@ userspace(){
 		case "$f" in
 		/usr/lib*|*/loop.ko|*/squashfs.ko);;
 		/lib*/*)use compressed && continue;;
+		*/bin/*)f="/bin/${f##*/bin/}";;
 		/usr/*)f="${f#/usr}";;
 		esac
 		if [[ -f "$i" ]]; then
@@ -927,12 +948,16 @@ userspace(){
 			fi
 			f="${f%/*}"
 		fi
-		while [[ -n "$f" ]]; do
+		while [[ -n "${f#/}" ]]; do
+			if [[ -z "${f%%*/$libdir}" ]] && [[ "$libdir" != lib ]]; then
+				echo "slink $f lib 0755 0 0"
+				f="${f%%$libdir}lib"
+			fi
 			echo "dir $f 0755 0 0"
 			f="${f%/*}"
 		done
-	done | sort -u >$img
-	use compressed && echo "file lib.loopfs lib.loopfs 0755 0 0" >>$img
+	done
+	} | sort -u >$img
 	if use integrated; then
 		use thin || c=NONE
 	else
