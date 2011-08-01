@@ -912,22 +912,23 @@ userspace(){
 		find ${i%/*} ${f:+-name} "${f}" 2>/dev/null
 	done | while read i; do
 		[[ -e "$i" ]] || [[ -L "$i" ]] || continue
-		f="${i#$BDIR/}"
+		f="${i#$BDIR}"
+		f="/${f#/}"
 		case "$f" in
-		usr/lib*|*/loop.ko|*/squashfs.ko);;
-		lib*/*)use compressed && continue;;
-		usr/*)f="${f#usr/}";;
+		/usr/lib*|*/loop.ko|*/squashfs.ko);;
+		/lib*/*)use compressed && continue;;
+		/usr/*)f="${f#/usr}";;
 		esac
 		if [[ -f "$i" ]]; then
 			if [[ -L "$i" ]]; then
-				echo "slink /$f $(readlink $f) 0755 0 0"
+				echo "slink $f $(readlink "$i") 0755 0 0"
 			else
-				echo "file /$f $i 0755 0 0"
+				echo "file $f $i 0755 0 0"
 			fi
 			f="${f%/*}"
 		fi
 		while [[ -n "$f" ]]; do
-			echo "dir /$f 0755 0 0"
+			echo "dir $f 0755 0 0"
 			f="${f%/*}"
 		done
 	done | sort -u >$img
