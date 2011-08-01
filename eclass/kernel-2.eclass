@@ -923,7 +923,7 @@ userspace(){
 		einfo "Compiling $i"
 		cp "$i" "${S}/usr/src/" || die
 		f="${i##*/}"
-		$klcc "$i" -o "${S}/usr/bin/${f%.*}" || die
+		$klcc "${S}/usr/src/$f" -shared -s -o "${S}/usr/bin/${f%.*}" || die
 	done
 
 	if use compressed; then
