@@ -960,6 +960,7 @@ slink /usr/$libdir lib 0755 0 0"
 		f="${f#$ROOT}"
 		f="/${f#/}"
 		f="${f//\/usr\/$libdir\///usr/lib/}"
+		f="${f#/usr/lib/klibc}"
 		case "$f" in
 		/usr/lib*|*/loop.ko|*/squashfs.ko);;
 		/lib*/*)use compressed && continue;;
