@@ -886,7 +886,7 @@ LICENSE(){
 }
 
 userspace(){
-	local i f t img='initramfs.lst' c='' k k1 libdir="$(get_libdir)"
+	local i f t img='initramfs.lst' c='' k k1 libdir="$(get_libdir)" klcc=klcc
 	# klibc in progress
 	if [[ -n "$KERNEL_KLIBC_SRC" ]]; then
 		if [[ "$KERNEL_KLIBC_SRC" == "*" ]]; then
@@ -911,10 +911,21 @@ userspace(){
 		kmake -C "$KERNEL_KLIBC_DIR" KLIBCKERNELSRC="${S}" INSTALLDIR="/usr" INSTALLROOT="${S}" all install
 		k="${S}/usr"
 		k1="$k/bin"
+		klcc="$k1/klcc"
+		sed -i -e 's:^\(\$prefix = "\):\1$ENV{S}:' "$klcc"
 	else
 		k="$ROOT/usr/$libdir"
 		k1="$k/klibc/bin"
 	fi
+
+	mkdir -p "${S}/usr/"{bin,src}
+	for i in "${SHARE}/insmod.c"; do
+		einfo "Compiling $i"
+		cp "$i" "${S}/usr/src" || die
+		i="${i##*/}"
+		i="${i%.c}"
+		$klcc "$i" -o "${S}/usr/bin/$i"
+	done
 
 	if use compressed; then
 		einfo "Compressing lib.loopfs"
