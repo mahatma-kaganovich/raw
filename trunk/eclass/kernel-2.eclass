@@ -925,6 +925,10 @@ userspace(){
 		$klcc "${S}/usr/src/$f" -shared -s -o "${S}/usr/bin/${f%.*}" || die
 	done
 
+	einfo "Sorting modules to new order"
+	i="$BDIR/lib/modules/$REAL_KV/"
+	bash "${SHARE}"/kpnp --sort "$i/modules.alias" >"${TMPDIR}modules.alias" && mv "$TMPDIR/modules.alias" "$i"
+
 	if use compressed; then
 		einfo "Compressing lib.loopfs"
 		[[ -z "$KERNEL_KLIBC_DIR" ]] && for i in "$ROOT/$libdir/klibc"*; do
