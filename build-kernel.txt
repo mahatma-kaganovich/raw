@@ -48,7 +48,7 @@ Radical solution: KERNEL_MODULES="+."
 
 KERNEL_CONFIG contains kernel configuration options, prefixed by
 none ("y"), "-" ("n"), "+" ("m"), "~" (remove/oldconfig-default),
-"=" ("y" if undefined).
+"=" ("y" if undefined), "&" (embed "m" to "y" recursive).
 Also perl regular expressions may be used.
 
 First reading "/etc/make.conf" values. If empty - using defaults. Then
@@ -98,6 +98,12 @@ Useflag "thin" make additional "thin" image (network drivers, cifs, nfs),
 having priority to be "integrated". TODO: strip drivers to PXE agents list.
 Loader will continue hw detection after mounting root if at least one module
 not found.
+
+Useflag "klibc" will make alternative (or "standard"?) initrd with
+"early userspace"/klibc. If KERNEL_KLIBC_SRC (or KERNEL_KLIBC_DIR) given
+- klibc will be build from this source (tar.bz2), if ="*" - sources
+will dirty hacked from currently installed dev-libs/klibc. This is
+more experimental.
 
 Kernel cmdline options: "nopnp", "unload" (try to rmmod after mounting root),
 "loadall" (try to load all possible drivers, slow), "slow" (fixed v0.1 mode,
