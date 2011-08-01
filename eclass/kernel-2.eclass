@@ -921,10 +921,9 @@ userspace(){
 	mkdir -p "${S}/usr/"{bin,src}
 	for i in "${SHARE}/insmod.c"; do
 		einfo "Compiling $i"
-		cp "$i" "${S}/usr/src" || die
-		i="${i##*/}"
-		i="${i%.c}"
-		$klcc "$i" -o "${S}/usr/bin/$i" || die
+		cp "$i" "${S}/usr/src/" || die
+		f="${i##*/}"
+		$klcc "$i" -o "${S}/usr/bin/${f%.*}" || die
 	done
 
 	if use compressed; then
