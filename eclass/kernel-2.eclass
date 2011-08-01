@@ -886,7 +886,7 @@ LICENSE(){
 }
 
 userspace(){
-	local i f t img='initramfs.lst' c='' k libdir="$(get_libdir)" klcc
+	local i f t img='initramfs.lst' c='' k libdir="$(get_libdir)" klcc mod="$BDIR/lib/modules/$REAL_KV/"
 	# klibc in progress
 	if [[ -n "$KERNEL_KLIBC_SRC" ]]; then
 		if [[ "$KERNEL_KLIBC_SRC" == "*" ]]; then
@@ -924,10 +924,8 @@ userspace(){
 		f="${i##*/}"
 		$klcc "${S}/usr/src/$f" -shared -s -o "${S}/usr/bin/${f%.*}" || die
 	done
-
 	einfo "Sorting modules to new order"
-	i="$BDIR/lib/modules/$REAL_KV/"
-	bash "${SHARE}"/kpnp --sort "$i/modules.alias" >"${TMPDIR}modules.alias" && mv "$TMPDIR/modules.alias" "$i"
+	mv "${mod}modules.alias" "$TMPDIR/" && bash "${SHARE}"/kpnp --sort "$TMPDIR/modules.alias" >"${mod}modules.alias" || die
 
 	if use compressed; then
 		einfo "Compressing lib.loopfs"
@@ -939,7 +937,6 @@ userspace(){
 		rm "$BDIR/lib/klibc"* -f 2>/dev/null
 		c=NONE
 	fi
-
 	einfo "Preparing initramfs"
 	mkdir "${S}/usr/sbin"
 	cp "${SHARE}/kpnp" "${S}/usr/sbin/init"
@@ -990,4 +987,5 @@ slink /usr/$libdir lib 0755 0 0"
 		img="$f"
 	fi
 	initramfs $img $c
+	mv "$TMPDIR/modules.alias" "${mod}"
 }
