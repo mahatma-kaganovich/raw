@@ -924,7 +924,7 @@ userspace(){
 		cp "$i" "${S}/usr/src" || die
 		i="${i##*/}"
 		i="${i%.c}"
-		$klcc "$i" -o "${S}/usr/bin/$i"
+		$klcc "$i" -o "${S}/usr/bin/$i" || die
 	done
 
 	if use compressed; then
