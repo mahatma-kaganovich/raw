@@ -373,7 +373,7 @@ run_genkernel(){
 		--logfile="${TMPDIR}/genkernel.log" \
 		--arch-override=${a} \
 		--utils-arch=${a} --utils-cross-compile=${CTARGET:-${CHOST}}- \
-		--postclear $* ${KERNEL_GENKERNEL} || die "genkernel failed"
+		$* ${KERNEL_GENKERNEL} || die "genkernel failed"
 	rm "${S}/genkernel"
 }
 
