@@ -919,7 +919,7 @@ userspace(){
 
 	mkdir -p "${S}/usr/"{bin,src,etc}
 	cp /usr/share/genpnprd/etc/modflags . -a
-	for i in "${SHARE}/*.c"; do
+	for i in "${SHARE}"/*.c; do
 		einfo "Compiling $i"
 		cp "$i" "${S}/usr/src/" || die
 		f="${i##*/}"
