@@ -917,8 +917,9 @@ userspace(){
 		klcc=klcc
 	fi
 
-	mkdir -p "${S}/usr/"{bin,src}
-	for i in "${SHARE}/insmod.c"; do
+	mkdir -p "${S}/usr/"{bin,src,etc}
+	cp /usr/share/genpnprd/etc/modflags . -a
+	for i in "${SHARE}/*.c"; do
 		einfo "Compiling $i"
 		cp "$i" "${S}/usr/src/" || die
 		f="${i##*/}"
