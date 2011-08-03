@@ -12,11 +12,11 @@ COMP='GZIP,BZIP2'
 if [[ ${ETYPE} == sources ]]; then
 
 IUSE="${IUSE} +build-kernel debug custom-cflags +pnp +compressed integrated
-	netboot unicode selinux custom-arch embed-hardware
+	netboot unicode custom-arch embed-hardware
 	+kernel-drm +kernel-alsa kernel-firmware +sources staging pnponly lzma xz
 	external-firmware xen +smp tools multilib multitarget +multislot thin
 	lvm evms device-mapper unionfs luks gpg iscsi e2fsprogs mdadm
-	lguest acpi klibc"
+	lguest acpi klibc +genkernel"
 DEPEND="${DEPEND}
 	!<app-portage/ppatch-0.08-r16
 	pnp? ( sys-kernel/genpnprd )
@@ -117,7 +117,7 @@ gen_KV(){
 }
 
 check_kv(){
-	REAL_KV="$(gen_KV)"
+	use genkernel && REAL_KV="$(gen_KV)" || REAL_KV="$(kmake kernelrelease)"
 	[ -z "${KV}" ] && set_kv ${REAL_KV}
 }
 
@@ -228,7 +228,8 @@ kernel-2_src_compile() {
 
 	if use klibc; then
 		userspace
-		return
+		use genkernel || return
+		mv initrd-${REAL_KV}.img initrd-${REAL_KV}.img.klibc
 	fi
 	
 	einfo "Generating initrd image"
@@ -275,18 +276,18 @@ CONFIG_INITRAMFS_COMPRESSION_$c=y" >>.config
 	else
 		[[ -e "$1" ]] && rename .cpio .img "$1"
 	fi
-	rm .config.old
 }
 
 kernel-2_src_install() {
 	check_kv
 	cd "${S}" || die
+	rm -f .config.old
 	if [[ ${ETYPE} == sources ]] && use build-kernel; then
 		mkdir "${D}/boot"
 		local f f1
 		if ! use integrated; then
 			insinto "/boot"
-			for f in initrd-"${REAL_KV}".img{,.thin}; do
+			for f in initrd-"${REAL_KV}".img{,.thin,.klibc}; do
 				[[ -e "$f" ]] && doins "$f"
 			done
 		fi
@@ -384,12 +385,19 @@ cfg(){
 cfg_use(){
 	local i u="$1"
 	shift
+	for i in $* "use:$u
+"; do
+		use $u && cfg $i || cfg -$i
+	done
+}
+
+cfg_use_(){
+	local i u="$1"
+	shift
+	KERNEL_CONFIG+"
+	use:$u "
 	for i in $* ; do
-		if use $u ; then
-			cfg $i
-		else
-			cfg -$i
-		fi
+		use $u && KERNEL_CONFIG+=" $i" || KERNEL_CONFIG+=" -$i"
 	done
 }
 
