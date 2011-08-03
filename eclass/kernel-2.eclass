@@ -401,6 +401,17 @@ cfg_use_(){
 	done
 }
 
+_cfg_use_(){
+	local i u="$1"
+	shift
+	KERNEL_CONFIG+"
+	use:$u "
+	for i in $* "use:$u
+"; do
+		use $u && KERNEL_CONFIG+=$i || cfg -$i
+	done
+}
+
 cfg_loop(){
 	grep "CONFIG" .config >$1
 	if cmp -s $1 $2 ; then
