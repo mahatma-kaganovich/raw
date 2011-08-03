@@ -382,6 +382,10 @@ cfg(){
 	KERNEL_CONFIG="$* ${KERNEL_CONFIG}"
 }
 
+cfg_(){
+	KERNEL_CONFIG+=" $*"
+}
+
 cfg_use(){
 	local i u="$1"
 	shift
@@ -394,21 +398,21 @@ cfg_use(){
 cfg_use_(){
 	local i u="$1"
 	shift
-	KERNEL_CONFIG+"
+	cfg_ "
 	use:$u "
 	for i in $* ; do
-		use $u && KERNEL_CONFIG+=" $i" || KERNEL_CONFIG+=" -$i"
+		use $u && cfg_ $i || cfg_ $i
 	done
 }
 
 _cfg_use_(){
 	local i u="$1"
 	shift
-	KERNEL_CONFIG+"
+	cfg_ "
 	use:$u "
 	for i in $* "use:$u
 "; do
-		use $u && KERNEL_CONFIG+=$i || cfg -$i
+		use $u && cfg_ $i || cfg -$i
 	done
 }
 
@@ -448,8 +452,12 @@ useconfig(){
 #	use lzo && COMP+=',LZO'
 	use lzma && COMP+=',LZMA,XZ'
 	use xz && COMP+=',XZ'
-	cfg KERNEL_{$c}
-	KERNEL_CONFIG+="
+	local o=''
+	for i in KERNEL_{$COMP}; do
+		grep -q "CONFIG_$i[ =]" .config && o="$i"
+	done
+	cfg $o
+	cfg_ "
 "
 	for i in "${SHARE}"/*use; do
 		o="${i##*/}"
@@ -462,9 +470,9 @@ useconfig(){
 		*)continue;;
 		esac
 		use "$o" || continue
-		KERNEL_CONFIG+="===$o: "
+		cfg_ "===$o: "
 		source "$i"
-		KERNEL_CONFIG+="
+		cfg_ "
 "
 	done
 	use multilib || ( use multitarget && use x86 ) || cfg -IA32_EMULATION
