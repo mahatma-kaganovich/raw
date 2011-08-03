@@ -29,7 +29,7 @@ SQUASH=false
 THIN="/drivers/net/\|/cifs/\|/nfs/\|/unix\|/packet/af_packet"
 THIN_INFO="/fs/\|^alias:.*:\|/unix\|/packet/af_packet"
 
-preserve="/bin/busybox /bin/mount /bin/sh /bin/uname /sbin/mdev /sbin/zcat"
+preserve="/bin/busybox /bin/mount /bin/sh /bin/uname /sbin/mdev /bin/zcat"
 
 : ${TMPDIR:="$ROOT/var/tmp"}
 tmp="$TMPDIR/genpnprd.$$"
