@@ -969,6 +969,10 @@ userspace(){
 	mkdir "${S}/usr/sbin"
 	cp "${SHARE}/kpnp" "${S}/usr/sbin/init"
 	{
+	echo "slink /init sbin/init 0755 0 0
+slink /linuxrc init 0755 0 0
+dir /proc 0755 0 0
+dir /sys 0755 0 0"
 	[[ -e "$k/bin/sh" ]] || echo "slink /bin/sh sh.shared 0755 0 0"
 	use compressed && echo "file lib.loopfs lib.loopfs 0755 0 0"
 	[[ "$libdir" != lib ]] && echo "slink /$libdir lib 0755 0 0
