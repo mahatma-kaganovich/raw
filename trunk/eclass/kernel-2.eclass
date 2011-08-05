@@ -909,7 +909,12 @@ m2y(){
 }
 
 mksquash(){
-	mksquashfs "${@}" ${comp:+-comp $comp }-no-recovery -no-progress
+	local p=1 i
+	for i in ${MAKEOPTS}; do
+		[[ "$i" == -j* ]] && p=$((${i#-j}-1))
+	done
+	[[ "${p:-0}" == 0 ]] && p=1
+	mksquashfs "${@}" ${comp:+-comp $comp }-no-recovery -no-progress -processors $p || die "mksquashfs failed"
 }
 
 LICENSE(){
