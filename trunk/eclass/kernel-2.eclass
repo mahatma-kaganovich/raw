@@ -570,7 +570,7 @@ native)
 	[[ "${fpu}" != yes ]] && CF1 MATH_EMULATION
 
 	use acpi && acpi_detect
-	[[ -z "${CF##* NUMA *}" ]] && CF1 SPARSE_IRQ
+	[[ -n "${CF##* -NUMA *}" ]] && CF1 SPARSE_IRQ
 
 	case "${vendor_id}" in
 	*Intel*)
