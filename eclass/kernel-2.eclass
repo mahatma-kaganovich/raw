@@ -334,7 +334,7 @@ kernel-2_src_install() {
 				cd "${WORKDIR}"
 				keepdir /usr/src/"${f}"
 				f="${D}/usr/src/${f}.squashfs"
-				mksquashfs "${S}" "${f}" ${comp:+-comp $comp }-no-recovery -no-progress || die
+				mksquash "${S}" "${f}" || die
 				chmod 755 "${f}"
 				rm "${S}" -Rf
 			fi
@@ -908,6 +908,10 @@ m2y(){
 	esac
 }
 
+mksquash(){
+	mksquashfs "${@}" ${comp:+-comp $comp }-no-recovery -no-progress
+}
+
 LICENSE(){
 	grep -qF "#include <linux/module.h>" $1 || sed -i -e 's:^#include:#include <linux/module.h>\n#include:' $1
 	grep -q "MODULE_LICENSE" $1 || echo "MODULE_LICENSE(\"${2:-GPL}\");" >>$1
@@ -962,7 +966,7 @@ userspace(){
 			i="${i##*/}"
 			ln -s "/usr/lib/$i" "$BDIR/lib/$i"
 		done
-		mksquashfs "${BDIR}/lib" lib.loopfs $(use xz&&echo "-comp xz") -all-root -no-recovery -no-progress
+		mksquash "${BDIR}/lib" lib.loopfs -all-root
 		rm "$BDIR/lib/klibc"* -f 2>/dev/null
 		c=NONE
 	fi
