@@ -515,7 +515,7 @@ if [[ -z "${march}" ]]; then
 fi
 case "${march}" in
 native)
-	CF1 -SCHED_{SMT,MC} -X86_{UP_APIC,TSC,PAT,MSR,MCE,CMOV,X2APIC} -MTRR -INTEL_IDLE -KVM_INTEL -KVM_AMD
+	CF1 -SCHED_{SMT,MC} -X86_{UP_APIC,TSC,PAT,MSR,MCE,CMOV,X2APIC} -MTRR -INTEL_IDLE -KVM_INTEL -KVM_AMD -SPARSE_IRQ
 	case "${CTARGET:-${CHOST}}" in
 	x86*|i?86*)
 		use multitarget && CF1 -64BIT
@@ -570,6 +570,7 @@ native)
 	[[ "${fpu}" != yes ]] && CF1 MATH_EMULATION
 
 	use acpi && acpi_detect
+	[[ -z "${CF##* NUMA *}" ]] && CF1 SPARSE_IRQ
 
 	case "${vendor_id}" in
 	*Intel*)
