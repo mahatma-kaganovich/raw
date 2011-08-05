@@ -7,7 +7,7 @@ EXPORT_FUNCTIONS src_configure src_prepare pkg_prerm
 #UROOT="${ROOT}"
 UROOT=""
 SHARE="${UROOT}/usr/share/genpnprd"
-COMP='GZIP,BZIP2'
+COMP='GZIP BZIP2'
 
 if [[ ${ETYPE} == sources ]]; then
 
@@ -147,8 +147,8 @@ kernel-2_src_configure() {
 	use build-kernel || return
 	useconfig
 	kconfig
-	for i in `grep "^CONFIG_KERNEL_.*=y$" "$S/.config"|sed -e 's:^CONFIG_KERNEL_::' -e 's:=y$::' -e 's:^LZMA$:LZMA XZ:'`; do
-		grep -q "^CONFIG_SQUASHFS_$i=y" "$S/.config" && (mksquashfs |& grep -qi "^\s*$i\s*$") && comp="${i,,}"
+	grep -q "^CONFIG_SQUASHFS=" .config && for i in $COMP; do
+		( [[ "$i" == GZIP ]] || grep -q "^CONFIG_SQUASHFS_$i=" .config ) && ( mksquashfs |& grep "^\s*${i,,}\s*" ) && comp="${i,,}"
 	done
 	export comp
 }
@@ -261,7 +261,7 @@ kernel-2_src_compile() {
 # integrated+thin = integrated thin
 # standalone "thin" image still compressed
 initramfs(){
-	local c="${2:-${COMP##*,}}"
+	local c="${2:-${COMP##* }}"
 	if use integrated; then
 		einfo "Integrating initramfs"
 		echo "CONFIG_INITRAMFS_SOURCE=\"$1\"
@@ -449,12 +449,12 @@ useconfig(){
 	fi
 	cfg_use kernel-alsa SND
 	use kernel-alsa || cfg +SOUND_PRIME
-#	use lzo && COMP+=',LZO'
-	use lzma && COMP+=',LZMA,XZ'
-	use xz && COMP+=',XZ'
+#	use lzo && COMP+=' LZO'
+	use lzma && COMP+=' LZMA XZ'
+	use xz && COMP+=' XZ'
 	local o=''
-	for i in KERNEL_{$COMP}; do
-		grep -q "CONFIG_$i[ =]" .config && o="$i"
+	for i in $COMP; do
+		grep -q "CONFIG_KERNEL_$i[ =]" .config && o="KERNEL_$i"
 	done
 	cfg $o
 	cfg_ "
