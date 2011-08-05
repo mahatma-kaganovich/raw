@@ -148,7 +148,7 @@ kernel-2_src_configure() {
 	useconfig
 	kconfig
 	grep -q "^CONFIG_SQUASHFS=" .config && for i in $COMP; do
-		( [[ "$i" == GZIP ]] || grep -q "^CONFIG_SQUASHFS_$i=" .config ) && ( mksquashfs |& grep "^\s*${i,,}\s*" ) && comp="${i,,}"
+		( [[ "$i" == GZIP ]] || grep -q "^CONFIG_SQUASHFS_$i=" .config ) && ( mksquashfs |& grep -q "^\s*${i,,}\s*" ) && comp="${i,,}"
 	done
 	export comp
 }
