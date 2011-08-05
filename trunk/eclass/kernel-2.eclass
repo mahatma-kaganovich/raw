@@ -504,9 +504,9 @@ acpi_detect(){
 cpu2K(){
 local i v V="" CF="" march=$(march) m64g="HIGHMEM64G -HIGHMEM4G -NOHIGHMEM" freq='' gov='ONDEMAND'
 local vendor_id="" model_name="" flags="" cpu_family="" model="" cache_alignment="" fpu="" siblings="" cpu_cores="" processor=""
-CF1 -SMP -X86{BIGSMP,GENERIC} X86_{X2APIC,UP_APIC,UP_IOAPIC}
+CF1 -SMP -X86{BIGSMP,GENERIC} X86_{X2APIC,UP_APIC,UP_IOAPIC} -SPARSE_IRQ
 use xen && CF1 -HIGHMEM64G -HIGHMEM4G NOHIGHMEM X86_PAE
-use smp && CF1 SMP X86_BIGSMP SCHED_{SMT,MC}
+use smp && CF1 SMP X86_BIGSMP SCHED_{SMT,MC} SPARSE_IRQ
 [[ "$(march mtune)" == generic ]] && CF1 X86_GENERIC
 if [[ -z "${march}" ]]; then
 	CF1 GENERIC_CPU X86_GENERIC
