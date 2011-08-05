@@ -1,5 +1,5 @@
 #!/bin/sh
-VERSION=0.3
+VERSION=0.4
 HELP="init for early userspace v$VERSION, (c) Denis Kaganovich, Anarchy or GPLv2 license
 
 Main goal: scan '/sys/*/uevent' for MODALIASes (without grep, sed...)
@@ -235,7 +235,13 @@ conf(){
 			i="${i%%-*}_${i#*-}"
 		done
 		[ -e "/sys/module/$i" ] && continue
-		echo "$d $m" >"alias/$i"
+		d=" $d"
+		while [ -n "$d" ]; do
+			echo "${d##* }" >>"alias/$i"
+			d="${d% *}"
+		done
+		echo "$m" >>"alias/$i"
+#		echo "$d $m" >"alias/$i"
 		[ "$x" != "$i" ] && ln -s "$i" "alias/$x"
 	done <$libmod/modules.dep
 	for i in /etc/modprobe.d/*; do
@@ -252,9 +258,10 @@ conf(){
 	done <$i
 	done
 	cat $libmod/modules.alias >>conf 2>/dev/null
-	cd alias
-	mv $last ../later/ 2>/dev/null
-	cd ..
+#	( cd alias && mv $last ../later/ 2>/dev/null ) #bug
+#	for i in $last; do
+#		mv -f alias/$i later/ 2>/dev/null
+#	done
 }
 
 dep(){
