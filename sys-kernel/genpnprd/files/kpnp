@@ -189,9 +189,7 @@ echo "$cmdline" >cmdline
 mod(){
 local l='' i m ok err=true
 for i in "${@}"; do
-	[ -e "alias/$i" ] && read i <alias/$i || continue
-	i=" $i"
-	while [ -n "$i" ]; do
+	read i <"alias/$i" && i=" $i" && while [ -n "$i" ]; do
 		l="$l ${i##* }"
 		i="${i% *}"
 	done
@@ -271,7 +269,7 @@ mod=mod
 dep1
 while read cmd m i; do
 	set $A/$m
-	[ -e "$1" ] && [ -e "$cmd/$i" ] && ! [ -e "modules/$i" ] && ! [ -e "/sys/module/$i" ] && echo "$i" >>modules.lst 2>"modules/$i"
+	[ -e "$1" ] && [ -e "$cmd/$i" ] && ! [ -e "modules/$i" ] && echo "$i" >>modules.lst 2>"modules/$i"
 done <conf
 dep1
 mv later/* alias/ 2>/dev/null
@@ -290,8 +288,8 @@ fs(){
 			i="${i#*=}"
 			i="${i#\"}"
 			i="${i%\"}"
-			[ -n "${fs##	$i
-}" ] && mod "$i"
+			[ -n "${fs##*	$i
+*}" ] && [ -e "alias/$i" ] && mod "$i"
 			! $BOOT || $MOUNTED && continue
 			mount $o -t $i "$1" /newroot 2>/dev/null || continue
 			[ "$cmd_root" = "$1" ] && MOUNTED=true && continue
@@ -366,14 +364,13 @@ if $BOOT; then
 	[ -L "/newroot/$libmod/kernel" ] && [ -e "$p.squashfs" ] && i=`losetup -f` && losetup $i $p.squashfs && mount -r -t squashfs $i $p
 	echo -n "Boot: [$cmd_root] "
 	cat /proc/uptime
-	cat /proc/mounts >/etc/mtab
-	while read d p i; do
+	cat /proc/mounts|while read d p i; do
 		case "$d:$p" in
 		*:/newroot*)echo " $p $d $i";;
 		/dev/loop*)umount $p&&losetup -d $d;;
 		*)umount $p 2>/dev/null;;
 		esac
-	done </etc/mtab
+	done
 	i=/sbin/switch_root
 	[ -e $i ] || i=run-init
 	exec $i -c /dev/console /newroot $cmd_init
