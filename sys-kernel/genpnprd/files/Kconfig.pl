@@ -175,7 +175,7 @@ sub modules{
 	my ($c,$d)=spl($_[0]);
 	my @l=grep(/^$d/,keys %tristate);
 	for(@l){
-		$_=~s/.*://;
+		~s/.*://;
 		if($c eq '+'){
 			cfg($_,'m');
 		}elsif($c eq '-'){
@@ -192,7 +192,7 @@ sub defaults{
 	my ($c,$d)=spl($_[0]);
 	my @l=grep(/^$d/,keys %menu);
 	for(@l){
-		$_=~s/.*://;
+		~s/.*://;
 		if($c eq '-'){
 			$unset{$_}=1;
 			delete($config{$_});
@@ -203,7 +203,7 @@ sub defaults{
 	my @l=grep(/^$d/,keys %bool);
 	for(@l){
 		my $y=$yes{$_};
-		$_=~s/.*://;
+		~s/.*://;
 		if(($c eq '-' && exists($defconfig{$_})) || ($c ne '+' && $defconfig{$_})){
 			cfg($_,$defconfig{$_});
 		}else{
@@ -251,10 +251,21 @@ sub conf{
 	my ($c,$d)=spl($_);
 	my $y='y';
 	$d=~s/(.*?)=(.*)/$y=$2;$1/se;
-	my @l=grep(/^$d$/,keys %vars);
+	my @l;
+	if(substr($d,0,1) eq '/'){
+		my %ll;
+		substr($d,0,1)='^';
+		for(grep(/$d$/,keys %tristate,keys %bool,keys %menu)){
+			my $i=$_;
+			$i=~s/.*://;
+			$ll{$i}=1 if(exists($vars{$i}))
+		}
+		@l=keys %ll;
+	}else{
+		@l=grep(/^$d$/,keys %vars);
+	}
 	@l=($d) if($#l==-1);
 	for(@l){
-		$_=~s/.*://;
 		if($c eq '+'){
 			cfg($_,'m');
 		}elsif($c eq '-'){
