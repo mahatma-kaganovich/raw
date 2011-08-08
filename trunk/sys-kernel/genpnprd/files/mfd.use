@@ -1,2 +1,0 @@
-# too many "bool" drivers
-KERNEL_CONFIG+="I2C =/drivers/(?:mfd|regulator)/.*"
