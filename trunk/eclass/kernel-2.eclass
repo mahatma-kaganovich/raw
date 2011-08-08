@@ -117,7 +117,9 @@ gen_KV(){
 }
 
 check_kv(){
-	use genkernel && REAL_KV="$(gen_KV)" || REAL_KV="$(kmake kernelrelease)"
+	REAL_KV=''
+	use genkernel && REAL_KV="$(gen_KV)"
+	: ${REAL_KV:="$(kmake kernelrelease)"}
 	[ -z "${KV}" ] && set_kv ${REAL_KV}
 }
 
