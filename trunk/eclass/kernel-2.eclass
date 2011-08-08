@@ -13,7 +13,7 @@ if [[ ${ETYPE} == sources ]]; then
 
 IUSE="${IUSE} +build-kernel debug custom-cflags +pnp +compressed integrated
 	netboot unicode custom-arch embed-hardware
-	+kernel-drm +kernel-alsa kernel-firmware +sources staging pnponly lzma xz
+	+kernel-drm +kernel-alsa kernel-firmware +sources staging pnponly lzma xz lzo
 	external-firmware xen +smp tools multilib multitarget +multislot thin
 	lvm evms device-mapper unionfs luks gpg iscsi e2fsprogs mdadm
 	lguest acpi klibc +genkernel"
@@ -22,6 +22,7 @@ DEPEND="${DEPEND}
 	pnp? ( sys-kernel/genpnprd )
 	lzma? ( app-arch/xz-utils )
 	xz? ( app-arch/xz-utils )
+	lzo? ( app-arch/lzop )
 	build-kernel? (
 		>=sys-kernel/genkernel-3.4.10.903
 		compressed? ( sys-kernel/genpnprd )
@@ -273,7 +274,8 @@ CONFIG_INITRAMFS_COMPRESSION_$c=y" >>.config
 		yes '' 2>/dev/null | kmake oldconfig &>/dev/null
 		kmake bzImage
 	elif [[ "${c:-NONE}" != NONE ]]; then
-		${c,,} -zc9 "$1" >"${1%.cpio}.img" || die
+		c="${c//LZO/lzop}"
+		${c,,} -c9 "$1" >"${1%.cpio}.img" || die
 		rm "$1"
 	else
 		[[ -e "$1" ]] && rename .cpio .img "$1"
@@ -451,13 +453,14 @@ useconfig(){
 	fi
 	cfg_use kernel-alsa SND
 	use kernel-alsa || cfg +SOUND_PRIME
-#	use lzo && COMP+=' LZO'
+	use lzo && COMP+=' LZO'
 	use lzma && COMP+=' LZMA XZ'
 	use xz && COMP+=' XZ'
-	local o=''
 	for i in $COMP; do
-		grep -q "CONFIG_KERNEL_$i[ =]" .config && o="KERNEL_$i"
+		o="$i $o"
 	done
+	o="${o% }"
+	cfg "KERNEL_${o// /;KERNEL_}"
 	cfg $o
 	cfg_ "
 "
