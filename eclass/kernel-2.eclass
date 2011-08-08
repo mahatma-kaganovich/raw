@@ -391,7 +391,7 @@ cfg_use(){
 	shift
 	for i in $* "use:$u
 "; do
-		use $u && cfg $i || cfg -$i
+		use $u && cfg $i || cfg -${i#[+=&]}
 	done
 }
 
@@ -401,7 +401,7 @@ cfg_use_(){
 	cfg_ "
 	use:$u "
 	for i in $* ; do
-		use $u && cfg_ $i || cfg_ $i
+		use $u && cfg_ $i || cfg_ -${i#[+=&]}
 	done
 }
 
@@ -412,7 +412,7 @@ _cfg_use_(){
 	use:$u "
 	for i in $* "use:$u
 "; do
-		use $u && cfg_ $i || cfg -$i
+		use $u && cfg_ $i || cfg -${i#[+=&]}
 	done
 }
 
