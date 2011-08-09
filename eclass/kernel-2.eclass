@@ -11,9 +11,9 @@ COMP='GZIP BZIP2'
 
 if [[ ${ETYPE} == sources ]]; then
 
-IUSE="${IUSE} +build-kernel debug custom-cflags +pnp +compressed integrated
-	netboot unicode custom-arch embed-hardware
-	+kernel-drm +kernel-alsa kernel-firmware +sources staging pnponly lzma xz lzo
+IUSE="${IUSE} +build-kernel custom-cflags +pnp +compressed integrated
+	netboot custom-arch embed-hardware staging
+	+kernel-drm +kernel-alsa kernel-firmware +sources pnponly lzma xz lzo
 	external-firmware xen +smp tools multilib multitarget +multislot thin
 	lvm evms device-mapper unionfs luks gpg iscsi e2fsprogs mdadm
 	lguest acpi klibc +genkernel"
@@ -441,11 +441,7 @@ useconfig(){
 		use compressed || use pnp && cfg +SQUASHFS +CRAMFS +BLK_DEV_LOOP
 	fi
 	local cfg_exclude=" HAVE_DMA_API_DEBUG "
-	cfg_use debug "(?:[^\n]*_)?DEBUG(?:GING)?(?:_[^\n]*)?" FRAME_POINTER OPTIMIZE_INLINING FUNCTION_TRACER OPROFILE KPROBES X86_VERBOSE_BOOTUP PROFILING MARKERS
-	use debug || cfg STRIP_ASM_SYMS -INPUT_EVBUG
 	local cfg_exclude=
-	cfg_use selinux "[\d\w_]*FS_SECURITY SECURITY SECURITY_NETWORK SECURITY_SELINUX SECURITY_SELINUX_BOOTPARAM"
-	use unicode && cfg NLS_UTF8
 	if use kernel-drm ; then
 		cfg +DRM
 	else
@@ -768,8 +764,6 @@ kernel-2_src_prepare(){
 	# gcc 4.2+
 	sed -i -e 's/_proxy_pda = 0/_proxy_pda = 1/g' "${S}"/arch/*/kernel/vmlinux.lds.S
 	[[ -e "${S}"arch/x86_64/kernel/x8664_ksyms.c ]] && ( grep -q "_proxy_pda" "${S}"arch/x86_64/kernel/x8664_ksyms.c || echo "EXPORT_SYMBOL(_proxy_pda);" >>arch/x86_64/kernel/x8664_ksyms.c )
-	# unicode by default/only for fat
-	use unicode && sed -i -e 's/(sbi->options\.utf8)\|(utf8)/(1)/g' fs/fat/{dir,namei_vfat}.c
 	# custom-arch
 	use custom-arch && sed -i -e 's/-march=[a-z0-9\-]*//g' -e 's/-mtune=[a-z0-9\-]*//g' arch/*/Makefile*
 	# prevent to build twice

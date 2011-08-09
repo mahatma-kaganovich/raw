@@ -1,1 +1,1 @@
-KERNEL_CONFIG+="[\d\w_]*_ACL"
+KERNEL_CONFIG+=".*_ACL"
