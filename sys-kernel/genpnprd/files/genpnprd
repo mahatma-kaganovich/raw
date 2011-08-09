@@ -172,6 +172,7 @@ cd "$rcdir" || die
 rcfile="$(readlink -f $IMAGE)"
 if [[ -f "$rcfile" ]]; then
 	( gzip -dc $rcfile | cpio -i ) || cpio -i <$rcfile || die "must be [gzipped] cpio file"
+	ln -s busybox "$rcdir/bin/zcat" &>/dev/null
 	if [[ -n "$OVERLAY" ]]; then
 		if $LIBLOOP; then
 			mkdir lib/root || die
