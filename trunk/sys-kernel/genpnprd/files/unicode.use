@@ -1,0 +1,2 @@
+KERNEL_CONFIG+="NLS_UTF8"
+sed -i -e 's/(sbi->options\.utf8)\|(utf8)/(1)/g' fs/fat/{dir,namei_vfat}.c
