@@ -61,7 +61,7 @@ grep -Prhl "${STR}${BUS}_device_id\s+" $1 --include="*.c" | while read i ; do
 			$s1
 		}
 		while(<STDIN>){$s.=$_}
-	exit !($s=~s/(\n'"${STR#^}"'[^\n]*?device_id[^\n]*=\s*\{\n[^;]*)(\{.*?\}.*?)(\s*?\};)/fix("$2").$3/es && print $s)' <$i >modulesfix.tmp &&  mv modulesfix.tmp $i
+	exit !($s=~s/(\n'"${STR#^}"'[^\n]*?device_id[^\n]*=\s*\{\n[^;]*)(\{.*?\}.*?)(\s*?\};)/$1.fix("$2").$3/es && print $s)' <$i >modulesfix.tmp &&  mv modulesfix.tmp $i
 	if [[ "$2" != "f" ]] ; then
 		local b="$bus"
 		case $b in
