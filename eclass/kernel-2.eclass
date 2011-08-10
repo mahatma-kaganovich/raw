@@ -16,7 +16,7 @@ IUSE="${IUSE} +build-kernel custom-cflags +pnp +compressed integrated
 	+kernel-drm +kernel-alsa kernel-firmware +sources pnponly lzma xz lzo
 	external-firmware xen +smp tools multilib multitarget +multislot thin
 	lvm evms device-mapper unionfs luks gpg iscsi e2fsprogs mdadm
-	lguest acpi klibc +genkernel"
+	lguest acpi klibc +genkernel monolythe"
 DEPEND="${DEPEND}
 	!<app-portage/ppatch-0.08-r16
 	pnp? ( sys-kernel/genpnprd )
@@ -189,13 +189,41 @@ kernel-2_src_compile() {
 		einfo "Compiling kernel (all)"
 		kmake all ${KERNEL_MODULES_MAKEOPT}
 		grep -q "=m$" .config && [[ -z "`find . -name "*.ko" -print`" ]] && die "Modules configured, but not built"
-		$i && use embed-hardware || break
-		KERNEL_CONFIG+=" ===detect: $(detects)"
-		kconfig
+		$i || break
+		i=false
+		if use embed-hardware; then
+			einfo "Reconfiguring kernel with hardware detect"
+			KERNEL_CONFIG+=" ===detect: $(detects)"
+			kconfig
+			i=true
+		fi
+		if [[ -n "$KERNEL_CLEANUP" ]]; then
+			einfo "Applying KERNEL_CLEANUP='$KERNEL_CLEANUP'"
+			[[ "$KERNEL_CLEANUP" == '.' ]] && [[ -e "${TMPDIR}"/unmodule.tmp ]] || _unmodule $KERNEL_CLEANUP
+			KERNEL_CONFIG+="
+===cleanup: $(module_reconf m2n <"${WORKDIR}"/modules.pnp)"
+			kconfig
+			i=true
+		fi
+		if use monolythe; then
+			einfo "Reconfiguring kernel as 'monolythe'"
+			use !embed-hadrware && [[ -z "$KERNEL_CLEANUP" ]] && {
+				ewarn "Useflag 'monolythe' requires at least USE='embed-hadrware' KERNEL_CLEANUP='.'"
+				ewarn "(or too global KERNEL_[CONFIG]) - You are warned!"
+			}
+			sed -i -e 's:^CONFIG_MODULES=y$:# CONFIG_MODULES is not set:' .config
+			sed -i -e 's:=m$:=y:g' .config
+			yes '' 2>/dev/null | kmake oldconfig &>/dev/null
+			i=true
+		fi
+		( [[ -n "$KERNEL_CLEANUP" ]] || use monolythe ) && use sources && kmake clean
+		$i || break
 	done
+
 	KV="${KV0}"
 	check_kv
 
+    if grep -q "=m$" .config; then
 	einfo "Preparing modules"
 	mkdir -p "${BDIR}" lib/modules/"${REAL_KV}"
 	kmake INSTALL_MOD_PATH="${BDIR}" -j1 modules_install
@@ -209,9 +237,11 @@ kernel-2_src_compile() {
 	use sources && for i in build source; do
 		ln -s "../../../usr/src/linux-${KV_FULL}" "${r}/${i}"
 	done
+    fi
+
 	cd "${S}"
 	if use external-firmware; then
-		mkdir "${BDIR}"/lib 2>/dev/null
+		mkdir -p "${BDIR}"/lib 2>/dev/null
 		cp -na "$ROOT"/lib/firmware "${BDIR}"/lib
 	fi
 
@@ -231,15 +261,16 @@ kernel-2_src_compile() {
 
 	if use klibc; then
 		userspace
-		use genkernel || return
 		mv initrd-${REAL_KV}.img initrd-${REAL_KV}.img.klibc
 	fi
-	
+	use genkernel || return
+
 	einfo "Generating initrd image"
 	local p="$(use__ lvm lvm2) $(use__ evms) $(use__ luks) $(use__ gpg) $(use__ iscsi) $(use__ device-mapper dmraid) $(use__ unionfs) $(use__ e2fsprogs disklabel) $(use__ mdadm)"
-	use netboot && p="${p} --netboot"
+	use netboot && p+=" --netboot"
+	use monolythe && p+=" --static"
 	if use pnp || use compressed; then
-		p="${p} --all-ramdisk-modules"
+		use monolythe || p+=" --all-ramdisk-modules"
 		[[ -e "${BDIR}/lib/firmware" ]] && p="${p} --firmware --firmware-dir=\"${BDIR}/lib/firmware\""
 	fi
 	run_genkernel ramdisk "--kerneldir=\"${S}\" --bootdir=\"${S}\" --module-prefix=\"${BDIR}\" --no-mountboot ${p}"
@@ -300,7 +331,7 @@ kernel-2_src_install() {
 		else
 			rm ${BDIR}/lib/firmware -Rf
 		fi
-		mv "${BDIR}"/* "${D}/" || die
+		[[ -e "${BDIR}" ]] && ( mv "${BDIR}"/* "${D}/" || die )
 		kmake INSTALL_PATH="${D}/boot" install
 		use tools && mktools INSTALL_PATH="${D}" DESTDIR="${D}" install
 		for f in vmlinuz System.map config ; do
@@ -861,14 +892,28 @@ done
 echo "${aflags# }"
 }
 
-detects(){
-	local i a b c d
-	find . -name Makefile|while read i; do
+module_reconf(){
+	local i
+	sed -e 's:^.*/::g' -e 's:\.ko$::g'|sort -u|while read i; do
+		grep -Rh "^\s*obj\-\$[(]CONFIG_.*\s*\+=.*\s${i//[_-]/[_-]}\.o" "${TMPDIR}"/unmodule.tmp|sed -e 's:).*$::g' -e 's:^.*(CONFIG_::'|while read i; do
+			$1 "$i"
+		done
+	done
+}
+
+_unmodule(){
+	local i a
+	find "${@}" -name Makefile|while read i; do
 		while read i; do
 			a="${i%\\}"
 			[[ "$a" == "$i" ]] && echo "$i" || echo -n "$a "
 		done <$i
 	done |grep "^obj-" >"${TMPDIR}"/unmodule.tmp
+}
+
+detects(){
+	local i a b c d
+	_unmodule .
 	perl "${SHARE}"/mod2sh.pl "${WORKDIR}" >&2 || die "Unable to run '${SHARE}/mod2sh.pl'"
 	. "${WORKDIR}"/modules.alias.sh
 	{
@@ -891,11 +936,7 @@ detects(){
 		echo "${i// /
 }"
 		rm -f $i
-	done|sed -e 's:^.*/::g' -e 's:\.ko$::g'|sort -u|while read i; do
-		grep -Rh "^\s*obj\-\$[(]CONFIG_.*\s*\+=.*\s${i//[_-]/[_-]}\.o" "${TMPDIR}"/unmodule.tmp|sed -e 's:).*$::g' -e 's:^.*(CONFIG_::'|while read i; do
-			m2y "$i"
-		done
-	done
+	done|module_reconf m2y
 }
 
 m2y(){
@@ -905,6 +946,13 @@ m2y(){
 	case "$1" in
 	ACPI_VIDEO)m2y VIDEO_OUTPUT_CONTROL;;
 	esac
+}
+
+m2n(){
+	grep -q "^CONFIG_$1=m$" .config || return
+	# "-$1" may be too deep
+	echo -ne " ~$1"
+	sed -i -e "s/^CONFIG_$1=m\$/# CONFIG_$1 is not set/" .config
 }
 
 mksquash(){

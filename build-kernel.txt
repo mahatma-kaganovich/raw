@@ -51,6 +51,10 @@ none ("y"), "-" ("n"), "+" ("m"), "~" (remove/oldconfig-default),
 "=" ("y" if undefined), "&" (embed "m" to "y" recursive).
 Also perl regular expressions may be used.
 
+KERNEL_CLEANUP contains directories to find modules (=m) to remove
+after second configuration stage (USE="embed-hardware").
+Example: KERNEL_CLEANUP="sound drivers/ata" or KERNEL_CLEANUP="."
+
 First reading "/etc/make.conf" values. If empty - using defaults. Then
 trying "/etc/kernels/kernel.conf".
 
@@ -102,8 +106,26 @@ not found.
 Useflag "klibc" will make alternative (or "standard"?) initrd with
 "early userspace"/klibc. If KERNEL_KLIBC_SRC (or KERNEL_KLIBC_DIR) given
 - klibc will be build from this source (tar.bz2), if ="*" - sources
-will dirty hacked from currently installed dev-libs/klibc. This is
-more experimental.
+will dirty hacked from currently installed dev-libs/klibc.
+
+Useflag "embed-hardware" detecting hardware (under /proc/cpuinfo &
+/sys/*/uevent) and embed required modules into kernel. Using same
+in-kernel "modalias" database and making kernel twice.
+
+Useflag "monolythe" making monolytic kernel. Usable primary with
+"embed-hardware" and KERNEL_CLEANUP. Need to be tested before usage:
+modules sometimes not fully detected on early stage.
+Example:
+USE="-genkernel monolythe embed-hardware" KERNEL_CLEANUP="." \
+emerge -1B gentoo-sources
+
+Also many useflags are "external" - placed in "/usr/share/genpnprd/*use".
+There are usually just a configuration templates to role optimisation.
+Currently there are:
+"minimal acl bare-metal debug desktop fbcon force-modules ipv6 laptop
+lxc nls rt selinux server tmem unicode"
+
+etc
 
 Kernel cmdline options: "nopnp", "unload" (try to rmmod after mounting root),
 "loadall" (try to load all possible drivers, slow), "slow" (fixed v0.1 mode,
