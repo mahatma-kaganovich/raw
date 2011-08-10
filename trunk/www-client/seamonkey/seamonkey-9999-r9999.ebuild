@@ -40,7 +40,7 @@ IUSE="-java mozdevelop moznoirc moznoroaming postgres startup-notification
 	debug minimal directfb moznosystem +threads jssh wifi python mobile static
 	moznomemory accessibility system-sqlite vanilla xforms gio +alsa
 	+custom-cflags +custom-optimization system-xulrunner +libxul system-nss system-nspr X
-	bindist flatfile dbus profile ipv6 opengl moznopango"
+	bindist flatfile dbus profile ipv6 opengl moznopango e10s force-shared-static"
 #	qt-experimental"
 
 #RESTRICT="nomirror"
@@ -271,7 +271,7 @@ src_prepare(){
 		sed -i -e 's:^cairo-pdf\.h$:cairo-pdf.h\ncairo-tee.h:' "${S1}/config/system-headers" "${S1}/js/src/config/system-headers"
 		rm -Rf "${S1}/gfx/cairo"
 	fi
-	sed -i -e 's:^\(PR_STATIC_ASSERT.*CAIRO_SURFACE_TYPE_SKIA.*\)$:#if CAIRO_HAS_SKIA_SURFACE\n\1\n#endif:' "${S1}"/gfx/thebes/gfxASurface.cpp
+#	sed -i -e 's:^\(PR_STATIC_ASSERT.*CAIRO_SURFACE_TYPE_SKIA.*\)$:#if CAIRO_HAS_SKIA_SURFACE\n\1\n#endif:' "${S1}"/gfx/thebes/gfxASurface.cpp
 	LDAP || sed -i -e 's:^#ifdef MOZ_LDAP_XPCOM$:ifdef MOZ_LDAP_XPCOM:' -e 's:^#endif$:endif:' "${S}"/bridge/bridge.mk
 	touch "${S}"/directory/xpcom/datasource/nsLDAPDataSource.manifest
 #	sed -i -e 's:\(return XRE_InitEmbedding.*\), nsnull, 0:\1:' "${S1}"/extensions/java/xpcom/src/nsJavaInterfaces.cpp
@@ -401,7 +401,12 @@ src_configure(){
 	mozconfig_use_enable ipv6
 	mozconfig_use_enable mobile mobile-optimize
 	mozconfig_use_enable !moznocalendar calendar
-	if use static; then
+	if use force-shared-static; then
+		ewarn "Forced shared or static is experimental or unstable"
+		mozconfig_use_enable static
+		mozconfig_use_enable static static-mail
+		mozconfig_use_enable static js-static
+	elif use static; then
 		use libxul || mozconfig_use_enable static
 		mozconfig_use_enable static static-mail
 		[[ "${PVR}" == *9999 ]] && mozconfig_use_enable static js-static-build
@@ -492,7 +497,8 @@ src_configure(){
 	mozconfig_use_enable !debug strip
 	mozconfig_use_enable !debug strip-libs
 	mozconfig_use_enable !debug install-strip
-#	egl-xrender-composite && mozconfig_use_enable opengl egl-xrender-composite
+#	isopt egl-xrender-composite && mozconfig_use_enable opengl egl-xrender-composite
+	is e10s-compat && mozconfig_use_enable e10s e10s-compat
 
 	use custom-cflags && export CFLAGS="${CF}"
 	use opengl && append-flags -DUSE_GLES2=1
