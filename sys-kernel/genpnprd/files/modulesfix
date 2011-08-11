@@ -1,6 +1,6 @@
 #!/bin/bash
 ## (c) Denis Kaganovich
-## v3.6
+## v3.7
 
 #BUS="pci"
 BUS="\w+"
@@ -20,13 +20,8 @@ grep -Prhl "${STR}${BUS}_device_id\s+" $1 --include="*.c" | while read i ; do
 	grep -q "MODULE_DEVICE_TABLE" $i && continue
 	local ii="${i#$1}"
 	ii="${ii#/}"
-	case $ii in
-	*/scx200_acb.c|*/pch_dma.c) if ! grep -q "^[ 	]*{[ 	]0,[ 	0]*}[,]*$" "$i"; then
-		echo "BROKEN: $bus: $ii"
-		continue
-	fi
-	;;
-	*/i2c-eg20t.c)
+	case $bus:$ii in
+	*/i2c-eg20t.c|of:*/tty/serial/*)
 		echo "BROKEN: $bus: $ii"
 		continue
 	;;
@@ -38,11 +33,6 @@ grep -Prhl "${STR}${BUS}_device_id\s+" $1 --include="*.c" | while read i ; do
 		echo "SKIPPED: $bus: $ii"
 		continue
 	;;
-#	*/tty/serial/*) if [[ "$bus" == of ]]; then
-#		echo "BROKEN: $bus: $ii"
-#		continue
-#	fi
-#	;;
 	esac
 	perl -e 'sub fix{
 			my $s=$_[0];
