@@ -227,7 +227,8 @@ sub cfg{
 	for(@{$select{$_[0]}}){
 		my $i=$_;
 		$i=~s/.*://;
-		if(defined($config{$i})){
+#		if(defined($config{$i})){
+		if($config{$i} ne ''){
 			print "KERNEL_CONFIG: -$_[0] -> -$i\n";
 			cfg($i);
 		}
@@ -253,7 +254,9 @@ sub conf{
 	my $y='y';
 	$d=~s/(.*?)=(.*)/$y=$2;$1/se;
 	my @l;
-	if(substr($d,0,1) eq '/'){
+	if(exists($vars{$d})){
+		@l=($d);
+	}elsif(substr($d,0,1) eq '/'){
 		my %ll;
 		substr($d,0,1)='^';
 		for(grep(/$d$/,keys %tristate,keys %bool,keys %menu)){
@@ -264,8 +267,8 @@ sub conf{
 		@l=keys %ll;
 	}else{
 		@l=grep(/^$d$/,keys %vars);
+		@l=($d) if($#l==-1 && ! $d=~/[^A-Z0-9_]/ && $_[0] eq $_);
 	}
-	@l=($d) if($#l==-1 && ! $d=~/[^A-Z0-9_]/ && $_[0] eq $_);
 	for(@l){
 		if($c eq '+'){
 			cfg($_,'m');
