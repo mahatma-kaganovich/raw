@@ -147,7 +147,7 @@ sub set_config{
 		close($F);
 	}
 	my $x=join('|',keys %unset);
-	$s=~s/\n(?:# )?CONFIG_(?:$x)(?:=[^\n]*| is not set)\n/\n/gs || die "$x";
+	$s=~s/\n(?:# )?CONFIG_(?:$x)(?:=[^\n]*| is not set)//gs;
 	while(my ($x,$y)=each %config){
 #		next if(defined($oldconfig{$x}) && $oldconfig{$x} eq $y);
 		$y=$y ne ''?"CONFIG_$x=$y":"# CONFIG_$x is not set";
