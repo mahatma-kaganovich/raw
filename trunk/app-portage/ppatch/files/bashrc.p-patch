@@ -2,7 +2,7 @@ $etc||="$ENV{SS}/etc";
 $rc="$etc/portage/bashrc";
 wf(">$rc",'') if(!-e $rc);
 addon($rc,'#',"ppatch auto",qq(_ppatch(){
-local p i PPATCH PPATCHLIST="" PPATCHDIR="\${PPATCH_ROOT:-\${PORTAGE_CONFIGROOT:-\$ROOT}}/usr/ppatch"
+local p i PPATCH PPATCHLIST="" PPATCHDIR="\${PPATCH_ROOT:-\${PORTAGE_CONFIGROOT:-\$ROOT}}/usr/ppatch" PPATCHRC=' '
 for PPATCH in \$CATEGORY/\$PN \$PN \$PROVIDE ; do\
 PPATCH="\$PPATCHDIR/\$PPATCH/\$EBUILD_PHASE/"
 if [[ -n "\$EBUILD_PHASE" ]]; then
@@ -16,7 +16,7 @@ if [[ -n "\$EBUILD_PHASE" ]]; then
 	p="\$PPATCH"
 	while true; do
 		for i in "\$p"/*bashrc ; do
-			[[ -e "\$i" ]] && source \$i
+			[[ -e "\$i" ]] && [[ -n "\${PPATCHRC##* \$i *}" ]] && PPATCHRC+="\$i " && . \$i
 		done
 		i="\$p"
 		p="\${p%/*}"
