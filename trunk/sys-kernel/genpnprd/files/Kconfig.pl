@@ -228,7 +228,7 @@ sub cfg{
 		my $i=$_;
 		$i=~s/.*://;
 #		if(defined($config{$i})){
-		if($config{$i} ne ''){
+		if(exists($config{$i})){
 			print "KERNEL_CONFIG: -$_[0] -> -$i\n";
 			cfg($i);
 		}
