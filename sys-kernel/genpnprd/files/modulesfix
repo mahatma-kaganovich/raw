@@ -1,9 +1,10 @@
 #!/bin/bash
 ## (c) Denis Kaganovich
-## v3.7
+## v5.0
 
 #BUS="pci"
 BUS="\w+"
+: ${TMPDIR:=/tmp}
 
 STR="^(?:static\s+)?(?:const\s+)?struct\s+"
 
@@ -19,43 +20,38 @@ grep -Prhl "${STR}${BUS}_device_id\s+" $1 --include="*.c" | while read i ; do
 	n="${n##* }"
 	bus="${bus%%_device_id*}"
 	grep -Pq "^module_init\s*\(" $i || continue
-	echo "==$i:$bus:$n"
 	grep -q "MODULE_DEVICE_TABLE" $i && continue
 	local ii="${i#$1}"
 	ii="${ii#/}"
 	case $bus:$ii in
-	*/hil_mlc.c) # ,{0} or unused
-		echo "BROKEN/SKIPPED: $bus: $ii"
-		continue
-	;;
 	*/neo1973_wm8753.c)
 		echo "SKIPPED: $bus: $ii"
 		continue
 	;;
 	esac
 	perl -e 'sub fix{
-			my $s=$_[0];
+			my ($s0,$s)=(@_);
 			my $s1=$s;
 			my $s2;
+			$s=~s/.*\{//gs || return "[]$s0\{$s1\}, {}";
+			$s0.=$s1;
 			$s=~s/\/\*.*\*\///gs;
-			$s=~s/,\s*$//s || ($s2=",");
+			$s=~s/,\s*$//s || ($s0=~s/\}/\},/s) || exit 1;
 			$s=~s/\"\"//gs;
 			$s=~s/\s//gs;
-			$s=~s/\}$//s || return $s1;
-			$s=~s/^\{//s || return $s1;
+			$s=~s/\}$//s || exit 1;
 			$s=~s/[0,]//gs;
-			$s=~s/\.\w+\s*=//gs;
+			$s=~s/\.\w+=//gs;
 #			print STDERR "FIX0:";
-			$s||return $s1;
-			$s1.="$s2\n	\{\}\n";
-			$s1
+			$s0.="\n	\{\}\n" if($s);
+			$s0
 		}
 		while(<STDIN>){$s.=$_}
-	exit !($s=~s/(\n'"${STR#^}"'[^\n]*?device_id[^\n]*=\s*\{\n[^;]*)(\{.*?\}.*?)(\s*?\};)/$1.fix("$2").$3/es && print $s)' <$i >modulesfix.tmp || {
+	exit !($s=~s/(\n'"${STR#^}"'[^\n]*?device_id[^\n]*)(=\s*\{)([^;]*)(\s*?\};)/$1.fix("$2","$3").$4/es && print $s)' <$i >"$TMPDIR/modulesfix.tmp" || {
 		echo "BROKEN: $bus: $ii"
 		continue
 	}
-	mv modulesfix.tmp $i
+	exit
 	if [[ "$2" != "f" ]] ; then
 		local b="$bus"
 		case $b in
@@ -75,7 +71,10 @@ grep -Prhl "${STR}${BUS}_device_id\s+" $1 --include="*.c" | while read i ; do
 	esac
 	if [[ "$2" != "f" ]] && ! grep -Pqr "MODULE_DEVICE_TABLE\($bus," $1 --include="*.c" ; then
 		echo "UNKNOWN BUS: $bus ($ii)"
-	elif grep -Prq "^\s*(?:menu)?config\s+$BU(?:\s.*)?$" $1 --include="Kconfig*"; then
+		continue
+	fi
+	mv "$TMPDIR/modulesfix.tmp" $i
+	if grep -Prq "^\s*(?:menu)?config\s+$BU(?:\s.*)?$" $1 --include="Kconfig*"; then
 		echo "Fixing: $BU: ($n) $ii"
 		sed -i -e 's/^\(module_init.*\)$/\n#ifdef CONFIG_'"$BU"'\nMODULE_DEVICE_TABLE('"$bus, $n"');\n#endif\n\n\1/' $i
 	else
