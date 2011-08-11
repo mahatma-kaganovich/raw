@@ -146,17 +146,12 @@ sub set_config{
 		print $F $s;
 		close($F);
 	}
-	my $x;
-	for(keys %unset){
-		$s=~s/\n(CONFIG_$_=[^\n]*|# CONFIG_$_ is not set)\n/\n/;
-	}
-	for(keys %config){
-		$x=$config{$_};
-#		next if(defined($oldconfig{$_}) && $oldconfig{$_} eq $x);
-		$x=$x ne ''?"CONFIG_$_=$x":"# CONFIG_$_ is not set";
-		my $y;
-		$s=~s/\n(CONFIG_$_=[^\n]*|# CONFIG_$_ is not set)\n/$y=1;"\n$x\n"/se;
-		$s.="$x\n" if(!$y);
+	my $x=join('|',keys %unset);
+	$s=~s/\n(?:# )?CONFIG_(?:$x)(?:=[^\n]*| is not set)\n/\n/gs || die "$x";
+	while(my ($x,$y)=each %config){
+#		next if(defined($oldconfig{$x}) && $oldconfig{$x} eq $y);
+		$y=$y ne ''?"CONFIG_$x=$y":"# CONFIG_$x is not set";
+		$s.="$y\n" if(!($s=~s/\nCONFIG_$x=[^\n]*\n|\n# CONFIG_$x is not set\n/\n$y\n/s));
 	}
 	open(my $F,">$_[0]") || die $!;
 	print $F $s;
@@ -174,8 +169,7 @@ sub modules{
 	return if($_[0] eq '');
 	print "Applying modules: $_[0]\n";
 	my ($c,$d)=spl($_[0]);
-	my @l=grep(/^$d/,keys %tristate);
-	for(@l){
+	for(grep(/^$d/,keys %tristate)){
 		~s/.*://;
 		if($c eq '+'){
 			cfg($_,'m');
@@ -191,8 +185,7 @@ sub defaults{
 	return if($_[0] eq '');
 	print "Applying defaults: $_[0]\n";
 	my ($c,$d)=spl($_[0]);
-	my @l=grep(/^$d/,keys %menu);
-	for(@l){
+	for(grep(/^$d/,keys %menu)){
 		~s/.*://;
 		if($c eq '-'){
 			$unset{$_}=1;
@@ -201,8 +194,7 @@ sub defaults{
 			cfg($_,'y');
 		}
 	}
-	my @l=grep(/^$d/,keys %bool);
-	for(@l){
+	for(grep(/^$d/,keys %bool)){
 		my $y=$yes{$_};
 		~s/.*://;
 		if(($c eq '-' && exists($defconfig{$_})) || ($c ne '+' && $defconfig{$_})){
@@ -222,6 +214,7 @@ sub cfg{
 		return
 	}
 	return if($off{$_[0]});
+	my $msg_=$msg;
 	$config{$_[0]}='';
 	$off{$_[0]}=1;
 	for(@{$select{$_[0]}}){
@@ -229,9 +222,13 @@ sub cfg{
 		$i=~s/.*://;
 #		if(defined($config{$i})){
 		if(exists($config{$i})){
-			print "KERNEL_CONFIG: -$_[0] -> -$i\n";
+			$msg.=" -$i" if($config{$i});
 			cfg($i);
 		}
+	}
+	if($msg && !$msg_){
+		print "KERNEL_CONFIG: -$_[0] ->$msg\n";
+		$msg=$msg_;
 	}
 }
 
