@@ -14,17 +14,17 @@ grep -Prhl "${STR}${BUS}_device_id\s+" $1 --include="*.c" | while read i ; do
 	local n="${bus%%[*}"
 	n="${n%%=*}"
 	n="${n##*device_id }"
-	n="${n// }"
+	while [[ -z "${n%%* }" ]]; do
+		n="${n%%* }"
+	done
+	n="${n##* }"
 	bus="${bus%%_device_id*}"
 	grep -Pq "^module_init\s*\(" $i || continue
+	echo "==$i:$bus:$n"
 	grep -q "MODULE_DEVICE_TABLE" $i && continue
 	local ii="${i#$1}"
 	ii="${ii#/}"
 	case $bus:$ii in
-	*/i2c-eg20t.c|of:*/tty/serial/*)
-		echo "BROKEN: $bus: $ii"
-		continue
-	;;
 	*/hil_mlc.c) # ,{0} or unused
 		echo "BROKEN/SKIPPED: $bus: $ii"
 		continue
