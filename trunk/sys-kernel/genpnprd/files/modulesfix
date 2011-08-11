@@ -48,8 +48,11 @@ grep -Prhl "${STR}${BUS}_device_id\s+" $1 --include="*.c" | while read i ; do
 		}
 		while(<STDIN>){$s.=$_}
 	exit !($s=~s/(\n'"${STR#^}"'[^\n]*?device_id[^\n]*)(=\s*\{)([^;]*)(\s*?\};)/$1.fix("$2","$3").$4/es && print $s)' <$i >"$TMPDIR/modulesfix.tmp" || {
-		echo "BROKEN: $bus: $ii"
-		continue
+		[[ "$2" != "f" ]] && {
+			echo "BROKEN/UNSURE: $bus: $ii"
+			continue
+		}
+		cat $i >"$TMPDIR/modulesfix.tmp"
 	}
 	if [[ "$2" != "f" ]] ; then
 		local b="$bus"
