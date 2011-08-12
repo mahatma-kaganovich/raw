@@ -1,16 +1,31 @@
 #!/bin/bash
 ## (c) Denis Kaganovich
-## v5.0
+## v5.1
+
+: ${TMPDIR:=/tmp}
 
 #BUS="pci"
 BUS="\w+"
-: ${TMPDIR:=/tmp}
-
 STR="^(?:static\s+)?(?:const\s+)?struct\s+"
+STR1="${STR}${BUS}_device_id(?:\s+\w+)+"
 
 fnd(){
-grep -Prhl "${STR}${BUS}_device_id\s+" $1 --include="*.c" | while read i ; do
-	local bus=`grep -Prho "${STR}${BUS}_device_id.*\s+" $i`
+grep -sPrhl "$STR1" $1 --include "*.[hc]"|while read h; do
+	if [[ "$h" == *.h ]]; then
+		for i in $(grep -sPrhl "^\s*#include\s+[\"<](?:.*/)?${h##*/}[\">]\s*$" $1 --include "*.c"); do #"
+			echo "$i $h"
+		done
+	else
+		echo "$h $h"
+	fi
+done|while read i h; do
+#grep -Prhl "$STR1" $1 --include="*.c" | while read i ; do h:="$i"
+	local bus
+	if bus=`grep -Prho "$STR1" $i`; then
+		h="$i"
+	else
+		bus=`grep -Prho "$STR1" $h` || continue
+	fi
 	bus="${bus#*struct }"
 	local n="${bus%%[\[=]*}"
 	n="${n##*device_id }"
@@ -23,37 +38,12 @@ grep -Prhl "${STR}${BUS}_device_id\s+" $1 --include="*.c" | while read i ; do
 	grep -q "MODULE_DEVICE_TABLE" $i && continue
 	local ii="${i#$1}"
 	ii="${ii#/}"
-	case $bus:$ii in
-	*/neo1973_wm8753.c)
-		echo "SKIPPED: $bus: $ii"
-		continue
-	;;
-	esac
-	perl -e 'sub fix{
-			my ($s0,$s)=(@_);
-			my $s1=$s;
-			my $s2;
-			$s=~s/.*\{//gs || return "[]$s0\{$s1\}, {}";
-			$s0.=$s1;
-			$s=~s/\/\*.*\*\///gs;
-			$s=~s/,\s*$//s || ($s0=~s/\}/\},/s) || exit 1;
-			$s=~s/\"\"//gs;
-			$s=~s/\s//gs;
-			$s=~s/\}$//s || exit 1;
-			$s=~s/[0,]//gs;
-			$s=~s/\.\w+=//gs;
-#			print STDERR "FIX0:";
-			$s0.="\n	\{\}\n" if($s);
-			$s0
-		}
-		while(<STDIN>){$s.=$_}
-	exit !($s=~s/(\n'"${STR#^}"'[^\n]*?device_id[^\n]*)(=\s*\{)([^;]*)(\s*?\};)/$1.fix("$2","$3").$4/es && print $s)' <$i >"$TMPDIR/modulesfix.tmp" || {
-		[[ "$2" != "f" ]] && {
-			echo "BROKEN/UNSURE: $bus: $ii"
-			continue
-		}
-		cat $i >"$TMPDIR/modulesfix.tmp"
-	}
+#	case $bus:$ii in
+#	*/neo1973_wm8753.c)
+#		echo "SKIPPED: $bus: $ii"
+#		continue
+#	;;
+#	esac
 	if [[ "$2" != "f" ]] ; then
 		local b="$bus"
 		case $b in
@@ -75,7 +65,30 @@ grep -Prhl "${STR}${BUS}_device_id\s+" $1 --include="*.c" | while read i ; do
 		echo "UNKNOWN BUS: $bus ($ii)"
 		continue
 	fi
-	mv "$TMPDIR/modulesfix.tmp" $i
+	if perl -e 'sub fix{
+			my ($s0,$s)=(@_);
+			my $s1=$s;
+			my $s2;
+			$s=~s/.*\{//gs || return "[]$s0\{$s1\}, {}";
+			$s0.=$s1;
+			$s=~s/\/\*.*\*\///gs;
+			$s=~s/,\s*$//s || ($s0=~s/\}/\},/s) || exit 1;
+			$s=~s/\"\"//gs;
+			$s=~s/\s//gs;
+			$s=~s/\}$//s || exit 1;
+			$s=~s/[0,]//gs;
+			$s=~s/\.\w+=//gs;
+#			print STDERR "FIX0:";
+			$s0.="\n	\{\}\n" if($s);
+			$s0
+		}
+		while(<STDIN>){$s.=$_}
+	exit !($s=~s/(\n'"${STR#^}"'[^\n]*?device_id[^\n]*)(=\s*\{)([^;]*)(\s*?\};)/$1.fix("$2","$3").$4/es && print $s)' <$h >"$TMPDIR/modulesfix.tmp" ; then
+		cmp "$TMPDIR/modulesfix.tmp" $h && rm "$TMPDIR/modulesfix.tmp" || mv "$TMPDIR/modulesfix.tmp" $h
+	elif [[ "$2" != "f" ]]; then
+		echo "BROKEN/UNSURE: $bus: $ii"
+		continue
+	fi
 	if grep -Prq "^\s*(?:menu)?config\s+$BU(?:\s.*)?$" $1 --include="Kconfig*"; then
 		echo "Fixing: $BU: ($n) $ii"
 		sed -i -e 's/^\(module_init.*\)$/\n#ifdef CONFIG_'"$BU"'\nMODULE_DEVICE_TABLE('"$bus, $n"');\n#endif\n\n\1/' $i
