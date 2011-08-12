@@ -69,26 +69,29 @@ done|while read i h; do
 			my ($s0,$s)=(@_);
 			my $s1=$s;
 			my $s2;
-			$s=~s/.*\{//gs || return "[]$s0\{$s1\}, {}";
+			($s=~s/.*\{//gs)||return(($s0=~/\]/)?$s0.$s1:"[]$s0\{$s1\}, \{\}");
 			$s0.=$s1;
+			$s1=$s0;
 			$s=~s/\/\*.*\*\///gs;
-			$s=~s/,\s*$//s || ($s0=~s/\}/\},/s) || exit 1;
+			$s=~s/,\s*$//s || ($s1=~s/\}/\},/s) || exit 1;
 			$s=~s/\"\"//gs;
 			$s=~s/\s//gs;
 			$s=~s/\}$//s || exit 1;
 			$s=~s/[0,]//gs;
 			$s=~s/\.\w+=//gs;
 #			print STDERR "FIX0:";
-			$s0.="\n	\{\}\n" if($s);
-			$s0
+			$s || return $s0;
+			$s1.="\n	\{\}\n";
+			$s1
 		}
 		while(<STDIN>){$s.=$_}
-	exit !($s=~s/(\n'"${STR#^}"'[^\n]*?device_id[^\n]*)(=\s*\{)([^;]*)(\s*?\};)/$1.fix("$2","$3").$4/es && print $s)' <$h >"$TMPDIR/modulesfix.tmp" ; then
+	exit !($s=~s/(\n'"${STR#^}"'[^\n]*?device_id[^\n]*)(\]\s*=\s*\{)([^;]*)(\s*?\};)/$1.fix("$2","$3").$4/es && print $s)' <$h >"$TMPDIR/modulesfix.tmp" ; then
 		cmp -s "$TMPDIR/modulesfix.tmp" $h && rm "$TMPDIR/modulesfix.tmp" || mv "$TMPDIR/modulesfix.tmp" $h
 	elif [[ "$2" != "f" ]]; then
 		echo "BROKEN/UNSURE: $bus: $ii"
 		continue
 	fi
+continue
 	if grep -Prq "^\s*(?:menu)?config\s+$BU(?:\s.*)?$" $1 --include="Kconfig*"; then
 		echo "Fixing: $BU: ($n) $ii"
 		sed -i -e 's/^\(module_init.*\)$/\n#ifdef CONFIG_'"$BU"'\nMODULE_DEVICE_TABLE('"$bus, $n"');\n#endif\n\n\1/' $i
