@@ -86,7 +86,10 @@ done|while read i h; do
 		}
 		while(<STDIN>){$s.=$_}
 	exit !($s=~s/(\n'"${STR#^}"'[^\n]*?device_id[^\n]*)(\]?\s*=\s*\{)([^;]*)(\s*?\};)/$1.fix("$2","$3").$4/es && print $s)' <$h >"$TMPDIR/modulesfix.tmp" ; then
-		cmp -s "$TMPDIR/modulesfix.tmp" $h && rm "$TMPDIR/modulesfix.tmp" || mv "$TMPDIR/modulesfix.tmp" $h
+		cmp -s "$TMPDIR/modulesfix.tmp" $h && rm "$TMPDIR/modulesfix.tmp" || {
+			[[ "$i" != "$h" ]] && echo "Fixing: ($n) ${h#$1/}"
+			mv "$TMPDIR/modulesfix.tmp" $h
+		}
 	elif [[ "$2" != "f" ]]; then
 		echo "BROKEN/UNSURE: $bus: $ii"
 		continue
