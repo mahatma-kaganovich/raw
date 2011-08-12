@@ -1,13 +1,12 @@
 #!/bin/bash
 ## (c) Denis Kaganovich
-## v5.2
+## v5.3
 
 : ${TMPDIR:=/tmp}
 
-#BUS="pci"
+#BUS="PCI"
 BUS="\w+"
-STR="^(?:static\s+)?(?:const\s+)?struct\s+"
-STR1="${STR}${BUS}_device_id(?:\s+\w+)+"
+STR="(?:^(?:static\s+)?(?:const\s+)?struct\s+${BUS,,}_device_id(?:\s+\w+)+|^(?:static\s+)?DEFINE_${BUS}_DEVICE_TABLE\(.*?\))"
 
 hdr(){
 	local h="$2" i x
@@ -29,7 +28,7 @@ hdr(){
 
 fnd(){
 local i h
-grep -sPrhl "$STR1" $1 --include "*.[hc]"|while read h; do
+grep -sPrhl "$STR" $1 --include "*.[hc]"|while read h; do
 	case "$h" in
 	*.h)for i in $(hdr $1 "$h"); do
 		echo "$i $h"
@@ -37,21 +36,33 @@ grep -sPrhl "$STR1" $1 --include "*.[hc]"|while read h; do
 	*)echo "$h $h";;
 	esac
 done|while read i h; do
-#grep -Prhl "$STR1" $1 --include="*.c" | while read i ; do h:="$i"
-	local bus
-	if bus=`grep -Prho "$STR1" $i`; then
+#grep -Prhl "$STR" $1 --include="*.c" | while read i ; do h:="$i"
+	local bus n
+	if bus=`grep -Prho "$STR" $i`; then
 		h="$i"
 	else
-		bus=`grep -Prho "$STR1" $h` || continue
+		bus=`grep -Prho "$STR" $h` || continue
 	fi
-	bus="${bus#*struct }"
-	local n="${bus%%[\[=]*}"
-	n="${n##*device_id }"
+	case "$bus" in
+	*DEFINE_*_DEVICE_TABLE*)
+		bus="${bus#*DEFINE_}"
+		n="${bus%%)*}"
+		n="${n##*(}"
+		bus="${bus%%_*}"
+		[[ "$bus" != PCI ]] && echo "Debug: DEFINE_$bus_*DEVICE_TABLE in $i"
+		bus="${bus,,}"
+	;;
+	*)
+		bus="${bus#*struct }"
+		n="${bus%%[\[=]*}"
+		n="${n##*device_id }"
+		bus="${bus%%_device_id*}"
+	;;
+	esac
 	while [ -z "${n%%* }" -a -n "$n" ]; do
 		n="${n%% }"
 	done
 	n="${n##* }"
-	bus="${bus%%_device_id*}"
 	grep -q "^module_init[ 	]*(\|^MODULE_DESCRIPTION(" $i || continue
 	grep -q "MODULE_DEVICE_TABLE" $i && continue
 	local ii="${i#$1}"
@@ -92,7 +103,7 @@ done|while read i h; do
 			my ($s0,$s)=(@_);
 			my $s1=$s;
 			my $s2;
-			($s=~s/.*\{//gs)||return(($s0=~/\]/)?$s0.$s1:"[]$s0\{$s1\}, \{\}");
+			($s=~s/.*\{//gs)||return(($s0=~/[\]\)]/)?$s0.$s1:"[]$s0\{$s1\}, \{\}");
 			$s0.=$s1;
 			$s1=$s0;
 			$s=~s/\/\*.*\*\///gs;
@@ -108,7 +119,7 @@ done|while read i h; do
 			$s1
 		}
 		while(<STDIN>){$s.=$_}
-	exit !($s=~s/(\n'"${STR#^}"'[^\n]*?device_id[^=;\{\}\]]*)(\]?\s*=\s*\{)([^;]*)(\s*?\};)/$1.fix("$2","$3").$4.$ENV{add}/es && print $s)' <$h >"$TMPDIR/modulesfix.tmp" ; then
+	exit !($s=~s/('"${STR//^/\n}"'[^=;\{\}\]\)]*)([\]\)]?\s*=\s*\{)([^;]*)(\s*?\};)/$1.fix("$2","$3").$4.$ENV{add}/es && print $s)' <$h >"$TMPDIR/modulesfix.tmp" ; then
 		cmp -s "$TMPDIR/modulesfix.tmp" $h && rm "$TMPDIR/modulesfix.tmp" || {
 			[[ "$i" != "$h" ]] && echo "Fixing: ($n) ${h#$1/}"
 			mv "$TMPDIR/modulesfix.tmp" $h
