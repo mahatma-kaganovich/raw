@@ -1,6 +1,6 @@
 #!/bin/bash
 ## (c) Denis Kaganovich
-## v5.1
+## v5.2
 
 : ${TMPDIR:=/tmp}
 
@@ -9,15 +9,33 @@ BUS="\w+"
 STR="^(?:static\s+)?(?:const\s+)?struct\s+"
 STR1="${STR}${BUS}_device_id(?:\s+\w+)+"
 
+hdr(){
+	local h="$2" i x
+	h="${h#$1}"
+	h="${h#/}"
+	for i in $(grep -sPrhl "^\s*#include\s+[\"<](?:.*/)?${h##*/}[\">]" $1 --include "*.[ch]"); do #"
+		x="${i#$1}"
+		x="${x#/}"
+		x="${x%/*}"
+		( [[ -z ${h##$x/*} ]] && grep -qP "^\s*#include\s+\"${h#$x/}\"" "$i" ) ||
+		 ( [[ -z "${h##include/*}" ]] && grep -qP "^\s*#include\s+<${h#include/}>" "$i" ) ||
+		 continue
+		case "$i" in
+		*.h)hdr $1 "$i";;
+		*)echo "$i";;
+		esac
+	done
+}
+
 fnd(){
+local i h
 grep -sPrhl "$STR1" $1 --include "*.[hc]"|while read h; do
-	if [[ "$h" == *.h ]]; then
-		for i in $(grep -sPrhl "^\s*#include\s+[\"<](?:.*/)?${h##*/}[\">]\s*$" $1 --include "*.c"); do #"
-			echo "$i $h"
-		done
-	else
-		echo "$h $h"
-	fi
+	case "$h" in
+	*.h)for i in $(hdr $1 "$h"); do
+		echo "$i $h"
+	done;;
+	*)echo "$h $h";;
+	esac
 done|while read i h; do
 #grep -Prhl "$STR1" $1 --include="*.c" | while read i ; do h:="$i"
 	local bus
