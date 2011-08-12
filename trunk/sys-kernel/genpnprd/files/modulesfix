@@ -92,7 +92,6 @@ done|while read i h; do
 			my ($s0,$s)=(@_);
 			my $s1=$s;
 			my $s2;
-			print STDERR "fix: ($s0)\n";
 			($s=~s/.*\{//gs)||return(($s0=~/\]/)?$s0.$s1:"[]$s0\{$s1\}, \{\}");
 			$s0.=$s1;
 			$s1=$s0;
