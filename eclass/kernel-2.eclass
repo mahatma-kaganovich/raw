@@ -937,7 +937,7 @@ detects(){
 }"
 		rm -f $i
 	done|module_reconf m2y
-	_unmodule arch drivers/{dma,dca}
+	_unmodule arch drivers/dma
 	module_reconf m2n <"${WORKDIR}"/modules.pnp
 }
 
