@@ -199,7 +199,7 @@ kernel-2_src_compile() {
 		fi
 		if [[ -n "$KERNEL_CLEANUP" ]]; then
 			einfo "Applying KERNEL_CLEANUP='$KERNEL_CLEANUP'"
-			[[ "$KERNEL_CLEANUP" == '.' ]] && [[ -e "${TMPDIR}"/unmodule.tmp ]] || _unmodule $KERNEL_CLEANUP
+			_unmodule $KERNEL_CLEANUP
 			KERNEL_CONFIG+="
 ===cleanup: $(module_reconf m2n <"${WORKDIR}"/modules.pnp)"
 			kconfig
@@ -937,6 +937,8 @@ detects(){
 }"
 		rm -f $i
 	done|module_reconf m2y
+	_unmodule arch drivers/{dma,dca}
+	module_reconf m2n <"${WORKDIR}"/modules.pnp
 }
 
 m2y(){
