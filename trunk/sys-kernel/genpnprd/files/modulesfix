@@ -91,7 +91,6 @@ done|while read i h; do
 		echo "BROKEN/UNSURE: $bus: $ii"
 		continue
 	fi
-continue
 	if grep -Prq "^\s*(?:menu)?config\s+$BU(?:\s.*)?$" $1 --include="Kconfig*"; then
 		echo "Fixing: $BU: ($n) $ii"
 		sed -i -e 's/^\(module_init.*\)$/\n#ifdef CONFIG_'"$BU"'\nMODULE_DEVICE_TABLE('"$bus, $n"');\n#endif\n\n\1/' $i
