@@ -52,7 +52,7 @@ done|while read i h; do
 	done
 	n="${n##* }"
 	bus="${bus%%_device_id*}"
-	grep -Pq "^module_init\s*\(" $i || continue
+	grep -q "^module_init[ 	]*(\|^MODULE_DESCRIPTION(" $i || continue
 	grep -q "MODULE_DEVICE_TABLE" $i && continue
 	local ii="${i#$1}"
 	ii="${ii#/}"
@@ -83,10 +83,16 @@ done|while read i h; do
 		echo "UNKNOWN BUS: $bus ($ii)"
 		continue
 	fi
+	add=''
+	[[ "$i" == "$h" ]] && add='
+/* _module_id_ */
+'
+	export add
 	if perl -e 'sub fix{
 			my ($s0,$s)=(@_);
 			my $s1=$s;
 			my $s2;
+			print STDERR "fix: ($s0)\n";
 			($s=~s/.*\{//gs)||return(($s0=~/\]/)?$s0.$s1:"[]$s0\{$s1\}, \{\}");
 			$s0.=$s1;
 			$s1=$s0;
@@ -103,7 +109,7 @@ done|while read i h; do
 			$s1
 		}
 		while(<STDIN>){$s.=$_}
-	exit !($s=~s/(\n'"${STR#^}"'[^\n]*?device_id[^\n]*)(\]?\s*=\s*\{)([^;]*)(\s*?\};)/$1.fix("$2","$3").$4/es && print $s)' <$h >"$TMPDIR/modulesfix.tmp" ; then
+	exit !($s=~s/(\n'"${STR#^}"'[^\n]*?device_id[^=;\{\}\]]*)(\]?\s*=\s*\{)([^;]*)(\s*?\};)/$1.fix("$2","$3").$4.$ENV{add}/es && print $s)' <$h >"$TMPDIR/modulesfix.tmp" ; then
 		cmp -s "$TMPDIR/modulesfix.tmp" $h && rm "$TMPDIR/modulesfix.tmp" || {
 			[[ "$i" != "$h" ]] && echo "Fixing: ($n) ${h#$1/}"
 			mv "$TMPDIR/modulesfix.tmp" $h
@@ -114,11 +120,13 @@ done|while read i h; do
 	fi
 	if grep -Prq "^\s*(?:menu)?config\s+$BU(?:\s.*)?$" $1 --include="Kconfig*"; then
 		echo "Fixing: $BU: ($n) $ii"
-		sed -i -e 's/^\(module_init.*\)$/\n#ifdef CONFIG_'"$BU"'\nMODULE_DEVICE_TABLE('"$bus, $n"');\n#endif\n\n\1/' $i
+		xx='\n#ifdef CONFIG_'"$BU"'\nMODULE_DEVICE_TABLE('"$bus, $n"');\n#endif'
 	else
 		echo "Fixing: $bus: ($n) $ii"
-		sed -i -e 's/^\(module_init.*\)$/\nMODULE_DEVICE_TABLE('"$bus, $n"');\n\n\1/' $i
+		xx='\nMODULE_DEVICE_TABLE('"$bus, $n"');'
 	fi
+	sed -i -e 's%^/\* _module_id_ \*/$%'"$xx"'\n%' $i
+	grep -q "^MODULE_DEVICE_TABLE" $i || echo -e "$xx" >>$i
 done
 }
 
