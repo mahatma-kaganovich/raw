@@ -1,0 +1,126 @@
+--- a/drivers/video/via/viafbdev.c	2011-08-13 16:17:24.000000000 +0300
++++ b/drivers/video/via/viafbdev.c	2011-08-13 22:20:32.000000000 +0300
+@@ -1692,6 +1692,115 @@
+ 	return 0;
+ }
+ 
++/* Add devices, detected only via i2c legacy.
++   Set LCD/DVI/CRT if viafb_active_dev unset.
++   FIXME: LCD check is DDI & no port 0x26 */
++static void viafb_detect_dev(struct viafb_dev *vdev)
++{
++	unsigned char *edid;
++	struct fb_var_screeninfo var;
++	int i, ndev = 0, nlcd = 0, unknown = 0;
++	struct i2c_adapter *adapter;
++	struct lvds_setting_information *inf;
++	struct fb_info *fb;
++
++	/* FIXME: viaparinfo1->chip_info looks equal to viaparinfo */
++	if (viaparinfo->chip_info->tmds_chip_info.tmds_chip_name) {
++		ndev++;
++		if (!viafb_active_dev)
++			viafb_DVI_ON = STATE_ON;
++	}
++	if (viaparinfo->chip_info->lvds_chip_info.lvds_chip_name) {
++		ndev++;
++		nlcd = 1;
++		if (!viafb_active_dev)
++			viafb_LCD_ON = STATE_ON;
++	}
++	if (viaparinfo->chip_info->lvds_chip_info2.lvds_chip_name) {
++		ndev++;
++		nlcd = 2;
++		if (!viafb_active_dev)
++			viafb_LCD2_ON = STATE_ON;
++	}
++	if (viafb_CRT_ON)
++		via_set_state(VIA_CRT, VIA_STATE_ON);
++	for (i = 0; i < VIAFB_NUM_PORTS; i++) {
++		/* detect only i2c ports, undetected in other places */
++		if ((viaparinfo && viaparinfo->chip_info && (
++		    (viaparinfo->chip_info->tmds_chip_info.tmds_chip_name &&
++		    viaparinfo->chip_info->tmds_chip_info.i2c_port == i) ||
++		    (viaparinfo->chip_info->lvds_chip_info.lvds_chip_name &&
++		    viaparinfo->chip_info->lvds_chip_info.i2c_port == i) ||
++		    (viaparinfo->chip_info->lvds_chip_info2.lvds_chip_name &&
++		    viaparinfo->chip_info->lvds_chip_info2.i2c_port == i)
++		    )) || (viaparinfo1 && viaparinfo1->chip_info && (
++		    (viaparinfo1->chip_info->tmds_chip_info.tmds_chip_name &&
++		    viaparinfo1->chip_info->tmds_chip_info.i2c_port == i) ||
++		    (viaparinfo1->chip_info->lvds_chip_info.lvds_chip_name &&
++		    viaparinfo1->chip_info->lvds_chip_info.i2c_port == i) ||
++		    (viaparinfo1->chip_info->lvds_chip_info2.lvds_chip_name &&
++		    viaparinfo1->chip_info->lvds_chip_info2.i2c_port == i)
++		    )) || !(adapter = viafb_find_i2c_adapter(i)) ||
++		    !adapter->algo_data || !(edid = fb_ddc_read(adapter)))
++			continue;
++		inf = NULL;
++		fb = NULL;
++		printk(KERN_INFO "viafb: adapter: %48s\n", adapter->name);
++		if (!nlcd) {
++			fb = viafbinfo;
++			inf = viaparinfo->lvds_setting_info;
++		} else if (nlcd > 1) {
++			printk(KERN_ERR "viafb: too many LCD\n");
++		} else if (viafb_dual_fb) {
++			fb = viafbinfo1;
++			inf = viaparinfo1->lvds_setting_info;
++		} else {
++			fb = viafbinfo;
++			inf = viaparinfo->lvds_setting_info2;
++		}
++		if (!fb)
++			goto unknown;
++		fb_edid_to_monspecs(edid, &fb->monspecs);
++		memset(&var, 0, sizeof(var));
++		if (fb_parse_edid(edid, &var) || !var.xres || !var.yres)
++			goto unknown;
++		/* fb->var=var; */
++		printk(KERN_INFO "viafb: res %ix%i\n",
++		    var.xres, var.yres);
++		if (!(fb->monspecs.input & FB_DISP_DDI) || i == VIA_PORT_26)
++			goto unknown;
++		if (inf) {
++			inf->lcd_panel_hres = var.xres;
++			inf->lcd_panel_vres = var.yres;
++		}
++		if (!viafb_active_dev) {
++			if (nlcd)
++				viafb_LCD2_ON = STATE_ON;
++			else
++				viafb_LCD_ON = STATE_ON;
++		}
++		nlcd++;
++		goto ok;
++	unknown:
++		unknown++;
++	ok:
++		ndev++;
++		kfree(edid);
++	}
++	if (!viafb_active_dev) {
++		/* prefer CRT OFF if other devices */
++		if (!unknown && ndev > 0) {
++			viafb_CRT_ON = STATE_OFF;
++			via_set_state(VIA_CRT, VIA_STATE_OFF);
++		}
++		viafb_DeviceStatus = viafb_primary_dev =
++		    viafb_CRT_ON ? CRT_Device :
++		    viafb_DVI_ON ? DVI_Device :
++		    viafb_LCD_ON ? LCD_Device : None_Device;
++		viafb_set_iga_path();
++	}
++}
++
+ 
+ #ifdef CONFIG_PM
+ static int viafb_suspend(void *unused)
+@@ -1897,6 +2006,7 @@
+ 
+ 	viafb_init_proc(viaparinfo->shared);
+ 	viafb_init_dac(IGA2);
++	viafb_detect_dev(vdev);
+ 
+ #ifdef CONFIG_PM
+ 	viafb_pm_register(&viafb_fb_pm_hooks);
