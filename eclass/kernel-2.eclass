@@ -935,7 +935,7 @@ detects(){
 }
 
 detects_cleanup(){
-	local i="${*:-arch drivers/dma}"
+	local i="${*:-drivers/dma}"
 	find $i -name "*.ko" -delete &>/dev/null
 #	find $i -name "*.o" -delete &>/dev/null
 	_unmodule $i
