@@ -195,8 +195,9 @@ kernel-2_src_compile() {
 			einfo "Reconfiguring kernel with hardware detect"
 			KERNEL_CONFIG+=" ===detect: $(detects)"
 			kconfig
-			einfo "Applying KERNEL_CLEANUP='$KERNEL_CLEANUP'"
-			KERNEL_CONFIG+=" ===cleanup: $(detects_cleanup $KERNEL_CLEANUP)"
+			i="${KERNEL_CLEANUP:-arch device/dma}"
+			einfo "Applying KERNEL_CLEANUP='$i'"
+			KERNEL_CONFIG+=" ===cleanup: $(detects_cleanup $i)"
 			kconfig
 			i=true
 		fi
@@ -935,10 +936,9 @@ detects(){
 }
 
 detects_cleanup(){
-	local i="${*:-drivers/dma}"
-	find $i -name "*.ko" -delete &>/dev/null
-#	find $i -name "*.o" -delete &>/dev/null
-	_unmodule $i
+	find "${@}" -name "*.ko" -delete &>/dev/null
+#	find "${@}" -name "*.o" -delete &>/dev/null
+	_unmodule "${@}"
 	module_reconf m2n <"${WORKDIR}"/modules.pnp
 }
 
