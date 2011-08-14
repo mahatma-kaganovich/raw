@@ -195,7 +195,7 @@ kernel-2_src_compile() {
 			einfo "Reconfiguring kernel with hardware detect"
 			KERNEL_CONFIG+=" ===detect: $(detects)"
 			kconfig
-			i="${KERNEL_CLEANUP:-arch drivers/dma}"
+			i="${KERNEL_CLEANUP:-arch/$(arch) drivers/dma}"
 			einfo "Applying KERNEL_CLEANUP='$i'"
 			KERNEL_CONFIG+=" ===cleanup: $(detects_cleanup $i)"
 			kconfig
