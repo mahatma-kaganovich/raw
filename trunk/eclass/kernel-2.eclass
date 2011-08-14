@@ -904,11 +904,11 @@ module_reconf(){
 _unmodule(){
 	local i a
 	find "${@}" -name Makefile|while read i; do
-		sed -e 's:=:= :' -e 's:\s\s*: :g' <$i|while read i; do
+		while read i; do
 			a="${i%\\}"
 			[[ "$a" == "$i" ]] && echo "$i" || echo -n "$a "
-		done
-	done |grep "^obj-" >"${TMPDIR}"/unmodule.tmp
+		done <$i
+	done |grep "^obj-"|sed -e 's:=:= :' -e 's:\s\s*: :g' >"${TMPDIR}"/unmodule.tmp
 }
 
 detects(){
