@@ -904,10 +904,10 @@ module_reconf(){
 _unmodule(){
 	local i a
 	find "${@}" -name Makefile|while read i; do
-		while read i; do
+		sed -e 's:=:= :' -e 's:\s\s*: :g' <$i|while read i; do
 			a="${i%\\}"
 			[[ "$a" == "$i" ]] && echo "$i" || echo -n "$a "
-		done <$i
+		done
 	done |grep "^obj-" >"${TMPDIR}"/unmodule.tmp
 }
 
@@ -937,7 +937,7 @@ detects(){
 }"
 		rm -f $i
 	done|module_reconf m2y
-	_unmodule arch drivers/dma
+	_unmodule ${@:-arch drivers/dma}
 	module_reconf m2n <"${WORKDIR}"/modules.pnp
 }
 
