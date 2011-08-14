@@ -196,7 +196,7 @@ kernel-2_src_compile() {
 			KERNEL_CONFIG+=" ===detect: $(detects)"
 			kconfig
 			einfo "Applying KERNEL_CLEANUP='$KERNEL_CLEANUP'"
-			KERNEL_CONFIG+=" ===cleanup: $(detects_cleanup)"
+			KERNEL_CONFIG+=" ===cleanup: $(detects_cleanup $KERNEL_CLEANUP)"
 			kconfig
 			i=true
 		fi
