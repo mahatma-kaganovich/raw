@@ -312,7 +312,7 @@ CONFIG_INITRAMFS_COMPRESSION_$c=y" >>.config
 kernel-2_src_install() {
 	check_kv
 	cd "${S}" || die
-	rm -f .config.old
+	rm -f .config.old *.loopfs
 	if [[ ${ETYPE} == sources ]] && use build-kernel; then
 		mkdir "${D}/boot"
 		local f f1
@@ -532,6 +532,7 @@ acpi_detect(){
 cpu2K(){
 local i v V="" CF="" march=$(march) m64g="HIGHMEM64G -HIGHMEM4G -NOHIGHMEM" freq='' gov='ONDEMAND'
 local vendor_id="" model_name="" flags="" cpu_family="" model="" cache_alignment="" fpu="" siblings="" cpu_cores="" processor=""
+export PNP_VENDOR="^vendor_id\|"
 CF1 -SMP -X86{BIGSMP,GENERIC} X86_{X2APIC,UP_APIC,UP_IOAPIC} -SPARSE_IRQ
 use xen && CF1 -HIGHMEM64G -HIGHMEM4G NOHIGHMEM X86_PAE
 use smp && CF1 SMP X86_BIGSMP SCHED_{SMT,MC} SPARSE_IRQ
@@ -543,6 +544,7 @@ if [[ -z "${march}" ]]; then
 fi
 case "${march}" in
 native)
+	export PNP_VENDOR=""
 	CF1 -SCHED_{SMT,MC} -X86_{UP_APIC,TSC,PAT,MSR,MCE,CMOV,X2APIC} -MTRR -INTEL_IDLE -KVM_INTEL -KVM_AMD -SPARSE_IRQ
 	case "${CTARGET:-${CHOST}}" in
 	x86*|i?86*)
@@ -889,10 +891,11 @@ echo "${aflags# }"
 }
 
 module_reconf(){
-	local i
+	local i c
 	sed -e 's:^.*/::g' -e 's:\.ko$::g'|sort -u|while read i; do
-		grep -Rh "^\s*obj\-\$[(]CONFIG_.*\s*\+=.*\s${i//[_-]/[_-]}\.o" "${TMPDIR}"/unmodule.tmp|sed -e 's:).*$::g' -e 's:^.*(CONFIG_::'|while read i; do
-			$1 "$i"
+		grep -Rh "^\s*obj\-\$[(]CONFIG_.*\s*\+=.*\s${i//[_-]/[_-]}\.o" "${TMPDIR}"/unmodule.tmp|sed -e 's:).*$::g' -e 's:^.*(CONFIG_::'|while read c; do
+			$1 "$c"
+			echo "$i" >>"${TMPDIR}/unmodule.$1"
 		done
 	done
 }
@@ -905,6 +908,20 @@ _unmodule(){
 			[[ "$a" == "$i" ]] && echo "$i" || echo -n "$a "
 		done <$i
 	done |grep "^obj-"|sed -e 's:=:= :' -e 's:\s\s*: :g' >"${TMPDIR}"/unmodule.tmp
+}
+
+modalias_reconf(){
+	sed -e 's:-:_:g'|sort -u|while read i; do
+		modalias "$i"||continue
+		# strip "later" concurrent drivers
+		i="$ALIAS"
+		i="${ALIAS%% 1 *}"
+		#[[ "$i" != "$ALIAS" ]] && [[ -n "$i" ]] && echo "strip: $ALIAS" >&2
+		i="${i:-${ALIAS#1 }}"
+		echo "${i// /
+}"
+		(cd "${WORKDIR}" && rm -f $i)
+	done|module_reconf "${@}"
 }
 
 detects(){
@@ -921,25 +938,16 @@ detects(){
 			[[ "$b" == / ]] && [[ "$c" != rootfs ]] && echo "$c"
 		done </proc/mounts
 		# cpu flags
-		(cd "${SHARE}"/etc/modflags && cat $(grep "^flags" /proc/cpuinfo|sed -e 's/^.*://') $(cat /sys/bus/acpi/devices/*/path|sed -e 's:^\\::') </dev/null 2>/dev/null)
-	}|sed -e 's:-:_:g'|sort -u|while read i; do
-		modalias "$i"||continue
-		# strip "later" concurrent drivers
-		i="$ALIAS"
-		i="${ALIAS%% 1 *}"
-		#[[ "$i" != "$ALIAS" ]] && [[ -n "$i" ]] && echo "strip: $ALIAS" >&2
-		i="${i:-${ALIAS#1 }}"
-		echo "${i// /
-}"
-		(cd "${WORKDIR}" && rm -f $i)
-	done|module_reconf m2y
+		(cd "${SHARE}"/etc/modflags && cat $(grep "${PNP_VENDOR}^flags" /proc/cpuinfo) $(cat /sys/bus/acpi/devices/*/path|sed -e 's:^\\::') </dev/null 2>/dev/null)
+	}|modalias_reconf m2y
+	(cd "${SHARE}"/etc/modflags && cat $(cat "${TMPDIR}/unmodule.m2y") </dev/null 2>/dev/null)|modalias_reconf m2y
 }
 
 detects_cleanup(){
-	find "${@}" -name "*.ko" -delete &>/dev/null
-#	find "${@}" -name "*.o" -delete &>/dev/null
+	find "${@}" -name "*.ko" -delete >/dev/null
+#	find "${@}" -name "*.o" -delete >/dev/null
 	_unmodule "${@}"
-	module_reconf m2n <"${WORKDIR}"/modules.pnp
+	cat "${WORKDIR}"/modules.pnp "${SHARE}"/etc/modflags/*|module_reconf m2n
 }
 
 m2y(){
