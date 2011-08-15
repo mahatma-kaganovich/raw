@@ -197,7 +197,7 @@ kernel-2_src_compile() {
 			kconfig
 			i="${KERNEL_CLEANUP:-arch/$(arch) drivers/dma}"
 			einfo "Applying KERNEL_CLEANUP='$i'"
-			KERNEL_CONFIG+=" ===cleanup: $(detects_cleanup $i)"
+			KERNEL_CONFIG+=" ===cleanup: ${KERNEL_CONFIG2} $(detects_cleanup $i)"
 			kconfig
 			i=true
 		fi
@@ -713,8 +713,8 @@ case "${CTARGET:-${CHOST}}:$CF" in
 esac
 use lguest && CF1 -HIGHMEM64G
 use acpi && use embed-hardware && acpi_detect
-use embed-hardware && [[ -n "$freq" ]] && CF1 $freq CPU_FREQ_GOV_${gov} CPU_FREQ_DEFAULT_GOV_${gov}
-[[ -n "${V}" ]] && CF1 "-CPU_SUP_[\w\d_]*" CPU_SUP_${V}
+use embed-hardware && [[ -n "$freq" ]] && CF1 -X86_POWERNOW_K8 -X86_ACPI_CPUFREQ $freq CPU_FREQ_GOV_${gov} CPU_FREQ_DEFAULT_GOV_${gov}
+CF1 "-CPU_SUP_.*" CPU_SUP_${V}
 KERNEL_CONFIG="#-march=${march}# ${CF//  / }
 ${KERNEL_CONFIG}"
 }
@@ -898,6 +898,7 @@ module_reconf(){
 			echo "$i" >>"${TMPDIR}/unmodule.$1"
 		done
 	done
+	echo ''
 }
 
 _unmodule(){
@@ -960,7 +961,7 @@ detects_cleanup(){
 
 m2y(){
 	grep -q "^CONFIG_$1=[my]$" .config || return
-	echo -ne " &$1"
+	echo -n " &$1"
 	# buggy dependences only
 	case "$1" in
 	ACPI_VIDEO)m2y VIDEO_OUTPUT_CONTROL;;
@@ -970,7 +971,7 @@ m2y(){
 m2n(){
 	grep -q "^CONFIG_$1=m$" .config || return
 	# "-$1" may be too deep
-	echo -ne " ~$1"
+	echo -n " ~$1"
 	sed -i -e "s/^CONFIG_$1=m\$/# CONFIG_$1 is not set/" .config
 }
 

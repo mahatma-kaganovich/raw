@@ -12,7 +12,7 @@ $ENV{KERNEL_CONFIG}||='
 	GFS2_FS_LOCKING_DLM NTFS_RW
 	X86_32_NON_STANDARD INTR_REMAP
 	MICROCODE_INTEL MICROCODE_AMD
-	ASYNC_TX_DMA NET_DMA DMAR INTR_REMAP BLK_DEV_INTEGRITY
+	ASYNC_TX_DMA DMAR INTR_REMAP BLK_DEV_INTEGRITY
 	AMD_IOMMU
 	SPARSEMEM_MANUAL MEMTEST .*FS_XATTR
 	MEMORY_HOTPLUG MEMORY_HOTREMOVE
@@ -83,8 +83,17 @@ $ENV{KERNEL_CONFIG}||='
 	===udev: -IDE
 	=======
 	';
+$ENV{KERNEL_CONFIG2}||='?DMA_ENGINE';
 
-%cc=('+'=>1,'-'=>1,'~'=>1,'='=>1,'&'=>1);
+
+%cc=(
+	'+'=>'m',
+	'-'=>'n (recursive)',
+	'~'=>'remove/oldconfig-default',
+	'='=>'y if undefined bool',
+	'&'=>'m->y recursive embed',
+	'?'=>'n if none embedded module dependences (use after detects)',
+);
 
 sub Kcload{
 	die "Unresolved Kconfig: $_[0]\n" if(index($_[0],'$')>=0);
@@ -95,8 +104,9 @@ sub Kcload{
 	substr($d,0,length($ENV{S})+1)='';
 	while(defined(my $s=<$F>)){
 		chomp($s);
-		$s=~s/^\s*((?:menu)?config)\s+(\S+)/$c=$1;$v="$d:$2";next/se;
+		$s=~s/^\s*(comment|(?:menu)?config)\s+(\S+)/$c=$1;$v="$d:$2";next/se;
 		$s=~s/^\s*choice\s*$/$c=choice;$v=undef;next/se;
+		$s=~s/^\s*comment\s/$c=comment;$v=undef;next/se;
 		$s=~s/^\s*(?:def_)?tristate(?:\s+\S*|$)/$tristate{$v}=1;next/se;
 		$s=~s/^\s*(?:def_)?bool(?:\s+\S*|$)/if($c eq 'menuconfig'){$menu{$v}=1}else{$bool{$v}=1};next/se;
 		$s=~s/^\s*select\s+(\S*)/push @{$select{$1}},$v;next/se;
@@ -211,37 +221,53 @@ sub cfg{
 	$set{$_[0]}=1;
 	if(defined($_[1])){
 		$config{$_[0]}=$_[1];
-		return
+		return 1;
 	}
-	return if($off{$_[0]});
+	return 0 if($off{$_[0]});
 	my $msg_=$msg;
-	$config{$_[0]}='';
 	$off{$_[0]}=1;
 	for(@{$select{$_[0]}}){
 		my $i=$_;
 		$i=~s/.*://;
-#		if(defined($config{$i})){
-		if(exists($config{$i})){
-			$msg.=" -$i" if($config{$i});
-			cfg($i);
-		}
+		my $r=$config{$i};
+		$msg.=" -$i" if(cfg($i,undef,$_[2]) && $r);
 	}
 	if($msg && !$msg_){
-		print "KERNEL_CONFIG: -$_[0] ->$msg\n";
+		print "KERNEL_CONFIG: ",($_[2]?'?':'')," -$_[0] ->$msg\n";
 		$msg=$msg_;
 	}
+	defined($_[2]) && !&{$_[2]}($_[0]) && return 0;
+	$config{$_[0]}='';
+	1;
 }
 
 sub _and{
 	return if($config{$_[0]} ne 'm');
 	print "KERNEL_CONFIG: & $_[2] -> $_[0]\n" if($_[0] ne $_[2]);
-	cfg(@_);
+	cfg(@_[0,1]);
 	for(grep(/.*:$_[0]$/,keys %depends)){
 		next if(!exists($tristate{$_}));
 		for(@{$depends{$_}}){
 			_and($_,@_[1,2]) for(split(/[ )(]/,$_));
 		}
 	}
+}
+
+sub _if{
+#	return 1 if(!$config{$_[0]});
+	my $r;
+	if(grep(/.*:$_[0]$/,keys %tristate)){
+		return 0 if($config{$_[0]} eq 'y');
+		$r++;
+	}
+	for(keys %tristate){
+		grep(/(?:^|[ \)\(])$_[0](?:[ \)\(]|$)/,@{$depends{$_}}) || next;
+		my $i=$_;
+		$i=~s/.*://;
+		return 0 if($config{$i} eq 'y');
+		$r++;
+	}
+	$r;
 }
 
 sub conf{
@@ -264,7 +290,7 @@ sub conf{
 		@l=keys %ll;
 	}else{
 		@l=grep(/^$d$/,keys %vars);
-		@l=($d) if($#l==-1 && ! $d=~/[^A-Z0-9_]/ && $_[0] eq $_);
+		@l=($d) if($#l==-1 && !($d=~/[^A-Z0-9_]/) && $_[0] eq $_);
 	}
 	for(@l){
 		if($c eq '+'){
@@ -276,6 +302,9 @@ sub conf{
 			cfg($_,$oldconfig{$_});
 		}elsif($c eq '&'){
 			_and($_,$y,$_);
+		}elsif($c eq '?'){
+			cfg($_,undef,\&_if);
+#			_if($_);
 		}elsif($c ne '=' || !defined($config{$_})){
 			cfg($_,$y);
 		}
@@ -323,10 +352,17 @@ sub Kconfig{
 	set_config("$ENV{S}/.config");
 }
 
-if($ARGV[0] eq '-config'){
-	print ": \${$_:='$ENV{$_}'}\n" for(grep(/^KERNEL_/,keys %ENV));
+sub config{
+	print ": \${$_:='$ENV{$_}'}\n" for(sort grep(/^KERNEL_/,keys %ENV));
+}
+
+if($ARGV[0]=~/^-(?:help|-help|h|--h)$/){
+	config;
+	print "---Modifiers:\n";
+	print "'$_' - $cc{$_}\n" for(sort keys %cc);
+}elsif($ARGV[0] eq '-config'){
+	config;
 }else{
 	$ENV{S}||=$ARGV[0]||'.';
 	Kconfig();
 }
-
