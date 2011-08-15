@@ -13,6 +13,7 @@ MY_PN="${MY_PN/shiretoko/firefox}"
 MY_PN="${MY_PN/bonecho/firefox}"
 MY_PN="${MY_PN/minefield/firefox}"
 MY_PN="${MY_PN/mozilla-firefox/firefox}"
+MY_PN="${MY_PN/aurora/firefox}"
 
 MY_PV="${PV/_/}"
 MY_PV="${MY_PV/beta/b}"
@@ -547,6 +548,9 @@ src_configure(){
 	*bonecho*|*shiretoko*)
 		mozconfig_annotate '' --with-branding=browser/branding/unofficial
 	;;
+	*aurora*)
+		mozconfig_annotate '' --with-branding=browser/branding/aurora
+	;;
 	*firefox*)
 		mozconfig_use_enable !bindist official-branding
 		einfo
@@ -717,6 +721,11 @@ src_install() {
 	*bonecho*|*shiretoko*)
 		icon "${S}"/browser/branding/unofficial
 		Title="Shiretoko"
+		R="firefox"
+	;;
+	*aurora*)
+		icon "${S}"/browser/branding/aurora
+		Title="Aurora"
 		R="firefox"
 	;;
 	*fennec*)
