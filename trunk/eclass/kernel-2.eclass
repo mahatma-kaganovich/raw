@@ -911,12 +911,19 @@ _unmodule(){
 }
 
 modalias_reconf(){
-	sed -e 's:-:_:g'|sort -u|while read i; do
-		modalias "$i"||continue
+	local a i
+	sed -e 's:-:_:g'|sort -u|while read a; do
+		modalias "$a"||continue
 		# strip "later" concurrent drivers
 		i="$ALIAS"
 		i="${ALIAS%% 1 *}"
 		#[[ "$i" != "$ALIAS" ]] && [[ -n "$i" ]] && echo "strip: $ALIAS" >&2
+		if [[ -z "$i" ]] && use !monolythe && [[ $1 == m2y ]]; then
+			# this module better to keep load later
+			# unless monolythe
+			sed -i -e "/^$a\$/d" "${WORKDIR}"/modules.pnp_
+			continue
+		fi
 		i="${i:-${ALIAS#1 }}"
 		echo "${i// /
 }"
@@ -929,6 +936,7 @@ detects(){
 	_unmodule .
 	perl "${SHARE}"/mod2sh.pl "${WORKDIR}" >&2 || die "Unable to run '${SHARE}/mod2sh.pl'"
 	. "${WORKDIR}"/modules.alias.sh
+	cat "${WORKDIR}"/modules.pnp "${SHARE}"/etc/modflags/* >>"${WORKDIR}"/modules.pnp_
 	{
 		# /sys
 		cat `find /sys -name modalias`
@@ -940,16 +948,7 @@ detects(){
 		# cpu flags
 		(cd "${SHARE}"/etc/modflags && cat $(grep "${PNP_VENDOR}^flags" /proc/cpuinfo) $(cat /sys/bus/acpi/devices/*/path|sed -e 's:^\\::') </dev/null 2>/dev/null)
 	}|modalias_reconf m2y
-	cat "${WORKDIR}"/modules.pnp "${SHARE}"/etc/modflags/* >>"${WORKDIR}"/modules.pnp_
-	# integrate or remove from "pnp"
-	# for example, usb_storage better to keep load sure after ata/scsi
-	(cd "${SHARE}"/etc/modflags && cat $(cat "${TMPDIR}/unmodule.m2y") </dev/null 2>/dev/null)|if use monolythe; then
-		modalias_reconf m2y
-	else
-		while read i; do
-			sed -i -e "/^$i\$/d" "${WORKDIR}"/modules.pnp_
-		done
-	fi
+	(cd "${SHARE}"/etc/modflags && cat $(cat "${TMPDIR}/unmodule.m2y") </dev/null 2>/dev/null)|modalias_reconf m2y
 }
 
 detects_cleanup(){
