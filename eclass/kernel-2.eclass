@@ -918,7 +918,7 @@ modalias_reconf(){
 		i="$ALIAS"
 		i="${ALIAS%% 1 *}"
 		#[[ "$i" != "$ALIAS" ]] && [[ -n "$i" ]] && echo "strip: $ALIAS" >&2
-		if [[ -z "$i" ]] && use !monolythe && [[ $1 == m2y ]]; then
+		if [[ -z "$i$2" ]] && use !monolythe; then
 			# this module better to keep load later
 			# unless monolythe
 			sed -i -e "/^$a\$/d" "${WORKDIR}"/modules.pnp_
@@ -947,7 +947,7 @@ detects(){
 		done </proc/mounts
 		# cpu flags
 		(cd "${SHARE}"/etc/modflags && cat $(grep "${PNP_VENDOR}^flags" /proc/cpuinfo) $(cat /sys/bus/acpi/devices/*/path|sed -e 's:^\\::') </dev/null 2>/dev/null)
-	}|modalias_reconf m2y
+	}|modalias_reconf m2y 1
 	(cd "${SHARE}"/etc/modflags && cat $(cat "${TMPDIR}/unmodule.m2y") </dev/null 2>/dev/null)|modalias_reconf m2y
 }
 
