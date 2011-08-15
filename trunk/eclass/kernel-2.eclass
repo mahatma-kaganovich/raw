@@ -940,14 +940,23 @@ detects(){
 		# cpu flags
 		(cd "${SHARE}"/etc/modflags && cat $(grep "${PNP_VENDOR}^flags" /proc/cpuinfo) $(cat /sys/bus/acpi/devices/*/path|sed -e 's:^\\::') </dev/null 2>/dev/null)
 	}|modalias_reconf m2y
-	(cd "${SHARE}"/etc/modflags && cat $(cat "${TMPDIR}/unmodule.m2y") </dev/null 2>/dev/null)|modalias_reconf m2y
+	cat "${WORKDIR}"/modules.pnp "${SHARE}"/etc/modflags/* >>"${WORKDIR}"/modules.pnp_
+	# integrate or remove from "pnp"
+	# for example, usb_storage better to keep load sure after ata/scsi
+	(cd "${SHARE}"/etc/modflags && cat $(cat "${TMPDIR}/unmodule.m2y") </dev/null 2>/dev/null)|if use monolythe; then
+		modalias_reconf m2y
+	else
+		while read i; do
+			sed -i -e "/^$i\$/d" "${WORKDIR}"/modules.pnp_
+		done
+	fi
 }
 
 detects_cleanup(){
 	find "${@}" -name "*.ko" -delete >/dev/null
 #	find "${@}" -name "*.o" -delete >/dev/null
 	_unmodule "${@}"
-	cat "${WORKDIR}"/modules.pnp "${SHARE}"/etc/modflags/*|module_reconf m2n
+	module_reconf m2n <"${WORKDIR}"/modules.pnp_
 }
 
 m2y(){
