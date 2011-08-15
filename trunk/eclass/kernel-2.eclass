@@ -924,7 +924,7 @@ modalias_reconf(){
 			sed -i -e "/^$a\$/d" "${WORKDIR}"/modules.pnp_
 			continue
 		fi
-		i="${i:-${ALIAS#1 }}"
+		i="${i:-${ALIAS# 1 }}"
 		echo "${i// /
 }"
 		(cd "${WORKDIR}" && rm -f $i)
