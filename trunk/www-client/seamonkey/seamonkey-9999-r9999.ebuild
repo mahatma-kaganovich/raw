@@ -540,25 +540,33 @@ src_configure(){
 
 	echo "" >>"${S}"/.mozconfig
 
+	branding=''
 	case "${PN}" in
 	*minefield*)
 		mozconfig_annotate '' --enable-faststripe
-		mozconfig_annotate '' --with-branding=browser/branding/nightly
+		branding=browser/branding/nightly
 	;;
 	*bonecho*|*shiretoko*)
-		mozconfig_annotate '' --with-branding=browser/branding/unofficial
+		branding=browser/branding/unofficial
 	;;
 	*aurora*)
-		mozconfig_annotate '' --with-branding=browser/branding/aurora
+		branding=browser/branding/aurora
 	;;
 	*firefox*)
 		mozconfig_use_enable !bindist official-branding
+#		branding=browser/branding/official
 		einfo
 		elog "You may not redistribute this build to any users on your network"
 		elog "or the internet. Doing so puts yourself into"
 		elog "a legal problem with Mozilla Foundation"
 	;;
 	esac
+	if [[ -n "$branding" ]]; then
+		local m="${branding//browser/mobile}"
+		use mobile && [[ -e "${S}/${m}" ]] && branding="$m"
+		mozconfig_annotate '' --with-branding=$branding
+	fi
+	export branding
 
 	export MAKEOPTS="$MAKEOPTS installdir=$MOZILLA_FIVE_HOME sdkdir=$MOZILLA_FIVE_HOME-devel includedir=/usr/include/${PN} idldir=/usr/share/idl/${PN}"
 
@@ -698,9 +706,9 @@ src_install() {
 #	cp "${D}"${MOZILLA_FIVE_HOME}/chrome/installed-chrome.txt \
 #		"${D}"${MOZILLA_FIVE_HOME}/chrome.d/0_base-chrome.txt
 
-	local Title="${PN}"
+	local Title="${PN^}"
 	local Comment="Web Browser"
-	local R="${PN}"
+	local R="${MY_PN}"
 
 	# Install icon and .desktop for menu entry
 	case "${PN}" in
@@ -711,27 +719,11 @@ src_install() {
 	*firefox*)
 		icon "${S}"/other-licenses/branding/firefox/content
 		Title="Mozilla Firefox"
-		R="firefox"
-	;;
-	*minefield*)
-		icon "${S}"/browser/branding/nightly
-		Title="Minefield"
-		R="firefox"
-	;;
-	*bonecho*|*shiretoko*)
-		icon "${S}"/browser/branding/unofficial
-		Title="Shiretoko"
-		R="firefox"
-	;;
-	*aurora*)
-		icon "${S}"/browser/branding/aurora
-		Title="Aurora"
-		R="firefox"
 	;;
 	*fennec*)
 		icon "${S}"/mobile/branding/{,nightly/}content
-		Title="Fennec"
 	;;
+	*)icon "${S}/${branding}";;
 	esac
 	echo "[Desktop Entry]
 Name=${Title}
