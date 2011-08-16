@@ -95,7 +95,7 @@ $ENV{KERNEL_CONFIG2}||='?DMA_ENGINE';
 	'?'=>'n if none embedded module dependences (use after detects)',
 );
 
-%config=('y'=>'y','n'=>'n');
+%config=('y'=>'y','n'=>'n','m'=>'m');
 
 sub Kcload{
 	die "Unresolved Kconfig: $_[0]\n" if(index($_[0],'$')>=0);
@@ -271,15 +271,16 @@ sub cfg{
 		$config{$_[0]}=$_[1];
 		return 1;
 	}
-	return 0 if($off{$_[0]});
+	return 1 if(exists($off{$_[0]}));
 	$off{$_[0]}=1;
 	for(sel($_[0],\%select)){
 		my $i=$_;
 		$i=~s/.*://;
 		my $r=$config{$i};
-		$msg.=" -$i" if(cfg($i,undef,$_[2]) && $r);
+		cfg($i,undef,$_[2]) || return 0;
+		$msg.=" -$i" if($r && !defined($_[2]));
 	}
-	defined($_[2]) && !&{$_[2]}($_[0]) && return 0;
+	defined($_[2]) && return &{$_[2]}($_[0]);
 	$config{$_[0]}='';
 	1;
 }
@@ -320,12 +321,19 @@ sub _if{
 		$y='m';
 		$r++;
 	}
-	my ($i,@t);
+	my $i;
 	for(keys %tristate){
 		onoff($_[0],$_,$y) || next;
 		$i=$_;
 		$i=~s/.*://;
-		return 0 if($config{$i} eq 'y');
+		return 0 if($config{$i} eq 'y' || !cfg($i,undef,\&_if));
+		$r++;
+	}
+	for(keys %bool){
+		onoff($_[0],$_,$y) || next;
+		$i=$_;
+		$i=~s/.*://;
+		return 0 if(!cfg($i,undef,\&_if));
 		$r++;
 	}
 	$r;
@@ -357,14 +365,18 @@ sub conf{
 		if($c eq '+'){
 			cfg($_,'m');
 		}elsif($c eq '-'){
-			%off={};
+			%off=();
 			cfg($_);
 		}elsif($c eq '~'){
 			cfg($_,$oldconfig{$_});
 		}elsif($c eq '&'){
 			_and($_,$y,$_);
 		}elsif($c eq '?'){
-			cfg($_,undef,\&_if);
+			%off=();
+			cfg($_,undef,\&_if) || next;
+			$msg='';
+			%off=();
+			cfg($_);
 		}elsif($c ne '=' || !defined($config{$_})){
 			cfg($_,$y);
 		}
