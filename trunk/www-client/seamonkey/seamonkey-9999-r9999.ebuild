@@ -41,7 +41,7 @@ IUSE="-java mozdevelop moznoirc moznoroaming postgres startup-notification
 	debug minimal directfb moznosystem +threads jssh wifi python mobile static
 	moznomemory accessibility system-sqlite vanilla xforms gio +alsa
 	+custom-cflags +custom-optimization system-xulrunner +libxul system-nss system-nspr X
-	bindist flatfile dbus profile ipv6 opengl moznopango e10s force-shared-static"
+	bindist flatfile dbus profile ipv6 opengl moznopango e10s force-shared-static ipcode"
 #	qt-experimental"
 
 #RESTRICT="nomirror"
@@ -175,6 +175,8 @@ mobile)
 ;;
 esac
 
+extensions="${S}/mailnews/extensions/enigmail ${S1}/extensions/ipcode"
+
 [[ -n "${PATCH}" ]] && SRC_URI="${SRC_URI}  !vanilla? ( ${PATCH} )"
 
 # wireless-tools requred by future (mercurial repo), maybe now too
@@ -233,18 +235,15 @@ src_prepare(){
 	EPATCH_FORCE="yes" \
 	epatch "${FILESDIR}"/${PV}
 
-	if [[ -e "${WORKDIR}"/enigmail ]]; then
-		mv "${WORKDIR}"/enigmail "${S}"/mailnews/extensions/enigmail
-	fi
-
-	if [[ -e "${S}"/mailnews/extensions/enigmail ]]; then
-		cd "${S}"/mailnews/extensions/enigmail || die
+	local i
+	for i in $extensions "${S1}"/extensions/{xforms,schema-validation}; do
+		mv "${WORKDIR}/${i##*/}" "$i"
+	done
+	for i in $extensions; do
+		cd "$i" 2>/dev/null || continue
 		sed -i -e 's:^\(#include "mimehdrs2.h"\)$:#include <ctype.h>\n\1:' src/mimehdrs2.cpp
 		./makemake -r
-	fi
-
-	mv "${WORKDIR}"/xforms* "${S1}"/extensions/xforms
-	mv "${WORKDIR}"/schema-validation* "${S1}"/extensions/schema-validation
+	done
 
 	# Fix scripts that call for /usr/local/bin/perl #51916
 	ebegin "Patching smime to call perl from /usr/bin"
@@ -639,7 +638,7 @@ _package(){
 }
 
 src_compile() {
-	local E="${S}/mailnews/extensions/enigmail" o= o1= o2=
+	local E o= o1= o2=
 	grep -q "^mk_" "${S}"/.mozconfig && o="-f client.mk" && o1=build
 	use profile && o2="MOZ_PROFILE_GENERATE=1"
 	# sometimes parallel build breaks
@@ -649,7 +648,9 @@ src_compile() {
 		emake $o maybe_clobber_profiledbuild
 		emake $o $o1 MOZ_PROFILE_USE=1 || die
 	}
-	[[ -e "$E" ]] && ( emake -C "$E" || die )
+	for E in $extensions; do
+		[[ -e "$E" ]] && ( emake -C "$E" || die )
+	done
 }
 
 rmopt(){
@@ -826,11 +827,13 @@ src_unpack() {
 	fi
 	[[ "${MY_PN}" == mobile ]] && _hg mobile-browser "${S}"/mobile
 	_hg dom-inspector "${S1}"/extensions/inspector
-	_hg xforms "${S1}"/extensions/xforms xforms
 	_hg schema-validation "${S1}"/extensions/schema-validation xforms
 	_hg venkman "${S1}"/extensions/venkman mozdevelop
 	_hg pyxpcom "${S1}"/extensions/python python
 	_hg chatzilla "${S1}"/extensions/irc !moznoirc
+	for i in xforms ipcode; do
+		_hg $i "${S1}"/extensions/$i $i
+	done
 	SM && use !moznomail && use crypt && _cvs enigmail/src "${S}"/mailnews/extensions/enigmail crypt
 	SM && LDAP && {
 		[[ -e "${S}/ldap" ]] && d="${S}/ldap/sdks" || d="${S}/directory"
@@ -841,6 +844,7 @@ src_unpack() {
 		use moznosystem || use !system-nss && for d in dbm security/nss security/coreconf security/dbm; do
 			_cvs_m "mozilla/$d" "${S1}/$d"
 		done
+		_hg tracemonkey "${S1}/js/src"
 #		_cvs_m mozilla/js/src "${S1}/js/src"
 #		_cvs_m libffi "${S1}/js/src/ctypes/libffi" "" :pserver:anoncvs@sources.redhat.com:/cvs/libffi
 #		ln -s src/libffi "${S1}/js/libffi" # ?
