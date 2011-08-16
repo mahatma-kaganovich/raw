@@ -95,31 +95,44 @@ $ENV{KERNEL_CONFIG2}||='?DMA_ENGINE';
 	'?'=>'n if none embedded module dependences (use after detects)',
 );
 
+%config=('y'=>'y','n'=>'n');
+
 sub Kcload{
 	die "Unresolved Kconfig: $_[0]\n" if(index($_[0],'$')>=0);
-	my ($c,$v);
+	my ($c,$v,@if1);
 	my $d=$_[0];
 	open(my $F,"<$d") || return; # || die "$! ($d)";
 	die "Invalid dereference\n" if(index($d,$ENV{S}.'/')!=0);
 	substr($d,0,length($ENV{S})+1)='';
 	while(defined(my $s=<$F>)){
-		chomp($s);
-		$s=~s/^\s*(comment|(?:menu)?config)\s+(\S+)/$c=$1;$v="$d:$2";next/se;
-		$s=~s/^\s*choice\s*$/$c=choice;$v=undef;next/se;
-		$s=~s/^\s*comment\s/$c=comment;$v=undef;next/se;
-		$s=~s/^\s*(?:def_)?tristate(?:\s+\S*|$)/$tristate{$v}=1;next/se;
-		$s=~s/^\s*(?:def_)?bool(?:\s+\S*|$)/if($c eq 'menuconfig'){$menu{$v}=1}else{$bool{$v}=1};next/se;
-		$s=~s/^\s*select\s+(\S*)/push @{$select{$1}},$v;next/se;
-		$s=~s/^\s*depends\s+on\s+(.*)$/push @{$depends{$v}},$1;next/se;
-		$s=~s/(?:If\s+unsure,\s+s|If\s+in\s+doubt,\s+s|S)ay\s+Y\./$yes{$v}=1;next/se;
-		$s=~s/(?:If\s+unsure,\s+s|If\s+in\s+doubt,\s+s|S)ay\s+N\./$no{$v}=1;next/se;
+		$s=~s/#.*//gs;
+		$s=~s/\s*$//s;
+		$s=~s/^\s*((?:menu)?config)\s+(\S+)/$c=$1;$v="$d:$2";push @{$if{$v}},join(' && ',@if1) if($#if1>=0);next/e;
+		$s=~s/^\s*(comment|mainmenu|menu)\s/$c=$1;$v=undef;next/e;
+		$s=~s/^\s*(choice|endchoice|endmenu)$/$c=$1;$v=undef;next/e;
+		$s=~s/^if\s+(.*)$/$c='if';push @if1,"($1)";next/e;
+		$s=~s/^endif$/$c='endif';pop @if1;next/e;
+		$s=~s/^\s*(?:def_)?tristate(?:\s+\S*|$)/$tristate{$v}=1;next/e;
+		$s=~s/^\s*(?:def_)?bool(?:\s+\S*|$)/if($c eq 'menuconfig'){$menu{$v}=1}else{$bool{$v}=1};next/e;
+		$s=~s/^\s*select\s+(.*)$/push @{$select{$1}},$v;next/e;
+		$s=~s/^\s*depends\s+on\s+(.*)$/push @{$depends{$v}},$1;next/e;
+		$s=~s/(?:If\s+unsure,\s+s|If\s+in\s+doubt,\s+s|S)ay\s+Y\./$yes{$v}=1;next/e;
+		$s=~s/(?:If\s+unsure,\s+s|If\s+in\s+doubt,\s+s|S)ay\s+N\./$no{$v}=1;next/e;
 		next if(!$ENV{SRCARCH});
-		$s=~s/^\s*option\s+env="(\w+)"/$env{$1}=1;next/se;
-		$s=~s/\$(\w+)/$env{$1}?$ENV{$1}:"\$$1"/se;
-		$s=~s/^\s*source\s+"(.*)"/Kcload("$ENV{S}\/$1");next/se;
-		$s=~s/^\s*source\s+(.*)/Kcload("$ENV{S}\/$1");next/se;
+		$s=~s/^\s*option\s+env="(\w+)"/$env{$1}=1;next/e;
+		$s=~s/\$(\w+)/$env{$1}?$ENV{$1}:"\$$1"/e;
+		$s=~s/^\s*source\s+"(.*)"/Kcload("$ENV{S}\/$1");next/e;
+		$s=~s/^\s*source\s+(.*)/Kcload("$ENV{S}\/$1");next/e;
 	}
 	close($F);
+}
+
+sub msg{
+	if($msg){
+		print "KERNEL_CONFIG: $_[0] ->$msg\n";
+		$msg='';
+	}
+
 }
 
 sub Kclist{
@@ -189,7 +202,9 @@ sub modules{
 			cfg($_,$defconfig{$_}?$defconfig{$_}:'m')
 		}
 	}
+	msg($_[0]);
 }
+
 
 sub defaults{
 	return if($_[0] eq '');
@@ -215,6 +230,39 @@ sub defaults{
 			cfg($_,'y') if($y && ($c eq '+' || !defined($defconfig{$_})));
 		}
 	}
+	msg($_[0]);
+}
+
+sub logic{
+	my $s=$_[0];
+	my $s1;
+	$s=~s/([A-Za-z0-9_]+)/$config{$1} ne ''?$config{$1}:'n'/ge;
+	$s=~s/\s*//g;
+	while($s ne $s1){
+		$s1=$s;
+		$s=~s/[ynm]\&\&n|n\&\&[ynm]|n\|\|n/n/g;
+		$s=~s/[ynm][&\|]{2}[ynm]/y/g;
+		$s=~s/![ym]/n/g;
+		$s=~s/!n/y/g;
+		$s=~s/\([ym]\)/y/g;
+		$s=~s/\(n\)/n/g;
+		$s=~s/([ymn])=+([ymn])/$1 eq $2?'y':'n'/ge;
+		$s=~s/([ymn])!=([ymn])/$1 ne $2?'y':'n'/ge;
+	}
+	$s eq 'n'?'':$s;
+}
+
+sub sel{
+	my $x=shift;
+	my @a=();
+	my $l;
+	for(grep(/^$x(?:\s|$)/,ref($_[0]) eq 'HASH'?keys %{$_[0]}:@_)){
+		push @a,$_ if(!(($l)=$_=~/\sif\s+(.*)$/)||logic($l));
+	}
+	return ref($_[0]) eq 'HASH'?map{
+		$x=$_[0]->{$_};
+		(ref($x) eq 'ARRAY')?@{$x}:$x;
+	}(@a):@a;
 }
 
 sub cfg{
@@ -224,17 +272,12 @@ sub cfg{
 		return 1;
 	}
 	return 0 if($off{$_[0]});
-	my $msg_=$msg;
 	$off{$_[0]}=1;
-	for(@{$select{$_[0]}}){
+	for(sel($_[0],\%select)){
 		my $i=$_;
 		$i=~s/.*://;
 		my $r=$config{$i};
 		$msg.=" -$i" if(cfg($i,undef,$_[2]) && $r);
-	}
-	if($msg && !$msg_){
-		print "KERNEL_CONFIG: ",($_[2]?'?':'')," -$_[0] ->$msg\n";
-		$msg=$msg_;
 	}
 	defined($_[2]) && !&{$_[2]}($_[0]) && return 0;
 	$config{$_[0]}='';
@@ -243,7 +286,7 @@ sub cfg{
 
 sub _and{
 	return if($config{$_[0]} ne 'm');
-	print "KERNEL_CONFIG: & $_[2] -> $_[0]\n" if($_[0] ne $_[2]);
+	$msg.=" $_[0]" if($_[0] ne $_[2]);
 	cfg(@_[0,1]);
 	for(grep(/.*:$_[0]$/,keys %depends)){
 		next if(!exists($tristate{$_}));
@@ -253,16 +296,34 @@ sub _and{
 	}
 }
 
+sub onoff{
+	my $v=$config{$_[0]};
+#	for(grep(/(?:^|\W)$_[0](?:\W|$)/,@{$depends{$_[1]}},@{$if{$_[1]}})){
+	for(@{$depends{$_[1]}},@{$if{$_[1]}}){
+		$config{$_[0]}=$_[2];
+		logic($_) || next;
+		$config{$_[0]}='';
+		logic($_) && next;
+		$config{$_[0]}=$v;
+		return 1;
+	}
+	$config{$_[0]}=$v;
+	0;
+}
+
 sub _if{
 #	return 1 if(!$config{$_[0]});
 	my $r;
+	my $y='y';
 	if(grep(/.*:$_[0]$/,keys %tristate)){
 		return 0 if($config{$_[0]} eq 'y');
+		$y='m';
 		$r++;
 	}
+	my ($i,@t);
 	for(keys %tristate){
-		grep(/(?:^|[ \)\(])$_[0](?:[ \)\(]|$)/,@{$depends{$_}}) || next;
-		my $i=$_;
+		onoff($_[0],$_,$y) || next;
+		$i=$_;
 		$i=~s/.*://;
 		return 0 if($config{$i} eq 'y');
 		$r++;
@@ -290,7 +351,7 @@ sub conf{
 		@l=keys %ll;
 	}else{
 		@l=grep(/^$d$/,keys %vars);
-		@l=($d) if($#l==-1 && !($d=~/[^A-Z0-9_]/) && $_[0] eq $_);
+		@l=($d) if($#l==-1 && !($d=~/[^A-Za-z0-9_]/) && $_[0] eq $_);
 	}
 	for(@l){
 		if($c eq '+'){
@@ -304,13 +365,13 @@ sub conf{
 			_and($_,$y,$_);
 		}elsif($c eq '?'){
 			cfg($_,undef,\&_if);
-#			_if($_);
 		}elsif($c ne '=' || !defined($config{$_})){
 			cfg($_,$y);
 		}
 	}
-	return if($#l>=0);
+	last if($#l>=0);
     }
+    msg($_[0]);
 }
 
 sub arch{
@@ -348,7 +409,10 @@ sub Kconfig{
 	modules($_) for(split(/\s+/,$ENV{KERNEL_MODULES}));
 	print "Applying config: $ENV{KERNEL_CONFIG}\n";
 	conf($_) for(split(/\s+/,$ENV{KERNEL_CONFIG}));
-	cfg(substr($_,14),$ENV{$_}) for(grep(/^KERNEL_CONFIG_/,keys %ENV));
+	for(grep(/^KERNEL_CONFIG_/,keys %ENV)){
+		cfg(substr($_,14),$ENV{$_});
+		msg("$_=$ENV{$_}");
+	}
 	set_config("$ENV{S}/.config");
 }
 
