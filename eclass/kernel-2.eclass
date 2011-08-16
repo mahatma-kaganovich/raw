@@ -971,7 +971,7 @@ m2y(){
 m2n(){
 	grep -q "^CONFIG_$1=m$" .config || return
 	# "-$1" may be too deep
-	echo -n " $1=n"
+	echo -n " $1="
 	sed -i -e "s/^CONFIG_$1=m\$/# CONFIG_$1 is not set/" .config
 }
 
