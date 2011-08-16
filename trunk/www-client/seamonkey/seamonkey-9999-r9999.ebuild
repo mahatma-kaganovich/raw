@@ -844,7 +844,6 @@ src_unpack() {
 		use moznosystem || use !system-nss && for d in dbm security/nss security/coreconf security/dbm; do
 			_cvs_m "mozilla/$d" "${S1}/$d"
 		done
-		_hg tracemonkey "${S1}/js/src"
 #		_cvs_m mozilla/js/src "${S1}/js/src"
 #		_cvs_m libffi "${S1}/js/src/ctypes/libffi" "" :pserver:anoncvs@sources.redhat.com:/cvs/libffi
 #		ln -s src/libffi "${S1}/js/libffi" # ?
