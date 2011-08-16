@@ -193,11 +193,11 @@ kernel-2_src_compile() {
 		i=false
 		if use embed-hardware; then
 			einfo "Reconfiguring kernel with hardware detect"
-			KERNEL_CONFIG+=" ===detect: $(detects)"
+			KERNEL_CONFIG+=" ###detect: $(detects)"
 			kconfig
 			i="${KERNEL_CLEANUP:-arch/$(arch) drivers/dma}"
 			einfo "Applying KERNEL_CLEANUP='$i'"
-			KERNEL_CONFIG+=" ===cleanup: ${KERNEL_CONFIG2} $(detects_cleanup $i)"
+			KERNEL_CONFIG+=" ###cleanup: ${KERNEL_CONFIG2} $(detects_cleanup $i)"
 			kconfig
 			i=true
 		fi
@@ -420,7 +420,7 @@ cfg_(){
 cfg_use(){
 	local i u="$1"
 	shift
-	for i in $* "use:$u
+	for i in $* "#use:$u
 "; do
 		use $u && cfg $i || cfg -${i#[+=&]}
 	done
@@ -430,7 +430,7 @@ cfg_use_(){
 	local i u="$1"
 	shift
 	cfg_ "
-	use:$u "
+	#use:$u "
 	for i in $* ; do
 		use $u && cfg_ $i || cfg_ -${i#[+=&]}
 	done
@@ -440,8 +440,8 @@ _cfg_use_(){
 	local i u="$1"
 	shift
 	cfg_ "
-	use:$u "
-	for i in $* "use:$u
+	#use:$u "
+	for i in $* "#use:$u
 "; do
 		use $u && cfg_ $i || cfg -${i#[+=&]}
 	done
@@ -498,7 +498,7 @@ useconfig(){
 		*)continue;;
 		esac
 		use "$o" || continue
-		cfg_ "===$o: "
+		cfg_ "###$o: "
 		source "$i"
 		cfg_ "
 "
