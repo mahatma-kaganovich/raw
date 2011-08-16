@@ -217,14 +217,17 @@ src_unpack() {
 		*) unpack ${i} ;;
 		esac
 	done
-	if [[ "$S" == "$S1" ]] && [[ "$S" != */mozilla/* ]]; then
-		rm -Rf "${WORKDIR}/mozilla"
-		ln -s $S "${WORKDIR}/mozilla"
-	fi
 }
 
 src_prepare(){
+	local i i1 i2
 	java-pkg-opt-2_src_prepare
+
+	i="${S1%/*}/mozilla"
+	if [[ "${i}" != "${S1}" ]] ; then
+		rm -Rf "$i"
+		ln -s "${S1}" "$i"
+	fi
 
 	if use !vanilla && [[ -n "${PATCH}" ]]; then
 		rm ${WORKDIR}/001*
@@ -239,7 +242,6 @@ src_prepare(){
 	EPATCH_FORCE="yes" \
 	epatch "${FILESDIR}"/${PV}
 
-	local i
 	for i in $extensions "${S1}"/extensions/{xforms,schema-validation}; do
 		mv "${WORKDIR}/${i##*/}" "$i"
 	done
@@ -281,7 +283,6 @@ src_prepare(){
 #	sed -i -e 's:\(return XRE_InitEmbedding.*\), nsnull, 0:\1:' "${S1}"/extensions/java/xpcom/src/nsJavaInterfaces.cpp
 #	use opengl && sed -i -e 's: = GLX$: = EGL:' "${S1}"/{gfx/thebes,content/canvas/src}/Makefile*
 
-	local i i1 i2
 	for i in "${WORKDIR}"/l10n/*/toolkit/chrome/global/*; do
 		[[ -e "${i}" ]] && ln -s "${i}" "${i%/*}/../../../suite/chrome/browser/${i##*/}"
 	done
