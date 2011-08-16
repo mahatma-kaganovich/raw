@@ -237,8 +237,8 @@ sub defaults{
 sub logic{
 	my $s=$_[0];
 	my $q='"((?:\"|[^"])*)"';
-	$s=~s/(\w+)=+($q)/$config{$1} eq $2?'y':'n'/ge;
-	$s=~s/(\w+)!=($q)/$config{$1} ne $2?'y':'n'/ge;
+	$s=~s/(\w+)=+$q/$config{$1} eq $2?'y':'n'/ge;
+	$s=~s/(\w+)!=$q/$config{$1} ne $2?'y':'n'/ge;
 	$s=~s/(\w+)/$config{$1} ne ''?$config{$1}:'n'/ge;
 	$s=~s/\s*//g;
 	while(
