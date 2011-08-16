@@ -236,17 +236,20 @@ sub defaults{
 
 sub logic{
 	my $s=$_[0];
-	$s=~s/([A-Za-z0-9_]+)/$config{$1} ne ''?$config{$1}:'n'/ge;
+	my $q='"((?:\"|[^"])*)"';
+	$s=~s/(\w+)=+($q)/$config{$1} eq $2?'y':'n'/ge;
+	$s=~s/(\w+)!=($q)/$config{$1} ne $2?'y':'n'/ge;
+	$s=~s/(\w+)/$config{$1} ne ''?$config{$1}:'n'/ge;
 	$s=~s/\s*//g;
 	while(
+		($s=~s/([ymn])=+([ymn])/$1 eq $2?'y':'n'/ge)||
+		($s=~s/([ymn])!=([ymn])/$1 ne $2?'y':'n'/ge)||
 		($s=~s/[ynm]\&\&n|n\&\&[ynm]|n\|\|n/n/g)||
 		($s=~s/[ynm][&\|]{2}[ynm]/y/g)||
 		($s=~s/![ym]/n/g)||
 		($s=~s/!n/y/g)||
 		($s=~s/\([ym]\)/y/g)||
-		($s=~s/\(n\)/n/g)||
-		($s=~s/([ymn])=+([ymn])/$1 eq $2?'y':'n'/ge)||
-		($s=~s/([ymn])!=([ymn])/$1 ne $2?'y':'n'/ge)
+		($s=~s/\(n\)/n/g)
 	){}
 	$s eq 'n'?'':$s;
 }
