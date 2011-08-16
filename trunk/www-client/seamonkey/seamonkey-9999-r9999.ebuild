@@ -217,6 +217,10 @@ src_unpack() {
 		*) unpack ${i} ;;
 		esac
 	done
+	if [[ "$S" == "$S1" ]] && [[ "$S" != */mozilla/* ]]; then
+		rm -Rf "${WORKDIR}/mozilla"
+		ln -s $S "${WORKDIR}/mozilla"
+	fi
 }
 
 src_prepare(){
