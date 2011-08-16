@@ -41,7 +41,7 @@ IUSE="-java mozdevelop moznoirc moznoroaming postgres startup-notification
 	debug minimal directfb moznosystem +threads jssh wifi python mobile static
 	moznomemory accessibility system-sqlite vanilla xforms gio +alsa
 	+custom-cflags +custom-optimization system-xulrunner +libxul system-nss system-nspr X
-	bindist flatfile dbus profile ipv6 opengl moznopango e10s force-shared-static ipcode"
+	bindist flatfile dbus profile ipv6 opengl moznopango e10s force-shared-static ipccode"
 #	qt-experimental"
 
 #RESTRICT="nomirror"
@@ -175,7 +175,7 @@ mobile)
 ;;
 esac
 
-extensions="${S}/mailnews/extensions/enigmail ${S1}/extensions/ipcode"
+extensions="${S}/mailnews/extensions/enigmail ${S1}/extensions/ipccode"
 
 [[ -n "${PATCH}" ]] && SRC_URI="${SRC_URI}  !vanilla? ( ${PATCH} )"
 
@@ -831,7 +831,7 @@ src_unpack() {
 	_hg venkman "${S1}"/extensions/venkman mozdevelop
 	_hg pyxpcom "${S1}"/extensions/python python
 	_hg chatzilla "${S1}"/extensions/irc !moznoirc
-	for i in xforms ipcode; do
+	for i in xforms ipccode; do
 		_hg $i "${S1}"/extensions/$i $i
 	done
 	SM && use !moznomail && use crypt && _cvs enigmail/src "${S}"/mailnews/extensions/enigmail crypt
