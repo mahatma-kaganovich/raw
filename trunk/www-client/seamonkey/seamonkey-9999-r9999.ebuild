@@ -499,7 +499,7 @@ src_configure(){
 	mozconfig_use_enable !debug strip-libs
 	mozconfig_use_enable !debug install-strip
 #	isopt egl-xrender-composite && mozconfig_use_enable opengl egl-xrender-composite
-	is e10s-compat && mozconfig_use_enable e10s e10s-compat
+	isopt e10s-compat && mozconfig_use_enable e10s e10s-compat
 
 	use custom-cflags && export CFLAGS="${CF}"
 	use opengl && append-flags -DUSE_GLES2=1
