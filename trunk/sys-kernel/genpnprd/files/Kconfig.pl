@@ -5,7 +5,7 @@ $ENV{KERNEL_MODULES}||='+.';
 # prefer: "-." - defconfig, "." - defconfig for "y|m", "+." - Kconfig/oldconfig
 $ENV{KERNEL_DEFAULTS}||='.';
 $ENV{KERNEL_CONFIG}||='
-	=======
+	######
 	KALLSYMS_EXTRA_PASS DMA_ENGINE
 	PREEMPT_NONE
 	MTRR_SANITIZER IA32_EMULATION LBD
@@ -79,9 +79,9 @@ $ENV{KERNEL_CONFIG}||='
 	=.+_(PARTITION|FF|X_COMPATIBILITY)
 	DM_UEVENT =.*_SDIO B43_PHY_N
 	CIFS_UPCALL NETCONSOLE_DYNAMIC  NFS_USE_NEW_IDMAPPER
-	===bugs: -TR -ECONET
-	===udev: -IDE
-	=======
+	###bugs: -TR -ECONET
+	###udev: -IDE
+	#######
 	';
 $ENV{KERNEL_CONFIG2}||='?DMA_ENGINE';
 
@@ -93,6 +93,7 @@ $ENV{KERNEL_CONFIG2}||='?DMA_ENGINE';
 	'='=>'y if undefined bool',
 	'&'=>'m->y recursive embed',
 	'?'=>'n if none embedded module dependences (use after detects)',
+	'#'=>'#',
 );
 
 %config=('y'=>'y','n'=>'n','m'=>'m');
@@ -377,6 +378,8 @@ sub conf{
 			$msg='';
 			%off=();
 			cfg($_);
+		}elsif($c eq '#'){
+			return;
 		}elsif($c ne '=' || !defined($config{$_})){
 			cfg($_,$y);
 		}
