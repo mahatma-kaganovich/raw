@@ -262,7 +262,7 @@ sub logic{
 		($s=~s/!(\w+)/$config{$1}?'n':'y'/ge)+
 		($s=~s/\((\w+)\)/$config{$1}?'y':'n'/ge)
 	){}
-	exists($config{$s})||($s=~/\W/ && ($s ne $_[0]) && print "Warning: invalid expression: '$_[0]' ('$s')\n");
+	exists($config{$s})||(($s=~/\W/ || ($s ne $_[0])) && print "Warning: invalid expression: '$_[0]' ('$s')\n");
 	$config{$s}
 }
 
