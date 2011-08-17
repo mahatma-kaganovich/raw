@@ -438,7 +438,7 @@ src_configure(){
 	mozconfig_use_enable libxul
 	if use flatfile; then
 		mozconfig_annotate "flatfile" --enable-chrome-format=symlink
-	elif SM || !use libxul; then
+	elif SM || use !libxul; then
 		mozconfig_annotate "-libxul,-flatfile" --enable-chrome-format=jar
 	fi
 
