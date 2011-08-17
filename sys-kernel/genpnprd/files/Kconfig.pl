@@ -96,8 +96,6 @@ $ENV{KERNEL_CONFIG2}||='?DMA_ENGINE';
 	'#'=>'#',
 );
 
-%config=('y'=>'y','n'=>'n','m'=>'m');
-
 sub Kcload{
 	die "Unresolved Kconfig: $_[0]\n" if(index($_[0],'$')>=0);
 	my ($c,$v,@if1);
@@ -106,17 +104,18 @@ sub Kcload{
 	die "Invalid dereference\n" if(index($d,$ENV{S}.'/')!=0);
 	substr($d,0,length($ENV{S})+1)='';
 	while(defined(my $s=<$F>)){
+		while(substr($s,-2) eq "\\\n" && defined(my $s1=<$F>)){substr($s,-2)=$s1};
 		$s=~s/#.*//gs;
 		$s=~s/\s*$//s;
-		$s=~s/^\s*((?:menu)?config)\s+(\S+)/$c=$1;$v="$d:$2";push @{$if{$v}},join(' && ',@if1) if($#if1>=0);next/e;
+		$s=~s/^\s*((?:menu)?config)\s+(\S+)/$c=$1;$v="$d:$2";push @{$if{$v}},prelogic(join(' && ',@if1)) if($#if1>=0);next/e;
 		$s=~s/^\s*(comment|mainmenu|menu)\s/$c=$1;$v=undef;next/e;
 		$s=~s/^\s*(choice|endchoice|endmenu)$/$c=$1;$v=undef;next/e;
 		$s=~s/^if\s+(.*)$/$c='if';push @if1,"($1)";next/e;
 		$s=~s/^endif$/$c='endif';pop @if1;next/e;
 		$s=~s/^\s*(?:def_)?tristate(?:\s+\S*|$)/$tristate{$v}=1;next/e;
 		$s=~s/^\s*(?:def_)?bool(?:\s+\S*|$)/if($c eq 'menuconfig'){$menu{$v}=1}else{$bool{$v}=1};next/e;
-		$s=~s/^\s*select\s+(.*)$/push @{$select{$1}},$v;next/e;
-		$s=~s/^\s*depends\s+on\s+(.*)$/push @{$depends{$v}},$1;next/e;
+		$s=~s/^\s*select\s+(.*)$/push @{$select{preif($1)}},$v;next/e;
+		$s=~s/^\s*depends\s+on\s+(.*)$/push @{$depends{$v}},prelogic($1);next/e;
 		$s=~s/(?:If\s+unsure,\s+s|If\s+in\s+doubt,\s+s|S)ay\s+Y\./$yes{$v}=1;next/e;
 		$s=~s/(?:If\s+unsure,\s+s|If\s+in\s+doubt,\s+s|S)ay\s+N\./$no{$v}=1;next/e;
 		next if(!$ENV{SRCARCH});
@@ -173,6 +172,7 @@ sub set_config{
 	my $x=join('|',keys %unset);
 	$s=~s/\n(?:# )?CONFIG_(?:$x)(?:=[^\n]*| is not set)//gs;
 	while(my ($x,$y)=each %config){
+		$x=~/^["'_]/ && next; #"
 #		next if(defined($oldconfig{$x}) && $oldconfig{$x} eq $y);
 		$y=$y ne ''?"CONFIG_$x=$y":"# CONFIG_$x is not set";
 		$s.="$y\n" if(!($s=~s/\nCONFIG_$x=[^\n]*\n|\n# CONFIG_$x is not set\n/\n$y\n/s));
@@ -194,13 +194,14 @@ sub modules{
 	print "Applying modules: $_[0]\n";
 	my ($c,$d)=spl($_[0]);
 	for(grep(/^$d/,keys %tristate)){
-		~s/.*://;
+		my $i=$_;
+		$i=~s/.*://;
 		if($c eq '+'){
-			cfg($_,'m');
+			cfg($i,'m');
 		}elsif($c eq '-'){
-			cfg($_,$defconfig{$_});
+			cfg($i,$defconfig{$i});
 		}elsif($c ne '=' || !defined($config{$_})){
-			cfg($_,$defconfig{$_}?$defconfig{$_}:'m')
+			cfg($i,$defconfig{$i}?$defconfig{$i}:'m')
 		}
 	}
 	msg($_[0]);
@@ -212,46 +213,57 @@ sub defaults{
 	print "Applying defaults: $_[0]\n";
 	my ($c,$d)=spl($_[0]);
 	for(grep(/^$d/,keys %menu)){
-		~s/.*://;
+		my $i=$_;
+		$i=~s/.*://;
 		if($c eq '-'){
-			$unset{$_}=1;
-			delete($config{$_});
+			$unset{$i}=1;
+			delete($config{$i});
 		}else{
-			cfg($_,'y');
+			cfg($i,'y');
 		}
 	}
 	for(grep(/^$d/,keys %bool)){
 		my $y=$yes{$_};
-		~s/.*://;
-		if(($c eq '-' && exists($defconfig{$_})) || ($c ne '+' && $defconfig{$_})){
-			cfg($_,$defconfig{$_});
+		my $i=$_;
+		$i=~s/.*://;
+		if(($c eq '-' && exists($defconfig{$i})) || ($c ne '+' && $defconfig{$i})){
+			cfg($i,$defconfig{$i});
 		}else{
-			$unset{$_}=1;
-			delete($config{$_});
-			cfg($_,'y') if($y && ($c eq '+' || !defined($defconfig{$_})));
+			$unset{$i}=1;
+			delete($config{$i});
+			cfg($i,'y') if($y && ($c eq '+' || !defined($defconfig{$i})));
 		}
 	}
 	msg($_[0]);
 }
 
+sub prelogic{
+	my $s=$_[0];
+	my $i;
+	$s=~s/("(?:\\"|[^"])*")/if(exists($config{$1})){$i=$config{$1}}else{$config{$config{$1}=$i='_'.++$NV}=$1}$i/ge;
+	$s=~s/('(?:\\'|[^'])*')/if(exists($config{$1})){$i=$config{$1}}else{$config{$config{$1}=$i='_'.++$NV}=$1}$i/ge;
+	$s=~s/\s+//g;
+	$s
+}
+
+sub preif{
+	my $s=$_[0];
+	$s=~s/\s+if\s+(.*)$/' if '.prelogic($1)/e;
+	$s;
+}
+
 sub logic{
 	my $s=$_[0];
-	my $q='"((?:\"|[^"])*)"';
-	$s=~s/(\w+)=+$q/$config{$1} eq $2?'y':'n'/ge;
-	$s=~s/(\w+)!=$q/$config{$1} ne $2?'y':'n'/ge;
-	$s=~s/(\w+)/$config{$1} ne ''?$config{$1}:'n'/ge;
-	$s=~s/\s*//g;
 	while(
-		($s=~s/([ymn])=+([ymn])/$1 eq $2?'y':'n'/ge)||
-		($s=~s/([ymn])!=([ymn])/$1 ne $2?'y':'n'/ge)||
-		($s=~s/[ynm]\&\&n|n\&\&[ynm]|n\|\|n/n/g)||
-		($s=~s/[ynm][&\|]{2}[ynm]/y/g)||
-		($s=~s/![ym]/n/g)||
-		($s=~s/!n/y/g)||
-		($s=~s/\([ym]\)/y/g)||
-		($s=~s/\(n\)/n/g)
+		($s=~s/(\w+)\&\&(\w+)/$config{$1}&&$config{$2}?'y':'n'/ge)+
+		($s=~s/(\w+)\|\|(\w+)/$config{$1}||$config{$2}?'y':'n'/ge)+
+		($s=~s/(\w+)=+(\w+)/$config{$1} eq $config{$2}?'y':'n'/ge)+
+		($s=~s/(\w+)!=(\w+)/$config{$1} ne $config{$2}?'y':'n'/ge)+
+		($s=~s/!(\w+)/$config{$1}?'n':'y'/ge)+
+		($s=~s/\((\w+)\)/$config{$1}?'y':'n'/ge)
 	){}
-	$s eq 'n'?'':$s;
+	exists($config{$s})||($s=~/\W/ && ($s ne $_[0]) && print "Warning: invalid expression: '$_[0]' ('$s')\n");
+	$config{$s}
 }
 
 sub sel{
@@ -403,6 +415,10 @@ sub arch{
 
 sub Kconfig{
 	our (%tristate,%bool,%select,%menu,%yes,%no,%config,%oldconfig,%defconfig,%off,%unset,%vars,%set)=();
+	%config=('y'=>'y','m'=>'m','n'=>'',''=>'',
+		"'y'"=>'y',"'m'"=>'m',"'n'"=>'n',
+		'"y"'=>'y','"m"'=>'m','"n"'=>'m',
+	);
 	if($ENV{SRCARCH} && arch() && -e "$ENV{S}/Kconfig" && -e "$ENV{S}/arch/$ENV{SRCARCH}/Kconfig"){
 		print "SRCARCH=$ENV{SRCARCH}\n";
 		Kcload("$ENV{S}/Kconfig");
