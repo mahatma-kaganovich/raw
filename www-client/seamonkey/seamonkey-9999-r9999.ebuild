@@ -282,6 +282,7 @@ src_prepare(){
 	touch "${S}"/directory/xpcom/datasource/nsLDAPDataSource.manifest
 #	sed -i -e 's:\(return XRE_InitEmbedding.*\), nsnull, 0:\1:' "${S1}"/extensions/java/xpcom/src/nsJavaInterfaces.cpp
 #	use opengl && sed -i -e 's: = GLX$: = EGL:' "${S1}"/{gfx/thebes,content/canvas/src}/Makefile*
+	use opengl && sed -i -e 's:if (mIsMesa):if (0):' "${S1}"/widget/src/xpwidgets/GfxInfoX11.cpp
 
 	for i in "${WORKDIR}"/l10n/*/toolkit/chrome/global/*; do
 		[[ -e "${i}" ]] && ln -s "${i}" "${i%/*}/../../../suite/chrome/browser/${i##*/}"
@@ -472,6 +473,7 @@ src_configure(){
 
 	use xforms && mozconfig_annotate "+xforms" --enable-extensions=xforms,schema-validation
 	use xforms && ewarn "xforms may required 'moznosystem' useflag to build and completely unsure"
+	use ipccode && mozconfig_annotate "+ipccode" --enable-extensions=ipccode
 
 	if use minimal; then
 #		use mobile && mozconfig_annotate +minimal,+mobile
