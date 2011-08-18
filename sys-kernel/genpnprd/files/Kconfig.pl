@@ -98,18 +98,28 @@ $ENV{KERNEL_CONFIG2}||='?DMA_ENGINE';
 
 sub Kcload{
 	die "Unresolved Kconfig: $_[0]\n" if(index($_[0],'$')>=0);
-	my ($c,$v);
+	my ($c,$v,%ch);
 	my $d=$_[0];
 	open(my $F,"<$d") || return; # || die "$! ($d)";
 	die "Invalid dereference\n" if(index($d,$ENV{S}.'/')!=0);
 	substr($d,0,length($ENV{S})+1)='';
 	while(defined(my $s=<$F>)){
-		while(substr($s,-2) eq "\\\n" && defined(my $s1=<$F>)){substr($s,-2)=$s1};
+		while(substr($s,-2) eq "\\\n"){substr($s,-2)=<$F>};
 		$s=~s/#.*//gs;
 		$s=~s/\s*$//s;
-		$s=~s/^\s*((?:menu)?config)\s+(\S+)/$c=$1;$v="$d:$2";push @{$if{$v}},prelogic(join(' && ',@if1)) if($#if1>=0);next/e;
-		$s=~s/^\s*(comment|mainmenu|menu)\s/$c=$1;$v=undef;next/e;
-		$s=~s/^\s*(choice|endchoice|endmenu)$/$c=$1;$v=undef;next/e;
+		$s=~s/^\s*((?:menu)?config)\s+(\S+)/$c=$1;$v="$d:$2";$ch{$v}="!$2";push @{$if{$v}},prelogic(join(' && ',@if1)) if($#if1>=0);next/e;
+		$s=~s/^\s*((?:comment|mainmenu|menu)\s|endmenu$)/$c=$1;$v=undef;next/e;
+		$s=~s/^\s*(choice|endchoice)$/
+			$c=$1;$v=':_choice';
+			if($1 eq 'endchoice'){
+			for(keys %ch){
+				my %dc=%ch;
+				delete($dc{$_});
+				push @{$depends{$_}},values %dc,@{$depends{$v}};
+			}
+			}
+			delete($depends{$v});
+		next/e;
 		$s=~s/^if\s+(.*)$/$c='if';push @if1,"($1)";next/e;
 		$s=~s/^endif$/$c='endif';pop @if1;next/e;
 		$s=~s/^\s*(?:def_)?tristate(?:\s+\S*|$)/$tristate{$v}=1;next/e;
