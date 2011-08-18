@@ -255,11 +255,9 @@ kernel-2_src_compile() {
 		_cc $i
 	done
 
-	if use klibc; then
-		userspace
-		mv initrd-${REAL_KV}.img initrd-${REAL_KV}.img.klibc
-	fi
+	use klibc && userspace
 	use genkernel || return
+	use klibc && mv initrd-${REAL_KV}.img initrd-${REAL_KV}.img.klibc
 
 	einfo "Generating initrd image"
 	local p="$(use__ lvm lvm2) $(use__ evms) $(use__ luks) $(use__ gpg) $(use__ iscsi) $(use__ device-mapper dmraid) $(use__ unionfs) $(use__ e2fsprogs disklabel) $(use__ mdadm)"
