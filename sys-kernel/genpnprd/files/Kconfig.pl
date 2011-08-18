@@ -98,7 +98,7 @@ $ENV{KERNEL_CONFIG2}||='?DMA_ENGINE';
 
 sub Kcload{
 	die "Unresolved Kconfig: $_[0]\n" if(index($_[0],'$')>=0);
-	my ($c,$v,@if1);
+	my ($c,$v);
 	my $d=$_[0];
 	open(my $F,"<$d") || return; # || die "$! ($d)";
 	die "Invalid dereference\n" if(index($d,$ENV{S}.'/')!=0);
