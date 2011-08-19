@@ -277,12 +277,11 @@ mv later/* alias/ 2>/dev/null
 
 fs(){
 	[ -b "$1" ] && ! [ -e "$tmp/$1" ] || return 1
-	mkdir -p "$tmp/$1"
+	${_cmd_rootwait:-false} || mkdir -p "$tmp/$1"
 	local i x y o="${cmd_rootflags:+-o $cmd_rootflags}" fs="`cat /proc/filesystems` t="${cmd_rootfstype:+TYPE=$cmd_rootfstype}"
 	unknown
 "
 	${_cmd_rw:-false} || o="$o -r"
-	while ${_cmd_rootwait:-false}; do
 	[ -n "$cmd_rootdelay" ] && sleep $cmd_rootdelay
 	for i in ${t:-`{ fstype "$1";blkid "$1";} 2>/dev/null`}; do #`
 		case "$i" in
@@ -303,7 +302,6 @@ fs(){
 			$MOUNTED || umount /newroot || MOUNTED=true
 		;;
 		esac
-	done
 	done
 }
 
@@ -327,7 +325,7 @@ cd $tmp||exit 1
 conf
 cmdline
 own 2>/dev/null
-while [ "$m1" != "$mm" ]; do
+while [ "$m1" != "$mm" -o "${_cmd_rootwait}:$MOUNTED" = 'true:false' ]; do
 	echo -n "*"
 	mod=modp
 	sys_modalias /sys/devices 2>/dev/null
