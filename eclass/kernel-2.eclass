@@ -341,8 +341,11 @@ kernel-2_src_install() {
 		local sym=''
 		if use !multislot; then
 			use sources && sym="linux-${KV_FULL}"
-			for i in .img .img.thin; do
-				[[ -e "${D}/boot/initrd-${REAL_KV}$i" ]] && dosym initrd-${REAL_KV}$i /boot/initrd-${SLOT}$i
+			for i in "${D}/boot/initrd-${REAL_KV}.img"{,.*}; do
+				local x
+				for x in "/boot/initrd-${SLOT}.img"{,"${i##*.img}"}; do
+					[[ -e "$i" ]] && ! [[ -e "${D}$x" ]] && dosym "${i##*/}" "$x"
+				done
 			done
 		fi
 		if use sources ; then

@@ -161,7 +161,7 @@ for i in "${@}"; do
 	if [ "$m" = "$x" ]; then
 		case "${x#real_}" in
 		# [^...] broken in klibc
-		quiet|root|init|rw|resume|resume_offset|nfsroot|ip)export $xx$x="$y";;
+		quiet|root|init|rw|resume|resume_offset|nfsroot|ip|rootdelay|rootwait|rootflags|rootfstype)export $xx$x="$y";;
 		esac
 	elif ! [ -e cmdline ]; then
 		[ -d options ] && echo -n " ${x#*.}$yy" >>"options/$x" || echo -n "options $m ${x#*.}$yy" >>"/etc/modprobe.d/initrd_$x.conf"
@@ -278,11 +278,13 @@ mv later/* alias/ 2>/dev/null
 fs(){
 	[ -b "$1" ] && ! [ -e "$tmp/$1" ] || return 1
 	mkdir -p "$tmp/$1"
-	local i x y o="-o ro" fs="`cat /proc/filesystems`
+	local i x y o="${cmd_rootflags:+-o $cmd_rootflags}" fs="`cat /proc/filesystems` t="${cmd_rootfstype:+TYPE=$cmd_rootfstype}"
 	unknown
 "
-	${_cmd_rw:-false} && o=''
-	for i in `{ fstype "$1";blkid "$1";} 2>/dev/null`; do
+	${_cmd_rw:-false} || o="$o -r"
+	while ${_cmd_rootwait:-false}; do
+	[ -n "$cmd_rootdelay" ] && sleep $cmd_rootdelay
+	for i in ${t:-`{ fstype "$1";blkid "$1";} 2>/dev/null`}; do #`
 		case "$i" in
 		FSTYPE=*|TYPE=*)
 			i="${i#*=}"
@@ -301,6 +303,7 @@ fs(){
 			$MOUNTED || umount /newroot || MOUNTED=true
 		;;
 		esac
+	done
 	done
 }
 
