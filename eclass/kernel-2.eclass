@@ -728,13 +728,17 @@ echo "${a%% *}"
 
 kconfig(){
 	einfo "Configuring kernel"
-	local a
 	[[ -e .config ]] || kmake defconfig >/dev/null
 	export ${!KERNEL_@}
 	while cfg_loop .config.{3,4} ; do
+		local ok=false o a
+		for o in '' '-relax'; do
 		for a in "$(arch)" ''; do
-			SRCARCH="$a" /usr/bin/perl "${SHARE}/Kconfig.pl" && break
+			SRCARCH="$a" /usr/bin/perl "${SHARE}/Kconfig.pl $o" && ok=true && break
 		done
+		$ok && break
+		done
+		$ok || die "Kconfig.pl failed"
 		yes '' 2>/dev/null | kmake oldconfig >/dev/null
 	done
 }

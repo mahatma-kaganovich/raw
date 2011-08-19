@@ -98,7 +98,7 @@ $ENV{KERNEL_CONFIG2}||='?DMA_ENGINE';
 
 sub Kcload{
 	die "Unresolved Kconfig: $_[0]\n" if(index($_[0],'$')>=0);
-	my ($c,$v,%ch);
+	my ($c,$v,$v1,%ch);
 	my $d=$_[0];
 	open(my $F,"<$d") || return; # || die "$! ($d)";
 	die "Invalid dereference\n" if(index($d,$ENV{S}.'/')!=0);
@@ -107,10 +107,10 @@ sub Kcload{
 		while(substr($s,-2) eq "\\\n"){substr($s,-2)=<$F>};
 		$s=~s/#.*//gs;
 		$s=~s/\s*$//s;
-		$s=~s/^\s*((?:menu)?config)\s+(\S+)/$c=$1;$v="$d:$2";$ch{$v}="!$2";push @{$if{$v}},prelogic(join(' && ',@if1)) if($#if1>=0);next/e;
-		$s=~s/^\s*((?:comment|mainmenu|menu)\s|endmenu$)/$c=$1;$v=undef;next/e;
+		$s=~s/^\s*((?:menu)?config)\s+(\S+)/$c=$1;$v1=$2;$v="$d:$2";$ch{$v}="!$2";push @{$if{$v}},prelogic(join(' && ',@if1)) if($#if1>=0);next/e;
+		$s=~s/^\s*((?:comment|mainmenu|menu)\s|endmenu$)/$c=$1;$v1=$v=undef;next/e;
 		$s=~s/^\s*(choice|endchoice)$/
-			$c=$1;$v=':_choice';
+			$c=$1;$v1=$v=':_choice';
 			if($1 eq 'endchoice'){
 			for(keys %ch){
 				my %dc=%ch;
@@ -122,7 +122,7 @@ sub Kcload{
 		next/e;
 		$s=~s/^if\s+(.*)$/$c='if';push @if1,"($1)";next/e;
 		$s=~s/^endif$/$c='endif';pop @if1;next/e;
-		$s=~s/^\s*(?:def_)?tristate(?:\s+\S*|$)/$tristate{$v}=1;next/e;
+		$s=~s/^\s*(?:def_)?tristate(?:\s+\S*|$)/$tristate{$v}=1;$tristate_{$v1}=1;next/e;
 		$s=~s/^\s*(?:def_)?bool(?:\s+\S*|$)/if($c eq 'menuconfig'){$menu{$v}=1}else{$bool{$v}=1};next/e;
 		$s=~s/^\s*select\s+(.*)$/push @{$select{preif($1)}},$v;next/e;
 		$s=~s/^\s*depends\s+on\s+(.*)$/push @{$depends{$v}},prelogic($1);next/e;
@@ -276,6 +276,43 @@ sub logic{
 	$config{$s}
 }
 
+sub dep{
+my (%l,%n,$i,$i1);
+while($i ne $i1){
+	$i1=$i;
+	$i=join('|',@_,sort keys %n)||'.*';
+	%l=();
+	for(grep(/^.*\/$i$/,keys %tristate,keys %bool,keys %menu)){
+		my $x=$_;
+		$x=~s/.*://;
+		$l{$x}++;
+		for(grep(/(?:^|\W)$i(?:\W|\$)/,@{$depends{$_}},@{$if{$_}})){
+			logic($_) || $l{$x}--;
+		}
+	}
+	for(keys(%l)){
+		$n{$_}=cfg{$_} if(!$l{$_});
+	}
+}
+keys %n;
+}
+
+sub depcfg{
+	my (%c,%x);
+	%c=%config;
+	cfg(@_);
+	for(keys %config){
+		$x{$_}=undef if($c{$_} ne $config{$_});
+	}
+	dep(keys %x);
+	for my $i ($_[0],keys %config){
+		next if($c{$i} ne 'y' || $config{$i} || !exists($tristate_{$i}));
+		%config=%c;
+		return 0;
+	}
+	1;
+}
+
 sub sel{
 	my $x=shift;
 	my @a=();
@@ -290,11 +327,8 @@ sub sel{
 }
 
 sub cfg{
-	$set{$_[0]}=1;
-	if(defined($_[1])){
-		$config{$_[0]}=$_[1];
-		return 1;
-	}
+$set{$_[0]}=1;
+if(!defined($_[1])){
 	return 1 if(exists($off{$_[0]}));
 	$off{$_[0]}=1;
 	for(sel($_[0],\%select)){
@@ -305,8 +339,10 @@ sub cfg{
 		$msg.=" -$i" if($r && !defined($_[2]));
 	}
 	defined($_[2]) && return &{$_[2]}($_[0]);
-	$config{$_[0]}='';
-	1;
+}
+$config{$_[0]}="$_[1]";
+dep($_[0]);
+1;
 }
 
 sub _and{
@@ -336,6 +372,7 @@ sub onoff{
 	0;
 }
 
+# deprecated
 sub _if{
 #	return 1 if(!$config{$_[0]});
 	my $r;
@@ -353,7 +390,7 @@ sub _if{
 		return 0 if($config{$i} eq 'y' || !cfg($i,undef,\&_if));
 		$r++;
 	}
-	for(keys %bool){
+	for(keys %bool,keys %menu){
 		onoff($_[0],$_,$y) || next;
 		$i=$_;
 		$i=~s/.*://;
@@ -363,10 +400,23 @@ sub _if{
 	$r;
 }
 
+# deprecated
+sub if_cfg_{
+	cfg($_[0],undef,\&_if) || next;
+	$msg='';
+	%off=();
+	cfg($_[0]);
+}
+
+sub if_cfg{
+	depcfg($_) || ($msg='');
+}
+
 sub conf{
     return if($_[0] eq '');
     for(split(/;/,$_[0])){
 	my ($c,$d)=spl($_);
+	return if($c eq '#');
 	my $y='y';
 	$d=~s/(.*?)=(.*)/$y=$2;$1/se;
 	my @l;
@@ -397,12 +447,7 @@ sub conf{
 			_and($_,$y,$_);
 		}elsif($c eq '?'){
 			%off=();
-			cfg($_,undef,\&_if) || next;
-			$msg='';
-			%off=();
-			cfg($_);
-		}elsif($c eq '#'){
-			return;
+			if_cfg($_)||next;
 		}elsif($c ne '=' || !defined($config{$_})){
 			cfg($_,$y);
 		}
@@ -424,7 +469,7 @@ sub arch{
 }
 
 sub Kconfig{
-	our (%tristate,%bool,%select,%menu,%yes,%no,%config,%oldconfig,%defconfig,%off,%unset,%vars,%set)=();
+	our (%tristate,%bool,%select,%menu,%yes,%no,%config,%oldconfig,%defconfig,%off,%unset,%vars,%if,@if1,$NV,%tristate_)=();
 	%config=('y'=>'y','m'=>'m','n'=>'',''=>'',
 		"'y'"=>'y',"'m'"=>'m',"'n'"=>'n',
 		'"y"'=>'y','"m"'=>'m','"n"'=>'m',
@@ -446,9 +491,12 @@ sub Kconfig{
 	}else{
 		die "Not found $c and|or $c.default";
 	}
+	my @dep0=dep();
+	die "Strict logic mismatch or you forget 'make oldconfig'. Initial changes: ".join(',',@dep0)."\n" if($#dep0>=0);
 	%oldconfig=%config;
 	defaults($_) for(split(/\s+/,$ENV{KERNEL_DEFAULTS}));
 	modules($_) for(split(/\s+/,$ENV{KERNEL_MODULES}));
+	dep();
 	print "Applying config: $ENV{KERNEL_CONFIG}\n";
 	conf($_) for(split(/\s+/,$ENV{KERNEL_CONFIG}));
 	for(grep(/^KERNEL_CONFIG_/,keys %ENV)){
@@ -466,9 +514,14 @@ if($ARGV[0]=~/^-(?:help|-help|h|--h)$/){
 	config;
 	print "---Modifiers:\n";
 	print "'$_' - $cc{$_}\n" for(sort keys %cc);
+	exit
 }elsif($ARGV[0] eq '-config'){
 	config;
-}else{
-	$ENV{S}||=$ARGV[0]||'.';
-	Kconfig();
+	exit;
+}elsif($ARGV[0] eq '-relax'){
+	*dep=sub{ 1;};
+	*if_cfg=*if_cfg_;
+	shift(@ARGV);
 }
+$ENV{S}||=$ARGV[0]||'.';
+Kconfig();
