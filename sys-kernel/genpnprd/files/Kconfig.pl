@@ -278,6 +278,7 @@ sub logic{
 
 sub dep{
 my (%l,%n,$i,$i1);
+$i=1;
 while($i ne $i1){
 	$i1=$i;
 	$i=join('|',@_,sort keys %n)||'.*';
@@ -285,14 +286,13 @@ while($i ne $i1){
 	for(grep(/^.*\/$i$/,keys %tristate,keys %bool,keys %menu)){
 		my $x=$_;
 		$x=~s/.*://;
-		$l{$x}++;
+		if($config{$x}){
 		for(grep(/(?:^|\W)$i(?:\W|\$)/,@{$depends{$_}},@{$if{$_}})){
-			logic($_) || $l{$x}--;
+			logic($_) || undef $l{$x};
+		}
 		}
 	}
-	for(keys(%l)){
-		$n{$_}=cfg{$_} if(!$l{$_});
-	}
+	$n{$_}=cfg($_) for(keys(%l));
 }
 keys %n;
 }
@@ -340,8 +340,7 @@ if(!defined($_[1])){
 	}
 	defined($_[2]) && return &{$_[2]}($_[0]);
 }
-$config{$_[0]}="$_[1]";
-dep($_[0]);
+dep($_[0]) if($config{$_[0]} ne ($config{$_[0]}="$_[1]"));
 1;
 }
 
@@ -491,12 +490,11 @@ sub Kconfig{
 	}else{
 		die "Not found $c and|or $c.default";
 	}
-	my @dep0=dep();
-	die "Strict logic mismatch or you forget 'make oldconfig'. Initial changes: ".join(',',@dep0)."\n" if($#dep0>=0);
+#	my @dep0=dep();
+#	die "Strict logic mismatch or you forget 'make oldconfig'. Initial changes: ".join(',',@dep0)."\n" if($#dep0>=0);
 	%oldconfig=%config;
 	defaults($_) for(split(/\s+/,$ENV{KERNEL_DEFAULTS}));
 	modules($_) for(split(/\s+/,$ENV{KERNEL_MODULES}));
-	dep();
 	print "Applying config: $ENV{KERNEL_CONFIG}\n";
 	conf($_) for(split(/\s+/,$ENV{KERNEL_CONFIG}));
 	for(grep(/^KERNEL_CONFIG_/,keys %ENV)){
@@ -518,10 +516,10 @@ if($ARGV[0]=~/^-(?:help|-help|h|--h)$/){
 }elsif($ARGV[0] eq '-config'){
 	config;
 	exit;
-}elsif($ARGV[0] eq '-relax'){
-	*dep=sub{ 1;};
+} #elsif($ARGV[0] eq '-relax'){
+	*dep=sub{ ();};
 	*if_cfg=*if_cfg_;
-	shift(@ARGV);
-}
+#	shift(@ARGV);
+#}
 $ENV{S}||=$ARGV[0]||'.';
 Kconfig();
