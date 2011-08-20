@@ -312,7 +312,7 @@ kernel-2_src_install() {
 	cd "${S}" || die
 	rm -f .config.old *.loopfs
 	if [[ ${ETYPE} == sources ]] && use build-kernel; then
-		mkdir "${D}/boot"
+		dodir /boot
 		local f f1
 		if ! use integrated; then
 			insinto "/boot"
@@ -349,6 +349,7 @@ kernel-2_src_install() {
 			done
 		fi
 		if use sources ; then
+			dodir /usr/src
 			find "${S}" -name "*.cmd" | while read f ; do
 				sed -i -e 's%'"${S}"'%/usr/src/linux-'"${REAL_KV}"'%g' ${f}
 			done
