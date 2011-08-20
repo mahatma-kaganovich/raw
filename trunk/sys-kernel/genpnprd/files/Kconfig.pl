@@ -107,7 +107,12 @@ sub Kcload{
 		while(substr($s,-2) eq "\\\n"){substr($s,-2)=<$F>};
 		$s=~s/#.*//gs;
 		$s=~s/\s*$//s;
-		$s=~s/^\s*((?:menu)?config)\s+(\S+)/$c=$1;$v1=$2;$v="$d:$2";$ch{$v}="!$2";push @{$if{$v}},prelogic(join(' && ',@if1)) if($#if1>=0);next/e;
+		$s=~s/^\s*((?:menu)?config)\s+(\S+)/
+			$c=$1;$v1=$2;
+			for(my $i;exists($depends{$v="$d$i:$2"});$i++){};
+			$ch{$v}="!$2";
+			push @{$depends{$v}},@if;
+		next/e;
 		$s=~s/^\s*((?:comment|mainmenu|menu)\s|endmenu$)/$c=$1;$v1=$v=undef;next/e;
 		$s=~s/^\s*(choice|endchoice)$/
 			$c=$1;$v1=$v=':_choice';
@@ -115,13 +120,14 @@ sub Kcload{
 			for(keys %ch){
 				my %dc=%ch;
 				delete($dc{$_});
-				push @{$depends{$_}},values %dc,@{$depends{$v}};
+#				push @{$depends{$_}},values %dc,@{$depends{$v}};
 			}
 			}
 			delete($depends{$v});
+			%ch=();
 		next/e;
-		$s=~s/^if\s+(.*)$/$c='if';push @if1,"($1)";next/e;
-		$s=~s/^endif$/$c='endif';pop @if1;next/e;
+		$s=~s/^if\s+(.*)$/$c='if';push @if,prelogic($1);next/e;
+		$s=~s/^endif$/$c='endif';pop @if;next/e;
 		$s=~s/^\s*(?:def_)?tristate(?:\s+\S*|$)/$tristate{$v}=1;$tristate_{$v1}=1;next/e;
 		$s=~s/^\s*(?:def_)?bool(?:\s+\S*|$)/if($c eq 'menuconfig'){$menu{$v}=1}else{$bool{$v}=1};next/e;
 		$s=~s/^\s*select\s+(.*)$/push @{$select{preif($1)}},$v;next/e;
@@ -265,12 +271,12 @@ sub preif{
 sub logic{
 	my $s=$_[0];
 	while(
-		($s=~s/(\w+)\&\&(\w+)/$config{$1}&&$config{$2}?'y':'n'/ge)+
-		($s=~s/(\w+)\|\|(\w+)/$config{$1}||$config{$2}?'y':'n'/ge)+
-		($s=~s/(\w+)=+(\w+)/$config{$1} eq $config{$2}?'y':'n'/ge)+
-		($s=~s/(\w+)!=(\w+)/$config{$1} ne $config{$2}?'y':'n'/ge)+
-		($s=~s/!(\w+)/$config{$1}?'n':'y'/ge)+
-		($s=~s/\((\w+)\)/$config{$1}?'y':'n'/ge)
+		($s=~s/\((\w+)\)/$config{$1}?'y':'n'/ge)||
+		($s=~s/!(\w+)/$config{$1}?'n':'y'/ge)||
+		($s=~s/(\w+)!=(\w+)/$config{$1} ne $config{$2}?'y':'n'/ge)||
+		($s=~s/(\w+)=+(\w+)/$config{$1} eq $config{$2}?'y':'n'/ge)||
+		($s=~s/(\w+)\&\&(\w+)/$config{$1}&&$config{$2}?'y':'n'/ge)||
+		($s=~s/(\w+)\|\|(\w+)/$config{$1}||$config{$2}?'y':'n'/ge)
 	){}
 	exists($config{$s})||(($s=~/\W/ || ($s ne $_[0])) && print "Warning: invalid expression: '$_[0]' ('$s')\n");
 	$config{$s}
@@ -283,16 +289,19 @@ while($i ne $i1){
 	$i1=$i;
 	$i=join('|',@_,sort keys %n)||'.*';
 	%l=();
-	for(grep(/^.*\/$i$/,keys %tristate,keys %bool,keys %menu)){
-		my $x=$_;
+	for my $c (grep(/^.*\/$i$/,keys %tristate,keys %bool,keys %menu)){
+		my $x=$c;
 		$x=~s/.*://;
+		$l{$x}++;
 		if($config{$x}){
-		for(grep(/(?:^|\W)$i(?:\W|\$)/,@{$depends{$_}},@{$if{$_}})){
-			logic($_) || undef $l{$x};
+		for(grep(/(?:^|\W)$i(?:\W|\$)/,@{$depends{$c}})){
+			logic($_) || $l{$x}--;
 		}
 		}
 	}
-	$n{$_}=cfg($_) for(keys(%l));
+	for(keys(%l)){
+		$n{$_}=cfg($_) if(!$l{$_});
+	}
 }
 keys %n;
 }
@@ -358,8 +367,8 @@ sub _and{
 
 sub onoff{
 	my $v=$config{$_[0]};
-#	for(grep(/(?:^|\W)$_[0](?:\W|$)/,@{$depends{$_[1]}},@{$if{$_[1]}})){
-	for(@{$depends{$_[1]}},@{$if{$_[1]}}){
+#	for(grep(/(?:^|\W)$_[0](?:\W|$)/,@{$depends{$_[1]}})){
+	for(@{$depends{$_[1]}}){
 		$config{$_[0]}=$_[2];
 		logic($_) || next;
 		$config{$_[0]}='';
@@ -468,7 +477,7 @@ sub arch{
 }
 
 sub Kconfig{
-	our (%tristate,%bool,%select,%menu,%yes,%no,%config,%oldconfig,%defconfig,%off,%unset,%vars,%if,@if1,$NV,%tristate_)=();
+	our (%tristate,%bool,%select,%menu,%yes,%no,%config,%oldconfig,%defconfig,%off,%unset,%vars,@if,$NV,%tristate_)=();
 	%config=('y'=>'y','m'=>'m','n'=>'',''=>'',
 		"'y'"=>'y',"'m'"=>'m',"'n'"=>'n',
 		'"y"'=>'y','"m"'=>'m','"n"'=>'m',
@@ -490,8 +499,7 @@ sub Kconfig{
 	}else{
 		die "Not found $c and|or $c.default";
 	}
-#	my @dep0=dep();
-#	die "Strict logic mismatch or you forget 'make oldconfig'. Initial changes: ".join(',',@dep0)."\n" if($#dep0>=0);
+	dep();
 	%oldconfig=%config;
 	defaults($_) for(split(/\s+/,$ENV{KERNEL_DEFAULTS}));
 	modules($_) for(split(/\s+/,$ENV{KERNEL_MODULES}));
@@ -516,10 +524,10 @@ if($ARGV[0]=~/^-(?:help|-help|h|--h)$/){
 }elsif($ARGV[0] eq '-config'){
 	config;
 	exit;
-} #elsif($ARGV[0] eq '-relax'){
+}elsif($ARGV[0] eq '-relax'){
 	*dep=sub{ ();};
 	*if_cfg=*if_cfg_;
-#	shift(@ARGV);
-#}
+	shift(@ARGV);
+}
 $ENV{S}||=$ARGV[0]||'.';
 Kconfig();
