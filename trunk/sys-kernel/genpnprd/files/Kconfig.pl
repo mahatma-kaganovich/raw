@@ -120,7 +120,7 @@ sub Kcload{
 			for(keys %ch){
 				my %dc=%ch;
 				delete($dc{$_});
-#				push @{$depends{$_}},values %dc,@{$depends{$v}};
+				push @{$depends{$_}},values %dc,@{$depends{$v}};
 			}
 			}
 			delete($depends{$v});
