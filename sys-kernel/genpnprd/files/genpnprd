@@ -369,7 +369,7 @@ $LIBLOOP && ldir='lib' || ldir=
 N=
 while true; do
     if $SQUASH ; then
-	mksquashfs "$rcdir/$ldir" "$tmp/${ldir:-rd}$N.loopfs" ${COMPRESS:+-comp $COMPRESS }-all-root -no-recovery -no-progress || die "mksquashfs"
+	mksquashfs "$rcdir/$ldir" "$tmp/${ldir:-rd}$N.loopfs" ${COMPRESS:+-comp $COMPRESS }-b 1048576 -all-root -no-recovery -no-progress || die "mksquashfs"
     else
 	[[ -x /sbin/mkfs.cramfs ]] && mkcramfs(){ /sbin/mkfs.cramfs "${@}";}
 	mkcramfs "$rcdir/$ldir" "$tmp/${ldir:-rd}$N.loopfs" || die "mkcramfs"
