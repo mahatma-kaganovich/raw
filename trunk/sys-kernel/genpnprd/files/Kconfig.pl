@@ -296,11 +296,12 @@ while($i ne $i1){
 	for my $c (grep(/^.*\/$i$/,keys %tristate,keys %bool,keys %menu)){
 		my $x=$c;
 		$x=~s/.*://;
-		$l{$x}++;
-		if($config{$x}){
+		next if($l{$x});
+		$l{$x}=1;
 		for(grep(/(?:^|\W)$i(?:\W|\$)/,@{$depends{$c}})){
-			logic($_) || $l{$x}--;
-		}
+			logic($_) && next;
+			$l{$x}=undef;
+			last;
 		}
 	}
 	for(keys(%l)){
