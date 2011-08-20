@@ -986,7 +986,7 @@ mksquash(){
 		[[ "$i" == -j* ]] && p=$((${i#-j}-1))
 	done
 	[[ "${p:-0}" == 0 ]] && p=1
-	mksquashfs "${@}" ${comp:+-comp $comp }-no-recovery -no-progress -processors $p || die "mksquashfs failed"
+	mksquashfs "${@}" ${comp:+-comp $comp }-b 1048576 -no-recovery -no-progress -processors $p || die "mksquashfs failed"
 }
 
 LICENSE(){
