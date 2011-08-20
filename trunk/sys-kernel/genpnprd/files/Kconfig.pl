@@ -128,6 +128,10 @@ sub Kcload{
 		next/e;
 		$s=~s/^if\s+(.*)$/$c='if';push @if,prelogic($1);next/e;
 		$s=~s/^endif$/$c='endif';pop @if;next/e;
+		if(my ($i)=$s=~/^\s*(?:def_tristate|def_bool|default)\s+(.+)/){
+			$i=prelogic($i) if(!($i=~s/^(.*)\s+if\s+(.*)$/prelogic($1).' if '.prelogic($2)/e));
+			$default{$v}=$i;
+		}
 		$s=~s/^\s*(?:def_)?tristate(?:\s+\S*|$)/$tristate{$v}=1;$tristate_{$v1}=1;next/e;
 		$s=~s/^\s*(?:def_)?bool(?:\s+\S*|$)/if($c eq 'menuconfig'){$menu{$v}=1}else{$bool{$v}=1};next/e;
 		$s=~s/^\s*select\s+(.*)$/push @{$select{preif($1)}},$v;next/e;
@@ -450,7 +454,7 @@ sub conf{
 			%off=();
 			cfg($_);
 		}elsif($c eq '~'){
-			cfg($_,$oldconfig{$_});
+			exists($oldconfig{$i})?cfg($_,$oldconfig{$i}):delete($config{$i});
 		}elsif($c eq '&'){
 			_and($_,$y,$_);
 		}elsif($c eq '?'){
@@ -499,7 +503,7 @@ sub Kconfig{
 	}else{
 		die "Not found $c and|or $c.default";
 	}
-	dep();
+#	dep();
 	%oldconfig=%config;
 	defaults($_) for(split(/\s+/,$ENV{KERNEL_DEFAULTS}));
 	modules($_) for(split(/\s+/,$ENV{KERNEL_MODULES}));
@@ -509,6 +513,7 @@ sub Kconfig{
 		cfg(substr($_,14),$ENV{$_});
 		msg("$_=$ENV{$_}");
 	}
+#	dep();
 	set_config("$ENV{S}/.config");
 }
 
