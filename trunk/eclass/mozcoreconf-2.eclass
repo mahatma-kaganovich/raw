@@ -6,6 +6,7 @@ case "${ARCH}" in
 alpha|ia64|amd64|ppc64) IUSE="${IUSE} +pic" ;;
 x86) IUSE="${IUSE} sse" ;;
 esac
+[[ "${ARCH}" == *86 ]] && IUSE="${IUSE} sse"
 
 
 RDEPEND="!moznosystem? ( >=sys-libs/zlib-1.1.4 )"
@@ -36,12 +37,12 @@ mozconfig_init() {
 	#
 	####################################
 
+	: >.mozconfig
 	case ${PN} in
 		mozilla|gecko-sdk)
 			# The other builds have an initial --enable-extensions in their
 			# .mozconfig.  The "default" set in configure applies to mozilla
 			# specifically.
-			: >.mozconfig || die "initial mozconfig creation failed"
 			mozconfig_annotate "" --enable-extensions=default ;;
 		*firefox)
 			cp browser/config/mozconfig .mozconfig \
@@ -56,13 +57,11 @@ mozconfig_init() {
 			cp calendar/sunbird/config/mozconfig .mozconfig \
 				|| die "cp calendar/sunbird/config/mozconfig failed" ;;
 		*thunderbird)
-			cp mail/config/mozconfig .mozconfig \
-				|| die "cp mail/config/mozconfig failed" ;;
+			mozconfig_annotate "" --enable-application=mail ;;
 		seamonkey)
 			# The other builds have an initial --enable-extensions in their
 			# .mozconfig.  The "default" set in configure applies to mozilla
 			# specifically.
-			: >.mozconfig || die "initial mozconfig creation failed"
 			mozconfig_annotate "" --enable-application=suite
 			mozconfig_annotate "" --enable-extensions=default ;;
 	esac
