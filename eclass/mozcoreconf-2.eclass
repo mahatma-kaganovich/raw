@@ -87,8 +87,8 @@ mozconfig_init() {
 			mozconfig_annotate "from CFLAGS" --enable-optimize=-Os
 		elif ${XUL}; then
 			mozconfig_annotate "xulrunner default" --enable-optimize=-O2
-#		elif is-flag -O3; then
-#			mozconfig_annotate "from CFLAGS" --enable-optimize=-O3
+		elif is-flag -O3; then
+			mozconfig_annotate "from CFLAGS" --enable-optimize=-O3
 		else
 			mozconfig_annotate "Gentoo's default optimization" --enable-optimize=-O2
 		fi
@@ -102,7 +102,8 @@ mozconfig_init() {
 	# compile string
 	filter-flags '-O*'
 
-	strip-flags
+	# I forget about stripping!
+#	strip-flags
 
 	# Historically we have needed to add -fPIC manually for 64-bit.
 	# I don't know why -fPIC needed for 64bit and want to off
