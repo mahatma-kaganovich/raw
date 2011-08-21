@@ -277,8 +277,14 @@ mv later/* alias/ 2>/dev/null
 
 fs(){
 	if [ -e "$1" ]; then
-		[ -e "$tmp/$1" ] && return 1
-		${_cmd_rootwait:-false} || mkdir -p "$tmp/$1"
+		[ -e "$tmp/mnt/$1" ] && return 1
+		${_cmd_rootwait:-false} || mkdir -p "$tmp/mnt/$1"
+	elif $MOUNTED; then
+		return 1
+	elif [ "$1" = /dev/nfs ]; then
+		#nfsmount -p /pmap_lock -o lock $cmd_nfsroot /newroot ||
+		nfsmount $cmd_nfsroot /newroot && MOUNTED=true
+		return $?
 	elif [ -z "$cmd_rootfstype" ]; then
 		return 1
 	fi
@@ -360,8 +366,6 @@ done
 echo ''
 if $BOOT; then
 	echo /sbin/modprobe >/proc/sys/kernel/modprobe
-	$MOUNTED || nfsmount $cmd_nfsroot /newroot
-	 #nfsmount -p /pmap_lock -o lock $cmd_nfsroot /newroot
 	if ! [ -e "/newroot/$cmd_init" ]; then
 		echo "Not found '/newroot/$cmd_init' - try shell:"
 		exec sh
