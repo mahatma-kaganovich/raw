@@ -38,10 +38,10 @@ seamonkey)
 esac
 
 IUSE="-java mozdevelop moznoirc moznoroaming postgres startup-notification
-	debug minimal directfb moznosystem +threads jssh wifi python mobile static
+	debug minimal directfb moznosystem +threads jssh python mobile static
 	moznomemory accessibility system-sqlite vanilla xforms gio +alsa
 	+custom-cflags +custom-optimization system-xulrunner +libxul system-nss system-nspr X
-	bindist flatfile dbus profile ipv6 opengl moznopango e10s force-shared-static ipccode"
+	bindist flatfile profile ipv6 opengl moznopango e10s force-shared-static ipccode"
 #	qt-experimental"
 
 #RESTRICT="nomirror"
@@ -74,9 +74,7 @@ RDEPEND="java? ( >=virtual/jre-1.4 )
 	system-nss? ( >=dev-libs/nss-3.12.2 )
 	system-xulrunner? ( net-libs/xulrunner )
 	alsa? ( media-libs/alsa-lib )
-	directfb? ( dev-libs/DirectFB )
-	gnome? ( !gio? ( >=gnome-base/gnome-vfs-2.3.5 )
-		>=gnome-base/libgnomeui-2.2.0 )"
+	directfb? ( dev-libs/DirectFB )"
 
 S="${WORKDIR}/comm-${MOZVER}"
 
@@ -185,7 +183,6 @@ extensions="${S}/mailnews/extensions/enigmail ${S1}/extensions/ipccode"
 #               x11-libs/qt-core )
 DEPEND="java? ( >=virtual/jdk-1.4 )
 	${RDEPEND}
-	wifi? ( net-wireless/wireless-tools )
 	dev-lang/perl
 	dev-util/pkgconfig
 	postgres? ( >=virtual/postgresql-server-7.2.0 )"
@@ -394,7 +391,6 @@ src_configure(){
 	mozconfig_use_extension mozdevelop venkman
 	mozconfig_use_extension mozdevelop layout-debug
 #	mozconfig_use_extension accessibility access-builtin
-	mozconfig_use_enable wifi necko-wifi
 	if LDAP; then
 		mozconfig_annotate +ldap --enable-ldap --enable-ldap-experimental
 	else
@@ -403,7 +399,6 @@ src_configure(){
 	mozconfig_use_with threads pthreads
 	mozconfig_use_with X x
 	mozconfig_use_enable X plugins
-	mozconfig_use_enable dbus
 	mozconfig_use_enable ipv6
 	mozconfig_use_enable mobile mobile-optimize
 	mozconfig_use_enable !moznocalendar calendar
@@ -426,6 +421,7 @@ src_configure(){
 	fi
 	mozconfig_use_enable accessibility
 	# ignored in 2.0
+	rmopt -gio
 	mozconfig_use_enable gio
 	mozconfig_use_enable faststart
 
@@ -504,6 +500,7 @@ src_configure(){
 	mozconfig_use_enable !debug strip
 	mozconfig_use_enable !debug strip-libs
 	mozconfig_use_enable !debug install-strip
+	
 #	isopt egl-xrender-composite && mozconfig_use_enable opengl egl-xrender-composite
 	isopt e10s-compat && mozconfig_use_enable e10s e10s-compat
 
@@ -546,6 +543,7 @@ src_configure(){
 
 	echo "" >>"${S}"/.mozconfig
 
+	rmopt -branding
 	branding=''
 	case "${PN}" in
 	*minefield*)
