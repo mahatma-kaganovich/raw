@@ -340,6 +340,10 @@ while [ "$m1" != "$mm" -o "${_cmd_rootwait}:$MOUNTED" = 'true:false' ]; do
 	resume "$cmd_resume" $cmd_resume_offset 2>/dev/null
 	flags `cd /sys/module && echo *` 2>/dev/null
 	mdevs
+	if [ -n "$cmd_ip" ] && ! [ -e "$tmp/ip/$cmd_ip" ] && ipconfig "$cmd_ip"; then
+		mkdir -p "$tmp/ip/$cmd_ip"
+		ipconfig 127.0.0.1:::::lo:none
+	fi
 	if [ "$cmd_root" = "*" ]; then
 		while read i i i i; do
 			fs "/dev/$i"
@@ -356,11 +360,7 @@ done
 echo ''
 if $BOOT; then
 	echo /sbin/modprobe >/proc/sys/kernel/modprobe
-	! $MOUNTED &&
-	 ! mount $cmd_root /newroot 2>/dev/null &&
-	 ipconfig $cmd_ip 2>/dev/null &&
-	 ipconfig 127.0.0.1:::::lo:none &&
-	 nfsmount $cmd_nfsroot /newroot
+	$MOUNTED || nfsmount $cmd_nfsroot /newroot
 	 #nfsmount -p /pmap_lock -o lock $cmd_nfsroot /newroot
 	if ! [ -e "/newroot/$cmd_init" ]; then
 		echo "Not found '/newroot/$cmd_init' - try shell:"
