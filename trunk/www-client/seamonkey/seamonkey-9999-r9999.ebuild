@@ -39,7 +39,7 @@ esac
 
 IUSE="-java mozdevelop moznoirc moznoroaming postgres startup-notification
 	debug minimal directfb moznosystem +threads jssh python mobile static
-	moznomemory accessibility system-sqlite vanilla xforms gio +alsa
+	moznomemory accessibility vanilla xforms gio +alsa
 	+custom-cflags +custom-optimization system-xulrunner +libxul system-nss system-nspr X
 	bindist flatfile profile ipv6 opengl moznopango e10s force-shared-static ipccode"
 #	qt-experimental"
@@ -58,7 +58,6 @@ RDEPEND="java? ( >=virtual/jre-1.4 )
 	>=sys-devel/binutils-2.16.1
 	!moznosystem? (
 		!static? ( >=app-text/hunspell-1.2 )
-		system-sqlite? ( dev-db/sqlite[fts3,secure-delete,unlock-notify] )
 		>=media-libs/lcms-1.17
 		app-arch/bzip2
 		x11-libs/cairo[directfb=]
@@ -529,10 +528,8 @@ src_configure(){
 
 	use system-xulrunner && mozconfig_annotate system-xulrunner --with-system-libxul --with-libxul-sdk=/usr/$(get_libdir)/xulrunner-devel-"`pkg-config libxul --modversion`"
 
-	# I don't know about sqlite bugs (runtime segfaults on x86_64 unknown source, testing),
-	# but internal sqlite are monolythic (must be faster)
-	mozconfig_use_enable system-sqlite
-
+	rmopt system-nss
+	rmopt system-nspr
 	# mozilla.org alredy source of last versions:
 	mozconfig_use_with system-nss
 	mozconfig_use_with system-nspr
