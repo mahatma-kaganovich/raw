@@ -1,5 +1,5 @@
 #!/bin/sh
-VERSION=0.5
+VERSION=0.6
 HELP="init for early userspace v$VERSION, (c) Denis Kaganovich, Anarchy or GPLv2 license
 
 Main goal: scan '/sys/*/uevent' for MODALIASes (without grep, sed...)
@@ -7,9 +7,11 @@ and load via external insmod only (trying to use standard modprobe
 and kernel configuration). And standard bootload..
 
 Usage: as /sbin/init, + /etc/modprobe.d, etc;
-or symlink to */modprobe;
+or symlink to /sbin/modprobe;
 or \"$0 --sort .../modules.alias [slow] >modules.alias\"
-	- to make new better modules order."
+	- to make new better modules order;
+or \"$0 --dry-run [<dir>]\"
+	- to scan /sys/devices -> modules [<dir>] -> stdout."
 
 #[ -e /dev/shm ] && : ${TMPDIR:=/dev/shm}
 tmp="${TMPDIR:-/tmp}/init_"
@@ -161,7 +163,7 @@ for i in "${@}"; do
 	if [ "$m" = "$x" ]; then
 		case "${x#real_}" in
 		# [^...] broken in klibc
-		quiet|root|init|rw|ro|resume|resume_offset|nfsroot|ip|rootdelay|rootwait|rootflags|rootfstype)export $xx$x="$y";;
+		quiet|root|init|rw|ro|resume|resume_offset|nfsroot|ip|rootdelay|rootwait|rootflags|rootfstype|loop)export $xx$x="$y";;
 		esac
 	elif ! [ -e cmdline ]; then
 		[ -d options ] && echo -n " ${x#*.}$yy" >>"options/$x" || echo -n "options $m ${x#*.}$yy" >>"/etc/modprobe.d/initrd_$x.conf"
@@ -227,7 +229,6 @@ $rm -f modules.lst modules/*
 
 conf(){
 	[ -e alias ] && return
-	echo -n '^'
 	local i m cmd x d
 	mkdir -p a alias modules options install remove softdep later
 	echo -n >>modules.lst
@@ -239,7 +240,7 @@ conf(){
 		while [ -z "${i##*-*}" ]; do
 			i="${i%%-*}_${i#*-}"
 		done
-		[ -e "/sys/module/$i" ] && continue
+		[ -e "/sys/module/$i" ] && ${1:-continue}
 		echo "$m $d" >>"alias/$i"
 		[ "$x" != "$i" ] && ln -s "$i" "alias/$x"
 	done <$libmod/modules.dep
@@ -275,6 +276,21 @@ dep1
 mv later/* alias/ 2>/dev/null
 }
 
+fs_loop(){
+	mkdir -p /looproot
+	local l i
+	for i in /newroot/$1; do
+		[ -e "$i" ] && l=`losetup -f` && losetup "$l" "$i" || continue
+		mount -r -t squashfs "$l" /looproot &&
+			mount -o move /newroot /looproot/boot &&
+			mount -o move /looproot /newroot &&
+			return 0
+		umount /looproot
+		losetup -d "$l"
+	done
+	return 1
+}
+
 fs(){
 	if [ -e "$1" ]; then
 		[ -e "$tmp/mnt/$1" ] && return 1
@@ -283,7 +299,8 @@ fs(){
 		return 1
 	elif [ "$1" = /dev/nfs ]; then
 		#nfsmount -p /pmap_lock -o lock $cmd_nfsroot /newroot ||
-		nfsmount $cmd_nfsroot /newroot && MOUNTED=true
+		nfsmount $cmd_nfsroot /newroot || return 1
+		[ -z "$2" ] || fs_loop "$2" || ! umount /newroot && MOUNTED=true
 		return $?
 	elif [ -z "$cmd_rootfstype" ]; then
 		return 1
@@ -303,11 +320,15 @@ fs(){
 *}" ] && [ -e "alias/$i" ] && mod "$i"
 			! $BOOT || $MOUNTED && continue
 			mount $o -t $i "$1" /newroot 2>/dev/null || continue
-			[ "$cmd_root" = "$1" ] && MOUNTED=true && continue
-			if [ -z "${1##$cmd_root}" ] && [ -e "/newroot/$cmd_init" ] && [ -e /newroot/etc/fstab ]; then
-				while read i x y; do
-					[ "$i:$x" = "$cmd_root:/" ] && MOUNTED=true && break
-				done </newroot/etc/fstab
+			if [ -n "$2" ]; then
+				fs_loop "$2" && MOUNTED=true
+			else
+				[ "$cmd_root" = "$1" ] && MOUNTED=true && continue
+				if [ -z "${1##$cmd_root}" ] && [ -e "/newroot/$cmd_init" ] && [ -e /newroot/etc/fstab ]; then
+					while read i x y; do
+						[ "$i:$x" = "$cmd_root:/" ] && MOUNTED=true && break
+					done </newroot/etc/fstab
+				fi
 			fi
 			$MOUNTED || umount /newroot || MOUNTED=true
 		;;
@@ -332,6 +353,7 @@ modaliases(){
 local i mm="`cat /proc/modules`" m1='-' fs m d p
 mkdir -p "$tmp/sys/class/*/*/uevent" "$tmp/options"
 cd $tmp||exit 1
+echo -n '^'
 conf
 cmdline
 own 2>/dev/null
@@ -352,11 +374,11 @@ while [ "$m1" != "$mm" -o "${_cmd_rootwait}:$MOUNTED" = 'true:false' ]; do
 	fi
 	if [ "$cmd_root" = "*" ]; then
 		while read i i i i; do
-			fs "/dev/$i"
+			fs "/dev/$i" "$cmd_loop"
 		done </proc/partitions
 	else
 		for i in $cmd_root; do
-			fs "$i"
+			fs "$i" "$cmd_loop"
 		done
 	fi
 	$MOUNTED && ${_cmd_fast:-false} && break
@@ -396,6 +418,7 @@ fi
 # but faster (and good here) to count only non-wildcard ("id") characters
 sortaliases(){
 local cmd a m mm
+tmp="$tmp$$"
 $rm -Rf "$tmp/aa" "$tmp/aaa" "$tmp/a0" "$tmp/a9"
 mkdir -p "$tmp/aa" "$tmp/aaa" "$tmp/a0" "$tmp/a9"
 cd "$tmp/a0" && mkdir $first && cd "$tmp/a9" && mkdir $last || return 1
@@ -450,17 +473,38 @@ cat $i </dev/null
 esac
 $rm -Rf "$tmp/aa" "$tmp/aaa" "$tmp/a0" "$tmp/a9"
 cd $tmp
+rm -rf $tmp
 }
 
+dry(){
+insmod(){
+	echo "$*"
+	rm "$tmp/alias/$i"
+}
+libmod="${1-$libmod}"
+tmp="$tmp$$"
+rm -rf $tmp
+mkdir -p "$tmp"
+cd "$tmp"||exit 1
+conf true
+mod=modp
+sys_modalias /sys/devices 2>/dev/null
+dep
+rm -rf $tmp
+}
 
+doinit=true
 case $0 in
+*/kpnp)doinit=false;;
 */modprobe)
 	A="a$$"
 	modprobe "${@}"
 	dep
 	$rm -Rf "$tmp/$A"
+	exit
 ;;
-*)
+esac
+
 [ -e /proc/version ] || init
 false && if /sbin/modprobe -aVA >/dev/null 2>&1; then
 	modprobe=/sbin/modprobe
@@ -488,8 +532,15 @@ case "$1" in
 			exit 1
 		}
 	;;
+	--dry-run)
+		shift
+		dry "${@}"
+	;;
 	-h|--help)echo "$HELP";;
-	*)modaliases;;
-esac
-;;
+	*)if $doinit || $BOOT; then
+		modaliases
+	else
+		echo "$HELP"
+	fi
+	;;
 esac
