@@ -21,7 +21,7 @@ esac
 
 inherit flag-o-matic eutils $cvs
 
-DESCRIPTION="Simple Multi Conference Unit using H.323"
+DESCRIPTION="H.323 plus applications"
 HOMEPAGE="http://www.h323plus.org/"
 LICENSE="MPL-1.0"
 SLOT="0"
