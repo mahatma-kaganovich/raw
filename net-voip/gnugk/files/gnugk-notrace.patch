@@ -21,26 +21,14 @@
  
  	// only one thread must do this
  	if (ReloadMutex.WillBlock())
-@@ -162,7 +164,9 @@
- 
- 	RasServer::Instance()->LoadConfig();
- 
+@@ -162,1 +164,3 @@
 +#if PTRACING
  	Gatekeeper::EnableLogFileRotation();
 +#endif
- 	
- 	ConfigReloadMutex.EndWrite();
- 
-@@ -600,7 +604,9 @@
- 			return;
- 	}
- 
+@@ -600,1 +604,3 @@
 +#if PTRACING
  	EnableLogFileRotation();
 +#endif
- 	
- 	PString welcome("GNU Gatekeeper with ID '" + Toolkit::GKName() + "' started\n" + Toolkit::GKVersion());
- 	cout << welcome << '\n';
 --- gkauth.cxx.1
 +++ gkauth.cxx
 @@ -862,8 +862,8 @@
