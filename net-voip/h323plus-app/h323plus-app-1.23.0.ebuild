@@ -91,7 +91,6 @@ for i in "${S}"/*; do
 		esac
 	done
 done
-die
 }
 
 pkg_preinst() {
