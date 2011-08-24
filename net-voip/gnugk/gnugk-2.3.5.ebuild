@@ -56,6 +56,7 @@ src_prepare() {
 	use firebird && _epatch "${FILESDIR}"/${P}-firebird-2.1.patch
 	epatch "${FILESDIR}"/${PN}-notrace.patch
 	sed -i -e 's% self->GetName();%\n#if PTRACING\nself->GetName();\n#else\n0;\n#endif\n%' *.{h,cxx}
+	sed -i -e 's: $(PT_LIBDIR)/\$(PTLIB_FILE)::g' Makefile*
 }
 
 src_configure() {
@@ -73,7 +74,8 @@ src_configure() {
 	# --with-large-fdset=4096 is added because of bug #128102
 	# and it is recommanded in the online manual
 	export PTLIB_CONFIG="${ROOT}/usr/bin/ptlib-config"
-	export PW_LIBDIR="/usr/$(get_libdir)"
+	export PT_LIBDIR="/usr/$(get_libdir)"
+	export PW_LIBDIR="$PT_LIBDIR"
 	
 	append-cflags `$PTLIB_CONFIG --ccflags --libs` -fexceptions
 	econf \
