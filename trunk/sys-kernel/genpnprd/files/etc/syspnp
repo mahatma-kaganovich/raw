@@ -752,6 +752,8 @@ load_hand_made(){
 	## some hand-made autoloads
 #	$cmd_nofb || [[ -z "$(cat /proc/fb 2>/dev/null)" ]] || mod fbcon
 	mod $(cd /etc/modflags && cat $(ls -1 /sys/module) </dev/null 2>/dev/null)
+	grep -sq yeah /proc/sys/net/ipv4/tcp_available_congestion_control &&
+		echo yeah >/proc/sys/net/ipv4/tcp_congestion_control
 	[[ -e /dev/freefall ]] && [[ -x /bin/hpfall ]] && /bin/hpfall /dev/sda
 }
 
