@@ -48,6 +48,7 @@ src_configure() {
 		--kernel_src="${KERNEL_DIR}" \
 		--nssincdir="/usr/include/nss" \
 		--nsprincdir="/usr/include/nspr" \
+		--without_rgmanager \
 			|| die
 }
 
