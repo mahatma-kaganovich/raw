@@ -63,6 +63,7 @@ fi
 src_prepare(){
 	[[ -e configure ]] || eautoreconf
 	use static && sed -i -e 's:PKG_CONFIG --libs :PKG_CONFIG --static --libs :g' configure
+	sed -i -e 's:\(log_error.*\), CRM_SERVICE:\1:' ocfs2_controld/pacemaker.c
 	if [[ -e ocfs2cdsl ]]; then
 		export ac_config_files="ocfs2cdsl/ocfs2cdsl.8"
 		sed -i -e 's:^\(SUBDIRS = .*\)$:\1 ocfs2cdsl:' Makefile
