@@ -2,7 +2,7 @@ inherit eutils linux-mod versionator
 
 EAPI=3
 
-DESCRIPTION="RedHat cluster packages (gfs2, dlm, etc)"
+DESCRIPTION="RedHat cluster packages"
 HOMEPAGE="http://sources.redhat.com/cluster/wiki/"
 SRC_URI="https://fedorahosted.org/releases/c/l/${PN}/${P}.tar.xz"
 RESTRICT=nomirror
