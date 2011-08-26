@@ -5,7 +5,6 @@ EAPI=3
 DESCRIPTION="RedHat cluster packages"
 HOMEPAGE="http://sources.redhat.com/cluster/wiki/"
 SRC_URI="https://fedorahosted.org/releases/c/l/${PN}/${P}.tar.xz"
-RESTRICT=nomirror
 
 #LICENSE="|| ( GPL-2.1 GPL-3 )"
 LICENSE=">=GPL-2.1"
@@ -19,15 +18,20 @@ DEPEND=">=sys-kernel/linux-headers-2.6.24
 	!sys-cluster/dlm
 	!sys-cluster/dlm-lib
 	!sys-cluster/cman-lib
+	!sys-cluster/ccs
 	sys-cluster/corosync
-	sys-cluster/openais
+	>=sys-cluster/openais-1.1.4
 	sys-libs/slang
 	xen? ( app-emulation/libvirt )
 	dbus? ( sys-apps/dbus )"
+# 	>=sys-cluster/corosync-1.4.1
 
 RDEPEND="${DEPEND}"
 
 src_prepare(){
+	ewarn "According to wiki, this version requred >=sys-cluster/corosync-1.4.1"
+	ewarn "But it is compiling with 1.3.3 (Gentoo current mainline) and I keep unchecked"
+	ewarn "If unsure - say 'emerge =sys-cluster/cluster-3.0.12.1' instead"
 	# fix the manual pages have executable bit
 	sed -i -e '
 		/\tinstall -d/s/install/& -m 0755/; t
