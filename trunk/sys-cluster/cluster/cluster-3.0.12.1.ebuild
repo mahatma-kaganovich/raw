@@ -21,7 +21,7 @@ DEPEND=">=sys-kernel/linux-headers-2.6.24
 	!sys-cluster/ccs
 	!sys-cluster/rgmanager
 	sys-cluster/corosync
-	>=sys-cluster/openais
+	sys-cluster/openais
 	sys-libs/slang
 	xen? ( app-emulation/libvirt )
 	dbus? ( sys-apps/dbus )"
