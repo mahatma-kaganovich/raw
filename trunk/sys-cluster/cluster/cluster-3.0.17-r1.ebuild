@@ -33,6 +33,7 @@ src_prepare(){
 		/\tinstall -d/s/install/& -m 0755/; t
 		/\tinstall/s/install/& -m 0644/' \
 		dlm/man/Makefile || die "failed patching man pages permission"
+	sed -i -e 's:_PLATFORM_H:_PLATFORM__RGM_H:' rgmanager/include/platform.h
 }
 
 src_configure() {
