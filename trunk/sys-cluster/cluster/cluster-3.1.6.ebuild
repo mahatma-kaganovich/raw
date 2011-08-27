@@ -54,6 +54,6 @@ src_configure() {
 
 src_install() {
 	emake DESTDIR="${D}" install || die
-	dodir /usr/share/doc/init
-	mv "${D}"/etc/init.d/* "${D}"/usr/share/doc/init
+	dodir /usr/share/doc/cluster/init
+	mv "${D}"/etc/init.d/* "${D}"/usr/share/doc/cluster/init
 }
