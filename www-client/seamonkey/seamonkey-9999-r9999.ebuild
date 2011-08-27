@@ -279,6 +279,9 @@ src_prepare(){
 #	sed -i -e 's:\(return XRE_InitEmbedding.*\), nsnull, 0:\1:' "${S1}"/extensions/java/xpcom/src/nsJavaInterfaces.cpp
 #	use opengl && sed -i -e 's: = GLX$: = EGL:' "${S1}"/{gfx/thebes,content/canvas/src}/Makefile*
 	use opengl && sed -i -e 's:if (mIsMesa):if (0):' "${S1}"/widget/src/xpwidgets/GfxInfoX11.cpp
+	# dumb
+	use opengl && sed -i -e 's%return nsIGfxInfo::FEATURE_BLOCKED_[A-Z0-9_]*%return nsIGfxInfo::FEATURE_NO_INFO%g' "${S1}"/widget/src/xpwidgets/*.cpp
+	use opengl && ewarn "Enabling all hardware for OpenGL. Just USE='-opengl' if problems."
 
 	for i in "${WORKDIR}"/l10n/*/toolkit/chrome/global/*; do
 		[[ -e "${i}" ]] && ln -s "${i}" "${i%/*}/../../../suite/chrome/browser/${i##*/}"
@@ -698,6 +701,7 @@ src_install() {
 	else
 	grep -q "^mk_" "${S}"/.mozconfig && i="-f client.mk" || i=
 	emake $i DESTDIR="${D}" install
+	use ipccode && cp -L "${S1}"/extensions/ipccode/build/*.so "${D}/${MOZILLA_FIVE_HOME}"/components/
 	# do you need this?
 	use !mozdevelop && rm -Rf "${D}"/usr/{include,share/idl}
 	fi
