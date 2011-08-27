@@ -23,6 +23,7 @@ DEPEND=">=sys-kernel/linux-headers-2.6.24
 	sys-cluster/corosync
 	sys-cluster/openais
 	sys-libs/slang
+	net-nds/openldap
 	xen? ( app-emulation/libvirt )
 	dbus? ( sys-apps/dbus )"
 
