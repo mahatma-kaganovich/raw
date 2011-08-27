@@ -19,8 +19,9 @@ DEPEND=">=sys-kernel/linux-headers-2.6.24
 	!sys-cluster/dlm-lib
 	!sys-cluster/cman-lib
 	!sys-cluster/ccs
+	!sys-cluster/rgmanager
 	sys-cluster/corosync
-	sys-cluster/openais
+	>=sys-cluster/openais
 	sys-libs/slang
 	xen? ( app-emulation/libvirt )
 	dbus? ( sys-apps/dbus )"
@@ -33,6 +34,7 @@ src_prepare(){
 		/\tinstall -d/s/install/& -m 0755/; t
 		/\tinstall/s/install/& -m 0644/' \
 		dlm/man/Makefile || die "failed patching man pages permission"
+	sed -i -e 's:_PLATFORM_H:_PLATFORM__RGM_H:' rgmanager/include/platform.h
 }
 
 src_configure() {
@@ -44,7 +46,6 @@ src_configure() {
 		--libdir="/usr/$(get_libdir)" \
 		--disable_kernel_check \
 		$(use dbus||echo --disable_dbus) \
-		--without_rgmanager \
 		--enable_contrib \
 		--kernel_src="${KERNEL_DIR}" \
 			|| die
@@ -56,5 +57,6 @@ src_compile(){
 
 src_install() {
 	emake DESTDIR="${D}" install || die
-	mv "${D}"/etc/init.d/cman "${D}"/usr/share/doc/cluster/cman.init
+	dodir /usr/share/doc/init
+	mv "${D}"/etc/init.d/* "${D}"//usr/share/doc/init
 }
