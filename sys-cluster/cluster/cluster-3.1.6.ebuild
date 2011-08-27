@@ -10,7 +10,7 @@ SRC_URI="https://fedorahosted.org/releases/c/l/${PN}/${P}.tar.xz"
 LICENSE=">=GPL-2.1"
 SLOT="0"
 KEYWORDS="~amd64 ~x86"
-IUSE="xen dbus"
+IUSE="xen dbus ldap"
 
 DEPEND=">=sys-kernel/linux-headers-2.6.24
 	!sys-cluster/dlm-headers
@@ -23,6 +23,7 @@ DEPEND=">=sys-kernel/linux-headers-2.6.24
 	sys-cluster/corosync
 	>=sys-cluster/openais-1.1.4
 	sys-libs/slang
+	ldap? ( net-nds/openldap )
 	xen? ( app-emulation/libvirt )
 	dbus? ( sys-apps/dbus )"
 # 	>=sys-cluster/corosync-1.4.1
@@ -39,6 +40,7 @@ src_prepare(){
 		/\tinstall/s/install/& -m 0644/' \
 		dlm/man/Makefile || die "failed patching man pages permission"
 	sed -i -e 's:_PLATFORM_H:_PLATFORM__RGM_H:' rgmanager/include/platform.h
+	use ldap || sed -i -e 's:ldap::g' config/*/Makefile
 }
 
 src_configure() {
