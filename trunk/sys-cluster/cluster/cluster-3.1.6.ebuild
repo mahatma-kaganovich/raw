@@ -36,14 +36,16 @@ src_prepare(){
 	# vs. dev-libs/libxml2[icu] -> icu -> unicode/platform.h interfere with
 	sed -i -e 's:_PLATFORM_H:_PLATFORM__RGM_H:' rgmanager/include/platform.h
 	use ldap || sed -i -e 's:ldap::g' config/*/Makefile
+	sed -i -e 's:LD_FLAGS:LDFLAGS:' rgmanager/src/daemons/Makefile
 }
 
 src_configure() {
 	./configure \
 		--prefix=/usr \
 		--cc="$(tc-getCC)" \
-		--ldflags="${LDFLAGS}" \
-		--cflags="${CFLAGS}" \
+		${LDFLAGS:+--ldflags="${LDFLAGS}"} \
+		${CFLAGS:+--cflags="${CFLAGS}"} \
+		${CPPFLAGS:+--extracflags="${CPPFLAGS}"} \
 		--libdir="/usr/$(get_libdir)" \
 		--disable_kernel_check \
 		--kernel_src=""${ROOT}/usr"" \
@@ -54,6 +56,30 @@ src_configure() {
 
 src_install() {
 	emake DESTDIR="${D}" install || die
-	dodir /usr/share/doc/cluster/init
-	mv "${D}"/etc/init.d/* "${D}"/usr/share/doc/cluster/init
+	local l=' corosync' n d='/usr/share/cluster/init.d'
+	dodir $d
+	for n in cman rgmanager; do
+		# lazy wrapper to RH's
+		mv "${D}/etc/init.d/$n" "${D}$d"
+		echo "#!/sbin/runscript
+
+depens(){
+	use net
+	${l:+need$l}
+}
+opts=\"${opts} reload status\"
+_do(){
+	ebegin \"\${1}ing $n\"
+	$d/$n \$1
+	eend \$?
+}
+start(){ _do start;}
+stop(){ _do stop;}
+restart(){ _do restart;}
+reload(){ _do reload;}
+status(){ $d/$n status;}" >"$TMPDIR/$n"
+		doinitd "$TMPDIR/$n"
+#		l+=" $n"
+		l=" $n"
+	done
 }
