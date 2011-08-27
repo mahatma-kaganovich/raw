@@ -20,6 +20,7 @@ DEPEND=">=sys-kernel/linux-headers-2.6.24
 	!sys-cluster/cman-lib
 	sys-cluster/corosync
 	dev-python/pexpect
+	net-nds/openldap
 	xen? ( app-emulation/libvirt )
 	"
 

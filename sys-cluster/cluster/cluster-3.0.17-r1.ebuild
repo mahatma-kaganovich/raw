@@ -21,6 +21,7 @@ DEPEND=">=sys-kernel/linux-headers-2.6.24
 	sys-cluster/corosync
 	dev-python/pexpect
 	dev-python/pycurl
+	net-nds/openldap
 	xen? ( app-emulation/libvirt )
 	"
 
