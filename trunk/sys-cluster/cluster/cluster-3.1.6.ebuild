@@ -39,6 +39,7 @@ src_prepare(){
 		/\tinstall -d/s/install/& -m 0755/; t
 		/\tinstall/s/install/& -m 0644/' \
 		dlm/man/Makefile || die "failed patching man pages permission"
+	# vs. dev-libs/libxml2[icu] -> icu -> unicode/platform.h interfere with
 	sed -i -e 's:_PLATFORM_H:_PLATFORM__RGM_H:' rgmanager/include/platform.h
 	use ldap || sed -i -e 's:ldap::g' config/*/Makefile
 }
