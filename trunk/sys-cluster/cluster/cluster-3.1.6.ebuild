@@ -1,4 +1,4 @@
-inherit eutils linux-mod versionator
+inherit eutils
 
 EAPI=3
 
@@ -14,7 +14,6 @@ IUSE="xen dbus ldap"
 
 DEPEND=">=sys-kernel/linux-headers-2.6.24
 	!sys-cluster/dlm-headers
-	!sys-cluster/dlm-kernel
 	!sys-cluster/dlm
 	!sys-cluster/dlm-lib
 	!sys-cluster/cman-lib
@@ -34,11 +33,6 @@ src_prepare(){
 	ewarn "According to wiki, this version requred >=sys-cluster/corosync-1.4.1"
 	ewarn "But it is compiling with 1.3.3 (Gentoo current mainline) and I keep unchecked"
 	ewarn "If unsure - say 'emerge =sys-cluster/cluster-3.0.12.1' instead"
-	# fix the manual pages have executable bit
-	sed -i -e '
-		/\tinstall -d/s/install/& -m 0755/; t
-		/\tinstall/s/install/& -m 0644/' \
-		dlm/man/Makefile || die "failed patching man pages permission"
 	# vs. dev-libs/libxml2[icu] -> icu -> unicode/platform.h interfere with
 	sed -i -e 's:_PLATFORM_H:_PLATFORM__RGM_H:' rgmanager/include/platform.h
 	use ldap || sed -i -e 's:ldap::g' config/*/Makefile
@@ -46,24 +40,20 @@ src_prepare(){
 
 src_configure() {
 	./configure \
-                --prefix=/usr \
+		--prefix=/usr \
 		--cc="$(tc-getCC)" \
 		--ldflags="${LDFLAGS}" \
 		--cflags="${CFLAGS}" \
 		--libdir="/usr/$(get_libdir)" \
 		--disable_kernel_check \
+		--kernel_src=""${ROOT}/usr"" \
 		$(use dbus||echo --disable_dbus) \
 		--enable_contrib \
-		--kernel_src="${KERNEL_DIR}" \
 			|| die
-}
-
-src_compile(){
-	emake || die
 }
 
 src_install() {
 	emake DESTDIR="${D}" install || die
 	dodir /usr/share/doc/init
-	mv "${D}"/etc/init.d/* "${D}"//usr/share/doc/init
+	mv "${D}"/etc/init.d/* "${D}"/usr/share/doc/init
 }
