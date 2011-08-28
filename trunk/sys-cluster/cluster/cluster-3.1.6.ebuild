@@ -61,6 +61,7 @@ src_install() {
 	for n in cman rgmanager; do
 		# lazy wrapper to RH's
 		mv "${D}/etc/init.d/$n" "${D}$d"
+		sed -i -e 's:[ 	]pid=:	local rtrn\n	pid=:' "${D}$d/$n"
 		echo "#!/sbin/runscript
 
 depens(){
