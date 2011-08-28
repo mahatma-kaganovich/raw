@@ -56,7 +56,7 @@ src_configure() {
 
 src_install() {
 	emake DESTDIR="${D}" install || die
-	local l=' corosync' n d='/usr/share/cluster/init.d'
+	local l='' n d='/usr/share/cluster/init.d'
 	dodir $d
 	for n in cman rgmanager; do
 		# lazy wrapper to RH's
