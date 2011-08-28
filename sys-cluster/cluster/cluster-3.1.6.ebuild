@@ -37,6 +37,8 @@ src_prepare(){
 	sed -i -e 's:_PLATFORM_H:_PLATFORM__RGM_H:' rgmanager/include/platform.h
 	use ldap || sed -i -e 's:ldap::g' config/*/Makefile
 	sed -i -e 's:LD_FLAGS:LDFLAGS:' rgmanager/src/daemons/Makefile
+	# ??
+	sed -i -e 's:LD_RUN_PATH:_LD_RUN_PATH:' make/perl-binding-common.mk
 }
 
 src_configure() {
