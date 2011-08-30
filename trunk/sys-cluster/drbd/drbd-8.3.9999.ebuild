@@ -15,7 +15,7 @@ DESCRIPTION="mirror/replicate block-devices across a network-connection"
 SRC_URI="http://oss.linbit.com/drbd/${MY_MAJ_PV}/"${MY_P}".tar.gz"
 HOMEPAGE="http://www.drbd.org"
 
-IUSE=""
+IUSE="pacemaker"
 
 DEPEND=""
 RDEPEND=""
@@ -37,6 +37,10 @@ if [[ -n "${GIT}" ]] ; then
 	}
 fi
 
+src_prepare(){
+	sed -i -e 's:PATCHLEVEL),12345:PATCHLEVEL),-:' drbd/Makefile
+}
+
 src_configure() {
 	sed -i -e "s: -o : $LDFLAGS -o :" "${S}"/user/Makefile{,.in}
 	econf \
@@ -45,9 +49,10 @@ src_configure() {
 		--without-km \
 		--without-udev \
 		--with-xen \
-		--with-pacemaker \
-		--with-heartbeat \
-		--without-rgmanager \
+		$(use pacemaker && \
+			echo --with-pacemaker --without-heartbeat --with-rgmanager || \
+			echo --without-pacemaker --with-heartbeat --without-rgmanager
+		) \
 		--without-bashcompletion \
 		--with-distro=gentoo \
 		|| die "configure failed"
