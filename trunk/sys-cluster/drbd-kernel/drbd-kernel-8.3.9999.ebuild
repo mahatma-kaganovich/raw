@@ -33,13 +33,14 @@ fi
 src_prepare(){
 	local i=true
 	cd "${S}/drbd" || die
+	sed -i -e 's:PATCHLEVEL),12345:PATCHLEVEL),-:' Makefile
 	elog "Compatibility fixes"
 	grep -q "^int cn_add_callback(.* const char" "${KERNEL_DIR}/include/linux/connector.h" && sed -i -e 's:^\(typedef int .*cn_add_callback.*,\) \(char \*.*\)$:\1 const \2:' drbd_nl.c
 	grep -q "^#define current_cap()" "${KERNEL_DIR}/include/linux/cred.h" && sed -i -e 's:nsp->eff_cap:current_cap():' drbd_nl.c
 	[[ -e "${KERNEL_DIR}/include/linux/smp_lock.h" ]] || sed -i -e 's:#include <linux/smp_lock\.h>::' *.c
 	[[ -e "${KERNEL_DIR}/include/linux/bitops.h" ]] && sed -i -e 's:^#include "compat/bitops\.h":#include <linux/bitops.h>:' *.c || i=false
 	[[ -e "${KERNEL_DIR}/include/generated/autoconf.h" ]] && sed -i -e 's:<linux/autoconf\.h>:<generated/autoconf.h>:' *.{c,h} || i=false
-	$i && rm -Rf compat
+#	$i && rm -Rf compat
 	elog "Replacing includes to local headers"
 	for i in linux/*; do
 		sed -i -e "s:#include <$i>:#include \"$i\":g" *.c *.h linux/*.h
@@ -47,8 +48,8 @@ src_prepare(){
 }
 
 pkg_setup() {
-	if ! kernel_is 2 6; then
-		die "Unsupported kernel, drbd-${PV} needs kernel 2.6.x ."
+	if ! kernel_is 2 6 && ! kernel_is 3; then
+		die "Unsupported kernel, drbd-${PV} needs kernel >=2.6 ."
 	fi
 
 	MODULE_NAMES="drbd(block:${S}/drbd)"
