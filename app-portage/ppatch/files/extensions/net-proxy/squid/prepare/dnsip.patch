@@ -316,7 +316,7 @@ diff -pruN a/src/fqdncache.cc b/src/fqdncache.cc
      fqdncache_entry *f;
 diff -pruN a/src/ipcache.cc b/src/ipcache.cc
 --- a/src/ipcache.cc	2011-08-30 08:02:10.000000000 +0300
-+++ b/src/ipcache.cc	2011-09-01 13:10:41.000000000 +0300
++++ b/src/ipcache.cc	2011-09-02 09:39:40.000000000 +0300
 @@ -93,6 +93,7 @@ public:
      time_t lastref;
      time_t expires;
@@ -330,7 +330,7 @@ diff -pruN a/src/ipcache.cc b/src/ipcache.cc
  static int ipcacheParse(ipcache_entry *, const char *buf);
  #else
 -static int ipcacheParse(ipcache_entry *, rfc1035_rr *, int, const char *error);
-+static int ipcacheParse(ipcache_entry *, rfc1035_rr *, int, const char *error, IpAddress const &from);
++static int ipcacheParse(ipcache_entry *, rfc1035_rr *, int, const char *error, void const *from);
  #endif
  static ipcache_entry *ipcache_get(const char *);
  static void ipcacheLockEntry(ipcache_entry *);
@@ -339,7 +339,7 @@ diff -pruN a/src/ipcache.cc b/src/ipcache.cc
  #else
  static int
 -ipcacheParse(ipcache_entry *i, rfc1035_rr * answers, int nr, const char *error_message)
-+ipcacheParse(ipcache_entry *i, rfc1035_rr * answers, int nr, const char *error_message, IpAddress const &from)
++ipcacheParse(ipcache_entry *i, rfc1035_rr * answers, int nr, const char *error_message, void const *from)
  {
      int k;
      int j = 0;
@@ -347,7 +347,7 @@ diff -pruN a/src/ipcache.cc b/src/ipcache.cc
      for (int l = 0; l < na; l++)
          i->addrs.in_addrs[l].SetEmpty(); // perform same init actions as constructor would.
      i->addrs.bad_mask = (unsigned char *)xcalloc(na, sizeof(unsigned char));
-+    i->from = from;
++    i->from = from ? (IpAddress *)from : 0;
  
      for (j = 0, k = 0; k < nr; k++) {
  
@@ -365,7 +365,7 @@ diff -pruN a/src/ipcache.cc b/src/ipcache.cc
  #else
  
 -    int done = ipcacheParse(i, answers, na, error_message);
-+    int done = ipcacheParse(i, answers, na, error_message, from ? (IpAddress *)from : 0);
++    int done = ipcacheParse(i, answers, na, error_message, from);
  
      /* If we have not produced either IPs or Error immediately, wait for recursion to finish. */
      if (done != 0 || error_message != NULL)
