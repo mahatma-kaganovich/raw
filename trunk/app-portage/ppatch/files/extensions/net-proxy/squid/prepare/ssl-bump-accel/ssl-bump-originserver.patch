@@ -1,0 +1,7 @@
+Signed-off-by: Denis Kaganovich <mahatma@eu.by>
+
+--- a/src/forward.cc	2011-08-08 14:04:04.000000000 +0300
++++ b/src/forward.cc	2011-08-08 14:05:52.000000000 +0300
+@@ -837 +837 @@ FwdState::connectStart()
+-    if (fs->_peer && request->flags.sslBumped == true) {
++    if (fs->_peer && request->flags.sslBumped == true && !fs->_peer->options.originserver) {
