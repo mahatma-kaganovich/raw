@@ -316,7 +316,7 @@ diff -pruN a/src/fqdncache.cc b/src/fqdncache.cc
      fqdncache_entry *f;
 diff -pruN a/src/ipcache.cc b/src/ipcache.cc
 --- a/src/ipcache.cc	2011-08-30 08:02:10.000000000 +0300
-+++ b/src/ipcache.cc	2011-09-02 09:39:40.000000000 +0300
++++ b/src/ipcache.cc	2011-09-02 11:33:54.000000000 +0300
 @@ -93,6 +93,7 @@ public:
      time_t lastref;
      time_t expires;
@@ -343,15 +343,17 @@ diff -pruN a/src/ipcache.cc b/src/ipcache.cc
  {
      int k;
      int j = 0;
-@@ -568,6 +569,7 @@ ipcacheParse(ipcache_entry *i, rfc1035_r
-     for (int l = 0; l < na; l++)
-         i->addrs.in_addrs[l].SetEmpty(); // perform same init actions as constructor would.
-     i->addrs.bad_mask = (unsigned char *)xcalloc(na, sizeof(unsigned char));
-+    i->from = from ? (IpAddress *)from : 0;
+@@ -621,6 +622,9 @@ ipcacheParse(ipcache_entry *i, rfc1035_r
+     else
+         i->addrs.count = 255;
  
-     for (j = 0, k = 0; k < nr; k++) {
++    if(na)
++        i->from = from ? (IpAddress *)from : 0;
++
+     if (ttl > Config.positiveDnsTtl)
+         ttl = Config.positiveDnsTtl;
  
-@@ -649,7 +651,7 @@ static void
+@@ -649,7 +653,7 @@ static void
  #if USE_DNSSERVERS
  ipcacheHandleReply(void *data, char *reply)
  #else
@@ -360,7 +362,7 @@ diff -pruN a/src/ipcache.cc b/src/ipcache.cc
  #endif
  {
      ipcache_entry *i;
-@@ -662,7 +664,7 @@ ipcacheHandleReply(void *data, rfc1035_r
+@@ -662,7 +666,7 @@ ipcacheHandleReply(void *data, rfc1035_r
      ipcacheParse(i, reply);
  #else
  
@@ -369,7 +371,7 @@ diff -pruN a/src/ipcache.cc b/src/ipcache.cc
  
      /* If we have not produced either IPs or Error immediately, wait for recursion to finish. */
      if (done != 0 || error_message != NULL)
-@@ -834,6 +836,15 @@ ipcache_gethostbyname(const char *name,
+@@ -834,6 +838,15 @@ ipcache_gethostbyname(const char *name,
          IpcacheStats.negative_hits++;
          // ignore i->error_message: the caller just checks IP cache presence
          return NULL;
@@ -385,7 +387,7 @@ diff -pruN a/src/ipcache.cc b/src/ipcache.cc
      } else {
          IpcacheStats.hits++;
          i->lastref = squid_curtime;
-@@ -844,6 +855,8 @@ ipcache_gethostbyname(const char *name,
+@@ -844,6 +857,8 @@ ipcache_gethostbyname(const char *name,
      /* no entry [any more] */
  
      if ((addrs = ipcacheCheckNumeric(name))) {
