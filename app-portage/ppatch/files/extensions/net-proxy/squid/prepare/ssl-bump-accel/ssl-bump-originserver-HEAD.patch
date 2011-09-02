@@ -1,0 +1,8 @@
+Signed-off-by: Denis Kaganovich <mahatma@eu.by>
+
+diff -prNU 0 a/src/forward.cc b/src/forward.cc
+--- a/src/forward.cc	2011-09-02 03:12:21.000000000 +0300
++++ b/src/forward.cc	2011-09-02 22:35:45.000000000 +0300
+@@ -801 +801 @@ FwdState::connectStart()
+-    if (serverDestinations[0]->getPeer() && request->flags.sslBumped == true) {
++    if (serverDestinations[0]->getPeer() && request->flags.sslBumped == true && !serverDestinations[0]->getPeer()->options.originserver) {
