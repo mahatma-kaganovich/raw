@@ -169,7 +169,11 @@ src_configure() {
 	driver_enable video_cards_sunffb ffb
 	driver_enable video_cards_tdfx tdfx
 	driver_enable video_cards_trident trident
-	driver_enable video_cards_via unichrome
+	if [[ -e src/mesa/drivers/dri/openchrome ]]; then
+		driver_enable video_cards_via openchrome
+	else
+		driver_enable video_cards_via unichrome
+	fi
 	if use gallium; then
 		driver_enable video_cards_intel i810
 		use video_cards_intel && ga+=" i915 i965"
