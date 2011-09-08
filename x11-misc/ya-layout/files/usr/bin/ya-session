@@ -25,7 +25,7 @@ done
 
 bk(){
 	shift 2
-	eval "$* &"
+	$* &
 }
 
 killer(){
@@ -68,8 +68,8 @@ case "$1" in
 --lx) sess xfsettingsd ;;
 --0)
 	killer
-	bk 1 2 "$pan"
-	bk 1 2 "$desk"
+	[ -n "$pan" ] && $pan &
+	$desk &
 ;;
 --layout)
 	desk(){
