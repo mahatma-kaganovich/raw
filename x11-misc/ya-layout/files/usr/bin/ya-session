@@ -42,12 +42,12 @@ settings(){
 sess(){
 	killer
 	$1
-	if [ -n "$2" -a -e "$2" ]; then
+	if [ -n "$2" -a -x "$2" ]; then
 		$2 &
 	else
 		lxpanel &
 	fi
-	if [ -n "$3" -a -e "$3" ]; then
+	if [ -n "$3" -a -x "$3" ]; then
 		$3 &
 	else
 		pcmanfm --desktop &
@@ -55,16 +55,11 @@ sess(){
 }
 
 case "$1" in
---exit)
-#	pcmanfm --desktop-off || xfdesktop --quit
-#	killer
-	exec $wm --exit
-;;
+--exit) exec $wm --exit ;;
 --ce) sess settings /usr/bin/xfce4-panel /usr/bin/xfdesktop ;;
 --lx) sess settings ;;
 --0)
 	killer
-	[ -n "$pan" ] && $pan &
 	$desk &
 ;;
 --layout)
@@ -88,10 +83,9 @@ Commands: --lx, --ce, --exit, --0, --layout [user]"
 	for i in {/etc/xdg,~/.config}/ya/{environment,autostart}; do
 		[ -r $i ] && . $i
 	done
-	[ -n "$pan" ] && $pan &
 	[ -n "$desk" ] && $ex $wm --startup "$desk"
 	exec $wm
 ;;
 esac
 
-$wm --restart
+exec $wm --restart
