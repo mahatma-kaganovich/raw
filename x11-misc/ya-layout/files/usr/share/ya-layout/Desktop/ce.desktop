@@ -1,0 +1,13 @@
+
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Xfce4 (partial)
+Name[ru]=Xfce4 (местами)
+TryExec=/usr/bin/xfce4-panel
+Exec=/usr/bin/ya-session --ce
+Icon=xfce4_xicon1
+Path=/usr/share/ya-layout
+Terminal=false
+StartupNotify=false
+GenericName=
