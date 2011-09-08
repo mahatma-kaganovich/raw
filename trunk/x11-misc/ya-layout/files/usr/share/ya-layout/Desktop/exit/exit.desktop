@@ -1,0 +1,15 @@
+
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=exit
+Name[ru]=выход
+Comment=exit
+Comment[ru]=выход
+#Exec=/usr/bin/killall X
+Exec=/usr/bin/ya-session --exit
+Icon=stop
+Path=/usr/share/ya-layout
+Terminal=false
+StartupNotify=false
+GenericName=

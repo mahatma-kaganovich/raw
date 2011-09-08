@@ -1,0 +1,98 @@
+#!/bin/bash
+# starting minimal openbox+desktop session
+# wm is not reloadable
+# startup is compromise pure openbox & some accessibility
+
+wm=/usr/bin/openbox
+ex=exec
+desk=''
+pan=''
+
+#if [ ! -e $wm -a -e /usr/bib/xfwm4 ]; then
+#	wm=/usr/bin/xfwm4
+#	ex=bk
+#	desk=/usr/bin/xfdesktop
+#	for i in $pan "/usr/bin/xfce4-panel" /usr/bin/lxpanel; do
+#		[ -x ${i%% *} ] && pan="$i" && break
+#	done
+#	pan=xfce4-session
+#fi
+
+for i in $desk "/usr/bin/pcmanfm --desktop" /usr/bin/xfdesktop; do
+	[ -x ${i%% *} ] && desk="$i" && break
+done
+
+
+bk(){
+	shift 2
+	eval "$* &"
+}
+
+killer(){
+	pcmanfm --desktop-off
+	xfdesktop --quit
+	lxpanelctl exit
+	killall -w xfce4-panel xfsettingsd
+}
+
+envir(){
+	for i in {/etc/xdg,~/.config}/$1/{environment,autostart}; do
+		[ -r $i ] && . $i
+		echo $i
+	done
+}
+
+sess(){
+	killer
+	$1
+	if [ -n "$2" -a -e "$2" ]; then
+		$2 &
+	else
+		lxpanel &
+	fi
+	if [ -n "$3" -a -e "$3" ]; then
+		$3 &
+	else
+		pcmanfm --desktop &
+	fi
+}
+
+case "$1" in
+--exit)
+	pcmanfm --desktop-off
+	xfdesktop --quit
+#	killer
+	exec $wm --exit
+;;
+--ce) sess xfsettingsd /usr/bin/xfce4-panel /usr/bin/xfdesktop ;;
+--lx) sess xfsettingsd ;;
+--0)
+	killer
+	bk 1 2 "$pan"
+	bk 1 2 "$desk"
+;;
+--layout)
+	desk(){
+		cd "$1" || ( mkdir "$1" && cd "$1" ) || exit 1
+	}
+	eval "desk ~${2:-$USER}/Desktop"
+	for i in /mnt/auto/disk /usr/share/ya-layout/Desktop/*; do
+		[ -n "${i##*/.*}" -a -e "$i" -a -e "${i##*/}" ] || ln -s "$i"
+	done
+	exit
+;;
+?*)
+	echo "Usage: ya-session [command]
+Commands: --lx, --ce, --exit, --0, --layout [user]"
+	exit
+;;
+*)
+	xprop -root -remove _NET_NUMBER_OF_DESKTOPS -remove _NET_DESKTOP_NAMES -remove _NET_CURRENT_DESKTOP
+#	[ $wm = /usr/bin/openbox ] && envir openbox
+	[ -n "$pan" ] && $pan &
+	[ -n "$desk" ] && $ex $wm --startup "$desk"
+	exec $wm
+;;
+esac
+
+$wm --restart

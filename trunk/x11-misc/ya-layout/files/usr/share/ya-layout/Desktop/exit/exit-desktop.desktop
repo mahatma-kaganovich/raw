@@ -1,0 +1,13 @@
+
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=remove desktop
+Name[ru]=убрать рабочий стол
+#Exec=bash -c 'pcmanfm --desktop-off;xfdesktop --quit'
+Exec=killall pcmanfm xfdesktop
+Icon=stop
+Path=/usr/share/ya-layout
+Terminal=false
+StartupNotify=false
+GenericName=

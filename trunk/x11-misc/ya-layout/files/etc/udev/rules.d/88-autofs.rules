@@ -1,0 +1,2 @@
+SUBSYSTEM=="block", RUN+="/bin/bash /usr/share/ya-layout/autofs-all"
+

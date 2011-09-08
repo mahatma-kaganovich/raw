@@ -1,0 +1,8 @@
+#!/bin/sh
+
+[ "$ACTION" == remove ] && umount -l "$DEVNAME" &>/dev/null
+{
+ls -lR /dev/disk|grep ' -> ../../'|sed -e 's:^.* \([^ ]*\) -> \.\./\.\./\([^ ]*\):\2 -fstype=auto,noatime \:/dev/\2:'|sort -u
+echo "disk --bind :/dev/disk"
+} >/var/run/auto.dev
+killall -s HUP automount
