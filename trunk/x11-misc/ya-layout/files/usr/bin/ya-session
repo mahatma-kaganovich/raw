@@ -32,14 +32,11 @@ killer(){
 	pcmanfm --desktop-off
 	xfdesktop --quit
 	lxpanelctl exit
-	killall -w xfce4-panel xfsettingsd
+	killall -w xfce4-panel xfsettingsd xfce-mcs-manager gnome-settings-daemon
 }
 
-envir(){
-	for i in {/etc/xdg,~/.config}/$1/{environment,autostart}; do
-		[ -r $i ] && . $i
-		echo $i
-	done
+settings(){
+	xfsettingsd || (xfce-mcs-manager n &) || (gnome-settings-daemon &) || (/usr/libexec/gnome-settings-daemon &)
 }
 
 sess(){
@@ -59,13 +56,12 @@ sess(){
 
 case "$1" in
 --exit)
-	pcmanfm --desktop-off
-	xfdesktop --quit
+#	pcmanfm --desktop-off || xfdesktop --quit
 #	killer
 	exec $wm --exit
 ;;
---ce) sess xfsettingsd /usr/bin/xfce4-panel /usr/bin/xfdesktop ;;
---lx) sess xfsettingsd ;;
+--ce) sess settings /usr/bin/xfce4-panel /usr/bin/xfdesktop ;;
+--lx) sess settings ;;
 --0)
 	killer
 	[ -n "$pan" ] && $pan &
@@ -87,8 +83,11 @@ Commands: --lx, --ce, --exit, --0, --layout [user]"
 	exit
 ;;
 *)
+	[ -e /usr/bin/dbus-launch ] && eval `/usr/bin/dbus-launch --sh-syntax --exit-with-session`
 	xprop -root -remove _NET_NUMBER_OF_DESKTOPS -remove _NET_DESKTOP_NAMES -remove _NET_CURRENT_DESKTOP
-#	[ $wm = /usr/bin/openbox ] && envir openbox
+	for i in {/etc/xdg,~/.config}/ya/{environment,autostart}; do
+		[ -r $i ] && . $i
+	done
 	[ -n "$pan" ] && $pan &
 	[ -n "$desk" ] && $ex $wm --startup "$desk"
 	exec $wm
