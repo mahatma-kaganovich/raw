@@ -10,6 +10,7 @@ HOMEPAGE="http://raw.googlecode.com/"
 
 src_install(){
 	cp -aT "$FILESDIR" "${D}" || die
+	rm -Rf `find "${D}" -name ".*" -delete`
 	chown root:root "${D}" -Rf
 	chmod 755 "${D}/usr/bin/"*
 	ewarn "Edit /etc/conf.d/autofs: MASTER_MAP_NAME=\"/usr/share/${PN}/auto.master\"
