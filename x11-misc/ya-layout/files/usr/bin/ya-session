@@ -108,7 +108,7 @@ or: ln -s $Desk ~/Desktop/desktop"
 	exit
 ;;
 *)
-	[ -e /etc/udev/rules.d/88-autofs.rules -a ! -e /var/run/auto.dev ] . /usr/share/ya-layout/autofs-all
+	[ -e /etc/udev/rules.d/88-autofs.rules -a ! -e /var/run/auto.dev ] && . /usr/share/ya-layout/autofs-all
 	[ -x /usr/bin/dbus-launch ] && eval `/usr/bin/dbus-launch --sh-syntax --exit-with-session`
 	xprop -root -remove _NET_NUMBER_OF_DESKTOPS -remove _NET_DESKTOP_NAMES -remove _NET_CURRENT_DESKTOP
 	envir ya
