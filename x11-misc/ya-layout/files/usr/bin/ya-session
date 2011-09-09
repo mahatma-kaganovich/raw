@@ -25,7 +25,7 @@ Desk=/usr/share/ya-layout/Desktop
 	return 1
 }
 
-[ -z "$YA_DESKTOP" ] && YA_DESKTOP=`1of $desk '/usr/bin/pcmanfm --desktop' /usr/bin/xfdesktop /usr/bin/nautilus`
+[ -z "$YA_DESKTOP" ] && YA_DESKTOP=`1of $desk '/usr/bin/pcmanfm --desktop -p ya' /usr/bin/xfdesktop /usr/bin/nautilus`
 desk="$YA_DESKTOP"
 
 bk(){
@@ -61,7 +61,7 @@ sess(){
 	killer
 	$1
 	runs "$2" lxpanel
-	runs "$3" 'pcmanfm --desktop'
+	runs "$3" 'pcmanfm --desktop -p ya'
 }
 
 while true; do
@@ -71,7 +71,7 @@ case "$1" in
 	exec killall xinit X $wm
 ;;
 --ce) sess settings xfce4-panel xfdesktop ;;
---lx) sess settings ;;
+--lx) sess settings 'lxpanel -p LXDE' 'pcmanfm --desktop -p LXDE' ;;
 --0)
 	killer
 	$desk &
@@ -95,7 +95,7 @@ case "$1" in
 ;;
 --open)
 	shift
-	desk=`1of /usr/bin/pcmanfm /usr/bin/Thunar '/usr/bin/nautilus --no-desktop' /usr/bin/dolphin '/usr/bin/exo-open --launch FileManager'` && for i in $Desk $HOME/Desktop; do
+	desk=`1of '/usr/bin/pcmanfm -p ya' /usr/bin/Thunar '/usr/bin/nautilus --no-desktop' /usr/bin/dolphin '/usr/bin/exo-open --launch FileManager'` && for i in $Desk $HOME/Desktop; do
 		[ -d "$i" ] && desk="$desk $i"
 	done
 	continue
