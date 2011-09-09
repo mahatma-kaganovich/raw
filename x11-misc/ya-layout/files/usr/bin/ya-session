@@ -5,8 +5,7 @@
 
 wm=/usr/bin/openbox
 ex=exec
-desk=''
-pan=''
+Desk=/usr/share/ya-layout/Desktop
 
 #if [ ! -e $wm -a -e /usr/bib/xfwm4 ]; then
 #	wm=/usr/bin/xfwm4
@@ -15,12 +14,19 @@ pan=''
 #	for i in $pan "/usr/bin/xfce4-panel" /usr/bin/lxpanel; do
 #		[ -x ${i%% *} ] && pan="$i" && break
 #	done
-#	pan=xfce4-session
 #fi
 
-for i in $desk "/usr/bin/pcmanfm --desktop" /usr/bin/xfdesktop; do
-	[ -x ${i%% *} ] && desk="$i" && break
-done
+1of(){
+	local i x
+	for i in "${@}"; do
+#		x="${i%% *}";( [ -x "$x" ] || which "$x" >/dev/null 2>&1 ) && echo "$i" && return 0
+		[ -x "${i%% *}" ] && echo "$i" && return 0
+	done
+	return 1
+}
+
+[ -z "$YA_DESKTOP" ] && YA_DESKTOP=`1of $desk '/usr/bin/pcmanfm --desktop' /usr/bin/xfdesktop /usr/bin/nautilus`
+desk="$YA_DESKTOP"
 
 bk(){
 	shift 2
@@ -72,7 +78,7 @@ case "$1" in
 		cd "$1" || ( mkdir "$1" && cd "$1" ) || exit 1
 	}
 	eval "desk ~${2:-$USER}/Desktop"
-	for i in /mnt/auto/disk /usr/share/ya-layout/Desktop/*; do
+	for i in /mnt/auto/disk $Desk/*; do
 		[ -n "${i##*/.*}" -a -e "$i" -a -e "${i##*/}" ] || ln -s "$i"
 	done
 	exit
@@ -84,19 +90,32 @@ case "$1" in
 	[ -z "$desk" ] && desk="$i" || desk="/bin/bash -c '$i;exec $desk'"
 	continue
 ;;
+--open)
+	shift
+	desk=`1of '/usr/bin/pcmanfm --no-desktop' /usr/bin/Thunar '/usr/bin/nautilus --no-desktop' /usr/bin/dolphin '/usr/bin/exo-open --launch FileManager'` && for i in $Desk $HOME/Desktop; do
+		[ -d "$i" ] && desk="$desk $i"
+	done
+	continue
+;;
 ?*)
 	echo "Usage: ya-session [command]
-Commands: --lx, --ce, --exit, --0, --obsession, --layout [user]"
+Commands: --lx, --ce, --exit, --0, --obsession, --open, --layout [user]
+.xinitrc examples:
+	minimal: exec ya-session'
+	openbox-style: exec ya-session --open --obsession
+One-shot desktop update: ya-session --layout
+or: ln -s $Desk ~/Desktop/desktop"
 	exit
 ;;
 *)
-	[ -e /usr/bin/dbus-launch ] && eval `/usr/bin/dbus-launch --sh-syntax --exit-with-session`
+	[ -e /etc/udev/rules.d/88-autofs.rules -a ! -e /var/run/auto.dev ] . /usr/share/ya-layout/autofs-all
+	[ -x /usr/bin/dbus-launch ] && eval `/usr/bin/dbus-launch --sh-syntax --exit-with-session`
 	xprop -root -remove _NET_NUMBER_OF_DESKTOPS -remove _NET_DESKTOP_NAMES -remove _NET_CURRENT_DESKTOP
 	envir ya
+	export YA_DESKTOP
 	[ -n "$desk" ] && $ex $wm --startup "$desk"
 	exec $wm
 ;;
 esac
-
 exec $wm --restart
 done
