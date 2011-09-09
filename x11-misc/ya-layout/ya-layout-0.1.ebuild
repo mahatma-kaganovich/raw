@@ -13,7 +13,7 @@ src_install(){
 	rm -Rf `find "${D}" -name ".*"`
 	chown root:root "${D}" -Rf
 	chmod 755 "${D}/usr/bin/"*
-	dosym /mnt/auto/disk /usr/share/${PN}/disk
+	dosym /mnt/auto/disk /usr/share/${PN}/Desktop/disk
 	ewarn "Edit /etc/conf.d/autofs: MASTER_MAP_NAME=\"/usr/share/${PN}/auto.master\"
 Then do: \"ya-session --layout [user]\" - to copy minimal Desktop/*
 and, possible, restart [udev]"
