@@ -10,7 +10,7 @@ HOMEPAGE="http://raw.googlecode.com/"
 
 src_install(){
 	cp -aT "$FILESDIR" "${D}" || die
-	rm -Rf `find "${D}" -name ".*" -delete`
+	rm -Rf `find "${D}" -name ".*"`
 	chown root:root "${D}" -Rf
 	chmod 755 "${D}/usr/bin/"*
 	dosym /mnt/auto/disk /usr/share/${PN}/disk
