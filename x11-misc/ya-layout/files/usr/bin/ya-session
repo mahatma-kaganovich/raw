@@ -19,7 +19,7 @@ Desk=/usr/share/ya-layout/Desktop
 1of(){
 	local i x
 	for i in "${@}"; do
-#		x="${i%% *}";( [ -x "$x" ] || which "$x" >/dev/null 2>&1 ) && echo "$i" && return 0
+#		which "${i%% *}" >/dev/null 2>&1 && echo "$i" && return 0
 		[ -x "${i%% *}" ] && echo "$i" && return 0
 	done
 	return 1
@@ -66,7 +66,10 @@ sess(){
 
 while true; do
 case "$1" in
---exit) exec $wm --exit ;;
+--exit)
+#	exec $wm --exit
+	exec killall xinit X $wm
+;;
 --ce) sess settings xfce4-panel xfdesktop ;;
 --lx) sess settings ;;
 --0)
@@ -92,7 +95,7 @@ case "$1" in
 ;;
 --open)
 	shift
-	desk=`1of '/usr/bin/pcmanfm --no-desktop' /usr/bin/Thunar '/usr/bin/nautilus --no-desktop' /usr/bin/dolphin '/usr/bin/exo-open --launch FileManager'` && for i in $Desk $HOME/Desktop; do
+	desk=`1of /usr/bin/pcmanfm /usr/bin/Thunar '/usr/bin/nautilus --no-desktop' /usr/bin/dolphin '/usr/bin/exo-open --launch FileManager'` && for i in $Desk $HOME/Desktop; do
 		[ -d "$i" ] && desk="$desk $i"
 	done
 	continue
