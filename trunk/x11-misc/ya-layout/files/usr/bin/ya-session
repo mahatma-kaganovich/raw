@@ -22,10 +22,15 @@ for i in $desk "/usr/bin/pcmanfm --desktop" /usr/bin/xfdesktop; do
 	[ -x ${i%% *} ] && desk="$i" && break
 done
 
-
 bk(){
 	shift 2
 	$* &
+}
+
+envir(){
+	for A in "/etc/xdg/$1/environment" "$HOME/.config/$1/environment"; do
+		[ -r $A ] && . $A
+	done
 }
 
 killer(){
@@ -35,6 +40,13 @@ killer(){
 	killall -w xfce4-panel xfsettingsd xfce-mcs-manager gnome-settings-daemon
 }
 
+runs(){
+	for i in "${@}"; do
+		[ -n "$i" ] && ($i &) && return 0
+	done
+	return 1
+}
+
 settings(){
 	xfsettingsd || (xfce-mcs-manager n &) || (gnome-settings-daemon &) || (/usr/libexec/gnome-settings-daemon &)
 }
@@ -42,21 +54,14 @@ settings(){
 sess(){
 	killer
 	$1
-	if [ -n "$2" -a -x "$2" ]; then
-		$2 &
-	else
-		lxpanel &
-	fi
-	if [ -n "$3" -a -x "$3" ]; then
-		$3 &
-	else
-		pcmanfm --desktop &
-	fi
+	runs "$2" lxpanel
+	runs "$3" 'pcmanfm --desktop'
 }
 
+while true; do
 case "$1" in
 --exit) exec $wm --exit ;;
---ce) sess settings /usr/bin/xfce4-panel /usr/bin/xfdesktop ;;
+--ce) sess settings xfce4-panel xfdesktop ;;
 --lx) sess settings ;;
 --0)
 	killer
@@ -72,20 +77,26 @@ case "$1" in
 	done
 	exit
 ;;
+--obsession)
+	shift
+	envir openbox
+	i='/usr/libexec/openbox-autostart OPENBOX'
+	[ -z "$desk" ] && desk="$i" || desk="/bin/bash -c '$i;exec $desk'"
+	continue
+;;
 ?*)
 	echo "Usage: ya-session [command]
-Commands: --lx, --ce, --exit, --0, --layout [user]"
+Commands: --lx, --ce, --exit, --0, --obsession, --layout [user]"
 	exit
 ;;
 *)
 	[ -e /usr/bin/dbus-launch ] && eval `/usr/bin/dbus-launch --sh-syntax --exit-with-session`
 	xprop -root -remove _NET_NUMBER_OF_DESKTOPS -remove _NET_DESKTOP_NAMES -remove _NET_CURRENT_DESKTOP
-	for i in {/etc/xdg,~/.config}/ya/{environment,autostart}; do
-		[ -r $i ] && . $i
-	done
+	envir ya
 	[ -n "$desk" ] && $ex $wm --startup "$desk"
 	exec $wm
 ;;
 esac
 
 exec $wm --restart
+done
