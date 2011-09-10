@@ -25,11 +25,11 @@ Desk=/usr/share/ya-layout/Desktop
 	return 1
 }
 
-[ -z "$YA_DESKTOP" ] && YA_DESKTOP=`1of $desk '/usr/bin/pcmanfm --desktop -p ya' /usr/bin/xfdesktop /usr/bin/nautilus`
+[ -z "$YA_DESKTOP" ] && YA_DESKTOP=`1of $desk '/usr/bin/pcmanfm --desktop -p ya' '/usr/bin/xfdesktop --sm-client-disable' /usr/bin/nautilus`
 desk="$YA_DESKTOP"
 
 bk(){
-	shift 2
+	shift 3
 	$* &
 }
 
@@ -57,6 +57,11 @@ settings(){
 	xfsettingsd || (xfce-mcs-manager n &) || (gnome-settings-daemon &) || (/usr/libexec/gnome-settings-daemon &)
 }
 
+sessn(){
+	export XDG_MENU_PREFIX="$1-" DESKTOP_SESSION="ya"
+	# SESSION_MANAGER=
+}
+
 sess(){
 	killer
 	$1
@@ -64,14 +69,12 @@ sess(){
 	runs "$3" 'pcmanfm --desktop -p ya'
 }
 
+sessn ya
 while true; do
 case "$1" in
---exit)
-#	exec $wm --exit
-	exec killall xinit X $wm
-;;
---ce) sess settings xfce4-panel xfdesktop ;;
---lx) sess settings 'lxpanel -p LXDE' 'pcmanfm --desktop -p LXDE' ;;
+--exit)exec killall xinit X $wm ;;
+--ce)sessn xfce;sess settings 'xfce4-panel --sm-client-disable' 'xfdesktop --sm-client-disable' ;;
+--lx)sessn lxde;sess settings 'lxpanel -p LXDE' 'pcmanfm --desktop -p LXDE' ;;
 --0)
 	killer
 	$desk &
@@ -117,9 +120,9 @@ or: ln -s $Desk ~/Desktop/desktop"
 	envir ya
 	xrdb -merge /etc/xdg/ya/Xresources
 	export YA_DESKTOP
-	[ -n "$desk" ] && $ex $wm --startup "$desk"
-	exec $wm
+	[ -n "$desk" ] && $ex $wm --sm-disable --startup "$desk"
+	exec $wm --sm-disable
 ;;
 esac
-exec $wm --restart
+exec $wm --sm-disable --restart
 done
