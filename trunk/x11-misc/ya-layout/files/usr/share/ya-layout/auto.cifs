@@ -1,9 +1,14 @@
 #!/bin/sh
 
-echo -n '--fstype=cifs '
+opt="-C"
+[ -z "${1##\\\\*}" -a -e /etc/autofs/auto.smb ] && exec /etc/autofs/auto.smb "${1#\\\\}" $opt
 d=''
 h=''
-smbtree -CN|sed -e 's:\\:/:g' |while read n c; do
+echo -n '--fstype=cifs '
+smbtree $opt -N|sed -e 's:[ 	]*	:	:g' -e 's:\\:/:g' |while read n; do
+	c="${n#*	}"
+	n="${n%%	*}"
+	n="${n%	}"
 	s="${n#//}"
 	p="${s#*/}"
 	if [ "$s" = "$n" ]; then
