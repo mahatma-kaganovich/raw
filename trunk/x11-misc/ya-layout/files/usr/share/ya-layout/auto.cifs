@@ -1,0 +1,19 @@
+#!/bin/sh
+
+echo -n '--fstype=cifs '
+d=''
+h=''
+smbtree -CN|sed -e 's:\\:/:g' |while read n c; do
+	s="${n#//}"
+	p="${s#*/}"
+	if [ "$s" = "$n" ]; then
+		d="$n"
+	elif [ "$p" = "$s" ]; then
+		h="${n//\//\\}"
+	elif [ "$1" = "$h" ]; then
+		echo -n "\"/$p\" \":$n\" "
+	elif [ "$1" = "$d" -o "$1" = "*" ]; then
+		echo -n "\"/${n//\//\\}\" \":$n\" "
+	fi
+done
+echo ''
