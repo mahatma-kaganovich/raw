@@ -19,13 +19,11 @@ D=''
 for i in /dev/disk/*-*/*; do
 	l=`readlink "$i"` && [ -z "${l##../../*}" ] || continue
 	l="${l#../../}"
-	! $all && [ -z "${NO##*$i*}" ] && NO+="/dev/$l $i " || D+="$l "
+	! $all && NO+="/dev/$l $i " || D+="$l "
 done
 for i in $D; do
-	! $all && [ -z "${NO##*$i*}" ] && continue
-	NO+="/dev/$i "
-	echo "$base/\"$i\" -fstype=auto,noatime \":/dev/$i\""
-done|sort -u
+	[ -n "${NO##*$i*}" ] && NO+="/dev/$i " && echo "$base/\"$i\" -fstype=auto,noatime \":/dev/$i\""
+done
 echo "$base/disk --bind :/dev/disk"
 } >"${1:-/var/run/auto.dev}"
 killall -s HUP automount
