@@ -1,8 +1,31 @@
 #!/bin/sh
+# automount only if not in fstab (!all)
+# param: <file> <base> [all]
+
+par="x$3"
+base="${2:-/mnt/auto}"
 
 [ "$ACTION" == remove ] && umount -l "$DEVNAME" &>/dev/null
+NO=' '
+[ -z "${par##*all*}" ] && all=true || {
+	all=false
+	NO=" `sed -e 's:^[ 	]*::g' -e 's:[ 	#].*::g' -e 's:^UUID=:/dev/disk/by-uuid/:' </etc/fstab` "
+	NO="${NO//
+/ }"
+}
+[ -L /dev/disk/dev ] || ln -s .. /dev/disk/dev
 {
-ls -lR /dev/disk|grep ' -> ../../'|sed -e 's:^.* \([^ ]*\) -> \.\./\.\./\([^ ]*\):\2 -fstype=auto,noatime \:/dev/\2:'|sort -u
-echo "disk --bind :/dev/disk"
-} >/var/run/auto.dev
+D=''
+for i in /dev/disk/*-*/*; do
+	l=`readlink "$i"` && [ -z "${l##../../*}" ] || continue
+	l="${l#../../}"
+	! $all && [ -z "${NO##*$i*}" ] && NO+="/dev/$l $i " || D+="$l "
+done
+for i in $D; do
+	! $all && [ -z "${NO##*$i*}" ] && continue
+	NO+="/dev/$i "
+	echo "$base/\"$i\" -fstype=auto,noatime \":/dev/$i\""
+done|sort -u
+echo "$base/disk --bind :/dev/disk"
+} >"${1:-/var/run/auto.dev}"
 killall -s HUP automount
