@@ -10,20 +10,22 @@ pidfile="$HOME/.cache/ya/running.pids"
 sm='--sm-disable'
 sm2='--sm-client-disable'
 
-# todo: fill apps list
+# todo: full apps list
 : ${YA_APP_XF86WWW:="'exo-open --launch WebBrowser' 'seamonkey --browser' firefox chromium midori"}
 : ${YA_APP_XF86Mail:="'exo-open --launch MailReader' 'seamonkey --mail' claws-mail thunderbird"}
 : ${YA_APP_TerminalEmulator:="'exo-open --launch TerminalEmulator' Terminal lxterminal kterm xterm"}
-: ${YA_APP_FileManager:="'exo-open --launch FileManager' pcmanfm Thunar 'nautilus --no-desktop' +mc"}
+: ${YA_APP_FileManager:="'exo-open --launch FileManager' 'pcmanfm -p ya' Thunar 'nautilus --no-desktop' +mc"}
 : ${YA_APP_XF86AudioMedia:="audacious aqualung vlc mplayer"}
 : ${YA_APP_XF86VideoMedia:="mplayer2 mplayer vlc"}
 : ${YA_APP_XF86Calendar:="orage"}
 : ${YA_APP_XF86Calculator="gpe-calculator"}
 : ${YA_APP_XF86Messenger="pidgin"}
 #
-: ${YA_APP_XF86SettingsManager="'xfsettingsd -d' xfce-mcs-manager gnome-settings-daemon /usr/libexec/gnome-settings-daemon"}
-: ${YA_APP_XF86Panel="'xfce4-panel $sm2' lxpanel"}
-: ${YA_APP_XF86Desktop="'pcmanfm --desktop' 'xfdesktop $sm2' nautilus"}
+: ${YA_APP_XF86SettingsManager:="'xfsettingsd -d' xfce-mcs-manager gnome-settings-daemon /usr/libexec/gnome-settings-daemon"}
+: ${YA_APP_XF86Panel:="\"xfce4-panel \$sm2\" lxpanel"}
+: ${YA_APP_XF86Desktop:="'pcmanfm --desktop -p ya' \"xfdesktop \$sm2\" nautilus"}
+
+: ${YA_SESSION:="XF86SettingsManager XF86Panel XF86Desktop"}
 
 err(){
 	echo "ERROR: ${@}"
@@ -93,17 +95,27 @@ killer(){
 	pcmanfm --desktop-off
 	xfdesktop --quit
 	lxpanelctl exit
-	kill -w $pids
+	[ -n "$pids" ] && kill -w $pids
 	pids=''
 	killall -w xfce4-panel xfsettingsd xfce-mcs-manager gnome-settings-daemon
 }
 
 runs(){
+	local i
 	i=`1of "${@}"` || return 1
 	$i &
 	i=$?
 	pids+="$! "
 	return $i
+}
+
+run(){
+	local i
+	for i in "${@}"; do
+		i=`app $i` || continue
+		$i &
+		pids+="$! "
+	done
 }
 
 _app(){
@@ -140,11 +152,12 @@ app(){
 		[ -n "${!v}" ] && x="${!v}"
 		eval "_app $x"
 	done
-	[ -n "$min" ] && case "$minpref" in
+	[ -z "$min" ] && return 1
+	case "$minpref" in
 	+)app "TerminalEmulator -e $min";;
 	*)echo "$min";;
 	esac
-	return 1
+	return
 }
 
 settings(){
@@ -163,7 +176,7 @@ sess(){
 	runs "$3" 'pcmanfm --desktop -p ya'
 }
 
-[ -z "$YA_DESKTOP" ] && YA_DESKTOP=`1of $desk '/usr/bin/pcmanfm --desktop -p ya' "/usr/bin/xfdesktop $sm2" /usr/bin/nautilus`
+[ -z "$YA_DESKTOP" ] && YA_DESKTOP=`app XF86Desktop`
 desk="$YA_DESKTOP"
 pids=`cat "$pidfile" 2>/dev/null` || {
 	mkdir -p "${pidfile%/*}"
@@ -178,15 +191,11 @@ case "$1" in
 --ya)
 	sessn ya
 	killer
-	for i in XF86SettingsManager XF86Panel XF86Desktop; do
-		i=`app $i` || continue
-		$i &
-		pids+="$! "
-	done
+	eval "run $YA_SESSION"
 ;;
 --0)
 	killer
-	$desk &
+	runs "$desk"
 ;;
 --layout)
 	desk(){
@@ -207,7 +216,7 @@ case "$1" in
 ;;
 --open)
 	shift
-	desk=`1of '/usr/bin/pcmanfm -p ya' /usr/bin/Thunar '/usr/bin/nautilus --no-desktop' /usr/bin/dolphin '/usr/bin/exo-open --launch FileManager'` && for i in $Desk $HOME/Desktop; do
+	desk=`app FileManager` && for i in $Desk $HOME/Desktop; do
 		[ -d "$i" ] && desk="$desk $i"
 	done
 	continue
