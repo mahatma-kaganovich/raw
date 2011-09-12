@@ -6,20 +6,37 @@
 wm=/usr/bin/openbox
 Desk=/usr/share/ya-layout/Desktop
 obconf="$HOME/.config/ya/rc.xml"
+pidfile="$HOME/.cache/ya/running.pids"
+sm='--sm-disable'
+sm2='--sm-client-disable'
 
-#if [ ! -e $wm -a -e /usr/bib/xfwm4 ]; then
-#	wm=/usr/bin/xfwm4
-#	desk=/usr/bin/xfdesktop
-#	for i in $pan "/usr/bin/xfce4-panel" /usr/bin/lxpanel; do
-#		[ -x ${i%% *} ] && pan="$i" && break
-#	done
-#fi
+# todo: fill apps list
+: ${YA_APP_XF86WWW:="'exo-open --launch WebBrowser' 'seamonkey --browser' firefox chromium midori"}
+: ${YA_APP_XF86Mail:="'exo-open --launch MailReader' 'seamonkey --mail' claws-mail thunderbird"}
+: ${YA_APP_TerminalEmulator:="'exo-open --launch TerminalEmulator' Terminal lxterminal kterm xterm"}
+: ${YA_APP_FileManager:="'exo-open --launch FileManager' pcmanfm Thunar 'nautilus --no-desktop' +mc"}
+: ${YA_APP_XF86AudioMedia:="audacious aqualung vlc mplayer"}
+: ${YA_APP_XF86VideoMedia:="mplayer2 mplayer vlc"}
+: ${YA_APP_XF86Calendar:="orage"}
+: ${YA_APP_XF86Calculator="gpe-calculator"}
+: ${YA_APP_XF86Messenger="pidgin"}
+#
+: ${YA_APP_XF86SettingsManager="'xfsettingsd -d' xfce-mcs-manager gnome-settings-daemon /usr/libexec/gnome-settings-daemon"}
+: ${YA_APP_XF86Panel="'xfce4-panel $sm2' lxpanel"}
+: ${YA_APP_XF86Desktop="'pcmanfm --desktop' 'xfdesktop $sm2' nautilus"}
+
+err(){
+	echo "ERROR: ${@}"
+	exit 1
+}
 
 1of(){
-	local i
+	local i x p
 	for i in "${@}"; do
-#		which "${i%% *}" >/dev/null 2>&1 && echo "$i" && return 0
-		[ -x "${i%% *}" ] && echo "$i" && return 0
+		x=`which "${i%% *}" 2>/dev/null` || continue
+		p="${i#* }"
+		[ "$p" = "$i" ] && echo "$x" || echo "$x $p"
+		return 0
 	done
 	return 1
 }
@@ -32,16 +49,16 @@ obconf="$HOME/.config/ya/rc.xml"
 	return 1
 }
 
-[ -z "$YA_DESKTOP" ] && YA_DESKTOP=`1of $desk '/usr/bin/pcmanfm --desktop -p ya' '/usr/bin/xfdesktop --sm-client-disable' /usr/bin/nautilus`
-desk="$YA_DESKTOP"
-
 wm(){
 	if [ "$1" = --startup -a "$wm" != /usr/bin/openbox ]; then
 		shift
-		$* &
+		runs "$*"
 		wm
 	fi
-	exec $wm --sm-disable --config-file "$obconf" "${@}"
+	for i in $pids; do
+		[ -d /proc/$i ] && echo $i
+	done >$pidfile
+	exec $wm $sm --config-file "$obconf" "${@}"
 }
 
 envir(){
@@ -76,14 +93,17 @@ killer(){
 	pcmanfm --desktop-off
 	xfdesktop --quit
 	lxpanelctl exit
+	kill -w $pids
+	pids=''
 	killall -w xfce4-panel xfsettingsd xfce-mcs-manager gnome-settings-daemon
 }
 
 runs(){
-	for i in "${@}"; do
-		[ -n "$i" ] && ($i &) && return 0
-	done
-	return 1
+	i=`1of "${@}"` || return 1
+	$i &
+	i=$?
+	pids+="$! "
+	return $i
 }
 
 _app(){
@@ -128,7 +148,7 @@ app(){
 }
 
 settings(){
-	xfsettingsd || (xfce-mcs-manager n &) || (gnome-settings-daemon &) || (/usr/libexec/gnome-settings-daemon &)
+	xfsettingsd || runs 'xfce-mcs-manager n' gnome-settings-daemon /usr/libexec/gnome-settings-daemon
 }
 
 sessn(){
@@ -143,19 +163,34 @@ sess(){
 	runs "$3" 'pcmanfm --desktop -p ya'
 }
 
+[ -z "$YA_DESKTOP" ] && YA_DESKTOP=`1of $desk '/usr/bin/pcmanfm --desktop -p ya' "/usr/bin/xfdesktop $sm2" /usr/bin/nautilus`
+desk="$YA_DESKTOP"
+pids=`cat "$pidfile" 2>/dev/null` || {
+	mkdir -p "${pidfile%/*}"
+	touch "$pidfile" || err "unable to touch '$pidfile'"
+}
 sessn ya
 while true; do
 case "$1" in
 --exit)exec killall xinit X $wm ;;
---ce)sessn xfce;sess settings 'xfce4-panel --sm-client-disable' 'xfdesktop --sm-client-disable' ;;
+--ce)sessn xfce;sess settings "xfce4-panel $sm2" "xfdesktop $sm2" ;;
 --lx)sessn lxde;sess settings 'lxpanel -p LXDE' 'pcmanfm --desktop -p LXDE' ;;
+--ya)
+	sessn ya
+	killer
+	for i in XF86SettingsManager XF86Panel XF86Desktop; do
+		i=`app $i` || continue
+		$i &
+		pids+="$! "
+	done
+;;
 --0)
 	killer
 	$desk &
 ;;
 --layout)
 	desk(){
-		cd "$1" || ( mkdir "$1" && cd "$1" ) || exit 1
+		cd "$1" || ( mkdir "$1" && cd "$1" ) || err "in '~/Desktop'"
 	}
 	eval "desk ~${2:-$USER}/Desktop"
 	for i in /mnt/auto/disk $Desk/*; do
@@ -178,16 +213,6 @@ case "$1" in
 	continue
 ;;
 --run)
-	# todo: fill apps list
-	: ${YA_APP_XF86WWW:="'exo-open --launch WebBrowser' 'seamonkey --browser' firefox chromium midori"}
-	: ${YA_APP_XF86Mail:="'exo-open --launch MailReader' 'seamonkey --mail' claws-mail thunderbird"}
-	: ${YA_APP_TerminalEmulator:="'exo-open --launch TerminalEmulator' Terminal lxterminal kterm xterm"}
-	: ${YA_APP_FileManager:="'exo-open --launch FileManager' pcmanfm Thunar 'nautilus --no-desktop' +mc"}
-	: ${YA_APP_XF86AudioMedia:="audacious aqualung vlc mplayer"}
-	: ${YA_APP_VideoPlayer:="mplayer2 mplayer vlc"}
-	: ${YA_APP_Calendar:="orage"}
-	: ${YA_APP_XF86Calculator="gpe-calculator"}
-	: ${YA_APP_XF86Messenger="pidgin"}
 	shift
 	i="$(app "${@}")"
 	case "$i" in
@@ -201,6 +226,9 @@ case "$1" in
 	exit
 ;;
 ?*)
+	i=" ${!YA_APP_*}"
+	i="${i// YA_APP_/,}"
+	i="${i#,}"
 	echo "Usage: ya-session [command]
 Commands: --lx, --ce, --exit, --0, --obsession, --open, --layout [user], --run 'cmd1' ['cmd2'...]
 .xinitrc examples:
@@ -209,11 +237,14 @@ Commands: --lx, --ce, --exit, --0, --obsession, --open, --layout [user], --run '
 One-shot desktop update: ya-session --layout
 or: ln -s $Desk ~/Desktop/desktop
 Launcher: ya-session --run 'cmd1' 'cmd2' ...
-	- launch first found command, preferred in \$YA_APP variable (prefixed by '+' to terminal)
-	and/or substituted via \$YA_APP_<cmd> variables"
+	- launch first found command, preferred in \$YA_APP variable
+	(prefixed by '+' to terminal)
+	and/or substituted via \$YA_APP_<cmd> variables:
+	$i"
 	exit
 ;;
 *)
+	pids=''
 	[ -e /etc/udev/rules.d/88-autofs.rules -a ! -e /var/run/auto.dev ] && . /usr/share/ya-layout/autofs-all
 	[ -x /usr/bin/dbus-launch ] && eval `/usr/bin/dbus-launch --sh-syntax --exit-with-session`
 	xprop -root -remove _NET_NUMBER_OF_DESKTOPS -remove _NET_DESKTOP_NAMES -remove _NET_CURRENT_DESKTOP
@@ -224,8 +255,7 @@ Launcher: ya-session --run 'cmd1' 'cmd2' ...
 	*pcmanfm*)desk+=" -w $i";;
 	esac
 	export YA_DESKTOP
-	[ -n "$desk" ] && wm --startup "$desk"
-	wm
+	wm ${desk:+--startup "$desk"}
 ;;
 esac
 wm --restart
