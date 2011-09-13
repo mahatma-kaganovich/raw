@@ -14,7 +14,7 @@ sm2='--sm-client-disable'
 : ${YA_APP_XF86WWW:="'exo-open --launch WebBrowser' 'seamonkey --browser' firefox chromium midori"}
 : ${YA_APP_XF86Mail:="'exo-open --launch MailReader' 'seamonkey --mail' claws-mail thunderbird"}
 : ${YA_APP_TerminalEmulator:="'exo-open --launch TerminalEmulator' Terminal lxterminal kterm xterm"}
-: ${YA_APP_FileManager:="'exo-open --launch FileManager' 'pcmanfm -p ya' Thunar 'nautilus --no-desktop' +mc"}
+: ${YA_APP_FileManager:="'exo-open --launch FileManager' \"pcmanfm -p \$YA_PROFILE\" Thunar 'nautilus --no-desktop' +mc"}
 : ${YA_APP_XF86AudioMedia:="audacious aqualung vlc mplayer"}
 : ${YA_APP_XF86VideoMedia:="mplayer2 mplayer vlc"}
 : ${YA_APP_XF86Calendar:="orage"}
@@ -22,14 +22,26 @@ sm2='--sm-client-disable'
 : ${YA_APP_XF86Messenger="pidgin"}
 #
 : ${YA_APP_XF86SettingsManager:="'xfsettingsd -d' xfce-mcs-manager gnome-settings-daemon /usr/libexec/gnome-settings-daemon"}
-: ${YA_APP_XF86Panel:="\"xfce4-panel \$sm2\" lxpanel"}
-: ${YA_APP_XF86Desktop:="'pcmanfm --desktop -p ya' \"xfdesktop \$sm2\" nautilus"}
+: ${YA_APP_XF86Panel:="\"xfce4-panel \$sm2\" \"lxpanel -p \$YA_PROFILE\""}
+: ${YA_APP_XF86Desktop:="\"pcmanfm --desktop -p \$YA_PROFILE\" \"xfdesktop \$sm2\" nautilus"}
 
+# 2run
 : ${YA_SESSION:="XF86SettingsManager XF86Panel XF86Desktop"}
+
+: ${YA_PROFILE:=ya}
+# preferred: append to $YA_APP
+: ${YA_PROFILE_LXDE:="pcmanfm lxpanel lxterminal"}
+: ${YA_PROFILE_xfce:="xfdesktop xfce4-panel exo-open"}
 
 err(){
 	echo "ERROR: ${@}"
+	flock -u 9
 	exit 1
+}
+
+_exec(){
+	flock -u 9
+	exec "${@}"
 }
 
 1of(){
@@ -54,13 +66,13 @@ err(){
 wm(){
 	if [ "$1" = --startup -a "$wm" != /usr/bin/openbox ]; then
 		shift
-		runs "$*"
+		_run $*
 		wm
 	fi
 	for i in $pids; do
 		[ -d /proc/$i ] && echo $i
-	done >$pidfile
-	exec $wm $sm --config-file "$obconf" "${@}"
+	done >"$pidfile"
+	_exec $wm $sm --config-file "$obconf" "${@}"
 }
 
 envir(){
@@ -95,26 +107,34 @@ killer(){
 	pcmanfm --desktop-off
 	xfdesktop --quit
 	lxpanelctl exit
-	[ -n "$pids" ] && kill -w $pids
+	[ -n "$pids" ] && {
+		kill $pids
+		wait $pids
+	}
 	pids=''
 	killall -w xfce4-panel xfsettingsd xfce-mcs-manager gnome-settings-daemon
 }
 
+_run(){
+	local i
+	"${@}" &
+	i=$?
+	case "$*" in
+	*/xfdesktop\ *|*/pcmanfm\ --desktop*|*/lxpanel\ *)return $i;;
+	esac
+	pids="$pids $!"
+	return $i
+}
+
 runs(){
 	local i
-	i=`1of "${@}"` || return 1
-	$i &
-	i=$?
-	pids+="$! "
-	return $i
+	i=`1of "${@}"` && _run $i
 }
 
 run(){
 	local i
 	for i in "${@}"; do
-		i=`app $i` || continue
-		$i &
-		pids+="$! "
+		i=`app $i` && _run $i
 	done
 }
 
@@ -122,18 +142,18 @@ _app(){
 	for i in "${@}"; do
 		x="${i%% *}"
 		p1="${i#* }"
-		[ "$p1" = "$i" ] || p="$p1 $p"
+		[ "$p1" = "$i" ] && p1='' || p1=" $p1"
 		pref="${x:0:1}"
 		x="${x#[+]}"
 #		which "$x" >/dev/null 2>&1 || continue
 		x=`which "$x" 2>/dev/null` || continue
-		a=" $YA_APP "
+		a="$aa"
 		a="${a%% $x *}"
-		a="${a%% ${x##*/} }"
+		a="${a%% ${x##*/} *}"
 		a="${#a}"
 		[ $a -lt $mina ] || continue
 		mina=$a
-		min="$x${p:+ $p}"
+		min="$x$p1$p"
 		minpref=$pref
 	done
 }
@@ -143,11 +163,14 @@ _app(){
 # $YA_APP_<name> - substitution list for "name"
 # +command - in term
 app(){
-	local i x a min= mina=$((${#YA_APP}+3)) v p p1 pref minpref=
+	local i x a aa min= mina v p p1 pref minpref=
+	v="YA_PROFILE_$YA_PROFILE"
+	aa=" $YA_APP ${!v} "
+	mina=$((${#aa}+1))
 	for i in "${@}"; do
 		x="${i%% *}"
 		p="${i#* }"
-		[ "$p" = "$i" ] && p=''
+		[ "$p" = "$i" ] && p='' || p=" $p"
 		v="YA_APP_${x//-_}"
 		[ -n "${!v}" ] && x="${!v}"
 		eval "_app $x"
@@ -165,7 +188,7 @@ settings(){
 }
 
 sessn(){
-	export XDG_MENU_PREFIX="$1-" DESKTOP_SESSION="ya"
+	export XDG_MENU_PREFIX="${1}-" DESKTOP_SESSION="ya"
 	# SESSION_MANAGER=
 }
 
@@ -176,42 +199,45 @@ sess(){
 	runs "$3" 'pcmanfm --desktop -p ya'
 }
 
+{
+flock -w 10 -x 9 || {
+	echo "error locking $pidfile"
+	exit
+}
 [ -z "$YA_DESKTOP" ] && YA_DESKTOP=`app XF86Desktop`
 desk="$YA_DESKTOP"
-pids=`cat "$pidfile" 2>/dev/null` || {
-	mkdir -p "${pidfile%/*}"
-	touch "$pidfile" || err "unable to touch '$pidfile'"
-}
+pids=`cat "$pidfile" 2>/dev/null` || mkdir -p "${pidfile%/*}"
 sessn ya
 while true; do
 case "$1" in
---exit)exec killall xinit X $wm ;;
---ce)sessn xfce;sess settings "xfce4-panel $sm2" "xfdesktop $sm2" ;;
---lx)sessn lxde;sess settings 'lxpanel -p LXDE' 'pcmanfm --desktop -p LXDE' ;;
+--exit)_exec killall xinit X $wm ;;
 --ya)
-	sessn ya
+	sessn "${YA_PROFILE,,}"
 	killer
-	eval "run $YA_SESSION"
+	i="YA_SESSION_$YA_PROFILE"
+	i="${!i}"
+	eval "run ${i:-$YA_SESSION}"
 ;;
 --0)
 	killer
-	runs "$desk"
+	echo killed
+	_run $desk
 ;;
 --layout)
 	desk(){
-		cd "$1" || ( mkdir "$1" && cd "$1" ) || err "in '~/Desktop'"
+		cd "$1" || ( mkdir "$1" && cd "$1" ) || err "~/Desktop"
 	}
 	eval "desk ~${2:-$USER}/Desktop"
 	for i in /mnt/auto/disk $Desk/*; do
 		[ -n "${i##*/.*}" -a -e "$i" -a -e "${i##*/}" ] || ln -s "$i"
 	done
-	exit
+	break
 ;;
 --obsession)
 	shift
 	envir openbox
 	i='/usr/libexec/openbox-autostart OPENBOX'
-	[ -z "$desk" ] && desk="$i" || desk="/bin/bash -c '$i;exec $desk'"
+	[ -z "$desk" ] && desk="$i" || desk="/bin/bash -c '$i;_exec $desk'"
 	continue
 ;;
 --open)
@@ -221,25 +247,30 @@ case "$1" in
 	done
 	continue
 ;;
+-p|--profile)
+	YA_PROFILE="$2"
+	shift 2
+	continue
+;;
 --run)
 	shift
 	i="$(app "${@}")"
 	case "$i" in
 	*exo-open\ --launch\ TerminalEmulator\ -e\ *)i="${i/ -e}";;
 	esac
-	exec $i
+	_exec $i
 ;;
 --obconfig)
 	shift
 	obconfig "${@}"
-	exit
+	break
 ;;
 ?*)
 	i=" ${!YA_APP_*}"
 	i="${i// YA_APP_/,}"
 	i="${i#,}"
 	echo "Usage: ya-session [command]
-Commands: --lx, --ce, --exit, --0, --obsession, --open, --layout [user], --run 'cmd1' ['cmd2'...]
+Commands: --ya, -p, --exit, --0, --obsession, --open, --layout [user], --run 'cmd1' ['cmd2'...]
 .xinitrc examples:
 	minimal: exec ya-session'
 	openbox-style: exec ya-session --open --obsession
@@ -250,7 +281,7 @@ Launcher: ya-session --run 'cmd1' 'cmd2' ...
 	(prefixed by '+' to terminal)
 	and/or substituted via \$YA_APP_<cmd> variables:
 	$i"
-	exit
+	break
 ;;
 *)
 	pids=''
@@ -269,3 +300,4 @@ Launcher: ya-session --run 'cmd1' 'cmd2' ...
 esac
 wm --restart
 done
+} 9>>"$pidfile.l"
