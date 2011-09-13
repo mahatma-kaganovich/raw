@@ -199,6 +199,7 @@ sess(){
 	runs "$3" 'pcmanfm --desktop -p ya'
 }
 
+[ -e "$pidfile.l" ] || mkdir -p "${pidfile%/*}"
 {
 flock -w 10 -x 9 || {
 	echo "error locking $pidfile"
@@ -206,7 +207,7 @@ flock -w 10 -x 9 || {
 }
 [ -z "$YA_DESKTOP" ] && YA_DESKTOP=`app XF86Desktop`
 desk="$YA_DESKTOP"
-pids=`cat "$pidfile" 2>/dev/null` || mkdir -p "${pidfile%/*}"
+pids=`cat "$pidfile" 2>/dev/null`
 sessn ya
 while true; do
 case "$1" in
