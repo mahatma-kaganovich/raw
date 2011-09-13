@@ -15,11 +15,11 @@ sm2='--sm-client-disable'
 : ${YA_APP_XF86Mail:="'exo-open --launch MailReader' 'seamonkey --mail' claws-mail thunderbird"}
 : ${YA_APP_TerminalEmulator:="'exo-open --launch TerminalEmulator' Terminal lxterminal kterm xterm"}
 : ${YA_APP_FileManager:="'exo-open --launch FileManager' \"pcmanfm -p \$YA_PROFILE\" Thunar 'nautilus --no-desktop' +mc"}
-: ${YA_APP_XF86AudioMedia:="audacious aqualung vlc mplayer"}
+: ${YA_APP_XF86AudioMedia:="audacious aqualung vlc mplayer2 mplayer"}
 : ${YA_APP_XF86VideoMedia:="mplayer2 mplayer vlc"}
 : ${YA_APP_XF86Calendar:="orage"}
 : ${YA_APP_XF86Calculator="gpe-calculator"}
-: ${YA_APP_XF86Messenger="pidgin"}
+: ${YA_APP_XF86Messenger="pidgin +finch"}
 #
 : ${YA_APP_XF86SettingsManager:="'xfsettingsd -d' xfce-mcs-manager gnome-settings-daemon /usr/libexec/gnome-settings-daemon"}
 : ${YA_APP_XF86Panel:="\"xfce4-panel \$sm2\" \"lxpanel -p \$YA_PROFILE\""}
@@ -33,14 +33,21 @@ sm2='--sm-client-disable'
 : ${YA_PROFILE_LXDE:="pcmanfm lxpanel lxterminal"}
 : ${YA_PROFILE_xfce:="xfdesktop xfce4-panel exo-open"}
 
+_exit(){
+	for i in $pids; do
+		[ -d /proc/$i ] && echo $i
+	done >"$pidfile"
+	flock -u 9
+}
+
 err(){
 	echo "ERROR: ${@}"
-	flock -u 9
+	_exit
 	exit 1
 }
 
 _exec(){
-	flock -u 9
+	_exit
 	exec "${@}"
 }
 
@@ -69,9 +76,6 @@ wm(){
 		_run $*
 		wm
 	fi
-	for i in $pids; do
-		[ -d /proc/$i ] && echo $i
-	done >"$pidfile"
 	_exec $wm $sm --config-file "$obconf" "${@}"
 }
 
@@ -103,16 +107,36 @@ obconfig(){
 			<"$2" >"$1"
 }
 
+killer2(){
+	local k i p
+	for k in kill false false false 'kill -s KILL' false; do
+		p=""
+		for i in $pids; do
+			if [ -d /proc/$i ]; then
+				$k $i
+				p="$p $i"
+			fi
+		done
+		pids="$p"
+		[ -z "$p" ] && return
+		sleep 1
+		echo -n "[wait]"
+	done
+	return 1
+}
+
+#killer2(){
+#	kill $pids
+#	wait $pids
+#	pids=''
+#}
+
 killer(){
 	pcmanfm --desktop-off
 	xfdesktop --quit
 	lxpanelctl exit
-	[ -n "$pids" ] && {
-		kill $pids
-		wait $pids
-	}
-	pids=''
-	killall -w xfce4-panel xfsettingsd xfce-mcs-manager gnome-settings-daemon
+	[ -n "$pids" ] && killer2
+	killall -w xfce-mcs-manager gnome-settings-daemon
 }
 
 _run(){
@@ -211,6 +235,7 @@ pids=`cat "$pidfile" 2>/dev/null`
 sessn ya
 while true; do
 case "$1" in
+--noop)break;;
 --exit)_exec killall xinit X $wm ;;
 --ya)
 	sessn "${YA_PROFILE,,}"
@@ -221,7 +246,6 @@ case "$1" in
 ;;
 --0)
 	killer
-	echo killed
 	_run $desk
 ;;
 --layout)
@@ -271,7 +295,7 @@ case "$1" in
 	i="${i// YA_APP_/,}"
 	i="${i#,}"
 	echo "Usage: ya-session [command]
-Commands: --ya, -p, --exit, --0, --obsession, --open, --layout [user], --run 'cmd1' ['cmd2'...]
+Commands: -noop, --ya, -p, --exit, --0, --obsession, --open, --layout [user], --run 'cmd1' ['cmd2'...]
 .xinitrc examples:
 	minimal: exec ya-session'
 	openbox-style: exec ya-session --open --obsession
@@ -299,6 +323,7 @@ Launcher: ya-session --run 'cmd1' 'cmd2' ...
 	wm ${desk:+--startup "$desk"}
 ;;
 esac
-wm --restart
+wm --reconfigure
 done
+_exit
 } 9>>"$pidfile.l"
