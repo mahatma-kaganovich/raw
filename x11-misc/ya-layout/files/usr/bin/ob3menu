@@ -1,0 +1,114 @@
+#!/usr/bin/perl
+# (c) Denis Kaganovich, Anarchy or GPLv2
+# OpenBox3 pipe menu
+# ob3menu [--slow [<path/to/rc.xml>]]
+# "--slow" - +keybinds, 3.5.0+ menu icons, better with cache.
+
+$SLOW=$ARGV[1] eq '--slow';
+
+$lang=$ENV{LANG};
+$lang=~s/_.*//;
+
+my (%ico,%key);
+
+if($SLOW && defined($ARGV[2])){
+	my $s;
+	open($F,"<$ARGV[1]") && read($F,$s,-s $F);
+	close($F);
+	$SLOW=index('<showIcons>yes</showIcons>',$s)>=0;
+	$s=~s/<keybind\s+key=\"(.*?)\".*?>\s*<action name=\"Execute\">.*?<command>(.*?)<\/command>/$key{$2}=$1;''/gse;
+};
+
+if($SLOW){
+	open($F,'find /usr/share/icons|');
+	while(<$F>){
+		chomp($_);
+		next if($_=~/\.svg$/);
+		$i=$_;
+		~s/.*\///;
+		$ico{$_}=$i;
+		$ico{$_}=$i if (~s/\....$//);
+	}
+	close($F);
+	while(</usr/share/pixmaps/*.???>){
+		chomp($_);
+		next if($_=~/\.svg$/);
+		$i=$_;
+		~s/.*\///;
+		$ico{$_}=$i;
+		~s/\....$//;
+		$ico{$_}=$i;
+	}
+}
+
+for $f(</usr/share/applications/*.desktop>,</usr/share/applications/*/*.desktop>,</usr/share/ya-layout/Desktop/*.desktop>,</usr/share/ya-layout/Desktop/exit/*.desktop>){
+	my %d;
+	open(my $F,"<$f")||next;
+	while(<$F>){
+		chomp($_);
+		~s/#.*//g;
+		my ($k,$l,$v)=$_=~/^([^\s=\[\]]+)(?:\[(.*?)\])?=(.*)$/ or next;
+		next if($l && $l ne $lang);
+		$k=~s/\s+//g;
+		$d{$k}=$v;
+	}
+	close($F);
+	next if((exists($d{TryExec}) && ! -x $d{TryExec}) || !exists($d{Exec}));
+	if(!exists($d{Name})){
+#		print STDOUT "Name? $f\n";
+		for $i ('Comment','Exec'){
+			if(exists($d{$i})){
+				$d{Name}=$d{$i};
+				goto N;
+			}
+		}
+		next;
+	}
+N:
+	$i='';
+	if($SLOW && exists($d{Icon})){
+		$i=$d{Icon};
+		$i=$ico{$i} if(exists($ico{$i}));
+		$i=" icon=\"$i\"";
+	}
+	if($d{Type} eq 'Application'){
+		next if(!exists($d{Exec}));
+		$d{Name}.=" 	[$key{$d{Exec}}]" if(exists($key{$d{Exec}}));
+		$i="<item label=\"$d{Name}\"$i><action name=\"Execute\"><execute>$d{Exec}</execute></action></item>";
+	}else{
+#		print STDOUT "Type=$d{Type}? $f\n";
+		next;
+	}
+	$n=0;
+	for(split(/;/,$d{Categories})){
+		next if($_ eq '');
+		push @{$cat{$_}},$i;
+		$n++;
+	}
+	push @{$cat{'misc'}},$i if(!$n);
+}
+
+for(reverse sort{scalar(@{$cat{$a}}) <=> scalar(@{$cat{$b}})}(keys %cat)){
+	for $i (@{$cat{$_}}){
+		push @{$cat1{$i}},$_;
+	}
+}
+
+%cat=();
+for(keys %cat1){
+	push@{$cat{shift @{$cat1{$_}}}},$_;
+}
+
+for(keys %cat1){
+	for $i (@{$cat1{$_}}){
+		push @{$cat{$i}},$_ if(exists($cat{$i}));
+	}
+}
+
+$i=0;
+print "<openbox_pipe_menu>";
+for(sort keys %cat){
+	$i++;
+	print "<menu id=\"$i\" label=\"$_\">".join('',sort @{$cat{$_}})."\n</menu>\n";
+}
+print "</openbox_pipe_menu>";
