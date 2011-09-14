@@ -47,8 +47,7 @@ for $f(</usr/share/applications/*.desktop>,</usr/share/applications/*/*.desktop>
 	while(<$F>){
 		chomp($_);
 		~s/#.*//g;
-		my ($k,$l,$v)=$_=~/^([^\s=\[\]]+)(?:\[(.*?)\])?=(.*)$/ or next;
-		next if($l && $l ne $lang);
+		my ($k,$v)=$_=~/^([^\s=\[\]]+)(?:\[$lang\])?\s*=(.*)$/ or next;
 		$k=~s/\s+//g;
 		$d{$k}=$v;
 	}
