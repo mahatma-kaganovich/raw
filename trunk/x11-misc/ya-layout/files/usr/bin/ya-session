@@ -15,11 +15,11 @@ sm2='--sm-client-disable'
 : ${YA_APP_XF86Mail:="'exo-open --launch MailReader' 'seamonkey --mail' claws-mail thunderbird"}
 : ${YA_APP_TerminalEmulator:="'exo-open --launch TerminalEmulator' Terminal lxterminal kterm xterm"}
 : ${YA_APP_FileManager:="'exo-open --launch FileManager' \"pcmanfm -p \$YA_PROFILE\" Thunar 'nautilus --no-desktop' +mc"}
-: ${YA_APP_XF86AudioMedia:="audacious aqualung vlc mplayer2 mplayer"}
+: ${YA_APP_XF86AudioMedia:="audacious aqualung vlc mplayer"}
 : ${YA_APP_XF86VideoMedia:="mplayer2 mplayer vlc"}
 : ${YA_APP_XF86Calendar:="orage"}
 : ${YA_APP_XF86Calculator="gpe-calculator"}
-: ${YA_APP_XF86Messenger="pidgin +finch"}
+: ${YA_APP_XF86Messenger="pidgin"}
 #
 : ${YA_APP_XF86SettingsManager:="'xfsettingsd -d' xfce-mcs-manager gnome-settings-daemon /usr/libexec/gnome-settings-daemon"}
 : ${YA_APP_XF86Panel:="\"xfce4-panel \$sm2\" \"lxpanel -p \$YA_PROFILE\""}
@@ -87,7 +87,7 @@ envir(){
 obconfig(){
 	mkdir -p "${1%/*}"
 	sed -e 's:<animateIconify>yes</animateIconify>:<animateIconify>no</animateIconify>:' \
-		-e 's:<file>menu.xml</file>:<file>menu.xml</file>\n<showIcons>yes</showIcons>:' \
+		-e 's:<file>menu\.xml</file>:<file>../ya/menu.xml</file>\n<showIcons>yes</showIcons>:' \
 		-e 's:<name>Clearlooks</name>:<name>Onyx</name>:' \
 		-e 's:</keyboard>:\
 		<keybind key="Menu"><action name="ShowMenu"><menu>root-menu</menu></action></keybind>\
