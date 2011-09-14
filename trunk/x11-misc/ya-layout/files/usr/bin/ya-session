@@ -7,6 +7,7 @@ wm=/usr/bin/openbox
 Desk=/usr/share/ya-layout/Desktop
 obconf="$HOME/.config/ya/rc.xml"
 pidfile="$HOME/.cache/ya/running.pids"
+envcache="$HOME/.cache/ya/env"
 sm='--sm-disable'
 sm2='--sm-client-disable'
 
@@ -22,7 +23,7 @@ sm2='--sm-client-disable'
 : ${YA_APP_XF86Messenger="pidgin"}
 #
 : ${YA_APP_XF86SettingsManager:="'xfsettingsd -d' xfce-mcs-manager gnome-settings-daemon /usr/libexec/gnome-settings-daemon"}
-: ${YA_APP_XF86Panel:="\"xfce4-panel \$sm2\" \"lxpanel -p \$YA_PROFILE\""}
+: ${YA_APP_XF86Panel:="\"xfce4-panel \$sm2\" \"lxpanel -p \$YA_PROFILE\"" \"gnome-panel \$sm2\"}
 : ${YA_APP_XF86Desktop:="\"pcmanfm --desktop -p \$YA_PROFILE\" \"xfdesktop \$sm2\" nautilus"}
 
 # 2run
@@ -32,6 +33,7 @@ sm2='--sm-client-disable'
 # preferred: append to $YA_APP
 : ${YA_PROFILE_LXDE:="pcmanfm lxpanel lxterminal"}
 : ${YA_PROFILE_xfce:="xfdesktop xfce4-panel exo-open"}
+: ${YA_PROFILE_gnome:="nautilus gnome-panel"}
 
 _exit(){
 	for i in $pids; do
@@ -223,6 +225,7 @@ sess(){
 	runs "$3" 'pcmanfm --desktop -p ya'
 }
 
+[ -r "$envcache" ] && . "$"
 [ -e "$pidfile.l" ] || mkdir -p "${pidfile%/*}"
 {
 flock -w 10 -x 9 || {
@@ -290,6 +293,11 @@ case "$1" in
 	obconfig "${@}"
 	break
 ;;
+--env)
+	echo "$2" >>"$envcache" && . "$envcache"
+	shift 2
+	continue
+;;
 ?*)
 	i=" ${!YA_APP_*}"
 	i="${i// YA_APP_/,}"
@@ -310,8 +318,9 @@ Launcher: ya-session --run 'cmd1' 'cmd2' ...
 ;;
 *)
 	pids=''
+	rm -f "$envcache"
 	[ -e /etc/udev/rules.d/88-autofs.rules -a ! -e /var/run/auto.dev ] && . /usr/share/ya-layout/autofs-all
-	[ -x /usr/bin/dbus-launch ] && eval `/usr/bin/dbus-launch --sh-syntax --exit-with-session`
+	[ -x /usr/bin/dbus-launch ] && /usr/bin/dbus-launch --sh-syntax --exit-with-session >>$envcache && . "$envcache"
 	xprop -root -remove _NET_NUMBER_OF_DESKTOPS -remove _NET_DESKTOP_NAMES -remove _NET_CURRENT_DESKTOP
 	envir ya
 	[ -s "$obconf" ] || obconfig "$obconf" $(1cfg openbox/rc.xml)

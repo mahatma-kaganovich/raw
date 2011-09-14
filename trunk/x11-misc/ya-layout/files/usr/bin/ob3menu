@@ -67,6 +67,7 @@ N:
 	$i='';
 	if($SLOW && exists($d{Icon})){
 		$i=$d{Icon};
+		$i=~s/(?:.*\/)?(.*?).svg$/$1.png/;
 		$i=$ico{$i} if(exists($ico{$i}));
 		$i=" icon=\"$i\"";
 	}

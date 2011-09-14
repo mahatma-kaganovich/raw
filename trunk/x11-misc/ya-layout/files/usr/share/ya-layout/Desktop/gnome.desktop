@@ -1,0 +1,12 @@
+
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=gnome-like
+TryExec=/usr/bin/gnome-panel
+Exec=/usr/bin/ya-session -p gnome --ya
+Icon=gnome-logo-icon-transparent
+Path=/usr/share/ya-layout
+Terminal=false
+StartupNotify=false
+GenericName=
