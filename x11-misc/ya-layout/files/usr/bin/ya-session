@@ -14,8 +14,8 @@ sm2='--sm-client-disable'
 # todo: full apps list
 : ${YA_APP_XF86WWW:="'exo-open --launch WebBrowser' 'seamonkey --browser' firefox chromium midori"}
 : ${YA_APP_XF86Mail:="'exo-open --launch MailReader' 'seamonkey --mail' claws-mail thunderbird"}
-: ${YA_APP_TerminalEmulator:="'exo-open --launch TerminalEmulator' Terminal lxterminal kterm xterm"}
-: ${YA_APP_FileManager:="'exo-open --launch FileManager' \"pcmanfm -p \$YA_PROFILE\" Thunar 'nautilus --no-desktop' +mc"}
+: ${YA_APP_TerminalEmulator:="'exo-open --launch TerminalEmulator' Terminal lxterminal \"gnome-terminal \$sm2\" kterm xterm"}
+: ${YA_APP_FileManager:="'exo-open --launch FileManager' \"pcmanfm -p \$YA_PROFILE\" Thunar \"nautilus --no-desktop \$sm2\" +mc"}
 : ${YA_APP_XF86AudioMedia:="audacious aqualung vlc mplayer"}
 : ${YA_APP_XF86VideoMedia:="mplayer2 mplayer vlc"}
 : ${YA_APP_XF86Calendar:="orage"}
@@ -24,7 +24,7 @@ sm2='--sm-client-disable'
 #
 : ${YA_APP_XF86SettingsManager:="'xfsettingsd -d' xfce-mcs-manager gnome-settings-daemon /usr/libexec/gnome-settings-daemon"}
 : ${YA_APP_XF86Panel:="\"xfce4-panel \$sm2\" \"lxpanel -p \$YA_PROFILE\"" \"gnome-panel \$sm2\"}
-: ${YA_APP_XF86Desktop:="\"pcmanfm --desktop -p \$YA_PROFILE\" \"xfdesktop \$sm2\" nautilus"}
+: ${YA_APP_XF86Desktop:="\"pcmanfm --desktop -p \$YA_PROFILE\" \"xfdesktop \$sm2\" \"nautilus -n \$sm2\""}
 
 # 2run
 : ${YA_SESSION:="XF86SettingsManager XF86Panel XF86Desktop"}
@@ -33,7 +33,7 @@ sm2='--sm-client-disable'
 # preferred: append to $YA_APP
 : ${YA_PROFILE_LXDE:="pcmanfm lxpanel lxterminal"}
 : ${YA_PROFILE_xfce:="xfdesktop xfce4-panel exo-open"}
-: ${YA_PROFILE_gnome:="nautilus gnome-panel"}
+: ${YA_PROFILE_gnome:="nautilus gnome-panel gnome-terminal"}
 
 _exit(){
 	for i in $pids; do
@@ -107,6 +107,20 @@ obconfig(){
 		<keybind key="XF86Eject"><action name="Execute"><command>"eject /dev/sr0"</command></action></keybind>\
 		</keyboard>:' \
 			<"$2" >"$1"
+}
+
+_kill(){
+	local i l
+	for i in "${@}"; do
+		i="${i%% *}"
+		case "$l" in
+		pcmanfm)pcmanfm --desktop-off;;
+		xfdesktop)xfdesktop --quit;;
+		lxpanel)lxpanelctl exit;;
+		*)l+=" $i";;
+		esac
+	done
+	killall $l
 }
 
 killer2(){
@@ -225,7 +239,7 @@ sess(){
 	runs "$3" 'pcmanfm --desktop -p ya'
 }
 
-[ -r "$envcache" ] && . "$"
+[ -r "$envcache" ] && . "$envcache"
 [ -e "$pidfile.l" ] || mkdir -p "${pidfile%/*}"
 {
 flock -w 10 -x 9 || {
@@ -246,6 +260,12 @@ case "$1" in
 	i="YA_SESSION_$YA_PROFILE"
 	i="${!i}"
 	eval "run ${i:-$YA_SESSION}"
+;;
+--kill)
+	i="YA_APP_$2"
+	[ -z "${!i}" ] && i="$2" || i="${!i}"
+	eval "_kill $i"
+	break
 ;;
 --0)
 	killer
@@ -277,6 +297,7 @@ case "$1" in
 ;;
 -p|--profile)
 	YA_PROFILE="$2"
+	echo "YA_PROFILE='$2'" >>"$envcache"
 	shift 2
 	continue
 ;;
