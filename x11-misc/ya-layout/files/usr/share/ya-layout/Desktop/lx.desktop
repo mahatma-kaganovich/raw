@@ -2,10 +2,10 @@
 [Desktop Entry]
 Version=1.0
 Type=Application
-Name=lxde (panel...)
+Name=lxde-like
 TryExec=/usr/bin/lxpanel
 Exec=/usr/bin/ya-session -p LXDE --ya
-#Icon=
+Icon=/usr/share/icons/Tango/scalable/actions/window-new.svg
 Path=/usr/share/ya-layout
 Terminal=false
 StartupNotify=false
