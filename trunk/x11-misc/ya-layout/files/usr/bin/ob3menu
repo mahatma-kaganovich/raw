@@ -4,14 +4,14 @@
 # ob3menu [--slow [<path/to/rc.xml>]]
 # "--slow" - +keybinds, 3.5.0+ menu icons, better with cache.
 
-$SLOW=$ARGV[1] eq '--slow';
+$SLOW=$ARGV[0] eq '--slow';
 
 $lang=$ENV{LANG};
 $lang=~s/_.*//;
 
 my (%ico,%key);
 
-if($SLOW && defined($ARGV[2])){
+if($SLOW && defined($ARGV[1])){
 	my $s;
 	open($F,"<$ARGV[1]") && read($F,$s,-s $F);
 	close($F);
