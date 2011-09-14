@@ -108,6 +108,6 @@ $i=0;
 print "<openbox_pipe_menu>";
 for(sort keys %cat){
 	$i++;
-	print "<menu id=\"$i\" label=\"$_\">".join('',sort @{$cat{$_}})."\n</menu>\n";
+	print "<menu id=\"$i\" label=\"$_\">".join('',sort @{$cat{$_}})."</menu>";
 }
 print "</openbox_pipe_menu>";
