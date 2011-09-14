@@ -15,7 +15,7 @@ if($SLOW && defined($ARGV[1])){
 	my $s;
 	open($F,"<$ARGV[1]") && read($F,$s,-s $F);
 	close($F);
-	$SLOW=index('<showIcons>yes</showIcons>',$s)>=0;
+	$SLOW=index($s,'<showIcons>yes</showIcons>')>=0;
 	$s=~s/<keybind\s+key=\"(.*?)\".*?>\s*<action name=\"Execute\">.*?<command>(.*?)<\/command>/$key{$2}=$1;''/gse;
 };
 
