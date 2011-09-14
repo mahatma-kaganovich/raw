@@ -72,6 +72,7 @@ N:
 	}
 	if($d{Type} eq 'Application'){
 		next if(!exists($d{Exec}));
+		$d{Exec}=~s/\s+%\w$//;
 		$d{Name}.=" 	[$key{$d{Exec}}]" if(exists($key{$d{Exec}}));
 		$i="<item label=\"$d{Name}\"$i><action name=\"Execute\"><execute>$d{Exec}</execute></action></item>";
 	}else{
