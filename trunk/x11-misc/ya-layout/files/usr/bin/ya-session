@@ -227,16 +227,9 @@ settings(){
 	xfsettingsd || runs 'xfce-mcs-manager n' gnome-settings-daemon /usr/libexec/gnome-settings-daemon
 }
 
-sessn(){
-	export XDG_MENU_PREFIX="${1}-" DESKTOP_SESSION="ya"
-	# SESSION_MANAGER=
-}
-
 sess(){
-	killer
-	$1
-	runs "$2" lxpanel
-	runs "$3" 'pcmanfm --desktop -p ya'
+	export XDG_MENU_PREFIX="${YA_PROFILE,,}-" DESKTOP_SESSION="ya"
+	# SESSION_MANAGER=
 }
 
 [ -r "$envcache" ] && . "$envcache"
@@ -249,14 +242,14 @@ flock -w 10 -x 9 || {
 [ -z "$YA_DESKTOP" ] && YA_DESKTOP=`app XF86Desktop`
 desk="$YA_DESKTOP"
 pids=`cat "$pidfile" 2>/dev/null`
-sessn ya
+sess
 while true; do
 case "$1" in
 --noop)break;;
 --exit)_exec killall xinit X $wm ;;
 --ya)
-	sessn "${YA_PROFILE,,}"
 	killer
+	sess
 	i="YA_SESSION_$YA_PROFILE"
 	i="${!i}"
 	eval "run ${i:-$YA_SESSION}"
@@ -298,6 +291,8 @@ case "$1" in
 -p|--profile)
 	YA_PROFILE="$2"
 	echo "YA_PROFILE='$2'" >>"$envcache"
+	YA_DESKTOP=`app XF86Desktop`
+	desk="$YA_DESKTOP"
 	shift 2
 	continue
 ;;

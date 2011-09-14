@@ -3,7 +3,7 @@
 Version=1.0
 Type=Application
 Name=openbox
-Exec=/usr/bin/ya-session --0
+Exec=/usr/bin/ya-session -p ya --0
 Icon=openbox
 Path=/usr/share/ya-layout
 Terminal=false
