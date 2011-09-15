@@ -54,7 +54,7 @@ for $f(</usr/share/applications/*.desktop>,</usr/share/applications/*/*.desktop>
 	close($F);
 	next if((exists($d{TryExec}) && ! -x $d{TryExec}) || !exists($d{Exec}));
 	if(!exists($d{Name})){
-#		print STDOUT "Name? $f\n";
+#		print STDERR "Name? $f\n";
 		for $i ('Comment','Exec'){
 			if(exists($d{$i})){
 				$d{Name}=$d{$i};
@@ -77,7 +77,7 @@ N:
 		$d{Name}.=" 	[$key{$d{Exec}}]" if(exists($key{$d{Exec}}));
 		$i="<item label=\"$d{Name}\"$i><action name=\"Execute\"><execute>$d{Exec}</execute></action></item>";
 	}else{
-#		print STDOUT "Type=$d{Type}? $f\n";
+#		print STDERR "Type=$d{Type}? $f\n";
 		next;
 	}
 	for(split(/;/,$d{Categories})){
@@ -87,25 +87,13 @@ N:
 	}
 	$cat{$i}=undef if(!exists($cat{$i}));
 }
-
-for(values(%cat)){
-	if(!defined($_)){
-		$_->{'misc'}=1;
-		$cc{'misc'}++;
-	}
-}
-
-for(keys %cat){
-	$cat{$_}=[sort{$cc{$a} <=> $cc{$b}}(keys %{$cat{$_}})];
-	push @{$cat1{pop @{$cat{$_}}}},$_;
-}
-
+$_=defined($_)?[sort{$cc{$a} <=> $cc{$b}}(keys %{$_})]:['misc'] for(values %cat);
+push @{$cat1{pop @{$cat{$_}}}},$_ for(keys %cat);
 for(keys %cat){
 	for $i (@{$cat{$_}}){
-		push @{$cat1{$i}},$_ if(exists($cat1{$i}));
+		push @{$cat1{$i}},$_ if(exists($cat1{$i}))
 	}
 }
-
 $i=0;
 print "<openbox_pipe_menu>";
 for(sort keys %cat1){
