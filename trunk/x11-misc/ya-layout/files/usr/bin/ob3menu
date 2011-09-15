@@ -11,6 +11,10 @@ $lang=~s/_.*//;
 @path=split(/:/,$ENV{PATH});
 
 sub eXist{
+	if(index($_[0],'/')>=0){
+		stat($_[0]);
+		return(-x _ && -f _);
+	}
 	for(@path){
 		stat("$_/$_[0]");
 		return 1 if(-x _ && -f _);
