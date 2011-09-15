@@ -80,21 +80,23 @@ N:
 #		print STDOUT "Type=$d{Type}? $f\n";
 		next;
 	}
-	$n=0;
 	for(split(/;/,$d{Categories})){
-		next if($_ eq '');
-		push @{$cat{$i}},$_;
+		next if($_ eq '' || exists($cat{$i}->{$_}));
+		$cat{$i}->{$_}=1;
 		$cc{$_}++;
-		$n++;
 	}
-	if(!$n){
-		push @{$cat{$i}},'misc';
+	$cat{$i}=undef if(!exists($cat{$i}));
+}
+
+for(values(%cat)){
+	if(!defined($_)){
+		$_->{'misc'}=1;
 		$cc{'misc'}++;
 	}
 }
 
 for(keys %cat){
-	@{$cat{$_}}=(sort{$cc{$a} <=> $cc{$b}}(@{$cat{$_}}));
+	$cat{$_}=[sort{$cc{$a} <=> $cc{$b}}(keys %{$cat{$_}})];
 	push @{$cat1{pop @{$cat{$_}}}},$_;
 }
 
