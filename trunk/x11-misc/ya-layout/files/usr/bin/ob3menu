@@ -8,6 +8,15 @@ $SLOW=$ARGV[0] eq '--slow';
 
 $lang=$ENV{LANG};
 $lang=~s/_.*//;
+@path=split(/:/,$ENV{PATH});
+
+sub eXist{
+	for(@path){
+		stat("$_/$_[0]");
+		return 1 if(-x _ && -f _);
+	}
+	0;
+}
 
 my (%ico,%key,%cat,%cat,%cc);
 
@@ -52,7 +61,7 @@ for $f(</usr/share/applications/*.desktop>,</usr/share/applications/*/*.desktop>
 		$d{$k}=$v;
 	}
 	close($F);
-	next if((exists($d{TryExec}) && ! -x $d{TryExec}) || !exists($d{Exec}));
+	next if((exists($d{TryExec}) && !eXist($d{TryExec})) || !exists($d{Exec}));
 	if(!exists($d{Name})){
 #		print STDERR "Name? $f\n";
 		for $i ('Comment','Exec'){
