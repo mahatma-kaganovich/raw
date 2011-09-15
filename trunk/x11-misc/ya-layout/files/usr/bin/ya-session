@@ -348,7 +348,7 @@ Launcher: ya-session --run 'cmd1' 'cmd2' ...
 	wm ${desk:+--startup "$desk"}
 ;;
 esac
-wm --reconfigure
+wm --restart
 done
 _exit
 } 9>>"$pidfile.l"
