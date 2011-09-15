@@ -9,7 +9,7 @@ $SLOW=$ARGV[0] eq '--slow';
 $lang=$ENV{LANG};
 $lang=~s/_.*//;
 
-my (%ico,%key);
+my (%ico,%key,%cat,%cat,%cc);
 
 if($SLOW && defined($ARGV[1])){
 	my $s;
@@ -83,33 +83,31 @@ N:
 	$n=0;
 	for(split(/;/,$d{Categories})){
 		next if($_ eq '');
-		push @{$cat{$_}},$i;
+		push @{$cat{$i}},$_;
+		$cc{$_}++;
 		$n++;
 	}
-	push @{$cat{'misc'}},$i if(!$n);
-}
-
-for(reverse sort{scalar(@{$cat{$a}}) <=> scalar(@{$cat{$b}})}(keys %cat)){
-	for $i (@{$cat{$_}}){
-		push @{$cat1{$i}},$_;
+	if(!$n){
+		push @{$cat{$i}},'misc';
+		$cc{'misc'}++;
 	}
 }
 
-%cat=();
-for(keys %cat1){
-	push@{$cat{shift @{$cat1{$_}}}},$_;
+for(keys %cat){
+	@{$cat{$_}}=(sort{$cc{$a} <=> $cc{$b}}(@{$cat{$_}}));
+	push @{$cat1{pop @{$cat{$_}}}},$_;
 }
 
-for(keys %cat1){
-	for $i (@{$cat1{$_}}){
-		push @{$cat{$i}},$_ if(exists($cat{$i}));
+for(keys %cat){
+	for $i (@{$cat{$_}}){
+		push @{$cat1{$i}},$_ if(exists($cat1{$i}));
 	}
 }
 
 $i=0;
 print "<openbox_pipe_menu>";
-for(sort keys %cat){
+for(sort keys %cat1){
 	$i++;
-	print "<menu id=\"$i\" label=\"$_\">".join('',sort @{$cat{$_}})."</menu>";
+	print "<menu id=\"$i\" label=\"$_\">".join('',sort @{$cat1{$_}})."</menu>";
 }
 print "</openbox_pipe_menu>";
