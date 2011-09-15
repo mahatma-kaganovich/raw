@@ -302,7 +302,7 @@ case "$1" in
 	case "$i" in
 	*exo-open\ --launch\ TerminalEmulator\ -e\ *)i="${i/ -e}";;
 	esac
-	_exec $i
+	exec $i
 ;;
 --obconfig)
 	shift
