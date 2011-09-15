@@ -6,8 +6,11 @@
 
 $SLOW=$ARGV[0] eq '--slow';
 
-$lang=$ENV{LANG};
-$lang=~s/_.*//;
+for($ENV{LANG}=~/([a-zA-Z0-9]+)?(_\w+)?(\.[\w-]+)?(\@\w+)?/){
+	$lang.='(?:'.quotemeta($_).')?' if(defined($_));
+}
+$lang='(?:\['.$lang.'\])?' if($lang);
+
 @path=split(/:/,$ENV{PATH});
 
 sub eXist{
@@ -58,11 +61,7 @@ for $f(</usr/share/applications/*.desktop>,</usr/share/applications/*/*.desktop>
 	my %d;
 	open(my $F,"<$f")||next;
 	while(<$F>){
-		chomp($_);
-		~s/#.*//g;
-		my ($k,$v)=$_=~/^([^\s=\[\]]+)(?:\[$lang\])?\s*=(.*)$/ or next;
-		$k=~s/\s+//g;
-		$d{$k}=$v;
+		$d{$k}=$v if(($k,$v)=$_=~/^\s*([^#\s=\[\]#]+)$lang\s*=([^#\n\r]*)/i);
 	}
 	close($F);
 	next if((exists($d{TryExec}) && !eXist($d{TryExec})) || !exists($d{Exec}));
@@ -103,7 +102,7 @@ N:
 $_=defined($_)?[sort{$cc{$a} <=> $cc{$b}}(keys %{$_})]:['misc'] for(values %cat);
 push @{$cat1{pop @{$cat{$_}}}},$_ for(keys %cat);
 for(keys %cat){
-	for $i (@{$cat{$_}}){
+	for $i (@{delete($cat{$_})}){
 		push @{$cat1{$i}},$_ if(exists($cat1{$i}))
 	}
 }
