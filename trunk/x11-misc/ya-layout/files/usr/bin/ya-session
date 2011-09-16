@@ -12,15 +12,15 @@ sm='--sm-disable'
 sm2='--sm-client-disable'
 
 # todo: full apps list
-: ${YA_APP_XF86WWW:="'exo-open --launch WebBrowser' 'seamonkey --browser' firefox chromium midori"}
-: ${YA_APP_XF86Mail:="'exo-open --launch MailReader' 'seamonkey --mail' claws-mail thunderbird"}
-: ${YA_APP_TerminalEmulator:="'exo-open --launch TerminalEmulator' Terminal lxterminal \"gnome-terminal \$sm2\" kterm xterm"}
-: ${YA_APP_FileManager:="'exo-open --launch FileManager' \"pcmanfm -p \$YA_PROFILE\" Thunar \"nautilus --no-desktop \$sm2\" +mc"}
-: ${YA_APP_XF86AudioMedia:="audacious aqualung vlc mplayer"}
-: ${YA_APP_XF86VideoMedia:="mplayer2 mplayer vlc"}
+: ${YA_APP_XF86WWW:="'exo-open --launch WebBrowser' 'seamonkey --browser' firefox chromium midori @WebBrowser"}
+: ${YA_APP_XF86Mail:="'exo-open --launch MailReader' 'seamonkey --mail' claws-mail thunderbird @Email"}
+: ${YA_APP_TerminalEmulator:="'exo-open --launch TerminalEmulator' Terminal lxterminal \"gnome-terminal \$sm2\" kterm xterm @TerminalEmulator"}
+: ${YA_APP_FileManager:="'exo-open --launch FileManager' \"pcmanfm -p \$YA_PROFILE\" Thunar \"nautilus --no-desktop \$sm2\" @FileManager +mc"}
+: ${YA_APP_XF86AudioMedia:="audacious aqualung vlc mplayer '@Player;Audio|Player;AudioVideo;!Video' '@Player;AudioVideo'"}
+: ${YA_APP_XF86VideoMedia:="mplayer2 mplayer vlc '@Player;Video|Player;AudioVideo;!Audio' '@Player;AudioVideo'"}
 : ${YA_APP_XF86Calendar:="orage"}
 : ${YA_APP_XF86Calculator="gpe-calculator"}
-: ${YA_APP_XF86Messenger="pidgin"}
+: ${YA_APP_XF86Messenger="pidgin @InstantMessaging"}
 #
 : ${YA_APP_XF86SettingsManager:="'xfsettingsd -d' xfce-mcs-manager gnome-settings-daemon /usr/libexec/gnome-settings-daemon"}
 : ${YA_APP_XF86Panel:="\"xfce4-panel \$sm2\" \"lxpanel -p \$YA_PROFILE\"" \"gnome-panel \$sm2\"}
@@ -178,13 +178,45 @@ run(){
 	done
 }
 
+by_category(){
+	local f i j c
+	for f in /usr/share/applications/*.desktop; do
+		local Exec= Categories= TryExec= Terminal= Type=
+		while read i; do
+			case "$i" in
+			Exec=*|Categories=*|TryExec=*|Terminal=*|Type=*)declare "${i%%=*}"="${i#*=}";;
+			esac
+		done <"$f"
+		[ -z "$Categories" -o -z "$Exec" -o "$Type" != Application ] || ([ -n "$TryExec" ] && ! which "$TryExec" >/dev/null 2>&1) && continue
+		Categories=";$Categories;"
+		[ "$Terminal" = true ] && Terminal='+' || Terminal=''
+		for i in ${*//|/ }; do
+			c=true
+			for j in ${i//;/ }; do
+				if [ -n "${Categories##*;${j#!};*}" ]; then
+					[ -n "${j##!*}" ] && c=false && break
+				elif [ -z "${j##!*}" ]; then
+					c=false && break
+				fi
+			done
+			$c && echo -n " '$Terminal${Exec% \%?}'" && break
+		done
+	done
+}
+
 _app(){
 	for i in "${@}"; do
 		x="${i%% *}"
+		pref="${x:0:1}"
+		x="${x#[+@]}"
 		p1="${i#* }"
 		[ "$p1" = "$i" ] && p1='' || p1=" $p1"
-		pref="${x:0:1}"
-		x="${x#[+]}"
+		case "$pref" in
+		@)
+			eval "_app $(by_category "$x")"
+			continue
+		;;
+		esac
 #		which "$x" >/dev/null 2>&1 || continue
 		x=`which "$x" 2>/dev/null` || continue
 		a="$aa"
