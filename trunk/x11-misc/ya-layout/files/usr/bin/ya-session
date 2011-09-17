@@ -208,18 +208,18 @@ _app(){
 		pref="${x:0:1}"
 		x="${x#[+@]}"
 		p1="${i#* }"
-		[ "$p1" = "$i" ] || p=" $p1$p"
+		[ "$p1" = "$i" ] && p1="$p" || p1=" $p1$p"
 		case "$pref" in
 		@)
 			# categories are slow, last resort
 			[ -n "$min" ] && continue
-			eval "_app '$p' $(by_category "$x")"
+			eval "_app '$p1' $(by_category "$x")"
 			continue
 		;;
 		esac
 		v="YA_APP_${x//-_}"
 		if [ -n "${!v}" ]; then
-			eval "_app '$p' ${!v}"
+			eval "_app '$p1' ${!v}"
 			continue
 		fi
 #		which "$x" >/dev/null 2>&1 || continue
@@ -230,7 +230,7 @@ _app(){
 		a="${#a}"
 		[ $a -lt $mina ] || continue
 		mina=$a
-		min="$x$p"
+		min="$x$p1"
 		minpref=$pref
 	done
 }
