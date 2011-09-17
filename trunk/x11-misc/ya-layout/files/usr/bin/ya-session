@@ -257,10 +257,6 @@ app(){
 	return
 }
 
-by_category '@Player;Audio|Player;AudioVideo;!Video'
-#echo "$(app @Player)"
-exit
-
 settings(){
 	xfsettingsd || runs 'xfce-mcs-manager n' gnome-settings-daemon /usr/libexec/gnome-settings-daemon
 }
