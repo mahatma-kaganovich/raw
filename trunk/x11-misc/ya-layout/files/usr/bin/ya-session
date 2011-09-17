@@ -179,29 +179,27 @@ run(){
 }
 
 by_category(){
-	local f i j c
-	for f in /usr/share/applications/*.desktop; do
-		local Exec= Categories= TryExec= Terminal= Type=
-		while read i; do
-			case "$i" in
-			Exec=*|Categories=*|TryExec=*|Terminal=*|Type=*)declare "${i%%=*}"="${i#*=}";;
-			esac
-		done <"$f"
-		[ -z "$Categories" -o -z "$Exec" -o "$Type" != Application ] || ([ -n "$TryExec" ] && ! which "$TryExec" >/dev/null 2>&1) && continue
-		Categories=";$Categories;"
-		[ "$Terminal" = true ] && Terminal='+' || Terminal=''
-		for i in ${*//|/ }; do
-			c=true
-			for j in ${i//;/ }; do
-				if [ -n "${Categories##*;${j#!};*}" ]; then
-					[ -n "${j##!*}" ] && c=false && break
-				elif [ -z "${j##!*}" ]; then
-					c=false && break
-				fi
-			done
-			$c && echo -n " '$Terminal${Exec% \%?}'" && break
-		done
-	done
+local i ok=false
+for i in ${*//|/ }; do
+    local g="grep -R '^Categories=' /usr/share/applications --include '*.desktop'"
+    for i in ${i//;/ }; do
+	[ -n "${i##!*}" ] && g+="|grep '[=;]$i\(;\|$\)'" || g+="|grep -v '[=;]${i#!}\(;\|$\)'"
+    done
+    eval "$g"|while read i; do
+	local Exec= TryExec= Terminal= Type=
+	while read i; do
+		case "$i" in
+		Exec=*|TryExec=*|Terminal=*|Type=*)local "${i%%=*}"="${i#*=}";;
+		esac
+	done <"${i%%:*}"
+	if [ -n "$Exec" -a "$Type" = Application ] && ([ -z "$TryExec" ] || which "$TryExec" >/dev/null 2>&1); then
+		[ "$Terminal" = true ] && -n echo "+"
+		echo "${Exec% \%?} "
+		ok=true
+	fi
+    done
+#    $ok && break
+done
 }
 
 _app(){
@@ -258,6 +256,10 @@ app(){
 	esac
 	return
 }
+
+by_category '@Player;Audio|Player;AudioVideo;!Video'
+#echo "$(app @Player)"
+exit
 
 settings(){
 	xfsettingsd || runs 'xfce-mcs-manager n' gnome-settings-daemon /usr/libexec/gnome-settings-daemon
