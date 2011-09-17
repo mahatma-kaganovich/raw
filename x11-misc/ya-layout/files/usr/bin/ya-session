@@ -93,18 +93,18 @@ obconfig(){
 		-e 's:<name>Clearlooks</name>:<name>Onyx</name>:' \
 		-e 's:</keyboard>:\
 		<keybind key="Menu"><action name="ShowMenu"><menu>root-menu</menu></action></keybind>\
-		<keybind key="C-Menu"><action name="Execute"><command>ya-session --run "+/usr/bin/sudo /usr/bin/mc"</command></action></keybind>\
+		<keybind key="C-Menu"><action name="Execute"><command>ya-session --run +/usr/bin/sudo /usr/bin/mc</command></action></keybind>\
 		<keybind key="Super_L"><action name="Execute"><command>ya-session --run TerminalEmulator</command></action></keybind>\
 		<keybind key="Super_R"><action name="Execute"><command>ya-session --run TerminalEmulator</command></action></keybind>\
-		<keybind key="C-Super_L"><action name="Execute"><command>ya-session --run "+/usr/bin/sudo -s"</command></action></keybind>\
-		<keybind key="C-Super_R"><action name="Execute"><command>ya-session --run "+/usr/bin/sudo -s"</command></action></keybind>\
+		<keybind key="C-Super_L"><action name="Execute"><command>ya-session --run +/usr/bin/sudo -s</command></action></keybind>\
+		<keybind key="C-Super_R"><action name="Execute"><command>ya-session --run +/usr/bin/sudo -s</command></action></keybind>\
 		<keybind key="XF86Calculator"><action name="Execute"><command>ya-session --run XF86Calculator</command></action></keybind>\
 		<keybind key="XF86WWW"><action name="Execute"><command>ya-session --run XF86WWW</command></action></keybind>\
 		<keybind key="XF86Mail"><action name="Execute"><command>ya-session --run XF86Mail</command></action></keybind>\
 		<keybind key="XF86AudioMedia"><action name="Execute"><command>ya-session --run XF86AudioMedia</command></action></keybind>\
 		<keybind key="XF86MyComputer"><action name="Execute"><command>ya-session --run "FileManager $HOME/Desktop"</command></action></keybind>\
 		<keybind key="XF86Messenger"><action name="Execute"><command>ya-session --run XF86Messenger</command></action></keybind>\
-		<keybind key="XF86Eject"><action name="Execute"><command>"eject /dev/sr0"</command></action></keybind>\
+		<keybind key="XF86Eject"><action name="Execute"><command>eject /dev/sr0</command></action></keybind>\
 		</keyboard>:' \
 			<"$2" >"$1"
 }
@@ -255,6 +255,15 @@ app(){
 	return
 }
 
+launch(){
+	i="$(app "${@}")"
+	case "$i" in
+	*exo-open\ --launch\ TerminalEmulator\ -e\ *)i="${i/ -e}";;
+	esac
+	exec $i
+	exit
+}
+
 settings(){
 	xfsettingsd || runs 'xfce-mcs-manager n' gnome-settings-daemon /usr/libexec/gnome-settings-daemon
 }
@@ -328,14 +337,8 @@ case "$1" in
 	shift 2
 	continue
 ;;
---run)
-	shift
-	i="$(app "${@}")"
-	case "$i" in
-	*exo-open\ --launch\ TerminalEmulator\ -e\ *)i="${i/ -e}";;
-	esac
-	exec $i
-;;
+--run)shift;launch "$*";; # better for param chaining
+--runs)shift;launch "${@}";;
 --obconfig)
 	shift
 	obconfig "${@}"
@@ -351,13 +354,16 @@ case "$1" in
 	i="${i// YA_APP_/,}"
 	i="${i#,}"
 	echo "Usage: ya-session [command]
-Commands: -noop, --ya, -p, --exit, --0, --obsession, --open, --layout [user], --run 'cmd1' ['cmd2'...]
+Commands: -noop, --ya, -p, --exit, --0, --obsession, --open, --layout [user],
+	--run <cmd>, --runs 'cmd1' ['cmd2'...]
 .xinitrc examples:
 	minimal: exec ya-session'
 	openbox-style: exec ya-session --open --obsession
 One-shot desktop update: ya-session --layout
 or: ln -s $Desk ~/Desktop/desktop
-Launcher: ya-session --run 'cmd1' 'cmd2' ...
+Launcher:
+	ya-session --run cmd
+	ya-session --runs 'cmd1' 'cmd2' ...
 	- launch first found command, preferred in \$YA_APP variable
 	(prefixed by '+' to terminal)
 	and/or substituted via \$YA_APP_<cmd> variables:
