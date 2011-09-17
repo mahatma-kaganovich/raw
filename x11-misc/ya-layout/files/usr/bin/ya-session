@@ -194,7 +194,7 @@ for i in ${*//|/ }; do
 	done <"${i%%:*}"
 	if [ -n "$Exec" -a "$Type" = Application ] && ([ -z "$TryExec" ] || which "$TryExec" >/dev/null 2>&1); then
 		[ "$Terminal" = true ] && -n echo "+"
-		echo -n "${Exec% \%?} "
+		echo -n "'${Exec% \%?}' "
 	fi
     done
 done
@@ -205,10 +205,9 @@ _app(){
 	shift
 	for i in "${@}"; do
 		x="${i%% *}"
+		[ "$x" = "$i" ] && p1="$p" || p1=" ${i#* }$p"
 		pref="${x:0:1}"
 		x="${x#[+@]}"
-		p1="${i#* }"
-		[ "$p1" = "$i" ] && p1="$p" || p1=" $p1$p"
 		case "$pref" in
 		@)
 			# categories are slow, last resort
@@ -217,7 +216,7 @@ _app(){
 			continue
 		;;
 		esac
-		v="YA_APP_${x//-_}"
+		v="YA_APP_${x//-/_}"
 		if [ -n "${!v}" ]; then
 			eval "_app '$p1' ${!v}"
 			continue
@@ -227,11 +226,12 @@ _app(){
 		a="$aa"
 		a="${a%% $x *}"
 		a="${a%% ${x##*/} *}"
+#		[ $a ] || return
 		a="${#a}"
 		[ $a -lt $mina ] || continue
 		mina=$a
 		min="$x$p1"
-		minpref=$pref
+		minpref="$pref"
 	done
 }
 
@@ -240,12 +240,12 @@ _app(){
 # $YA_APP_<name> - substitution list for "name"
 # +command - in term
 app(){
-	local i v a aa min= mina pref minpref= p=
+	local i v a aa min= mina pref minpref=
 	v="YA_PROFILE_$YA_PROFILE"
 	aa=" $YA_APP ${!v} "
 	mina=$((${#aa}+1))
 	for i in "${@}"; do
-		eval "_app '' $i"
+		eval "_app '' '$i'"
 	done
 	[ -z "$min" ] && return 1
 	case "$minpref" in
