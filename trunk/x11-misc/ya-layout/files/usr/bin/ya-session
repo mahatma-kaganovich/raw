@@ -179,7 +179,7 @@ run(){
 }
 
 by_category(){
-local i ok=false
+local i
 for i in ${*//|/ }; do
     local g="grep -R '^Categories=' /usr/share/applications --include '*.desktop'"
     for i in ${i//;/ }; do
@@ -194,11 +194,9 @@ for i in ${*//|/ }; do
 	done <"${i%%:*}"
 	if [ -n "$Exec" -a "$Type" = Application ] && ([ -z "$TryExec" ] || which "$TryExec" >/dev/null 2>&1); then
 		[ "$Terminal" = true ] && -n echo "+"
-		echo "${Exec% \%?} "
-		ok=true
+		echo -n "${Exec% \%?} "
 	fi
     done
-#    $ok && break
 done
 }
 
