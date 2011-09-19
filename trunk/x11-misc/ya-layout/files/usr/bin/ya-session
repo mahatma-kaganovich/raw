@@ -185,7 +185,7 @@ for i in ${*//|/ }; do
 	for i in ${i//;/ }; do
 		[ -n "${i##!*}" ] && y+="$i\|" || n+="${i#!}\|"
 	done
-	eval "grep -R '^Categories=${y:+\(\|.*;\)\(${y%??}\)\(;\|\$\)}' /usr/share/applications --include '*.desktop'${n:+|grep -v '[=;]\(${n%??}\)\(;\|$\)'}"
+	eval "grep -R '^Categories=${y:+\(\|.*;\)\(${y%??}\)\(;\|$\)}' /usr/share/applications --include '*.desktop'${n:+|grep -v '[=;]\(${n%??}\)\(;\|$\)'}"
 done|sort -u|while read i; do
 	local Exec= TryExec= Terminal= Type=
 	while read i; do
@@ -194,7 +194,7 @@ done|sort -u|while read i; do
 		esac
 	done <"${i%%:*}"
 	if [ -n "$Exec" -a "$Type" = Application ] && ([ -z "$TryExec" ] || which "$TryExec" >/dev/null 2>&1); then
-		[ "$Terminal" = true ] && -n echo "+"
+		[ "$Terminal" = true ] && Exec="+$Exec"
 		echo -n "'${Exec% \%?}' "
 	fi
 done
