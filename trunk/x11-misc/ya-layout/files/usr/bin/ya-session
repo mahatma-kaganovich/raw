@@ -181,11 +181,12 @@ run(){
 by_category(){
 local i
 for i in ${*//|/ }; do
-    local g="grep -R '^Categories=' /usr/share/applications --include '*.desktop'"
-    for i in ${i//;/ }; do
-	[ -n "${i##!*}" ] && g+="|grep '[=;]$i\(;\|$\)'" || g+="|grep -v '[=;]${i#!}\(;\|$\)'"
-    done
-    eval "$g"|while read i; do
+	local y= n=
+	for i in ${i//;/ }; do
+		[ -n "${i##!*}" ] && y+="$i\|" || n+="${i#!}\|"
+	done
+	eval "grep -R '^Categories=${y:+\(\|.*;\)\(${y%??}\)\(;\|\$\)}' /usr/share/applications --include '*.desktop'${n:+|grep -v '[=;]\(${n%??}\)\(;\|$\)'}"
+done|sort -u|while read i; do
 	local Exec= TryExec= Terminal= Type=
 	while read i; do
 		case "$i" in
@@ -196,7 +197,6 @@ for i in ${*//|/ }; do
 		[ "$Terminal" = true ] && -n echo "+"
 		echo -n "'${Exec% \%?}' "
 	fi
-    done
 done
 }
 
