@@ -9,9 +9,9 @@ base="${2:-/mnt/auto}"
 NO=' '
 [ -z "${par##*all*}" ] && all=true || {
 	all=false
-	NO=" `sed -e 's:^[ 	]*::g' -e 's:[ 	#].*::g' -e 's:^UUID=:/dev/disk/by-uuid/:' </etc/fstab` "
-	NO="${NO//
-/ }"
+	NO="`sed -e 's:^[ 	]*::g' -e 's:[ 	#].*::g' -e 's:^UUID=:/dev/disk/by-uuid/:' </etc/fstab`"
+	NO=" ${NO//
+/ } "
 }
 
 [ -L /dev/disk/dev ] || ln -s .. /dev/disk/dev
@@ -20,11 +20,11 @@ D=' '
 for i in /dev/disk/*-*/*; do
 	l=`readlink "$i"` && [ -z "${l##../../*}" ] || continue
 	l="${l#../../}"
-	! $all && [ -z "${NO##* $i *}" ] && NO+=" /dev/$l $i " || D+="$l "
+	! $all && [ -z "${NO##* $i *}" ] && NO+="/dev/$l $i " || D+="$l "
 done
 for i in $D; do
-	[ -z "${NO##* /dev/$i *}" ] || ([ -n "${i%%*[0-9]}" ] && [ -z "${NO##* /dev/$i*}" -o -z "${D##* $i*}" ]) && continue
-	NO+=" /dev/$i "
+	[ -z "${NO##* /dev/$i *}" ] || ([ -n "${i%%*[0-9]}" ] && [ -z "${NO##* /dev/$i[0-9]*}"  -o -z "${D##* $i[0-9]*}" ]) && continue
+	NO+="/dev/$i "
 	echo "$base/\"$i\" -fstype=auto,noatime \":/dev/$i\""
 done
 echo "$base/disk --bind :/dev/disk"
