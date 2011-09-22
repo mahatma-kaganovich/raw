@@ -5,13 +5,30 @@
 par="x$3"
 base="${2:-/mnt/auto}"
 
+raids(){
+local i
+#$all ||
+for i in "${@}"; do
+	case "$i" in
+	/dev/drbd[0-9]*)
+		i=`drbdsetup "$i" show|grep -o '"/dev/[^ 	"]*"'` && NO+="${i//\"/} "
+	;;
+	/dev/md*)
+		i=`mdadm -D "$i"|grep -o '/dev/[^ 	"]*'` && NO+="$i "
+	;;
+	esac
+done
+}
+
 [ "$ACTION" == remove ] && umount -l "$DEVNAME" &>/dev/null
 NO=' '
 [ -z "${par##*all*}" ] && all=true || {
 	all=false
-	NO="`sed -e 's:^[ 	]*::g' -e 's:[ 	#].*::g' -e 's:^UUID=:/dev/disk/by-uuid/:' </etc/fstab`"
-	NO=" ${NO//
-/ } "
+	for i in `(sed -e 's:^[ 	]*::g' -e 's:[ 	#].*::g' -e 's:^UUID=:/dev/disk/by-uuid/:' </etc/fstab;sed -e "s:.* $base/.*::" -e 's: .*::' </proc/mounts)|sort -u`; do
+		[ -L "$i" ] && i+="`readlink "$i"` "
+		NO+="$i "
+		raids $i
+	done
 }
 
 [ -L /dev/disk/dev ] || ln -s .. /dev/disk/dev
@@ -20,7 +37,9 @@ D=' '
 for i in /dev/disk/*-*/*; do
 	l=`readlink "$i"` && [ -z "${l##../../*}" ] || continue
 	l="${l#../../}"
-	! $all && [ -z "${NO##* $i *}" ] && NO+="/dev/$l $i " || D+="$l "
+	! $all && [ -z "${NO##* $i *}" ] && NO+="/dev/$l $i " && continue
+	D+="$l "
+	raids "/dev/$l"
 done
 for i in $D; do
 	[ -z "${NO##* /dev/$i *}" ] || ([ -n "${i%%*[0-9]}" ] && [ -z "${NO##* /dev/$i[0-9]*}"  -o -z "${D##* $i[0-9]*}" ]) && continue
