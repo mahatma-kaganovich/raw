@@ -35,6 +35,9 @@ sm2='--sm-client-disable'
 : ${YA_PROFILE_xfce:="xfdesktop xfce4-panel exo-open"}
 : ${YA_PROFILE_gnome:="nautilus gnome-panel gnome-terminal"}
 
+# startup: minimal
+: ${YA_STARTUP:=XF86Desktop}
+
 _exit(){
 	for i in $pids; do
 		[ -d /proc/$i ] && echo $i
@@ -280,7 +283,7 @@ flock -w 10 -x 9 || {
 	echo "error locking $pidfile"
 	exit
 }
-[ -z "$YA_DESKTOP" ] && YA_DESKTOP=`app XF86Desktop`
+[ -z "$YA_DESKTOP" ] && YA_DESKTOP=`app $YA_STARTUP`
 desk="$YA_DESKTOP"
 pids=`cat "$pidfile" 2>/dev/null`
 sess
@@ -332,7 +335,7 @@ case "$1" in
 -p|--profile)
 	YA_PROFILE="$2"
 	echo "YA_PROFILE='$2'" >>"$envcache"
-	YA_DESKTOP=`app XF86Desktop`
+	YA_DESKTOP=`app $YA_STARTUP`
 	desk="$YA_DESKTOP"
 	shift 2
 	continue
@@ -354,11 +357,13 @@ case "$1" in
 	i="${i// YA_APP_/,}"
 	i="${i#,}"
 	echo "Usage: ya-session [command]
-Commands: -noop, --ya, -p, --exit, --0, --obsession, --open, --layout [user],
-	--run <cmd>, --runs 'cmd1' ['cmd2'...]
+Commands: -noop, --ya, -p|--profile <profile>, --exit, --0, --obsession, --open,
+	--layout [user], --run <cmd>, --runs 'cmd1' ['cmd2'...]
 .xinitrc examples:
 	minimal: exec ya-session'
 	openbox-style: exec ya-session --open --obsession
+	panel: YA_STARTUP=XF86Panel exec ya-session
+	xfce4 panel: YA_PROFILE=xfce YA_STARTUP=XF86Panel exec ya-session
 One-shot desktop update: ya-session --layout
 or: ln -s $Desk ~/Desktop/desktop
 Launcher:
