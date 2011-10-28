@@ -5,7 +5,7 @@ addon($rc,'#',"ppatch auto",qq(_ppatch(){
 local p i PPATCH PPATCHLIST="" PPATCHDIR="\${PPATCH_ROOT:-\${PORTAGE_CONFIGROOT:-\$ROOT}}/usr/ppatch" PPATCHRC=' '
 for PPATCH in \$CATEGORY/\$PN \$PN \$PROVIDE ; do\
 PPATCH="\$PPATCHDIR/\$PPATCH/\$EBUILD_PHASE/"
-if [[ -n "\$EBUILD_PHASE" ]]; then
+if [[ -n "\$EBUILD_PHASE" ]] && [[ "\$CATEGORY" != virtual ]]; then
 	i="`readlink -f \$PPATCH`"
 	p=""
 	for p in \$PPATCHLIST; do
