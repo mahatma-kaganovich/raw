@@ -15,7 +15,7 @@ DESCRIPTION="mirror/replicate block-devices across a network-connection"
 SRC_URI="http://oss.linbit.com/drbd/${MY_MAJ_PV}/"${MY_P}".tar.gz"
 HOMEPAGE="http://www.drbd.org"
 
-IUSE="pacemaker"
+IUSE="pacemaker bash-completion"
 
 DEPEND=""
 RDEPEND=""
@@ -53,7 +53,7 @@ src_configure() {
 			echo --with-pacemaker --without-heartbeat --with-rgmanager || \
 			echo --without-pacemaker --with-heartbeat --without-rgmanager
 		) \
-		--without-bashcompletion \
+		$(use_with bash-completion bashcompletion) \
 		--with-distro=gentoo \
 		|| die "configure failed"
 }
