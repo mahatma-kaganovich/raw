@@ -1,11 +1,11 @@
---- a/src/external_acl.cc	2011-09-28 07:28:17.000000000 +0300
-+++ b/src/external_acl.cc	2011-10-03 11:59:12.000000000 +0300
+--- a/src/external_acl.cc	2011-11-09 12:06:43.000000000 +0300
++++ b/src/external_acl.cc	2011-11-09 12:15:24.000000000 +0300
 @@ -732,7 +732,8 @@ aclMatchExternal(external_acl_data *acl,
                  debugs(82, 2, "aclMatchExternal: \"" << key << "\": queueing a call.");
                  ch->changeState(ExternalACLLookup::Instance());
                  debugs(82, 2, "aclMatchExternal: \"" << key << "\": return -1.");
 -                return -1; // to get here we have to have an expired cache entry. MUST not use.
-+                if (!entry)
++                if (!entry || !entry->result) // accept expired cached positive while queued (before auth)
 +                    return -1; // to get here we have to have an expired cache entry. MUST not use.
              } else {
                  if (!entry) {
