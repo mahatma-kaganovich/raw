@@ -1,4 +1,4 @@
-file(my $vortex="$ENV{S}/drivers/net/3c59x.c");
+my $vortex=ffile("$ENV{S}/drivers/net/3c59x.c");
 $f{$vortex}=~s/\n#define tx_interrupt_mitigation 1/\n#define VORTEX_DEBUG 0\n\/\/#define tx_interrupt_mitigation 1/g;
 $f{$vortex}=~s/static int options\[MAX_UNITS\] = \{ \[0 \.\.\. MAX_UNITS-1\] = -1 \}/static int options\[MAX_UNITS\] = \{ \[0 \.\.\. MAX_UNITS-1\] = 1 \}/g;
 $f{$vortex}=~s/static int full_duplex\[MAX_UNITS\] = \{\[0 \.\.\. MAX_UNITS-1\] = -1 \}/static int full_duplex\[MAX_UNITS\] = \{\[0 \.\.\. MAX_UNITS-1\] = 1 \}/g;
