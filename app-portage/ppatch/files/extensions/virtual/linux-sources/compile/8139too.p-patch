@@ -1,5 +1,5 @@
 file(my $rtl="$ENV{S}/drivers/net/8139too.c");
-$f{$rtl}=~s/static int full_duplex\[MAX_UNITS\] = \{-1/static int full_duplex[MAX_UNITS] = {1/g;
+# $f{$rtl}=~s/static int full_duplex\[MAX_UNITS\] = \{-1/static int full_duplex[MAX_UNITS] = {1/g;
 $f{$rtl}=~s/#undef RTL8139_NDEBUG/#define RTL8139_NDEBUG 1/g;
 
 &flush;

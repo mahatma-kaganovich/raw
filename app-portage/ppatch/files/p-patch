@@ -1,5 +1,5 @@
 #! /usr/bin/perl
-# p-patch v0.09, by mahatma
+# p-patch v0.10, by mahatma
 
 my $s;
 my %f;
@@ -12,6 +12,22 @@ sub touch{wf(-e $_[0]?">>$_[0]":">$_[0]");$_[0]}
 sub file{
 my $n=$_[1]||$_[0];
 $f{$n}=rf("<$_[0]") if(!exists($f{$n}));
+$n
+}
+
+sub ffile{
+my $n=$_[0];
+return $n if(exists($f{$n}));
+if(! -e $n){
+	my ($d,$f)=$_[0]=~/^(.*)\/(.*?)$/;
+	if(open(my $F,"find '$d' -name '$f'|")){
+		$f=<$F>;
+		chomp($f);
+		close($F);
+		$n=$f if($f ne '');
+	}
+}
+$f{$n}=rf("<$n");
 $n
 }
 
@@ -109,11 +125,10 @@ $flags
 }
 
 sub rf{
-my ($ss,$s);
 open FH,$_[0] or err("'$_[0]' read");
-$ss.=$s while(read(FH,$s,1024));
+read(FH,my $s,-s FH);
 close FH;
-$ss
+$s
 }
 
 sub wf{
