@@ -1,6 +1,6 @@
 MY_P="smf-grey-2.0.0+tym1.2"
 MY_PN="smf-grey"
-DIRS="/var/run/smfs /var/${MY_PN}"
+DIRS="/var/run/smfs /var/${MY_PN} /var/spool/smfs"
 inherit smf
 DESCRIPTION="Sendmail GreyList milter, extended version"
 HOMEPAGE="http://smfs.takm.com/"
