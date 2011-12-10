@@ -8,10 +8,13 @@ IUSE_MPMS_FORK="itk prefork"
 IUSE_MPMS_THREAD="event worker simple"
 
 # latest gentoo apache files
-GENTOO_PATCHSTAMP="20111209"
+GENTOO_PATCHSTAMP="20111210"
 GENTOO_DEVELOPER=""
 # We want the patch from r0
 GENTOO_PATCHNAME="gentoo-${P}"
+
+# now for USE=static only
+IUSE_MODULES="cache-disk file-cache setenvif cern-meta case-filter expires authn-file unixd optional-hook-export deflate proxy-ftp proxy-fdpass sed asis proxy-fcgi negotiation usertrack dialup dav-lock info proxy-balancer cache dumpio cgid optional-fn-import lbmethod-bytraffic dav-fs ident authz-user data proxy-connect reqtimeout authz-host vhost-alias lbmethod-heartbeat actions authn-anon isapi reflector log-config access-compat session-dbd echo charset-lite authn-dbd mime-magic authn-dbm log-forensic status slotmem-plain heartmonitor ext-filter authn-socache authz-core allowmethods optional-fn-export proxy-html proxy-http optional-hook-import request imagemap authz-owner logio auth-form alias socache-dbm authn-core watchdog mime auth-digest speling auth-basic autoindex userdir socache-memcache unique-id proxy authz-groupfile bucketeer heartbeat session-cookie authz-dbd authz-dbm xml2enc remoteip rewrite session cgi include dbd dav dir substitute log-debug env proxy-express buffer example-ipc slotmem-shm headers lbmethod-byrequests case-filter-in proxy-ajp socache-shmcb filter ratelimit proxy-scgi version example-hooks lbmethod-bybusyness"
 
 inherit apache-2
 
@@ -24,7 +27,7 @@ HOMEPAGE="http://httpd.apache.org/"
 LICENSE="Apache-2.0 Apache-1.1"
 SLOT="2"
 KEYWORDS=""
-IUSE="-static"
+IUSE="static"
 
 for i in $moduse; do
 	IUSE+=" ${i%%:*}"
@@ -49,7 +52,6 @@ SRC_URI="mirror://apache/httpd/httpd-${PV}-beta.tar.bz2
 	http://mahatma.bspu.unibel.by/download/gentoo-apache-2.3+/${GENTOO_PATCH_A}"
 
 src_prepare(){
-	use static && die "Static build not supported (all-shared modules build)"
 #	cp -a "$FILESDIR" "$GENTOO_PATCHDIR"
 	cd "$S"
 	for i in "$GENTOO_PATCHDIR"/patches/*.sh{,.*}; do
@@ -60,13 +62,24 @@ src_prepare(){
 }
 
 src_configure(){
-	MY_CONF=''
+	use static || ewarn "APACHE2_MODULES variable ignored in this ebuild with -static. Building all shared."
+	if use static; then
+		MY_CONF=''
+		s='=static'
+	else
+		MY_CONF='--enable-mpms-shared=all'
+		s=''
+	fi
 	# session_crypto - APR does not include SSL/EVP
-	for i in mpms-shared=all cgi cgid isapi watchdog bucketeer echo example_hooks case_filter case_filter_in example_ipc data reflector charset_lite xml2enc proxy_html log_forensic mime_magic cern_meta ident usertrack proxy_fdpass slotmem_plain optional_hook_export optional_hook_import optional_fn_import optional_fn_export dialup heartbeat heartmonitor asis cgi dav_lock imagemap; do
+	for i in cgi cgid isapi watchdog bucketeer echo example_hooks case_filter case_filter_in example_ipc data reflector charset_lite xml2enc proxy_html log_forensic mime_magic cern_meta ident usertrack proxy_fdpass slotmem_plain optional_hook_export optional_hook_import optional_fn_import optional_fn_export dialup heartbeat heartmonitor asis cgi dav_lock imagemap; do
 		MY_CONF+=" --enable-$i"
 	done
 	for i in ${moduse//+}; do
-		MY_CONF+=" $(use_enable ${i//:/ })"
+		MY_CONF+=" $(use_enable ${i//:/ })$(use ${i%%:*} && echo "$s")"
+	done
+	MY_CONF+=' '
+	use static && for i in $IUSE_MODULES; do
+		use apache2_modules_$i && MY_CONF="${MY_CONF//--enable-$i } --enable-$i=static"
 	done
 	use threads || {
 		ewarn "Threads really moderated by dev-libs/apr -> apr.h -> APR_HAS_THREADS.
@@ -87,6 +100,19 @@ LoadModule mpm_${MY_MPM}_module modules/mod_mpm_${MY_MPM}.so" >"$TMPDIR/my_mpm.c
 #		cp $S/docs/conf/extra/${i//:/ $GENTOO_PATCHDIR/}
 #	done
 	apache-2_src_install
+	sed -i -e 's:^LoadModule \([^ ]*\) \(.*\)$:<IfModule !\1>\nLoadModule \1 \2\n<\\IfModule>:' "$D/etc/apache2/httpd.conf"
 	cd "$S/modules" && tar -caf modules-docs.tar.bz2 $(find -name "docs") && dodoc modules-docs.tar.bz2
+
+#	echo -n "SWITCHABLE MODULES:"
+#	cd $S
+#	./configure --help |grep -o "\--[^ 	]*" &>l
+#	for i in $(find $D -name "mod*.so"); do
+#		i=${i#*\mod_}
+#		i=${i%.so}
+#		i=${i//_/-}
+#		grep -q "\--enable-$i\$\|--disable-$i\$" l && echo -n " $i"
+#	done
+#	echo
+
 	# rm /var/lib/dav/lockdb
 }
