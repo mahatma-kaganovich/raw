@@ -71,7 +71,7 @@ src_configure(){
 		s=''
 	fi
 	# session_crypto - APR does not include SSL/EVP
-	for i in cgi cgid isapi watchdog bucketeer echo example_hooks case_filter case_filter_in example_ipc data reflector charset_lite xml2enc proxy_html log_forensic mime_magic cern_meta ident usertrack proxy_fdpass slotmem_plain optional_hook_export optional_hook_import optional_fn_import optional_fn_export dialup heartbeat heartmonitor asis cgi dav_lock imagemap; do
+	for i in cgi cgid isapi watchdog bucketeer echo example_hooks case_filter case_filter_in example_ipc data reflector charset_lite xml2enc proxy_html log_forensic mime_magic cern_meta ident usertrack proxy_fdpass slotmem_plain optional_hook_export optional_hook_import optional_fn_import optional_fn_export dialup heartbeat heartmonitor asis cgi dav_lock imagemap privileges; do
 		MY_CONF+=" --enable-$i"
 	done
 	for i in ${moduse//+}; do
