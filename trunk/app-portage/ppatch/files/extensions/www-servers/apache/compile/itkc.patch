@@ -58,7 +58,7 @@ Signed-off-by: Denis Kaganovich <mahatma@eu.by>
 +    if (pid_file) {
 +       if (apr_file_open(&dconf->pidfile, pid_file, APR_WRITE | APR_APPEND, APR_OS_DEFAULT, cmd->pool) != APR_SUCCESS) {
 +          _DBG("apr_file_open(%s): %s", pid_file, strerror(errno));
-+          exit(-1);
++          return "Unable to open cgroup/pidfile";
 +       }
 +    } else
 +        dconf->pidfile = NULL;
