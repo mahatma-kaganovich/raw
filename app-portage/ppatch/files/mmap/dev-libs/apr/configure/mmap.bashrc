@@ -1,0 +1,1 @@
+export enable_allocator_uses_mmap=yes
