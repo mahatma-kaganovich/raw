@@ -3,5 +3,5 @@
 @@ -126,3 +128,2 @@
 -ifeq ($(experimental-malloc),yes)
  CPPFLAGS-malloc.c += -DPER_THREAD -DATOMIC_FASTBINS
-+CPPFLAGS-malloc.c += -O3
++CPPFLAGS-malloc.c += $(CFLAGS_BASE)
 -endif
