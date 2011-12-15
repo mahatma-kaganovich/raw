@@ -24,7 +24,7 @@ Licensed under the same terms as the rest of Apache (or Anarchy license).
 +#if ITK_USE_CLONE
 +static int clone_flags1 = 0, clone_flags2 = 0;
 +static long stack_size;
-+void *stack = NULL;
++static void *stack;
 +#endif
  
  /*
