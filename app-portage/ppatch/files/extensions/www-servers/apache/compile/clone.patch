@@ -141,12 +141,11 @@ Licensed under the same terms as the rest of Apache (or Anarchy license).
  
  static int make_child(server_rec *s, int slot)
  {
-@@ -811,6 +863,9 @@ static int make_child(server_rec *s, int
+@@ -811,6 +863,8 @@ static int make_child(server_rec *s, int
      if ((pid = os_fork(unixd_config.user_name)) == -1) {
  #elif defined(TPF)
      if ((pid = os_fork(s, slot)) == -1) {
 +#elif ITK_USE_CLONE
-+   _DBG("clone = %x %x", clone_flags1, clone_flags2);
 +    if ( /*getuid() || */ (pid = clone(do_child1, stack = alloca(stack_size) + stack_size, clone_flags2, &slot)) == -1) {
  #else
      if ((pid = fork()) == -1) {
