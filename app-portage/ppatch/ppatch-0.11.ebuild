@@ -18,7 +18,7 @@ ppinit(){
 	for p in "${FILESDIR}"/* ; do
 		[[ -d "$p" ]] || continue
 		f="${p##*/}"
-		IUSE="$IUSE $f"
+		IUSE="$IUSE ${f#!}"
 #		for p1 in "$p"/*/* ; do
 #			[[ -d "${p1}" ]] || continue
 #			pac="${p1#$p/}"
@@ -39,8 +39,9 @@ src_install(){
     dodir /usr/ppatch/virtual
     dosym linux-sources /usr/ppatch/virtual/linux-kernel
     for d in $IUSE ; do
-	( use !"${d}" || ! [[ -d "${d}" ]] ) && continue
+	use "${d}" || d="!${d}"
 	d="${FILESDIR}/${d}"
+	[[ -d "${d}" ]] || continue
 	find "${d}"|egrep -v "/\."|while read s; do
 		t="${s#${d}/}"
 		[[ "${t}" == "${s}" ]] && continue
