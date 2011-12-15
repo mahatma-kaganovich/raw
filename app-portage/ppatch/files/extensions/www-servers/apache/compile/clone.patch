@@ -1,5 +1,13 @@
---- a/server/mpm/experimental/itk/itk.c	2011-12-14 14:35:11.000000000 +0300
-+++ b/server/mpm/experimental/itk/itk.c	2011-12-14 17:01:53.000000000 +0300
+This is experimental clone() (vs. fork()) patch for mpm-itk apache 2.2.
+Really I see no perfomance benefits, but only little RAM. But using
+CLONE_VFORK must relax cheduling in theory. CLONE_VM working with clone_flags1
+(final connection fork) and slow. So, primary - for experiments with LXC.
+
+(c) Denis Kaganovich, <mahatma@eu.by>
+Licensed under the same terms as the rest of Apache (or Anarchy license).
+
+--- a/server/mpm/experimental/itk/itk.c	2011-12-15 18:10:25.732671762 +0300
++++ b/server/mpm/experimental/itk/itk.c	2011-12-15 18:17:44.205651404 +0300
 @@ -107,6 +107,8 @@
  #define HARD_THREAD_LIMIT 1
  #endif
@@ -9,17 +17,19 @@
  /* config globals */
  
  int ap_threads_per_child=0;         /* Worker threads per child */
-@@ -120,6 +122,9 @@ static int first_server_limit = 0;
+@@ -120,6 +122,11 @@ static int first_server_limit = 0;
  static int changed_limit_at_restart;
  static int mpm_state = AP_MPMQ_STARTING;
  static ap_pod_t *pod;
 +#if ITK_USE_CLONE
-+static int clone_flags = 0;
++static int clone_flags1 = 0, clone_flags2 = 0;
++static long stack_size;
++void *stack = NULL;
 +#endif
  
  /*
   * The max child slot ever assigned, preserved across restarts.  Necessary
-@@ -502,17 +507,34 @@ int ap_graceful_stop_signalled(void)
+@@ -502,17 +509,34 @@ int ap_graceful_stop_signalled(void)
      return mpm_state == AP_MPMQ_STOPPING;
  }
  
@@ -57,7 +67,7 @@
      int last_poll_idx = 0;
  
  #if HAVE_LIBCAP
-@@ -606,8 +628,6 @@ static void child_main(int child_num_arg
+@@ -606,8 +630,6 @@ static void child_main(int child_num_arg
       * shutdown_pending is set when SIGTERM is received when running
       * in single process mode.  */
      while (!die_now && !shutdown_pending) {
@@ -66,13 +76,12 @@
  
          /*
           * (Re)initialize this child to a pre-connection state.
-@@ -720,20 +740,21 @@ static void child_main(int child_num_arg
+@@ -720,20 +742,20 @@ static void child_main(int child_num_arg
           */
  
          {
 +#if ITK_USE_CLONE
-+            long stack_size = sysconf(_SC_PAGESIZE);
-+            pid_t pid = clone(do_child, alloca(stack_size) + stack_size, clone_flags, NULL), child_pid;
++            pid_t pid = clone(do_child, stack, clone_flags1, NULL), child_pid;
 +#else
              pid_t pid = fork(), child_pid;
 +#endif
@@ -95,42 +104,129 @@
              default: /* parent; just wait for child to be done */
                  do {
                      child_pid = waitpid(pid, &status, 0);
-@@ -1433,6 +1454,9 @@ static int itk_pre_config(apr_pool_t *p,
+@@ -781,6 +803,36 @@ static void child_main(int child_num_arg
+     clean_child_exit(0);
+ }
+ 
++static int 
++#if !ITK_USE_CLONE
++    inline
++#endif
++    do_child1(int *slot)
++{
++#ifdef HAVE_BINDPROCESSOR
++        /* by default AIX binds to a single processor
++         * this bit unbinds children which will then bind to another cpu
++         */
++        int status = bindprocessor(BINDPROCESS, (int)getpid(),
++                                   PROCESSOR_CLASS_ANY);
++        if (status != OK) {
++            ap_log_error(APLOG_MARK, APLOG_WARNING, errno,
++                         ap_server_conf, "processor unbind failed %d", status);
++        }
++#endif
++        RAISE_SIGSTOP(MAKE_CHILD);
++        AP_MONCONTROL(1);
++        /* Disable the parent's signal handlers and set up proper handling in
++         * the child.
++         */
++        apr_signal(SIGHUP, just_die);
++        apr_signal(SIGTERM, just_die);
++        /* The child process just closes listeners on AP_SIG_GRACEFUL.
++         * The pod is used for signalling the graceful restart.
++         */
++        apr_signal(AP_SIG_GRACEFUL, stop_listening);
++        child_main(*slot);
++}
+ 
+ static int make_child(server_rec *s, int slot)
+ {
+@@ -811,6 +863,9 @@ static int make_child(server_rec *s, int
+     if ((pid = os_fork(unixd_config.user_name)) == -1) {
+ #elif defined(TPF)
+     if ((pid = os_fork(s, slot)) == -1) {
++#elif ITK_USE_CLONE
++   _DBG("clone = %x %x", clone_flags1, clone_flags2);
++    if ( /*getuid() || */ (pid = clone(do_child1, stack = alloca(stack_size) + stack_size, clone_flags2, &slot)) == -1) {
+ #else
+     if ((pid = fork()) == -1) {
+ #endif
+@@ -831,31 +885,11 @@ static int make_child(server_rec *s, int
+         return -1;
+     }
+ 
++#if !ITK_USE_CLONE
+     if (!pid) {
+-#ifdef HAVE_BINDPROCESSOR
+-        /* by default AIX binds to a single processor
+-         * this bit unbinds children which will then bind to another cpu
+-         */
+-        int status = bindprocessor(BINDPROCESS, (int)getpid(),
+-                                   PROCESSOR_CLASS_ANY);
+-        if (status != OK) {
+-            ap_log_error(APLOG_MARK, APLOG_WARNING, errno,
+-                         ap_server_conf, "processor unbind failed %d", status);
+-        }
+-#endif
+-        RAISE_SIGSTOP(MAKE_CHILD);
+-        AP_MONCONTROL(1);
+-        /* Disable the parent's signal handlers and set up proper handling in
+-         * the child.
+-         */
+-        apr_signal(SIGHUP, just_die);
+-        apr_signal(SIGTERM, just_die);
+-        /* The child process just closes listeners on AP_SIG_GRACEFUL.
+-         * The pod is used for signalling the graceful restart.
+-         */
+-        apr_signal(AP_SIG_GRACEFUL, stop_listening);
+-        child_main(slot);
++        do_child1(&slot);
+     }
++#endif
+ 
+     ap_scoreboard_image->parent[slot].pid = pid;
+ 
+@@ -1433,6 +1467,11 @@ static int itk_pre_config(apr_pool_t *p,
  #ifdef AP_MPM_WANT_SET_MAX_MEM_FREE
      ap_max_mem_free = APR_ALLOCATOR_MAX_FREE_UNLIMITED;
  #endif
 +#if ITK_USE_CLONE
-+    clone_flags = SIGCHLD | CLONE_VFORK;
++    clone_flags1 = SIGCHLD | CLONE_VFORK;
++    clone_flags2 = SIGCHLD | CLONE_FS;
++    stack_size = sysconf(_SC_PAGESIZE);
 +#endif
  
      apr_cpystrn(ap_coredump_dir, ap_server_root, sizeof(ap_coredump_dir));
  
-@@ -1697,6 +1719,19 @@ static const char *set_nice_value (cmd_p
+@@ -1696,6 +1738,20 @@ static const char *set_nice_value (cmd_p
      return NULL;
  }
  
-+static const char *set_clone_flags(cmd_parms *cmd, void *dummy, const char *arg)
-+{
 +#if ITK_USE_CLONE
++static const char *set_clone_flags(cmd_parms *cmd, void *dummy, const char *flags1,  const char *flags2)
++{
 +    const char *err = ap_check_cmd_context(cmd, GLOBAL_ONLY);
 +    if (err != NULL) {
 +        return err;
 +    }
 +
-+    clone_flags = (SIGCHLD | CLONE_VFORK) ^ atoi(arg);
-+#endif
++    clone_flags1 = (SIGCHLD | CLONE_VFORK) ^ atoi(flags1);
++    clone_flags2 = (SIGCHLD | CLONE_FS) ^ atoi(flags2);
 +    return NULL;
 +}
++#endif
 +
  static const command_rec itk_cmds[] = {
  UNIX_DAEMON_COMMANDS,
  LISTEN_COMMANDS,
-@@ -1716,6 +1751,8 @@ AP_INIT_TAKE1("MaxClientsVHost", set_max
+@@ -1715,6 +1771,10 @@ AP_INIT_TAKE1("MaxClientsVHost", set_max
                "Maximum number of children alive at the same time for this virtual host."),
  AP_INIT_TAKE1("NiceValue", set_nice_value, NULL, RSRC_CONF|ACCESS_CONF,
                "Set nice value for the given vhost, from -20 (highest priority) to 19 (lowest priority)."),
-+AP_INIT_TAKE1("CloneFlags", set_clone_flags, NULL, RSRC_CONF,
-+              "XOR to default (SIGCHLD|CLONE_VFORK) clone() flags. CLONE_VM=0x100, CLONE_FS=0x200."),
++#if ITK_USE_CLONE
++AP_INIT_TAKE12("CloneFlags", set_clone_flags, NULL, RSRC_CONF,
++              "XOR to default (SIGCHLD|CLONE_VFORK, SIGCHLD|CLONE_FS) clone flags. See /usr/include/{linux,bits}/sched.h or 'man 2 clone'"),
++#endif
  AP_GRACEFUL_SHUTDOWN_TIMEOUT_COMMAND,
  { NULL }
  };
