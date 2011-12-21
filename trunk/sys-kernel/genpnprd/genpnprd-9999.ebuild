@@ -6,8 +6,8 @@ HOMEPAGE="http://raw.googlecode.com/"
 RDEPEND="|| ( sys-fs/cramfs sys-apps/util-linux[cramfs] )
 	sys-fs/squashfs-tools
 	app-misc/pax-utils
-	sys-apps/grep[pcre]
-	|| ( <sys-libs/glibc-2.14 sys-libs/uclibc net-libs/libtirpc[static-libs] )"
+	sys-apps/grep[pcre]"
+#	|| ( <sys-libs/glibc-2.14 sys-libs/uclibc net-libs/libtirpc[static-libs] )"
 S="${FILESDIR}"
 
 src_install(){
