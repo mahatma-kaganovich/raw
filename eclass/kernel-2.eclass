@@ -299,8 +299,11 @@ CONFIG_INITRAMFS_COMPRESSION_$c=y" >>.config
 		yes '' 2>/dev/null | kmake oldconfig &>/dev/null
 		kmake bzImage
 	elif [[ "${c:-NONE}" != NONE ]]; then
-		c="${c//LZO/lzop}"
-		${c,,} -c9 "$1" >"${1%.cpio}.img" || die
+		c="${c,,} -9"
+		c="${c//lzo/lzop}"
+		c="${c//gzip/gzip -n}"
+		c="${c//xz -9/xz --check=crc32 --lzma2=dict=1MiB}"
+		${c} -c "$1" >"${1%.cpio}.img" || die
 		rm "$1"
 	else
 		[[ -e "$1" ]] && rename .cpio .img "$1"
