@@ -268,8 +268,7 @@ kernel-2_src_compile() {
 		[[ -e "${BDIR}/lib/firmware" ]] && p="${p} --firmware --firmware-dir=\"${BDIR}/lib/firmware\""
 	fi
 	run_genkernel ramdisk "--kerneldir=\"${S}\" --bootdir=\"${S}\" --module-prefix=\"${BDIR}\" --no-mountboot ${p}"
-	r=`ls initramfs*-${REAL_KV}` || (mv "$TMPDIR"/genkernel/initramfs* "$S" && r=`ls initramfs*-${REAL_KV}`)
-	rename "${r}" "initrd-${REAL_KV}.img" "${r}" || die "initramfs rename failed"
+	r=`ls initramfs*-${REAL_KV}||ls "$TMPDIR"/genkernel/initramfs*` && mv "$r" "initrd-${REAL_KV}.img" || die "initramfs rename failed"
 	einfo "Preparing boot image"
 	bash "${SHARE}/genpnprd" "${S}/initrd-${REAL_KV}.img" "$( (use !pnp && echo nopnp)||(use pnponly && echo pnponly) )" "${TMPDIR}"/overlay-rd "${S}" ${comp:+--COMPRESS $comp} $(use thin||echo --THIN -)|| die
 	local i="initrd-${REAL_KV}.cpio" i1="initrd-${REAL_KV}.img"
