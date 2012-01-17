@@ -50,8 +50,9 @@ case "`hexdump -v -s $i -n 10 -e '"'$i:'" 10/1 "%x" ""' $d`" in
 	case "`hexdump -v -s 1116 -n 12 -e '"" 1 "%04x" ""' $d`" in
 	???[012389ab]00[01][02]000[1-7])u=ext2;;
 	????00[01][0246]000[1-7])u=ext3;;
-	*[1-7])u=ext4;;
-	*)continue;;
+	*)u=ext4;;
+#	*[1-7])u=ext4;;
+#	*)continue;;
 	esac
 	b_id $u 48 64
 ;;
