@@ -1,19 +1,27 @@
---- a/init	2009-10-11 00:02:42.000000000 +0300
-+++ b/init	2009-10-19 19:38:21.000000000 +0300
-@@ -4,2 +4,3 @@
+--- linuxrc.orig	2011-12-15 13:32:15.000000000 +0300
++++ linuxrc	2012-01-18 20:06:41.594337800 +0300
+@@ -3,4 +3,5 @@
+ . /etc/initrd.defaults
  . /etc/initrd.scripts
 +. /etc/syspnp
  
-@@ -28,2 +29,4 @@
+ splash() {
+@@ -27,4 +28,6 @@
+ /bin/busybox --install -s
  
 +pnp_init
 +
  if [ "$0" = '/init' ]
-@@ -239,2 +242,3 @@
+ then
+@@ -254,4 +257,5 @@
+ then
  	good_msg 'Loading modules'
 +	syspnp
  	# Load appropriate kernel modules
-@@ -695,2 +699,3 @@
+ 	if [ "${NODETECT}" != '1' ]
+@@ -714,4 +718,5 @@
+ mkdir "${CHROOT}/proc" "${CHROOT}/sys" 2>/dev/null
  echo -ne "${BOLD}.${NORMAL}"
 +mod_unload
- umount /sys || echo '*: Failed to unmount the ramdisk /sys!'
+ 
+ # If devtmpfs is mounted, try move it to the new root
