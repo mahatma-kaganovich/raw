@@ -853,7 +853,7 @@ loadsh(){
 mntnewroot(){
 	if mkdir "$NEW_ROOT" 2>/dev/null ; then
 		if [[ -z "$NFSLIKE_FS" ]] || ! findnfsmount; then
-			mount -t "${NEW_ROOT_TYPE:-auto}" -o ro,$cmd_real_rootflags "$REAL_ROOT" "$NEW_ROOT" || rmdir "$NEW_ROOT"
+			mount -t "${cmd_rootfstype:-auto}" -o ro,$cmd_real_rootflags "$REAL_ROOT" "$NEW_ROOT" || rmdir "$NEW_ROOT"
 		fi
 		[[ "$NEW_ROOT" == /dev/nfs ]] && [[ -e /newroot ]] && NEW_ROOT="/newroot"
 		if [[ -e "$NEW_ROOT" ]] && [[ -n "$LOOP" ]]; then
@@ -1015,7 +1015,6 @@ run_shell(){
 # minimalistic. debug
 if [[ -z "$KV"  ]] && ! [[ -e /proc/version ]]; then
 NEW_ROOT="/newroot"
-NEW_ROOT_TYPE=auto
 CDROOT=0
 good_msg(){
 echo "$*"
