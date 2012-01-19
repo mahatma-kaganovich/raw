@@ -34,7 +34,7 @@ shift
 done
 $a && set "$*"
 m="$1"
-[-n "$m" ] && while [ -z "${m##*[*?/-]*}" ]; do
+[ -n "$m" ] && while [ -z "${m##*[*?/-]*}" ]; do
 	m="${m%%[*?/-]*}_${m#*[*?/-]}"
 done
 shift
