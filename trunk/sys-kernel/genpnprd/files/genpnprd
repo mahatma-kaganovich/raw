@@ -324,7 +324,7 @@ done
 $PNPONLY && rm $rcdir/lib/modules/*/modules.{alias,dep,symbols,*.bin,*map,order,builtin} $rcdir/sbin/modprobe 2>/dev/null
 [[ -e $rcdir/sbin/init ]] || ln -s /etc/syspnp $rcdir/sbin/init
 $GENKERNEL && for i in $DATA/*.patch; do
-	patch -p1 -std $rcdir <$i
+	patch -p1 -std $rcdir <$i || die "Patch '$i' failed"
 done
 rm $rcdir/{init,etc/initrd.scripts}.{rej,orig} -f &>/dev/null
 
