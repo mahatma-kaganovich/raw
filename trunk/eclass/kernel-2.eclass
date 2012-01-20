@@ -398,7 +398,7 @@ run_genkernel(){
 	[[ ! -e "${TMPDIR}/genkernel-cache" ]] && cp "${UROOT}/var/cache/genkernel" "${TMPDIR}/genkernel-cache" -r
 	cp "$UROOT/usr/share/genkernel/defaults/busy-config" "$TMPDIR"
 	touch "$TMPDIR/busy-config"
-	for i in $(use selinux && echo SELINUX=y) && PAM=n STATIC=y DEBUG=n NO_DEBUG_LIB=y DMALLOC=n EFENCE=n FEATURE_MOUNT_NFS=n \
+	for i in $(use selinux && echo SELINUX=y) PAM=n STATIC=y DEBUG=n NO_DEBUG_LIB=y DMALLOC=n EFENCE=n FEATURE_MOUNT_NFS=n \
 	    FEATURE_MOUNT_CIFS=y MODPROBE_SMALL=n FEATURE_MODPROBE_BLACKLIST=y TELNETD=y; do
 		sed -i -e "s:^.*CONFIG_${i%%=*}[= ].*\$:CONFIG_$i:" "$TMPDIR/busy-config"
 		grep -q "CONFIG_${i%%=*}[= ]" "$TMPDIR/busy-config" || echo "CONFIG_$i" >>"$TMPDIR/busy-config"
