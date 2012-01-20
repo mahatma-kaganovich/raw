@@ -396,8 +396,11 @@ to_overlay(){
 
 run_genkernel(){
 	[[ ! -e "${TMPDIR}/genkernel-cache" ]] && cp "${UROOT}/var/cache/genkernel" "${TMPDIR}/genkernel-cache" -r
-	cp "$UROOT/usr/share/genkernel/defaults/busy-config" "$TMPDIR"
-	touch "$TMPDIR/busy-config"
+	if use netboot; then
+		cp "$UROOT/usr/share/genkernel/netboot/busy-config" "$TMPDIR"
+	else
+		cp "$UROOT/usr/share/genkernel/defaults/busy-config" "$TMPDIR"
+	fi
 	for i in $(use selinux && echo SELINUX=y) PAM=n STATIC=y DEBUG=n NO_DEBUG_LIB=y DMALLOC=n EFENCE=n FEATURE_MOUNT_NFS=n \
 	    FEATURE_MOUNT_CIFS=y MODPROBE_SMALL=n FEATURE_MODPROBE_BLACKLIST=y TELNETD=y; do
 		sed -i -e "s:^.*CONFIG_${i%%=*}[= ].*\$:CONFIG_$i:" "$TMPDIR/busy-config"
@@ -406,12 +409,12 @@ run_genkernel(){
 	# cpio works fine without loopback, but may panish sandbox
 	cp /usr/bin/genkernel "${S}" || die
 	sed -i -e 's/has_loop/true/' "${S}/genkernel"
-	local a="$(arch "" 1)"
+	local a="$(arch "" 1)" opt=
+	ls "$UROOT/usr/share/genkernel/arch/$a/*busy*" >/dev/null 2>&1 || opt+=" --busybox-config=${TMPDIR}/busy-config"
 	# e2fsprogs & mdraid need more crosscompile info
 	ac_cv_target="${CTARGET:-${CHOST}}" ac_cv_build="${CBUILD}" ac_cv_host="${CHOST:-${CTARGET}}" CC="$(tc-getCC)" LD="$(tc-getLD)" CXX="$(tc-getCXX)" CPP="$(tc-getCPP)" AS="$(tc-getAS)" \
-	CFLAGS="${KERNEL_UTILS_CFLAGS}" LDFLAGS="${KERNEL_GENKERNEL_LDFLAGS}" "${S}/genkernel" \
+	CFLAGS="${KERNEL_UTILS_CFLAGS}" LDFLAGS="${KERNEL_GENKERNEL_LDFLAGS}" "${S}/genkernel" $opt\
 		--config=/etc/kernels/genkernel.conf \
-		--busybox-config="${TMPDIR}/busy-config" \
 		--cachedir="${TMPDIR}/genkernel-cache" \
 		--tempdir="${TMPDIR}/genkernel" \
 		--logfile="${TMPDIR}/genkernel.log" \
