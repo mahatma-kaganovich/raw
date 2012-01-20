@@ -317,7 +317,7 @@ for i in $DATA/no/*; do
 	if [[ -d "$i" ]]; then
 		cpdata "$i" `ls -1 $i`
 	elif [[ -z "${i%%*.patch}" ]]; then
-		patch -p1 -std $rcdir <$i
+		patch -p1 -std $rcdir <$i || die "Patch '$i' failed"
 	fi
 done
 [[ -n "$susp_sig" ]] && sed -i -e "s:554c53555350454e44:$susp_sig:" $DATA/etc/blkid.sh
