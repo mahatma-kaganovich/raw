@@ -24,14 +24,28 @@ DEPEND="${DEPEND}
 	xz? ( app-arch/xz-utils )
 	lzo? ( app-arch/lzop )
 	build-kernel? (
-		>=sys-kernel/genkernel-3.4.10.903
 		compressed? ( sys-kernel/genpnprd )
 		kernel-drm? ( !x11-base/x11-drm )
 		kernel-alsa? ( !media-sound/alsa-driver )
 		kernel-firmware? ( !sys-kernel/linux-firmware )
-		luks? ( sys-fs/cryptsetup )
-		evms? ( sys-fs/evms )
 		klibc? ( dev-libs/klibc )
+		genkernel? (
+			>=sys-kernel/genkernel-3.4.10.903
+			luks? ( sys-fs/cryptsetup )
+			evms? ( sys-fs/evms )
+		)
+		!klibc? ( !genkernel? (
+			sys-apps/busybox
+			e2fsprogs? ( sys-apps/util-linux )
+			mdadm? ( sys-fs/mdadm )
+			device-mapper? ( sys-fs/dmraid )
+			lvm? ( sys-fs/lvm2 )
+			unionfs? ( sys-fs/unionfs-fuse )
+			iscsi? ( sys-block/open-iscsi )
+			gpg? ( app-crypt/gnupg )
+			luks? ( sys-fs/cryptsetup )
+			evms? ( sys-fs/evms )
+		) )
 	) "
 
 if use multislot ; then
@@ -255,6 +269,18 @@ kernel-2_src_compile() {
 		_cc $i
 	done
 
+	if use !klibc && use !genkernel; then
+		/usr/bin/genpnprd --IMAGE "initrd-${REAL_KV}.img" --FILES "/bin/busybox
+			$(use e2fsprogs && echo /sbin/blkid)
+			$(use mdadm && echo /sbin/mdadm /sbin/mdmon)
+			$(use device-mapper && echo /usr/sbin/dmraid)
+			$(use lvm && echo /sbin/lvm /sbin/dmsetup)
+			$(use unionfs && echo /sbin/unionfs)
+			$(use luks && echo /bin/cryptsetup)
+			$(use gpg && echo /sbin/gpg)
+			$(use iscsi && echo /usr/sbin/iscsistart)
+		" || die "genpnprd failed"
+	fi
 	use klibc && userspace
 	use genkernel || return
 	use klibc && mv initrd-${REAL_KV}.img initrd-${REAL_KV}.img.klibc
