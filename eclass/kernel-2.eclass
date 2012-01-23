@@ -270,7 +270,7 @@ kernel-2_src_compile() {
 	done
 
 	if use !klibc && use !genkernel; then
-		/usr/bin/genpnprd --IMAGE "initrd-${REAL_KV}.img" --FILES "/bin/busybox
+		/usr/bin/genpnprd --IMAGE "initrd-${REAL_KV}.img" --S "${S}" --FILES "/bin/busybox
 			$(use e2fsprogs && echo /sbin/blkid)
 			$(use mdadm && echo /sbin/mdadm /sbin/mdmon)
 			$(use device-mapper && echo /usr/sbin/dmraid)
