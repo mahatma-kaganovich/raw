@@ -398,6 +398,7 @@ if $BOOT; then
 	cat /proc/uptime
 	cat /proc/mounts|while read d p i; do
 		case "$d:$p" in
+		rootfs:/);;
 		*:/newroot*)echo " $p $d $i";;
 		/dev/loop*)umount $p&&losetup -d $d;;
 		*)umount $p 2>/dev/null;;
