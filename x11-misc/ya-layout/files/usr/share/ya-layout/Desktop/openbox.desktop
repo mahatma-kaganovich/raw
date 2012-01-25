@@ -2,7 +2,7 @@
 [Desktop Entry]
 Version=1.0
 Type=Application
-Name=openbox
+Name="openbox"
 Exec=/usr/bin/ya-session -p ya --0
 Icon=openbox
 Path=/usr/share/ya-layout
