@@ -85,6 +85,7 @@ for $f(</usr/share/applications/*.desktop>,</usr/share/applications/*/*.desktop>
 	}
 N:
 	$i='';
+	$d{$_}=~s/\'/\\'/g for(Name,Categories);
 	if(exists($P{slow}) && exists($d{Icon})){
 		$i=$d{Icon};
 		$i=~s/(?:.*\/)?(.*?).svg$/$1.png/;
@@ -95,7 +96,7 @@ N:
 		next if(!exists($d{Exec}));
 		$d{Exec}=~s/\s+%\w$//;
 		$d{Name}.=" 	[$key{$d{Exec}}]" if(exists($key{$d{Exec}}));
-		$i="<item label=\"$d{Name}\"$i><action name=\"Execute\"><execute>$d{Exec}</execute></action></item>";
+		$i="<item label='$d{Name}'$i><action name='Execute'><execute>$d{Exec}</execute></action></item>";
 	}else{
 #		print STDERR "Type=$d{Type}? $f\n";
 		next;
@@ -125,6 +126,6 @@ $i=0;
 print "<openbox_pipe_menu>";
 for(sort keys %cat1){
 	$i++;
-	print "<menu id=\"$i\" label=\"$_\">".join('',sort @{$cat1{$_}})."</menu>";
+	print "<menu id='$i' label='$_'>".join('',sort @{$cat1{$_}})."</menu>\n";
 }
 print "</openbox_pipe_menu>";
