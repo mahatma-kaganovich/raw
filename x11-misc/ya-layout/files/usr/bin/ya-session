@@ -26,7 +26,7 @@ sm2='--sm-client-disable'
 : ${YA_APP_XF86Panel:="\"xfce4-panel \$sm2\" \"lxpanel -p \$YA_PROFILE\"" \"gnome-panel \$sm2\"}
 : ${YA_APP_XF86Desktop:="\"pcmanfm --desktop -p \$YA_PROFILE\" \"xfdesktop \$sm2\" \"nautilus -n \$sm2\""}
 
-: ${YA_APP_xdg_autostart:="\"/usr/bin/ob3menu-cache /usr/bin/ob3menu --autostart \$YA_PROFILE --slow\""}
+: ${YA_APP_xdg_autostart:="\"/usr/bin/ob3menu-cache /usr/bin/ob3menu --autostart \$YA_PROFILE --slow ~/.config/ya/rc.xml\""}
 
 # 2run
 : ${YA_SESSION:="XF86SettingsManager XF86Panel XF86Desktop"}
