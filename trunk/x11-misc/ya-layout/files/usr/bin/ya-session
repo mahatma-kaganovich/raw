@@ -26,9 +26,9 @@ sm2='--sm-client-disable'
 : ${YA_APP_XF86Panel:="\"xfce4-panel \$sm2\" \"lxpanel -p \$YA_PROFILE\"" \"gnome-panel \$sm2\"}
 : ${YA_APP_XF86Desktop:="\"pcmanfm --desktop -p \$YA_PROFILE\" \"xfdesktop \$sm2\" \"nautilus -n \$sm2\""}
 
-: ${YA_APP_xdg_autostart:="\"/usr/bin/ob3menu-cache /usr/bin/ob3menu --autostart \$YA_PROFILE --slow ~/.config/ya/rc.xml\""}
+: ${YA_APP_xdg_autostart:="\"/usr/bin/ob3menu-cache /usr/bin/ob3menu --autostart \${YA_XDG_AUTOSTART:-\$YA_PROFILE} --slow ~/.config/ya/rc.xml\""} #"
 
-# 2run
+# 2run. I prefer to omit "xdg_autostart" in minimal
 : ${YA_SESSION:="XF86SettingsManager XF86Panel XF86Desktop"}
 
 : ${YA_PROFILE:=ya}
@@ -36,6 +36,8 @@ sm2='--sm-client-disable'
 : ${YA_PROFILE_LXDE:="pcmanfm lxpanel lxterminal"}
 : ${YA_PROFILE_xfce:="xfdesktop xfce4-panel exo-open"}
 : ${YA_PROFILE_gnome:="nautilus gnome-panel gnome-terminal"}
+
+: ${YA_XDG_AUTOSTART:="$YA_PROFILE"}
 
 # startup: minimal
 : ${YA_STARTUP:=XF86Desktop}
@@ -265,6 +267,8 @@ launch(){
 	case "$i" in
 	*exo-open\ --launch\ TerminalEmulator\ -e\ *)i="${i/ -e}";;
 	esac
+	echo "==$i"
+	exit
 	exec $i
 	exit
 }
