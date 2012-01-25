@@ -6,7 +6,7 @@ cmd="${*:-/usr/bin/ob3menu --slow}"
 #cmd="${*:-/usr/bin/mmaker -ci OpenBox3}"
 
 m="$HOME/.cache/ya/menu.xml"
-c="/usr/share/applications $0 ${cmd%% *}"
+c="/usr/share/applications $0 ${cmd%% *} /etc/xdg/autostart"
 mm='#'
 cat=cat
 a=/dev/null
