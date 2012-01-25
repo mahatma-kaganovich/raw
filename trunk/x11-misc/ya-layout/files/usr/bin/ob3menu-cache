@@ -1,5 +1,5 @@
 #!/bin/bash
-# pipe menu cache for OpenBox3
+# pipe menu cache for OpenBox3 v0.2
 # icons changes not tracked
 # param: generator command:
 cmd="${*:-/usr/bin/ob3menu --slow}"
@@ -7,7 +7,10 @@ cmd="${*:-/usr/bin/ob3menu --slow}"
 
 m="$HOME/.cache/ya/menu.xml"
 c="/usr/share/applications $0 ${cmd%% *}"
-mm=false
+mm='#'
+cat=cat
+a=/dev/null
+auto='#'
 
 key(){
 	echo "$cmd
@@ -16,7 +19,8 @@ $LANG"
 }
 
 case "$cmd" in
-*ob3menu\ --slow\ *)c+=" ${3%/*}";;
+*ob3menu*\ --autostart*)cat='#';auto='.';a="$HOME/.cache/ya/autostart";;&
+*ob3menu*\ --slow\ *)c+=" ${3%/*}";;
 *mmaker\ *)mm=echo;;
 esac
 {
@@ -24,10 +28,11 @@ if ! (key|cmp -s - "$m.key" && [ -s "$m" ] ); then
 	mkdir -p "${m%/*}"
 	{
 	$mm '<openbox_pipe_menu>'
-	$cmd
+	$cmd 2>"$a" || echo '' >"$a"
 	$mm '</openbox_pipe_menu>'
 	} >"$m"
 	key >"$m.key"
 fi
-cat "$m"
+$cat "$m"
 } 2>/dev/null
+$auto "$a"
