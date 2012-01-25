@@ -1,10 +1,18 @@
 #!/usr/bin/perl
 # (c) Denis Kaganovich, Anarchy or GPLv2
-# OpenBox3 pipe menu
-# ob3menu [--slow [<path/to/rc.xml>]]
+# OpenBox3 pipe menu v0.2
+# ob3menu {--<command> {param}}
+# 	--slow {<path/to/rc.xml>}
+#	--autostart {profile}
 # "--slow" - +keybinds, 3.5.0+ menu icons, better with cache.
 
-$SLOW=$ARGV[0] eq '--slow';
+for(@ARGV){
+	if($_=~s/^--//){
+		undef $P{$i=$_};
+	}else{
+		push(@{$P{$i}},$_);
+	}
+}
 
 for($ENV{LANG}=~/([a-zA-Z0-9]+)?(_\w+)?(\.[\w-]+)?(\@\w+)?/){
 	$lang.='(?:'.quotemeta($_).')?' if(defined($_));
@@ -27,15 +35,14 @@ sub eXist{
 
 my (%ico,%key,%cat,%cat,%cc);
 
-if($SLOW && defined($ARGV[1])){
-	my $s;
-	open($F,"<$ARGV[1]") && read($F,$s,-s $F);
-	close($F);
-	$SLOW=index($s,'<showIcons>yes</showIcons>')>=0;
-	$s=~s/<keybind\s+key=\"(.*?)\".*?>\s*<action name=\"Execute\">.*?<command>(.*?)<\/command>/$key{$2}=$1;''/gse;
-};
-
-if($SLOW){
+if(exists($P{slow})){
+	for(@{$P{slow}}){
+		my $s;
+		open($F,"<$_") && read($F,$s,-s $F);
+		close($F);
+		$P{'slow'}=index($s,'<showIcons>yes</showIcons>')>=0;
+		$s=~s/<keybind\s+key=\"(.*?)\".*?>\s*<action name=\"Execute\">.*?<command>(.*?)<\/command>/$key{$2}=$1;''/gse;
+	};
 	open($F,'find /usr/share/icons|');
 	while(<$F>){
 		chomp($_);
@@ -57,7 +64,7 @@ if($SLOW){
 	}
 }
 
-for $f(</usr/share/applications/*.desktop>,</usr/share/applications/*/*.desktop>,</usr/share/ya-layout/Desktop/*.desktop>,</usr/share/ya-layout/Desktop/exit/*.desktop>){
+for $f(</usr/share/applications/*.desktop>,</usr/share/applications/*/*.desktop>,</usr/share/ya-layout/Desktop/*.desktop>,</usr/share/ya-layout/Desktop/exit/*.desktop>,</etc/xdg/autostart/*.desktop>){
 	my %d;
 	open(my $F,"<$f")||next;
 	while(<$F>){
@@ -65,6 +72,7 @@ for $f(</usr/share/applications/*.desktop>,</usr/share/applications/*/*.desktop>
 	}
 	close($F);
 	next if((exists($d{TryExec}) && !eXist($d{TryExec})) || !exists($d{Exec}));
+	$d{Exec}="/usr/bin/ya-session --run +$d{Exec}" if($d{Terminal} && lc($d{Terminal}) ne 'false');
 	if(!exists($d{Name})){
 #		print STDERR "Name? $f\n";
 		for $i ('Comment','Exec'){
@@ -77,7 +85,7 @@ for $f(</usr/share/applications/*.desktop>,</usr/share/applications/*/*.desktop>
 	}
 N:
 	$i='';
-	if($SLOW && exists($d{Icon})){
+	if(exists($P{slow}) && exists($d{Icon})){
 		$i=$d{Icon};
 		$i=~s/(?:.*\/)?(.*?).svg$/$1.png/;
 		$i=$ico{$i} if(exists($ico{$i}));
@@ -91,6 +99,13 @@ N:
 	}else{
 #		print STDERR "Type=$d{Type}? $f\n";
 		next;
+	}
+	if(substr($f,0,4) eq '/etc'){
+		$d{Categories}='Autostart';
+		if(exists($P{autostart})){
+			my $i=join('|',@{$P{autostart}})||$ENV{YA_PROFILE}||'--';
+			print STDERR "$d{Exec} &\n" if(!exists($d{OnlyShowIn}) || grep(/^(?:$i)$/i,split(';',$d{OnlyShowIn})));
+		}
 	}
 	for(split(/;/,$d{Categories})){
 		next if($_ eq '' || exists($cat{$i}->{$_}));
