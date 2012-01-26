@@ -84,6 +84,7 @@ for $f(</usr/share/applications/*.desktop>,</usr/share/applications/*/*.desktop>
 		next;
 	}
 N:
+	next if($d{Type} ne 'Application' || !exists($d{Exec}));
 	$i='';
 	$d{$_}=~s/\'/\\'/g for(Name,Categories);
 	if(exists($P{slow}) && exists($d{Icon})){
@@ -92,22 +93,19 @@ N:
 		$i=$ico{$i} if(exists($ico{$i}));
 		$i=" icon=\"$i\"";
 	}
-	if($d{Type} eq 'Application'){
-		next if(!exists($d{Exec}));
-		$d{Exec}=~s/\s+%\w$//;
-		$d{Name}.=" 	[$key{$d{Exec}}]" if(exists($key{$d{Exec}}));
-		$i="<item label='$d{Name}'$i><action name='Execute'><execute>$d{Exec}</execute></action></item>";
-	}else{
-#		print STDERR "Type=$d{Type}? $f\n";
-		next;
-	}
 	if(substr($f,0,4) eq '/etc'){
 		$d{Categories}='Autostart';
 		if(exists($P{autostart})){
-			my $i=join('|',@{$P{autostart}})||$ENV{YA_PROFILE}||'--';
-			print STDERR "$d{Exec} &\n" if(!exists($d{OnlyShowIn}) || grep(/^(?:$i)$/i,split(';',$d{OnlyShowIn})));
+			my $i;
+			if(($i=join('|',@{$P{autostart}})||$ENV{YA_PROFILE}) && !exists($d{OnlyShowIn}) || grep(/^(?:$i)$/i,split(';',$d{OnlyShowIn}))){
+				print STDERR "$d{Exec} &\n";
+				$d{Name}="+ $d{Name}";
+			}
 		}
 	}
+	$d{Exec}=~s/\s+%\w$//;
+	$d{Name}.=" 	[$key{$d{Exec}}]" if(exists($key{$d{Exec}}));
+	$i="<item label='$d{Name}'$i><action name='Execute'><execute>$d{Exec}</execute></action></item>";
 	for(split(/;/,$d{Categories})){
 		next if($_ eq '' || exists($cat{$i}->{$_}));
 		$cat{$i}->{$_}=1;
@@ -126,6 +124,6 @@ $i=0;
 print "<openbox_pipe_menu>";
 for(sort keys %cat1){
 	$i++;
-	print "<menu id='$i' label='$_'>".join('',sort @{$cat1{$_}})."</menu>\n";
+	print "<menu id='$i' label='$_'>".join('',sort @{$cat1{$_}})."</menu>";
 }
 print "</openbox_pipe_menu>";
