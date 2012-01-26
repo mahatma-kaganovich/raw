@@ -44,7 +44,7 @@ done
 for i in $D; do
 	[ -z "${NO##* /dev/$i *}" ] || ([ -n "${i%%*[0-9]}" ] && [ -z "${NO##* /dev/$i[0-9]*}"  -o -z "${D##* $i[0-9]*}" ]) && continue
 	NO+="/dev/$i "
-	echo "$base/\"$i\" -fstype=auto,noatime \":/dev/$i\""
+	echo "$base/\"$i\" -fstype=auto,noatime,users,umask=000 \":/dev/$i\""
 done
 echo "$base/disk --bind :/dev/disk"
 } >"${1:-/var/run/auto.dev}"
