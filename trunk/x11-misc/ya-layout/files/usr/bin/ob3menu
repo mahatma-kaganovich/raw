@@ -122,8 +122,13 @@ N:
 		$i="<item label='$d{Name}'$i><action name='Execute'><execute>$d{Exec}</execute></action></item>";
 	}elsif($d{Type} eq 'Directory'){
 		for(@{$en{Name}}){
-			$dir{$_}="$d{Name}' $i";
-			$cc{$_}+=1000*(($d{Name} ne $_)+1);
+			if($d{Name} ne $_){
+				$dir{$_}="$d{Name}'$i";
+				$cc{$_}+=2000;
+			}elsif($i){
+				$dir{$_}="$d{Name}'$i";
+				$cc{$_}+=1000;
+			}
 		}
 		next;
 	}else{next}
