@@ -6,10 +6,12 @@
 wm=/usr/bin/openbox
 Desk=/usr/share/ya-layout/Desktop
 obconf="$HOME/.config/ya/rc.xml"
-pidfile="$HOME/.cache/ya/running.pids"
-envcache="$HOME/.cache/ya/env"
+cache="$HOME/.cache/ya"
+pidfile="$cache/running.pids"
+envcache="$cache/env"
 sm='--sm-disable'
 sm2='--sm-client-disable'
+safepids=true
 
 # todo: full apps list
 : ${YA_APP_XF86WWW:="'exo-open --launch WebBrowser' 'seamonkey --browser' firefox chromium midori @WebBrowser"}
@@ -40,9 +42,14 @@ sm2='--sm-client-disable'
 # startup: minimal
 : ${YA_STARTUP:=XF86Desktop}
 
+pid_ok(){
+	[ -d /proc/$1 ] && ( ! $safepids || ! [ -e "$cache/PIDS/$1" ] || grep -qf "$cache/PIDS/$1" /proc/$1/cmdline )
+	return $?
+}
+
 _exit(){
 	for i in $pids; do
-		[ -d /proc/$i ] && echo $i
+		pid_ok $i && echo $i
 	done >"$pidfile"
 	flock -u 9
 }
@@ -133,7 +140,7 @@ killer2(){
 	for k in kill false false false 'kill -s KILL' false; do
 		p=""
 		for i in $pids; do
-			if [ -d /proc/$i ]; then
+			if pid_ok $i ; then
 				$k $i
 				p="$p $i"
 			fi
@@ -168,6 +175,7 @@ _run(){
 	*/xfdesktop\ *|*/pcmanfm\ --desktop*|*/lxpanel\ *)return $i;;
 	esac
 	pids+=" $!"
+	$safepids && echo "${*// /.}" >"$cache/PIDS/$!"
 	return $i
 }
 
@@ -180,6 +188,14 @@ run(){
 	local i
 	for i in "${@}"; do
 		i=`app $i` && _run $i
+	done
+}
+
+envcache(){
+	local i
+	for i in "${@}"; do
+		sed -i -e "/^$i=/d" "$envcache"
+		echo "$i='${!i}'" >>"$envcache"
 	done
 }
 
@@ -279,7 +295,7 @@ sess(){
 }
 
 [ -r "$envcache" ] && . "$envcache"
-[ -e "$pidfile.l" ] || mkdir -p "${pidfile%/*}"
+[ -e "$pidfile.l" ] || mkdir -p "${pidfile%/*}/PIDS"
 {
 flock -w 10 -x 9 || {
 	echo "error locking $pidfile"
@@ -300,9 +316,8 @@ case "$1" in
 	i="${!i}"
 	eval "run ${i:-$YA_SESSION}"
 	while read i; do
-		${i% &} &
-		pids+=" $!"
-	done <"$HOME/.cache/ya/autostart"
+		_run ${i% &}
+	done <"$cache/autostart"
 ;;
 --kill)
 	i="YA_APP_$2"
@@ -340,7 +355,7 @@ case "$1" in
 ;;
 -p|--profile)
 	YA_PROFILE="$2"
-	echo "YA_PROFILE='$2'" >>"$envcache"
+	envcache YA_PROFILE
 	YA_DESKTOP=`app $YA_STARTUP`
 	desk="$YA_DESKTOP"
 	shift 2
