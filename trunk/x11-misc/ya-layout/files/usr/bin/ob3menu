@@ -26,10 +26,9 @@ $lang='(?:\['.$lang.'\])?' if($lang);
 @path=split(/:/,$ENV{PATH});
 
 if(exists($P{profile})){
-	$prof=join('|',@prof=@{$P{profile}});
+	$prof=join('|',@{$P{profile}});
 }elsif($prof=$ENV{YA_PROFILE}){
 	$prof=~s/[, ]+/|/g;
-	@prof=reverse split(/\|/,lc($prof));
 }
 
 sub eXist{
@@ -73,19 +72,20 @@ if(exists($P{slow})){
 	}
 }
 
-for $f(map{glob $_}('/usr/share/applications/*.desktop','/usr/share/applications/*/*.desktop','/usr/share/ya-layout/Desktop/*.desktop','/usr/share/ya-layout/Desktop/exit/*.desktop','/etc/xdg/autostart/*.desktop',
-    scalar(@prof)?map{"/usr/share/desktop-directories/$_-*.directory"}(@prof):'/usr/share/desktop-directories/*.directory')
-    ){
-	my (%d,%en);
-	open(my $F,"<$f")||next;
-	if($f=~/y$/){
-		while(<$F>){$en{$k.$l}=$d{$k}=$v if(($k,$l,$v)=$_=~/^\s*([^#\s=\[\]#]+)($lang)\s*=([^#\n\r]*)/i)}
+for $f(map{glob $_}('/usr/share/applications/*.desktop','/usr/share/applications/*/*.desktop','/usr/share/ya-layout/Desktop/*.desktop','/usr/share/ya-layout/Desktop/exit/*.desktop','/etc/xdg/autostart/*.desktop','/usr/share/desktop-directories/*.directory')){
+	my (%d,%en,$F);
+	if(($i)=$f=~/\/([^\/]*)\.directory$/){
+		next if(!exists($cc{$i}) && $prof && $i=~/^(?:$prof)-/i);
+		open($F,"<$f")||next;
+		while(<$F>){push @{$en{$k.$l}},$d{$k}=$v if(($k,$l,$v)=$_=~/^\s*([^#\s=\[\]#]+)($lang)\s*=([^#\n\r]*)/i)}
+		close($F);
+		push @{$en{Name}},$i if($i ne $en{Name}->[0]);
 	}else{
+		open($F,"<$f")||next;
 		while(<$F>){$d{$k}=$v if(($k,$v)=$_=~/^\s*([^#\s=\[\]#]+)$lang\s*=([^#\n\r]*)/i)};
+		close($F);
 		exists($d{Exec}) || next;
-
 	}
-	close($F);
 	next if(exists($d{TryExec}) && !eXist($d{TryExec}));
 	$d{Exec}="/usr/bin/ya-session --run +$d{Exec}" if($d{Terminal} && lc($d{Terminal}) ne 'false');
 	if(!exists($d{Name})){
@@ -121,8 +121,10 @@ N:
 		$d{Name}.=" 	[$key{$d{Exec}}]" if(exists($key{$d{Exec}}));
 		$i="<item label='$d{Name}'$i><action name='Execute'><execute>$d{Exec}</execute></action></item>";
 	}elsif($d{Type} eq 'Directory'){
-		$dir{$en{Name}}="$d{Name}' $i";
-		$cc{$en{Name}}+=1000*($d{Name} ne $en{Name}+1);
+		for(@{$en{Name}}){
+			$dir{$_}="$d{Name}' $i";
+			$cc{$_}+=1000*(($d{Name} ne $_)+1);
+		}
 		next;
 	}else{next}
 	for(split(/;/,$d{Categories})){
