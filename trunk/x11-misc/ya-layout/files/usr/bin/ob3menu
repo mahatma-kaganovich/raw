@@ -79,7 +79,7 @@ for $f(map{glob $_}('/usr/share/applications/*.desktop','/usr/share/applications
 		open($F,"<$f")||next;
 		while(<$F>){push @{$en{$k.$l}},$d{$k}=$v if(($k,$l,$v)=$_=~/^\s*([^#\s=\[\]#]+)($lang)\s*=([^#\n\r]*)/i)}
 		close($F);
-		push @{$en{Name}},$i if($i ne $en{Name}->[0]);
+		unshift @{$en{Name}},$i if($i ne $en{Name}->[0]);
 	}else{
 		open($F,"<$f")||next;
 		while(<$F>){$d{$k}=$v if(($k,$v)=$_=~/^\s*([^#\s=\[\]#]+)$lang\s*=([^#\n\r]*)/i)};
