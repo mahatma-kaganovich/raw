@@ -1,10 +1,14 @@
 #!/usr/bin/perl
 # (c) Denis Kaganovich, Anarchy or GPLv2
 # OpenBox3 pipe menu v0.2
-# ob3menu {--<command> {param}}
+# ob3menu {--<command> {params}}
 # 	--slow {<path/to/rc.xml>}
 #	--autostart {profile}
+#	--include {menu to include}
+#	--profile {profile}
 # "--slow" - +keybinds, 3.5.0+ menu icons, better with cache.
+
+my (%ico,%key,%cat,%cat,%cc,%dir,@prof,$prof);
 
 for(@ARGV){
 	if($_=~s/^--//){
@@ -21,6 +25,13 @@ $lang='(?:\['.$lang.'\])?' if($lang);
 
 @path=split(/:/,$ENV{PATH});
 
+if(exists($P{profile})){
+	$prof=join('|',@prof=@{$P{profile}});
+}elsif($prof=$ENV{YA_PROFILE}){
+	$prof=~s/[, ]+/|/g;
+	@prof=reverse split(/\|/,lc($prof));
+}
+
 sub eXist{
 	if(index($_[0],'/')>=0){
 		stat($_[0]);
@@ -32,8 +43,6 @@ sub eXist{
 	}
 	0;
 }
-
-my (%ico,%key,%cat,%cat,%cc);
 
 if(exists($P{slow})){
 	for(@{$P{slow}}){
@@ -64,27 +73,31 @@ if(exists($P{slow})){
 	}
 }
 
-for $f(</usr/share/applications/*.desktop>,</usr/share/applications/*/*.desktop>,</usr/share/ya-layout/Desktop/*.desktop>,</usr/share/ya-layout/Desktop/exit/*.desktop>,</etc/xdg/autostart/*.desktop>){
-	my %d;
+for $f(map{glob $_}('/usr/share/applications/*.desktop','/usr/share/applications/*/*.desktop','/usr/share/ya-layout/Desktop/*.desktop','/usr/share/ya-layout/Desktop/exit/*.desktop','/etc/xdg/autostart/*.desktop',
+    scalar(@prof)?map{"/usr/share/desktop-directories/$_-*.directory"}(@prof):'/usr/share/desktop-directories/*.directory')
+    ){
+	my (%d,%en);
 	open(my $F,"<$f")||next;
-	while(<$F>){
-		$d{$k}=$v if(($k,$v)=$_=~/^\s*([^#\s=\[\]#]+)$lang\s*=([^#\n\r]*)/i);
+	if($f=~/y$/){
+		while(<$F>){$en{$k.$l}=$d{$k}=$v if(($k,$l,$v)=$_=~/^\s*([^#\s=\[\]#]+)($lang)\s*=([^#\n\r]*)/i)}
+	}else{
+		while(<$F>){$d{$k}=$v if(($k,$v)=$_=~/^\s*([^#\s=\[\]#]+)$lang\s*=([^#\n\r]*)/i)};
+		exists($d{Exec}) || next;
+
 	}
 	close($F);
-	next if((exists($d{TryExec}) && !eXist($d{TryExec})) || !exists($d{Exec}));
+	next if(exists($d{TryExec}) && !eXist($d{TryExec}));
 	$d{Exec}="/usr/bin/ya-session --run +$d{Exec}" if($d{Terminal} && lc($d{Terminal}) ne 'false');
 	if(!exists($d{Name})){
-#		print STDERR "Name? $f\n";
-		for $i ('Comment','Exec'){
-			if(exists($d{$i})){
-				$d{Name}=$d{$i};
+		for(Comment,Exec){
+			if(exists($d{$_})){
+				$d{Name}=$d{$_};
 				goto N;
 			}
 		}
 		next;
 	}
 N:
-	next if($d{Type} ne 'Application' || !exists($d{Exec}));
 	$i='';
 	$d{$_}=~s/\'/\\'/g for(Name,Categories);
 	if(exists($P{slow}) && exists($d{Icon})){
@@ -97,15 +110,21 @@ N:
 		$d{Categories}='Autostart';
 		if(exists($P{autostart})){
 			my $i;
-			if(($i=join('|',@{$P{autostart}})||$ENV{YA_PROFILE}) && !exists($d{OnlyShowIn}) || grep(/^(?:$i)$/i,split(';',$d{OnlyShowIn}))){
+			if(($i=join('|',@{$P{autostart}})||$prof) && !exists($d{OnlyShowIn}) || grep(/^(?:$i)$/i,split(';',$d{OnlyShowIn}))){
 				print STDERR "$d{Exec} &\n";
 				$d{Name}="+ $d{Name}";
 			}
 		}
 	}
-	$d{Exec}=~s/\s+%\w$//;
-	$d{Name}.=" 	[$key{$d{Exec}}]" if(exists($key{$d{Exec}}));
-	$i="<item label='$d{Name}'$i><action name='Execute'><execute>$d{Exec}</execute></action></item>";
+	if($d{Type} eq 'Application'){
+		$d{Exec}=~s/\s+%\w$//;
+		$d{Name}.=" 	[$key{$d{Exec}}]" if(exists($key{$d{Exec}}));
+		$i="<item label='$d{Name}'$i><action name='Execute'><execute>$d{Exec}</execute></action></item>";
+	}elsif($d{Type} eq 'Directory'){
+		$dir{$en{Name}}="$d{Name}' $i";
+		$cc{$en{Name}}+=1000*($d{Name} ne $en{Name}+1);
+		next;
+	}else{next}
 	for(split(/;/,$d{Categories})){
 		next if($_ eq '' || exists($cat{$i}->{$_}));
 		$cat{$i}->{$_}=1;
@@ -121,9 +140,15 @@ for(keys %cat){
 	}
 }
 $i=0;
-print "<openbox_pipe_menu>";
+print '<openbox_pipe_menu>';
 for(sort keys %cat1){
 	$i++;
-	print "<menu id='$i' label='$_'>".join('',sort @{$cat1{$_}})."</menu>";
+	print "<menu id='$i' label='",$dir{$_}||"$_'",'>',(sort @{$cat1{$_}}),'</menu>';
 }
-print "</openbox_pipe_menu>";
+for(map{glob $_}(@{$P{include}})){
+	if(open(my $F,(-x $_)?"$_|":"<$_")){
+		print('<separator />',(<$F>));
+		close($F);
+	}
+}
+print '</openbox_pipe_menu>';
