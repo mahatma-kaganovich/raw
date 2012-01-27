@@ -12,9 +12,9 @@ $LANG"
 ob3menu-cache(){
 local cmd="${*:-/usr/bin/ob3menu --slow}"
 #local cmd="${*:-/usr/bin/mmaker -ci OpenBox3}"
-. "$HOME/.cache/env" 2>/dev/null
-cmd=${cmd/ob3menu --slow/ob3menu --autostart ${YA_XDG_AUTOSTART:-$YA_PROFILE} --slow}
-local m="$HOME/.cache/ya/menu.xml" c="/usr/share/applications $0 ${cmd%% *} /etc/xdg/autostart" mm='#' cat=cat a=/dev/null
+. "$HOME/.cache/env" 2>/dev/null && export YA_PROFILE
+cmd=${cmd/ob3menu --slow/ob3menu --autostart $YA_XDG_AUTOSTART --slow}
+local m="$HOME/.cache/ya/menu.xml" c="/usr/share/applications /usr/share/desktop-directories $0 ${cmd%% *} /etc/xdg/autostart" mm='#' cat=cat a=/dev/null
 case "$cmd" in
 *ob3menu*\ --autostart*)a="$HOME/.cache/ya/autostart";;&
 *ob3menu*\ --slow\ *)c+=" ${3%/*}";;
