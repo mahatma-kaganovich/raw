@@ -295,7 +295,7 @@ sess(){
 }
 
 [ -r "$envcache" ] && . "$envcache"
-[ -e "$pidfile.l" ] || mkdir -p "${pidfile%/*}/PIDS"
+mkdir -p "$cache/PIDS"
 {
 flock -w 10 -x 9 || {
 	echo "error locking $pidfile"
