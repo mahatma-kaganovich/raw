@@ -137,13 +137,12 @@ killer(){
 	xfdesktop --quit
 	lxpanelctl exit
 	local k i p
-	p=`ls -1 "$cache/"[1-9]* 2>/dev/null` || return
+	p=`cd "$cache" && ls -1 [1-9]* 2>/dev/null` &&
 	for k in kill false false false 'kill -s KILL' false; do
 		for i in $p; do
-			i="${i##*/}"
 			pid_ok $i && $k $i
 		done
-		p=`ls -1 "$cache/"[1-9]* 2>/dev/null` || break
+		p=`cd "$cache" && ls -1 [1-9]* 2>/dev/null` || break
 		sleep 1
 		echo -n "[wait]"
 	done
