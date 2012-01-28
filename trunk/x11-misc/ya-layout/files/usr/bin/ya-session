@@ -7,11 +7,8 @@ wm=/usr/bin/openbox
 Desk=/usr/share/ya-layout/Desktop
 obconf="$HOME/.config/ya/rc.xml"
 cache="$HOME/.cache/ya"
-pidfile="$cache/running.pids"
-envcache="$cache/env"
 sm='--sm-disable'
 sm2='--sm-client-disable'
-safepids=true
 
 # todo: full apps list
 : ${YA_APP_XF86WWW:="'exo-open --launch WebBrowser' 'seamonkey --browser' firefox chromium midori @WebBrowser"}
@@ -42,16 +39,14 @@ safepids=true
 # startup: minimal
 : ${YA_STARTUP:=XF86Desktop}
 
-pid_ok(){
-	[ -d /proc/$1 ] && ( ! $safepids || ! [ -e "$cache/PIDS/$1" ] || grep -qf "$cache/PIDS/$1" /proc/$1/cmdline )
-	return $?
+_exit(){
+	return
 }
 
-_exit(){
-	for i in $pids; do
-		pid_ok $i && echo $i
-	done >"$pidfile"
-	flock -u 9
+pid_ok(){
+	grep -sqxf "$cache/$1" /proc/$1/cmdline && return
+	rm "$cache/$1"
+	return 1
 }
 
 err(){
@@ -135,47 +130,37 @@ _kill(){
 	killall $l
 }
 
-killer2(){
-	local k i p
-	for k in kill false false false 'kill -s KILL' false; do
-		p=""
-		for i in $pids; do
-			if pid_ok $i ; then
-				$k $i
-				p="$p $i"
-			fi
-		done
-		pids="$p"
-		[ -z "$p" ] && return
-		sleep 1
-		echo -n "[wait]"
-	done
-	return 1
-}
-
-#killer2(){
-#	kill $pids
-#	wait $pids
-#	pids=''
-#}
-
 killer(){
+	{
+	flock -w 10 -x 9
 	pcmanfm --desktop-off
 	xfdesktop --quit
 	lxpanelctl exit
-	[ -n "$pids" ] && killer2
+	local k i p
+	p=`ls -1 "$cache/"[1-9]* 2>/dev/null` || return
+	for k in kill false false false 'kill -s KILL' false; do
+		for i in $p; do
+			i="${i##*/}"
+			pid_ok $i && $k $i
+		done
+		p=`ls -1 "$cache/"[1-9]* 2>/dev/null` || break
+		sleep 1
+		echo -n "[wait]"
+	done
 	killall -w xfce-mcs-manager gnome-settings-daemon
+	} 9>>"$cache/environment"
 }
 
 _run(){
-	local i
+	local i c="$*"
 	"${@}" &
 	i=$?
 	case "$*" in
 	*/xfdesktop\ *|*/pcmanfm\ --desktop*|*/lxpanel\ *)return $i;;
 	esac
-	pids+=" $!"
-	$safepids && echo "${*// /.}" >"$cache/PIDS/$!"
+	c="${c//[^a-zA-Z0-9\/-]/.*}"
+	c="${c//.\*.\*/.*}"
+	echo "$c." >"$cache/$!"
 	return $i
 }
 
@@ -191,12 +176,22 @@ run(){
 	done
 }
 
+_env(){
+	{
+	flock -x 1
+	"${@}"
+	} >>"$cache/environment" && . "$cache/environment"
+}
+
 envcache(){
 	local i
+	{
+	flock -x 1
 	for i in "${@}"; do
-		sed -i -e "/^$i=/d" "$envcache"
-		echo "$i='${!i}'" >>"$envcache"
+		sed -i -e "/^$i=/d" "$cache/environment"
+		echo "$i='${!i}';" >>"$cache/environment"
 	done
+	} >>"$cache/environment"
 }
 
 by_category(){
@@ -294,16 +289,9 @@ sess(){
 	# SESSION_MANAGER=
 }
 
-[ -r "$envcache" ] && . "$envcache"
-mkdir -p "$cache/PIDS"
-{
-flock -w 10 -x 9 || {
-	echo "error locking $pidfile"
-	exit
-}
+. "$cache/environment" || mkdir -p "$cache"
 [ -z "$YA_DESKTOP" ] && YA_DESKTOP=`app $YA_STARTUP`
 desk="$YA_DESKTOP"
-pids=`cat "$pidfile" 2>/dev/null`
 sess
 while true; do
 case "$1" in
@@ -369,7 +357,7 @@ case "$1" in
 	break
 ;;
 --env)
-	echo "$2" >>"$envcache" && . "$envcache"
+	_env "$2"
 	shift 2
 	continue
 ;;
@@ -397,10 +385,9 @@ Launcher:
 	break
 ;;
 *)
-	pids=''
-	rm -f "$envcache"
+	rm -f "$cache/"[1-9]* "$cache/environment"
 	[ -e /etc/udev/rules.d/88-autofs.rules -a ! -e /var/run/auto.dev ] && . /usr/share/ya-layout/autofs-all
-	[ -x /usr/bin/dbus-launch ] && /usr/bin/dbus-launch --sh-syntax --exit-with-session >>$envcache && . "$envcache"
+	[ -x /usr/bin/dbus-launch ] && _env /usr/bin/dbus-launch --sh-syntax --exit-with-session
 	xprop -root -remove _NET_NUMBER_OF_DESKTOPS -remove _NET_DESKTOP_NAMES -remove _NET_CURRENT_DESKTOP
 	envir ya
 	[ -s "$obconf" ] || obconfig "$obconf" $(1cfg openbox/rc.xml)
@@ -416,4 +403,3 @@ esac
 wm --restart
 done
 _exit
-} 9>>"$pidfile.l"
