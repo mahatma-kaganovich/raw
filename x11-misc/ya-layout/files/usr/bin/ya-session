@@ -101,9 +101,7 @@ obconfig(){
 		-e 's:</keyboard>:\
 		<keybind key="Menu"><action name="ShowMenu"><menu>root-menu</menu></action></keybind>\
 		<keybind key="C-Menu"><action name="Execute"><command>ya-session --run +/usr/bin/sudo /usr/bin/mc</command></action></keybind>\
-		<keybind key="Super_L"><action name="Execute"><command>ya-session --run TerminalEmulator</command></action></keybind>\
 		<keybind key="Super_R"><action name="Execute"><command>ya-session --run TerminalEmulator</command></action></keybind>\
-		<keybind key="C-Super_L"><action name="Execute"><command>ya-session --run +/usr/bin/sudo -s</command></action></keybind>\
 		<keybind key="C-Super_R"><action name="Execute"><command>ya-session --run +/usr/bin/sudo -s</command></action></keybind>\
 		<keybind key="XF86Calculator"><action name="Execute"><command>ya-session --run XF86Calculator</command></action></keybind>\
 		<keybind key="XF86WWW"><action name="Execute"><command>ya-session --run XF86WWW</command></action></keybind>\
@@ -113,7 +111,7 @@ obconfig(){
 		<keybind key="XF86Messenger"><action name="Execute"><command>ya-session --run XF86Messenger</command></action></keybind>\
 		<keybind key="XF86Eject"><action name="Execute"><command>eject /dev/sr0</command></action></keybind>\
 		</keyboard>:' \
-			<"$2" >"$1"
+			<"$2" |perl -e '$s=join("",<>);$s=~s/(<mousebind button="Right" action="Press">\s*<action name="Focus"\/>\s*<action name="Raise"\/>\s*<action name="ShowMenu"><menu>)client/$1root/s;print $s;'>"$1"
 }
 
 _kill(){

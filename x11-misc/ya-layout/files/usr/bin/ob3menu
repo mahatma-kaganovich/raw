@@ -43,6 +43,19 @@ sub eXist{
 	0;
 }
 
+sub icons{
+	opendir(my $D,$_[0])||return;
+	my @d=readdir($D);
+	closedir($D);
+	for(@d){
+		if(my ($i,$j)=$_=~/^(.*)\.(...)$/){
+			$ico{$i}=$ico{$_}=$_[0].$_ if($j && $j ne 'svg');
+		}elsif(!($_=~/^\.|scalable/)){
+			icons("$_[0]$_/");
+		}
+	}
+}
+
 if(exists($P{slow})){
 	for(@{$P{slow}}){
 		my $s;
@@ -51,16 +64,7 @@ if(exists($P{slow})){
 		$P{'slow'}=index($s,'<showIcons>yes</showIcons>')>=0;
 		$s=~s/<keybind\s+key=\"(.*?)\".*?>\s*<action name=\"Execute\">.*?<command>(.*?)<\/command>/$key{$2}=$1;''/gse;
 	};
-	open($F,'find /usr/share/icons|');
-	while(<$F>){
-		chomp($_);
-		next if($_=~/\.svg$/);
-		$i=$_;
-		~s/.*\///;
-		$ico{$_}=$i;
-		$ico{$_}=$i if (~s/\....$//);
-	}
-	close($F);
+	icons('/usr/share/icons/');
 	while(</usr/share/pixmaps/*.???>){
 		chomp($_);
 		next if($_=~/\.svg$/);
@@ -147,10 +151,10 @@ for(keys %cat){
 	}
 }
 $i=0;
-print '<openbox_pipe_menu>';
+print '<openbox_pipe_menu><menu id="client-list-combined-menu"/><separator/>';
 for(sort keys %cat1){
-	$i++;
 	print "<menu id='$i' label='",$dir{$_}||"$_'",'>',(sort @{$cat1{$_}}),'</menu>';
+	$i++;
 }
 for(map{glob $_}(@{$P{include}})){
 	if(open(my $F,(-x $_)?"$_|":"<$_")){
@@ -158,4 +162,15 @@ for(map{glob $_}(@{$P{include}})){
 		close($F);
 	}
 }
-print '</openbox_pipe_menu>';
+print qq(<separator/>
+<menu id="$i" label="OpenBox">
+<menu id="client-menu"/>
+<menu id="client-list-menu"/>
+<item label="Fullscreen"><action name="ToggleFullscreen"/></item>
+<item label="Reconfigure"><action name="Reconfigure"/></item>
+<item label="Restart"><action name="Restart"/></item>
+<separator label=""/>
+<item label="Exit"><action name="Exit"/></item>
+</menu>
+</openbox_pipe_menu>
+);
