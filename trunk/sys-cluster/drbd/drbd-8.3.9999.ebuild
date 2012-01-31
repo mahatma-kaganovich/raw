@@ -25,6 +25,12 @@ SLOT="0"
 
 S="${WORKDIR}/${MY_P}"
 
+case ${MY_MAJ_PV} in
+8.3)v="";;
+8.4)v="-$MY_MAJ_PV";;
+*)die "Unknown version";;
+esac
+
 if [[ -n "${GIT}" ]] ; then
 	SRC_URI=""
 	IUSE="${IUSE} +doc"
@@ -70,7 +76,7 @@ src_install() {
 	newconfd "${FILESDIR}"/drbd.conf.d drbd
 
 	insinto /etc/drbd.d
-	doins "${FILESDIR}"/global_common2.conf
+	doins "${FILESDIR}"/global_common2$v.conf
 
 	# manually install udev rules
 	insinto /etc/udev/rules.d
