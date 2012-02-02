@@ -989,7 +989,9 @@ detects(){
 		grep -sh "^MODALIAS=" $(find /sys -name uevent)|sed -e 's:^MODALIAS=::'
 		# rootfs
 		while read a b c d; do
-			[[ "$b" == / ]] && [[ "$c" != rootfs ]] && echo "$c"
+			[[ "$b" == / ]] && [[ "$c" != rootfs ]] && echo "$c" && {
+				grep -s "^${a#/dev/} :" /proc/mdstat|grep -o 'raid[0-9]*'
+			}
 		done </proc/mounts
 		# cpu flags
 		(cd "${SHARE}"/etc/modflags && cat $(grep "${PNP_VENDOR}^flags" /proc/cpuinfo) $(cat /sys/bus/acpi/devices/*/path|sed -e 's:^\\::') </dev/null 2>/dev/null)
