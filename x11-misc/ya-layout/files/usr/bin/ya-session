@@ -93,12 +93,40 @@ envir(){
 	A=`1cfg "$1/environment"` && [ -r "$A" ] && . "$A"
 }
 
+fixml(){
+perl -e 'sub ndx{
+	my $i=index($_[0],$_[1]);
+	$i<0?$i:$i+length($_[1]);
+}
+
+$s=join("",<STDIN>);
+$to=shift @ARGV;
+($p1,$p2)=(0,length($s)-1);
+my $i;
+for(@ARGV){
+	last if(($i=ndx(substr($s,$p1,$p2),$_))<0);
+	$p1+=$i;
+	$p2-=$i;
+	if(substr($_,0,1) eq "<"){
+		my $x=$_;
+		$x=~s/\s.*//;
+		substr($x,1,0)="/";
+		last if(($p2=ndx(substr($s,$p1,$p2),$x))<0);
+	}else{
+		$i=length($_);
+		substr($s,$p1-$i,$i)=$to;
+	}
+}
+print $s;' "${@}"
+}
+
 obconfig(){
 	mkdir -p "${1%/*}"
 	sed -e 's:<animateIconify>yes</animateIconify>:<animateIconify>no</animateIconify>:' \
 		-e 's:<file>menu\.xml</file>:<file>../ya/menu.xml</file>\n<showIcons>yes</showIcons>:' \
 		-e 's:<name>Clearlooks</name>:<name>Onyx</name>:' \
 		-e 's:</keyboard>:\
+		<keybind key="C-Escape"><action name="ShowMenu"><menu>client-list-combined-menu</menu></action></keybind>\
 		<keybind key="Menu"><action name="ShowMenu"><menu>root-menu</menu></action></keybind>\
 		<keybind key="C-Menu"><action name="Execute"><command>ya-session --run +/usr/bin/sudo /usr/bin/mc</command></action></keybind>\
 		<keybind key="Super_R"><action name="Execute"><command>ya-session --run TerminalEmulator</command></action></keybind>\
@@ -111,7 +139,7 @@ obconfig(){
 		<keybind key="XF86Messenger"><action name="Execute"><command>ya-session --run XF86Messenger</command></action></keybind>\
 		<keybind key="XF86Eject"><action name="Execute"><command>eject /dev/sr0</command></action></keybind>\
 		</keyboard>:' \
-			<"$2" |perl -e '$s=join("",<>);$s=~s/(<mousebind button="Right" action="Press">\s*<action name="Focus"\/>\s*<action name="Raise"\/>\s*<action name="ShowMenu"><menu>)client/$1root/s;print $s;'>"$1"
+			<"$2" |fixml 'root' '<context name="Icon">' '<mousebind button="Right" action="Press">' '<menu>' 'client' >$1
 }
 
 _kill(){

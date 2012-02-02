@@ -9,6 +9,10 @@
 # "--slow" - +keybinds, 3.5.0+ menu icons, better with cache.
 
 my (%ico,%key,%cat,%cat,%cc,%dir,@prof,$prof);
+%notify=(
+	'true'=>'<startupnotify><enabled>yes</enabled></startupnotify>',
+	'false'=>'<startupnotify><enabled>no</enabled></startupnotify>'
+);
 
 for(@ARGV){
 	if($_=~s/^--//){
@@ -123,7 +127,7 @@ N:
 	if($d{Type} eq 'Application'){
 		$d{Exec}=~s/\s+%\w$//;
 		$d{Name}.=" 	[$key{$d{Exec}}]" if(exists($key{$d{Exec}}));
-		$i="<item label='$d{Name}'$i><action name='Execute'><execute>$d{Exec}</execute></action></item>";
+		$i="<item label='$d{Name}'$i><action name='Execute'><execute>$d{Exec}</execute>".$notify{lc($d{StartupNotify})}.'</action></item>';
 	}elsif($d{Type} eq 'Directory'){
 		for(@{$en{Name}}){
 			if($d{Name} ne $_){
