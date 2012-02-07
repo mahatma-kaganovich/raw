@@ -66,7 +66,7 @@ src_install() {
 		sed -i -e 's:[ 	]pid=:	local rtrn\n	pid=:' "${D}$d/$n"
 		echo "#!/sbin/runscript
 
-depens(){
+depend(){
 	use net
 	${l:+need$l}
 }
