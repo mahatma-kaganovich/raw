@@ -1,8 +1,10 @@
 ## Upgrade "new" -> "current" config (/etc):
 ## - If md5sum of current not changed - replacing by new.
-## - If exists "current.patch" & "original" reverse diff md5sum is not changed -
-## make diff of new & original and applying to current.
-## - If new md5sum is alredy installed - writing "current.diff" & removing new.
+## - If exists "current.patch" or ".current.patch"  & "original" reverse diff md5sum is not
+## changed - make diff of new & original and applying to current.
+## - If new md5sum is alredy installed - writing ".current.DIFF", if no - ".current.diff"
+## & removing new.
+## - Usually ".current.DIFF" ready to be renamed to ".current.patch".
 ##
 ## decorations are dangerous ;)
 ##
@@ -15,7 +17,7 @@ local p="$ROOT/var/cache/conf.ppatch/$CATEGORY/$PN/$SLOT"
 local mf="$p/md5" t="$p/rm.tmp"
 case "$EBUILD_PHASE" in
 preinst)
-	local i i1 i1r d c=" [conf]" m
+	local i i1 i1r d c=" [conf]" m s
 	mkdir -p "$p"
 	rm "$t" -f
 	echo -n "" >"$mf.merge" || return 1
@@ -37,20 +39,30 @@ preinst)
 			continue
 		fi
 		d="${i1%/*}"
-		if [[ -e "$i1.patch" ]]; then
-			if patch -stNd "${i%/*}" -i "$i1.patch" -o - -r - | cmp -s - "$i1" ||
-			    ( echo "$c Upgrading: $i1"; patch -sRtNd "$d" -i "$i1.patch" -o - -r - ${ETC_PATCH} | iscurrent - &&
-			    ( patch -sRtNd "$d" -i "$i1.patch" -o - -r - ${ETC_PATCH} |diff -pruN - "$i" ${ETC_DIFF} |patch -stNd "$d" ${ETC_PATCH} ) ); then
-				echo "$i" >>"$t"
+		s="$i1.patch"
+		if ( [[ -e ".$s" ]] && s=".$s" ) || [[ -e "$s"  ]]; then
+			if patch -stNi "$s" "$i" -o - -r - |cmp -s - "$i1"; then
+				echo "$c Already upgraded: $s"
 				continue
 			fi
-			echo "$c Upgrading failed"
+			m=`patch -sRtNi "$i1.patch" "$i1" -o - -r - |md5sum -` || continue
+			if grep -qsF " ${m%% *} ${i1r} " "$mf"; then
+				if patch -sRtNi "$s" "$i1" -o - -r - | diff -pruN - "$i" | patch -stN "$i1"; then
+					echo "$c Upgrading: $s"
+					echo "$i" >>"$t"
+					continue
+				fi
+				echo "$c Upgrading failed: $s"
+			else
+				echo "$c Upgrading failed: $s - original was changed outside the patch"
+			fi
 		fi
-#		if iscurrent "$i"; then
-			echo "$c diff: $i1.diff"
-			diff -pruN "$i" "$i1" ${ETC_DIFF} >"$i1.diff"
-			echo "$i" >>"$t"
-#		fi
+		m=`md5sum "$i"` || continue
+		grep -qsF " ${m%% *} ${i1r} " "$mf" && s=DIFF || s=diff
+		s="$d/.${i1##*/}.$s"
+		echo "$c diff: $s"
+		diff -pruN "$i" "$i1" >"$s"
+		echo "$i" >>"$t"
 	done
 	mv "$mf.merge" "$mf"
 ;;
