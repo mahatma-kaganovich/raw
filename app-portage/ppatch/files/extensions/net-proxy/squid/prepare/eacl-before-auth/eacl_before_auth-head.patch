@@ -1,0 +1,12 @@
+--- a/src/external_acl.cc	2012-02-17 13:26:50.641542418 +0300
++++ b/src/external_acl.cc	2012-02-17 13:27:15.771541252 +0300
+@@ -833,7 +833,8 @@
+                 debugs(82, 2, HERE << "\"" << key << "\": queueing a call.");
+                 ch->changeState(ExternalACLLookup::Instance());
+                 debugs(82, 2, HERE << "\"" << key << "\": return -1.");
+-                return ACCESS_DUNNO; // to get here we have to have an expired cache entry. MUST not use.
++                if (!entry || !entry->result) // accept expired cached positive while queued (before auth)
++                    return ACCESS_DUNNO; // to get here we have to have an expired cache entry. MUST not use.
+             } else {
+                 if (!entry) {
+                     debugs(82, DBG_IMPORTANT, "WARNING: external ACL '" << acl->def->name <<
