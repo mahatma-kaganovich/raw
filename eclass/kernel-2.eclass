@@ -606,17 +606,11 @@ native)
 	for i in ${flags}; do
 		case $i in
 		apic)CF1 X86_UP_APIC;;
-		ht)	case "${model_name}" in
-			*Celeron*);;
-			*)
-				if ! grep -q SMP /proc/version; then
-					ewarn "Trying to detect hyperthreading/cores under non-SMP kernel:"
-					ewarn "SMP+SMT+MC forced, recommended to re-ebuild kernel under new kernel."
-					CF1 SMP SCHED_{SMT,MC}
-				fi
-			;;
-			esac
-		;;
+		ht)if ! ( [[ "${model_name}" == *Celeron* ]] && [[ "${model_name}" != *460* ]] && [[ "${model_name}" != *1053* ]] ) && ! grep -q SMP /proc/version; then
+			ewarn "Trying to detect hyperthreading/cores under non-SMP kernel:"
+			ewarn "SMP+SMT+MC forced, recommended to re-ebuild kernel under new kernel."
+			CF1 SMP SCHED_{SMT,MC}
+		fi;;
 		tsc|pat|msr|mce|cmov|x2apic)CF1 X86_${i^^};;
 		mtrr)CF1 ${i^^};;
 		pae)CF1 X86_PAE $m64g;;
