@@ -95,7 +95,9 @@ envir(){
 
 fixml(){
 perl -e 'sub ndx{
-	my $i=index($_[0],$_[1]);
+	my $i;
+	$_[1]=$i if((($i)=$_[0]=~/($_[1])/));
+	$i=index($_[0],$_[1]);
 	$i<0?$i:$i+length($_[1]);
 }
 
@@ -124,7 +126,6 @@ obconfig(){
 	mkdir -p "${1%/*}"
 	sed -e 's:<animateIconify>yes</animateIconify>:<animateIconify>no</animateIconify>:' \
 		-e 's:<file>menu\.xml</file>:<file>../ya/menu.xml</file>\n<showIcons>yes</showIcons>:' \
-		-e 's:<name>Clearlooks</name>:<name>Onyx</name>:' \
 		-e 's:</keyboard>:\
 		<keybind key="C-Escape"><action name="ShowMenu"><menu>client-list-combined-menu</menu></action></keybind>\
 		<keybind key="Menu"><action name="ShowMenu"><menu>root-menu</menu></action></keybind>\
@@ -139,7 +140,9 @@ obconfig(){
 		<keybind key="XF86Messenger"><action name="Execute"><command>ya-session --run XF86Messenger</command></action></keybind>\
 		<keybind key="XF86Eject"><action name="Execute"><command>eject /dev/sr0</command></action></keybind>\
 		</keyboard>:' \
-			<"$2" |fixml 'root' '<context name="Icon">' '<mousebind button="Right" action="Press">' '<menu>' 'client' >$1
+			<"$2" | \
+			fixml 'root' '<context name="Icon">' '<mousebind button="Right" action="Press">' '<menu>' 'client' | \
+			fixml 'Onyx' '<theme>' '<name>' '[^<]*' >$1
 }
 
 _kill(){
