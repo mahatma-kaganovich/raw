@@ -205,12 +205,12 @@ Licensed under the same terms as the rest of Apache (or Anarchy license).
 +static const char *set_clone_flags(cmd_parms *cmd, void *dummy, const char *flags1,  const char *flags2)
 +{
 +    const char *err = ap_check_cmd_context(cmd, GLOBAL_ONLY);
-+    if (err != NULL) {
++    if (err != NULL)
 +        return err;
-+    }
 +
 +    clone_flags1 = (SIGCHLD | CLONE_VFORK) ^ atoi(flags1);
-+    clone_flags2 = (SIGCHLD | CLONE_FS) ^ atoi(flags2);
++    if (flags2)
++        clone_flags2 = (SIGCHLD | CLONE_FS) ^ atoi(flags2);
 +    return NULL;
 +}
 +#endif
