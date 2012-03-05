@@ -6,9 +6,9 @@ CLONE_VFORK must relax cheduling in theory. CLONE_VM working with clone_flags1
 (c) Denis Kaganovich, <mahatma@eu.by>
 Licensed under the same terms as the rest of Apache (or Anarchy license).
 
---- a/server/mpm/experimental/itk/itk.c	2011-12-15 18:10:25.732671762 +0300
-+++ b/server/mpm/experimental/itk/itk.c	2011-12-15 18:17:44.205651404 +0300
-@@ -107,6 +107,8 @@
+--- a/server/mpm/experimental/itk/itk.c	2012-03-05 20:17:04.000000000 +0300
++++ b/server/mpm/experimental/itk/itk.c	2012-03-05 20:21:01.000000000 +0300
+@@ -104,6 +104,8 @@
  #define HARD_THREAD_LIMIT 1
  #endif
  
@@ -17,7 +17,7 @@ Licensed under the same terms as the rest of Apache (or Anarchy license).
  /* config globals */
  
  int ap_threads_per_child=0;         /* Worker threads per child */
-@@ -120,6 +122,11 @@ static int first_server_limit = 0;
+@@ -117,6 +119,11 @@
  static int changed_limit_at_restart;
  static int mpm_state = AP_MPMQ_STARTING;
  static ap_pod_t *pod;
@@ -29,7 +29,7 @@ Licensed under the same terms as the rest of Apache (or Anarchy license).
  
  /*
   * The max child slot ever assigned, preserved across restarts.  Necessary
-@@ -502,17 +509,34 @@ int ap_graceful_stop_signalled(void)
+@@ -500,17 +507,34 @@
      return mpm_state == AP_MPMQ_STOPPING;
  }
  
@@ -67,7 +67,7 @@ Licensed under the same terms as the rest of Apache (or Anarchy license).
      int last_poll_idx = 0;
  
  #if HAVE_LIBCAP
-@@ -606,8 +630,6 @@ static void child_main(int child_num_arg
+@@ -604,8 +628,6 @@
       * shutdown_pending is set when SIGTERM is received when running
       * in single process mode.  */
      while (!die_now && !shutdown_pending) {
@@ -76,14 +76,14 @@ Licensed under the same terms as the rest of Apache (or Anarchy license).
  
          /*
           * (Re)initialize this child to a pre-connection state.
-@@ -720,20 +742,20 @@ static void child_main(int child_num_arg
+@@ -718,20 +740,20 @@
           */
  
          {
 +#if ITK_USE_CLONE
 +            pid_t pid = clone(do_child, stack, clone_flags1, NULL), child_pid;
 +#else
-             pid_t pid = fork(), child_pid;
+             pid_t pid = vfork(), child_pid;
 +#endif
              int status;
              switch (pid) {
@@ -104,7 +104,7 @@ Licensed under the same terms as the rest of Apache (or Anarchy license).
              default: /* parent; just wait for child to be done */
                  do {
                      child_pid = waitpid(pid, &status, 0);
-@@ -781,6 +803,36 @@ static void child_main(int child_num_arg
+@@ -779,6 +801,36 @@
      clean_child_exit(0);
  }
  
@@ -141,16 +141,16 @@ Licensed under the same terms as the rest of Apache (or Anarchy license).
  
  static int make_child(server_rec *s, int slot)
  {
-@@ -811,6 +863,8 @@ static int make_child(server_rec *s, int
+@@ -809,6 +861,8 @@
      if ((pid = os_fork(unixd_config.user_name)) == -1) {
  #elif defined(TPF)
      if ((pid = os_fork(s, slot)) == -1) {
 +#elif ITK_USE_CLONE
-+    if ( /*getuid() || */ (pid = clone(do_child1, stack = alloca(stack_size) + stack_size, clone_flags2, &slot)) == -1) {
++    if ( /*getuid() || */ (pid = clone(do_child1, stack, clone_flags2, &slot)) == -1) {
  #else
      if ((pid = fork()) == -1) {
  #endif
-@@ -831,31 +885,11 @@ static int make_child(server_rec *s, int
+@@ -829,31 +883,11 @@
          return -1;
      }
  
@@ -185,7 +185,18 @@ Licensed under the same terms as the rest of Apache (or Anarchy license).
  
      ap_scoreboard_image->parent[slot].pid = pid;
  
-@@ -1433,6 +1467,11 @@ static int itk_pre_config(apr_pool_t *p,
+@@ -1070,6 +1104,10 @@
+ 
+     set_signals();
+ 
++#if ITK_USE_CLONE
++    stack = alloca(stack_size) + stack_size;
++#endif
++
+     if (one_process) {
+         AP_MONCONTROL(1);
+         make_child(ap_server_conf, 0);
+@@ -1431,6 +1469,11 @@
  #ifdef AP_MPM_WANT_SET_MAX_MEM_FREE
      ap_max_mem_free = APR_ALLOCATOR_MAX_FREE_UNLIMITED;
  #endif
@@ -197,7 +208,18 @@ Licensed under the same terms as the rest of Apache (or Anarchy license).
  
      apr_cpystrn(ap_coredump_dir, ap_server_root, sizeof(ap_coredump_dir));
  
-@@ -1696,6 +1738,19 @@ static const char *set_nice_value (cmd_p
+@@ -1501,9 +1544,8 @@
+                 if (chdir(r->filename) || chroot(r->filename)) {
+                     _DBG("chdir+chroot(%s): %s", r->filename, strerror(errno));
+                     goto err;
+-                } else {
+-                    *(r->filename += ch_root)  = '/';
+                 }
++                *(r->filename += ch_root)  = '/';
+             }
+         }
+         if (dconf->pidfile) {
+@@ -1725,6 +1767,19 @@
      return NULL;
  }
  
@@ -217,7 +239,7 @@ Licensed under the same terms as the rest of Apache (or Anarchy license).
  static const command_rec itk_cmds[] = {
  UNIX_DAEMON_COMMANDS,
  LISTEN_COMMANDS,
-@@ -1715,6 +1771,10 @@ AP_INIT_TAKE1("MaxClientsVHost", set_max
+@@ -1746,6 +1801,10 @@
                "Maximum number of children alive at the same time for this virtual host."),
  AP_INIT_TAKE1("NiceValue", set_nice_value, NULL, RSRC_CONF|ACCESS_CONF,
                "Set nice value for the given vhost, from -20 (highest priority) to 19 (lowest priority)."),
