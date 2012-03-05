@@ -2,14 +2,12 @@
 # Distributed under the terms of the GNU General Public License v2
 # $Header: /var/cvsroot/gentoo-x86/app-admin/apache-tools/apache-tools-2.2.21.ebuild,v 1.7 2011/10/14 16:25:46 beandog Exp $
 
-# simple bump: "-beta"
-
 EAPI="4"
 inherit flag-o-matic eutils
 
 DESCRIPTION="Useful Apache tools - htdigest, htpasswd, ab, htdbm"
 HOMEPAGE="http://httpd.apache.org/"
-SRC_URI="mirror://apache/httpd/httpd-${PV}-beta.tar.bz2"
+SRC_URI="mirror://apache/httpd/httpd-${PV}.tar.bz2"
 
 LICENSE="Apache-2.0"
 SLOT="0"
@@ -26,14 +24,14 @@ RDEPEND="=dev-libs/apr-1*
 DEPEND="${RDEPEND}
 	sys-devel/libtool"
 
-S="${WORKDIR}/httpd-${PV}-beta"
+S="${WORKDIR}/httpd-${PV}"
 
 src_prepare() {
 	# Apply these patches:
 	# (1)	apache-tools-2.2.20-Makefile.patch:
 	#		- fix up the `make install' for support/
 	#		- remove envvars from `make install'
-	epatch "${FILESDIR}"/${PN}-2.2.20-Makefile.patch
+	epatch "${FILESDIR}"/${PN}-2.4.1-Makefile.patch
 }
 
 src_configure() {
@@ -66,8 +64,7 @@ src_install () {
 	make DESTDIR="${D}" install
 
 	# install manpages
-	doman "${S}"/docs/man/{dbmmanage,htdigest,htpasswd,htdbm}.1 \
-		"${S}"/docs/man/{ab,htcacheclean,logresolve,rotatelogs}.8
+	doman "${S}"/docs/man/{dbmmanage,htdigest,htpasswd,htdbm,logresolve,ab,htcacheclean,rotatelogs}.?
 
 	# Providing compatiblity symlinks for #177697 (which we'll stop to install
 	# at some point).
