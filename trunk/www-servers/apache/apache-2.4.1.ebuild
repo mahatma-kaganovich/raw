@@ -8,7 +8,7 @@ IUSE_MPMS_FORK="itk prefork"
 IUSE_MPMS_THREAD="event worker simple"
 
 # latest gentoo apache files
-GENTOO_PATCHSTAMP="20120305"
+GENTOO_PATCHSTAMP="20120306"
 GENTOO_DEVELOPER=""
 # We want the patch from r0
 GENTOO_PATCHNAME="gentoo-${P}"

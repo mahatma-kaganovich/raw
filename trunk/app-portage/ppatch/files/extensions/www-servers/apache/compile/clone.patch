@@ -185,25 +185,25 @@ Licensed under the same terms as the rest of Apache (or Anarchy license).
  
      ap_scoreboard_image->parent[slot].pid = pid;
  
-@@ -1070,6 +1104,10 @@
+@@ -1070,6 +1104,11 @@
  
      set_signals();
  
 +#if ITK_USE_CLONE
++    stack_size = sysconf(_SC_PAGESIZE);
 +    stack = alloca(stack_size) + stack_size;
 +#endif
 +
      if (one_process) {
          AP_MONCONTROL(1);
          make_child(ap_server_conf, 0);
-@@ -1431,6 +1469,11 @@
+@@ -1431,6 +1469,10 @@
  #ifdef AP_MPM_WANT_SET_MAX_MEM_FREE
      ap_max_mem_free = APR_ALLOCATOR_MAX_FREE_UNLIMITED;
  #endif
 +#if ITK_USE_CLONE
 +    clone_flags1 = SIGCHLD | CLONE_VFORK;
 +    clone_flags2 = SIGCHLD | CLONE_FS;
-+    stack_size = sysconf(_SC_PAGESIZE);
 +#endif
  
      apr_cpystrn(ap_coredump_dir, ap_server_root, sizeof(ap_coredump_dir));
