@@ -197,7 +197,7 @@ Licensed under the same terms as the rest of Apache (or Anarchy license).
  
      apr_cpystrn(ap_coredump_dir, ap_server_root, sizeof(ap_coredump_dir));
  
-@@ -1696,6 +1738,20 @@ static const char *set_nice_value (cmd_p
+@@ -1696,6 +1738,19 @@ static const char *set_nice_value (cmd_p
      return NULL;
  }
  
@@ -209,8 +209,7 @@ Licensed under the same terms as the rest of Apache (or Anarchy license).
 +        return err;
 +
 +    clone_flags1 = (SIGCHLD | CLONE_VFORK) ^ atoi(flags1);
-+    if (flags2)
-+        clone_flags2 = (SIGCHLD | CLONE_FS) ^ atoi(flags2);
++    clone_flags2 = (SIGCHLD | CLONE_FS) ^ (flags2 ? atoi(flags2) : 0);
 +    return NULL;
 +}
 +#endif
