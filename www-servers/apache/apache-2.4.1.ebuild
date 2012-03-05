@@ -8,7 +8,7 @@ IUSE_MPMS_FORK="itk prefork"
 IUSE_MPMS_THREAD="event worker simple"
 
 # latest gentoo apache files
-GENTOO_PATCHSTAMP="20111215"
+GENTOO_PATCHSTAMP="20120305"
 GENTOO_DEVELOPER=""
 # We want the patch from r0
 GENTOO_PATCHNAME="gentoo-${P}"
@@ -47,8 +47,8 @@ RDEPEND="${RDEPEND}
 	ssl? ( >=dev-libs/openssl-0.9.8m )
 	mime? ( app-misc/mime-types )"
 
-S="${WORKDIR}/httpd-${PV}-beta"
-SRC_URI="mirror://apache/httpd/httpd-${PV}-beta.tar.bz2
+S="${WORKDIR}/httpd-${PV}"
+SRC_URI="mirror://apache/httpd/httpd-${PV}.tar.bz2
 	http://mahatma.bspu.unibel.by/download/gentoo-apache-2.3+/${GENTOO_PATCH_A}"
 
 src_prepare(){
@@ -57,7 +57,6 @@ src_prepare(){
 	for i in "$GENTOO_PATCHDIR"/patches/*.sh{,.*}; do
 		[[ -e "$i" ]] && sh "$i"
 	done
-	rm configure
 	apache-2_src_prepare
 }
 
@@ -85,7 +84,7 @@ src_configure(){
 		ewarn "Threads really moderated by dev-libs/apr -> apr.h -> APR_HAS_THREADS.
 	You may get hidden threads use anymore!"
 		sed -i -e 's:ac_cv_define_APR_HAS_THREADS=yes:ac_cv_define_APR_HAS_THREADS=no:' configure
-		MY_CONF+=" --disable-watchdog"
+		MY_CONF+=" --disable-watchdog --disable-heartbeat"
 	}
 	apache-2_src_configure
 }
