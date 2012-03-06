@@ -1,203 +1,57 @@
 This is experimental clone() (vs. fork()) patch for mpm-itk apache 2.2.
 Really I see no perfomance benefits, but only little RAM. But using
-CLONE_VFORK must relax cheduling in theory. CLONE_VM working with clone_flags1
-(final connection fork) and slow. So, primary - for experiments with LXC.
+CLONE_VFORK must relax cheduling in theory.
+
+Primary - for experiments with LXC.
 
 (c) Denis Kaganovich, <mahatma@eu.by>
 Licensed under the same terms as the rest of Apache (or Anarchy license).
 
---- a/server/mpm/experimental/itk/itk.c	2012-03-05 20:17:04.000000000 +0300
-+++ b/server/mpm/experimental/itk/itk.c	2012-03-05 20:21:01.000000000 +0300
-@@ -104,6 +104,8 @@
+--- a/server/mpm/experimental/itk/itk.c	2012-03-06 11:14:36.000000000 +0300
++++ b/server/mpm/experimental/itk/itk.c	2012-03-06 11:13:08.000000000 +0300
+@@ -104,6 +104,19 @@
  #define HARD_THREAD_LIMIT 1
  #endif
  
-+#define ITK_USE_CLONE defined(CLONE_VFORK)
++#ifdef __linux__
++#include <syscall.h>
++#include <linux/version.h>
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,5,49) && defined(CLONE_VFORK)
++#define ITK_USE_CLONE 1
++static int clone_flags1 = 0, clone_flags2 = 0;
++#else
++#define ITK_USE_CLONE 0
++#endif
++#else
++#define ITK_USE_CLONE 0
++#endif
 +
  /* config globals */
  
  int ap_threads_per_child=0;         /* Worker threads per child */
-@@ -117,6 +119,11 @@
- static int changed_limit_at_restart;
- static int mpm_state = AP_MPMQ_STARTING;
- static ap_pod_t *pod;
-+#if ITK_USE_CLONE
-+static int clone_flags1 = 0, clone_flags2 = 0;
-+static long stack_size;
-+static void *stack;
-+#endif
- 
- /*
-  * The max child slot ever assigned, preserved across restarts.  Necessary
-@@ -500,17 +507,34 @@
-     return mpm_state == AP_MPMQ_STOPPING;
- }
- 
-+conn_rec *current_conn;
-+void *csd;
-+apr_pool_t *ptrans;
-+ap_sb_handle_t *sbh;
-+apr_bucket_alloc_t *bucket_alloc;
-+
-+#if ITK_USE_CLONE
-+static int do_child(void *arg)
-+#else
-+static inline void do_child()
-+#endif
-+{
-+    apr_proc_mutex_child_init(&accept_mutex, ap_lock_fname, pchild);
-+    current_conn = ap_run_create_connection(ptrans, ap_server_conf, csd, my_child_num, sbh, bucket_alloc);
-+    if (current_conn) {
-+        ap_process_connection(current_conn, csd);
-+        ap_lingering_close(current_conn);
-+    }
-+    exit(0);
-+}
- 
- static void child_main(int child_num_arg)
- {
--    apr_pool_t *ptrans;
-     apr_allocator_t *allocator;
-     apr_status_t status;
-     int i;
-     ap_listen_rec *lr;
-     apr_pollset_t *pollset;
--    ap_sb_handle_t *sbh;
--    apr_bucket_alloc_t *bucket_alloc;
-     int last_poll_idx = 0;
- 
- #if HAVE_LIBCAP
-@@ -604,8 +628,6 @@
-      * shutdown_pending is set when SIGTERM is received when running
-      * in single process mode.  */
-     while (!die_now && !shutdown_pending) {
--        conn_rec *current_conn;
--        void *csd;
- 
-         /*
-          * (Re)initialize this child to a pre-connection state.
-@@ -718,20 +740,20 @@
+@@ -718,7 +731,11 @@ static void child_main(int child_num_arg
           */
  
          {
+-            pid_t pid = fork(), child_pid;
 +#if ITK_USE_CLONE
-+            pid_t pid = clone(do_child, stack, clone_flags1, NULL), child_pid;
++            pid_t pid = syscall(SYS_clone, clone_flags1, 0, NULL, NULL), child_pid;
 +#else
-             pid_t pid = vfork(), child_pid;
++            pid_t pid = vfork(), child_pid;
 +#endif
              int status;
              switch (pid) {
              case -1:
-                 ap_log_error(APLOG_MARK, APLOG_ERR, errno, NULL, "fork: Unable to fork new process");
-                 break;
-+#if !ITK_USE_CLONE
-             case 0: /* child */
--                apr_proc_mutex_child_init(&accept_mutex, ap_lock_fname, pchild);
--                current_conn = ap_run_create_connection(ptrans, ap_server_conf, csd, my_child_num, sbh, bucket_alloc);
--                if (current_conn) {
--                    ap_process_connection(current_conn, csd);
--                    ap_lingering_close(current_conn);
--                }
--                exit(0);
-+                do_child();
-+#endif
-             default: /* parent; just wait for child to be done */
-                 do {
-                     child_pid = waitpid(pid, &status, 0);
-@@ -779,6 +801,36 @@
-     clean_child_exit(0);
- }
- 
-+static int 
-+#if !ITK_USE_CLONE
-+    inline
-+#endif
-+    do_child1(int *slot)
-+{
-+#ifdef HAVE_BINDPROCESSOR
-+        /* by default AIX binds to a single processor
-+         * this bit unbinds children which will then bind to another cpu
-+         */
-+        int status = bindprocessor(BINDPROCESS, (int)getpid(),
-+                                   PROCESSOR_CLASS_ANY);
-+        if (status != OK) {
-+            ap_log_error(APLOG_MARK, APLOG_WARNING, errno,
-+                         ap_server_conf, "processor unbind failed %d", status);
-+        }
-+#endif
-+        RAISE_SIGSTOP(MAKE_CHILD);
-+        AP_MONCONTROL(1);
-+        /* Disable the parent's signal handlers and set up proper handling in
-+         * the child.
-+         */
-+        apr_signal(SIGHUP, just_die);
-+        apr_signal(SIGTERM, just_die);
-+        /* The child process just closes listeners on AP_SIG_GRACEFUL.
-+         * The pod is used for signalling the graceful restart.
-+         */
-+        apr_signal(AP_SIG_GRACEFUL, stop_listening);
-+        child_main(*slot);
-+}
- 
- static int make_child(server_rec *s, int slot)
- {
-@@ -809,6 +861,8 @@
+@@ -809,6 +826,8 @@ static int make_child(server_rec *s, int
      if ((pid = os_fork(unixd_config.user_name)) == -1) {
  #elif defined(TPF)
      if ((pid = os_fork(s, slot)) == -1) {
 +#elif ITK_USE_CLONE
-+    if ( /*getuid() || */ (pid = clone(do_child1, stack, clone_flags2, &slot)) == -1) {
++    if ((pid = syscall(SYS_clone, clone_flags2, 0, NULL, NULL)) == -1) {
  #else
      if ((pid = fork()) == -1) {
  #endif
-@@ -829,31 +883,11 @@
-         return -1;
-     }
- 
-+#if !ITK_USE_CLONE
-     if (!pid) {
--#ifdef HAVE_BINDPROCESSOR
--        /* by default AIX binds to a single processor
--         * this bit unbinds children which will then bind to another cpu
--         */
--        int status = bindprocessor(BINDPROCESS, (int)getpid(),
--                                   PROCESSOR_CLASS_ANY);
--        if (status != OK) {
--            ap_log_error(APLOG_MARK, APLOG_WARNING, errno,
--                         ap_server_conf, "processor unbind failed %d", status);
--        }
--#endif
--        RAISE_SIGSTOP(MAKE_CHILD);
--        AP_MONCONTROL(1);
--        /* Disable the parent's signal handlers and set up proper handling in
--         * the child.
--         */
--        apr_signal(SIGHUP, just_die);
--        apr_signal(SIGTERM, just_die);
--        /* The child process just closes listeners on AP_SIG_GRACEFUL.
--         * The pod is used for signalling the graceful restart.
--         */
--        apr_signal(AP_SIG_GRACEFUL, stop_listening);
--        child_main(slot);
-+        do_child1(&slot);
-     }
-+#endif
- 
-     ap_scoreboard_image->parent[slot].pid = pid;
- 
-@@ -1070,6 +1104,11 @@
- 
-     set_signals();
- 
-+#if ITK_USE_CLONE
-+    stack_size = sysconf(_SC_PAGESIZE);
-+    stack = alloca(stack_size) + stack_size;
-+#endif
-+
-     if (one_process) {
-         AP_MONCONTROL(1);
-         make_child(ap_server_conf, 0);
-@@ -1431,6 +1469,10 @@
+@@ -1431,6 +1450,10 @@ static int itk_pre_config(apr_pool_t *p,
  #ifdef AP_MPM_WANT_SET_MAX_MEM_FREE
      ap_max_mem_free = APR_ALLOCATOR_MAX_FREE_UNLIMITED;
  #endif
@@ -208,18 +62,7 @@ Licensed under the same terms as the rest of Apache (or Anarchy license).
  
      apr_cpystrn(ap_coredump_dir, ap_server_root, sizeof(ap_coredump_dir));
  
-@@ -1501,9 +1544,8 @@
-                 if (chdir(r->filename) || chroot(r->filename)) {
-                     _DBG("chdir+chroot(%s): %s", r->filename, strerror(errno));
-                     goto err;
--                } else {
--                    *(r->filename += ch_root)  = '/';
-                 }
-+                *(r->filename += ch_root)  = '/';
-             }
-         }
-         if (dconf->pidfile) {
-@@ -1725,6 +1767,19 @@
+@@ -1725,6 +1748,19 @@ static const char *set_chroot(cmd_parms
      return NULL;
  }
  
@@ -239,7 +82,7 @@ Licensed under the same terms as the rest of Apache (or Anarchy license).
  static const command_rec itk_cmds[] = {
  UNIX_DAEMON_COMMANDS,
  LISTEN_COMMANDS,
-@@ -1746,6 +1801,10 @@
+@@ -1746,6 +1782,10 @@ AP_INIT_TAKE1("MaxClientsVHost", set_max
                "Maximum number of children alive at the same time for this virtual host."),
  AP_INIT_TAKE1("NiceValue", set_nice_value, NULL, RSRC_CONF|ACCESS_CONF,
                "Set nice value for the given vhost, from -20 (highest priority) to 19 (lowest priority)."),
