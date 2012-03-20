@@ -260,6 +260,8 @@ kernel-2_src_compile() {
 		kmake headers_install #$(use compressed && echo _all)
 	fi
 
+	use klibc && userspace
+
 	if use tools; then
 		einfo "Compiling tools"
 		mktools
@@ -281,7 +283,6 @@ kernel-2_src_compile() {
 			$(use iscsi && echo /usr/sbin/iscsistart)
 		" || die "genpnprd failed"
 	fi
-	use klibc && userspace
 	use genkernel || return
 	use klibc && mv initrd-${REAL_KV}.img initrd-${REAL_KV}.img.klibc
 
@@ -810,11 +811,22 @@ mktools(){
 	done
 }
 
-_cc(){
-	einfo "Compiling '$1'"
-	$(tc-getCC) -I"${S}"/include ${KERNEL_UTILS_CFLAGS} ${LDFLAGS} $1 -o ${1%.c} &&
-	    [[ -n "$2" ]] && ( ( [[ -d "$2" ]] || mkdir -p "$2" ) && cp ${1%.c} "$2" )
+_log(){
+	echo "$*"
+	"${@}"
 	return $?
+}
+
+_cc(){
+	local c
+	einfo "Compiling '$1'"
+	for c in "$(use klibc && echo "$klcc -static")" "$(use klibc && echo "$klcc -shared")" "$(tc-getCC)"; do
+		[[ -n "$c" ]] && _log $c -I"${S}"/include ${KERNEL_UTILS_CFLAGS} ${LDFLAGS} $1 -s -o ${1%.c} && {
+			[[ -n "$2" ]] && ( ( [[ -d "$2" ]] || mkdir -p "$2" ) && cp ${1%.c} "$2" )
+			return 0
+		}
+	done
+	return 1
 }
 
 kernel-2_src_prepare(){
@@ -1032,7 +1044,7 @@ LICENSE(){
 }
 
 userspace(){
-	local i f t img='initramfs.lst' c='' k libdir="$(get_libdir)" klcc mod="$BDIR/lib/modules/$REAL_KV/"
+	local i f t img='initramfs.lst' c='' k libdir="$(get_libdir)" mod="$BDIR/lib/modules/$REAL_KV/"
 	# klibc in progress
 	if [[ -n "$KERNEL_KLIBC_SRC" ]]; then
 		if [[ "$KERNEL_KLIBC_SRC" == "*" ]]; then
