@@ -235,10 +235,10 @@ kernel-2_src_compile() {
 
     if grep -q "=m$" .config; then
 	einfo "Preparing modules"
-	mkdir -p "${BDIR}" lib/modules/"${REAL_KV}"
+	mkdir -p "${BDIR}" # lib/modules/"${REAL_KV}"
 	kmake INSTALL_MOD_PATH="${BDIR}" -j1 modules_install
-	ln -s ../firmware lib/firmware
-	ln -s ../../.. "lib/modules/${REAL_KV}/kernel"
+#	ln -s ../firmware lib/firmware
+#	ln -s ../../.. "lib/modules/${REAL_KV}/kernel"
 	cp "${BDIR}/lib/modules/${REAL_KV}"/* "lib/modules/${REAL_KV}/"
 	local r="${BDIR}/lib/modules/${REAL_KV}"
 	rm "${r}"/build "${r}"/source
