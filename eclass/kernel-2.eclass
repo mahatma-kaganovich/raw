@@ -447,6 +447,7 @@ run_genkernel(){
 		--tempdir="${TMPDIR}/genkernel" \
 		--logfile="${TMPDIR}/genkernel.log" \
 		--arch-override=${a} \
+		--compress-initramfs-type=bzip2 \
 		--utils-arch=${a} --utils-cross-compile=${CTARGET:-${CHOST}}- \
 		$* ${KERNEL_GENKERNEL} || die "genkernel failed"
 	rm "${S}/genkernel"
