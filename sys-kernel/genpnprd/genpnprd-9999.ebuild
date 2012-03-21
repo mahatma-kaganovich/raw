@@ -24,6 +24,8 @@ src_install(){
 	done
 	dobin ${PN}
 	dosym ../../bin/${PN} /usr/share/${PN}
+	# suddenly
+	dosym _SB_.PCCH /usr/share/etc/modflags/\\_SB_.PCCH
 }
 
 pkg_postinst(){
