@@ -526,7 +526,7 @@ src_configure(){
 
 	use moznosystem &&
 	    einfo "USE 'moznosystem' flag - disabling usage system libs" &&
-	    sed -i -e 's/--enable-system-\([^ =]*\)/--disable-system-\1 #/g' -e 's/--with-system-\([^ =]*\)/--without-system-\1 #/g' "${S}"/.mozconfig
+	    sed -i -e 's/--enable-system-\([^ =]*\).*/--disable-system-\1/g' -e 's/--with-system-\([^ =]*\).*/--without-system-\1/g' "${S}"/.mozconfig
 
 
 	use system-xulrunner && mozconfig_annotate system-xulrunner --with-system-libxul --with-libxul-sdk=/usr/$(get_libdir)/xulrunner-devel-"`pkg-config libxul --modversion`"

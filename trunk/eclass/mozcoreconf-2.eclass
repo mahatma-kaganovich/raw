@@ -288,7 +288,7 @@ mozconfig_use_extension() {
 # with reasons, then clean up extensions list
 mozconfig_final() {
 	declare ac opt hash reason
-	use moznosystem && sed -i -e 's/--enable-system-\([^ =]*\)/--disable-system-\1 # /g' -e 's/--with-system-\([^ =]*\)/--without-system-\1 #/g' .mozconfig
+	use moznosystem && sed -i -e 's/--enable-system-\([^ =]*\).*/--disable-system-\1/g' -e 's/--with-system-\([^ =]*\).*/--without-system-\1/g' .mozconfig
 	echo
 	echo "=========================================================="
 	echo "Building ${PF} with the following configuration"
