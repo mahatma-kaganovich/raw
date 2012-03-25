@@ -283,7 +283,7 @@ src_prepare(){
 	# dumb
 	use opengl && sed -i -e 's%return nsIGfxInfo::FEATURE_BLOCKED_[A-Z0-9_]*%return nsIGfxInfo::FEATURE_NO_INFO%g' "${S1}"/widget/src/xpwidgets/*.cpp
 	use opengl && ewarn "Enabling all hardware for OpenGL. Just USE='-opengl' if problems."
-	sed -i -e 's:header\.py --cachedir=\. --regen:header\.py --cachedir=cache --regen:' "${S1}"/xpcom/idl-parser/Makefile.in b/xpcom/idl-parser/Makefile.in
+	sed -i -e 's:header\.py --cachedir=\. --regen:header.py --cachedir=cache --regen:' "${S1}"/xpcom/idl-parser/Makefile.in b/xpcom/idl-parser/Makefile.in
 
 	for i in "${WORKDIR}"/l10n/*/toolkit/chrome/global/*; do
 		[[ -e "${i}" ]] && ln -s "${i}" "${i%/*}/../../../suite/chrome/browser/${i##*/}"
