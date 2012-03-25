@@ -65,6 +65,7 @@ RDEPEND="java? ( >=virtual/jre-1.4 )
 		x11-libs/pixman
 		dev-libs/libevent
 		alsa? ( media-libs/libvpx )
+		dev-python/ply
 	)
 	opengl? ( || ( media-libs/mesa[gles] media-libs/mesa[gles2] ) )
 	X? ( >=x11-libs/gtk+-2.8.6 )
@@ -282,6 +283,7 @@ src_prepare(){
 	# dumb
 	use opengl && sed -i -e 's%return nsIGfxInfo::FEATURE_BLOCKED_[A-Z0-9_]*%return nsIGfxInfo::FEATURE_NO_INFO%g' "${S1}"/widget/src/xpwidgets/*.cpp
 	use opengl && ewarn "Enabling all hardware for OpenGL. Just USE='-opengl' if problems."
+	sed -i -e 's:header\.py --cachedir=\. --regen:header\.py --cachedir=cache --regen:' "${S1}"/xpcom/idl-parser/Makefile.in b/xpcom/idl-parser/Makefile.in
 
 	for i in "${WORKDIR}"/l10n/*/toolkit/chrome/global/*; do
 		[[ -e "${i}" ]] && ln -s "${i}" "${i%/*}/../../../suite/chrome/browser/${i##*/}"
@@ -348,8 +350,7 @@ src_configure(){
 		--with-system-bz2 \
 		--enable-canvas \
 		--enable-image-encoder=all \
-		--enable-system-lcms \
-		--enable-system-pixman \
+		--enable-system-{lcms,pixman,ply} \
 		--with-default-mozilla-five-home=${MOZILLA_FIVE_HOME} \
 		--with-user-appdir=.mozilla \
 		--without-system-png \
