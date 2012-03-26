@@ -168,7 +168,7 @@ src_prepare() {
 
 #	use gallium && sed -i -e 's:GALLIUM_WINSYS_DIRS="":GALLIUM_WINSYS_DIRS="xlib":g' configure.ac
 	sed -i -e '/GALLIUM_DRIVERS_DIRS i915 i965 r300 svga/d' -e '/GALLIUM_WINSYS_DIRS i915\/sw/d' "${S}"/configure*
-	sed -i -e 's:^\(#include "fbdev\):#include <errno.h>\n\1:' src/gallium/state_trackers/egl/fbdev/native_fbdev.c'
+	sed -i -e 's:^\(#include "fbdev\):#include <errno.h>\n\1:' src/gallium/state_trackers/egl/fbdev/native_fbdev.c
 
 	eautoreconf
 }
