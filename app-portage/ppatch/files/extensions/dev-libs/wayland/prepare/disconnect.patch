@@ -8,13 +8,3 @@
  int wl_display_get_fd(struct wl_display *display,
  		      wl_display_update_func_t update, void *data);
  void wl_display_iterate(struct wl_display *display, uint32_t mask);
---- a/src/wayland-server.h	2012-03-26 19:58:21.000000000 +0300
-+++ b/src/wayland-server.h	2012-03-26 19:59:32.000000000 +0300
-@@ -77,6 +77,7 @@ struct wl_input_device;
- 
- struct wl_display *wl_display_create(void);
- void wl_display_destroy(struct wl_display *display);
-+#define wl_display_disconnect wl_display_destroy
- struct wl_event_loop *wl_display_get_event_loop(struct wl_display *display);
- int wl_display_add_socket(struct wl_display *display, const char *name);
- void wl_display_terminate(struct wl_display *display);
