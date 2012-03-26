@@ -1,4 +1,4 @@
-EAPI="3"
+EAPI="4"
 GIT=$([[ ${PVR} = *9999* ]] && echo "git")
 EGIT_REPO_URI="git://anongit.freedesktop.org/mesa/mesa"
 
@@ -49,7 +49,7 @@ IUSE="${IUSE_VIDEO_CARDS}
 	doc
 	pic
 	motif
-	nptl
+	+nptl
 	xcb
 	kernel_FreeBSD
 	+gallium
@@ -59,10 +59,29 @@ IUSE="${IUSE_VIDEO_CARDS}
 	llvm
 	X
 	+fbdev
-	+gles
+	gles1
+	gles2
 	+dricore
 	selinux
+	+egl
+	gbm
+	g3dvl
+	vdpau
+	xa
+	xvmc
+	wayland
+	openvg
 	d3d"
+
+REQUIRED_USE="
+	g3dvl?  ( gallium )
+	g3dvl? ( || ( vdpau xvmc ) )
+	vdpau? ( g3dvl )
+	xvmc?  ( g3dvl )
+	xa? ( gallium )
+	gbm? ( dricore )
+	openvg? ( egl gallium )
+	"
 
 RDEPEND="app-admin/eselect-opengl
 	dev-libs/expat
@@ -89,6 +108,10 @@ RDEPEND="app-admin/eselect-opengl
 	)
 	video_cards_vmware? ( x11-libs/libdrm[video_cards_vmware] )
 	video_cards_nouveau? ( x11-libs/libdrm[video_cards_nouveau] )
+	vdpau? ( >=x11-libs/libvdpau-0.4.1 )
+	wayland? ( dev-libs/wayland )
+	xvmc? ( x11-libs/libXvMC )
+	gbm? ( sys-fs/udev )
 	!<=x11-base/xorg-x11-6.9"
 DEPEND="${RDEPEND}
 	glut? ( !media-libs/freeglut )
@@ -184,7 +207,7 @@ src_configure() {
 		ewarn "This gallium configuration required 'xorg-server' headers installed."
 		ewarn "To avoid circular dependences install mesa without gallium before and re-emerge after."
 		use X && myconf+=" --enable-xorg"
-		myconf+=" --enable-gallium-egl --enable-openvg"
+		myconf+=" --enable-gallium-egl $(use_enable openvg)"
 	else
 		driver_enable video_cards_radeon radeon r200 r300 r600
 		driver_enable video_cards_intel i810 i915 i965
@@ -214,20 +237,28 @@ src_configure() {
 		grep -q '^\s*x'"$i)" configure && myconf+="$i,"
 	done
 	econf ${myconf%,} \
+		$(use_enable !bindist texture-float) \
+		$(use_enable egl) \
+		$(use_enable gbm) \
+		$(use_enable g3dvl gallium-g3dvl) \
+		$(use_enable vdpau) \
+		$(use_enable xvmc) \
+		--enable-dri \
+		--enable-glx \
 		$(use_enable nptl glx-tls) \
 		$(use_enable glut) \
 		$(use_enable xcb) \
 		$(use_enable motif glw) \
 		$(use_enable motif) \
-		$(use_enable gles gles1) \
-		$(use_enable gles gles2) \
+		$(use_enable gles1 gles1) \
+		$(use_enable gles2 gles2) \
 		$(use_enable dricore shared-dricore) \
 		$(use_enable dricore shared-glapi) \
 		$(use_enable selinux) \
 		$(use_with X x) \
-		$(use_enable X xa) \
+		$(use_enable xa) \
 		$(use_enable d3d d3d1x) \
-		--with-egl-platforms=x11,drm$(use fbdev && echo ,fbdev) \
+		--with-egl-platforms=x11,drm$(use fbdev && echo ,fbdev)$(use wayland && echo ,wayland) \
 		|| die
 }
 
