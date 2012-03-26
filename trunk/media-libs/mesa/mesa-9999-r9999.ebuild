@@ -21,7 +21,7 @@ elif [[ $PVR = *-r9999 ]]; then
 else
 	SRC_URI="mirror://sourceforge/mesa3d/${MY_SRC_P}.tar.bz2"
 fi
-LICENSE="LGPL-2"
+LICENSE="MIT LGPL-3 SGI-B-2.0"
 SLOT="0"
 KEYWORDS="~alpha ~amd64 ~arm ~hppa ~ia64 ~mips ~ppc ~ppc64 ~sh ~sparc ~x86 ~x86-fbsd raw"
 IUSE_VIDEO_CARDS="
