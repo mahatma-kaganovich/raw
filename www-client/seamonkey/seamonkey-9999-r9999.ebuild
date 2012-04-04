@@ -41,7 +41,7 @@ IUSE="-java mozdevelop moznoirc moznoroaming postgres startup-notification
 	debug minimal directfb moznosystem +threads jssh python mobile static
 	moznomemory accessibility vanilla xforms gio +alsa
 	+custom-cflags +custom-optimization system-xulrunner +libxul system-nss system-nspr X
-	bindist flatfile profile ipv6 opengl moznopango e10s force-shared-static ipccode"
+	bindist flatfile profile ipv6 moznopango e10s force-shared-static ipccode egl force-gl gles2"
 #	qt-experimental"
 
 #RESTRICT="nomirror"
@@ -67,7 +67,8 @@ RDEPEND="java? ( >=virtual/jre-1.4 )
 		alsa? ( media-libs/libvpx )
 		dev-python/ply
 	)
-	opengl? ( || ( media-libs/mesa[gles] media-libs/mesa[gles2] ) )
+	gles2? ( || ( media-libs/mesa[gles] media-libs/mesa[gles2] ) )
+	egl? ( media-libs/mesa[egl] )
 	X? ( >=x11-libs/gtk+-2.8.6 )
 	!X? ( x11-libs/gtk+-directfb )
 	system-nspr? ( >=dev-libs/nspr-4.7.3 )
@@ -279,10 +280,17 @@ src_prepare(){
 	touch "${S}"/directory/xpcom/datasource/nsLDAPDataSource.manifest
 #	sed -i -e 's:\(return XRE_InitEmbedding.*\), nsnull, 0:\1:' "${S1}"/extensions/java/xpcom/src/nsJavaInterfaces.cpp
 #	use opengl && sed -i -e 's: = GLX$: = EGL:' "${S1}"/{gfx/thebes,content/canvas/src}/Makefile*
-	use opengl && sed -i -e 's:if (mIsMesa):if (0):' "${S1}"/widget/src/xpwidgets/GfxInfoX11.cpp
-	# dumb
-	use opengl && sed -i -e 's%return nsIGfxInfo::FEATURE_BLOCKED_[A-Z0-9_]*%return nsIGfxInfo::FEATURE_NO_INFO%g' "${S1}"/widget/src/xpwidgets/*.cpp
-	use opengl && ewarn "Enabling all hardware for OpenGL. Just USE='-opengl' if problems."
+	if use force-gl; then
+		sed -i -e 's:if (mIsMesa):if (0):' "${S1}"/widget/src/xpwidgets/GfxInfoX11.cpp
+		# dumb
+		sed -i -e 's%return nsIGfxInfo::FEATURE_BLOCKED_[A-Z0-9_]*%return nsIGfxInfo::FEATURE_NO_INFO%g' "${S1}"/widget/src/xpwidgets/*.cpp
+		ewarn "Enabling all hardware for OpenGL. Just USE='-force-gl' if problems."
+	fi
+	# try to use "maemo"?
+	use egl && sed -i -e 's:MOZ_PLATFORM_MAEMO:MOZ_X11:' "${S1}"/gfx/{thebes/gfxXlibSurface.cpp,layers/*/*}
+	echo 'ifeq ($(GL_PROVIDER),EGL)
+CXXFLAGS += -fpermissive
+endif' >>"${S1}"/gfx/gl/Makefile.in
 
 	sed -i -e 's:header\.py --cachedir=\. --regen:header.py --cachedir=cache --regen:' "${S1}"/xpcom/idl-parser/Makefile.in
 	ln -s {cache,"${S1}"/xpcom/idl-parser}/xpidllex.py
@@ -343,6 +351,7 @@ src_configure(){
 	rmopt --with-system-png
 
 	use alpha && append-ldflags "-Wl,--no-relax"
+	append-ldflags "-Wl,--no-keep-memory"
 
 	if use moznopango; then
 		rmopt able-pango
@@ -506,12 +515,12 @@ src_configure(){
 	mozconfig_use_enable !debug strip
 	mozconfig_use_enable !debug strip-libs
 	mozconfig_use_enable !debug install-strip
-	
-#	isopt egl-xrender-composite && mozconfig_use_enable opengl egl-xrender-composite
+
+	isopt egl-xrender-composite && mozconfig_use_enable egl egl-xrender-composite
 	isopt e10s-compat && mozconfig_use_enable e10s e10s-compat
 
 	use custom-cflags && export CFLAGS="${CF}"
-	use opengl && append-flags -DUSE_GLES2=1
+	use gles2 && append-flags -DUSE_GLES2=1
 	is-flag -O3 && sed -i -e 's:\=\-O2:=-O3:g' .mozconfig
 
 	# required for sse prior to gcc 4.4.3, may be faster in other cases
