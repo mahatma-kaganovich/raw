@@ -77,6 +77,8 @@ RDEPEND="java? ( >=virtual/jre-1.4 )
 	alsa? ( media-libs/alsa-lib )
 	directfb? ( dev-libs/DirectFB )"
 
+DEPEND=">=dev-lang/python-3.2"
+
 S="${WORKDIR}/comm-${MOZVER}"
 
 force(){
@@ -197,6 +199,11 @@ LDAP(){
 	return 0
 }
 
+pkg_setup() {
+	python_set_active_version 3
+	python_pkg_setup
+}
+
 src_unpack() {
 	use static && use jssh && die 'Useflags "static" & "jssh" incompatible'
 	use !X && use startup-notification && die 'Useflags "-X" & "startup-notification" incompatibe'
@@ -286,8 +293,8 @@ src_prepare(){
 		sed -i -e 's%return nsIGfxInfo::FEATURE_BLOCKED_[A-Z0-9_]*%return nsIGfxInfo::FEATURE_NO_INFO%g' "${S1}"/widget/src/xpwidgets/*.cpp
 		ewarn "Enabling all hardware for OpenGL. Just USE='-force-gl' if problems."
 	fi
-	# try to use "maemo"?
-	use egl && sed -i -e 's:MOZ_PLATFORM_MAEMO:MOZ_X11:' "${S1}"/gfx/{thebes/gfxXlibSurface.cpp,layers/*/*}
+	use gles2 || sed -i -e '/#define USE_GLES2 1/d' "${S1}"gfx/gl/GLContext.h
+	sed -i -e 's:MOZ_PLATFORM_MAEMO:MOZ_EGL_XRENDER_COMPOSITE:' "${S1}"/gfx/{thebes/gfxXlibSurface.*,layers/*/*}
 	echo 'ifeq ($(GL_PROVIDER),EGL)
 CXXFLAGS += -fpermissive
 endif' >>"${S1}"/gfx/gl/Makefile.in
