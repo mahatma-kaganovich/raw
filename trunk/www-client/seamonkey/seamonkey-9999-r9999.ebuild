@@ -1,4 +1,4 @@
-EAPI="3"
+EAPI="4"
 WANT_AUTOCONF="2.1"
 
 
@@ -41,7 +41,7 @@ IUSE="-java mozdevelop moznoirc moznoroaming postgres startup-notification
 	debug minimal directfb moznosystem +threads jssh python mobile static
 	moznomemory accessibility vanilla xforms gio +alsa
 	+custom-cflags +custom-optimization system-xulrunner +libxul system-nss system-nspr X
-	bindist flatfile profile ipv6 moznopango e10s force-shared-static ipccode egl force-gl gles2"
+	bindist flatfile profile ipv6 moznopango e10s force-shared-static ipccode egl +force-gl gles2"
 #	qt-experimental"
 
 #RESTRICT="nomirror"
