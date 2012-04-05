@@ -1,4 +1,4 @@
-EAPI="4"
+EAPI="3"
 WANT_AUTOCONF="2.1"
 
 
@@ -43,11 +43,13 @@ IUSE="-java mozdevelop moznoirc moznoroaming postgres startup-notification
 	+custom-cflags +custom-optimization system-xulrunner +libxul system-nss system-nspr X
 	bindist flatfile profile ipv6 moznopango e10s force-shared-static ipccode egl +force-gl gles2 xrender"
 #	qt-experimental"
-REQUIRED_USE="
+REQUIRED_USE_="
 	gles2? ( egl )
 	jssh? ( !static )
 	startup-notification? ( X )
 "
+
+[[ "$EAPI" != 3 ]] && REQUIRED_USE="$REQUIRED_USE"
 
 #RESTRICT="nomirror"
 
@@ -205,6 +207,14 @@ LDAP(){
 }
 
 pkg_setup() {
+	local i f f1
+	[[ "$EAPI" == 3 ]] && for i in ${REQUIRED_USE_}; do
+		case "$i" in
+		\)|\();;
+		*\?)f=${i%?};;
+		*)use $f && ! use $i && die "Useflags mismatch: $f? ( $i )";;
+		esac
+	done
 	python_set_active_version 3
 	python_pkg_setup
 }
@@ -663,7 +673,7 @@ _package(){
 			    ${i1}/bin/defaults/pref*/*-l10n.js &&
 			    mv "${D}/${MOZILLA_FIVE_HOME}"/* "${i1}/bin/"
 		fi
-		emake -C "$i" package
+		emake -C "$i" package # -i # eapi 4
 	done
 }
 
