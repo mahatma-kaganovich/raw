@@ -307,7 +307,7 @@ src_prepare(){
 		ewarn "Enabling all hardware for OpenGL. Just USE='-force-gl' if problems."
 	fi
 	use gles2 || sed -i -e '/#define USE_GLES2 1/d' "${S1}"gfx/gl/GLContext.h
-	sed -i -e 's:MOZ_PLATFORM_MAEMO:MOZ_EGL_XRENDER_COMPOSITE:' "${S1}"/gfx/{thebes/gfxXlibSurface.*,layers/*/*} $(use xrender || echo "${S1}/gfx/thebes/gfxPlatformGtk.h")
+	sed -i -e 's:MOZ_PLATFORM_MAEMO:MOZ_EGL_XRENDER_COMPOSITE:' "${S1}"/gfx/{thebes/gfxXlibSurface.*,layers/*/*} $(use xrender || echo "${S1}/gfx/thebes/gfxPlatformGtk.h") $(use gles2 && echo layers/Makefile.in)
 	echo 'ifeq ($(GL_PROVIDER),EGL)
 CXXFLAGS += -fpermissive
 endif' >>"${S1}"/gfx/gl/Makefile.in
@@ -361,7 +361,6 @@ src_configure(){
 		export MOZ_PYTHON_LIBS="-L${MOZ_PYTHON_LIBDIR} -l$(PYTHON)"
 	fi
 
-	local o3=false
 	setup-allowed-flags
 	export ALLOWED_FLAGS="${ALLOWED_FLAGS} -fomit-frame-pointer -O3 -mfpmath -msse* -m3dnow* -mmmx -mstackrealign -fPIC"
 #	use strip-cflags && strip-flags
@@ -543,7 +542,11 @@ src_configure(){
 
 	use custom-cflags && export CFLAGS="${CF}"
 	use gles2 && append-flags -DUSE_GLES2=1
-	is-flag -O3 && sed -i -e 's:\=\-O2:=-O3:g' .mozconfig
+	for i in -Ofast -O3; do
+		is-flag $i || continue
+		sed -i -e 's:\=\-O2:='"$i"':g' .mozconfig
+		break
+	done
 
 	# required for sse prior to gcc 4.4.3, may be faster in other cases
 	[[ "${ARCH}" == "x86" ]] && append-flags -mstackrealign
