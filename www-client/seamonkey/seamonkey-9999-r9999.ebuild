@@ -41,8 +41,13 @@ IUSE="-java mozdevelop moznoirc moznoroaming postgres startup-notification
 	debug minimal directfb moznosystem +threads jssh python mobile static
 	moznomemory accessibility vanilla xforms gio +alsa
 	+custom-cflags +custom-optimization system-xulrunner +libxul system-nss system-nspr X
-	bindist flatfile profile ipv6 moznopango e10s force-shared-static ipccode egl +force-gl gles2"
+	bindist flatfile profile ipv6 moznopango e10s force-shared-static ipccode egl +force-gl gles2 xrender"
 #	qt-experimental"
+REQUIRED_USE="
+	gles2? ( egl )
+	jssh? ( !static )
+	startup-notification? ( X )
+"
 
 #RESTRICT="nomirror"
 
@@ -205,8 +210,6 @@ pkg_setup() {
 }
 
 src_unpack() {
-	use static && use jssh && die 'Useflags "static" & "jssh" incompatible'
-	use !X && use startup-notification && die 'Useflags "-X" & "startup-notification" incompatibe'
 	local i l
 	mkdir "${WORKDIR}"/l10n
 	for i in ${A} ; do
@@ -294,7 +297,7 @@ src_prepare(){
 		ewarn "Enabling all hardware for OpenGL. Just USE='-force-gl' if problems."
 	fi
 	use gles2 || sed -i -e '/#define USE_GLES2 1/d' "${S1}"gfx/gl/GLContext.h
-	sed -i -e 's:MOZ_PLATFORM_MAEMO:MOZ_EGL_XRENDER_COMPOSITE:' "${S1}"/gfx/{thebes/gfxXlibSurface.*,layers/*/*}
+	sed -i -e 's:MOZ_PLATFORM_MAEMO:MOZ_EGL_XRENDER_COMPOSITE:' "${S1}"/gfx/{thebes/gfxXlibSurface.*,layers/*/*} $(use xrender || echo "${S1}/gfx/thebes/gfxPlatformGtk.h")
 	echo 'ifeq ($(GL_PROVIDER),EGL)
 CXXFLAGS += -fpermissive
 endif' >>"${S1}"/gfx/gl/Makefile.in
@@ -302,6 +305,8 @@ endif' >>"${S1}"/gfx/gl/Makefile.in
 	sed -i -e 's:header\.py --cachedir=\. --regen:header.py --cachedir=cache --regen:' "${S1}"/xpcom/idl-parser/Makefile.in
 	ln -s {cache,"${S1}"/xpcom/idl-parser}/xpidllex.py
 	ln -s {cache,"${S1}"/xpcom/idl-parser}/xpidlyacc.py
+
+	sed -i -e 's:\r::' "${S}"/db/makefiles.sh
 
 	for i in "${WORKDIR}"/l10n/*/toolkit/chrome/global/*; do
 		[[ -e "${i}" ]] && ln -s "${i}" "${i%/*}/../../../suite/chrome/browser/${i##*/}"
@@ -841,7 +846,6 @@ SM(){
 if [[ -n "${hg}" ]]; then
 
 src_unpack() {
-	use static && use jssh && die 'Useflags "static" & "jssh" incompatible'
 	local hg_mod="" d
 	use release-branch || use release-tag || local EHG_BRANCH=default
 	if [[ "${PVR}" == *-r9999* ]]; then
