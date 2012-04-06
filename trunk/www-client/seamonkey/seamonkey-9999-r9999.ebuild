@@ -307,7 +307,7 @@ src_prepare(){
 		ewarn "Enabling all hardware for OpenGL. Just USE='-force-gl' if problems."
 	fi
 	use gles2 || sed -i -e '/#define USE_GLES2 1/d' "${S1}"gfx/gl/GLContext.h
-	sed -i -e 's:MOZ_PLATFORM_MAEMO:MOZ_EGL_XRENDER_COMPOSITE:' "${S1}"/gfx/{thebes/gfxXlibSurface.*,layers/*/*} $(use xrender || echo "${S1}/gfx/thebes/gfxPlatformGtk.h") $(use gles2 && echo layers/Makefile.in)
+	sed -i -e 's:MOZ_PLATFORM_MAEMO:MOZ_EGL_XRENDER_COMPOSITE:' "${S1}"/gfx/{thebes/gfxXlibSurface.*,layers/*/*} $(use xrender || echo "${S1}/gfx/thebes/gfxPlatformGtk.h") $(use gles2 && echo "${S1}/gfs/layers/Makefile.in")
 	echo 'ifeq ($(GL_PROVIDER),EGL)
 CXXFLAGS += -fpermissive
 endif' >>"${S1}"/gfx/gl/Makefile.in
