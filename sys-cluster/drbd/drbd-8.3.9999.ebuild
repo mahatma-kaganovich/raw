@@ -15,7 +15,7 @@ DESCRIPTION="mirror/replicate block-devices across a network-connection"
 SRC_URI="http://oss.linbit.com/drbd/${MY_MAJ_PV}/"${MY_P}".tar.gz"
 HOMEPAGE="http://www.drbd.org"
 
-IUSE="pacemaker bash-completion"
+IUSE="pacemaker heartbeat bash-completion"
 
 DEPEND=""
 RDEPEND=""
@@ -55,9 +55,10 @@ src_configure() {
 		--without-km \
 		--without-udev \
 		--with-xen \
+		$(use_with heartbeat) \
 		$(use pacemaker && \
-			echo --with-pacemaker --without-heartbeat --with-rgmanager || \
-			echo --without-pacemaker --with-heartbeat --without-rgmanager
+			echo --with-pacemaker --with-rgmanager || \
+			echo --without-pacemaker --without-rgmanager
 		) \
 		$(use_with bash-completion bashcompletion) \
 		--with-distro=gentoo \
