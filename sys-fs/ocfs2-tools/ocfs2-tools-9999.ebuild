@@ -41,6 +41,7 @@ RDEPEND="X? (
 		)
 	>=dev-libs/glib-2.2.3
 	sys-fs/e2fsprogs"
+[[ "$PV" > "1.7" ]] && RDEPEND+=" dev-libs/libaio"
 DEPEND="${RDEPEND}"
 
 RESTRICT="nomirror"
