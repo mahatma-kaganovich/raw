@@ -9,5 +9,5 @@ DEPEND="app-portage/ppatch"
 
 src_install(){
 	insinto "/usr/ppatch/mail-mta/sendmail/compile"
-	doins "${FILESDIR}/sleep.p-patch"
+	doins "${FILESDIR}/sleep.bashrc"
 }
