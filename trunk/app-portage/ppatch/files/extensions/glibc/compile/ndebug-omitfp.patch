@@ -1,7 +1,0 @@
---- a/Makeconfig	2011-12-13 20:02:54.000000000 +0300
-+++ b/Makeconfig	2011-12-13 20:02:40.000000000 +0300
-@@ -761,2 +761,2 @@
--CFLAGS-.o = $(filter %frame-pointer,$(+cflags)) -g0 -O99 -fomit-frame-pointer -D__USE_STRING_INLINES
--CFLAGS-.os += -g0 -O99 -fomit-frame-pointer -D__USE_STRING_INLINES
-+CFLAGS-.o = $(filter %frame-pointer,$(+cflags)) -g0 -O99 -fomit-frame-pointer -DNDEBUG=1 -D__USE_STRING_INLINES
-+CFLAGS-.os += -g0 -O99 -fomit-frame-pointer -DNDEBUG=1 -D__USE_STRING_INLINES

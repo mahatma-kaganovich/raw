@@ -1,0 +1,14 @@
+--- a/Makeconfig	2012-05-03 14:50:29.000000000 +0300
++++ b/Makeconfig	2012-05-03 17:46:26.000000000 +0300
+@@ -786,6 +786,11 @@
+ libtype.ob = lib%_b.a
+ endif
+ 
++ifdef CFLAGS_BASE
++CFLAGS-.o += $(CFLAGS_BASE) -fno-fast-math -fno-tracer -DNDEBUG=1 -D__USE_STRING_INLINES
++CFLAGS-.os += $(CFLAGS_BASE) -fno-fast-math -fno-tracer -DNDEBUG=1 -D__USE_STRING_INLINES
++endif
++
+ object-suffixes-for-libc := $(object-suffixes)
+ 
+ ifeq (yes,$(build-shared))
