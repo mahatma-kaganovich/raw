@@ -1,7 +1,7 @@
 EAPI="3"
 
 # drbd-8.3.9999.ebuild
-GIT=$([[ ${PVR} = *.9999 ]] && echo "git autotools")
+GIT=$([[ ${PVR} = *.9999 ]] && echo "git-2 autotools")
 EGIT_REPO_URI="git://git.drbd.org/drbd-${PV%.9999}.git"
 inherit eutils versionator ${GIT}
 
@@ -36,7 +36,7 @@ if [[ -n "${GIT}" ]] ; then
 	IUSE="${IUSE} +doc"
 	DEPEND="${DEPEND} doc? ( dev-libs/libxslt app-text/docbook-xsl-stylesheets ) "
 	src_unpack(){
-		git_src_unpack
+		git-2_src_unpack
 		cd "${S}"
 		eautoreconf
 		use doc || sed -i -e 's/ documentation / /g' Makefile.in

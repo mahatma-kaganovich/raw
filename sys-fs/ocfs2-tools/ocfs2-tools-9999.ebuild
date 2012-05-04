@@ -6,12 +6,12 @@ if [[ "${PV}" == *.9999 ]]; then
 	OCFS2_BRANCH="${PN}-${PV%.9999}"
 	EGIT_COMMIT="refs/remotes/origin/${OCFS2_BRANCH}"
 	EGIT_FETCH_CMD="git clone --branch ${OCFS2_BRANCH}"
-	EGIT_PROJECT="${OCFS2_BRANCH}"
+	EGIT_PROJECT="${OCFS2_BRANCH}.git"
 	# both behaviours are wrong
 	EGIT_HAS_SUBMODULES=true
 fi
 
-inherit flag-o-matic eutils `[[ "${PVR}" == *9999* ]] && echo "git autotools"`
+inherit flag-o-matic eutils `[[ "${PVR}" == *9999* ]] && echo "git-2 autotools"`
 
 EAPI=3
 
@@ -65,6 +65,7 @@ src_prepare(){
 	[[ -e configure ]] || eautoreconf
 	use static && sed -i -e 's:PKG_CONFIG --libs :PKG_CONFIG --static --libs :g' configure
 	sed -i -e 's:\(log_error.*\)%d\(.*\), CRM_SERVICE:\1\2:' ocfs2_controld/pacemaker.c
+	sed -i -e 's:umode_t:__le16:' include/ocfs2-kernel/ocfs2_fs.h
 	if [[ -e ocfs2cdsl ]]; then
 		export ac_config_files="ocfs2cdsl/ocfs2cdsl.8"
 		sed -i -e 's:^\(SUBDIRS = .*\)$:\1 ocfs2cdsl:' Makefile
