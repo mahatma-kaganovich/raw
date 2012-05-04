@@ -1,7 +1,7 @@
 EAPI="3"
 
 # drbd-kernel-8.3.9999.ebuild
-GIT=$([[ ${PVR} = *.9999 ]] && echo "git")
+GIT=$([[ ${PVR} = *.9999 ]] && echo "git-2")
 EGIT_REPO_URI="git://git.drbd.org/drbd-${PV%.9999}.git"
 
 inherit eutils versionator linux-mod ${GIT}
@@ -25,9 +25,9 @@ SLOT="0"
 
 S="${WORKDIR}/${MY_P}"
 
-if [[ "${GIT}" == "git" ]]; then
+if [[ "${GIT}" == git* ]]; then
 	SRC_URI=""
-	export EGIT_PROJECT="drbd"
+	export EGIT_PROJECT="${EGIT_PROJECT//-kernel}"
 fi
 
 src_prepare(){
