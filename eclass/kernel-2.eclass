@@ -659,7 +659,7 @@ native)
 		[3-6]:*)CF1 M${cpu_family}86;;
 		*)CF1 GENERIC_CPU X86_GENERIC;;
 		esac
-		[[ "$family" == 6 ]] && [[ "$model" -gt 25 ]] && CF1 INTEL_IDLE
+		[[ "$cpu_family" == 6 ]] && [[ "$model" -gt 25 ]] && CF1 INTEL_IDLE
 	;;
 	*AMD*)
 		V=AMD
