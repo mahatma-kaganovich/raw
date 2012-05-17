@@ -2,6 +2,8 @@
 # Distributed under the terms of the GNU General Public License v2
 # $Header$
 
+EAPI=3
+
 if [[ "${PV}" == *.9999 ]]; then
 	OCFS2_BRANCH="${PN}-${PV%.9999}"
 	EGIT_COMMIT="refs/remotes/origin/${OCFS2_BRANCH}"
@@ -12,8 +14,6 @@ if [[ "${PV}" == *.9999 ]]; then
 fi
 
 inherit flag-o-matic eutils `[[ "${PVR}" == *9999* ]] && echo "git-2 autotools"`
-
-EAPI=3
 
 vv="${PV%.*}"
 PV_MAJOR="${PV%%.*}"
