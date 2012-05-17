@@ -331,8 +331,6 @@ endif' >>"${S1}"/gfx/gl/Makefile.in
 		done
 	done
 
-	ln -s Linux2.6.mk "${S1}"/security/coreconf/Linux`uname -r|sed -e 's:\([^.]*\.[^.]*\).*:\1:'`.mk
-
 	[[ -e "${S1}/netwerk/protocol/device" ]] && for i in "${S}" "${S1}"; do
 		grep -q "^NECKO_PROTOCOLS_DEFAULT=.*device" "${i}"/configure.in ||
 			sed -i -e 's:^NECKO_PROTOCOLS_DEFAULT=":NECKO_PROTOCOLS_DEFAULT="device :' "${i}"/configure.in
