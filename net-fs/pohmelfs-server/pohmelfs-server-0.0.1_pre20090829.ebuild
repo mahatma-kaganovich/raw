@@ -1,7 +1,7 @@
+EAPI=3
+
 # possible deprecated package
 inherit eutils autotools `[[ "${PVR}" == *9999* ]] && echo "git"`
-
-EAPI=3
 
 DESCRIPTION="POHMELFS userspace server"
 HOMEPAGE="http://www.ioremap.net/projects/pohmelfs"
