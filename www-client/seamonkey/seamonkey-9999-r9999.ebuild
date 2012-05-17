@@ -301,7 +301,7 @@ src_prepare(){
 #	sed -i -e 's:\(return XRE_InitEmbedding.*\), nsnull, 0:\1:' "${S1}"/extensions/java/xpcom/src/nsJavaInterfaces.cpp
 #	use opengl && sed -i -e 's: = GLX$: = EGL:' "${S1}"/{gfx/thebes,content/canvas/src}/Makefile*
 	if use force-gl; then
-		sed -i -e 's:if (mIsMesa):if (0):' "${S1}"/widget/src/xpwidgets/GfxInfoX11.cpp
+		sed -i -e 's:if (mIsMesa):if (0):' "${S1}"/widget/xpwidgets/GfxInfoX11.cpp
 		# dumb
 		sed -i -e 's%return nsIGfxInfo::FEATURE_BLOCKED_[A-Z0-9_]*%return nsIGfxInfo::FEATURE_NO_INFO%g' "${S1}"/widget/xpwidgets/*.cpp
 		ewarn "Enabling all hardware for OpenGL. Just USE='-force-gl' if problems."
