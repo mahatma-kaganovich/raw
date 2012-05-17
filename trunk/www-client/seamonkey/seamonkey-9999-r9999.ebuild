@@ -303,7 +303,7 @@ src_prepare(){
 	if use force-gl; then
 		sed -i -e 's:if (mIsMesa):if (0):' "${S1}"/widget/src/xpwidgets/GfxInfoX11.cpp
 		# dumb
-		sed -i -e 's%return nsIGfxInfo::FEATURE_BLOCKED_[A-Z0-9_]*%return nsIGfxInfo::FEATURE_NO_INFO%g' "${S1}"/widget/src/xpwidgets/*.cpp
+		sed -i -e 's%return nsIGfxInfo::FEATURE_BLOCKED_[A-Z0-9_]*%return nsIGfxInfo::FEATURE_NO_INFO%g' "${S1}"/widget/xpwidgets/*.cpp
 		ewarn "Enabling all hardware for OpenGL. Just USE='-force-gl' if problems."
 	fi
 	use gles2 || sed -i -e '/#define USE_GLES2 1/d' "${S1}"gfx/gl/GLContext.h
@@ -317,6 +317,8 @@ endif' >>"${S1}"/gfx/gl/Makefile.in
 	ln -s {cache,"${S1}"/xpcom/idl-parser}/xpidlyacc.py
 
 	sed -i -e 's:\r::' "${S}"/db/makefiles.sh
+
+	sed -i -e '/;-/d' -e 's,;+,,' -e 's; DATA ;;' -e 's,;;,,' -e 's,;.*,;,' $(find "${S1}"/security/nss -name '*.def')
 
 	for i in "${WORKDIR}"/l10n/*/toolkit/chrome/global/*; do
 		[[ -e "${i}" ]] && ln -s "${i}" "${i%/*}/../../../suite/chrome/browser/${i##*/}"
