@@ -1,5 +1,5 @@
 EAPI="4"
-GIT=$([[ ${PVR} = *9999* ]] && echo "git")
+GIT=$([[ ${PVR} = *9999* ]] && echo "git-2")
 EGIT_REPO_URI="git://anongit.freedesktop.org/mesa/mesa"
 
 inherit autotools multilib flag-o-matic ${GIT} portability
@@ -341,8 +341,16 @@ fix_opengl_symlinks() {
 		# libGL.so symlink and leave libGL.so.1 being the real thing
 		dosym libGL.so.1 /usr/$(get_libdir)/libGL.so
 	else
-		dosym libGL.so.1.2 /usr/$(get_libdir)/libGL.so
-		dosym libGL.so.1.2 /usr/$(get_libdir)/libGL.so.1
+		local l='' i j
+		for i in /usr/$(get_libdir)/libGL.so{.1.2,.1,}; do
+			[[ -z "$l" ]] && for j in "$D$i".*; do
+				[ -e "$j" ] || continue
+				[ -e "$D$i" -a ! -L "$D$i" -a ! -L "$l" ]  && cmp -s "$D$i" "$j" && rm "$D$i"
+				l="${j##*/}"
+				break
+			done
+			[[ -n "$l" ]] && ! [[ -e "$D$i" ]] && dosym "$l" "$i"
+		done
 	fi
 }
 
