@@ -7,8 +7,10 @@ Primary - for experiments with LXC.
 (c) Denis Kaganovich, <mahatma@eu.by>
 Licensed under the same terms as the rest of Apache (or Anarchy license).
 
---- a/server/mpm/experimental/itk/itk.c	2012-03-06 11:14:36.000000000 +0300
-+++ b/server/mpm/experimental/itk/itk.c	2012-03-06 11:13:08.000000000 +0300
+In this version I remove vfork by default die to segfaults.
+
+--- a/server/mpm/experimental/itk/itk.c	2012-05-18 14:49:06.000000000 +0300
++++ b/server/mpm/experimental/itk/itk.c	2012-05-18 15:02:49.000000000 +0300
 @@ -104,6 +104,19 @@
  #define HARD_THREAD_LIMIT 1
  #endif
@@ -16,7 +18,7 @@ Licensed under the same terms as the rest of Apache (or Anarchy license).
 +#ifdef __linux__
 +#include <syscall.h>
 +#include <linux/version.h>
-+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,5,49) && defined(CLONE_VFORK)
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,5,49) && defined(CLONE_FS)
 +#define ITK_USE_CLONE 1
 +static int clone_flags1 = 0, clone_flags2 = 0;
 +#else
@@ -29,20 +31,19 @@ Licensed under the same terms as the rest of Apache (or Anarchy license).
  /* config globals */
  
  int ap_threads_per_child=0;         /* Worker threads per child */
-@@ -718,7 +731,11 @@ static void child_main(int child_num_arg
+@@ -715,7 +728,11 @@ static void child_main(int child_num_arg
           */
  
          {
--            pid_t pid = fork(), child_pid;
 +#if ITK_USE_CLONE
 +            pid_t pid = syscall(SYS_clone, clone_flags1, 0, NULL, NULL), child_pid;
 +#else
-+            pid_t pid = vfork(), child_pid;
+             pid_t pid = fork(), child_pid;
 +#endif
              int status;
              switch (pid) {
              case -1:
-@@ -809,6 +826,8 @@ static int make_child(server_rec *s, int
+@@ -806,6 +823,8 @@ static int make_child(server_rec *s, int
      if ((pid = os_fork(unixd_config.user_name)) == -1) {
  #elif defined(TPF)
      if ((pid = os_fork(s, slot)) == -1) {
@@ -51,18 +52,18 @@ Licensed under the same terms as the rest of Apache (or Anarchy license).
  #else
      if ((pid = fork()) == -1) {
  #endif
-@@ -1431,6 +1450,10 @@ static int itk_pre_config(apr_pool_t *p,
+@@ -1428,6 +1447,10 @@ static int itk_pre_config(apr_pool_t *p,
  #ifdef AP_MPM_WANT_SET_MAX_MEM_FREE
      ap_max_mem_free = APR_ALLOCATOR_MAX_FREE_UNLIMITED;
  #endif
 +#if ITK_USE_CLONE
-+    clone_flags1 = SIGCHLD | CLONE_VFORK;
++    clone_flags1 = SIGCHLD;
 +    clone_flags2 = SIGCHLD | CLONE_FS;
 +#endif
  
      apr_cpystrn(ap_coredump_dir, ap_server_root, sizeof(ap_coredump_dir));
  
-@@ -1725,6 +1748,19 @@ static const char *set_chroot(cmd_parms
+@@ -1722,6 +1745,19 @@ static const char *set_chroot(cmd_parms
      return NULL;
  }
  
@@ -73,7 +74,7 @@ Licensed under the same terms as the rest of Apache (or Anarchy license).
 +    if (err != NULL)
 +        return err;
 +
-+    clone_flags1 = (SIGCHLD | CLONE_VFORK) ^ atoi(flags1);
++    clone_flags1 = (SIGCHLD) ^ atoi(flags1);
 +    clone_flags2 = (SIGCHLD | CLONE_FS) ^ (flags2 ? atoi(flags2) : 0);
 +    return NULL;
 +}
@@ -82,13 +83,13 @@ Licensed under the same terms as the rest of Apache (or Anarchy license).
  static const command_rec itk_cmds[] = {
  UNIX_DAEMON_COMMANDS,
  LISTEN_COMMANDS,
-@@ -1746,6 +1782,10 @@ AP_INIT_TAKE1("MaxClientsVHost", set_max
+@@ -1743,6 +1779,10 @@ AP_INIT_TAKE1("MaxClientsVHost", set_max
                "Maximum number of children alive at the same time for this virtual host."),
  AP_INIT_TAKE1("NiceValue", set_nice_value, NULL, RSRC_CONF|ACCESS_CONF,
                "Set nice value for the given vhost, from -20 (highest priority) to 19 (lowest priority)."),
 +#if ITK_USE_CLONE
 +AP_INIT_TAKE12("CloneFlags", set_clone_flags, NULL, RSRC_CONF,
-+              "XOR to default (SIGCHLD|CLONE_VFORK, SIGCHLD|CLONE_FS) clone flags. See /usr/include/{linux,bits}/sched.h or 'man 2 clone'"),
++              "XOR to default (SIGCHLD, SIGCHLD|CLONE_FS) clone flags. See /usr/include/{linux,bits}/sched.h or 'man 2 clone'"),
 +#endif
  AP_GRACEFUL_SHUTDOWN_TIMEOUT_COMMAND,
  { NULL }
