@@ -854,6 +854,11 @@ kernel-2_src_prepare(){
 	# gcc 4.5+ -O3 -ftracer
 	sed -i -e 's:^static unsigned long vmcs_readl:static noinline unsigned long vmcs_readl:' arch/x86/kvm/vmx.c
 	sed -i -e 's:^static void sleep_delay:static noinline void sleep_delay:' drivers/media/radio/radio-aimslab.c
+	# gcc 4.7 -O3 or -finline-functions
+#	echo "CFLAGS_phy.o += -fno-inline-functions" >>drivers/net/ethernet/intel/e1000e/Makefile
+#	echo "CFLAGS_e1000_phy.o += -fno-inline-functions" >>drivers/net/ethernet/intel/igb/Makefile
+	sed -i -e 's:^s32 e1000e_phy_has_link_generic:s32 noinline e1000e_phy_has_link_generic:' drivers/net/ethernet/intel/e1000e/phy.c
+	sed -i -e 's:^s32 igb_phy_has_link:s32 noinline igb_phy_has_link:' drivers/net/ethernet/intel/e1000e/phy.c
 	# ;)
 	sed -i -e 's:^#if 0$:#if 1:' drivers/net/tokenring/tms380tr.c
 	# amdfam10 (???)
