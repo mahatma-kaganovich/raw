@@ -873,6 +873,8 @@ kernel-2_src_prepare(){
 	fi
 	# core2+
 	echo "CFLAGS_ti_usb_3410_5052.o += -fno-tree-loop-distribution" >>drivers/usb/serial/Makefile
+	# deprecated
+	sed -i -e 's:defined(@:(@:' kernel/timeconst.pl
 	# pnp
 	use pnp || return
 	einfo "Fixing modules hardware info exports (forced mode, waiting for bugs!)"
