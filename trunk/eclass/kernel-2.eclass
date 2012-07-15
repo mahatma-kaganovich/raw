@@ -161,6 +161,8 @@ kernel-2_src_configure() {
 	[[ -n "${aflags}" ]] && sed -i -e "s/^\(AFLAGS_[A-Z]*[	 ]*=\)$/\1 ${aflags}/" Makefile
 	[[ -n "${ldflags}" ]] && sed -i -e "s/^\(LDFLAGS_[A-Z]*[	 ]*=\)$/\1 ${ldflags}/" Makefile
 	export comp=''
+	# kmake & genkernel
+	export MAKEOPTS+=" DEPMOD=$([[ -x /sbin/depmod ]] && echo /sbin/depmod || echo /usr/bin/depmod)"
 	use build-kernel || return
 	useconfig
 	kconfig
