@@ -1098,7 +1098,7 @@ userspace(){
 	fi
 
 	mkdir -p "${S}/usr/"{bin,src,etc}
-	cp ${SHARE}/etc/modflags "${S}/etc/modflags" -aT
+	cp ${SHARE}/etc/modflags "${S}/usr/etc/modflags" -aT
 	for i in "${SHARE}"/*.c; do
 		einfo "Compiling $i"
 		cp "$i" "${S}/usr/src/" || die
