@@ -365,17 +365,19 @@ sub _and{
 	$msg.=" $_[0]" if($_[0] ne $_[2]);
 	cfg(@_[0,1]);
 	for(grep(/.*:$_[0]$/,keys %depends)){
-#		next if(!exists($tristate{$_}));
+		next if(!exists($tristate{$_}));
 		for(@{$depends{$_}}){
 			_and($_,@_[1,2]) for(split(/[ )(]/,$_));
 		}
 	}
-	for(@{$select{$_[0]}}){
-#		next if(!exists($tristate{$_}));
-		my $i=$_;
-		$i=~s/.*://;
-		_and($i,@_[1,2]);
-	}
+#	my @s;
+#	for(@{$select{$_[0]}}){
+#		my $i=$_;
+#		$i=~s/.*://;
+#		return if($config{$i} eq 'y');
+#		push @s,$i;
+#	}
+#	_and($_,@_[1,2]) for(@s);
 }
 
 sub onoff{

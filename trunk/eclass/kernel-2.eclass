@@ -425,7 +425,10 @@ to_overlay(){
 		cp -a "$SHARE/$x" "$i/$x" -aT
 	done
 	for x in $(_lsmod drivers/dma); do
-		_lsmod crypto/async_tx >>"$i/etc/modflags/$x"
+		{
+			_lsmod crypto/async_tx
+			echo raid456
+		} >>"$i/etc/modflags/$x"
 	done
 	bash "${SHARE}/genpkgrd" "${i}" "${KERNEL_IMAGE_FILES}" "${KERNEL_IMAGE_FILES2}" "${KERNEL_IMAGE_PACKAGES}"
 }
