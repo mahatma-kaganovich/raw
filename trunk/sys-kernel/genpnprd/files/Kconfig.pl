@@ -364,7 +364,7 @@ sub _and{
 	return if($config{$_[0]} ne 'm');
 	$msg.=" $_[0]" if($_[0] ne $_[2]);
 	cfg(@_[0,1]);
-	for(grep(/.*:$_[0]$/,keys %depends)){
+	for(grep(/.*:$_[0]$/,keys %depends),@{$select{$_[0]}}){
 		next if(!exists($tristate{$_}));
 		for(@{$depends{$_}}){
 			_and($_,@_[1,2]) for(split(/[ )(]/,$_));
