@@ -274,7 +274,7 @@ kernel-2_src_compile() {
 	done
 
 	if use !klibc && use !genkernel; then
-		/usr/bin/genpnprd --IMAGE "initrd-${REAL_KV}.img" --S "${S}" --DATA "${SHARE}" --FILES "/bin/busybox
+		/usr/bin/genpnprd --IMAGE "initrd-${REAL_KV}.img" --S "${S}" --OVERLAY "${TMPDIR}/overlay-rd" --FILES "/bin/busybox
 			$(use e2fsprogs && echo /sbin/blkid)
 			$(use mdadm && echo /sbin/mdadm /sbin/mdmon)
 			$(use device-mapper && echo /usr/sbin/dmraid)
@@ -299,7 +299,7 @@ kernel-2_src_compile() {
 	run_genkernel ramdisk "--kerneldir=\"${S}\" --bootdir=\"${S}\" --module-prefix=\"${BDIR}\" --no-mountboot ${p}"
 	r=`ls initramfs*-${REAL_KV}||ls "$TMPDIR"/genkernel/initramfs*` && mv "$r" "initrd-${REAL_KV}.img" || die "initramfs rename failed"
 	einfo "Preparing boot image"
-	bash "${SHARE}/genpnprd" "${S}/initrd-${REAL_KV}.img" "$( (use !pnp && echo nopnp)||(use pnponly && echo pnponly) )" "${TMPDIR}"/overlay-rd "${S}" ${comp:+--COMPRESS $comp} $(use thin||echo --THIN -) --DATA "${SHARE}"|| die
+	bash "${SHARE}/genpnprd" "${S}/initrd-${REAL_KV}.img" "$( (use !pnp && echo nopnp)||(use pnponly && echo pnponly) )" "${TMPDIR}"/overlay-rd "${S}" ${comp:+--COMPRESS $comp} $(use thin||echo --THIN -)|| die
 	local i="initrd-${REAL_KV}.cpio" i1="initrd-${REAL_KV}.img"
 	( use pnp || use compressed || (use integrated && use !thin) ) &&
 		gzip -dc "$i1"  >"$i" && rm "$i1"
@@ -419,8 +419,14 @@ kernel-2_src_install() {
 to_overlay(){
 	use build-kernel || return
 	einfo "Generating boot image overlay (if configured)"
-	local i="${TMPDIR}/overlay-rd"
-	mkdir "${i}"
+	local i="${TMPDIR}/overlay-rd" x
+	for x in etc/modflags; do
+		mkdir -p "$i/$x"
+		cp -a "$SHARE/$x" "$i/$x" -aT
+	done
+	for x in $(_lsmod drivers/dma); do
+		_lsmod crypto/async_tx >>"$i/etc/modflags/$x"
+	done
 	bash "${SHARE}/genpkgrd" "${i}" "${KERNEL_IMAGE_FILES}" "${KERNEL_IMAGE_FILES2}" "${KERNEL_IMAGE_PACKAGES}"
 }
 
@@ -881,12 +887,6 @@ kernel-2_src_prepare(){
 	echo "CFLAGS_ti_usb_3410_5052.o += -fno-tree-loop-distribution" >>drivers/usb/serial/Makefile
 	# deprecated
 	sed -i -e 's:defined(@:(@:' kernel/timeconst.pl
-	# additional dependences
-	cp "$SHARE" "$TMPDIR/SHARE" -aT || die
-	export SHARE="$TMPDIR/SHARE"
-	for i in $(_lsmod drivers/dma); do
-		_lsmod crypto/async_tx >>"$SHARE/etc/modflags/$i"
-	done
 	# pnp
 	use pnp || return
 	einfo "Fixing modules hardware info exports (forced mode, waiting for bugs!)"
@@ -1011,7 +1011,7 @@ detects(){
 	_unmodule .
 	perl "${SHARE}"/mod2sh.pl "${WORKDIR}" >&2 || die "Unable to run '${SHARE}/mod2sh.pl'"
 	. "${WORKDIR}"/modules.alias.sh
-	cat "${WORKDIR}"/modules.pnp "${SHARE}"/etc/modflags/* >>"${WORKDIR}"/modules.pnp_
+	cat "${WORKDIR}"/modules.pnp "${TMPDIR}"/overlay-rd/etc/modflags/* >>"${WORKDIR}"/modules.pnp_
 	{
 		# /sys
 		cat `find /sys -name modalias`
@@ -1023,9 +1023,9 @@ detects(){
 			}
 		done </proc/mounts
 		# cpu flags
-		(cd "${SHARE}"/etc/modflags && cat $(grep "${PNP_VENDOR}^flags" /proc/cpuinfo) $(cat /sys/bus/acpi/devices/*/path|sed -e 's:^\\::') </dev/null 2>/dev/null)
+		(cd "${TMPDIR}"/overlay-rd/etc/modflags && cat $(grep "${PNP_VENDOR}^flags" /proc/cpuinfo) $(cat /sys/bus/acpi/devices/*/path|sed -e 's:^\\::') </dev/null 2>/dev/null)
 	}|modalias_reconf m2y 1
-	(cd "${SHARE}"/etc/modflags && cat $(cat "${TMPDIR}/unmodule.m2y") </dev/null 2>/dev/null)|modalias_reconf m2y
+	(cd "${TMPDIR}"/overlay-rd/etc/modflags && cat $(cat "${TMPDIR}/unmodule.m2y") </dev/null 2>/dev/null)|modalias_reconf m2y
 }
 
 detects_cleanup(){
@@ -1098,7 +1098,6 @@ userspace(){
 	fi
 
 	mkdir -p "${S}/usr/"{bin,src,etc}
-	cp ${SHARE}/etc/modflags "${S}/usr/etc/modflags" -aT
 	for i in "${SHARE}"/*.c; do
 		einfo "Compiling $i"
 		cp "$i" "${S}/usr/src/" || die
@@ -1139,7 +1138,7 @@ slink /usr/$libdir lib 0755 0 0"
 		echo "file /usr/lib/$f $i 0755 0 0"
 		echo "slink /lib/$f /usr/lib/$f 0755 0 0"
 	done
-	for i in "${BDIR}/" "$k/bin/" "usr/lib/klibc*" '-L usr/'{bin,sbin,etc}/'*'; do
+	for i in "${BDIR}/" "$k/bin/" "usr/lib/klibc*" '-L usr/'{bin,sbin,etc}/'*' "${TMPDIR}/overlay-rd/*"; do
 		f="${i##*/}"
 		find ${i%/*} ${f:+-name} "${f}" 2>/dev/null
 	done | while read i; do
@@ -1151,6 +1150,7 @@ slink /usr/$libdir lib 0755 0 0"
 		f="${f//\/usr\/$libdir\///usr/lib/}"
 		f="${f#/usr/lib/klibc}"
 		case "$f" in
+		*/overlay-rd/*)f="${f##*/overlay-rd/}/";;
 		/usr/lib*|*/loop.ko|*/squashfs.ko);;
 		/lib*/*)use compressed && continue;;
 		/usr/*)f="${f#/usr}";;
