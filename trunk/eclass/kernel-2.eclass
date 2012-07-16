@@ -204,6 +204,7 @@ kernel-2_src_compile() {
 		fi
 		einfo "Compiling kernel (all)"
 		kmake all ${KERNEL_MODULES_MAKEOPT}
+		$i && modules_preprocess
 		grep -q "=m$" .config && [[ -z "`find . -name "*.ko" -print`" ]] && die "Modules configured, but not built"
 		$i || break
 		i=false
@@ -834,6 +835,10 @@ _cc(){
 	return 1
 }
 
+_lsmod(){
+	find "${@}" -name "*.c"|sed -e 's:^.*/\([^/]*\).c$:\1:' -e 's:-:_:g'
+}
+
 kernel-2_src_prepare(){
 	[[ ${ETYPE} == sources ]] || return
 
@@ -877,6 +882,12 @@ kernel-2_src_prepare(){
 	echo "CFLAGS_ti_usb_3410_5052.o += -fno-tree-loop-distribution" >>drivers/usb/serial/Makefile
 	# deprecated
 	sed -i -e 's:defined(@:(@:' kernel/timeconst.pl
+	# additional dependences
+	cp "$SHARE" "$TMPDIR/SHARE" -aT || die
+	export SHARE="$TMPDIR/SHARE"
+	for i in $(_lsmod drivers/dma); do
+		_lsmod crypto/async_tx >>"$SHARE/etc/modflags/$i"
+	done
 	# pnp
 	use pnp || return
 	einfo "Fixing modules hardware info exports (forced mode, waiting for bugs!)"
