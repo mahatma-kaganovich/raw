@@ -237,6 +237,13 @@ kernel-2_src_compile() {
 
     if grep -q "=m$" .config; then
 	einfo "Preparing modules"
+
+	# fix modules order & presence in /etc/modflags
+	sed -e 's:.*/::' -e 's:.ko*::' -e 's:-:_:' <modules.order >"${TMPDIR}/mod.order" || die
+	for i in "${TMPDIR}/overlay-rd/etc/modflags/"*; do
+		grep -xoFf "$i" "${TMPDIR}/mod.order" >"${TMPDIR}/_mod" && mv "${TMPDIR}/_mod" "$i"
+	done
+
 	mkdir -p "${BDIR}" lib/modules/"${REAL_KV}"
 	kmake INSTALL_MOD_PATH="${BDIR}" -j1 modules_install
 	ln -s ../firmware lib/firmware
