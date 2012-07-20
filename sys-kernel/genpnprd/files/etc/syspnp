@@ -574,6 +574,7 @@ fstype(){
 
 resume(){
 	local i
+	[[ -e /sys/power/resume ]] || return
 	[[ -n "$*" ]] && for i in "${@}"; do
 		[[ "$i" == true ]] && {
 			cat $(grep -l "[1-9]" /sys/class/block/*/size|grep -v /loop|sed -e 's:size$:dev:') >/sys/power/resume
