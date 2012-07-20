@@ -88,7 +88,7 @@ mdevs(){
 			[ -e /lib/firmware/$FIRMWARE ] && cat /lib/firmware/$FIRMWARE >/sys/$DEVPATH/data && echo 0 >/sys/$DEVPATH/loading || echo -1 >/sys/$DEVPATH/loading
 		fi
 		if [ -n "$DEVNAME" ] && ! [ -e "/dev/$DEVNAME" ]; then
-			DEVNAME="/dev/$DEVNAME"
+			DEVNAME="$1/dev/$DEVNAME"
 			[ -z "${i##/sys/class/block/*}" ] && t=b
 			i="${DEVNAME%/*}"
 			[ -e "$i" ] || mkdir -p "$i"
@@ -392,6 +392,11 @@ if $BOOT; then
 		echo "Not found '/newroot/$cmd_init' - try shell:"
 		exec sh
 	fi
+	[ -e /newroot/dev/console ] ||
+	    (mkdir -p /newroot/dev ; mount --move /dev /newroot/dev) ||
+	    mount -n -t devtmpfs -o exec,nosuid,mode=0755,size=10M udev /newroot/dev ||
+	    mount -n -t tmpfs dev /newroot/dev
+	[ -e /newroot/dev/console ] || cp -a /dev /newroot/ || mdevs /newroot
 	p="/newroot/usr/src/linux-$KV"
 	[ -L "/newroot/$libmod/kernel" ] && [ -e "$p.squashfs" ] && i=`losetup -f` && losetup $i $p.squashfs && mount -r -t squashfs $i $p
 	echo -n "Boot: [$cmd_root] "
