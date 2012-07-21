@@ -596,9 +596,9 @@ cpu2K(){
 local i v V="" CF="" march=$(march) m64g="HIGHMEM64G -HIGHMEM4G -NOHIGHMEM" freq='' gov='ONDEMAND'
 local vendor_id="" model_name="" flags="" cpu_family="" model="" cache_alignment="" fpu="" siblings="" cpu_cores="" processor=""
 export PNP_VENDOR="^vendor_id\|"
-CF1 -SMP -X86{BIGSMP,GENERIC} X86_{X2APIC,UP_APIC,UP_IOAPIC} -SPARSE_IRQ
+CF1 -SMP -X86{BIGSMP,GENERIC} X86_{X2APIC,UP_APIC,UP_IOAPIC} -SPARSE_IRQ -CPUSETS
 use xen && CF1 -HIGHMEM64G -HIGHMEM4G NOHIGHMEM X86_PAE
-use smp && CF1 SMP X86_BIGSMP SCHED_{SMT,MC} SPARSE_IRQ
+use smp && CF1 SMP X86_BIGSMP SCHED_{SMT,MC} SPARSE_IRQ CPUSETS
 [[ "$(march mtune)" == generic ]] && CF1 X86_GENERIC
 if [[ -z "${march}" ]]; then
 	CF1 GENERIC_CPU X86_GENERIC
@@ -608,7 +608,7 @@ fi
 case "${march}" in
 native)
 	export PNP_VENDOR=""
-	CF1 -SCHED_{SMT,MC} -X86_{UP_APIC,TSC,PAT,MSR,MCE,CMOV,X2APIC} -MTRR -INTEL_IDLE -KVM_INTEL -KVM_AMD -SPARSE_IRQ
+	CF1 -SCHED_{SMT,MC} -X86_{UP_APIC,TSC,PAT,MSR,MCE,CMOV,X2APIC} -MTRR -INTEL_IDLE -KVM_INTEL -KVM_AMD -SPARSE_IRQ -CPUSETS
 	case "${CTARGET:-${CHOST}}" in
 	x86*|i?86*)
 		use multitarget && CF1 -64BIT
@@ -658,7 +658,7 @@ native)
 	[[ "${fpu}" != yes ]] && CF1 MATH_EMULATION
 
 	use acpi && acpi_detect
-	[[ -n "${CF##* -NUMA *}" ]] && CF1 SPARSE_IRQ
+	[[ -n "${CF##* -NUMA *}" ]] && CF1 SPARSE_IRQ CPUSETS
 
 	case "${vendor_id}" in
 	*Intel*)
@@ -765,7 +765,6 @@ athlon|athlon-tbird|athlon-4|athlon-xp|athlon-mp)CF1 MK7 $m64g -SCHED_SMT;freq=X
 bdver1|k8|opteron|athlon64|athlon-fx|k8-sse3|opteron-sse3|athlon64-sse3|amdfam10|barcelona)CF1 MK8 $m64g -SCHED_SMT;freq=X86_POWERNOW_K8;gov=CONSERVATIVE;V=AMD;;
 *)CF1 GENERIC_CPU X86_GENERIC;;
 esac
-[[ -n "${CF##* -NUMA *}" ]] && CF1 CPUSETS
 case "${CTARGET:-${CHOST}}:$CF" in
 	x86_64*|*\ 64BIT\ *)CF1 -MPENTIUM4 -PENTIUMM -X86_GENERIC;;
 	*)CF1 -MPSC -GENERIC_CPU;;
