@@ -765,6 +765,7 @@ athlon|athlon-tbird|athlon-4|athlon-xp|athlon-mp)CF1 MK7 $m64g -SCHED_SMT;freq=X
 bdver1|k8|opteron|athlon64|athlon-fx|k8-sse3|opteron-sse3|athlon64-sse3|amdfam10|barcelona)CF1 MK8 $m64g -SCHED_SMT;freq=X86_POWERNOW_K8;gov=CONSERVATIVE;V=AMD;;
 *)CF1 GENERIC_CPU X86_GENERIC;;
 esac
+[[ -n "${CF##* -NUMA *}" ]] && CF1 CPUSETS
 case "${CTARGET:-${CHOST}}:$CF" in
 	x86_64*|*\ 64BIT\ *)CF1 -MPENTIUM4 -PENTIUMM -X86_GENERIC;;
 	*)CF1 -MPSC -GENERIC_CPU;;
