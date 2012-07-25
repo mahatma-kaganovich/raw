@@ -273,6 +273,8 @@ kernel-2_src_compile() {
 		kmake headers_install #$(use compressed && echo _all)
 	fi
 
+	[[ -n "$KERNEL_MAKE_ADD" ]] && kmake $KERNEL_MAKE_ADD
+
 	use klibc && userspace
 
 	if use tools; then
