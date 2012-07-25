@@ -988,7 +988,7 @@ echo "${aflags# }"
 module_reconf(){
 	local i c
 	sed -e 's:^.*/::g' -e 's:\.ko$::g'|sort -u|while read i; do
-		grep -Rh "^\s*obj\-\$[(]CONFIG_.*\s*\+=.*\s${i//[_-]/[_-]}\.o" "${TMPDIR}"/unmodule.tmp|sed -e 's:).*$::g' -e 's:^.*(CONFIG_::'|sort-u|while read c; do
+		grep -Rh "^\s*obj\-\$[(]CONFIG_.*\s*\+=.*\s${i//[_-]/[_-]}\.o" "${TMPDIR}"/unmodule.tmp|sed -e 's:).*$::g' -e 's:^.*(CONFIG_::'|sort -u|while read c; do
 			$1 "$c"
 			echo "$i" >>"${TMPDIR}/unmodule.$1"
 		done
