@@ -1,0 +1,17 @@
+Partial revert of commit deb5ade9145f8809f1fde19cf53bdfdf1fb7963e
+Fixed o2cb_ctl ignoring >1 node.
+
+Signed-off-by: Denis Kaganovich (Dzianis Kahanovich) <mahatma@eu.by>
+
+diff -pruN a/o2cb_ctl/jconfig.c b/o2cb_ctl/jconfig.c
+--- a/o2cb_ctl/jconfig.c	2012-03-14 21:45:05.000000000 +0300
++++ b/o2cb_ctl/jconfig.c	2012-07-26 16:06:38.000000000 +0300
+@@ -1082,6 +1082,8 @@ JConfigStanza *j_config_add_stanza(JConf
+                             g_strdup(stanza_name),
+                             elem);
+     }
++    else
++        g_list_append(elem, cfs);
+ 
+     return(cfs);
+ }  /* j_config_add_stanza() */
