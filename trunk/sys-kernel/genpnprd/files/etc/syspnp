@@ -532,7 +532,7 @@ findnfsmount() {
 			bad_msg "The DHCP Server did not send a valid root-path."
 			bad_msg "Please check your DHCP setup, or provide a nfsroot=<...> parameter."
 		else
-			local o="ro,nolock,rsize=1024,wsize=1024,$cmd_real_rootflags" m="$NEW_ROOT"
+			local o="ro,nolock,rsize=1024,wsize=1024,$cmd_real_rootflags" m="$NEW_ROOT" unc
 			[[ "$CDROOT" != '0' ]] && m="$m/mnt/cdrom"
 			case "$NFSLIKE_FS:$NFSROOT" in
 			cifs:*|://*)o="$o,user=,guest,serverino";NFSLIKE_FS=cifs;;
@@ -541,14 +541,17 @@ findnfsmount() {
 			esac
 			grep -q "[ 	]${NFSLIKE_FS:=nfs}\$" /proc/filesystems || return 1
 			for o in $o; do
+			    for unc in '' "$(echo ",unc=$NFSROOT"|sed -e 's:/:\\:g')"; do # try new cifs
 				good_msg "Attempting to mount $NFSLIKE_FS on $NFSROOT into $m -o $o"
-				if mount -t $NFSLIKE_FS $NFSROOT $m -o $o ; then
+				if mount -t $NFSLIKE_FS "$NFSROOT" $m -o "$o$unc" ; then
 					# FIXME: Need to start portmap and the other rpc daemons in
 					# order to remount rw.
 					REAL_ROOT="/dev/nfs"
 					REAL_ROOTFLAGS="$o"
 					return 0
 				fi
+				[[ "$NFSLIKE_FS" == nfs ]] && break
+			    done
 			done
 			bad_msg "$NFSLIKE_FS Mounting failed. Is the path correct ?"
 		fi
