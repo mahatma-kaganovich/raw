@@ -301,18 +301,6 @@ start() {
 	echo "]"
 
 	eend $ret
-	return $ret
-}
-
-isdown(){
-			$DRBDADM -d down all|while read c m s; do
-				if [[ -e "/dev/drbd$m" ]]; then
-				echo "==$m"
-					eend 1
-					return 1
-				fi
-			done
-			return 0
 }
 
 stop() {
@@ -344,7 +332,6 @@ stop() {
 		fi
 	fi
 	eend $ret
-	return $ret
 }
 
 status() {
@@ -367,7 +354,5 @@ status() {
 reload() {
 	ebegin "Reloading DRBD"
 	$DRBDADM adjust all
-	ret=$?
-	eend $ret
-	return $ret
+	eend $?
 }
