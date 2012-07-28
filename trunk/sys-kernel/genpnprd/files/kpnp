@@ -87,7 +87,7 @@ mdevs(){
 		if [ -n "$FIRMWARE" ] && echo 1 >/sys/$DEVPATH/loading; then
 			[ -e /lib/firmware/$FIRMWARE ] && cat /lib/firmware/$FIRMWARE >/sys/$DEVPATH/data && echo 0 >/sys/$DEVPATH/loading || echo -1 >/sys/$DEVPATH/loading
 		fi
-		if [ -n "$DEVNAME" ] && ! [ -e "/dev/$DEVNAME" ]; then
+		if [ -n "$DEVNAME" ] && ! [ -e "$1/dev/$DEVNAME" ]; then
 			DEVNAME="$1/dev/$DEVNAME"
 			[ -z "${i##/sys/class/block/*}" ] && t=b
 			i="${DEVNAME%/*}"
