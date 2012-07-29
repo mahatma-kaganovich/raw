@@ -1,11 +1,13 @@
 abis="$MULTILIB_ABIS"
 use !multilib && abis=''
 use multitarget && use x86 && abis+=' x86'
-
-for a1 in x86:IA32_EMULATION x32:X86_X32; do
-	a="-${a1#*:}"
-	for a2 in $abis; do
-		[[ $a1 == $a2:* ]] && a="${a#-}"
-	done
-	KERNEL_CONFIG+=" $a"
+abis=" $abis "
+aa=' '
+for a1 in x86:IA32_EMULATION x32:IA32_EMULATION x32:X86_X32; do
+	a="${a1#*:} "
+	aa="${aa// -$a / }"
+	[[ -z "${aa##* $a *}" ]] && continue
+	[[ -n "${abis##* ${a1%%:*} *}" ]] && aa+='-'
+	aa+="$a "
 done
+KERNEL_CONFIG+="$aa"
