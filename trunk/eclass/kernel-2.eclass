@@ -14,7 +14,7 @@ if [[ ${ETYPE} == sources ]]; then
 IUSE="${IUSE} +build-kernel custom-cflags +pnp +compressed integrated
 	netboot custom-arch embed-hardware staging
 	+kernel-drm +kernel-alsa kernel-firmware +sources pnponly lzma xz lzo
-	external-firmware xen +smp tools multilib multitarget +multislot thin
+	external-firmware xen +smp tools multitarget +multislot thin
 	lvm evms device-mapper unionfs luks gpg iscsi e2fsprogs mdadm
 	lguest acpi klibc +genkernel monolythe"
 DEPEND="${DEPEND}
@@ -572,7 +572,6 @@ useconfig(){
 		cfg_ "
 "
 	done
-	use multilib || ( use multitarget && use x86 ) || cfg -IA32_EMULATION
 }
 
 # experemental
