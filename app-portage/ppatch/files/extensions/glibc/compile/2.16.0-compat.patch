@@ -1,0 +1,11 @@
+diff -pruN a/posix/sys/wait.h b/posix/sys/wait.h
+--- a/posix/sys/wait.h	2012-06-30 22:12:34.000000000 +0300
++++ b/posix/sys/wait.h	2012-07-29 20:38:02.824332895 +0300
+@@ -28,6 +28,7 @@
+ __BEGIN_DECLS
+ 
+ #include <signal.h>
++#include <sys/resource.h>
+ 
+ /* These macros could also be defined in <stdlib.h>.  */
+ #if !defined _STDLIB_H || (!defined __USE_XOPEN && !defined __USE_XOPEN2K8)
