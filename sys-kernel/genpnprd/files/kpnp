@@ -1,10 +1,12 @@
 #!/bin/sh
-VERSION=0.6
+VERSION=0.7
 HELP="init for early userspace v$VERSION, (c) Denis Kaganovich, Anarchy or GPLv2 license
 
 Main goal: scan '/sys/*/uevent' for MODALIASes (without grep, sed...)
 and load via external insmod only (trying to use standard modprobe
 and kernel configuration). And standard bootload..
+
+Moving all pseudofs to newroot controlled by pre-created empty /dev.
 
 Usage: as /sbin/init, + /etc/modprobe.d, etc;
 or symlink to /sbin/modprobe;
@@ -75,8 +77,8 @@ fi
 mdevs(){
 	local i s
 	for i in /sys/class/*/*/uevent; do
-		[ -e "$tmp$i" ] && continue
-		mkdir -p "$tmp$i"
+		[ -e "$tmp$1$i" ] && continue
+		mkdir -p "$tmp$1$i"
 		local DEVNAME='' MAJOR='' MINOR='' FIRMWARE='' DEVPATH='' DEVMODE='' x='' t=c
 		while read s; do
 			x="${s%%=*}"
@@ -84,7 +86,7 @@ mdevs(){
 			DEVNAME|MAJOR|MINOR|FIRMWARE|DEVPATH|DEVMODE)eval "$x='${s#*=}'";;
 			esac
 		done <$i
-		if [ -n "$FIRMWARE" ] && echo 1 >/sys/$DEVPATH/loading; then
+		if [ -n "$FIRMWARE" ] && [ -z "$1" ] && echo 1 >/sys/$DEVPATH/loading; then
 			[ -e /lib/firmware/$FIRMWARE ] && cat /lib/firmware/$FIRMWARE >/sys/$DEVPATH/data && echo 0 >/sys/$DEVPATH/loading || echo -1 >/sys/$DEVPATH/loading
 		fi
 		if [ -n "$DEVNAME" ] && ! [ -e "$1/dev/$DEVNAME" ]; then
@@ -122,18 +124,25 @@ DRIVER=*}" ] && modp "${x%%
 	done
 }
 
+devtmpfs(){
+[ -e $1/dev ] && [ ! -e $1/dev/console ] &&
+	(mount -t devtmpfs -o exec,nosuid,mode=0755,size=10M,relatime udev $1/dev ||
+	mount -t tmpfs dev $1/dev)
+[ -e $1/dev/console ] || mdevs $1
+}
+
 init(){
-mount -t proc proc /proc && mount -t sysfs sys /sys || return
+local i='-o nosuid,nodev,noexec,relatime' l
+mount -t proc $i proc /proc && mount -t sysfs $i sys /sys || return
 BOOT=true
 mkdir /newroot
 [ -e /bin/busybox ] && /bin/busybox --install -s
-mdevs
+devtmpfs
 if ! [ -e /dev/loop1 ]; then
 	insmod $libmod/kernel/drivers/block/loop.ko
 	insmod $libmod/kernel/fs/squashfs/squashfs.ko
 	mdevs
 fi
-local i l
 for i in /*loop* /*.squahfs; do
 	[ -e "$i" ] || continue
 	l="${i##*.}"
@@ -392,11 +401,12 @@ if $BOOT; then
 		echo "Not found '/newroot/$cmd_init' - try shell:"
 		exec sh
 	fi
-	[ -e /newroot/dev/console ] ||
-	    (mkdir -p /newroot/dev ; mount --move /dev /newroot/dev) ||
-	    mount -n -t devtmpfs -o exec,nosuid,mode=0755,size=10M udev /newroot/dev ||
-	    mount -n -t tmpfs dev /newroot/dev
-	[ -e /newroot/dev/console ] || cp -a /dev /newroot/ || mdevs /newroot
+	for i in /dev /proc /sys; do
+		mkdir -p /newroot$i
+		mount --move $i /newroot$i || break
+		rmdir $i && ln -s /newroot$i $i
+	done 2>/dev/null
+	devtmpfs /newroot
 	p="/newroot/usr/src/linux-$KV"
 	[ -L "/newroot/$libmod/kernel" ] && [ -e "$p.squashfs" ] && i=`losetup -f` && losetup $i $p.squashfs && mount -r -t squashfs $i $p
 	echo -n "Boot: [$cmd_root] "
