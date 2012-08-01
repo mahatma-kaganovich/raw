@@ -124,20 +124,13 @@ DRIVER=*}" ] && modp "${x%%
 	done
 }
 
-devtmpfs(){
-[ -e $1/dev ] && ! [ -e $1/dev/console -a -e /dev/null ] &&
-	(mount -t devtmpfs -o exec,nosuid,mode=0755,size=10M udev $1/dev ||
-	mount -t tmpfs dev $1/dev)
-[ -e $1/dev/console -a -e /dev/null ] || mdevs $1
-}
-
 init(){
 local i='-o nosuid,nodev,noexec' l
 mount -t proc $i proc /proc && mount -t sysfs $i sys /sys || return
 BOOT=true
 mkdir /newroot
 [ -e /bin/busybox ] && /bin/busybox --install -s
-devtmpfs
+mdevs
 if ! [ -e /dev/loop1 ]; then
 	insmod $libmod/kernel/drivers/block/loop.ko
 	insmod $libmod/kernel/fs/squashfs/squashfs.ko
@@ -359,7 +352,7 @@ own(){
 }
 
 modaliases(){
-local i mm="`cat /proc/modules`" m1='-' fs m d p
+local i mm="`cat /proc/modules`" m1='-' fs m d p n='/newroot'
 mkdir -p "$tmp/sys/class/*/*/uevent" "$tmp/options"
 cd $tmp||exit 1
 echo -n '^'
@@ -397,18 +390,19 @@ done
 echo ''
 if $BOOT; then
 	echo /sbin/modprobe >/proc/sys/kernel/modprobe
-	if ! [ -e "/newroot/$cmd_init" ]; then
-		echo "Not found '/newroot/$cmd_init' - try shell:"
+	if ! [ -e "$n/$cmd_init" ]; then
+		echo "Not found '$n/$cmd_init' - try shell:"
 		exec sh
 	fi
 	for i in /dev /proc /sys; do
-		mkdir -p /newroot$i
-		mount --move $i /newroot$i || break
-		rmdir $i && ln -s /newroot$i $i
+		mkdir -p $n$i
+		mount --move $i $n$i || break
+		rmdir $i && ln -s $n$i $i
 	done 2>/dev/null
-	devtmpfs /newroot
-	p="/newroot/usr/src/linux-$KV"
-	[ -L "/newroot/$libmod/kernel" ] && [ -e "$p.squashfs" ] && i=`losetup -f` && losetup $i $p.squashfs && mount -r -t squashfs $i $p
+	[ -e $n/dev ] && [ ! -e $n/dev/console ] && (mount -t devtmpfs -o exec,nosuid,mode=0755,size=10M udev $n/dev || mount -t tmpfs dev $n/dev)
+	[ -e /dev/console ] || mdevs $n
+	p="$n/usr/src/linux-$KV"
+	[ -L "$n/$libmod/kernel" ] && [ -e "$p.squashfs" ] && i=`losetup -f` && losetup $i $p.squashfs && mount -r -t squashfs $i $p
 	echo -n "Boot: [$cmd_root] "
 	cat /proc/uptime
 	cat /proc/mounts|while read d p i; do
@@ -421,7 +415,7 @@ if $BOOT; then
 	done
 	i=/sbin/switch_root
 	[ -e $i ] || i=run-init
-	exec $i -c /dev/console /newroot $cmd_init
+	exec $i -c /dev/console $n $cmd_init
 fi
 }
 
