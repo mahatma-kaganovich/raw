@@ -764,7 +764,7 @@ pentium4|pentium4m|prescott|nocona)
 	esac
 	freq="X86_ACPI_CPUFREQ X86_P4_CLOCKMOD"
 ;;
-core2|atom)CF1 M${^^march} $m64g;freq=X86_ACPI_CPUFREQ;;
+core2|atom)CF1 M${march^^} $m64g;freq=X86_ACPI_CPUFREQ;;
 k6-3)CF1 MK6 $m64g -SCHED_SMT;freq=X86_POWERNOW_K6;V=AMD;;
 athlon|athlon-tbird|athlon-4|athlon-xp|athlon-mp)CF1 MK7 $m64g -SCHED_SMT;freq=X86_POWERNOW_K7;V=AMD;;
 bdver1|k8|opteron|athlon64|athlon-fx|k8-sse3|opteron-sse3|athlon64-sse3|amdfam10|barcelona)CF1 MK8 $m64g -SCHED_SMT;freq=X86_POWERNOW_K8;gov=CONSERVATIVE;V=AMD;;
