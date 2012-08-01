@@ -125,14 +125,14 @@ DRIVER=*}" ] && modp "${x%%
 }
 
 devtmpfs(){
-[ -e $1/dev ] && [ ! -e $1/dev/console ] &&
-	(mount -t devtmpfs -o exec,nosuid,mode=0755,size=10M,relatime udev $1/dev ||
+[ -e $1/dev ] && ! [ -e $1/dev/console -a -e $1/dev/null ] &&
+	(mount -t devtmpfs -o exec,nosuid,mode=0755,size=10M udev $1/dev ||
 	mount -t tmpfs dev $1/dev)
-[ -e $1/dev/console ] || mdevs $1
+[ -e $1/dev/console -a -e $1/dev/null ] || mdevs $1
 }
 
 init(){
-local i='-o nosuid,nodev,noexec,relatime' l
+local i='-o nosuid,nodev,noexec' l
 mount -t proc $i proc /proc && mount -t sysfs $i sys /sys || return
 BOOT=true
 mkdir /newroot
