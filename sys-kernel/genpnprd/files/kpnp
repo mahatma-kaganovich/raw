@@ -125,10 +125,10 @@ DRIVER=*}" ] && modp "${x%%
 }
 
 devtmpfs(){
-[ -e $1/dev ] && ! [ -e $1/dev/console -a -e $1/dev/null ] &&
+[ -e $1/dev ] && ! [ -e $1/dev/console -a -e /dev/null ] &&
 	(mount -t devtmpfs -o exec,nosuid,mode=0755,size=10M udev $1/dev ||
 	mount -t tmpfs dev $1/dev)
-[ -e $1/dev/console -a -e $1/dev/null ] || mdevs $1
+[ -e $1/dev/console -a -e /dev/null ] || mdevs $1
 }
 
 init(){
