@@ -1,0 +1,28 @@
+From: Anton Statutov <stant@bestyle.ru>
+
+--- a/server/request.c	2012-06-20 11:30:49.000000000 +0400
++++ b/server/request.c	2012-06-19 23:34:59.000000000 +0400
+@@ -50,6 +50,7 @@
+ #include "util_filter.h"
+ #include "util_charset.h"
+ #include "util_script.h"
++#include "mpm.h"
+ 
+ #include "mod_core.h"
+ 
+@@ -1026,6 +1027,15 @@
+                 break;
+             }
+             else if (APR_STATUS_IS_EACCES(rv)) {
++#ifdef ITK_MPM
++                if (r->main == NULL && getuid() != 0) {
++                    ap_log_rerror(APLOG_MARK, APLOG_WARNING, rv, r,
++                                  "Access to %s denied, closing connection.",
++                                  r->filename);
++                    ap_lingering_close(r->connection);
++                    exit(0);
++                }
++#endif
+                 ap_log_rerror(APLOG_MARK, APLOG_ERR, rv, r,
+                               "access to %s denied", r->uri);
+                 return r->status = HTTP_FORBIDDEN;
