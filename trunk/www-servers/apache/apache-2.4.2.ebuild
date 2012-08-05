@@ -15,7 +15,7 @@ GENTOO_DEVELOPER=""
 GENTOO_PATCHNAME="gentoo-${P}"
 
 # now for USE=static only
-IUSE_MODULES="cache-disk file-cache setenvif cern-meta case-filter expires authn-file unixd optional-hook-export proxy-ftp proxy-fdpass sed asis proxy-fcgi negotiation usertrack dialup dav-lock info proxy-balancer cache dumpio cgid optional-fn-import lbmethod-bytraffic dav-fs ident authz-user data proxy-connect reqtimeout authz-host vhost-alias lbmethod-heartbeat actions authn-anon isapi reflector log-config access-compat session-dbd echo charset-lite authn-dbd mime-magic authn-dbm log-forensic status slotmem-plain heartmonitor ext-filter authn-socache authz-core allowmethods optional-fn-export proxy-html proxy-http optional-hook-import request imagemap authz-owner logio auth-form alias socache-dbm authn-core watchdog auth-digest speling auth-basic autoindex userdir socache-memcache unique-id proxy authz-groupfile bucketeer heartbeat session-cookie authz-dbd authz-dbm xml2enc remoteip rewrite session cgi include dbd dav dir substitute log-debug env proxy-express buffer example-ipc slotmem-shm headers lbmethod-byrequests case-filter-in proxy-ajp socache-shmcb filter ratelimit proxy-scgi version example-hooks lbmethod-bybusyness privileges"
+IUSE_MODULES="cache_disk file_cache setenvif cern_meta case_filter expires authn_file unixd optional_hook_export proxy_ftp proxy_fdpass sed asis proxy_fcgi negotiation usertrack dialup dav_lock info proxy_balancer cache dumpio cgid optional_fn_import lbmethod_bytraffic dav_fs ident authz_user data proxy_connect reqtimeout authz_host vhost_alias lbmethod_heartbeat actions authn_anon isapi reflector log_config access_compat session_dbd echo charset_lite authn_dbd mime_magic authn_dbm log_forensic status slotmem_plain heartmonitor ext_filter authn_socache authz_core allowmethods optional_fn_export proxy_html proxy_http optional_hook_import request imagemap authz_owner logio auth_form alias socache_dbm authn_core watchdog auth_digest speling auth_basic autoindex userdir socache_memcache unique_id proxy authz_groupfile bucketeer heartbeat session_cookie authz_dbd authz_dbm xml2enc remoteip rewrite session cgi include dbd dav dir substitute log_debug env proxy_express buffer example_ipc slotmem_shm headers lbmethod_byrequests case_filter_in proxy_ajp socache_shmcb filter ratelimit proxy_scgi version example_hooks lbmethod_bybusyness privileges"
 
 inherit apache-2
 
@@ -78,7 +78,7 @@ src_configure(){
 		MY_CONF+=" $(use_enable ${i//:/ })$(use ${i%%:*} && echo "$s")"
 	done
 	MY_CONF+=' '
-	use static && for i in $IUSE_MODULES; do
+	use static && for i in ${IUSE_MODULES//-/_}; do
 		use apache2_modules_$i && MY_CONF="${MY_CONF//--enable-$i } --enable-$i=static"
 	done
 	use threads || {
