@@ -1,0 +1,18 @@
+Backport from Steinar's 2.4.2
+--- a/server/mpm/itk/itk.c	2012-08-05 04:37:05.000000000 +0300
++++ b/server/mpm/experimental/itk/itk.c	2012-08-05 04:40:12.000000000 +0300
+@@ -720,13 +720,12 @@
+                 ap_log_error(APLOG_MARK, APLOG_ERR, errno, NULL, "fork: Unable to fork new process");
+                 break;
+             case 0: /* child */
+-                apr_proc_mutex_child_init(&accept_mutex, ap_lock_fname, pchild);
+                 current_conn = ap_run_create_connection(ptrans, ap_server_conf, csd, my_child_num, sbh, bucket_alloc);
+                 if (current_conn) {
+                     ap_process_connection(current_conn, csd);
+                     ap_lingering_close(current_conn);
+                 }
+-                exit(0);
++                clean_child_exit(0);
+             default: /* parent; just wait for child to be done */
+                 do {
+                     child_pid = waitpid(pid, &status, 0);
