@@ -100,7 +100,7 @@ LoadModule mpm_${MY_MPM}_module modules/mod_mpm_${MY_MPM}.so" >"$TMPDIR/my_mpm.c
 #		cp $S/docs/conf/extra/${i//:/ $GENTOO_PATCHDIR/}
 #	done
 	apache-2_src_install
-	sed -i -e 's:^LoadModule \([^ ]*\) \(.*\)$:<IfModule !\1>\nLoadModule \1 \2\n<\\IfModule>:' "$D/etc/apache2/httpd.conf"
+	sed -i -e 's:^LoadModule \([^ ]*\) \(.*\)$:<IfModule !\1>\nLoadModule \1 \2\n</IfModule>:' "$D/etc/apache2/httpd.conf"
 	cd "$S/modules" && tar -caf modules-docs.tar.bz2 $(find -name "docs") && dodoc modules-docs.tar.bz2
 
 #	echo -n "SWITCHABLE MODULES:"
