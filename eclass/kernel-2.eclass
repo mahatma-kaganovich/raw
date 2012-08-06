@@ -1031,7 +1031,8 @@ detects(){
 	_unmodule .
 	perl "${SHARE}"/mod2sh.pl "${WORKDIR}" >&2 || die "Unable to run '${SHARE}/mod2sh.pl'"
 	. "${WORKDIR}"/modules.alias.sh
-	cat "${WORKDIR}"/modules.pnp "${TMPDIR}"/overlay-rd/etc/modflags/* >>"${WORKDIR}"/modules.pnp_
+	sort -u "${WORKDIR}"/modules.pnp "${TMPDIR}"/overlay-rd/etc/modflags/* >>"${WORKDIR}"/modules.pnp_
+	sort -u "${WORKDIR}"/modules.pnp0 "${SHARE}"/etc/modflags/* >>"${WORKDIR}"/modules.pnp0_
 	{
 		# /sys
 		cat `find /sys -name modalias`
@@ -1052,7 +1053,7 @@ detects_cleanup(){
 	find "${@}" -name "*.ko" -delete >/dev/null
 #	find "${@}" -name "*.o" -delete >/dev/null
 	_unmodule "${@}"
-	module_reconf m2n <"${WORKDIR}"/modules.pnp_
+	module_reconf m2n <"${WORKDIR}"/modules.pnp0_
 }
 
 m2y(){
