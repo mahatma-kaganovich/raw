@@ -653,6 +653,7 @@ native)
 #		xtopology)CF1 SCHED_SMT;;
 		esac
 	done
+	use xen && CF1 PARAVIRT{,_GUEST}
 
 	[[ "${processor:=0}" -gt 0 ]] && CF1 SMP
 	[[ $((processor+1)) == "${cpu_cores:-1}" ]] && [[ "${siblings:-1}" == "${cpu_cores:-1}" ]] && CF1 -NUMA
