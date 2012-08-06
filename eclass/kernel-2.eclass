@@ -647,9 +647,9 @@ native)
 		up)ewarn "Running SMP on UP. Recommended useflag '-smp' and '-SMP' in ${KERNEL_CONF}";;
 		est)freq+=" X86_ACPI_CPUFREQ";;
 		longrun)freq+=" X86_LONGRUN";;
-		vmx)CF1 XEN +KVM{,_INTEL} PARAVIRT{,_GUEST} VIRTUALIZATION;;
-		svm)CF1 XEN +KVM{,_AMD} PARAVIRT{,_GUEST} VIRTUALIZATION;;
-		hypervisor)CF1 XEN PARAVIRT{,_GUEST} VIRTUALIZATION;;
+		vmx)CF1 XEN +KVM{,_INTEL} VIRTUALIZATION;;
+		svm)CF1 XEN +KVM{,_AMD} VIRTUALIZATION;;
+		hypervisor)CF1 XEN PARAVIRT{,_GUEST};;
 #		xtopology)CF1 SCHED_SMT;;
 		esac
 	done
