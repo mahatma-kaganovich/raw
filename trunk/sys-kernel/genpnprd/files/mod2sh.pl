@@ -229,9 +229,11 @@ sub fix_{
 sub mk_sh{
 	my %res=();
 	my %pnp=();
+	my %pnp0=();
 	open(FS,$_[0]) || die $!;
 	open(FP,$_[1]) || die $!;
 	open(FO,$_[2]) || die $!;
+	open(FP0,$_[3]) || die $!;
 	print FS 'modalias(){
 local i=""
 ';
@@ -255,6 +257,9 @@ local i=""
 		if(isPNP($_)){
 			for(@d){
 				$pnp{$_}=1 for (lines(mod($_)));
+			}
+			for(@{$alias{$_}}){
+				$pnp0{$_}=1 for (lines(mod($_)));
 			}
 		}
 		my $k=join(' ',
@@ -316,9 +321,16 @@ return $?
 		$i=~s/_/-/g;
 		print FP "$i\n" if(not exists($pnp{$i}));
 	}
+	for (keys %pnp0) {
+		print FP0 "$_\n";
+		my $i=$_;
+		$i=~s/_/-/g;
+		print FP0 "$i\n" if(not exists($pnp0{$i}));
+	}
 	close(FO);
 	close(FP);
 	close(FS);
+	close(FP0);
 #	for (sort keys %nopnp,''){
 #		system("modprobe ".mod($_)) if(index($_,'video')<0);
 #	}
@@ -348,6 +360,6 @@ for my $MOD (@ARGV){
 		read_modinfo("$MOD");
 	}
 	&check_info;
-	mk_sh(">$MOD/modules.alias.sh",">$MOD/modules.pnp",">$MOD/modules.other");
+	mk_sh(">$MOD/modules.alias.sh",">$MOD/modules.pnp",">$MOD/modules.other",">$MOD/modules.pnp0");
 	print "OK\n";
 }
