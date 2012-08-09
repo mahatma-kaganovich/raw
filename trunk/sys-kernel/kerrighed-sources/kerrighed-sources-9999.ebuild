@@ -7,6 +7,7 @@ ESVN_REPO_URI="svn://scm.gforge.inria.fr/svn/kerrighed/trunk"
 
 KV=""
 K_NOSETEXTRAVERSION="1"
+KV_PATCH=0
 
 #set_kv 2.6.20-krg
 
