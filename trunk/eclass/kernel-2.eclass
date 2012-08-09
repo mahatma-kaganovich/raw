@@ -931,7 +931,7 @@ _umount(){
 			[[ "${y}" == "${i}" ]] || continue
 			x="${x%:}"
 			( umount ${x} || umount -l ${x} ) && elog "Unmounted $x: $i"
-			losetup -d ${x}
+			losetup $x && losetup -d $x
 		done </proc/mounts
 		( umount "${i}" || umount -l "${i}" ) && elog "Unmounted $i"
 	done 2>/dev/null
