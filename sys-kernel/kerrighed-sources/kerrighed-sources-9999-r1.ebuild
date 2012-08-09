@@ -9,6 +9,7 @@ EGIT_COMMIT="master"
 
 KV="" # autodetect by overlayed kernel-2.eclass
 K_NOSETEXTRAVERSION="1"
+KV_PATCH=0
 
 HOMEPAGE="http://www.kerrighed.org/"
 DESCRIPTION="Kerrighed SSI cluster kernel"

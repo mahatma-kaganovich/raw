@@ -8,6 +8,7 @@ EGIT_REPO_URI="git://kerrighed.git.sourceforge.net/gitroot/kerrighed/kernel"
 
 KV="" # autodetect by overlayed kernel-2.eclass
 K_NOSETEXTRAVERSION="1"
+KV_PATCH=0
 
 HOMEPAGE="http://www.kerrighed.org/"
 DESCRIPTION="Kerrighed SSI cluster kernel"
