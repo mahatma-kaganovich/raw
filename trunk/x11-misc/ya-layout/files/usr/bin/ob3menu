@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # (c) Denis Kaganovich, Anarchy or GPLv2
-# OpenBox3 pipe menu v0.2
+# OpenBox3 pipe menu v0.3
 # ob3menu {--<command> {params}}
 # 	--slow {<path/to/rc.xml>}
 #	--autostart {profile}
@@ -9,6 +9,8 @@
 # "--slow" - +keybinds, 3.5.0+ menu icons, better with cache.
 
 my (%ico,%key,%cat,%cat,%cc,%dir,@prof,$prof);
+%xml_=('<'=>'lt','>'=>'gt',"'"=>'apos','"'=>'quot','&'=>'amp');
+$xml_='<>\'"&';
 %notify=(
 	'true'=>'<startupnotify><enabled>yes</enabled></startupnotify>',
 	'false'=>'<startupnotify><enabled>no</enabled></startupnotify>'
@@ -107,7 +109,7 @@ for $f(map{glob $_}('/usr/share/applications/*.desktop','/usr/share/applications
 	}
 N:
 	$i='';
-	$d{$_}=~s/\'/\\'/g for(Name,Categories);
+	$_=~s/([$xml_])/\&$xml_{$1};/g for(values %d);
 	if(exists($P{slow}) && exists($d{Icon})){
 		$i=$d{Icon};
 		$i=~s/(?:.*\/)?(.*?).svg$/$1.png/;
