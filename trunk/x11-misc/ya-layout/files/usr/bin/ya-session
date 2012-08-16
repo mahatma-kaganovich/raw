@@ -14,16 +14,16 @@ sm2='--sm-client-disable'
 : ${YA_APP_XF86WWW:="'exo-open --launch WebBrowser' 'seamonkey --browser' firefox chromium midori @WebBrowser"}
 : ${YA_APP_XF86Mail:="'exo-open --launch MailReader' 'seamonkey --mail' claws-mail thunderbird @Email"}
 : ${YA_APP_TerminalEmulator:="'exo-open --launch TerminalEmulator' Terminal lxterminal \"gnome-terminal \$sm2\" kterm xterm @TerminalEmulator"}
-: ${YA_APP_FileManager:="'exo-open --launch FileManager' \"pcmanfm -p \$YA_PROFILE\" Thunar \"nautilus --no-desktop \$sm2\" @FileManager +mc"}
+: ${YA_APP_FileManager:="'exo-open --launch FileManager' \"spacefm --profile=\$YA_PROFILE\" \"pcmanfm -p \$YA_PROFILE\" Thunar \"nautilus --no-desktop \$sm2\" qtfm @FileManager +mc"}
 : ${YA_APP_XF86AudioMedia:="audacious aqualung vlc mplayer '@Player;Audio|Player;AudioVideo;!Video' '@Player;AudioVideo'"}
 : ${YA_APP_XF86VideoMedia:="mplayer2 mplayer vlc '@Player;Video|Player;AudioVideo;!Audio' '@Player;AudioVideo'"}
 : ${YA_APP_XF86Calendar:="orage"}
 : ${YA_APP_XF86Calculator="gpe-calculator"}
 : ${YA_APP_XF86Messenger="pidgin @InstantMessaging"}
 #
-: ${YA_APP_XF86SettingsManager:="'xfsettingsd -d' xfce-mcs-manager gnome-settings-daemon /usr/libexec/gnome-settings-daemon"}
+: ${YA_APP_XF86SettingsManager:="'xfsettingsd --replace' xfce-mcs-manager gnome-settings-daemon /usr/libexec/gnome-settings-daemon"}
 : ${YA_APP_XF86Panel:="\"xfce4-panel \$sm2\" \"lxpanel -p \$YA_PROFILE\"" \"gnome-panel \$sm2\"}
-: ${YA_APP_XF86Desktop:="\"pcmanfm --desktop -p \$YA_PROFILE\" \"xfdesktop \$sm2\" \"nautilus -n \$sm2\""}
+: ${YA_APP_XF86Desktop:="\"spacefm --desktop --profile=\$YA_PROFILE\" \"pcmanfm --desktop -p \$YA_PROFILE\" \"xfdesktop \$sm2\" \"nautilus -n \$sm2\""}
 
 # 2run
 : ${YA_SESSION:="XF86SettingsManager XF86Panel XF86Desktop"}
@@ -424,7 +424,7 @@ Launcher:
 	*pcmanfm*)desk+=" -w $i";;
 	esac
 	export YA_DESKTOP
-	ob3menu-cache /usr/bin/ob3menu --slow "$HOME/.config/ya/rc.xml"
+	ob3menu-cache /usr/bin/ob3menu --slow "$HOME/.config/ya/rc.xml" >/dev/null
 	wm ${desk:+--startup "$desk"}
 ;;
 esac
