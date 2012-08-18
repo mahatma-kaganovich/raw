@@ -1,12 +1,12 @@
 #!/bin/bash
-# pipe menu cache for OpenBox3 v0.2
+# pipe menu cache for OpenBox3 v0.3
 # icons changes not tracked
 # param: generator command:
 
 ob3mkey(){
 	echo "$cmd
 $LANG"
-	ls -lsR $c
+	stat --printf=%Z $c
 }
 
 ob3menu-cache(){
@@ -14,10 +14,13 @@ ob3menu-cache(){
 local cmd="${*:-/usr/bin/ob3menu --slow}"
 #local cmd="${*:-/usr/bin/mmaker -ci OpenBox3}"
 . "$HOME/.cache/ya/environment" && cmd=${cmd/ob3menu --slow/ob3menu --autostart $YA_XDG_AUTOSTART --profile $YA_PROFILE --slow}
-local m="$HOME/.cache/ya/menu.xml" c="/usr/share/applications /usr/share/desktop-directories $0 ${cmd%% *} /etc/xdg/autostart" mm='#' cat=cat a=/dev/null
+local m="$HOME/.cache/ya/menu.xml" c="/usr/share/applications /usr/share/applications/inputmethods /usr/share/desktop-directories $0 ${cmd%% *} /etc/xdg/autostart" mm='#' cat=cat a=/dev/null
 case "$cmd" in
 *ob3menu*\ --autostart*)a="$HOME/.cache/ya/autostart";;&
-*ob3menu*\ --slow\ *)c+=" ${3%/*}";;
+*ob3menu*\ --slow\ *)
+	c+=" ${cmd##*--slow }"
+#	c+=" /usr/share/icons/*/*/*"
+;;
 *mmaker\ *)mm=echo;;
 esac
 if ! (ob3mkey|cmp -s - "$m.key" && [ -s "$m" ] ); then
