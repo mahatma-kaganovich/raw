@@ -308,10 +308,6 @@ launch(){
 	exit
 }
 
-ob3menu-cache(){
-	. /usr/bin/ob3menu-cache
-}
-
 sess(){
 	export XDG_MENU_PREFIX="${YA_PROFILE,,}-" DESKTOP_SESSION="ya"
 	# SESSION_MANAGER=
@@ -424,7 +420,6 @@ Launcher:
 	*pcmanfm*)desk+=" -w $i";;
 	esac
 	export YA_DESKTOP
-	ob3menu-cache /usr/bin/ob3menu --slow "$HOME/.config/ya/rc.xml" >/dev/null
 	wm ${desk:+--startup "$desk"}
 ;;
 esac
