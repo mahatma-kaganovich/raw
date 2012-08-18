@@ -3,14 +3,7 @@
 # icons changes not tracked
 # param: generator command:
 
-ob3mkey(){
-	echo "$cmd
-$LANG"
-	stat --printf=%Z $c
-}
-
 ob3menu-cache(){
-{
 local cmd="${*:-/usr/bin/ob3menu --slow}"
 #local cmd="${*:-/usr/bin/mmaker -ci OpenBox3}"
 . "$HOME/.cache/ya/environment" && cmd=${cmd/ob3menu --slow/ob3menu --autostart $YA_XDG_AUTOSTART --profile $YA_PROFILE --slow}
@@ -23,17 +16,17 @@ case "$cmd" in
 ;;
 *mmaker\ *)mm=echo;;
 esac
-if ! (ob3mkey|cmp -s - "$m.key" && [ -s "$m" ] ); then
+local k="$cmd:$LANG:`stat --printf=%Z $c`" k1
+if ! (read k1 <"$m.key" && [ "$k1" = "$k" ]); then
 	mkdir -p "${m%/*}"
 	{
 	$mm '<openbox_pipe_menu>'
 	$cmd 2>"$a" || echo '' >"$a"
 	$mm '</openbox_pipe_menu>'
 	} >"$m"
-	ob3mkey >"$m.key"
+	echo "$k" >"$m.key"
 fi
 $cat "$m"
-} 2>/dev/null
 }
 
-ob3menu-cache "${@}"
+ob3menu-cache "${@}" 2>/dev/null
