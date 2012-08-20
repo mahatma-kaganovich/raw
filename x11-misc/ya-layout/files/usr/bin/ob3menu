@@ -174,7 +174,7 @@ for(map{glob $_}(@{$P{include}})){
 	}
 }
 
-for(@{$P{mime}}){
+if(defined($P{mime})){
 	for(values %mime){
 		for(@$_){
 			($_=~s/(<item label=').*?(' icon=)/$1\$F$2/g) ||
@@ -191,10 +191,6 @@ for(@{$P{mime}}){
 	}
 	close($F);
 	print "<separator/>";
-#	for my $D('/','~/Desktop'){
-	for my $D('/','~/'){
-		print "<menu id='dir:$D' label='$D' execute='/bin/bash \"$_\" $D' />";
-	}
 	while(($t,$i)=each %g){
 		for $i(keys %$i){
 			$m{$t}->{$_}=undef for(@{$mime{$i}});
@@ -204,7 +200,10 @@ for(@{$P{mime}}){
 	while(($t,$i)=each %m){
 		$g{join('',sort keys %$i)}->{$t}=undef;
 	}
-	open($F,'>',$_)||die $!;
+	open($F,'>',$t=shift(@{$P{mime}}))||die $!;
+	for my $D(@{$P{mime}}){
+		print "<menu id='dir:$D' label='$D' execute='/bin/bash \"$t\" $D' />";
+	}
 	print $F q(#/bin/bash
 xml(){
 x="${f//&/&amp;}"
