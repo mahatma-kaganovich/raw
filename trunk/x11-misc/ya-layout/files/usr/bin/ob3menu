@@ -200,7 +200,7 @@ echo "<openbox_pipe_menu><separator label=\"$f/\"/>"
 for f in "$f"/*; do
 F="${f##*/}"
 if [ -d "$f" ]; then
-echo "',"<menu id='dir:\$f' label='\$F/' execute='/bin/bash $_ \$f' />",'"
+echo "',"<menu id='dir:\$f' label='\$F/' execute='/bin/bash \$0 \$f' />",'"
 else
 case "$f" in
 ';
