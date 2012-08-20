@@ -202,7 +202,7 @@ F="${f##*/}"
 if [ -d "$f" ]; then
 echo "',"<menu id='dir:\$f' label='\$F/' execute='/bin/bash \$0 \$f' />",'"
 else
-case "$f" in
+case "${f,,}" in
 ';
 	while(($i,$t)=each %g){
 		print $F join('|',keys %$t).")echo \"$mime{$i}\";;&\n" if(exists($mime{$i}));
