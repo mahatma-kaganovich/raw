@@ -175,7 +175,14 @@ for(map{glob $_}(@{$P{include}})){
 }
 
 for(@{$P{mime}}){
-	open($G,'<','/usr/share/mime/globs')||last;
+	my %g;
+	open($F,'<','/usr/share/mime/globs')||last;
+	while(my $s=<$F>){
+		chomp($s);
+		($i,$t)=split(/:/,$s);
+		$g{$i}->{$t}=undef;
+	}
+	close($F);
 	print "<separator/>";
 #	for my $D('/','~/Desktop'){
 	for my $D('/','~/'){
@@ -197,17 +204,14 @@ echo "',"<menu id='dir:\$f' label='\$F/' execute='/bin/bash $_ \$f' />",'"
 else
 case "$f" in
 ';
-	while(my $s=<$G>){
-		chomp($s);
-		($i,$t)=split(/:/,$s);
-		print $F "$t)echo \"$mime{$i}\";;\n" if(exists($mime{$i}));
+	while(($i,$t)=each %g){
+		print $F join('|',keys %$t).")echo \"$mime{$i}\";;&\n" if(exists($mime{$i}));
 	}
 	print $F 'esac
 fi
 done
 echo "</openbox_pipe_menu>"';
 	close($F);
-	close($G);
 }
 
 print qq(<separator/>
