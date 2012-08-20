@@ -1,5 +1,5 @@
 #!/bin/bash
-# pipe menu cache for OpenBox3 v0.3
+# pipe menu cache for OpenBox3 v0.4
 # icons changes not tracked
 # param: generator command:
 
@@ -13,6 +13,7 @@ case "$cmd" in
 *ob3menu*\ --slow\ *)
 	c+=" ${cmd##*--slow }"
 #	c+=" /usr/share/icons/*/*/*"
+	cmd+=" --mime $m.sh"
 ;;
 *mmaker\ *)mm=echo;;
 esac

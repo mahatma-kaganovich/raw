@@ -1,11 +1,12 @@
 #!/usr/bin/perl
 # (c) Denis Kaganovich, Anarchy or GPLv2
-# OpenBox3 pipe menu v0.3
+# OpenBox3 pipe menu v0.4
 # ob3menu {--<command> {params}}
 # 	--slow {<path/to/rc.xml>}
 #	--autostart {profile}
 #	--include {menu to include}
 #	--profile {profile}
+#	--mime {mime.sh}
 # "--slow" - +keybinds, 3.5.0+ menu icons, better with cache.
 
 my (%ico,%key,%cat,%cat,%cc,%dir,@prof,$prof);
@@ -114,7 +115,7 @@ N:
 		$i=$d{Icon};
 		$i=~s/(?:.*\/)?(.*?).svg$/$1.png/;
 		$i=$ico{$i} if(exists($ico{$i}));
-		$i=" icon=\"$i\"";
+		$i=" icon='$i'";
 	}
 	if(substr($f,0,4) eq '/etc'){
 		$d{Categories}='Autostart';
@@ -148,6 +149,10 @@ N:
 		$cc{$_}++;
 	}
 	$cat{$i}=undef if(!exists($cat{$i}));
+	if(exists($P{mime}) && exists($d{MimeType})){
+		$d{MimeType}=~s/;$//;
+		push @{$mime{$_}},$i for(split(/;/,$d{MimeType}));
+	}
 }
 $_=defined($_)?[sort{$cc{$a} <=> $cc{$b}}(keys %{$_})]:['misc'] for(values %cat);
 push @{$cat1{pop @{$cat{$_}}}},$_ for(keys %cat);
@@ -168,6 +173,43 @@ for(map{glob $_}(@{$P{include}})){
 		close($F);
 	}
 }
+
+for(@{$P{mime}}){
+	open($G,'<','/usr/share/mime/globs')||last;
+	print "<separator/>";
+#	for my $D('/','~/Desktop'){
+	for my $D('/','~/'){
+		print "<menu id='dir:$D' label='$D' execute='/bin/bash $_ $D' />";
+	}
+	for(values %mime){
+		$_=join('',@$_);
+		$_=~s/(<item label=')(.*?)'/$1\$F  [$2]'/g; #'
+		$_=~s/(<\/execute)/ \$f$1/g;
+	}
+	open($F,'>',$_)||die $!;
+	print $F '#/bin/bash
+f="${1%/}"
+echo "<openbox_pipe_menu><separator label=\"$f/\"/>"
+for f in "$f"/*; do
+F="${f##*/}"
+if [ -d "$f" ]; then
+echo "',"<menu id='dir:\$f' label='\$F/' execute='/bin/bash $_ \$f' />",'"
+else
+case "$f" in
+';
+	while(my $s=<$G>){
+		chomp($s);
+		($i,$t)=split(/:/,$s);
+		print $F "$t)echo \"$mime{$i}\";;\n" if(exists($mime{$i}));
+	}
+	print $F 'esac
+fi
+done
+echo "</openbox_pipe_menu>"';
+	close($F);
+	close($G);
+}
+
 print qq(<separator/>
 <menu id="$i" label="OpenBox">
 <menu id="client-menu"/>
@@ -180,3 +222,4 @@ print qq(<separator/>
 </menu>
 </openbox_pipe_menu>
 );
+
