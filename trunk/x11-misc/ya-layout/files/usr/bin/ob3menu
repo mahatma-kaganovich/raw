@@ -186,24 +186,33 @@ for(@{$P{mime}}){
 	print "<separator/>";
 #	for my $D('/','~/Desktop'){
 	for my $D('/','~/'){
-		print "<menu id='dir:$D' label='$D' execute='/bin/bash $_ $D' />";
+		print "<menu id='dir:$D' label='$D' execute='/bin/bash \"$_\" $D' />";
 	}
 	for(values %mime){
 		$_=join('',@$_);
 		$_=~s/(<item label=')(.*?)'/$1\$F  [$2]'/g; #'
-		$_=~s/(<\/execute)/ \$f$1/g;
+		$_=~s/(<\/execute)/ \\\"\$x\\\"$1/g;
 	}
 	open($F,'>',$_)||die $!;
-	print $F '#/bin/bash
+	print $F q(#/bin/bash
+xml(){
+x="${f//&/&amp;}"
+x="${x//</&lt;}"
+x="${x//>/&gt;}"
+x="${x//\'/&apos;}"
+x="${x//\"/&quot;}"
+}
 f="${1%/}"
-echo "<openbox_pipe_menu><separator label=\"$f/\"/>"
+xml
+echo "<openbox_pipe_menu><separator label=\"$x/\"/>"
 for f in "$f"/*; do
-F="${f##*/}"
+xml
+F="${x##*/}"
 if [ -d "$f" ]; then
-echo "',"<menu id='dir:\$f' label='\$F/' execute='/bin/bash \$0 \$f' />",'"
+echo "),"<menu id='dir:\$x' label='\$F/' execute='/bin/bash \\\"\$0\\\" \\\"\$x\\\"' />",q("
 else
 case "${f,,}" in
-';
+);
 	while(($i,$t)=each %g){
 		print $F join('|',keys %$t).")echo \"$mime{$i}\";;&\n" if(exists($mime{$i}));
 	}
