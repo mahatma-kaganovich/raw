@@ -175,12 +175,19 @@ for(map{glob $_}(@{$P{include}})){
 }
 
 for(@{$P{mime}}){
-	my %g;
+	for(values %mime){
+		for(@$_){
+			($_=~s/(<item label=').*?(' icon=)/$1\$F$2/g) ||
+			($_=~s/(<item label=')(.*?)'/$1\$F  [$2]'/g); #'
+			$_=~s/(<\/execute)/ \\\"\$x\\\"$1/g;
+		}
+	}
+	my (%g,%m);
 	open($F,'<','/usr/share/mime/globs')||last;
 	while(my $s=<$F>){
 		chomp($s);
 		($i,$t)=split(/:/,$s);
-		$g{$i}->{$t}=undef;
+		$g{$t}->{$i}=undef if(exists($mime{$i}));
 	}
 	close($F);
 	print "<separator/>";
@@ -188,10 +195,14 @@ for(@{$P{mime}}){
 	for my $D('/','~/'){
 		print "<menu id='dir:$D' label='$D' execute='/bin/bash \"$_\" $D' />";
 	}
-	for(values %mime){
-		$_=join('',@$_);
-		$_=~s/(<item label=')(.*?)'/$1\$F  [$2]'/g; #'
-		$_=~s/(<\/execute)/ \\\"\$x\\\"$1/g;
+	while(($t,$i)=each %g){
+		for $i(keys %$i){
+			$m{$t}->{$_}=undef for(@{$mime{$i}});
+		}
+	}
+	%g=();
+	while(($t,$i)=each %m){
+		$g{join('',sort keys %$i)}->{$t}=undef;
 	}
 	open($F,'>',$_)||die $!;
 	print $F q(#/bin/bash
@@ -208,13 +219,14 @@ echo "<openbox_pipe_menu><separator label=\"$x/\"/>"
 for f in "$f"/*; do
 xml
 F="${x##*/}"
+[ -r "$f" -o -x "$f" ] &&
 if [ -d "$f" ]; then
 echo "),"<menu id='dir:\$x' label='\$F/' execute='/bin/bash \\\"\$0\\\" \\\"\$x\\\"' />",q("
 else
 case "${f,,}" in
 );
 	while(($i,$t)=each %g){
-		print $F join('|',keys %$t).")echo \"$mime{$i}\";;&\n" if(exists($mime{$i}));
+		print $F join('|',keys %$t),")echo \"$i\";;&\n";
 	}
 	print $F 'esac
 fi
