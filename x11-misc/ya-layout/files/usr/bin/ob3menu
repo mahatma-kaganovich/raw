@@ -6,7 +6,7 @@
 #	--autostart {profile}
 #	--include {menu to include}
 #	--profile {profile}
-#	--mime {mime.sh}
+#	--mime <mime.sh> {dirs}
 # "--slow" - +keybinds, 3.5.0+ menu icons, better with cache.
 
 my (%ico,%key,%cat,%cat,%cc,%dir,@prof,$prof);
