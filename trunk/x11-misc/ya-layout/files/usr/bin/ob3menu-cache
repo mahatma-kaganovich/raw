@@ -13,7 +13,8 @@ case "$cmd" in
 *ob3menu*\ --slow\ *)
 	c+=" ${cmd##*--slow }"
 #	c+=" /usr/share/icons/*/*/*"
-	cmd+=" --mime $m.sh"
+	cmd+=" --mime $m.sh / "
+	cmd+=~/
 ;;
 *mmaker\ *)mm=echo;;
 esac
