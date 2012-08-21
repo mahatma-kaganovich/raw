@@ -180,7 +180,7 @@ if(defined($P{mime})){
 		for(@$_){
 			($_=~s/(<item label=').*?(' icon=)/$1\$F$2/g) ||
 			($_=~s/(<item label=')(.*?)'/$1\$F  [$2]'/g); #'
-			$_=~s/(<\/execute)/ \$x$1/g;
+			$_=~s/(<\/execute)/ \$X$1/g;
 		}
 	}
 	my (%g,%m);
@@ -218,16 +218,16 @@ x="${x//\"/&quot;}"
 }
 f="${1%/}"
 xml
-echo "<openbox_pipe_menu><separator label=\"$x/\"/>"
+echo "<openbox_pipe_menu><separator label='$x/'/>"
 for f in "$f"/*; do
 xml
 F="${x##*/}"
+X="&apos;$x&apos;"
 if [ -d "$f" ]; then
 [ -r "$f" ] &&
-echo "),"<menu id='dir:\$x' label='\$F/' execute='/bin/bash \"\$0\" \\\"\$x\\\"'$fold />",q("
+echo "<menu id='dir:$x' label='$F/' execute='/bin/bash &apos;$0&apos; $X'),$fold,q( />"
 else
-x="'$x'"
-( [ -x "$f" ] && echo "<item label='*$F'><action name='Execute'><execute>/usr/bin/ya-session --run +$x</execute></action></item>" ) ||
+( [ -x "$f" ] && echo "<item label='*$F'><action name='Execute'><execute>/usr/bin/ya-session --run +$X</execute></action></item>" ) ||
 [ -r "$f" ] &&
 case "${f,,}" in
 );
