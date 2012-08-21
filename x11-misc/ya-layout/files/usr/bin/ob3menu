@@ -16,6 +16,7 @@ $xml_='<>\'"&';
 	'true'=>'<startupnotify><enabled>yes</enabled></startupnotify>',
 	'false'=>'<startupnotify><enabled>no</enabled></startupnotify>'
 );
+$folder='folder';
 
 for(@ARGV){
 	if($_=~s/^--//){
@@ -110,7 +111,7 @@ for $f(map{glob $_}('/usr/share/applications/*.desktop','/usr/share/applications
 	}
 N:
 	$i='';
-	$_=~s/([$xml_])/\&$xml_{$1};/g for(values %d);
+	~s/([$xml_])/\&$xml_{$1};/g for(values %d);
 	if(exists($P{slow}) && exists($d{Icon})){
 		$i=$d{Icon};
 		$i=~s/(?:.*\/)?(.*?).svg$/$1.png/;
@@ -179,7 +180,7 @@ if(defined($P{mime})){
 		for(@$_){
 			($_=~s/(<item label=').*?(' icon=)/$1\$F$2/g) ||
 			($_=~s/(<item label=')(.*?)'/$1\$F  [$2]'/g); #'
-			$_=~s/(<\/execute)/ \\\"\$x\\\"$1/g;
+			$_=~s/(<\/execute)/ \$x$1/g;
 		}
 	}
 	my (%g,%m);
@@ -202,8 +203,11 @@ if(defined($P{mime})){
 	}
 	open($F,'>',$t=shift(@{$P{mime}}))||die $!;
 	for my $D(@{$P{mime}}){
+#		( -r $D ) &&
 		print "<menu id='dir:$D' label='$D' execute='/bin/bash \"$t\" $D' />";
 	}
+	my $fold;
+	$fold=" icon='$ico{$folder}'" if($folder && exists($ico{$folder}));
 	print $F q(#/bin/bash
 xml(){
 x="${f//&/&amp;}"
@@ -218,14 +222,17 @@ echo "<openbox_pipe_menu><separator label=\"$x/\"/>"
 for f in "$f"/*; do
 xml
 F="${x##*/}"
-[ -r "$f" -o -x "$f" ] &&
 if [ -d "$f" ]; then
-echo "),"<menu id='dir:\$x' label='\$F/' execute='/bin/bash \\\"\$0\\\" \\\"\$x\\\"' />",q("
+[ -r "$f" ] &&
+echo "),"<menu id='dir:\$x' label='\$F/' execute='/bin/bash \"\$0\" \\\"\$x\\\"'$fold />",q("
 else
+x="'$x'"
+( [ -x "$f" ] && echo "<item label='*$F'><action name='Execute'><execute>/usr/bin/ya-session --run +$x</execute></action></item>" ) ||
+[ -r "$f" ] &&
 case "${f,,}" in
 );
 	while(($i,$t)=each %g){
-		print $F join('|',keys %$t),")echo \"$i\";;&\n";
+		print $F lc(join('|',keys %$t)),")echo \"$i\";;&\n";
 	}
 	print $F 'esac
 fi
