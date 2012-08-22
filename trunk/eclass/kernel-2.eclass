@@ -649,7 +649,7 @@ native)
 		longrun)freq+=" X86_LONGRUN";;
 		vmx)CF1 XEN +KVM{,_INTEL} VIRTUALIZATION;;
 		svm)CF1 XEN +KVM{,_AMD} VIRTUALIZATION;;
-		hypervisor)CF1 XEN PARAVIRT{,_GUEST};;
+		hypervisor)CF1 XEN PARAVIRT{,_GUEST,_SPINLOCKS};;
 #		xtopology)CF1 SCHED_SMT;;
 		esac
 	done
