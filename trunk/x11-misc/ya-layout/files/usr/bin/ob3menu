@@ -221,8 +221,11 @@ xml
 echo "<openbox_pipe_menu><separator label='$x/'/>"
 for f in "$f"/*; do
 xml
-F="${x##*/}"
-X="&apos;$x&apos;"
+X="${x//\\/\\\\}"
+X="${X//\$/\\\$}"
+X="${X//&quot;/\\&quot;}"
+F="${X##*/}"
+X="&quot;$X&quot;"
 if [ -d "$f" ]; then
 [ -r "$f" ] &&
 echo "<menu id='dir:$x' label='$F/' execute='/bin/bash &apos;$0&apos; $X'),$fold,q( />"
