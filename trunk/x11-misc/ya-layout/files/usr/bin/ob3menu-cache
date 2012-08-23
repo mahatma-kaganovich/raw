@@ -13,7 +13,7 @@ case "$cmd" in
 *ob3menu*\ --slow\ *)
 	i="${cmd##* --slow }"
 	c+=" ${i%% --*} /usr/share/mime/globs" # /usr/share/icons/*/*/*
-	cmd+=" --mime $m.sh / "
+	cmd+=" --mime $m.sh "
 	cmd+=~/
 ;;
 *ob3menu*\ --mime\ *)c+=" /usr/share/mime/globs";;
