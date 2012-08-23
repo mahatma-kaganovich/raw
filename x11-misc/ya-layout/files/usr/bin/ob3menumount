@@ -1,0 +1,110 @@
+#!/bin/bash
+# openbox pipe menu to [u]mount removable & view mounts
+# (c) Denis Kaganovich, Anarchy or GPLv2
+
+xml(){
+	x="${x//&/&amp;}"
+	x="${x//</&lt;}"
+	x="${x//>/&gt;}"
+	x="${x//\'/&apos;}"
+	x="${x//\"/&quot;}"
+}
+
+_removable(){
+	[ "$DEVNAME" != "$d" -o -b "$d" ] || return 1
+	x=
+	s="/sys/block/$DEVNAME"
+	if [ -e "$s" ]; then
+		read x <"$s/removable"
+	else
+		for i in /sys/block/*/"$DEVNAME"; do
+			[ -e "$i/partition" ] && s="${i%/*}" && read x <"$s/removable" && [ "$x" = 0 ] && break
+		done
+	fi
+	read model <"$s/device/model"
+	[ "$x" = 1 ]
+}
+
+clist(){
+while read d m t f x; do
+	true
+done
+}
+
+_umnt(){
+while read d m t f x; do
+	model=
+	case "$1:$2" in
+	*:mount|*:umount)
+		DEVNAME="${d#/dev/}"
+		_removable || continue
+		f=",$f,"
+		[ "$UID" = 0 -o -z "${f##*,user=$USER,*}" -o -z "${f##*,users,*}" ] || continue
+	;;&
+	*:fs)
+		DEVNAME="${d#/dev/}"
+		_removable
+#		[ -z "${m##/mnt/*}" ] || [ "$m" = / -a "$d" != rootfs ] || continue
+		[ -z "${d##*/*}" ] || continue
+	;;&
+	/etc/fstab:*)
+		d1=
+		while read d1 m1; do
+			[ "$d1" = "$d" ] && break
+		done </proc/mounts
+	;;&
+	/etc/fstab:mount)[ "$d1" = "$d" ] && continue;;&
+	/etc/fstab:umount)[ "$d1" = "$d" ] || continue;;&
+	*)
+		x="$d -> $m${model:+: $model}"
+		xml
+		u="$x"
+		x="/bin/$2 '$d'"
+	;;&
+	*:fs)
+		x="$m"
+		xml
+		echo "<menu id='ob3menumount:fs $x' label='$u' execute='/bin/bash .cache/ya/menu.xml.sh &apos;$x&apos;'/>"
+	;;
+	*:umount)
+		x="'$d'"
+		# "ejected" usb can be detached too
+		[ -x /usr/bin/eject ] && x+=" && /usr/bin/eject $x"
+	;;&
+	*:mount)x+=" '$m'";;&
+	*)
+		xml
+		echo "<item label='$u'><action name='Execute'><execute>/bin/$2 $x</execute></action></item>"
+	;;
+	esac
+done <"$1"
+}
+
+case "$1:$ACTION" in
+block:remove)exec /bin/umount -l "/dev/$DEVNAME" &>/dev/null;;
+block:add)
+	d="/dev/$DEVNAME"
+	_removable || exit
+	m="/mnt/auto/$DEVNAME"
+	mkdir -p "$m"
+	/bin/mount -o noatime "$d" "$m" || rmdir "$m"
+	sed -i -e 's%^\($d [^ ]*\ [^ ]*\) %\1,users %' /etc/mtab
+;;
+*)
+	echo "<openbox_pipe_menu><separator label='$1'/>"
+	USER="${2:-$USER}"2
+	case "$1:$UID" in
+	umount:0|fs:*)
+		_umnt /proc/mounts "${@}"
+	;;
+	umount:*)
+		_umnt /etc/mtab "${@}"
+		_umnt /etc/fstab "${@}"
+	;;
+	mount:*)
+		_umnt /etc/fstab "${@}"
+	;;
+	esac
+	echo '</openbox_pipe_menu>'
+;;
+esac 2>/dev/null

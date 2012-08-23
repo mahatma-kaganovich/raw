@@ -16,7 +16,10 @@ $xml_='<>\'"&';
 	'true'=>'<startupnotify><enabled>yes</enabled></startupnotify>',
 	'false'=>'<startupnotify><enabled>no</enabled></startupnotify>'
 );
-$folder='folder';
+%ico_=(
+	'umount'=>'gdu-unmount',
+	'mount'=>'gdu-mount',
+);
 
 for(@ARGV){
 	if($_=~s/^--//){
@@ -62,6 +65,11 @@ sub icons{
 			icons("$_[0]$_/");
 		}
 	}
+}
+
+sub ico{
+	my $i=$ico_{$_[0]}||$_[0];
+	return " icon='$ico{$i}'" if($i && exists($ico{$i}));
 }
 
 if(exists($P{slow})){
@@ -201,13 +209,13 @@ if(defined($P{mime})){
 	while(($t,$i)=each %m){
 		$g{join('',sort keys %$i)}->{$t}=undef;
 	}
+	my $fold=ico('folder');
 	open($F,'>',$t=shift(@{$P{mime}}))||die $!;
 	for my $D(@{$P{mime}}){
 #		( -r $D ) &&
-		print "<menu id='dir:$D' label='$D' execute='/bin/bash \"$t\" $D' />";
+		print "<menu id='dir:$D' label='$D' execute='/bin/bash \"$t\" $D'$fold />";
 	}
-	my $fold;
-	$fold=" icon='$ico{$folder}'" if($folder && exists($ico{$folder}));
+	print map{"<menu id='ob3menumount:$_' label='$_' execute='/usr/bin/ob3menumount $_'".ico($_)."/>"}('fs','mount','umount');
 	print $F q(#/bin/bash
 xml(){
 x="${f//&/&amp;}"
@@ -256,4 +264,3 @@ print qq(<separator/>
 </menu>
 </openbox_pipe_menu>
 );
-
