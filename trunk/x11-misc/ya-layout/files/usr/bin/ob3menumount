@@ -71,7 +71,7 @@ while read d m t f x; do
 		# "ejected" usb can be detached too
 		[ -x /usr/bin/eject ] && x+=" && /usr/bin/eject $x"
 	;;&
-	*:mount)x+=" '$m'";;&
+	*:mount)x="'$m'";;&
 	*)
 		xml
 		echo "<item label='$u'><action name='Execute'><execute>/bin/$2 $x</execute></action></item>"
@@ -88,7 +88,7 @@ block:add)
 	m="/mnt/auto/$DEVNAME"
 	mkdir -p "$m"
 	/bin/mount -o noatime "$d" "$m" || rmdir "$m"
-	sed -i -e 's%^\($d [^ ]*\ [^ ]*\) %\1,users %' /etc/mtab
+	sed -i -e 's%^\($d [^ ]*\ [^ ]* [^ ]*\) %\1,users %' /etc/mtab
 ;;
 *)
 	echo "<openbox_pipe_menu><separator label='$1'/>"
