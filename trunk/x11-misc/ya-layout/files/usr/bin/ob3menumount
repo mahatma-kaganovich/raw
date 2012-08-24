@@ -2,6 +2,8 @@
 # openbox pipe menu to [u]mount removable & view mounts
 # (c) Denis Kaganovich, Anarchy or GPLv2
 
+notify='/usr/bin/notify-send -t 6000'
+
 xml(){
 	x="${x//&/&amp;}"
 	x="${x//</&lt;}"
@@ -34,12 +36,20 @@ done
 _umnt(){
 while read d m t f x; do
 	model=
+	f=",$f,"
 	case "$1:$2" in
+	/etc/fstab:mount)
+		[ "$UID" = 0 -o -z "${f##*,users,*}" -o -z "${f##*,user,*}" ] || continue
+	;;&
+	/etc/fstab:umount)
+		[ "$UID" = 0 -o -z "${f##*,users,*}" ] || continue
+	;;&
+	/etc/mtab:umount)
+		[ -z "${f##*,user=$USER,*}" ] || continue
+	;;&
 	*:mount|*:umount)
 		DEVNAME="${d#/dev/}"
 		_removable || continue
-		f=",$f,"
-		[ "$UID" = 0 -o -z "${f##*,user=$USER,*}" -o -z "${f##*,users,*}" ] || continue
 	;;&
 	*:fs)
 		DEVNAME="${d#/dev/}"
@@ -66,31 +76,74 @@ while read d m t f x; do
 		xml
 		echo "<menu id='ob3menumount:fs $x' label='$u' execute='/bin/bash .cache/ya/menu.xml.sh &apos;$x&apos;'/>"
 	;;
-	*:umount)
-		x="'$d'"
-		# "ejected" usb can be detached too
-		[ -x /usr/bin/eject ] && x+=" && /usr/bin/eject $x"
-	;;&
+	*:umount)x="'$d'";;&
 	*:mount)x="'$m'";;&
 	*)
 		xml
-		echo "<item label='$u'><action name='Execute'><execute>/bin/$2 $x</execute></action></item>"
+		echo "<item label='$u'><action name='Execute'><execute>${notify_}/bin/$2 $x</execute></action></item>"
 	;;
 	esac
 done <"$1"
 }
 
+_exec(){
+	r=0
+	e='OK'
+	# do not eval to ob compat
+	m="`"${@}" 2>&1`" || {
+		r=$?
+		e="ERROR[$r]"
+	}
+	[ $r = 0 ] && case "$1" in
+	/bin/umount)/usr/bin/eject "$2";; # "ejected" usb can be detached too
+	esac
+	i="$*"
+	i="${i%% *}"
+	shift
+	m="${i##*/} $*
+$e${m:+
+$m}"
+	$notify "$m"
+	return $r
+}
+
+obuser(){
+local i
+user=
+i=`grep -sazl "^/usr/bin/openbox$" /proc/[0-9]*/cmdline` || return 1
+i="/proc/${i//[^0-9
+]/}/environ"
+# only single session
+[ -e "$i"  ] || return 1
+export DBUS_SESSION_BUS_ADDRESS=`grep -sazh "^DBUS_SESSION_BUS_ADDRESS=" "$i"|sed -e "s:\x0:\n:g" -e 's:^.*=::'`
+user=`grep -sazh "^USER=" "$i"|sed -e "s:\x0:\n:g" -e 's:^.*=::'`
+}
+
 case "$1:$ACTION" in
-block:remove)exec /bin/umount -l "/dev/$DEVNAME" &>/dev/null;;
+block:remove)
+	# udev/hotplug: umount every removed
+	notify=exec
+	[ -x "${notify%% *}" ] && obuser && [ -n "$DBUS_SESSION_BUS_ADDRESS" ] && notify_=_exec
+	${notify_} /bin/umount -l "/dev/$DEVNAME"
+;;
 block:add)
+	# udev/hotplug: mount only if openbox user found
 	d="/dev/$DEVNAME"
-	_removable || exit
+	_removable && obuser && [ -n "$user" ] || exit
 	m="/mnt/auto/$DEVNAME"
 	mkdir -p "$m"
-	/bin/mount -o noatime "$d" "$m" || rmdir "$m"
-	sed -i -e 's%^\($d [^ ]*\ [^ ]* [^ ]*\) %\1,users %' /etc/mtab
+	notify_='_exec '
+	[ -n "$DBUS_SESSION_BUS_ADDRESS" -a -x "${notify%% *}" ] || notify_=
+	${notify_}sudo -u "$u" /bin/mount "$d" "$m" || rmdir "$m"
+;;
+exec:*)
+	shift
+	_exec "${@}"
+	exit $?
 ;;
 *)
+	notify_="$0 exec "
+	[ -n "$DBUS_SESSION_BUS_ADDRESS" -a -x "${notify%% *}" ] || notify_=
 	echo "<openbox_pipe_menu><separator label='$1'/>"
 	USER="${2:-$USER}"2
 	case "$1:$UID" in
