@@ -226,16 +226,26 @@ x="${x//\"/&quot;}"
 }
 f="${1%/}"
 xml
+# avoid automount on ls|stat symlinks
+a=false
+case "$f" in
+/mnt/auto/disk/*/*\);;
+/mnt/auto/disk/*\)a=true;f="/dev${f#/mnt/auto}";;
+esac
 echo "<openbox_pipe_menu><separator label='$x/'/>"
 for f in "$f"/*; do
+if $a; then
+	i=`readlink -f "$f"` && grep -qs "\":$i\"$" /var/run/auto.dev || continue
+	f="/mnt/auto${f#/dev}"
+fi
 xml
 X="${x//\\/\\\\}"
 X="${X//\$/\\\$}"
 X="${X//&quot;/\\&quot;}"
 F="${X##*/}"
 X="&quot;$X&quot;"
-if [ -d "$f" ]; then
-[ -r "$f" ] &&
+if $a || [ -d "$f" ]; then
+$a || [ -e "$f" ] &&
 echo "<menu id='dir:$x' label='$F/' execute='/bin/bash &apos;$0&apos; $X'),$fold,q( />"
 else
 ( [ -x "$f" ] && echo "<item label='*$F'><action name='Execute'><execute>/usr/bin/ya-session --run +$X</execute></action></item>" ) ||
