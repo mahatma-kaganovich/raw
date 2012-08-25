@@ -2,7 +2,7 @@
 # openbox pipe menu to [u]mount removable & view mounts
 # (c) Denis Kaganovich, Anarchy or GPLv2
 
-notify='/usr/bin/notify-send -t 6000'
+notify="/usr/bin/notify-send -t 6000"
 
 xml(){
 	x="${x//&/&amp;}"
@@ -19,21 +19,20 @@ _removable(){
 	if [ -e "$s" ]; then
 		read x <"$s/removable"
 	else
-		for i in /sys/block/*/"$DEVNAME"; do
-			[ -e "$i/partition" ] && s="${i%/*}" && read x <"$s/removable" && [ "$x" = 0 ] && break
+		while i="${s%[0-9]}" && [ "$i" != "$s" -a ! -e "$s" ]; do
+			s="$i"
 		done
+		[ -e "$s/$DEVNAME/partition" ] && read x <"$s/removable"
+#		for i in "$s/$DEVNAME"; do
+#			[ -e "$i/partition" ] && s="${i%/*}" && read x <"$s/removable" && [ "$x" = 0 ] && break
+#		done
 	fi
 	read model <"$s/device/model"
 	[ "$x" = 1 ]
 }
 
-clist(){
-while read d m t f x; do
-	true
-done
-}
-
 _umnt(){
+autofs=false
 while read d m t f x; do
 	model=
 	f=",$f,"
@@ -52,10 +51,14 @@ while read d m t f x; do
 		_removable || continue
 	;;&
 	*:fs)
+		case "$d $m $t" in
+		/var/run/auto.dev\ /mnt/auto/disk\ autofs)autofs=true;continue;;
+		*\ autofs)continue;;
+		*/*\ *\ *);;
+		*)continue;;
+		esac
 		DEVNAME="${d#/dev/}"
 		_removable
-#		[ -z "${m##/mnt/*}" ] || [ "$m" = / -a "$d" != rootfs ] || continue
-		[ -z "${d##*/*}" ] || continue
 	;;&
 	/etc/fstab:*)
 		d1=
@@ -84,6 +87,11 @@ while read d m t f x; do
 	;;
 	esac
 done <"$1"
+$autofs || return
+echo '<separator/>'
+for x in /mnt/auto /mnt/auto/disk/by-uuid; do
+	echo "<menu id='ob3menumount:$x' label='$x' execute='/bin/bash .cache/ya/menu.xml.sh $x'/>"
+done
 }
 
 _exec(){
