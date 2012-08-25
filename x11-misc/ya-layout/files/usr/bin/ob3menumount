@@ -94,11 +94,11 @@ for x in /mnt/auto; do
 done
 for x in /dev/disk/by-uuid/*; do
 	i=`readlink -f "$x"`||continue
-	i="${i#/dev}"
+	i="${i#/dev/}"
 	xml
 	while read d m t f; do
-		[ "$d $m $t" = "/var/run/auto.dev /mnt/auto$i autofs" ] &&
-		echo "<menu id='ob3menumount:$x' label='"${x#/dev/disk/by-}"' execute='/bin/bash .cache/ya/menu.xml.sh /mnt/auto${x#/dev}'/>"
+		[ "$d $m $t" = "/var/run/auto.dev /mnt/auto/$i autofs" ] &&
+		echo "<menu id='ob3menumount:$x' label='"${x#/dev/disk/by-}: $i"' execute='/bin/bash .cache/ya/menu.xml.sh /mnt/auto${x#/dev}'/>"
 	done </proc/mounts
 done
 }
