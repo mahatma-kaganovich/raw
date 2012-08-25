@@ -26,7 +26,7 @@ src_install(){
 	else
 		rm "${D}/etc/udev" -Rf
 	fi
-	use libnotify || sed -i -e 's:^notify=.*$:notify=:' "${D}"/usr/bin/ob3menumount
+	use libnotify || sed -i -e 's:^notify=.*$:notify=:' "${D}"/usr/bin/*
 	ewarn "Edit /etc/conf.d/autofs: MASTER_MAP_NAME=\"/usr/share/${PN}/auto.master\"
 Then do: \"ya-session --layout [user]\" - to copy minimal Desktop/*
 and, possible, restart [udev]"
