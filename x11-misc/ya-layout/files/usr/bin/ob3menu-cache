@@ -12,11 +12,11 @@ case "$cmd" in
 *ob3menu*\ --autostart*)a="$HOME/.cache/ya/autostart";;&
 *ob3menu*\ --slow\ *)
 	i="${cmd##* --slow }"
-	c+=" ${i%% --*} /usr/share/mime/globs" # /usr/share/icons/*/*/*
+	c+=" ${i%% --*} /usr/share/mime/globs /etc/fstab" # /usr/share/icons/*/*/*
 	cmd+=" --mime $m.sh "
 	cmd+=~/
 ;;
-*ob3menu*\ --mime\ *)c+=" /usr/share/mime/globs";;
+*ob3menu*\ --mime\ *)c+=" /usr/share/mime/globs /etc/fstab";;
 *mmaker\ *)mm=echo;;
 esac
 local k="$cmd:$LANG:`stat --printf=%Z $c`" k1
