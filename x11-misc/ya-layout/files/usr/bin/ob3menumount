@@ -36,6 +36,7 @@ autofs=false
 while read d m t f x; do
 	model=
 	f=",$f,"
+	dd="$d"
 	case "$1:$2" in
 	/etc/fstab:mount)
 		[ "$UID" = 0 -o -z "${f##*,users,*}" -o -z "${f##*,user,*}" ] || continue
@@ -45,6 +46,34 @@ while read d m t f x; do
 	;;&
 	/etc/mtab:umount)
 		[ -z "${f##*,user=$USER,*}" ] || continue
+	;;&
+	/etc/fstab:*)
+		d1=
+		case "$d" in
+		UUID=*|LABEL=*)
+			d1="${d%%=*}"
+			d1="/dev/disk/by-${d1,,}/${d#*=}"
+		;;&
+		LABEL=*)
+			if ! [ -L "$d1" ]; then
+				d1=$(/bin/mount -nfv "$d" |& {
+					d1=
+					while read i; do
+						x="${i##*/dev/}"
+						[ "$x" = "$i" ] && continue
+						i="/dev/${x%% *}"
+						[ -b "$i" ] || continue
+						[ -n "$d1" -a "$d1" != "$i" ] && break
+						d1="$i"
+					done
+					echo -n "$d1"
+				})
+				echo "$d1"
+			fi
+		;;
+		esac
+		[ -n "$d1" ] && d="$d1"
+		[ -L "$d" ] && d=`readlink -f "$d"`
 	;;&
 	*:mount|*:umount)
 		DEVNAME="${d#/dev/}"
@@ -66,12 +95,16 @@ while read d m t f x; do
 			[ "$d1" = "$d" ] && break
 		done </proc/mounts
 	;;&
-	/etc/fstab:mount)[ "$d1" = "$d" ] && continue;;&
+	/etc/fstab:mount)
+		[ "$d1" = "$d" ] && continue
+		d="$dd"
+	;;&
 	/etc/fstab:umount)[ "$d1" = "$d" ] || continue;;&
 	*)
-		x="$d -> $m${model:+: $model}"
+		x="${d#/dev/disk/by-} -> $m${model:+: $model}"
 		xml
 		u="$x"
+		# prefer per-device errors 4 safe detach
 		x="/bin/$2 '$d'"
 	;;&
 	*:fs)
