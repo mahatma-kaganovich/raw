@@ -17,8 +17,9 @@ $xml_='<>\'"&';
 	'false'=>'<startupnotify><enabled>no</enabled></startupnotify>'
 );
 %ico_=(
-	'umount'=>'gdu-unmount',
-	'mount'=>'gdu-mount',
+	'fs'=>['mount-point'],
+	'umount'=>['usbpendrive_unmount','gdu-unmount'],
+	'mount'=>['xfce-mount','gdu-mount'],
 );
 
 for(@ARGV){
@@ -68,8 +69,11 @@ sub icons{
 }
 
 sub ico{
-	my $i=$ico_{$_[0]}||$_[0];
-	return " icon='$ico{$i}'" if($i && exists($ico{$i}));
+	for(@_){
+		for(@{$ico_{$_}},$_){
+			return " icon='$ico{$_}'" if(exists($ico{$_}));
+		}
+	}
 }
 
 if(exists($P{slow})){
@@ -215,7 +219,18 @@ if(defined($P{mime})){
 #		( -r $D ) &&
 		print "<menu id='dir:$D' label='$D' execute='/bin/bash \"$t\" $D'$fold />";
 	}
-	print map{"<menu id='ob3menumount:$_' label='$_' execute='/usr/bin/ob3menumount $_'".ico($_)."/>"}('fs','mount','umount');
+	$i=1;
+	if($> && open($FF,'<','/etc/fstab')){
+		$i=0;
+		while(<$FF>){
+			if($_=~/^(?:[^\s#]+\s+){3}(?:\S*,)?users?(?:,\S*)?\s/g){
+				$i=1;
+				last;
+			}
+		}
+		close($FF);
+	}
+	print map{"<menu id='ob3menumount:$_' label='$_' execute='/usr/bin/ob3menumount $_'".ico($_)."/>"}('fs',$i?('mount','umount'):());
 	print $F q(#/bin/bash
 xml(){
 x="${f//&/&amp;}"
