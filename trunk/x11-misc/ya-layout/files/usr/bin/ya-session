@@ -420,6 +420,7 @@ Launcher:
 	*pcmanfm*)desk+=" -w $i";;
 	esac
 	export YA_DESKTOP
+	[ -e /var/run/autofs.pid ] && (. /usr/share/ya-layout/autofs-all)
 	wm ${desk:+--startup "$desk"}
 ;;
 esac
