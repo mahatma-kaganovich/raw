@@ -175,6 +175,10 @@ primary(){
 	return $r
 }
 
+_ips(){
+	[[ "$i" == "$1" ]] && i="$p" && p="$1" ||[[ "$p" == "$1" ]]
+}
+
 wait_sync(){
 	local i cmd ipid pid p s break="....."
 	while read -n 1 i; do
@@ -188,7 +192,8 @@ wait_sync(){
 	$DRBDADM -d wait-connect all|{
 		pid=""
 		while read cmd i p s; do
-			[[ "$p" == "wait-connect" ]] || continue
+			_ips wait-connect || continue
+			s="${s//--wait-after-sb=yes/--wait-after-sb}"
 			{
 			if [[ "$DRBD_HIDE_WAIT" == "yes" ]]; then
 				$cmd $i $p $s
@@ -204,7 +209,7 @@ wait_sync(){
 	$DRBDADM -d sh-b-pri all|{
 		pid=""
 		while read cmd i p s; do
-			[[ "$p" == "primary" ]] || continue
+			_ips primary || continue
 			primary "$cmd" "$i" &
 			pid="$pid $!"
 		done
