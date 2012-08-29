@@ -66,7 +66,7 @@ src_configure() {
 }
 
 src_compile() {
-	emake XSLTPROC_OPTIONS="--xinclude --novalid" tools $(use doc && echo "doc") || die "compile problem"
+	emake -j1 XSLTPROC_OPTIONS="--xinclude --novalid" tools $(use doc && echo "doc") || die "compile problem"
 }
 
 src_install() {
