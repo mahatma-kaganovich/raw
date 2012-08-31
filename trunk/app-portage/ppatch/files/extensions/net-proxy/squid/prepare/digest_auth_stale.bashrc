@@ -1,0 +1,1 @@
+sed -i -e 's/int stale = 0;/int stale = 1;/' "$S/src/auth/digest/auth_digest.cc"
