@@ -572,6 +572,13 @@ useconfig(){
 		cfg_ "
 "
 	done
+	cfg_ "###respect:$o" $(for i in $KERNEL_RESPECT; do
+		[[ -e "$i" ]] || continue
+		o=$(/bin/bash -c "inherit(){ true};. '$i' >/dev/null;echo \"\$CONFIG_CHECK\"")
+		for i in $o; do
+			[[ "$i" == [A-Z0-9!]* ]] && echo "${i//!/-}"
+		done
+	done|sort -u) #"
 }
 
 # experemental
