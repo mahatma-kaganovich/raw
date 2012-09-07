@@ -578,7 +578,8 @@ useconfig(){
 		for i in $o; do
 			[[ "$i" == [A-Z0-9!]* ]] && echo "${i//!/-}"
 		done
-	done|sort -u) #"
+	done|sort -u) "
+"
 }
 
 # experemental
