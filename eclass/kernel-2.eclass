@@ -529,7 +529,7 @@ cfg_loop(){
 
 useconfig(){
 	einfo "Preparing KERNEL_CONFIG"
-	local i o
+	local i o j
 	# staging submenu will be opened, but no auto-m
 	use staging || KERNEL_MODULES="${KERNEL_MODULES} -drivers/staging"
 	if use !embed-hardware; then
@@ -573,10 +573,21 @@ useconfig(){
 "
 	done
 	cfg_ "###respect:${KERNEL_RESPECT//[ 	]/,}" $(for i in $KERNEL_RESPECT; do
+		if [[ "$i" != /* ]]; then
+			[[ "$i" == */* ]] && i="$i/*.ebuild" || i="*/$i/$i-*.ebuild"
+			o=
+			for j in $PORTDIR $PORTDIR_OVERLAY; do
+				o+=" $j/$i"
+			done
+			i="$o"
+		fi
+		for i in $i; do
 		[[ -e "$i" ]] || continue
 		o=$(/bin/bash -c ". '$i' &>/dev/null;echo \"\$CONFIG_CHECK\"")
 		for i in $o; do
+			i="${i#\~}"
 			[[ "$i" == [A-Z0-9!]* ]] && echo "${i//!/-}"
+		done
 		done
 	done|sort -u) "
 "
