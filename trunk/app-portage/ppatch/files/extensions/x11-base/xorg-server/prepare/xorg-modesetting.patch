@@ -1,0 +1,14 @@
+for xorg <1.13
+--- a/hw/xfree86/common/xf86AutoConfig.c	2012-09-09 12:29:50.000000000 +0300
++++ b/hw/xfree86/common/xf86AutoConfig.c	2012-09-09 12:30:00.000000000 +0300
+@@ -276,6 +276,10 @@ listPossibleVideoDrivers(char *matches[]
+ #endif
+     }
+ 
++#if defined(__linux__)
++    matches[i++] = xnfstrdup("modesetting");
++#endif
++
+ #if !defined(sun)
+     /* Fallback to platform default frame buffer driver */
+     if (i < (nmatches - 1)) {
