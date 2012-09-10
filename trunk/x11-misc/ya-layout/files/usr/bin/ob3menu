@@ -21,6 +21,10 @@ $xml_='<>\'"&';
 	'umount'=>['usbpendrive_unmount','gdu-unmount'],
 	'mount'=>['xfce-mount','gdu-mount'],
 );
+# to configure more - need xml parsing
+@conf=('Focus:','focusNew','followMouse','focusLast','underMouse','raiseOnFocus', 'Theme:','animateIconify','keepBorder', 'Menu:','showIcons', 'Resize:','drawContents',
+    'Applications:','decor','shade','focus','iconic','skip_pager','skip_taskbar','fullscreen','maximized');
+%ch=('yes'=>'no','no'=>'yes','true'=>'false','false'=>'true');
 
 for(@ARGV){
 	if($_=~s/^--//){
@@ -81,7 +85,10 @@ if(exists($P{slow})){
 		my $s;
 		open($F,"<$_") && read($F,$s,-s $F);
 		close($F);
-		$P{'slow'}=index($s,'<showIcons>yes</showIcons>')>=0;
+		for $i (@conf){
+			$conf{$i}=$x if(substr($i,-1) ne ':' && (($x)=$s=~/<$i>([^<]*)<\/$i>/));
+		}
+		$P{'slow'}=$conf{showIcons} eq 'yes';
 		$s=~s/<keybind\s+key=\"(.*?)\".*?>\s*<action name=\"Execute\">.*?<command>(.*?)<\/command>/$key{$2}=$1;''/gse;
 	};
 	icons('/usr/share/icons/');
@@ -281,6 +288,28 @@ print qq(<separator/>
 <menu id="$i" label="OpenBox">
 <menu id="client-menu"/>
 <menu id="client-list-menu"/>
+);
+
+if(exists($P{slow})){
+	print "<menu id='ob3m:config' label='config'>",(map{
+		$i=substr($_,18,-10);
+		"<item label='$i'><action name='Execute'><execute>/usr/bin/ya-session --fixrc $i &lt;theme&gt; &lt;name&gt; [^&lt;]*</execute></action></item>"
+	}(</usr/share/themes/*/openbox-3>,'/usr/share/themes//dev/null/openbox-3')),
+	(map{
+		if(substr($_,-1) eq ':'){
+			"<separator label='$_'/>";
+		}else{
+			$i=$conf{$_};
+			$x=$_;
+			$x=~s/([A-Z])/ $1/g;
+			$x=~s/_/ /g;
+			exists($ch{$i})?"<item label='$x: $i'><action name='Execute'><execute>/usr/bin/ya-session --fixrc $ch{$i} &lt;$_&gt; $i</execute></action></item>":''
+		}
+	}(@conf)),
+	'</menu>';
+}
+
+print qq(
 <item label="Fullscreen"><action name="ToggleFullscreen"/></item>
 <item label="Reconfigure"><action name="Reconfigure"/></item>
 <item label="Restart"><action name="Restart"/></item>
