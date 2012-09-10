@@ -385,6 +385,10 @@ case "$1" in
 	shift 2
 	continue
 ;;
+--fixrc)
+	shift
+	fixml "${@}" <"$obconf" >"$obconf"'.$$$' && rename '.$$$' '' "$obconf"'.$$$'
+;;
 ?*)
 	i=" ${!YA_APP_*}"
 	i="${i// YA_APP_/,}"
