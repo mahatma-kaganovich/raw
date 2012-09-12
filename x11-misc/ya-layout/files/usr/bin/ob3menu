@@ -25,6 +25,7 @@ $xml_='<>\'"&';
 @conf=('Focus:','focusNew','followMouse','focusLast','underMouse','raiseOnFocus', 'Theme:','animateIconify','keepBorder', 'Menu:','showIcons', 'Resize:','drawContents',
     'Applications:','decor','shade','focus','iconic','skip_pager','skip_taskbar','fullscreen','maximized');
 %ch=('yes'=>'no','no'=>'yes','true'=>'false','false'=>'true');
+$id=0;
 
 for(@ARGV){
 	if($_=~s/^--//){
@@ -181,11 +182,10 @@ for(keys %cat){
 		push @{$cat1{$i}},$_ if(exists($cat1{$i}))
 	}
 }
-$i=0;
 print '<openbox_pipe_menu><menu id="client-list-combined-menu"/><separator/>';
 for(sort keys %cat1){
-	print "<menu id='$i' label='",$dir{$_}||"$_'",'>',(sort @{$cat1{$_}}),'</menu>';
-	$i++;
+	print "<menu id='$id' label='",$dir{$_}||"$_'",'>',(sort @{$cat1{$_}}),'</menu>';
+	$id++;
 }
 for(map{glob $_}(@{$P{include}})){
 	if(open(my $F,(-x $_)?"$_|":"<$_")){
@@ -224,7 +224,8 @@ if(defined($P{mime})){
 	open($F,'>',$t=shift(@{$P{mime}}))||die $!;
 	for my $D(@{$P{mime}}){
 #		( -r $D ) &&
-		print "<menu id='dir:$D' label='$D' execute='/bin/bash \"$t\" $D'$fold />";
+		print "<menu id='$id' label='$D' execute='/bin/bash \"$t\" $D'$fold />";
+		$id++;
 	}
 	$i=1;
 	if($> && open($FF,'<','/etc/fstab')){
@@ -237,7 +238,7 @@ if(defined($P{mime})){
 		}
 		close($FF);
 	}
-	print map{"<menu id='ob3menumount:$_' label='$_' execute='/usr/bin/ob3menumount $_'".ico($_)."/>"}('fs',$i?('mount','umount'):());
+	print map{"<menu id='".($id++)."' label='$_' execute='${0}mount $_'".ico($_)."/>"}('fs',$i?('mount','umount'):());
 	print $F q(#/bin/bash
 xml(){
 x="${f//&/&amp;}"
@@ -268,7 +269,7 @@ F="${X##*/}"
 X="&quot;$X&quot;"
 if $a || [ -d "$f" ]; then
 $a || [ -e "$f" ] &&
-echo "<menu id='dir:$x' label='$F/' execute='/bin/bash &apos;$0&apos; $X'),$fold,q( />"
+echo "<menu id='fs:$x' label='$F/' execute='/bin/bash &apos;$0&apos; $X'),$fold,q( />"
 else
 ( [ -x "$f" ] && echo "<item label='*$F'><action name='Execute'><execute>/usr/bin/ya-session --run +$X</execute></action></item>" ) ||
 [ -r "$f" ] &&
@@ -285,31 +286,10 @@ echo "</openbox_pipe_menu>"';
 }
 
 print qq(<separator/>
-<menu id="$i" label="OpenBox">
+<menu id=").($id++).qq(" label="OpenBox">
 <menu id="client-menu"/>
 <menu id="client-list-menu"/>
-);
-
-if(exists($P{slow})){
-	print "<menu id='ob3m:config' label='config'>",(map{
-		$i=substr($_,18,-10);
-		"<item label='$i'><action name='Execute'><execute>/usr/bin/ya-session --fixrc $i &lt;theme&gt; &lt;name&gt; [^&lt;]*</execute></action></item>"
-	}(</usr/share/themes/*/openbox-3>,'/usr/share/themes//dev/null/openbox-3')),
-	(map{
-		if(substr($_,-1) eq ':'){
-			"<separator label='$_'/>";
-		}else{
-			$i=$conf{$_};
-			$x=$_;
-			$x=~s/([A-Z])/ $1/g;
-			$x=~s/_/ /g;
-			exists($ch{$i})?"<item label='$x: $i'><action name='Execute'><execute>/usr/bin/ya-session --fixrc $ch{$i} &lt;$_&gt; $i</execute></action></item>":''
-		}
-	}(@conf)),
-	'</menu>';
-}
-
-print qq(
+<menu id=").($id++).qq(" label="config" execute="${0}config --config '$P{slow}->[0]'"/>
 <item label="Fullscreen"><action name="ToggleFullscreen"/></item>
 <item label="Reconfigure"><action name="Reconfigure"/></item>
 <item label="Restart"><action name="Restart"/></item>

@@ -1,0 +1,195 @@
+#!/usr/bin/perl
+# (c) Denis Kaganovich, Anarchy or GPLv2
+# openbox config pipe menu v0.1
+# using /usr/share/openbox*/rc.xsd
+
+%xml_=('<'=>'lt','>'=>'gt',"'"=>'apos','"'=>'quot','&'=>'amp');
+$xml_=join('',keys %xml_);
+$sep=':';
+
+for(@ARGV){
+	if($_=~s/^--//){
+		undef $P{$i=$_};
+	}else{
+		push(@{$P{$i}},$_);
+	}
+}
+
+if($prof=$P{profile}->[0]){
+	$cfg="$ENV{HOME}/.config/$prof";
+	@rc=("$cfg/rc.xml","/etc/xdg/$prof/rc.xml");
+}else{
+	if(!($cfg=$P{config}->[0])){
+		$i=`obxprop --root`;
+		$i=~s/_OB_CONFIG_FILE\(UTF8_STRING\) = \"(\S*)\"/$cfg=$1;''/se;
+	}
+	@rc=($cfg);
+	($cfg=~s/[^\/]*$//) &&
+	(($prof)=$cfg=~/.*\/([^\/]+)\/*$/) || die "Detecting openbox config";
+}
+
+&fixrc(@{$P{fix}}) if(exists($P{fix}));
+
+my %tag;
+my @tag;
+my %enum;
+
+$fixcmd="$0 --profile $prof --fix";
+
+%F=(
+'xsd:complexType'=>sub{
+	delete($enum{$_[1]});
+	delete($element{$_[1]});
+},
+'xsd:restriction'=>sub{delete($enum{$_[1]})},
+'xsd:all'=>sub{delete($element{$_[1]})},
+'xsd:sequence'=>sub{delete($element{$_[1]})},
+'xsd:enumeration'=>sub{
+	push @{$enum{$_[1]}},$_[0]->{'value'};
+},
+'xsd:element'=>sub{
+	push @{$element{$_[1]}},$_[0]->{'type'};
+},
+);
+
+%nomenu=(
+	$sep.'openbox_config'=>0,
+);
+
+sub load_xml{
+	read($_[0],my $s,-s $_[0]) || die $!;
+	close($_[0]);
+	$s=~s/<!--.*?-->//gs;
+	$s=~s/<\?.*?\?>//gs;
+	$s=~s/<!.*?[.*?].*?>//gs;
+	@tag=\%{$_[1]};
+	$s=~s/<(\/?)([^>\s\/]*)([^>]*?)(\/?)>\s*([^<]*)\s*/
+	    if($1){
+		pop @tag;
+	    }else{
+		push @tag,\%{$tag[-1]->{0}->{$2}->{$3}};
+		if($4){
+			$tag[-1]->{1}.=$5 if($5 ne '');
+			pop @tag;
+		}
+	    };
+	    $tag[-1]->{1}.=$5 if(!$4 && $5 ne '');
+	''/ge;
+}
+
+sub sort_xsd{
+	for (keys %{$_[0]}){
+		my $t=$_;
+		for my $a(keys %{$_[0]->{$t}}){
+			my $id=$_[1];
+			my $i=$a;
+			my %a;
+			$i=~s/([^=\s]*)(?:=\"([^=\s]*)\"|=\'([^=\s]*)\'|)/$a{$1}=$2;''/gse;
+			$id.="$sep$a{'name'}" if(exists($a{'name'}));
+			if(exists($a{'type'})){
+				$a{'type'}=~s/^$NS/$sep/;
+				$type{$id}=$a{'type'};
+			}
+			&{$F{$t}}(\%a,$id) if(exists($F{$t}));
+			sort_xsd($_[0]->{$t}->{$a}->{0},$id) if(exists($_[0]->{$t}->{$a}->{0}));
+		}
+	}
+}
+
+sub sort_tags{
+	for my $t(sort keys %{$_[0]}){
+		my $id="$_[2]$sep$t";
+		my $i1=$t;
+		$i1=~s/_/-/g;
+		$conf++;
+		if(exists($nomenu{$id})){
+			next if($nomenu{$id});
+#			print "<separator label='$i1'/>";
+		}else{
+			print "<menu id='config:$conf' label='$i1'>"
+		}
+		my $A=scalar(keys %{$_[0]->{$t}})>1;
+		for my $a(sort keys %{$_[0]->{$t}}){
+			my $ed="<$t$a>";
+			$ed=~s/([$xml_])/\&$xml_{$1};/g;
+			$ed="$_[1] '$ed'";
+			my $i;
+			if($a && $A){
+				$i=$a;
+				$i=~s/_/-/g;
+				$i=~s/([$xml_])/\&$xml_{$1};/gs;
+				$conf++;
+				print exists($nomenu{$id})?"<separator label='$i'/>":"<menu id='config:$conf' label='$i'>";
+				$i=" $a";
+			}
+			sort_tags($_[0]->{$t}->{$a}->{0},$ed,$id) if(exists($_[0]->{$t}->{$a}->{0}));
+			if((my $d=$_[0]->{$t}->{$a}->{1}) ne ''){
+				~s/([$xml_])/\&$xml_{$1};/gs for($d);
+				if(ref($type{$id}) eq ARRAY){
+					print map{
+						($_ eq $d)?"<separator label='$d'/>":"<item label='$_'><action name='Execute'><execute>$fixcmd &quot;$_&quot; $ed &quot;$d&quot;</execute></action></item>"
+					}(@{$type{$id}});
+				}else{
+					print "<separator label='$d'/>$type{$id}";
+				}
+			}
+			if($a && $A && !exists($nomenu{$id})){
+				print '</menu>';
+			}
+		}
+		exists($nomenu{$id}) || print '</menu>';
+	}
+}
+
+sub open_{
+	open($_[0],@_[1,$_]) && return $_[0] for(2..$#_);
+	die "Error open '".join('|',@_[2..$#_])."'\n";
+}
+
+sub fixrc(){
+$qm=1;
+open_(my $F,'<',@rc);
+mkdir($cfg)||die $! if(! -d $cfg);
+read($F,$s,-s $F)||die $!;
+close($F);
+$to=shift;
+$from=pop(@_);
+my $rc1=$rc[0].'.$$$';
+my ($p1,$p2);
+for(@_){
+	my $x=$_;
+	$x=~s/\s.*//s;
+	substr($x,1,0)='/';
+	$p2=".*$x$p";
+	$p1.=($qm?quotemeta($_):$_).'.*';
+}
+($s=~s/($p1)$from($p2)/$1$to$2/gs) || die "Not found\n";
+open($F,'>',$rc1) && print($F $s) && close($F) && rename($rc1,$rc[0]) || die $!;
+exec('/usr/bin/openbox','--reconfigure');
+exit;
+}
+
+
+$NS='ob:';
+load_xml(open_($F,'<',(glob('/usr/share/doc/openbox*/rc.xsd'))[-1]),$xsd);
+load_xml(open_($F,'<',@rc),$tag);
+
+print '<openbox_pipe_menu>';
+sort_xsd($xsd->{0});
+for (values %type){
+	$_=exists($enum{$_})?$enum{$_}:undef;
+}
+for (sort keys %type){
+	if(exists($element{$_})){
+		for my $i (@{$element{$_}}){
+			for my $ii (grep(/^$i$sep.*/,keys %type)){
+				my $t=$ii;
+				$t=~s/$sep[^$sep]*//;
+				$type{$_.$t}=$type{$ii};
+			}
+		}
+	}
+}
+$type{join($sep,'','openbox_config','theme','name')}=[(map{substr($_,18,-10)}glob('/usr/share/themes/*/openbox-3')),'/dev/null'];
+sort_tags($tag->{0});
+print '</openbox_pipe_menu>';
