@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # (c) Denis Kaganovich, Anarchy or GPLv2
-# openbox config pipe menu v0.1
+# openbox config pipe menu v0.2
 # using /usr/share/openbox*/rc.xsd
 
 %xml_=('<'=>'lt','>'=>'gt',"'"=>'apos','"'=>'quot','&'=>'amp');
@@ -30,30 +30,12 @@ if($prof=$P{profile}->[0]){
 
 &fixrc(@{$P{fix}}) if(exists($P{fix}));
 
-my %tag;
-my @tag;
-my %enum;
+my (%type,%xsd);
 
 $fixcmd="$0 --profile $prof --fix";
 
-%F=(
-'xsd:complexType'=>sub{
-	delete($enum{$_[1]});
-	delete($element{$_[1]});
-},
-'xsd:restriction'=>sub{delete($enum{$_[1]})},
-'xsd:all'=>sub{delete($element{$_[1]})},
-'xsd:sequence'=>sub{delete($element{$_[1]})},
-'xsd:enumeration'=>sub{
-	push @{$enum{$_[1]}},$_[0]->{'value'};
-},
-'xsd:element'=>sub{
-	push @{$element{$_[1]}},$_[0]->{'type'};
-},
-);
-
 %nomenu=(
-	$sep.'openbox_config'=>0,
+	"ob${sep}openbox_config"=>0,
 );
 
 sub load_xml{
@@ -61,69 +43,79 @@ sub load_xml{
 	close($_[0]);
 	$s=~s/<!--.*?-->//gs;
 	$s=~s/<\?.*?\?>//gs;
-	$s=~s/<!.*?(?:[.*?])?.*?>//gs;
-	@tag=\%{$_[1]};
-	$s=~s/<(\/?)([^>\s\/]*)([^>]*?)(\/?)>\s*([^<]*)\s*/
-	    if($1){
+	my @tag=({});
+	$s=~s/<([\/!]?)([^<>\s\/]*)([^<>]*?)(\/?)>([^<]*)/
+	    my $c;
+	    my $i=1;
+	    if($1 eq '\/'){
 		pop @tag;
+		$c=$tag[-1];
 	    }else{
-		push @tag,\%{$tag[-1]->{0}->{$2}->{$3}};
-		if($4){
-			$tag[-1]->{1}.=$5 if($5 ne '');
-			pop @tag;
+		push @tag,$c=\%{$tag[-1]->{0}->{$2}->{$3}};
+		if($4 || $1){
+			$c=pop @tag
+		}elsif(exists($c->{1})){
+			$i=scalar(keys %$c)+!exists($c->{0})
 		}
 	    };
-	    $tag[-1]->{1}.=$5 if(!$4 && $5 ne '');
-	''/ge;
+#	    $c->{$i}.=$5;
+	    if(my ($x)=$5=~\/^\s*(\S.*?)\s*$\/s){ $c->{$i}.=$c->{$i} ne ''?' '.$x:$x; }
+	''/ges;
+	$tag[0]->{0};
 }
 
 sub sort_xsd{
-	for (keys %{$_[0]}){
-		my $t=$_;
+	for my $t(keys %{$_[0]}){
 		for my $a(keys %{$_[0]->{$t}}){
 			my $id=$_[1];
 			my $i=$a;
 			my %a;
-			$i=~s/([^=\s]*)(?:=\"([^=\s]*)\"|=\'([^=\s]*)\'|)/$a{$1}=$2;''/gse;
-			$id.="$sep$a{'name'}" if(exists($a{'name'}));
-			if(exists($a{'type'})){
-				$a{'type'}=~s/^$NS/$sep/;
-				$type{$id}=$a{'type'};
+			$i=~s/([^=\s]+)(?:=\"([^=\s]*)\"|=\'([^=\s]*)\'|)/$a{$1}=$2;''/gse;
+			$id.=$sep.$a{'name'} if(exists($a{'name'}));
+			$type{$id}=$a{'type'} if(exists($a{'type'}));
+			while(my ($x,$y)=each %a){
+				push @{$xsd{$t}->{$id}->{$x}},$y;
 			}
-			&{$F{$t}}(\%a,$id) if(exists($F{$t}));
-			sort_xsd($_[0]->{$t}->{$a}->{0},$id) if(exists($_[0]->{$t}->{$a}->{0}));
+			sort_xsd($_[0]->{$t}->{$a}->{0},$id);
 		}
 	}
 }
 
 sub sort_tags{
 	for my $t(sort keys %{$_[0]}){
-		my $id="$_[2]$sep$t";
+		my $id="$_[1]$sep$t";
 		my $i1=$t;
 		$i1=~s/_/-/g;
-		$conf++;
 		if(exists($nomenu{$id})){
 			next if($nomenu{$id});
 #			print "<separator label='$i1'/>";
 		}else{
-			print "<menu id='config:$conf' label='$i1'>"
+			$conf++;
+			print "<menu id='config:$conf' label='$i1'>";
 		}
 		my $A=scalar(keys %{$_[0]->{$t}})>1;
-		for my $a(sort keys %{$_[0]->{$t}}){
+		for my $aa(sort keys %{$_[0]->{$t}}){
+			my $a1=$aa;
+			$a1=~s/^\s+//s;
+			$a1=~s/\s+$//s;
 			my $ed="<$t$a>";
 			$ed=~s/([$xml_])/\&$xml_{$1};/g;
-			$ed="$_[1] '$ed'";
+			$ed="$_[2] '$ed'";
 			my $i;
-			if($a && $A){
-				$i=$a;
+			$a1=1;
+			if($a1&&=$A){
+				$i=$aa;
 				$i=~s/_/-/g;
 				$i=~s/([$xml_])/\&$xml_{$1};/gs;
 				$conf++;
-				print exists($nomenu{$id})?"<separator label='$i'/>":"<menu id='config:$conf' label='$i'>";
-				$i=" $a";
+				$a1&&=!exists($nomenu{$id});
+				print $a1?"<menu id='config:$conf' label='$i'>":"<separator label='$i'/>";
+				$i=" $aa";
 			}
-			sort_tags($_[0]->{$t}->{$a}->{0},$ed,$id) if(exists($_[0]->{$t}->{$a}->{0}));
-			if((my $d=$_[0]->{$t}->{$a}->{1}) ne ''){
+			for(sort{$a<=>$b}keys %{$_[0]->{$t}->{$aa}}){
+			    if(!$_){
+				sort_tags($_[0]->{$t}->{$aa}->{0},$id,$ed);
+			    }elsif(($d=$_[0]->{$t}->{$aa}->{$_}) ne ''){
 				~s/([$xml_])/\&$xml_{$1};/gs for($d);
 				if(ref($type{$id}) eq ARRAY){
 					print map{
@@ -132,10 +124,9 @@ sub sort_tags{
 				}else{
 					print "<separator label='$d'/>$type{$id}";
 				}
+			    }
 			}
-			if($a && $A && !exists($nomenu{$id})){
-				print '</menu>';
-			}
+			$a1 && print '</menu>';
 		}
 		exists($nomenu{$id}) || print '</menu>';
 	}
@@ -169,27 +160,29 @@ exec('/usr/bin/openbox','--reconfigure');
 exit;
 }
 
+sort_xsd(load_xml(open_($F,'<',reverse glob('/usr/share/doc/openbox*/rc.xsd'))),'ob');
 
-$NS='ob:';
-load_xml(open_($F,'<',(glob('/usr/share/doc/openbox*/rc.xsd'))[-1]),$xsd);
-load_xml(open_($F,'<',@rc),$tag);
-
-print '<openbox_pipe_menu>';
-sort_xsd($xsd->{0});
 for (values %type){
-	$_=exists($enum{$_})?$enum{$_}:undef;
+	# don't know what to do else now. todo
+	$_=exists($xsd{'xsd:enumeration'}->{$_})?$xsd{'xsd:enumeration'}->{$_}->{'value'}:undef;
 }
-for (sort keys %type){
-	if(exists($element{$_})){
-		for my $i (@{$element{$_}}){
+
+for(0..2){
+for(keys %type){
+	if(exists($xsd{'xsd:element'}->{$_})){
+		for my $i (@{$xsd{'xsd:element'}->{$_}->{'type'}}){
 			for my $ii (grep(/^$i$sep.*/,keys %type)){
 				my $t=$ii;
-				$t=~s/$sep[^$sep]*//;
+				$t=~s/^$i//;
 				$type{$_.$t}=$type{$ii};
 			}
 		}
 	}
 }
-$type{join($sep,'','openbox_config','theme','name')}=[(map{substr($_,18,-10)}glob('/usr/share/themes/*/openbox-3')),'/dev/null'];
-sort_tags($tag->{0});
+}
+
+$type{join($sep,'ob','openbox_config','theme','name')}=[(map{substr($_,18,-10)}glob('/usr/share/themes/*/openbox-3')),'/dev/null'];
+
+print '<openbox_pipe_menu>';
+sort_tags(load_xml(open_($F,'<',@rc)),'ob');
 print '</openbox_pipe_menu>';
