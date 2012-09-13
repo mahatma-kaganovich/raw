@@ -98,7 +98,7 @@ sub sort_tags{
 			my $a1=$aa;
 			$a1=~s/^\s+//s;
 			$a1=~s/\s+$//s;
-			my $ed="<$t$a>";
+			my $ed="<$t$aa>";
 			$ed=~s/([$xml_])/\&$xml_{$1};/g;
 			$ed="$_[2] '$ed'";
 			my $i;
