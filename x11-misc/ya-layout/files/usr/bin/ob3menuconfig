@@ -198,7 +198,7 @@ my ($p1,$p2);
 for(@_){
 	my $x=$_;
 	if(substr($x,0,2) ne '</'){
-		$x=~s/\s.*//s;
+		$x=~s/\s.*/>/s;
 		substr($x,1,0)='/';
 		$p2='.*?'.($qm?quotemeta($x):$x).$p2;
 		$p1.=($qm?quotemeta($_):$_).'.*?';
