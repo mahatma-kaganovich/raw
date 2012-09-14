@@ -30,7 +30,7 @@ if($prof=$P{profile}->[0]){
 
 &fixrc(@{$P{fix}}) if(exists($P{fix}));
 
-my (%type,%xsd);
+my (%type,%xsd,%fontcfg);
 
 $fixcmd="$0 --profile $prof --fix";
 
@@ -117,19 +117,63 @@ sub sort_tags{
 				sort_tags($_[0]->{$t}->{$aa}->{0},$id,$ed);
 			    }elsif(($d=$_[0]->{$t}->{$aa}->{$_}) ne ''){
 				~s/([$xml_])/\&$xml_{$1};/gs for($d);
+				my $def="<separator label='$d'/>";
 				if(ref($type{$id}) eq ARRAY){
 					print map{
-						($_ eq $d)?"<separator label='$d'/>":"<item label='$_'><action name='Execute'><execute>$fixcmd &quot;$_&quot; $ed &quot;$d&quot;</execute></action></item>"
+						if($_ eq $d){
+							my $i=$def;
+							$def=undef;
+							$i;
+						}else{
+							"<item label='$_'><action name='Execute'><execute>$fixcmd &quot;$_&quot; $ed &quot;$d&quot;</execute></action></item>"
+						}
 					}(@{$type{$id}});
-				}else{
-					print "<separator label='$d'/>$type{$id}";
+				}elsif(ref($type{$id}) eq HASH){
+					for(sort keys %{$type{$id}}){
+						if($_ eq $d){
+							print "<separator label='$type{$id}->{$_}'/>";
+							$def=undef;
+						}else{
+							print "<item label='$type{$id}->{$_}'><action name='Execute'><execute>$fixcmd &quot;$_&quot; $ed &quot;$d&quot;</execute></action></item>"
+						}
+					};
+				}elsif(substr($type{$id},0,1,) eq '<'){
+					print $type{$id};
 				}
+				print $def;
 			    }
 			}
 			$a1 && print '</menu>';
 		}
 		exists($nomenu{$id}) || print '</menu>';
 	}
+}
+
+sub fontconfig{
+	for(@_){
+		next if(defined($fontcfg{$_}));
+		$fontcfg{$_}++;
+		if(stat($_) && -f && -r _ && -s _){
+			my $d=$_;
+			$d=~s/[^\/]*$//;
+			sort_fonts(load_xml(open_(my $F,'<',$_)),$d)
+		}
+	}
+}
+
+sub walk{
+	my $x=$_[1];
+	return ref($_[0])?defined($x)?ref($x)?map{walk($_[0]->{$_},@_[2..$#_])}(grep(/$x->[0]/,keys %{$_[0]})):walk($_[0]->{$x},@_[2..$#_]):$#_?map{walk($_[0]->{$_},@_[2..$#_])}(keys %{$_[0]}):():$#_?():($_[0]);
+}
+
+sub sort_fonts{
+	for(walk($_[0],'fontconfig',undef,undef,'include',undef,undef)){
+		my $f=$_;
+		$f="$_[1]$f" if(substr($f,0,1) ne '/');
+		fontconfig($f,"$f.conf",glob('[0-9][0-9]-$f.conf'),glob("$f/[0-9][0-9]-*.conf"))
+	}
+	$fonts{$_}=$_ for(walk($_[0],'fontconfig',undef,0,'alias',undef,0,'family',undef,undef));
+	$fonts{$_}="$_ *" for(walk($_[0],'fontconfig',undef,0,'match',['target="pattern"'],0,'test',['name="family"'],0,'string',undef,undef));
 }
 
 sub open_{
@@ -142,17 +186,25 @@ $qm=1;
 open_(my $F,'<',@rc);
 mkdir($cfg)||die $! if(! -d $cfg);
 read($F,$s,-s $F)||die $!;
+print "$rc[0]";;
 close($F);
+my ($from,$to);
 $to=shift;
-$from=pop(@_);
+if(substr($_[-1],0,2) ne '</'){
+	$from=pop(@_);
+}
 my $rc1=$rc[0].'.$$$';
 my ($p1,$p2);
 for(@_){
 	my $x=$_;
-	$x=~s/\s.*//s;
-	substr($x,1,0)='/';
-	$p2=".*$x$p";
-	$p1.=($qm?quotemeta($_):$_).'.*';
+	if(substr($x,0,2) ne '</'){
+		$x=~s/\s.*//s;
+		substr($x,1,0)='/';
+		$p2='.*?'.($qm?quotemeta($x):$x).$p2;
+		$p1.=($qm?quotemeta($_):$_).'.*?';
+	}else{
+		$p2=($qm?quotemeta($x):$x).$p2;
+	}
 }
 ($s=~s/($p1)$from($p2)/$1$to$2/gs) || die "Not found\n";
 open($F,'>',$rc1) && print($F $s) && close($F) && rename($rc1,$rc[0]) || die $!;
@@ -161,6 +213,7 @@ exit;
 }
 
 sort_xsd(load_xml(open_($F,'<',reverse glob('/usr/share/doc/openbox*/rc.xsd'))),'ob');
+fontconfig('/etc/fonts/fonts.conf');
 
 for (values %type){
 	# don't know what to do else now. todo
@@ -182,6 +235,8 @@ for(keys %type){
 }
 
 $type{join($sep,'ob','openbox_config','theme','name')}=[(map{substr($_,18,-10)}glob('/usr/share/themes/*/openbox-3')),'/dev/null'];
+$type{join($sep,'ob','openbox_config','theme','font','size')}=[(5..32)];
+$type{join($sep,'ob','openbox_config','theme','font','name')}=\%fonts;
 
 print '<openbox_pipe_menu>';
 sort_tags(load_xml(open_($F,'<',@rc)),'ob');
