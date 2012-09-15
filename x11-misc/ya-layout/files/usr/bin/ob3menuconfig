@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # (c) Denis Kaganovich, Anarchy or GPLv2
-# openbox config pipe menu v0.2
+# openbox config pipe menu v0.3
 # using /usr/share/openbox*/rc.xsd
 
 %xml_=('<'=>'lt','>'=>'gt',"'"=>'apos','"'=>'quot','&'=>'amp');
@@ -30,7 +30,7 @@ if($prof=$P{profile}->[0]){
 
 &fixrc(@{$P{fix}}) if(exists($P{fix}));
 
-my (%type,%xsd,%fontcfg);
+my (%type,%xsd,%fontcfg,%fonts,%fonts_);
 
 $fixcmd="$0 --profile $prof --fix";
 
@@ -163,7 +163,7 @@ sub fontconfig{
 
 sub walk{
 	my $x=$_[1];
-	return ref($_[0])?defined($x)?ref($x)?map{walk($_[0]->{$_},@_[2..$#_])}(grep(/$x->[0]/,keys %{$_[0]})):walk($_[0]->{$x},@_[2..$#_]):$#_?map{walk($_[0]->{$_},@_[2..$#_])}(keys %{$_[0]}):$_[0]:$#_?():($_[0]);
+	ref($_[0])?defined($x)?ref($x)?map{walk($_[0]->{$_},@_[2..$#_])}(grep(/$x->[0]/,keys %{$_[0]})):walk($_[0]->{$x},@_[2..$#_]):$#_?map{walk($_[0]->{$_},@_[2..$#_])}(keys %{$_[0]}):($_[0]):$#_?():($_[0]);
 }
 
 sub sort_fonts{
@@ -179,26 +179,17 @@ sub sort_fonts{
 		for my $x (walk($_,'family',undef,undef)){
 			next if(ref($x) || exists($fonts{$x}));
 			for my $y (@a){
-				next if(ref($y));
-				if(exists($fonts{$y})){
-					$fonts{$x}="$x *";
-				}else{
-					$fonts_{$x}->{$y}=undef;
-				}
+				$fonts_{$x}->{$y}='*' if(!ref($y));
 			}
 		}
 	}
 	for(walk($_[0],'fontconfig',undef,0,'match',['\starget=["\']pattern["\']'],0)){
 		next if(ref($_) ne 'HASH');
+		my @a=walk($_,'edit',['\sname=["\']family["\']'],0,'string',undef,undef);
 		for my $x (walk($_,'test',['\sname=["\']family["\']'],0,'string',undef,undef)){
 			next if(ref($x) || exists($fonts{$x}));
-			for my $y (walk($_,'edit',['\sname=["\']family["\']'],0,'string',undef,undef)){
-				next if(ref($y));
-				if(exists($fonts{$y})){
-					$fonts{$x}="$x ***";
-				}else{
-					$fonts_{$x}->{$y}=undef;
-				}
+			for my $y (@a){
+				$fonts_{$x}->{$y}='~' if(!ref($y));
 			}
 		}
 	}
@@ -240,27 +231,29 @@ exec('/usr/bin/openbox','--reconfigure');
 exit;
 }
 
-sort_xsd(load_xml(open_($F,'<',reverse glob('/usr/share/doc/openbox*/rc.xsd'))),'ob');
-
-$_=~s/^.*:\s(.*?):.*$/$fonts{$1}=$1/e for(split(/\n/,`/usr/bin/fc-list`));
-fontconfig('/etc/fonts/fonts.conf') if(!$?);
-#for(my ($n,$n1)=(1); $n ne $n1; ($n,$n1)=(scalar(%fonts),$n)){
-for(keys %fonts_){
-	for my $i (keys %{$fonts_{$_}}){
-		if(exists($fonts{$i})){
-			$fonts{$_}="$_ **";
-			delete($fonts_{$_});
-			last;
+~s/^.*:\s(.*?):.*$/$fonts{$1}=$1/e for(split(/\n/,`/usr/bin/fc-list`));
+if(!$?){
+	fontconfig('/etc/fonts/fonts.conf');
+	for(my ($n,$n1)=(1); $n ne $n1; ($n,$n1)=(scalar(%fonts),$n)){
+		for(keys %fonts_){
+			for my $i (keys %{$fonts_{$_}}){
+				if(exists($fonts{$i})){
+					my $x=$fonts{$i};
+					$x=~s/[^\*\~]*//;
+					$fonts{$_}="$_ ".delete($fonts_{$_})->{$i}.$x;
+					last
+				}
+			}
 		}
 	}
 }
-#}
+%fonts_=();
 
+sort_xsd(load_xml(open_($F,'<',reverse glob('/usr/share/doc/openbox*/rc.xsd'))),'ob');
 for (values %type){
 	# don't know what to do else now. todo
 	$_=exists($xsd{'xsd:enumeration'}->{$_})?$xsd{'xsd:enumeration'}->{$_}->{'value'}:undef;
 }
-
 for(0..2){
 for(keys %type){
 	if(exists($xsd{'xsd:element'}->{$_})){
@@ -274,7 +267,7 @@ for(keys %type){
 	}
 }
 }
-
+%xsd=();
 $type{join($sep,'ob','openbox_config','theme','name')}=[(map{substr($_,18,-10)}glob('/usr/share/themes/*/openbox-3')),'/dev/null'];
 $type{join($sep,'ob','openbox_config','theme','font','size')}=[(5..32)];
 $type{join($sep,'ob','openbox_config','theme','font','name')}=\%fonts;
