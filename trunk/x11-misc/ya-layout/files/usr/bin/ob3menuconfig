@@ -163,17 +163,45 @@ sub fontconfig{
 
 sub walk{
 	my $x=$_[1];
-	return ref($_[0])?defined($x)?ref($x)?map{walk($_[0]->{$_},@_[2..$#_])}(grep(/$x->[0]/,keys %{$_[0]})):walk($_[0]->{$x},@_[2..$#_]):$#_?map{walk($_[0]->{$_},@_[2..$#_])}(keys %{$_[0]}):():$#_?():($_[0]);
+	return ref($_[0])?defined($x)?ref($x)?map{walk($_[0]->{$_},@_[2..$#_])}(grep(/$x->[0]/,keys %{$_[0]})):walk($_[0]->{$x},@_[2..$#_]):$#_?map{walk($_[0]->{$_},@_[2..$#_])}(keys %{$_[0]}):$_[0]:$#_?():($_[0]);
 }
 
 sub sort_fonts{
 	for(walk($_[0],'fontconfig',undef,undef,'include',undef,undef)){
+		next if(ref($_));
 		my $f=$_;
 		$f="$_[1]$f" if(substr($f,0,1) ne '/');
 		fontconfig($f,"$f.conf",glob('[0-9][0-9]-$f.conf'),glob("$f/[0-9][0-9]-*.conf"))
 	}
-	$fonts{$_}=$_ for(walk($_[0],'fontconfig',undef,0,'alias',undef,0,'family',undef,undef));
-	$fonts{$_}="$_ *" for(walk($_[0],'fontconfig',undef,0,'match',['target="pattern"'],0,'test',['name="family"'],0,'string',undef,undef));
+	for(walk($_[0],'fontconfig',undef,0,'alias',undef,0)){
+		next if(ref($_) ne 'HASH');
+		my @a=walk($_,undef,undef,0,undef,undef,undef);
+		for my $x (walk($_,'family',undef,undef)){
+			next if(ref($x) || exists($fonts{$x}));
+			for my $y (@a){
+				next if(ref($y));
+				if(exists($fonts{$y})){
+					$fonts{$x}="$x *";
+				}else{
+					$fonts_{$x}->{$y}=undef;
+				}
+			}
+		}
+	}
+	for(walk($_[0],'fontconfig',undef,0,'match',['\starget=["\']pattern["\']'],0)){
+		next if(ref($_) ne 'HASH');
+		for my $x (walk($_,'test',['\sname=["\']family["\']'],0,'string',undef,undef)){
+			next if(ref($x) || exists($fonts{$x}));
+			for my $y (walk($_,'edit',['\sname=["\']family["\']'],0,'string',undef,undef)){
+				next if(ref($y));
+				if(exists($fonts{$y})){
+					$fonts{$x}="$x ***";
+				}else{
+					$fonts_{$x}->{$y}=undef;
+				}
+			}
+		}
+	}
 }
 
 sub open_{
@@ -213,7 +241,20 @@ exit;
 }
 
 sort_xsd(load_xml(open_($F,'<',reverse glob('/usr/share/doc/openbox*/rc.xsd'))),'ob');
-fontconfig('/etc/fonts/fonts.conf');
+
+$_=~s/^.*:\s(.*?):.*$/$fonts{$1}=$1/e for(split(/\n/,`/usr/bin/fc-list`));
+fontconfig('/etc/fonts/fonts.conf') if(!$?);
+#for(my ($n,$n1)=(1); $n ne $n1; ($n,$n1)=(scalar(%fonts),$n)){
+for(keys %fonts_){
+	for my $i (keys %{$fonts_{$_}}){
+		if(exists($fonts{$i})){
+			$fonts{$_}="$_ **";
+			delete($fonts_{$_});
+			last;
+		}
+	}
+}
+#}
 
 for (values %type){
 	# don't know what to do else now. todo
