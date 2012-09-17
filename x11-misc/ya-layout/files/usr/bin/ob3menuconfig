@@ -1,11 +1,27 @@
 #!/usr/bin/perl
 # (c) Denis Kaganovich, Anarchy or GPLv2
-# openbox config pipe menu v0.3
+# openbox config pipe menu v0.4
 # using /usr/share/openbox*/rc.xsd
 
 %xml_=('<'=>'lt','>'=>'gt',"'"=>'apos','"'=>'quot','&'=>'amp');
 $xml_=join('',keys %xml_);
 $sep=':';
+$MENU='config';
+#$sel='+';
+
+$SIG{__DIE__}=sub{
+return if(!exists($ENV{DBUS_SESSION_BUS_ADDRESS}));
+print STDERR ($e=join('',"$0: ",@_));
+exec('/usr/bin/notify-send','-t',6000,$e);
+};
+
+sub utf8_encode{};
+sub utf8_decode{};
+if(1){ # perl version?
+	*utf8_encode=*utf8::encode;
+	*utf8_decode=*utf8::decode;
+#	$filemode=':utf8';
+}
 
 for(@ARGV){
 	if($_=~s/^--//){
@@ -28,19 +44,51 @@ if($prof=$P{profile}->[0]){
 	(($prof)=$cfg=~/.*\/([^\/]+)\/*$/) || die "Detecting openbox config";
 }
 
-&fixrc(@{$P{fix}}) if(exists($P{fix}));
+my (%type,%xsd,%fontcfg,%fonts,%fonts_,$SUBMENU);
 
-my (%type,%xsd,%fontcfg,%fonts,%fonts_);
-
-$fixcmd="$0 --profile $prof --fix";
+$cmd="$0 --profile $prof";
 
 %nomenu=(
 	"ob${sep}openbox_config"=>0,
 );
 
+%cmd=(
+'fix'=>\&fixrc,
+# todo
+'app'=>sub{
+#	open_(my $F,'<',"$ENV{HOME}/.cache/$prof/menu.xml");
+#	read($F,my $s,-s $F);
+	open_(my $F,'|-',"/usr/bin/ob3menu-cache /usr/bin/ob3menu --slow $ENV{HOME}/.config/ya/rc.xml");
+	$s=join('',<$F>);
+	close($F);
+	utf8_decode($s);
+	$s=~s/(<menu id=[\'\"])/$1$$:/gs;
+	~s/([$xml_])/\&$xml_{$1};/g for(@_);
+	my $p=join("' '",@_);
+	$s=~s/(<action.*?<\/action>)/
+		my $i=$1;
+		$i=~s\/([$xml_])\/\&$xml_{$1};\/g;
+		"<action name='execute'><execute>$cmd --fix '$i' '$p'<\/execute><\/action>"
+	/gse;
+	print $s;
+	exit;
+},
+'fonts'=>sub{
+	fonts();
+	submenu(\%fonts,undef,@_);
+},
+);
+
 sub load_xml{
 	read($_[0],my $s,-s $_[0]) || die $!;
 	close($_[0]);
+	utf8_decode($s);
+	### bugfix
+	if($_[1]){
+		$s=~s/name=\"monitor\" type=\"ob:primarymonitor\"/name=\"primaryMonitor\" type=\"ob:primarymonitor\"/;
+		$s=~s/:enumeration value=\"\[0-/:pattern value=\"[0-/;
+	}
+	### /bugfix
 	$s=~s/<!--.*?-->//gs;
 	$s=~s/<\?.*?\?>//gs;
 	my @tag=({});
@@ -70,7 +118,7 @@ sub sort_xsd{
 			my $id=$_[1];
 			my $i=$a;
 			my %a;
-			$i=~s/([^=\s]+)(?:=\"([^=\s]*)\"|=\'([^=\s]*)\'|)/$a{$1}=$2;''/gse;
+			$i=~s/([^=\s]+)(?:=\"([^=\"]*)\"|=\'([^=\']*)\'|)/$a{$1}=$2;''/gse;
 			$id.=$sep.$a{'name'} if(exists($a{'name'}));
 			$type{$id}=$a{'type'} if(exists($a{'type'}));
 			while(my ($x,$y)=each %a){
@@ -85,67 +133,93 @@ sub sort_tags{
 	for my $t(sort keys %{$_[0]}){
 		my $id="$_[1]$sep$t";
 		my $i1=$t;
+		my $submenu;
 		$i1=~s/_/-/g;
 		if(exists($nomenu{$id})){
 			next if($nomenu{$id});
 #			print "<separator label='$i1'/>";
 		}else{
 			$conf++;
-			print "<menu id='config:$conf' label='$i1'>";
+			$submenu="<menu id='$MENU:$conf' label='$i1'>";
 		}
 		my $A=scalar(keys %{$_[0]->{$t}})>1;
 		for my $aa(sort keys %{$_[0]->{$t}}){
 			my $a1=$aa;
 			$a1=~s/^\s+//s;
 			$a1=~s/\s+$//s;
-			my $ed="<$t$aa>";
-			$ed=~s/([$xml_])/\&$xml_{$1};/g;
-			$ed="$_[2] '$ed'";
+			my $ed;
+			if($SUBMENU){
+				$ed=$_[2];
+			}else{
+				$ed=$t.$aa;
+				$ed=~s/([$xml_])/\&$xml_{$1};/g;
+				$ed="$_[2] \&apos;&lt;$ed&gt;&apos;";
+			}
 			my $i;
 			$a1=1;
 			if($a1&&=$A){
 				$i=$aa;
 				$i=~s/_/-/g;
 				$i=~s/([$xml_])/\&$xml_{$1};/gs;
-				$conf++;
 				$a1&&=!exists($nomenu{$id});
-				print $a1?"<menu id='config:$conf' label='$i'>":"<separator label='$i'/>";
-				$i=" $aa";
+				if($a1){
+					print $submenu;
+					$conf++;
+					$submenu="<menu id='$MENU:$conf' label='$i'>"
+				}else{
+					print "<separator label='$i'/>"
+				}
+			}
+			my $r=ref($type{$id});
+			if($r || !($type{$id}=~/^[a-z]/)){
+				print $submenu;
+				$submenu=undef;
 			}
 			for(sort{$a<=>$b}keys %{$_[0]->{$t}->{$aa}}){
 			    if(!$_){
 				sort_tags($_[0]->{$t}->{$aa}->{0},$id,$ed);
 			    }elsif(($d=$_[0]->{$t}->{$aa}->{$_}) ne ''){
 				~s/([$xml_])/\&$xml_{$1};/gs for($d);
-				my $def="<separator label='$d'/>";
-				if(ref($type{$id}) eq ARRAY){
-					print map{
+				my $def="<separator label='$sel$d'/>";
+				if($r eq ARRAY){
+					for(@{$type{$id}}){
 						if($_ eq $d){
-							my $i=$def;
-							$def=undef;
-							$i;
+							($i,$def)=($def);
 						}else{
-							"<item label='$_'><action name='Execute'><execute>$fixcmd &quot;$_&quot; $ed &quot;$d&quot;</execute></action></item>"
+							$i="<item label='$_'><action name='Execute'><execute>$cmd --fix &quot;$_&quot; $ed &quot;$d&quot;</execute></action></item>"
 						}
-					}(@{$type{$id}});
-				}elsif(ref($type{$id}) eq HASH){
+						utf8_encode($i);
+						print $i;
+					}
+				}elsif($r eq HASH){
 					for(sort keys %{$type{$id}}){
-						if($_ eq $d){
-							print "<separator label='$type{$id}->{$_}'/>";
-							$def=undef;
+						my $x=$i=$type{$id}->{$_};
+						($i,$x)=@{$i} if(ref($i));
+						if($d=~/^$_$/){
+							($i,$def)=("<separator label='$sel$x'/>");
 						}else{
-							print "<item label='$type{$id}->{$_}'><action name='Execute'><execute>$fixcmd &quot;$_&quot; $ed &quot;$d&quot;</execute></action></item>"
+							$i="<item label='$x'><action name='Execute'><execute>$cmd --fix &quot;$i&quot; $ed &quot;$d&quot;</execute></action></item>"
 						}
+						utf8_encode($i);
+						print $i;
 					};
-				}elsif(substr($type{$id},0,1,) eq '<'){
-					print $type{$id};
+				}elsif(defined($submenu)){
+					$i=$ed;
+					# "<menu exec=" broken <cr>/spaces
+					$i=~s/(\s)/'&#'.ord($1).';'/gse;
+					$def=substr($submenu,0,-1)." execute='$cmd --$type{$id} $i &apos;$d&apos;'/>";
+				}elsif(substr($type{$id},0,1) eq '<'){
+					$def=$type{$id};
 				}
-				print $def;
+				if(defined($def)){
+					utf8_encode($def);
+					print $def;
+				}
 			    }
 			}
 			$a1 && print '</menu>';
 		}
-		exists($nomenu{$id}) || print '</menu>';
+		exists($nomenu{$id}) || $submenu || print '</menu>';
 	}
 }
 
@@ -177,9 +251,9 @@ sub sort_fonts{
 		next if(ref($_) ne 'HASH');
 		my @a=walk($_,undef,undef,0,undef,undef,undef);
 		for my $x (walk($_,'family',undef,undef)){
-			next if(ref($x) || exists($fonts{$x}));
+			next if(ref($x) || exists($fonts{quotemeta($x)}));
 			for my $y (@a){
-				$fonts_{$x}->{$y}='*' if(!ref($y));
+				$fonts_{$x}->{quotemeta($y)}='*' if(!ref($y));
 			}
 		}
 	}
@@ -187,25 +261,26 @@ sub sort_fonts{
 		next if(ref($_) ne 'HASH');
 		my @a=walk($_,'edit',['\sname=["\']family["\']'],0,'string',undef,undef);
 		for my $x (walk($_,'test',['\sname=["\']family["\']'],0,'string',undef,undef)){
-			next if(ref($x) || exists($fonts{$x}));
+			next if(ref($x) || exists($fonts{quotemeta($x)}));
 			for my $y (@a){
-				$fonts_{$x}->{$y}='~' if(!ref($y));
+				$fonts_{$x}->{quotemeta($y)}='~' if(!ref($y));
 			}
 		}
 	}
 }
 
 sub open_{
-	open($_[0],@_[1,$_]) && return $_[0] for(2..$#_);
+	open($_[0],$_[1]?$_[1].$filemode:$_[1],$_[$_]) && return $_[0] for(2..$#_);
 	die "Error open '".join('|',@_[2..$#_])."'\n";
 }
 
 sub fixrc(){
-$qm=1;
+$qm=0;
 open_(my $F,'<',@rc);
 mkdir($cfg)||die $! if(! -d $cfg);
 read($F,$s,-s $F)||die $!;
-print "$rc[0]";;
+utf8_decode($s);
+print "$rc[0]";
 close($F);
 my ($from,$to);
 $to=shift;
@@ -219,28 +294,37 @@ for(@_){
 	if(substr($x,0,2) ne '</'){
 		$x=~s/\s.*/>/s;
 		substr($x,1,0)='/';
-		$p2='.*?'.($qm?quotemeta($x):$x).$p2;
-		$p1.=($qm?quotemeta($_):$_).'.*?';
+		$p2=($qm?quotemeta($x):$x).'.*?'.$p2;
+		$p1.='.*?'.($qm?quotemeta($_):$_);
 	}else{
-		$p2=($qm?quotemeta($x):$x).$p2;
+		$p2=($qm?quotemeta($x):$x).'.*?'.$p2;
 	}
 }
-($s=~s/($p1)$from($p2)/$1$to$2/gs) || die "Not found\n";
-open($F,'>',$rc1) && print($F $s) && close($F) && rename($rc1,$rc[0]) || die $!;
+#without g this is normal
+#($s=~s/($p1.*?)$from(.*?$p2)/$1$to$2/s) || die "Not found\n";
+#but this safest
+($s=~s/($p1)(.*?)($p2)/
+	my @x=($1,$2,$3);
+	$x[1]=~s\/$from\/$to\/s or die "Not found";
+	join('',@x)
+/se) || die "Not found";
+utf8_encode($s);
+open_($F,'>',$rc1) && print($F $s) && close($F) && rename($rc1,$rc[0]) || die $!;
 exec('/usr/bin/openbox','--reconfigure');
 exit;
 }
 
-~s/^.*:\s(.*?):.*$/$fonts{$1}=$1/e for(split(/\n/,`/usr/bin/fc-list`));
+sub fonts{
+~s/^(?:.*:\s)?(.+):.*$/$fonts{quotemeta($1)}=[$1,$1]/e for(split(/\n/,`/usr/bin/fc-list`));
 if(!$?){
 	fontconfig('/etc/fonts/fonts.conf');
 	for(my ($n,$n1)=(1); $n ne $n1; ($n,$n1)=(scalar(%fonts),$n)){
 		for(keys %fonts_){
 			for my $i (keys %{$fonts_{$_}}){
 				if(exists($fonts{$i})){
-					my $x=$fonts{$i};
+					my $x=$fonts{$i}->[1];
 					$x=~s/[^\*\~]*//;
-					$fonts{$_}="$_ ".delete($fonts_{$_})->{$i}.$x;
+					$fonts{quotemeta($_)}=[$_,"$_ ".delete($fonts_{$_})->{$i}.$x];
 					last
 				}
 			}
@@ -248,14 +332,47 @@ if(!$?){
 	}
 }
 %fonts_=();
+}
 
-sort_xsd(load_xml(open_($F,'<',reverse glob('/usr/share/doc/openbox*/rc.xsd'))),'ob');
+sub xsd{
+sort_xsd(@_);
+for my $t (keys %xsd){
+	for (keys %{$xsd{$_}}){
+		$type{$_}=$_ if(!exists($type{$_}));
+	}
+}
+for(keys %{$xsd{'xsd:union'}}){
+	for my $i (map{split(/\s+/,$_)}(@{$xsd{'xsd:union'}->{$_}->{'memberTypes'}})){
+		for my $t(keys %xsd){
+			push @{$xsd{$t}->{$_}->{'value'}}, @{$xsd{$t}->{$i}->{'value'}} if(exists($xsd{$t}->{$i}));
+		}
+	}
+}
+$_->{'value'}=[sort @{$_->{'value'}}] for(values %{$xsd{'xsd:enumeration'}});
+$xsd{'xsd:enumeration'}->{'ob:bool'}->{'value'}={'(?:yes|true|on)'=>'on','(?:no|false|off)'=>'off'};
 for (values %type){
-	# don't know what to do else now. todo
-	$_=exists($xsd{'xsd:enumeration'}->{$_})?$xsd{'xsd:enumeration'}->{$_}->{'value'}:undef;
+    for(ref($_)?@$_:$_){
+	if(exists($xsd{'xsd:pattern'}->{$_})){
+		my %e;
+		if(ref($xsd{'xsd:enumeration'}->{$_}->{'value'}) eq 'ARRAY'){
+			$e{quotemeta($_)}=$_ for(@{$xsd{'xsd:enumeration'}->{$_}->{'value'}});
+		}
+		for(@{delete($xsd{'xsd:pattern'}->{$_})->{'value'}}){
+			$i=$_;
+			$i=~s/\[([a-z])([a-z])\]/$1/gsi;
+			if($i=~/[\[\]\{\}\*\.\|\+]/){
+#				$enum=(); last;
+				next;
+			}
+			$e{$_}=$i;
+		}
+		$xsd{'xsd:enumeration'}->{$_}->{'value'}=\%e;
+	}
+	$_=$xsd{'xsd:enumeration'}->{$_}->{'value'};
+    }
 }
 for(0..2){
-for(keys %type){
+    for(keys %type){
 	if(exists($xsd{'xsd:element'}->{$_})){
 		for my $i (@{$xsd{'xsd:element'}->{$_}->{'type'}}){
 			for my $ii (grep(/^$i$sep.*/,keys %type)){
@@ -265,13 +382,44 @@ for(keys %type){
 			}
 		}
 	}
-}
+    }
 }
 %xsd=();
+}
+
+sub menu{
+	$MENU.=":$_[1]";
+	print '<openbox_pipe_menu>';
+	sort_tags(@_);
+	print '</openbox_pipe_menu>';
+}
+
+sub submenu{
+	$nomenu{"$_$sep"}=0;
+	$type{"$_$sep"}=shift;
+	my $x=shift;
+	$x={''=>{''=>{1=>pop @_}}} if(!$x);
+	my $p="'".join("' '",@_)."'";
+	$p=~s/([$xml_])/\&$xml_{$1};/gs;
+	menu($x,$SUBMENU=$_,$p);
+	exit;
+}
+
+###########################################
+for(keys %P){
+	&{$cmd{$_}}(@{$P{$_}}) if(exists($cmd{$_}));
+}
+
+
+xsd(load_xml(open_($F,'<',reverse glob('/usr/share/doc/openbox*/rc.xsd')),1),'ob');
+
 $type{join($sep,'ob','openbox_config','theme','name')}=[(map{substr($_,18,-10)}glob('/usr/share/themes/*/openbox-3')),'/dev/null'];
 $type{join($sep,'ob','openbox_config','theme','font','size')}=[(5..32)];
-$type{join($sep,'ob','openbox_config','theme','font','name')}=\%fonts;
 
-print '<openbox_pipe_menu>';
-sort_tags(load_xml(open_($F,'<',@rc)),'ob');
-print '</openbox_pipe_menu>';
+$type{join($sep,'ob','openbox_config','theme','font','name')}='fonts';
+
+#fonts();
+#$type{join($sep,'ob','openbox_config','theme','font','name')}=\%fonts;
+
+
+menu(load_xml(open_($F,'<',@rc)),'ob');

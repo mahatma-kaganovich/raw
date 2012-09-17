@@ -9,6 +9,12 @@
 #	--mime <mime.sh> {dirs}
 # "--slow" - +keybinds, 3.5.0+ menu icons, better with cache.
 
+$SIG{__DIE__}=sub{
+return if(!exists($ENV{DBUS_SESSION_BUS_ADDRESS}));
+print STDERR ($e=join('',"$0: ",@_));
+exec('/usr/bin/notify-send','-t',6000,$e);
+};
+
 my (%ico,%key,%cat,%cat,%cc,%dir,@prof,$prof);
 %xml_=('<'=>'lt','>'=>'gt',"'"=>'apos','"'=>'quot','&'=>'amp');
 $xml_='<>\'"&';
@@ -22,9 +28,7 @@ $xml_='<>\'"&';
 	'mount'=>['xfce-mount','gdu-mount'],
 );
 # to configure more - need xml parsing
-@conf=('Focus:','focusNew','followMouse','focusLast','underMouse','raiseOnFocus', 'Theme:','animateIconify','keepBorder', 'Menu:','showIcons', 'Resize:','drawContents',
-    'Applications:','decor','shade','focus','iconic','skip_pager','skip_taskbar','fullscreen','maximized');
-%ch=('yes'=>'no','no'=>'yes','true'=>'false','false'=>'true');
+@conf=('showIcons');
 $id=0;
 
 for(@ARGV){
@@ -86,9 +90,7 @@ if(exists($P{slow})){
 		my $s;
 		open($F,"<$_") && read($F,$s,-s $F);
 		close($F);
-		for $i (@conf){
-			$conf{$i}=$x if(substr($i,-1) ne ':' && (($x)=$s=~/<$i>([^<]*)<\/$i>/));
-		}
+		for $i (@conf){($conf{$i})=$s=~/<$i>([^<]*)<\/$i>/};
 		$P{'slow'}=$conf{showIcons} eq 'yes';
 		$s=~s/<keybind\s+key=\"(.*?)\".*?>\s*<action name=\"Execute\">.*?<command>(.*?)<\/command>/$key{$2}=$1;''/gse;
 	};
