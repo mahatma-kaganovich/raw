@@ -148,26 +148,23 @@ sub sort_tags{
 			$submenu="<menu id='$MENU:$conf' label='$i1'>";
 		}
 		for my $aa(sort keys %{$_[0]->{$t}}){
-			my $a1=$aa;
-			$a1=~s/^\s+//s;
-			$a1=~s/\s+$//s;
 			my $ed=$_[2];
-			my $i;
+			my ($i,$a1);
 			if(($i=$t.$aa) ne ''){
-				$i=~s/([$xml_])/\&$xml_{$1};/g;
+				$i=~s/([$xml_])/\&$xml_{$1};/gs;
 				$ed.=" \&apos;&lt;$i&gt;&apos;";
 			}
-			if($a1&&=$A){
+			if($A && ($aa=~/\S/s)){
 				$i=$aa;
-				$i=~s/_/-/g;
+				$i=~s/_/-/gs;
 				$i=~s/([$xml_])/\&$xml_{$1};/gs;
-				$a1&&=!exists($nomenu{$id});
-				if($a1){
+				if(exists($nomenu{$id})){
+					print "<separator label='$i'/>"
+				}else{
+					$a1=1;
 					print $submenu;
 					$conf++;
 					$submenu="<menu id='$MENU:$conf' label='$i'>"
-				}else{
-					print "<separator label='$i'/>"
 				}
 			}
 			my $r=ref($type{$id});
