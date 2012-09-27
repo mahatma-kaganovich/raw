@@ -44,7 +44,7 @@ if($prof=$P{profile}->[0]){
 	(($prof)=$cfg=~/.*\/([^\/]+)\/*$/) || die "Detecting openbox config";
 }
 
-my (%type,%xsd,%fontcfg,%fonts,%fonts_,$SUBMENU);
+my (%type,%xsd,%fontcfg,%fonts,%fonts_);
 
 $cmd="$0 --profile $prof";
 
@@ -147,15 +147,12 @@ sub sort_tags{
 			my $a1=$aa;
 			$a1=~s/^\s+//s;
 			$a1=~s/\s+$//s;
-			my $ed;
-			if($SUBMENU){
-				$ed=$_[2];
-			}else{
-				$ed=$t.$aa;
-				$ed=~s/([$xml_])/\&$xml_{$1};/g;
-				$ed="$_[2] \&apos;&lt;$ed&gt;&apos;";
+			my $ed=$_[2];
+			my $i=$t.$aa;
+			if($i ne ''){
+				$i=~s/([$xml_])/\&$xml_{$1};/g;
+				$ed.=" \&apos;&lt;$i&gt;&apos;";
 			}
-			my $i;
 			$a1=1;
 			if($a1&&=$A){
 				$i=$aa;
