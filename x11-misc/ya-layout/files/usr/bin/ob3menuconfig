@@ -135,6 +135,11 @@ sub sort_tags{
 		my $i1=$t;
 		my $submenu;
 		$i1=~s/_/-/g;
+		my $A=scalar(keys %{$_[0]->{$t}});
+		if($A==1){
+			$i1.=(keys %{$_[0]->{$t}})[0];
+			$A=0;
+		}
 		if(exists($nomenu{$id})){
 			next if($nomenu{$id});
 #			print "<separator label='$i1'/>";
@@ -142,18 +147,16 @@ sub sort_tags{
 			$conf++;
 			$submenu="<menu id='$MENU:$conf' label='$i1'>";
 		}
-		my $A=scalar(keys %{$_[0]->{$t}})>1;
 		for my $aa(sort keys %{$_[0]->{$t}}){
 			my $a1=$aa;
 			$a1=~s/^\s+//s;
 			$a1=~s/\s+$//s;
 			my $ed=$_[2];
-			my $i=$t.$aa;
-			if($i ne ''){
+			my $i;
+			if(($i=$t.$aa) ne ''){
 				$i=~s/([$xml_])/\&$xml_{$1};/g;
 				$ed.=" \&apos;&lt;$i&gt;&apos;";
 			}
-			$a1=1;
 			if($a1&&=$A){
 				$i=$aa;
 				$i=~s/_/-/g;

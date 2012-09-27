@@ -142,7 +142,7 @@ obconfig(){
 		</keyboard>:' \
 			<"$2" | \
 			fixml 'root' '<context name="Icon">' '<mousebind button="Right" action="Press">' '<menu>' 'client' | \
-			fixml 'Onyx' '<theme>' '<name>' '[^<]*' >$1
+			fixml 'Onyx-Citrus' '<theme>' '<name>' '[^<]*' >$1
 }
 
 _kill(){
