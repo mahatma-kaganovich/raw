@@ -1,0 +1,16 @@
+--- a/openbox/actions/execute.c	2011-10-17 01:52:16.000000000 +0300
++++ b/openbox/actions/execute.c	2012-09-27 13:58:43.000000000 +0300
+@@ -225,6 +225,13 @@ static gboolean run_func(ObActionsData *
+         }
+     }
+ 
++    {
++        gchar *c;
++
++        if((c = strstr(cmd, "$position$")) && data->x >= 0 && data->x < 100000 && data->y >= 0 && data->y < 100000)
++            sprintf(c, "%05i%05i", data->x, data->y);
++    }
++
+     /* If there is a keyboard grab going on then we need to cancel
+        it so the application can grab things */
+     if (data->uact != OB_USER_ACTION_MENU_SELECTION)
