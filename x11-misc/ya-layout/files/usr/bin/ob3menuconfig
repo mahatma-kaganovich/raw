@@ -470,9 +470,7 @@ if($FONTS_CALL){
 
 my $cf=load_xml(open_($F,'<',@rc));
 
-for(walk($cf,'openbox_config',undef,0,'desktops',undef,0,'number',undef,undef)){
-	$type{join($sep,'ob','openbox_config','desktops','firstdesk')}=[(1..$_)] if(!ref($_));
-}
+$type{join($sep,'ob','openbox_config','desktops','firstdesk')}=[$prop{'_NET_CURRENT_DESKTOP'}+1];
 $type{join($sep,'ob','openbox_config','desktops','number')}=[$prop{'_NET_NUMBER_OF_DESKTOPS'}||()];
 
 menu($cf,'ob');
