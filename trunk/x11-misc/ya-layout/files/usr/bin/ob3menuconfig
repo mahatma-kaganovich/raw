@@ -152,7 +152,6 @@ sub sort_xsd{
 sub type{
 	for(my ($i,$x)=($_[0],1); $x; $x=($i=~s/^ob:[^:]*/ob/)){
 		if(exists($type{$i})){
-			$type_{$_[0]}=$type_{$i};
 			return $type{$_[0]}=$type{$i};
 		}
 	}
@@ -248,7 +247,7 @@ sub sort_tags{
 				$ed.=" $i=";
 				$conf++;
 				$i="<menu id='$MENU:$conf' label='$i='>";
-				next if($cmpid && ($silent || _call($id,$type_{$id},$i)));
+				next if($cmpid && ($silent || _call($id,$type,$i)));
 				if(!$silent){
 					$at=1;
 					utf8_encode($i);
@@ -427,7 +426,6 @@ for my $t (keys %xsd){
 		$type{$_}=$_ if(!exists($type{$_}));
 	}
 }
-%type_=%type;
 for(keys %{$xsd{'xsd:union'}}){
 	for my $i (map{split(/\s+/,$_)}(@{$xsd{'xsd:union'}->{$_}->{'memberTypes'}})){
 		for my $t(keys %xsd){
