@@ -183,19 +183,21 @@ sub sort_tags{
 		cmpid($id,my $cmpid,my $silent) && next;
 		my $submenu;
 		my $A=scalar(keys %{$_[0]->{$t}});
+		my $type=type($id);
+		my $menu1;
 		if($cmpid){
-			my $i1=$t;
-			$i1=~s/_/-/g;
-			$i1.=(keys %{$_[0]->{$t}})[0] if($A==1);
+			my $i=$t;
+			$i=~s/_/-/g;
+			$i.=(keys %{$_[0]->{$t}})[0] if($A==1);
 			$conf++;
-			$submenu="<menu id='$MENU:$conf' label='$i1'>";
-			next if(!$silent && (_call($id,$t,$submenu)||_call($id,type($id),$submenu)));
+			$submenu="<menu id='$MENU:$conf' label='$i'>";
+			next if(!$silent && (_call($id,$t,$submenu)||_call($id,$type,$submenu)));
 		}elsif(!exists($P{id})){
 			$silent=1;
 		}
 		for my $aa(sort keys %{$_[0]->{$t}}){
 			my $ed=$_[2];
-			my ($i,$a1,%a);
+			my ($i,$menu2,%a);
 			if($t ne ''){
 				$i=$t.(($A==1 && $aa && !scalar(%a))?substr($aa,0,1):$aa.'>');
 #				$i="$t$aa>";
@@ -204,28 +206,24 @@ sub sort_tags{
 			}
 			$i=$aa;
 			$i=~s/([^=\s]+)(?:=\"([^=\"]*)\"|=\'([^=\']*)\'|)/my $x=type("$id$sep$1");$a{$1}=$2 if(ref($x) ne 'HASH' || scalar(%$x));''/gse;
-			if($A>1 && ($aa=~/\S/s)){
+			if(!$silent){
+			    $menu1||=$submenu;
+			    if($A>1 && ($aa=~/\S/s)){
 				$i=$aa;
 				$i=~s/_/-/gs;
 				$i=~s/([$xml_])/\&$xml_{$1};/gs;
 				$conf++;
-				($submenu,$i)=("<menu id='$MENU:$conf' label='$i'>",$submenu);
-				if(!$silent){
-					$a1=1;
-					utf8_encode($i);
-					print $i;
-				}
-			}
-			my $type=type($id);
-			my $r=ref($type);
-			if(!$silent){
-				utf8_encode($submenu);
-				print $submenu;
+				$submenu.="<menu id='$MENU:$conf' label='$i'>";
+				$menu2=1;
+			    }
+			    utf8_encode($submenu);
+			    print $submenu;
 			}
 			$submenu=undef;
+			my $r=ref($type);
 			my $branch=delete($_[0]->{$t}->{$aa});
 			for(sort{$a<=>$b}keys %$branch,undef,sort keys %a){
-			    my ($d,$at);
+			    my ($d,$menu3);
 			    my ($id,$r,$ed,$type)=($id,$r,$ed,$type);
 			    if(exists($branch->{$_})){
 				$d=delete($branch->{$_});
@@ -249,14 +247,14 @@ sub sort_tags{
 				$i="<menu id='$MENU:$conf' label='$i='>";
 				next if($cmpid && ($silent || _call($id,$type,$i)));
 				if(!$silent){
-					$at=1;
+					$menu3=1;
 					utf8_encode($i);
 					print $i;
 				}
 			    }elsif($silent){
 				next;
 			    }else{
-				scalar(%a) && print "<separator/>";
+				scalar(%a) && print '<separator/>';
 				next;
 			    }
 			    if($d ne ''){
@@ -292,11 +290,11 @@ sub sort_tags{
 					print $def;
 				}
 			    }
-			    $at && print '</menu>';
+			    $menu3 && print '</menu>';
 			}
-			$a1 && print '</menu>';
+			$menu2 && print '</menu>';
 		}
-		$submenu || $silent || !$cmpid || print '</menu>';
+		$menu1 && print '</menu>';
 	}
 }
 
