@@ -433,12 +433,28 @@ if(!$?){
 
 sub _menu{
 	join('',map{
-		ref($_[0]->{$_}) && scalar(%{$_[0]->{$_}})?"<menu id='' label='$_'>"._menu($_[0]->{$_}).'</menu>':
-		"<item label='$_'><action name='execute'><execute>$_</execute></action></item>"
-	}sort{
-#		length($a)<=>length($b)||
-		lc($a) cmp lc($b)||$a cmp $b
-	}keys %{$_[0]});
+		my $k=$_;
+		my $x=delete($_[0]->{$k});
+		my $i;
+		while(($i=ref($x)?scalar(keys %$x):0)==1 && defined($_[1])){
+			my $n=(keys %$x)[0];
+			$x=$x->{$n};
+			$k.=$_[1].$n;
+		}
+		$k=~s/([$xml_])/\&$xml_{$1};/gs;
+		$k1=$k;
+		$k1=~s/_/ /g;
+		$i?"<menu id='' label='$k1'>"._menu($x).'</menu>':
+		"<item label='$k1'><action name='execute'><execute>$k</execute></action></item>"
+	}sort{lc($a) cmp lc($b)||$a cmp $b}keys %{$_[0]});
+}
+
+sub _keyv{
+	($_[1]?join('',(map{
+		my $i=$_[0];
+		$i=~s/(<execute>)([^<>]*)(<\/execute>)/$1$_-$2$3/gs;
+		"<menu id='' label='$_-'>"._keyv($i,$_[1]-1)."</menu>";
+	}'A','C','M','S','W'),'<separator/>'):'').$_[0];
 }
 
 sub keymap{
@@ -450,7 +466,7 @@ sub keymap{
 	close($F);
 	for my $p('[0-9]','[a-z]','[A-Z]','F[0-9]+'){
 		$keys.="<menu id='' label='$p'>";
-		for(sort grep(/^$p$/,keys %k)){
+		for(sort{length($a)<=>length($b)||lc($a) cmp lc($b)||$a cmp $b}grep(/^$p$/,keys %k)){
 			delete($k{$_});
 			$keys.="<item label='$_'><action name='execute'><execute>$_</execute></action></item>"
 		}
@@ -458,12 +474,10 @@ sub keymap{
 	}
 	for(keys %k){
 		my $x=\%kk;
-		for(split(/_/,$_)){
-			$x=\%{$x->{$_}};
-		}
+		$x=\%{$x->{$_}} for(split(/_/,$_));
 	}
-	$keys.='<separator/>'._menu(\%kk);
-	$keys;
+	# up to 5, but too much RAM and fingers
+	_keyv($keys.'<separator/>'._menu(\%kk,'_'),2);
 }
 
 sub xsd{
