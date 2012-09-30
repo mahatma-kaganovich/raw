@@ -65,8 +65,18 @@ $ID="ob${sep}openbox_config";
 	'action'=>0,
 );
 
+%subinit=(
+join($sep,'ob','openbox_config','theme','font')=>\&fonts,
+);
+
 %xtype=(
-	'ob:keyname'=>\&keymap,
+'ob:keyname'=>"<menu id='' label='' execute='--menu ob:keyname &quot;&quot;'/>",
+'ob:button'=>"<menu id='' label='' execute='--menu ob:button &quot;&quot;'/>",
+);
+
+%menu=(
+'ob:keyname'=>\&keymap,
+'ob:button'=>\&button,
 );
 
 %cmd=(
@@ -95,11 +105,19 @@ $ID="ob${sep}openbox_config";
 	&{$subinit{$ID}}(@_) if(exists($subinit{$ID}));
 	$MENU=join($sep,$MENU,@_);
 },
-);
-
-%subinit=(
-join($sep,'ob','openbox_config','theme','font')=>\&fonts,
-join($sep,'ob','openbox_config','keyboard','keybind','name')=>\&keymap,
+# current submenu design looks not best, but simple, fast & recursive
+'menu'=>sub{
+	my $m=shift;
+	for(@_){
+		~s/([$xml_])/\&$xml_{$1};/gs;
+		$_="&apos;$_&apos;"
+	}
+	$MENU.=":$m:$_[1]:$$";
+	print '<openbox_pipe_menu>';
+	&{$menu{$m}}(@_);
+	print '</openbox_pipe_menu>';
+	exit;
+},
 );
 
 sub load_xml{
@@ -155,7 +173,7 @@ sub sort_xsd{
 }
 
 sub type{
-	for(my ($i,$x)=($_[0],1); $x; $x=($i=~s/^ob:[^:]*/ob/)){
+	for(my ($i,$x)=($_[0],1); $x; $x=($i=~s/^([^:]*):[^:]*/$1/)){
 		if(exists($type{$i})){
 			return $type{$_[0]}=$type{$i};
 		}
@@ -164,7 +182,8 @@ sub type{
 
 sub _call{
 for(@{$_[1]},$_[0]){
-	next if(!exists($call_tags{$_}) && ref($_) ne SCALAR);
+#	next if(!exists($call_tags{$_}) && ref($_) ne SCALAR_);
+	next if(!exists($call_tags{$_}));
 	my $i=$_[0];
 	$i=~s/([$xml_])/\&$xml_{$1};/gs;
 	$_[2]=~s/\'>$/:\' execute='$0 --id $i $CNT{$_[0]}'\/>/s;
@@ -290,10 +309,14 @@ sub sort_tags{
 						print $i;
 					};
 				}elsif($r eq SCALAR){
-					$i=$xtype{${$type}};
-					$i=$xtype{${$type}}=&{$i}() if(ref($i) eq CODE);
+					$i=$xtype{$$type};
+					$i=$xtype{$$type}=&{$i}() if(ref($i) eq CODE);
 					$i=~s/(<menu id=[\'\"])/$conf++;"$1$MENU:$conf"/gse;
-					$i=~s/(<execute>)([^<>]*)(<\/execute>)/$1$fix &quot;$2&quot; $ed &quot;$d&quot;$3/gs;
+					$i=~s/(<execute>)([^<>]*)(<\/execute>)/$1$fix $2 $ed &quot;$d&quot;$3/gs;
+					$i=~s/ label=\'\'/ label=\'[$$type]\'/gs;
+					my $ed=$ed;
+					$ed=~s/(\s)/'&#'.ord($1).';'/gse;
+					$i=~s/( execute=\')([^\']*)(\')/$1$fix $2 $ed &quot;$d&quot;$3/gs;
 					$def.=$i;
 					undef $i;
 #				}elsif(substr($type,0,1) eq '<'){
@@ -444,40 +467,54 @@ sub _menu{
 		$k=~s/([$xml_])/\&$xml_{$1};/gs;
 		$k1=$k;
 		$k1=~s/_/ /g;
-		$i?"<menu id='' label='$k1'>"._menu($x).'</menu>':
-		"<item label='$k1'><action name='execute'><execute>$k</execute></action></item>"
+		$i?"<menu id='$MENU".(++$conf)."' label='$k1'>"._menu($x,@_[1..$#_]).'</menu>':
+		"<item label='$k1'><action name='execute'><execute>$0 $_[2]&quot;$k&quot; $_[3]</execute></action></item>"
 	}sort{lc($a) cmp lc($b)||$a cmp $b}keys %{$_[0]});
 }
 
-sub _keyv{
-	($_[1]?join('',(map{
-		my $i=$_[0];
-		$i=~s/(<execute>)([^<>]*)(<\/execute>)/$1$_-$2$3/gs;
-		"<menu id='' label='$_-'>"._keyv($i,$_[1]-1)."</menu>";
-	}'A','C','M','S','W'),'<separator/>'):'').$_[0];
-}
-
 sub keymap{
-	my (%k,%kk,$keys);
+	my (%k,%kk);
+	my $ed=join(' ',@_[1..$#_]);
 	open(my $F,'-|','/usr/bin/xmodmap -pke');
 	while(<$F>){
 		~s/^keycode\s+(\d+)\s+=\s+(.+?)\s*$/$k{$_}=$1 for(split(\/\s+\/,$2));''/ge;
 	}
 	close($F);
+	for('A','C','M','S','W'){
+		next if($_[0]=~/$_-/);
+		$conf++;
+		print "<menu id='$MENU:$conf' label='$_-' execute='$0 --menu ob:keyname $_[0]$_- $ed'/>";
+	}
+	print '<separator/>';
 	for my $p('[0-9]','[a-z]','[A-Z]','F[0-9]+'){
-		$keys.="<menu id='' label='$p'>";
+		$conf++;
+		print "<menu id='$MENU:$conf' label='$p'>";
 		for(sort{length($a)<=>length($b)||lc($a) cmp lc($b)||$a cmp $b}grep(/^$p$/,keys %k)){
 			delete($k{$_});
-			$keys.="<item label='$_'><action name='execute'><execute>$_</execute></action></item>"
+			~s/([$xml_])/\&$xml_{$1};/gs;
+			print "<item label='$_'><action name='execute'><execute>$0 $_[0]&quot;$_&quot; $ed</execute></action></item>\n"
 		}
-		$keys.="</menu>";
+		print '</menu>';
 	}
 	for(keys %k){
 		my $x=\%kk;
 		$x=\%{$x->{$_}} for(split(/_/,$_));
 	}
-	# up to 5, but too much RAM and fingers
-	_keyv($keys.'<separator/>'._menu(\%kk,'_'),2);
+	print '<separator/>',_menu(\%kk,'_',$_[0],$ed)
+}
+
+sub button{
+	my (%k,%kk);
+	my $ed=join(' ',@_[1..$#_]);
+	for('A','C','M','S','W'){
+		next if($_[0]=~/$_-/);
+		$conf++;
+		print "<menu id='$MENU:$conf' label='$_-' execute='$0 --menu ob:button $_[0]$_- $ed'/>";
+	}
+	print '<separator/>';
+	for('Left','Middle','Right','Up','Down',map{"Button$_"}(0..12)){
+			print "<item label='$_'><action name='execute'><execute>$0 $_[0]&quot;$_&quot; $ed</execute></action></item>\n"
+	}
 }
 
 sub xsd{
