@@ -50,7 +50,7 @@ if($prof=$P{profile}->[0]){
 	(($prof)=$cfg=~/.*\/([^\/]+)\/*$/) || die "Detecting openbox config";
 }
 
-my (%type,%xsd,%fontcfg,%fonts,%fonts_,%CNT);
+my (%type,%xsd,%fontcfg,%fonts,%fonts_,%CNT,%xtype);
 
 $cmd="$0 --profile $prof";
 $fix=$0;
@@ -63,6 +63,10 @@ $ID="ob${sep}openbox_config";
 #	'ob:action'=>0,
 #	'ob:actionname'=>0,
 	'action'=>0,
+);
+
+%xtype=(
+	'ob:keyname'=>\&keymap,
 );
 
 %cmd=(
@@ -95,6 +99,7 @@ $ID="ob${sep}openbox_config";
 
 %subinit=(
 join($sep,'ob','openbox_config','theme','font')=>\&fonts,
+join($sep,'ob','openbox_config','keyboard','keybind','name')=>\&keymap,
 );
 
 sub load_xml{
@@ -158,12 +163,14 @@ sub type{
 }
 
 sub _call{
-	exists($call_tags{$_[1]}) || return;
+for(@{$_[1]},$_[0]){
+	next if(!exists($call_tags{$_}) && ref($_) ne SCALAR);
 	my $i=$_[0];
 	$i=~s/([$xml_])/\&$xml_{$1};/gs;
 	$_[2]=~s/\'>$/:\' execute='$0 --id $i $CNT{$_[0]}'\/>/s;
 	utf8_encode($_[2]);
-	print $_[2];
+	return print $_[2];
+}
 }
 
 sub cmpid{
@@ -191,7 +198,7 @@ sub sort_tags{
 			$i.=(keys %{$_[0]->{$t}})[0] if($A==1);
 			$conf++;
 			$submenu="<menu id='$MENU:$conf' label='$i'>";
-			next if(!$silent && (_call($id,$t,$submenu)||_call($id,$type,$submenu)));
+			next if(!$silent && _call($id,[$t,$type],$submenu));
 		}elsif(!exists($P{id})){
 			$silent=1;
 		}
@@ -245,7 +252,7 @@ sub sort_tags{
 				$ed.=" $i=";
 				$conf++;
 				$i="<menu id='$MENU:$conf' label='$i='>";
-				next if($cmpid && ($silent || _call($id,$type,$i)));
+				next if($cmpid && ($silent || _call($id,[$type],$i)));
 				if(!$silent){
 					$menu3=1;
 					utf8_encode($i);
@@ -282,8 +289,15 @@ sub sort_tags{
 						utf8_encode($i);
 						print $i;
 					};
-				}elsif(substr($type,0,1) eq '<'){
-					$def=$type;
+				}elsif($r eq SCALAR){
+					$i=$xtype{${$type}};
+					$i=$xtype{${$type}}=&{$i}() if(ref($i) eq CODE);
+					$i=~s/(<menu id=[\'\"])/$conf++;"$1$MENU:$conf"/gse;
+					$i=~s/(<execute>)([^<>]*)(<\/execute>)/$1$fix &quot;$2&quot; $ed &quot;$d&quot;$3/gs;
+					$def.=$i;
+					undef $i;
+#				}elsif(substr($type,0,1) eq '<'){
+#					$def=$type;
 				}
 				if(defined($def)){
 					utf8_encode($def);
@@ -417,6 +431,41 @@ if(!$?){
 %fonts_=();
 }
 
+sub _menu{
+	join('',map{
+		ref($_[0]->{$_}) && scalar(%{$_[0]->{$_}})?"<menu id='' label='$_'>"._menu($_[0]->{$_}).'</menu>':
+		"<item label='$_'><action name='execute'><execute>$_</execute></action></item>"
+	}sort{
+#		length($a)<=>length($b)||
+		lc($a) cmp lc($b)||$a cmp $b
+	}keys %{$_[0]});
+}
+
+sub keymap{
+	my (%k,%kk,$keys);
+	open(my $F,'-|','/usr/bin/xmodmap -pke');
+	while(<$F>){
+		~s/^keycode\s+(\d+)\s+=\s+(.+?)\s*$/$k{$_}=$1 for(split(\/\s+\/,$2));''/ge;
+	}
+	close($F);
+	for my $p('[0-9]','[a-z]','[A-Z]','F[0-9]+'){
+		$keys.="<menu id='' label='$p'>";
+		for(sort grep(/^$p$/,keys %k)){
+			delete($k{$_});
+			$keys.="<item label='$_'><action name='execute'><execute>$_</execute></action></item>"
+		}
+		$keys.="</menu>";
+	}
+	for(keys %k){
+		my $x=\%kk;
+		for(split(/_/,$_)){
+			$x=\%{$x->{$_}};
+		}
+	}
+	$keys.='<separator/>'._menu(\%kk);
+	$keys;
+}
+
 sub xsd{
 sort_xsd(@_);
 for my $t (keys %xsd){
@@ -433,9 +482,12 @@ for(keys %{$xsd{'xsd:union'}}){
 }
 $_->{'value'}=[sort @{$_->{'value'}}] for(values %{$xsd{'xsd:enumeration'}});
 $xsd{'xsd:enumeration'}->{'ob:bool'}->{'value'}={'(?:yes|true|on)'=>'on','(?:no|false|off)'=>'off'};
-for (values %type){
-    for(ref($_)?@$_:$_){
-	if(exists($xsd{'xsd:pattern'}->{$_})){
+for my $t(values %type){
+    for(ref($t)?@$t:$t){
+	if(exists($xtype{$_})){
+		my $i=$_;
+		$t=\$i;
+	}elsif(exists($xsd{'xsd:pattern'}->{$_})){
 		my %e;
 		if(ref($xsd{'xsd:enumeration'}->{$_}->{'value'}) eq 'ARRAY'){
 			$e{quotemeta($_)}=$_ for(@{$xsd{'xsd:enumeration'}->{$_}->{'value'}});
@@ -464,14 +516,11 @@ for(keys %P){
 
 xsd(load_xml(open_($F,'<',reverse glob('/usr/share/doc/openbox*/rc.xsd')),1),'ob');
 
-fonts();
-
 $type{join($sep,'ob','openbox_config','theme','name')}=[(map{substr($_,18,-10)}glob('/usr/share/themes/*/openbox-3')),'/dev/null'];
 $type{join($sep,'ob','openbox_config','desktops','firstdesk')}=[$prop{'_NET_CURRENT_DESKTOP'}+1];
 $type{join($sep,'ob','openbox_config','desktops','number')}=[$prop{'_NET_NUMBER_OF_DESKTOPS'}||()];
 $type{join($sep,'ob','openbox_config','theme','font','name')}=\%fonts;
 $type{join($sep,'ob','openbox_config','theme','font','size')}=[(5..32)];
-
 
 print '<openbox_pipe_menu>';
 sort_tags(load_xml(open_($F,'<',@rc)),'ob');

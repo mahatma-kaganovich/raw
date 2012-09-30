@@ -291,7 +291,7 @@ print qq(<separator/>
 <menu id=").($id++).qq(" label="OpenBox">
 <menu id="client-menu"/>
 <menu id="client-list-menu"/>
-<menu id=").($id++).qq(" label="config" execute="${0}config --config '$P{slow}->[0]'"/>
+<menu id=").($id++).qq(" label="config" execute="${0}config"/>
 <item label="Fullscreen"><action name="ToggleFullscreen"/></item>
 <item label="Reconfigure"><action name="Reconfigure"/></item>
 <item label="Restart"><action name="Restart"/></item>
