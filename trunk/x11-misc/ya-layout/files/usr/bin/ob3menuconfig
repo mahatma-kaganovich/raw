@@ -238,6 +238,7 @@ sub sort_tags{
 			    $menu1||=$submenu;
 			    if($A>1){
 				$i=$aa;
+				$i=~s/^\s*//s;
 				$i=~s/_/-/gs;
 				$i=~s/([$xml_])/\&$xml_{$1};/gs;
 				$conf++;
