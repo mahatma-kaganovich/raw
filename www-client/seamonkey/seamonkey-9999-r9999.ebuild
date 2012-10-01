@@ -3,7 +3,7 @@ WANT_AUTOCONF="2.1"
 
 
 hg=""
-[[ "${PV}" == 9999* ]] && hg="mercurial cvs"
+[[ "${PV}" == 9999* ]] && hg="mercurial cvs git-2"
 inherit ${hg} flag-o-matic toolchain-funcs eutils mozcoreconf-2 mozconfig-3 makeedit multilib autotools mozextension fdo-mime java-pkg-opt-2 python
 
 : ${FILESDIR:=${EBUILD%/*}/files}
@@ -41,7 +41,8 @@ IUSE="-java mozdevelop moznoirc moznoroaming postgres startup-notification
 	debug minimal directfb moznosystem +threads jssh python mobile static
 	moznomemory accessibility vanilla xforms gio +alsa
 	+custom-cflags +custom-optimization system-xulrunner +libxul system-nss system-nspr X
-	bindist flatfile profile ipv6 moznopango e10s force-shared-static ipccode egl +force-gl gles2 xrender"
+	bindist flatfile profile ipv6 moznopango e10s force-shared-static ipccode egl +force-gl gles2 xrender
+	gstreamer"
 #	qt-experimental"
 REQUIRED_USE_="
 	gles2? ( egl )
@@ -82,6 +83,7 @@ RDEPEND="java? ( >=virtual/jre-1.4 )
 	system-nss? ( >=dev-libs/nss-3.12.2 )
 	system-xulrunner? ( net-libs/xulrunner )
 	alsa? ( media-libs/alsa-lib )
+	gstreamer? ( media-libs/gstreamer )
 	directfb? ( dev-libs/DirectFB )"
 
 DEPEND=">=dev-lang/python-3.2"
@@ -320,6 +322,8 @@ endif' >>"${S1}"/gfx/gl/Makefile.in
 
 	sed -i -e '/;-/d' -e 's,;+,,' -e 's; DATA ;;' -e 's,;;,,' -e 's,;.*,;,' $(find "${S1}"/security/nss -name '*.def')
 
+	mkdir "${S1}/js/src/.deps"
+
 	for i in "${WORKDIR}"/l10n/*/toolkit/chrome/global/*; do
 		[[ -e "${i}" ]] && ln -s "${i}" "${i%/*}/../../../suite/chrome/browser/${i##*/}"
 	done
@@ -388,9 +392,14 @@ src_configure(){
 		--with-user-appdir=.mozilla \
 		--without-system-png \
 		--enable-pref-extensions \
+		--enable-raw \
 		--disable-tests
 
-	isopt system-libevent && mozconfig_annotate "gentoo" --with-system-libevent
+	for i in --with-system-libevent --enable-media-plugins --enable-media-navigator --enable-omx-plugin; do
+		isopt -${i#--*-} && mozconfig_annotate "gentoo" $i
+	done
+	isopt -gstreamer && mozconfig_use_enable gstreamer
+
 
 	local l
 	for l in $(langs); do
@@ -541,6 +550,7 @@ src_configure(){
 	isopt e10s-compat && mozconfig_use_enable e10s e10s-compat
 
 	use custom-cflags && export CFLAGS="${CF}"
+	filter-flags -fgraphite-identity
 	use gles2 && append-flags -DUSE_GLES2=1
 	for i in -Ofast -O3; do
 		is-flag $i || continue
@@ -877,7 +887,7 @@ src_unpack() {
 	for i in xforms ipccode; do
 		_hg $i "${S1}"/extensions/$i $i
 	done
-	SM && use !moznomail && use crypt && _cvs enigmail/src "${S}"/mailnews/extensions/enigmail crypt
+	SM && use !moznomail && use crypt && _git git://git.code.sf.net/p/enigmail/source "${S}"/mailnews/extensions/enigmail enigmail-source
 	SM && LDAP && {
 		[[ -e "${S}/ldap" ]] && d="${S}/ldap/sdks" || d="${S}/directory"
 		EHG_REVISION=LDAPCSDK_6_0_7_RTM _hg projects/ldap-sdks "$d"
@@ -959,6 +969,15 @@ _cvs_m(){
 	mkdir -p "$2"
 	rm "$2" -Rf
 	mv "${WORKDIR}/$1" "$2"
+}
+
+_git(){
+	mkdir -p "$2"
+	rm "$2" -Rf
+	EGIT_REPO_URI="$1" \
+		EGIT_PROJECT="$3" \
+		EGIT_SOURCEDIR="$2" \
+		git-2_src_unpack
 }
 
 fi
