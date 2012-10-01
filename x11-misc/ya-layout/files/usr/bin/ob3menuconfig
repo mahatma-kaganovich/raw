@@ -7,6 +7,7 @@
 $xml_=join('',keys %xml_);
 $sep=':';
 $MENU='config';
+$show_empty=0;
 #$sel='+';
 
 $SIG{__DIE__}=sub{
@@ -232,9 +233,10 @@ sub sort_tags{
 			}
 			$i=$aa;
 			$i=~s/([^=\s]+)(?:=\"([^=\"]*)\"|=\'([^=\']*)\'|)/my $x=type("$id$sep$1");$a{$1}=$2 if(ref($x) ne 'HASH' || scalar(%$x));''/gse;
-			if(!$silent){
+			my $branch=delete($_[0]->{$t}->{$aa});
+			if(!$silent && (($i=($aa=~/\S/s)) || $A>1 || scalar(%$branch) || $show_empty)){
 			    $menu1||=$submenu;
-			    if($A>1 && ($aa=~/\S/s)){
+			    if($A>1 && $i){
 				$i=$aa;
 				$i=~s/_/-/gs;
 				$i=~s/([$xml_])/\&$xml_{$1};/gs;
@@ -247,7 +249,6 @@ sub sort_tags{
 			}
 			$submenu=undef;
 			my $r=ref($type);
-			my $branch=delete($_[0]->{$t}->{$aa});
 			for(sort{$a<=>$b}keys %$branch,undef,sort keys %a){
 			    my ($d,$menu3);
 			    my ($id,$r,$ed,$type)=($id,$r,$ed,$type);
