@@ -1,14 +1,14 @@
 #!/usr/bin/perl
 # (c) Denis Kaganovich, Anarchy or GPLv2
-# openbox config pipe menu v0.7
+# openbox config pipe menu v0.8
 # using /usr/share/openbox*/rc.xsd
 
 %xml_=('<'=>'lt','>'=>'gt',"'"=>'apos','"'=>'quot','&'=>'amp');
 $xml_=join('',keys %xml_);
-$sep=':';
 $MENU='config';
 $show_empty=0;
-#$sel='+';
+($sel1,$sel2)=('*');
+#($sel1,$sel2)=('&gt;','&lt;');
 
 $SIG{__DIE__}=sub{
 return if(!exists($ENV{DBUS_SESSION_BUS_ADDRESS}));
@@ -51,13 +51,13 @@ if($prof=$P{profile}->[0]){
 	(($prof)=$cfg=~/.*\/([^\/]+)\/*$/) || die "Detecting openbox config";
 }
 
-my (%type,%xsd,%fontcfg,%fonts,%fonts_,%CNT,%xtype);
+my (%type,%xsd,%fontcfg,%fonts,%fonts_,%CNT,%xtype,%add_del,%add);
 
 $cmd="$0 --profile $prof";
 $fix=$0;
 #~s/^\/usr\/bin\///gs for($cmd,$fix);
 
-$ID="ob${sep}openbox_config";
+$ID='ob:openbox_config';
 
 %call_tags=(
 	'font'=>0,
@@ -67,7 +67,7 @@ $ID="ob${sep}openbox_config";
 );
 
 %subinit=(
-join($sep,'ob','openbox_config','theme','font')=>\&fonts,
+'ob:openbox_config:theme:font'=>\&fonts,
 );
 
 %xtype=(
@@ -104,7 +104,7 @@ join($sep,'ob','openbox_config','theme','font')=>\&fonts,
 'id'=>sub{
 	$ID=$_[0];
 	&{$subinit{$ID}}(@_) if(exists($subinit{$ID}));
-	$MENU=join($sep,$MENU,@_);
+	$MENU=join(':',$MENU,@_);
 },
 # current submenu design looks not best, but simple, fast & recursive
 'menu'=>sub{
@@ -129,6 +129,9 @@ sub load_xml{
 	if($_[1]){
 		$s=~s/name=\"monitor\" type=\"ob:primarymonitor\"/name=\"primaryMonitor\" type=\"ob:primarymonitor\"/;
 		$s=~s/:enumeration value=\"\[0-/:pattern value=\"[0-/;
+		if(!($s=~/\"(?:Active|Inactive)OnScreenDisplay\"/)){
+			$s=~s/(<xsd:enumeration value=\")(OnScreenDisplay\"\/>)/$1Active$2$1Inactive$2/;
+		}
 	}
 	### /bugfix
 	$s=~s/<!--.*?-->//gs;
@@ -156,6 +159,10 @@ sub load_xml{
 	$tag[0]->{0};
 }
 
+%xsd_class=(
+	'xsd:attribute'=>'=',
+);
+
 sub sort_xsd{
 	for my $t(keys %{$_[0]}){
 		for my $a(keys %{$_[0]->{$t}}){
@@ -163,20 +170,12 @@ sub sort_xsd{
 			my $i=$a;
 			my %a;
 			$i=~s/([^=\s]+)(?:=\"([^=\"]*)\"|=\'([^=\']*)\'|)/$a{$1}=$2;''/gse;
-			$id.=$sep.$a{'name'} if(exists($a{'name'}));
+			$id.=':'.($a{'name'}.=$xsd_class{$t}) if(exists($a{'name'}));
 			$type{$id}=$a{'type'} if(exists($a{'type'}));
 			while(my ($x,$y)=each %a){
 				push @{$xsd{$t}->{$id}->{$x}},$y;
 			}
 			sort_xsd($_[0]->{$t}->{$a}->{0},$id);
-		}
-	}
-}
-
-sub type{
-	for(my ($i,$x)=($_[0],1); $x; $x=($i=~s/^([^:]*):[^:]*/$1/)){
-		if(exists($type{$i})){
-			return $type{$_[0]}=$type{$i};
 		}
 	}
 }
@@ -196,21 +195,45 @@ for(@{$_[1]},$_[0]){
 sub cmpid{
 	if(($_[1]=$_[0] cmp $ID)<0){
 		$_[2]=1;
-		return index($ID.$sep,$_[0].$sep);
+		return index($ID.':',$_[0].':');
 	}elsif($_[1]>0){
-		return index($_[0].$sep,$ID.$sep);
+		return index($_[0].':',$ID.':');
 	}
 	exists($P{id}) && $P{id}->[1] ne $CNT{$_[0]}
 }
 
+sub _add_del{
+	return; # under construction
+	my ($id,$type,$ed)=(@_);
+	my $i;
+	if(exists($add{$id})){
+		my $ed1=$ed;
+		$ed1=~s/^(.*)\&lt;(.*?)$/$1&lt;\/$2/;
+		$i.="<item label='+[$add{$id}]'><action name='execute'><execute>$fix $stub{$type} $ed1</execute></action></item>";
+	}
+	if(exists($add_del{$id})){
+		my $x=$id;
+		$x=~s/^.*://;
+		$i.="<item label='-[$x]'><action name='execute'><execute>$fix $type $ed -</execute></action></item>";
+	}
+	$i.='<separator/>' if(defined($i));
+	$i;
+}
+
+sub _chk_attr{
+	my $i=$_[1];
+	my $a=$_[2];
+	($i=~s/( $a[\"\'])[^\'\"]*([\'\"])/$1$_[3]$2/) && exists($_[0]->{$i});
+}
+
 sub sort_tags{
 	for my $t(sort keys %{$_[0]}){
-		my $id="$_[1]$sep$t";
+		my $id="$_[1]:$t";
 		$CNT{$id}++;
 		cmpid($id,my $cmpid,my $silent) && next;
 		my $submenu;
 		my $A=scalar(keys %{$_[0]->{$t}});
-		my $type=type($id);
+		my $type=$type{$id};
 		my $menu1;
 		if($cmpid){
 			my $i=$t;
@@ -232,9 +255,9 @@ sub sort_tags{
 				$ed.=' &apos;&lt;'.$i.'&apos;';
 			}
 			$i=$aa;
-			$i=~s/([^=\s]+)(?:=\"([^=\"]*)\"|=\'([^=\']*)\'|)/my $x=type("$id$sep$1");$a{$1}=$2 if(ref($x) ne 'HASH' || scalar(%$x));''/gse;
-			my $branch=delete($_[0]->{$t}->{$aa});
-			if(!$silent && ($A>1 || scalar(%$branch) || ($aa=~/\S/s) || $show_empty)){
+			$i=~s/([^=\s]+)(?:=\"([^=\"]*)\"|=\'([^=\']*)\'|)/my $x=$type{"$id:$1="};$a{$1.'='}=$2 if(ref($x) ne 'HASH' || scalar(%$x));''/gse;
+			my $branch=$_[0]->{$t}->{$aa};
+			if(!$silent && ($A>1 || scalar(%$branch) || ($aa=~/\S/s) || exists($add{$type}) || exists($add_del{$id}) || $show_empty)){
 			    $menu1||=$submenu;
 			    if($A>1){
 				$i=$aa;
@@ -245,14 +268,17 @@ sub sort_tags{
 				$submenu.="<menu id='$MENU:$conf' label='$i'>";
 				$menu2=1;
 			    }
+			    $submenu.=_add_del($id,$type,$ed) if($submenu);
 			    utf8_encode($submenu);
 			    print $submenu;
 			}
+			$i=!$submenu;
 			$submenu=undef;
 			my $r=ref($type);
 			for(sort{$a<=>$b}keys %$branch,undef,sort keys %a){
 			    my ($d,$menu3);
 			    my ($id,$r,$ed,$type)=($id,$r,$ed,$type);
+			    my $attr;
 			    if(exists($branch->{$_})){
 				$d=delete($branch->{$_});
 				if(!$_){
@@ -261,23 +287,25 @@ sub sort_tags{
 				}
 				$ed.="[$_]" if($_>1);
 			    }elsif(exists($a{$_})){
+				$attr=quotemeta($_);
 				$d=delete($a{$_});
-				$id.=$sep.$_;
+				$id.=':'.$_;
 				$CNT{$id}++;
 				cmpid($id,my $cmpid,my $silent=$silent) && next;
-				$type=type($id);
+				$type=$type{$id};
 				$type || next;
 				$r=ref($type);
 				$i=$_;
 				$i=~s/([$xml_])/\&$xml_{$1};/gs;
-				$ed.=" $i=";
+				$ed.=" &apos;$i&apos;";
 				$conf++;
-				$i="<menu id='$MENU:$conf' label='$i='>";
+				$i="<menu id='$MENU:$conf' label='$i'>";
 				next if($cmpid && ($silent || _call($id,[$type],$i)));
 				if(!$silent){
+					$i.=_add_del($id,$type,$ed);
 					$menu3=1;
 					utf8_encode($i);
-					print $i;
+					print $i,;
 				}
 			    }elsif($silent){
 				next;
@@ -287,12 +315,13 @@ sub sort_tags{
 			    }
 			    if($d ne ''){
 				~s/([$xml_])/\&$xml_{$1};/gs for($d);
-				my $def="<separator label='$sel$d'/>";
+				my $def="<separator label='$sel1$d$sel2'/>";
 				if($r eq ARRAY){
 					for(@{$type}){
 						if($_ eq $d){
 							($i,$def)=($def);
 						}else{
+							$attr && _chk_attr($_[0]->{$t},$aa,$attr,$_) && next;
 							$i="<item label='$_'><action name='Execute'><execute>$fix &quot;$_&quot; $ed &quot;$d&quot;</execute></action></item>"
 						}
 						utf8_encode($i);
@@ -303,8 +332,9 @@ sub sort_tags{
 						my $x=$i=$type->{$_};
 						($i,$x)=@{$i} if(ref($i));
 						if($d=~/^$_$/){
-							($i,$def)=("<separator label='$sel$x'/>");
+							($i,$def)=("<separator label='$sel1$x$sel2'/>");
 						}else{
+							$attr && _chk_attr($_[0]->{$t},$aa,$attr,$i) && next;
 							$i="<item label='$x'><action name='Execute'><execute>$fix &quot;$i&quot; $ed &quot;$d&quot;</execute></action></item>"
 						}
 						utf8_encode($i);
@@ -315,8 +345,10 @@ sub sort_tags{
 					$i=$xtype{$$type}=&{$i}() if(ref($i) eq CODE);
 					$i=~s/(<menu id=[\'\"])/$conf++;"$1$MENU:$conf"/gse;
 					$i=~s/(<execute>)([^<>]*)(<\/execute>)/$1$fix $2 $ed &quot;$d&quot;$3/gs;
-					$i=~s/ label=\'\'/ label=\'[$$type]\'/gs;
-					my $ed=$ed;
+					my $x=$$type;
+					$x=~s/^[^:]*://;
+					$i=~s/ label=\'\'/ label=\'[$x]\'/gs;
+#					my $ed=$ed;
 					$ed=~s/(\s)/'&#'.ord($1).';'/gse;
 					$i=~s/( execute=\')([^\']*)(\')/$1$fix $2 $ed &quot;$d&quot;$3/gs;
 					$def.=$i;
@@ -521,11 +553,6 @@ sub button{
 
 sub xsd{
 sort_xsd(@_);
-for my $t (keys %xsd){
-	for (keys %{$xsd{$t}}){
-		$type{$_}=$_ if(!exists($type{$_}));
-	}
-}
 for(keys %{$xsd{'xsd:union'}}){
 	for my $i (map{split(/\s+/,$_)}(@{$xsd{'xsd:union'}->{$_}->{'memberTypes'}})){
 		for my $t(keys %xsd){
@@ -559,7 +586,61 @@ for my $t(values %type){
 	$_=$xsd{'xsd:enumeration'}->{$_}->{'value'}||$_;
     }
 }
+_types('ob:openbox_config');
+for my $x (values %xsd){
+	for my $t (keys %$x){
+		for(@{$x->{$t}->{'maxOccurs'}}){
+			next if($_ ne 'unbounded');
+			my $i=$t;
+			$i=~s/^[^:]*//;
+			$i=quotemeta($i);
+			for(grep(/$i$/,keys %type)){
+				$add_del{$_}=$x->{$t}->{'minOccurs'}->[0];
+				my ($x1,$x2)=$_=~/^(.*):([^:]*)$/ or next;
+				$add{$x1}=$x2;
+			}
+		}
+	}
+}
 %xsd=();
+}
+
+sub _types{
+	my $i=quotemeta($_[0]);
+	my @r=grep(/^$i:/,keys %type);
+	for(@r){
+		my $t=$type{$_};
+		next if(ref($t) || $walked{$t}++);
+		for my $i (_types($t)){
+			my $x=$_.substr($i,length($t));
+			push @r,$x;
+			$type{$x}=$type{$i};
+		}
+	}
+	@r;
+}
+
+my %dup_tags=(
+'ob:action:execute'=>0,
+);
+
+sub stub{
+my $r1;
+my $r2;
+my $type=type($_[0]);
+my $i=quotemeta($type.':');
+my @e=split(/:/,$_[0]);
+my $r1=$e[-1];
+for(sort grep(/^$i[^:]*$/,keys %type)){
+	next if($_ eq $_[0] || exists($dup_tags{$_}));
+	next if(!ref(type($_)));
+	if(substr($_,-1) eq '='){
+		$r1.=' '.substr($_,length($type)+1)."''";
+	}else{
+		$r2.=stub($_,@_[1..$#_]);
+	}
+}
+"<$r1>$r2</$e[-1]>"
 }
 
 ###########################################
@@ -569,11 +650,11 @@ for(keys %P){
 
 xsd(load_xml(open_($F,'<',reverse glob('/usr/share/doc/openbox*/rc.xsd')),1),'ob');
 
-$type{join($sep,'ob','openbox_config','theme','name')}=[(map{substr($_,18,-10)}glob('/usr/share/themes/*/openbox-3')),'/dev/null'];
-$type{join($sep,'ob','openbox_config','desktops','firstdesk')}=[$prop{'_NET_CURRENT_DESKTOP'}+1];
-$type{join($sep,'ob','openbox_config','desktops','number')}=[$prop{'_NET_NUMBER_OF_DESKTOPS'}||()];
-$type{join($sep,'ob','openbox_config','theme','font','name')}=\%fonts;
-$type{join($sep,'ob','openbox_config','theme','font','size')}=[(5..32)];
+$type{'ob:openbox_config:theme:name'}=[(map{substr($_,18,-10)}glob('/usr/share/themes/*/openbox-3')),'/dev/null'];
+$type{'ob:openbox_config:desktops:firstdesk'}=[$prop{'_NET_CURRENT_DESKTOP'}+1];
+$type{'ob:openbox_config:desktops:number'}=[$prop{'_NET_NUMBER_OF_DESKTOPS'}||()];
+$type{'ob:openbox_config:theme:font:name'}=\%fonts;
+$type{'ob:openbox_config:theme:font:size'}=[(5..32)];
 
 print '<openbox_pipe_menu>';
 sort_tags(load_xml(open_($F,'<',@rc)),'ob');
