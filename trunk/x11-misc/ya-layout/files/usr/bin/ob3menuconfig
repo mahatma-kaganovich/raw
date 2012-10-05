@@ -159,7 +159,12 @@ sub load_xml{
 		}
 	    }
 	    if(my ($x)=$5=~\/^\s*(\S.*?)\s*$\/s){
-		$i+=(scalar(keys %$c)-($xml_mode&&exists($c->{0})))||1;
+		if($xml_mode){
+			$i+=scalar(keys %$c)||1;
+			for(my $ii=$i; ref($c->{$i}); $i--||($i=$ii+1)){};
+		}else{
+			$i+=(scalar(keys %$c)-exists($c->{0}))||1;
+		}
 		$c->{$i}.=$c->{$i} ne ''?' '.$x:$x;
 	    }
 	''/ges;
@@ -233,10 +238,6 @@ sub _chk_attr{
 	($i=~s/( $a[\"\'])[^\'\"]*([\'\"])/$1$_[3]$2/) && exists($_[0]->{$i});
 }
 
-sub _edcnt{
-	if((my $i=$edcount{$_[0]}++)){$_[0].="[$i]"};
-}
-
 sub sort_tags{
 	for my $t(sort keys %{$_[0]}){
 		my $id="$_[1]:$t";
@@ -295,7 +296,7 @@ sub sort_tags{
 					sort_tags($d,$id,$ed);
 					next;
 				}
-				_edcnt($ed);
+				$ed.="[$i]" if($i=$edcount{$ed}++);
 			    }elsif(exists($a{$_})){
 				$attr=quotemeta($_);
 				$d=delete($a{$_});
