@@ -6,9 +6,14 @@
 %xml_=('<'=>'lt','>'=>'gt',"'"=>'apos','"'=>'quot','&'=>'amp');
 $xml_=join('',keys %xml_);
 $MENU='config';
-$show_empty=0;
-($sel1,$sel2)=('*');
-#($sel1,$sel2)=('&gt;','&lt;');
+$config_mode='TREE/xml';
+
+my %config=(
+'config_mode'=>{
+	'TREE/xml'=>sub{($sel1,$sel2,$xml_mode)=('*')},
+	'tree/XML'=>sub{($sel1,$sel2,$xml_mode)=('&lt;','&gt;',1)},
+},
+);
 
 $SIG{__DIE__}=sub{
 return if(!exists($ENV{DBUS_SESSION_BUS_ADDRESS}));
@@ -134,6 +139,9 @@ sub load_xml{
 		}
 	}
 	### /bugfix
+	$s=~s/<!-- ob3menuconfig:([^:]*):(.*?)-->/
+		exists($config{$1}) && exists($config{$1}->{$2}) && &{$config{$1}->{${$1}=$2}}();
+	''/se;
 	$s=~s/<!--.*?-->//gs;
 	$s=~s/<\?.*?\?>//gs;
 	my @tag=({});
@@ -143,8 +151,7 @@ sub load_xml{
 		pop @tag;
 		$c=$tag[-1];
 	    }else{
-		push @tag,$c=\%{$tag[-1]->{0}->{$2}->{$3}};
-#		push @tag,$c=\%{$tag[-1]->{scalar(keys %{$tag[-1]})}->{$2}->{$3}}; # multiple equal tag+attribute
+		push @tag,$c=\%{$tag[-1]->{$xml_mode?scalar(keys %{$tag[-1]}):0}->{$2}->{$3}};
 		if($4 || $1){
 			$c=pop @tag
 		}elsif(exists($c->{1})){
@@ -152,8 +159,7 @@ sub load_xml{
 		}
 	    }
 	    if(my ($x)=$5=~\/^\s*(\S.*?)\s*$\/s){
-		$i+=(scalar(keys %$c)-exists($c->{0}))||1;
-#		$i+=scalar(keys %$c)||1;  # multiple equal tag+attribute
+		$i+=(scalar(keys %$c)-($xml_mode&&exists($c->{0})))||1;
 		$c->{$i}.=$c->{$i} ne ''?' '.$x:$x;
 	    }
 	''/ges;
@@ -228,10 +234,7 @@ sub _chk_attr{
 }
 
 sub _edcnt{
-	if((my $i=$edcount{$_[0]}++)){
-		$i++;
-		$_[0].="[$i]";
-	}
+	if((my $i=$edcount{$_[0]}++)){$_[0].="[$i]"};
 }
 
 sub sort_tags{
@@ -258,14 +261,13 @@ sub sort_tags{
 			my ($i,$menu2,%a);
 			if($t ne ''){
 				$i=$t.(($A==1 && $aa && !scalar(%a))?substr($aa,0,1):$aa.'>');
-#				$i="$t$aa>"; # multiple equal tag+attribute
 				$i=~s/([$xml_])/\&$xml_{$1};/gs;
 				$ed.=' &apos;&lt;'.$i.'&apos;';
 			}
 			$i=$aa;
 			$i=~s/([^=\s]+)(?:=\"([^=\"]*)\"|=\'([^=\']*)\'|)/my $x=$type{"$id:$1="};$a{$1.'='}=$2 if(ref($x) ne 'HASH' || scalar(%$x));''/gse;
 			my $branch=$_[0]->{$t}->{$aa};
-			if(!$silent && ($A>1 || scalar(%$branch) || ($aa=~/\S/s) || exists($add{$type}) || exists($add_del{$id}) || $show_empty)){
+			if(!$silent && ($A>1 || scalar(%$branch) || ($aa=~/\S/s) || exists($add{$type}) || exists($add_del{$id}) || $xml_mode)){
 			    $menu1||=$submenu;
 			    if($A>1){
 				$i=$aa;
@@ -319,7 +321,7 @@ sub sort_tags{
 			    }elsif($silent){
 				next;
 			    }else{
-				scalar(%a) && print '<separator/>';
+				scalar(%a) && !$xml_mode && print '<separator/>';
 				next;
 			    }
 			    if($d ne ''){
@@ -452,25 +454,36 @@ if(substr($_[-1],-1) eq '='){
 	$from=quotemeta($t);
 	$to=$t1;
 }
+my $mycfg;
 for(@_){
-	my $n=1;
-	$_=~s/\[(\d+)\]$/$n=$1;''/se;
+	my $n=0;
 	my $x=$_;
+	$x=~s/\[(\d+)\]$/$n=$1;''/se;
 	if(substr($x,0,2) eq '</'){
-		$p2=quotemeta($x).'.*?'.$p2;
+		$p2=quotemeta($x).'.*?'.$p2 for(0..$n);
 	}else{
-		$x=~s/\s.*/>/s;
-		substr($x,1,0)='/';
-		$p2=quotemeta($x).'.*?'.$p2 for(1..$n);
-		$p1.='.*?'.quotemeta($_);
+		$p1.='.*?'.quotemeta($x);
+		if(substr($x,0,4) eq '<!--'){
+			$p2='-->.*'.$p2 for(0..$n);
+			$mycfg=1;
+			$from=undef;
+		}else{
+			$x=~s/\s.*/>/s;
+			substr($x,1,0)='/';
+			$p2=quotemeta($x).'.*'.$p2 for(0..$n);
+		}
 	}
 }
 my $sl='/';
 ($s=~s/($p1)(.*?)($p2)/
 	my @x=($1,$2,$3);
-	$x[1]=~s\/$from\/$to\/s or  die "Not found";
+	if(defined($from)){
+		$x[1]=~s\/$from\/$to\/s or  die "Not found $from";
+	}else{
+		$x[1]=$to;
+	}
 	join('',@x)
-/se) || die "Not found";
+/se) || ($mycfg?($s.=join('',@_,$to,"-->\n")):die "Not found");
 utf8_encode($s);
 open_($F,'>',$rc1) && print($F $s) && close($F) && rename($rc1,$rc[0]) || die $!;
 exec('/usr/bin/openbox','--reconfigure');
@@ -667,4 +680,17 @@ $type{'ob:openbox_config:theme:font:size'}=[(5..32)];
 
 print '<openbox_pipe_menu>';
 sort_tags($_,'ob') for(load_xml(open_($F,'<',@rc)));
+if(!exists($P{id})){
+	print '<separator/>';
+	for(keys %config){
+		$x=1;
+		my @a;
+		for my $i (@a=keys %{$config{$_}}){
+			last if($i eq ${$_});
+			$x++;
+		}
+		push @a,$a[0];
+		print "<item label='${$_}'><action name='execute'><execute>$fix $a[$x] &apos;&lt;!-- ob3menuconfig:$_:&apos; ${$_}</execute></action></item>";
+	}
+}
 print '</openbox_pipe_menu>';
