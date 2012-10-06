@@ -6,11 +6,11 @@
 %xml_=('<'=>'lt','>'=>'gt',"'"=>'apos','"'=>'quot','&'=>'amp');
 $xml_=join('',keys %xml_);
 $MENU='config';
-$config_mode='TREE/xml';
+$bin='/usr/bin/';
 
 my %config=(
 'config_mode'=>{
-	'TREE/xml'=>sub{($sel1,$sel2,$xml_mode)=('*')},
+	($config_mode='TREE/xml')=>sub{($sel1,$sel2,$xml_mode)=('*')},
 	'tree/XML'=>sub{($sel1,$sel2,$xml_mode)=('&lt;','&gt;',1)},
 },
 );
@@ -18,7 +18,7 @@ my %config=(
 $SIG{__DIE__}=sub{
 return if(!exists($ENV{DBUS_SESSION_BUS_ADDRESS}));
 print STDERR ($e=join('',"$0: ",@_));
-exec('/usr/bin/notify-send','-t',6000,$e);
+exec($bin.'notify-send','-t',6000,$e);
 };
 
 sub utf8_encode{};
@@ -44,23 +44,23 @@ if(exists($P{''}) && substr(scalar(%P),0,2) eq '1/'){
 
 if($prof=$P{profile}->[0]){
 	$cfg="$ENV{HOME}/.config/$prof";
-	@rc=("$cfg/rc.xml","/etc/xdg/$prof/rc.xml");
+	@rc=("$cfg/rc.xml");
 }else{
 	if(!($cfg=$P{config}->[0])){
-		~s/^([A-Z0-9_]*)\([A-Z0-9_]*\) = (.*)?$/$prop{$1}=$2;''/ge for(split(/\n/,`/usr/bin/obxprop --root`));
+		~s/^([A-Z0-9_]*)\([A-Z0-9_]*\) = (.*)?$/$prop{$1}=$2;''/ge for(split(/\n/,`${bin}obxprop --root`));
 		$cfg=$prop{'_OB_CONFIG_FILE'};
 		$cfg=~s/\"//gs;
 	}
 	@rc=($cfg);
 	($cfg=~s/[^\/]*$//) &&
-	(($prof)=$cfg=~/.*\/([^\/]+)\/*$/) || die "Detecting openbox config";
+	(($prof)=$cfg=~/.*\/([^\/]+)\/*$/);
 }
+push @rc,"/etc/xdg/$prof/rc.xml";
 
 my (%type,%xsd,%fontcfg,%fonts,%fonts_,%CNT,%xtype,%add_del,%add);
 
-$cmd="$0 --profile $prof";
 $fix=$0;
-#~s/^\/usr\/bin\///gs for($cmd,$fix);
+$fix=~s/^\/usr\/bin\///gs if(!$bin);
 
 $ID='ob:openbox_config';
 
@@ -68,7 +68,7 @@ $ID='ob:openbox_config';
 	'font'=>0,
 #	'ob:action'=>0,
 #	'ob:actionname'=>0,
-	'action'=>0,
+#	'action'=>0,
 );
 
 %subinit=(
@@ -91,7 +91,7 @@ $ID='ob:openbox_config';
 'app'=>sub{
 #	open_(my $F,'<',"$ENV{HOME}/.cache/$prof/menu.xml");
 #	read($F,my $s,-s $F);
-	open_(my $F,'|-',"/usr/bin/ob3menu-cache /usr/bin/ob3menu --slow $ENV{HOME}/.config/ya/rc.xml");
+	open_(my $F,'|-',"${bin}ob3menu-cache /usr/bin/ob3menu --slow $ENV{HOME}/.config/ya/rc.xml");
 	$s=join('',<$F>);
 	close($F);
 	utf8_decode($s);
@@ -126,23 +126,33 @@ $ID='ob:openbox_config';
 },
 );
 
+%stdio=('<-'=>*STDIN,'>-'=>*STDOUT);
+
 sub load_xml{
-	read($_[0],my $s,-s $_[0]) || die $!;
-	close($_[0]);
+	my $F=$_[0];
+	my $s;
+	if(my $l=-s $F){
+		flock($F,1) if($_[1]==2);
+		read($F,$s,$l) || die $!;
+		close($F);
+	}else{
+		while(<$F>){$s.=$_}
+	}
 	utf8_decode($s);
 	### bugfix
-	if($_[1]){
+	if($_[1]==1){
 		$s=~s/name=\"monitor\" type=\"ob:primarymonitor\"/name=\"primaryMonitor\" type=\"ob:primarymonitor\"/;
 		$s=~s/:enumeration value=\"\[0-/:pattern value=\"[0-/;
 		if(!($s=~/\"(?:Active|Inactive)OnScreenDisplay\"/)){
 			$s=~s/(<xsd:enumeration value=\")(OnScreenDisplay\"\/>)/$1Active$2$1Inactive$2/;
 		}
+	}elsif($_[1]==2){
+		_fixrc($s);
 	}
 	### /bugfix
-	$s=~s/<!-- ob3menuconfig:([^:]*):(.*?)-->/
-		exists($config{$1}) && exists($config{$1}->{$2}) && &{$config{$1}->{${$1}=$2}}();
-	''/se;
-	$s=~s/<!--.*?-->//gs;
+	$s=~s/<!--(?: ob3menuconfig:([^:]*):(.*?) |.*?)-->/
+		$1 && exists($config{$1}) && exists($config{$1}->{$2}) && &{$config{$1}->{${$1}=$2}}();
+	''/gse;
 	$s=~s/<\?.*?\?>//gs;
 	my @tag=({});
 	$s=~s/<([\/!]?)([^<>\s\/]*)([^<>]*?)(\/?)>([^<]*)/
@@ -251,6 +261,7 @@ sub sort_tags{
 			my $i=$t;
 			$i=~s/_/-/g;
 			$i.=(keys %{$_[0]->{$t}})[0] if($A==1);
+			$i=~s/([$xml_])/\&$xml_{$1};/gs;
 			$conf++;
 			$submenu="<menu id='$MENU:$conf' label='$i'>";
 			next if(!$silent && _call($id,[$t,$type],$submenu));
@@ -427,24 +438,48 @@ sub sort_fonts{
 	}
 }
 
+
 sub open_{
-	open($_[0],$_[1]?$_[1].$filemode:$_[1],$_[$_]) && return $_[0] for(2..$#_);
+	(($_[0]=$stdio{$_[1].$_[$_]}) || open($_[0],$_[1]?$_[1].$filemode:$_[1],$_[$_])) && return $_[0] for(2..$#_);
 	die "Error open '".join('|',@_[2..$#_])."'\n";
 }
 
+sub _fixrc{
+	my $r;
+	$r+=$_[0]=~s/ -->(
+       if this is a negative)/$1/s;
+	if($_[0]=~/<showIcons>/){
+		$r+=$_[0]=~s/ *<applicationIcons>yes<\/applicationIcons>\n//s;
+	}elsif($_[0]=~s/applicationIcons>/showIcons>/gs){
+		$r++;
+	}else{
+		$r+=$_[0]=~s/(<menu>.*?<\/file>)/$1
+<showIcons>yes<\/showIcons>/s;
+	}
+	$r
+}
+
 sub fixrc(){
+my $rc1=$rc[0];
+$rc1.='.$$$' if($rc1 ne '-');
 open_(my $F,'<',@rc);
-mkdir($cfg)||die $! if(! -d $cfg);
-read($F,$s,-s $F)||die $!;
+mkdir($cfg)||die $! if($cfg && ! -d $cfg);
+my $s;
+if(my $l=-s $F){
+	flock($F,1);
+	read($F,$s,$l)||die $!;
+	close($F);
+}else{
+	while(<$F>){$s.=$_}
+}
 utf8_decode($s);
-print "$rc[0]";
-close($F);
+goto FIX if(_fixrc($s) && $#_<0);
+exit if($#_<0);
 my ($from,$to);
 $to=shift;
 if(substr($_[-1],0,2) ne '</'){
 	$from=quotemeta(pop(@_));
 }
-my $rc1=$rc[0].'.$$$';
 my ($p1,$p2);
 if(substr($_[-1],-1) eq '='){
 	my $a=pop @_;
@@ -485,14 +520,20 @@ my $sl='/';
 	}
 	join('',@x)
 /se) || ($mycfg?($s.=join('',@_,$to,"-->\n")):die "Not found");
+FIX:
 utf8_encode($s);
-open_($F,'>',$rc1) && print($F $s) && close($F) && rename($rc1,$rc[0]) || die $!;
-exec('/usr/bin/openbox','--reconfigure');
+open_($F,'>',$rc1);
+flock($F,2);
+print($F $s) || die $!;
+if($rc1 ne '-'){
+	close($F) && rename($rc1,$rc[0]) || die $!;
+	exec($bin.'openbox','--reconfigure');
+}
 exit;
 }
 
 sub fonts{
-~s/^(?:.*:\s)?(.+):.*$/$fonts{quotemeta($1)}=[$1,$1]/e for(split(/\n/,`/usr/bin/fc-list`));
+~s/^(?:.*:\s)?(.+):.*$/$fonts{quotemeta($1)}=[$1,$1]/e for(split(/\n/,`${bin}fc-list`));
 if(!$?){
 	fontconfig('/etc/fonts/fonts.conf');
 	for(my ($n,$n1)=(1); $n ne $n1; ($n,$n1)=(scalar(%fonts),$n)){
@@ -532,7 +573,7 @@ sub _menu{
 sub keymap{
 	my (%k,%kk);
 	my $ed=join(' ',@_[1..$#_]);
-	open(my $F,'-|','/usr/bin/xmodmap -pke');
+	open(my $F,'-|',$bin.'xmodmap -pke');
 	while(<$F>){
 		~s/^keycode\s+(\d+)\s+=\s+(.+?)\s*$/$k{$_}=$1 for(split(\/\s+\/,$2));''/ge;
 	}
@@ -670,6 +711,8 @@ for(keys %P){
 	&{$cmd{$_}}(@{$P{$_}}) if(exists($cmd{$_}));
 }
 
+&{$config{$_}->{${$_}}}() for(keys %config);
+
 sort_xsd($_,'ob') for(load_xml(open_($F,'<',reverse glob('/usr/share/doc/openbox*/rc.xsd')),1));
 xsd();
 
@@ -680,7 +723,7 @@ $type{'ob:openbox_config:theme:font:name'}=\%fonts;
 $type{'ob:openbox_config:theme:font:size'}=[(5..32)];
 
 print '<openbox_pipe_menu>';
-sort_tags($_,'ob') for(load_xml(open_($F,'<',@rc)));
+sort_tags($_,'ob') for(load_xml(open_($F,'<',@rc),2));
 if(!exists($P{id})){
 	print '<separator/>';
 	for(keys %config){
@@ -691,7 +734,7 @@ if(!exists($P{id})){
 			$x++;
 		}
 		push @a,$a[0];
-		print "<item label='${$_}'><action name='execute'><execute>$fix $a[$x] &apos;&lt;!-- ob3menuconfig:$_:&apos; ${$_}</execute></action></item>";
+		print "<item label='${$_}'><action name='execute'><execute>$fix &quot;$a[$x] &quot; &apos;&lt;!-- ob3menuconfig:$_:&apos; ${$_}</execute></action></item>";
 	}
 }
 print '</openbox_pipe_menu>';
