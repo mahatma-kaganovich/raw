@@ -10,17 +10,36 @@ cache="$HOME/.cache/ya"
 sm='--sm-disable'
 sm2='--sm-client-disable'
 
-# todo: full apps list
-: ${YA_APP_XF86WWW:="'exo-open --launch WebBrowser' 'seamonkey --browser' firefox chromium midori @WebBrowser"}
-: ${YA_APP_XF86Mail:="'exo-open --launch MailReader' 'seamonkey --mail' claws-mail thunderbird @Email"}
-: ${YA_APP_TerminalEmulator:="'exo-open --launch TerminalEmulator' Terminal lxterminal \"gnome-terminal \$sm2\" kterm xterm @TerminalEmulator"}
+: ${YA_APP_WebBrowser:="'exo-open --launch WebBrowser' 'seamonkey --browser' firefox chromium midori"}
+: ${YA_APP_TerminalEmulator:="'exo-open --launch TerminalEmulator' Terminal lxterminal \"gnome-terminal \$sm2\" kterm xterm"}
 : ${YA_APP_FileManager:="'exo-open --launch FileManager' \"spacefm --profile=\$YA_PROFILE\" \"pcmanfm -p \$YA_PROFILE\" Thunar \"nautilus --no-desktop \$sm2\" qtfm @FileManager +mc"}
+: ${YA_APP_Email:="'exo-open --launch MailReader' 'seamonkey --mail' claws-mail thunderbird"}
+: ${YA_APP_InstantMessaging:="pidgin"}
+
+: ${YA_APP_XF86WWW:="WebBrowser"}
+: ${YA_APP_XF86Mail:="Email"}
 : ${YA_APP_XF86AudioMedia:="audacious aqualung vlc mplayer '@Player;Audio|Player;AudioVideo;!Video' '@Player;AudioVideo'"}
 : ${YA_APP_XF86VideoMedia:="mplayer2 mplayer vlc '@Player;Video|Player;AudioVideo;!Audio' '@Player;AudioVideo'"}
 : ${YA_APP_XF86Calendar:="orage"}
-: ${YA_APP_XF86Calculator="gpe-calculator"}
-: ${YA_APP_XF86Messenger="pidgin @InstantMessaging"}
-#
+: ${YA_APP_XF86Calculator:="gpe-calculator"}
+: ${YA_APP_XF86Messenger:="InstantMessaging"}
+: ${YA_APP_XF86Eject:="\"eject /dev/sr0\""}
+: ${YA_APP_XF86MyComputer:="\"FileManager \$HOME/Desktop\""}
+: ${YA_APP_XF86Documents:="libreoffice"}
+: ${YA_APP_XF86DOS:="TerminalEmulator"}
+: ${YA_APP_XF86Terminal:="TerminalEmulator"}
+: ${YA_APP_XF86Explorer:="WebBrowser"}
+: ${YA_APP_XF86Excel:="libreoffice -calc"}
+: ${YA_APP_XF86Video:="XF86VideoMedia"}
+: ${YA_APP_XF86Music:="XF86AudioMedia"}
+: ${YA_APP_XF86Phone:="Telephony"}
+: ${YA_APP_XF86Word:="WordProcessor @X-MandrivaLinux-Office-Wordprocessors"}
+#F86Battery XF86Bluetooth XF86Book XF86CD XF86Community XF86Config XF86Favorites
+#XF86Finance XF86Forward XF86Game XF86Go XF86Hibernate XF86History XF86HomePage
+#XF86HotLinks XF86iTouch XF86LogOff XF86New XF86News XF86OfficeHome XF86Open XF86OpenURL
+#XF86Pictures XF86PowerOff XF86ScreenSaver XF86Shop XF86Terminal XF86ToDoList XF86Tools
+#XF86Travel XF86VendorHome XF86WebCam XF86WLAN
+
 : ${YA_APP_XF86SettingsManager:="'xfsettingsd --replace' xfce-mcs-manager gnome-settings-daemon /usr/libexec/gnome-settings-daemon"}
 : ${YA_APP_XF86Panel:="\"xfce4-panel \$sm2\" \"lxpanel -p \$YA_PROFILE\"" \"gnome-panel \$sm2\"}
 : ${YA_APP_XF86Desktop:="\"spacefm --desktop --profile=\$YA_PROFILE\" \"pcmanfm --desktop -p \$YA_PROFILE\" \"xfdesktop \$sm2\" \"nautilus -n \$sm2\""}
@@ -124,23 +143,24 @@ print $s;' "${@}"
 
 obconfig(){
 	mkdir -p "${1%/*}"
+	local a= i
+	for i in "${!YA_APP_XF86@}"; do
+		i="${i#YA_APP_}"
+		case "$i" in
+		XF86Desktop|XF86Panel|XF86SettingsManager);;
+		*)a+="<keybind key='$i'><action name='Execute'><command>ya-session --run $i</command></action></keybind>\n";;
+		esac
+	done
+	for i in 'C-Menu +/usr/bin/sudo /usr/bin/mc' 'Super_R TerminalEmulator' 'C-Super_R +/usr/bin/sudo -s'; do
+		a+="<keybind key='${i%% *}'><action name='Execute'><command>ya-session --run ${i#* }</command></action></keybind>\n"
+	done
+	ob3menuconfig --config - --fix <"$2" | \
 	sed -e 's:<animateIconify>yes</animateIconify>:<animateIconify>no</animateIconify>:' \
-		-e 's:<file>menu\.xml</file>:<file>../ya/menu.xml</file>\n<showIcons>yes</showIcons>:' \
-		-e 's:</keyboard>:\
-		<keybind key="C-Escape"><action name="ShowMenu"><menu>client-list-combined-menu</menu></action></keybind>\
-		<keybind key="Menu"><action name="ShowMenu"><menu>root-menu</menu></action></keybind>\
-		<keybind key="C-Menu"><action name="Execute"><command>ya-session --run +/usr/bin/sudo /usr/bin/mc</command></action></keybind>\
-		<keybind key="Super_R"><action name="Execute"><command>ya-session --run TerminalEmulator</command></action></keybind>\
-		<keybind key="C-Super_R"><action name="Execute"><command>ya-session --run +/usr/bin/sudo -s</command></action></keybind>\
-		<keybind key="XF86Calculator"><action name="Execute"><command>ya-session --run XF86Calculator</command></action></keybind>\
-		<keybind key="XF86WWW"><action name="Execute"><command>ya-session --run XF86WWW</command></action></keybind>\
-		<keybind key="XF86Mail"><action name="Execute"><command>ya-session --run XF86Mail</command></action></keybind>\
-		<keybind key="XF86AudioMedia"><action name="Execute"><command>ya-session --run XF86AudioMedia</command></action></keybind>\
-		<keybind key="XF86MyComputer"><action name="Execute"><command>ya-session --run "FileManager $HOME/Desktop"</command></action></keybind>\
-		<keybind key="XF86Messenger"><action name="Execute"><command>ya-session --run XF86Messenger</command></action></keybind>\
-		<keybind key="XF86Eject"><action name="Execute"><command>eject /dev/sr0</command></action></keybind>\
-		</keyboard>:' \
-			<"$2" | \
+		-e 's:<file>menu\.xml</file>:<file>../ya/menu.xml</file>:' \
+		-e 's:</keyboard>:<!-- ya.keybind -->\
+<keybind key="C-Escape"><action name="ShowMenu"><menu>client-list-combined-menu</menu></action></keybind>\
+<keybind key="Menu"><action name="ShowMenu"><menu>root-menu</menu></action></keybind>\
+'"$a"'<!-- /ya.keybind -->\n</keyboard>:' | \
 			fixml 'root' '<context name="Icon">' '<mousebind button="Right" action="Press">' '<menu>' 'client' | \
 			fixml 'Onyx-Citrus' '<theme>' '<name>' '[^<]*' >$1
 }
@@ -291,7 +311,16 @@ app(){
 	for i in "${@}"; do
 		eval "_app '' '$i'"
 	done
-	[ -z "$min" ] && return 1
+	if [ -z "$min" ]; then
+		for i in "${@}"; do
+			case "$i" in
+			@*);;
+			*)eval "_app '' '@$i'";;
+			esac
+			[ -n "$min" ] && break
+		done
+		[ -z "$min" ] && return 1
+	fi
 	case "$minpref" in
 	+)app "TerminalEmulator -e $min";;
 	*)echo "$min";;
@@ -388,6 +417,11 @@ case "$1" in
 --fixrc)
 	shift
 	fixml "${@}" <"$obconf" >"$obconf"'.$$$' && rename '.$$$' '' "$obconf"'.$$$'
+;;
+--app)
+	shift
+	app "${@}"
+	break
 ;;
 ?*)
 	i=" ${!YA_APP_*}"
