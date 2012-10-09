@@ -336,8 +336,11 @@ sub netmenu{
 	if($SUDO=($_[0] eq '--sudo')){
 		delete($ENV{DBUS_SESSION_BUS_ADDRESS}) if($NOTIFY==2);
 		$notify=$NOTIFY; # now we can notify in sudo'ed terminal
-		shift @_;
-		rescan(@_) if($_[0] eq '--rescan');
+		shift;
+		if($_[0] eq '--rescan'){
+			rescan(@_)
+			exit;
+		}
 		@cmd=@_;
 		goto SUDO;
 	}
