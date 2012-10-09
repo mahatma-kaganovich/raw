@@ -103,6 +103,7 @@ sub ico{
 }
 
 if(exists($P{slow})){
+	$configs{$_}=1 for(glob("${0}_*"));
 	for(@{$P{slow}}){
 		my $s;
 		open($F,"<$_") && read($F,$s,-s $F);
@@ -201,10 +202,16 @@ for(keys %cat){
 		push @{$cat1{$i}},$_ if(exists($cat1{$i}) && (exists($base{$i})));
 	}
 }
+$set=$dir{'Settings'}||"Settings'";
 print '<openbox_pipe_menu><menu id="client-list-combined-menu"/><separator/>';
 for(sort keys %cat1){
-	print "<menu id='$id' label='",$dir{$_}||"$_'",'>',(sort @{$cat1{$_}}),'</menu>';
+	print "<menu id='$id' label='",$dir{$_}||"$_'",'>',(sort @{$cat1{$_}});
 	$id++;
+	if(delete($configs{$i="${0}_$_"})){
+		print "<separator/><menu id='$id' label='$set execute='$i'/>";
+		$id++;
+	}
+	print '</menu>';
 }
 for(map{glob $_}(@{$P{include}})){
 	if(open(my $F,(-x $_)?"$_|":"<$_")){
@@ -305,21 +312,20 @@ echo "</openbox_pipe_menu>"';
 }
 
 print '<separator/>';
-if(exists($P{slow})){
-	for(glob("${0}_*")){
-		$i=substr($_,length($0)+1);
-		print "<menu id='$id' label='",$dir{$i}||"$i'"," execute='$_'/>";
-		$id++
-	}
+for(sort keys %configs){
+	$i=substr($_,length($0)+1);
+	print "<menu id='$id' label='",$dir{$i}||"$i'"," execute='$_'/>";
+	$id++
 }
 print qq(
 <menu id=").($id++).qq(" label="OpenBox">
 <menu id="client-menu"/>
 <menu id="client-list-menu"/>
-<menu id=").($id++).qq(" label="config" execute="${0}config"/>
 <item label="Fullscreen"><action name="ToggleFullscreen"/></item>
 <item label="Reconfigure"><action name="Reconfigure"/></item>
 <item label="Restart"><action name="Restart"/></item>
+<separator/>
+<menu id=").($id++).qq(" label='$set execute="${0}config"/>
 <separator label=""/>
 <item label="Exit"><action name="Exit"/></item>
 </menu>
