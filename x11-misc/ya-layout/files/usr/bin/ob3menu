@@ -15,7 +15,24 @@ print STDERR ($e=join('',"$0: ",@_));
 exec('/usr/bin/notify-send','-t',6000,$e);
 };
 
-my (%ico,%key,%cat,%cat,%cc,%dir,@prof,$prof);
+my (%ico,%key,%cat,%cat1,%dir,@prof,$prof);
+%base=%cc=(
+# http://standards.freedesktop.org/menu-spec/menu-spec-1.1.html
+'AudioVideo'=>10000,
+'Audio'=>10000,
+'Video'=>10000,
+'Development'=>10000,
+'Education'=>10000,
+'Game'=>10000,
+'Graphics'=>10000,
+'Network'=>10000,
+'Office'=>10000,
+'Settings'=>10000,
+'System'=>10000,
+'Utility'=>10000,
+#
+'Autostart'=>0,
+);
 %xml_=('<'=>'lt','>'=>'gt',"'"=>'apos','"'=>'quot','&'=>'amp');
 $xml_='<>\'"&';
 %notify=(
@@ -181,7 +198,7 @@ $_=defined($_)?[sort{$cc{$a} <=> $cc{$b}}(keys %{$_})]:['misc'] for(values %cat)
 push @{$cat1{pop @{$cat{$_}}}},$_ for(keys %cat);
 for(keys %cat){
 	for $i (@{delete($cat{$_})}){
-		push @{$cat1{$i}},$_ if(exists($cat1{$i}))
+		push @{$cat1{$i}},$_ if(exists($cat1{$i}) && (exists($base{$i})));
 	}
 }
 print '<openbox_pipe_menu><menu id="client-list-combined-menu"/><separator/>';
@@ -287,7 +304,15 @@ echo "</openbox_pipe_menu>"';
 	close($F);
 }
 
-print qq(<separator/>
+print '<separator/>';
+if(exists($P{slow})){
+	for(glob("${0}_*")){
+		$i=substr($_,length($0)+1);
+		print "<menu id='$id' label='",$dir{$i}||"$i'"," execute='$_'/>";
+		$id++
+	}
+}
+print qq(
 <menu id=").($id++).qq(" label="OpenBox">
 <menu id="client-menu"/>
 <menu id="client-list-menu"/>
