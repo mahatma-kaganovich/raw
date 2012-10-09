@@ -322,7 +322,6 @@ sub resolvstat{
 	$enable_ch_resolv=!scalar(%$r);
 }
 
-#rescan('--rescan',1000,'/home/mahatma');
 $ENV='^(?:OB3MENUNET_.*|DBUS_SESSION_BUS_ADDRESS|DISPLAY)$';
 
 sub netmenu{
@@ -338,7 +337,7 @@ sub netmenu{
 		$notify=$NOTIFY; # now we can notify in sudo'ed terminal
 		shift;
 		if($_[0] eq '--rescan'){
-			rescan(@_)
+			rescan(@_);
 			exit;
 		}
 		@cmd=@_;
