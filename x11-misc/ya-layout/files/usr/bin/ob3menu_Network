@@ -23,6 +23,8 @@
 # - bluetooth;
 # - bridges (for VM, IMHO just connect/disconnect to active bridge).
 
+use bigint;
+
 $NOTIFY=2; # 0 - none; 1 - libnotify||terminal; 2 - terminal||libnotify; 3 - only terminal
 
 $SIG{__DIE__}=sub{
@@ -179,12 +181,32 @@ sub _debug{
 sub ip2n{
 	my @i=@_;
 	my $x255='((?:1?[0-9]{1,2}|2[0-4][0-9]|25[1-5]))';
+	my $b6='([0-9a-z]{4}|)';
 	for(@i[0..2]){
 		if(!defined($_)){
-		}elsif($_=~s/^$x255\.$x255\.$x255\.$x255$/hex(sprintf('%02x%02x%02x%02x',$1,$2,$3,$4))/ge){ # ipv4
+		}elsif($_=~s/^$x255\.$x255\.$x255\.$x255$/hex(sprintf('%02x%02x%02x%02x',$1,$2,$3,$4))/e){ # ipv4
 			$i[4]=0xFFFFFFFF;
-		}elsif($_=~s/^([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/hex($4.$3.$2.$1)/gie){ # /proc/net/route
+		}elsif($_=~s/^([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/hex($4.$3.$2.$1)/ie){ # /proc/net/route
 			$i[4]=0xFFFFFFFF;
+		}elsif($_=~s/^\[?([0-9a-z:]+)\]?$/$1/i){
+			~s/(^|:)([0-9a-z]{1,3})(:|$)/$1.sprintf('%04s',$2).$3/gei;
+			while(length($_)<39){
+				$_=~s/::/::0000:/ or last;
+			}
+#			~s/::/:/;if(length($_)!=39){$_=undef;next;}
+			~s/://g;
+			if(length($_)!=32){
+				$_=undef;
+				next;
+			}
+			$_=hex($_);
+			$i[4]=0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF;
+#		}elsif($i[4]==0xFFFFFFFF && ($_=~/^[0-9]{1,2}$/i)){
+#			my $x=32-hex($_);
+#			$_=($i[4]>>$x)<<$x;
+		}elsif($_=~/^[0-9a-z]{2}$/i){
+			my $x=128-hex($_);
+			$_=($i[4]>>$x)<<$x;
 		}else{
 			$_=undef;
 		}
@@ -198,8 +220,18 @@ sub routestat{
 	if(open($F,'<','/proc/net/if_inet6')){
 		while(<$F>){
 			chomp($_);
-			$_=~s/.*\s+//gs;
+			~s/.*\s+//gs;
 			$if_ip{$_}=1;
+		}
+		close($F);
+	}
+	if(open($F,'<','/proc/net/ipv6_route')){
+		while(<$F>){
+			chomp($_);
+			~s/.*\s+//gs;
+			$if_ip{$_}=1;
+			my @a=split(/\s+/,$_);
+			ip2n($a[0],$a[1],$a[4],$a[9],$a[2],$a[3]);
 		}
 		close($F);
 	}
@@ -343,6 +375,10 @@ sub netmenu{
 		@cmd=@_;
 		goto SUDO;
 	}
+	if($_[0] eq '--debug'){
+		shift;
+		$ENV{OB3MENUNET_DEBUG}=1;
+	}
 	my $i;
 	$if=$_[0];
 	$id=xml($0,@_);
@@ -364,7 +400,7 @@ sub netmenu{
 			$if{$i}=$c;
 		}
 		print '<openbox_pipe_menu>';
-		print _menu($_) for(sort keys %if);
+		print _menu(($ENV{OB3MENUNET_DEBUG}?'+':'').$_) for(sort keys %if);
 		my (%ppp,%fd,%pppd);
 		for(glob('/var/run/ppp*.pid')){
 			open(my $F,'<',$_)||next;
@@ -427,18 +463,21 @@ sub netmenu{
 					$i.=' nodefaultroute';
 					$d.=' !gw';
 				}
-#				if(!$enable_ch_resolv){
-#					$i.=' nousepeerdns';
-#					$d.=' !dns';
-#				}
-				print _ex(_debug($debug,$i,$d));
+				if($enable_ch_resolv){
+					$i.=' usepeerdns';
+				}else{
+					$d.=' !dns';
+				}
+				print _ex(($debug?'+':'').$i,$d);
 			}
 		}
+		print '<separator/>';
+		print _menu("--debug",'debug') if(!$ENV{OB3MENUNET_DEBUG});
 		if($iw && $>){
 			die 'Security problem' if(substr($0,0,1) ne '/');
 			$i=join(' ',map{"$_='$ENV{$_}'"}grep(/$ENV/,keys %ENV));
 			$id="ya-session --run +sudo -p $0:root:password: $i $id";
-			print '<separator/>',_ex("--sudo --rescan",'sudo rescan');
+			print _ex("--sudo --rescan",'sudo rescan');
 		}
 		print '</openbox_pipe_menu>';
 	}elsif(!$_[1]){
@@ -451,7 +490,7 @@ sub netmenu{
 			close($F);
 			print _ex("kill $i",'stop dhcp');
 		}else{
-			my $p;
+			my $p=$ENV{OB3MENUNET_DEBUG}?'Bd':'bq';
 			if($default_route){
 				$p.='G';
 				$i.=' !gw';
@@ -460,7 +499,7 @@ sub netmenu{
 				$p.=' -C resolv.conf';
 				$i.=' !dns';
 			}
-			print _ex("dhcpcd -bq$p $if","start dhcp$i");
+			print _ex("dhcpcd -$p $if","start dhcp$i");
 		}
 		if(-e "$d/wireless"){
 			print '<separator label="Wi-Fi"/>';
