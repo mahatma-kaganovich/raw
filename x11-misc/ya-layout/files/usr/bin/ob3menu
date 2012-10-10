@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # (c) Denis Kaganovich, Anarchy or GPLv2
-# OpenBox3 pipe menu v0.4
+# OpenBox3 pipe menu v0.5
 # ob3menu {--<command> {params}}
 # 	--slow {<path/to/rc.xml>}
 #	--autostart {profile}
@@ -175,10 +175,10 @@ N:
 	}elsif($d{Type} eq 'Directory'){
 		for(@{$en{Name}}){
 			if($d{Name} ne $_){
-				$dir{$_}->{"$d{Name}'$i"}++;
+				$dir{$_}="$d{Name}'$i";
 				$base{$_}=$cc{$_}+=2000;
 			}elsif($i){
-				$dir{$_}->{"$d{Name}'$i"}++;
+				$dir{$_}="$d{Name}'$i";
 				$base{$_}=$cc{$_}+=1000;
 			}
 		}
@@ -195,7 +195,6 @@ N:
 		push @{$mime{$_}},$i for(split(/;/,$d{MimeType}));
 	}
 }
-$_=(sort{$_->{$a}<=>$_->{$b}}keys %$_)[-1] for(values %dir);
 $_=defined($_)?[sort{$cc{$a} <=> $cc{$b}}(keys %{$_})]:['misc'] for(values %cat);
 push @{$cat1{pop @{$cat{$_}}}},$_ for(keys %cat);
 for(keys %cat){
