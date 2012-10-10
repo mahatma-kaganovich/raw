@@ -27,6 +27,8 @@ use bigint;
 
 $NOTIFY=2; # 0 - none; 1 - libnotify||terminal; 2 - terminal||libnotify; 3 - only terminal
 
+$AUTO=$>||$ENV{OB3MENUNET_USER}; # do some auto-ops: iface up/down. disable for root.
+
 $SIG{__DIE__}=sub{
 	$SIG{__DIE__}=sub{};
 	unshift @_,"$0: ";
@@ -97,7 +99,7 @@ sub _iwhelp{
 		}
 	''/e;
 	}
-	$current=_iwdata($i=_getprg('iwconfig $if 2>/dev/null'),undef,1);
+	$current=_iwdata($i=_getprg("iwconfig $if 2>/dev/null"),undef,1);
 }
 
 sub _iwdata{
@@ -166,6 +168,13 @@ sub _menu1{
 #	'Retry  long lifetime'=>{'retry lifetime'=>{}},
 	''=>{'commit'=>{}},
 );
+
+sub _read{
+	open(my $F,'<',$_[0])||return;
+	read($F,my $s,$_[1]||-s $F);
+	close($F);
+	$s;
+}
 
 %noerr=(
 	'pppd'=>{1280=>1,1536=>1},
@@ -274,7 +283,8 @@ sub checkroute{
 my @ID=('ESSID','Frequency','Channel','Address|Access Point');
 
 sub _getprg{
-	my $n=$_[0];
+	my $cmd=$_[0];
+	my $n=$cmd;
 	$n=~s/\W/_/gs;
 	$n="$ENV{HOME}/.cache/ya/net.$n.tmp";
 	my $s;
@@ -284,7 +294,11 @@ sub _getprg{
 		read($F,$s,-s $F);
 		close($F);
 	}else{
-		$s=`$_[0]`;
+		if($AUTO && (my ($if)=$_[0]=~/^iwlist+\s+(\S+)/) && _read("/sys/class/net/$if/carrier",1) eq ''){
+			$cmd="$cmd || ( ifconfig $if up && ( $cmd || ( sleep 1 && $cmd ) ; ifconfig $if down ) )";
+		}
+		print "#:$AUTO:$ENV{OB3MENUNET_USER} $cmd\n" if($ENV{OB3MENUNET_DEBUG});
+		$s=`$cmd`;
 	}
 	if($if eq ''){
 		$tmp{$n}=undef;
@@ -375,6 +389,7 @@ sub netmenu{
 	}
 	my $i;
 	$if=$_[0];
+	$ENV{OB3MENUNET_DEBUG}=($if=~s/^\+//)||$ENV{OB3MENUNET_DEBUG};
 	$id=xml($0,@_);
 	if(!$if){
 		routestat();
@@ -386,10 +401,7 @@ sub netmenu{
 #			next if($i eq 'lo');
 			my $w=-e "$_/wireless";
 			$iw+=$w;
-			open(my $F,"$_/carrier");
-			read($F,my $c,1);
-			close($F);
-			$carrier{$i}=$c if($c);
+			$carrier{$i}=_read("$_/carrier",1);
 			next if((!$c && !$w) || (exists($if_ip{$i}) && !-e "/var/run/dhcpcd-$i.pid"));
 			$if{$i}=$c;
 		}
@@ -422,9 +434,7 @@ sub netmenu{
 				print _ex("_ kill $pppd{$i}","$ppp{$i} stop $i");
 			}else{
 				my ($default_route,$enable_ch_resolv)=($default_route,$enable_ch_resolv);
-				open(my $F,'<',$_)||next;
-				read($F,$d,-s $F);
-				close($F);
+				defined($d=_read($_))||next;
 				my $debug=$ENV{OB3MENUNET_DEBUG};
 				$debug=1 if($d=~/\n\s*debug(\s|$)/);
 				# todo: if pptp goes via default network - CAN replace default network, but keep destination subnet
@@ -479,9 +489,7 @@ sub netmenu{
 		resolvstat();
 		print '<openbox_pipe_menu>';
 		my $d="/sys/class/net/$if";
-		if(open(my $F,'<',"/var/run/dhcpcd-$if.pid")){
-			read($F,$i,32);
-			close($F);
+		if(defined($i=_read("/var/run/dhcpcd-$if.pid",32))){
 			print _ex("kill $i",'stop dhcp');
 		}else{
 			my $p=$ENV{OB3MENUNET_DEBUG}?'Bd':'bq';
@@ -580,7 +588,6 @@ sub netmenu{
 		}
 		print '</openbox_pipe_menu>';
 	}else{
-		$ENV{OB3MENUNET_DEBUG}||=($_[0]=~s/^\+//);
 		@cmd=@_[1..$#_];
 		for(@cmd){
 			~s/^ap_$/ap/;
