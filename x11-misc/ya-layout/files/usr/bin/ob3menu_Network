@@ -61,7 +61,7 @@ sub _iwhelp{
 	my $NNN="(?:\"[^\"]*\"|'[^']*'|[^'\"\\s]*)";
 	$iw=1;
 	for $i(split(/\n/,_getprg('iwconfig --help 2>&1'))){
-	$i=~s/^\s*interface\s+(\S+)\s+(.+?)\s*$/
+	$i=~s/^\s*interface\s+(\S+)\s+(.*?)\s*$/
 		xml(my $x=$1); my $o=$2;
 		my $op=quotemeta($1);
 		my @v;
@@ -110,6 +110,7 @@ for(split(/\n/,$_[0])){
 		next if($if1 ne $if);
 	}
 	for my $s(keys %iw){
+		$s||next;
 		for my $o(keys %{$iw{$s}}){
 			my $pt=_iwpattern($s,$o);
 			$pt="$pr(?:${s})[:=] *($pt)";
@@ -149,13 +150,6 @@ sub _menu1{
 	"<menu id='$id $i' label='$l'>\n";
 }
 
-sub _debug{
-	shift || return @_;
-	my @i=(@_);
-	$i[0]='+'.$i[0];
-	@i;
-}
-
 %iw=(
 	'Mode'=>{'mode'=>{}},
 	'Channel'=>{'channel'=>{}},
@@ -163,7 +157,6 @@ sub _debug{
 	'Frequency'=>{'freq'=>{}},
 	'ESSID'=>{'essid'=>{}},
 	'RTS thr'=>{'rts'=>{}},
-#	'Mode'=>{'mode'=>{}},
 	'Fragment thr'=>{'frag'=>{}},
 	'Encryption key'=>{'key'=>{}},
 	'Power Management'=>{'power'=>{}},
@@ -171,6 +164,7 @@ sub _debug{
 	'Address|Access Point'=>{'ap'=>{}},
 	'Bit Rates?|Bit Rate'=>{'rate'=>{},'bit'=>{}},
 #	'Retry  long lifetime'=>{'retry lifetime'=>{}},
+	''=>{'commit'=>{}},
 );
 
 %noerr=(
@@ -400,7 +394,7 @@ sub netmenu{
 			$if{$i}=$c;
 		}
 		print '<openbox_pipe_menu>';
-		print _menu(($ENV{OB3MENUNET_DEBUG}?'+':'').$_) for(sort keys %if);
+		print _menu(($ENV{OB3MENUNET_DEBUG}?'+':'').$_,$_) for(sort keys %if);
 		my (%ppp,%fd,%pppd);
 		for(glob('/var/run/ppp*.pid')){
 			open(my $F,'<',$_)||next;
@@ -505,8 +499,13 @@ sub netmenu{
 			print '<separator label="Wi-Fi"/>';
 			my $i;
 			_iwhelp();
-			for my $s(sort keys %iw){
-				for my $o(sort keys %{$iw{$s}}){
+			my %o;
+			for my $s(keys %iw){
+				for my $o(keys %{$iw{$s}}){
+					if(!$s){
+						$o{$o}.=_ex("iwconfig $if $o",$o);
+						next;
+					}
 					my $d=$current->{$s}->{$o};
 					my $t=$o;
 #					$t=lc($s) eq $t?$s:"$s ($t)";
@@ -516,7 +515,7 @@ sub netmenu{
 						$def=_cur($d);
 					}
 					if($o eq 'ap'){
-						print _menu("iwconfig $if $o","$t:") if(scalar(%{$iw{'Address|Access Point'}->{'ap'}}));
+						$o{$o}.=_menu("iwconfig $if $o","$t:") if(scalar(%{$iw{'Address|Access Point'}->{'ap'}}));
 						next;
 					}
 					$i.=_menu1("iwconfig $if $o",$t);
@@ -532,10 +531,11 @@ sub netmenu{
 						}
 					}
 					$i.=$def.'</menu>';
-					$n && print $i,;
+					$o{$o}.=$i if($n);
 					$i='';
 				}
 			}
+			print map{$o{$_}}sort keys %o;
 		}
 		print '</openbox_pipe_menu>';
 	}elsif($#_==3 && $_[1] eq 'iwconfig' && $_[3] eq 'ap'){
