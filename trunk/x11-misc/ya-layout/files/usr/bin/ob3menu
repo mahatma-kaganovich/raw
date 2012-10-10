@@ -8,6 +8,9 @@
 #	--profile {profile}
 #	--mime <mime.sh> {dirs}
 # "--slow" - +keybinds, 3.5.0+ menu icons, better with cache.
+#
+# OnlyShowIn is specified, but I newer want it. But you can think else.
+# Consensus: just respect it by --profile, not $ENV{YA_PROFILE}
 
 $SIG{__DIE__}=sub{
 return if(!exists($ENV{DBUS_SESSION_BUS_ADDRESS}));
@@ -133,18 +136,21 @@ for $f(map{glob $_}('/usr/share/applications/*.desktop','/usr/share/applications
 			$i=~s/^[^-]*-//i;
 		}
 		$i=join('',map{ucfirst($_)}(split(/-/,$i)));
-		next if(!exists($cc{$i}));
 		open($F,"<$f")||next;
-		while(<$F>){push @{$en{$k.$l}},$d{$k}=$v if(($k,$l,$v)=$_=~/^\s*([^#\s=\[\]#]+)($lang)\s*=([^#\n\r]*)/i)}
+		while(<$F>){$d{$k}->{$l}=$v if(($k,$l,$v)=$_=~/^\s*([^#\s=\[\]#]+)($lang)\s*=([^#\n\r]*)/i)}
 		close($F);
-		unshift @{$en{Name}},$i if($i ne $en{Name}->[0]);
+		$en{$i}=$en{$d{Name}->{''}}=undef;
+		# same can be in next block (else) too, but fixme:
+		# in all known *.desktop "Name=" come before "Name[...]=". So, just can use more CPU.
+		# Here we need "Name=" too.
+		$_=$_->{(sort keys %$_)[-1]} for(values %d);
 	}else{
 		open($F,"<$f")||next;
 		while(<$F>){$d{$k}=$v if(($k,$v)=$_=~/^\s*([^#\s=\[\]#]+)$lang\s*=([^#\n\r]*)/i)};
 		close($F);
 		exists($d{Exec}) || next;
 	}
-	next if(exists($d{TryExec}) && !eXist($d{TryExec}));
+	next if((exists($P{profile}) && exists($d{OnlyShowIn}) && !($d{OnlyShowIn}=~/(?:^|;)(?:$prof)(?:;$)/i)) || (exists($d{TryExec}) && !eXist($d{TryExec})));
 	$d{Exec}="/usr/bin/ya-session --run +$d{Exec}" if($d{Terminal} && lc($d{Terminal}) ne 'false');
 	if(!exists($d{Name})){
 		for(Comment,Exec){
@@ -179,7 +185,7 @@ N:
 		$d{Name}.=" 	[$key{$d{Exec}}]" if(exists($key{$d{Exec}}));
 		$i="<item label='$d{Name}'$i><action name='Execute'><execute>$d{Exec}</execute>".$notify{lc($d{StartupNotify})}.'</action></item>';
 	}elsif($d{Type} eq 'Directory'){
-		for(@{$en{Name}}){
+		for(keys %en){
 			if($d{Name} ne $_){
 				$dir{$_}->{"$d{Name}'$i"}++;
 				$base{$_}=$cc{$_}+=2000;
