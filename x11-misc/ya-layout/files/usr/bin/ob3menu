@@ -127,7 +127,7 @@ if(exists($P{slow})){
 for $f(map{glob $_}('/usr/share/applications/*.desktop','/usr/share/applications/*/*.desktop','/usr/share/ya-layout/Desktop/*.desktop','/usr/share/ya-layout/Desktop/exit/*.desktop','/etc/xdg/autostart/*.desktop','/usr/share/desktop-directories/*.directory')){
 	my (%d,%en,$F);
 	if(($i)=$f=~/\/([^\/]*)\.directory$/){
-		next if(!exists($cc{$i}) && $prof && $i=~/^(?:$prof)-/i);
+		next if($prof && !exists($cc{$i}) && !($i=~/^(?:$prof)-/i));
 		open($F,"<$f")||next;
 		while(<$F>){push @{$en{$k.$l}},$d{$k}=$v if(($k,$l,$v)=$_=~/^\s*([^#\s=\[\]#]+)($lang)\s*=([^#\n\r]*)/i)}
 		close($F);
@@ -175,11 +175,11 @@ N:
 	}elsif($d{Type} eq 'Directory'){
 		for(@{$en{Name}}){
 			if($d{Name} ne $_){
-				$dir{$_}="$d{Name}'$i";
-				$cc{$_}+=2000;
+				$dir{$_}->{"$d{Name}'$i"}++;
+				$base{$_}=$cc{$_}+=2000;
 			}elsif($i){
-				$dir{$_}="$d{Name}'$i";
-				$cc{$_}+=1000;
+				$dir{$_}->{"$d{Name}'$i"}++;
+				$base{$_}=$cc{$_}+=1000;
 			}
 		}
 		next;
@@ -195,6 +195,7 @@ N:
 		push @{$mime{$_}},$i for(split(/;/,$d{MimeType}));
 	}
 }
+$_=(sort{$_->{$a}<=>$_->{$b}}keys %$_)[-1] for(values %dir);
 $_=defined($_)?[sort{$cc{$a} <=> $cc{$b}}(keys %{$_})]:['misc'] for(values %cat);
 push @{$cat1{pop @{$cat{$_}}}},$_ for(keys %cat);
 for(keys %cat){
