@@ -529,7 +529,7 @@ sub netmenu{
 				print _ex("--sudo --rescan",'sudo rescan');
 			}
 			_iwhelp();
-			for(@wlan)
+			for(@wlan){
 				$header="$_ ";
 				$if=$_;
 				aplist($_,'iwconfig',$_,'ap')
