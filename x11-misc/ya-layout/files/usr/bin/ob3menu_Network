@@ -363,7 +363,49 @@ sub resolvstat{
 	$enable_ch_resolv=!scalar(%$r);
 }
 
+sub aplist{
+	pop @_;
+	$id=join(' ',$0,@_);
+	my $i=_getprg("iwlist $if scanning 2>&1");
+	my $keys=join('|',keys %{$iw{'Encryption key'}->{'key'}});
+	if(!$! && index($i,'Cell')>=0){
+		print '<separator label="'.$header.join(':',map{join('|',keys %{$iw{$_}})}@ID).'"/>';
+		my @res;
+		for(split(/\n\s*Cell\s+/s,$i)){
+			my %v;
+			$_=~s/^(\S+)\s+-\s+/$v{cell}=$1;''/se or next;
+			my $v=_iwdata("\n ".$_);
+			$v || next;
+			my $avail=!grep(/(?:$keys)/,values %{$v->{'Encryption key'}});
+			my ($i,$s,$sep,$cur);
+			for(@ID){
+				next if(!exists($v->{$_}));
+				for my $x(values %{$v->{$_}}){
+					$x=~s/\s//gs if(!($x=~/\"/));
+					$s.=",$x";
+				}
+				for my $o (keys %{$v->{$_}}){
+					# current "Channel" don't visible in "iwconfig"
+					# ignore list?
+					$cur&&=$current->{$_}->{$o} eq $v->{$_}->{$o};
+					$i.="$o $v->{$_}->{$o} "
+				}
+			}
+			$s=substr($s,1);
+			$res[$avail].=$cur?_sep($s):_ex($i,$s);
+		}
+		print $res[0];
+		$res[$_] && print '<separator/>',$res[$_] for(1..$#_);
+	}
+}
+
 $ENV='^(?:OB3MENUNET_.*|DBUS_SESSION_BUS_ADDRESS|DISPLAY)$';
+
+%carr=(
+'0'=>' -',
+'1'=>' +',
+''=>' ?',
+);
 
 sub netmenu{
 	my @cmd;
@@ -396,18 +438,19 @@ sub netmenu{
 		routestat();
 		resolvstat();
 		my (%if,%carrier);
+		print '<openbox_pipe_menu>';
 		for(glob('/sys/class/net/*')){
 			$i=$_;
 			$i=~s/.*\///g;
 #			next if($i eq 'lo');
 			my $w=-e "$_/wireless";
 			$iw+=$w;
-			$carrier{$i}=_read("$_/carrier",1);
-			next if((!$c && !$w) || (exists($if_ip{$i}) && !-e "/var/run/dhcpcd-$i.pid"));
-			$if{$i}=$c;
+			push @wlan,$i if($w);
+			my $c=$carrier{$i}=_read("$_/carrier",1);
+			next if(exists($if_ip{$i}) && !-e "/var/run/dhcpcd-$i.pid");
+			$if{$i}=1;
+			print _menu(($ENV{OB3MENUNET_DEBUG}?'+':'').$i,$i.$carr{$c});
 		}
-		print '<openbox_pipe_menu>';
-		print _menu(($ENV{OB3MENUNET_DEBUG}?'+':'').$_,$_) for(sort keys %if);
 		my (%ppp,%fd,%pppd);
 		for(glob('/var/run/ppp*.pid')){
 			open(my $F,'<',$_)||next;
@@ -478,11 +521,19 @@ sub netmenu{
 		}
 		print '<separator/>';
 		print _menu("--debug",'debug') if(!$ENV{OB3MENUNET_DEBUG});
-		if($iw && $>){
-			die 'Security problem' if(substr($0,0,1) ne '/');
-			$i=join(' ',map{"$_='$ENV{$_}'"}grep(/$ENV/,keys %ENV));
-			$id="ya-session --run +sudo -p $0:root:password: $i $id";
-			print _ex("--sudo --rescan",'sudo rescan');
+		if($iw){
+			if($>){
+				die 'Security problem' if(substr($0,0,1) ne '/');
+				$i=join(' ',map{"$_='$ENV{$_}'"}grep(/$ENV/,keys %ENV));
+				$id="ya-session --run +sudo -p $0:root:password: $i $id";
+				print _ex("--sudo --rescan",'sudo rescan');
+			}
+			_iwhelp();
+			for(@wlan)
+				$header="$_ ";
+				$if=$_;
+				aplist($_,'iwconfig',$_,'ap')
+			}
 		}
 		print '</openbox_pipe_menu>';
 	}elsif(!$_[1]){
@@ -548,45 +599,12 @@ sub netmenu{
 		}
 		print '</openbox_pipe_menu>';
 	}elsif($#_==3 && $_[1] eq 'iwconfig' && $_[3] eq 'ap'){
-		_iwhelp();
+	_	iwhelp();
 		print '<openbox_pipe_menu>';
 		for(keys %{$iw{'Address|Access Point'}->{'ap'}}){
 			print _ex($_) if(!($_=~/[\[\(\|]/));
 		}
-		pop @_;
-		$id=join(' ',$0,@_);
-		# todo? or keep dhcp in mind? - ifconfig $if up+down
-		my $i=_getprg("iwlist $if scanning 2>&1");
-		my $keys=join('|',keys %{$iw{'Encryption key'}->{'key'}});
-		if(!$! && index($i,'Cell')>=0){
-			print '<separator label="'.join(':',map{join('|',keys %{$iw{$_}})}@ID).'"/>';
-			my @res;
-			for(split(/\n\s*Cell\s+/s,$i)){
-				my %v;
-				$_=~s/^(\S+)\s+-\s+/$v{cell}=$1;''/se or next;
-				my $v=_iwdata("\n ".$_);
-				$v || next;
-				my $avail=!grep(/(?:$keys)/,values %{$v->{'Encryption key'}});
-				my ($i,$s,$sep,$cur);
-				for(@ID){
-					next if(!exists($v->{$_}));
-					for my $x(values %{$v->{$_}}){
-						$x=~s/\s//gs if(!($x=~/\"/));
-						$s.=",$x";
-					}
-					for my $o (keys %{$v->{$_}}){
-						# current "Channel" don't visible in "iwconfig"
-						# ignore list?
-						$cur&&=$current->{$_}->{$o} eq $v->{$_}->{$o};
-						$i.="$o $v->{$_}->{$o} "
-					}
-				}
-				$s=substr($s,1);
-				$res[$avail].=$cur?_sep($s):_ex($i,$s);
-			}
-			print $res[0];
-			$res[$_] && print '<separator/>',$res[$_] for(1..$#_);
-		}
+		aplist(@_);
 		print '</openbox_pipe_menu>';
 	}else{
 		@cmd=@_[1..$#_];
