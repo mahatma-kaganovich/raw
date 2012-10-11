@@ -99,7 +99,7 @@ sub _iwhelp{
 		}
 	''/e;
 	}
-	$current=_iwdata($i=_getprg("iwconfig $if 2>/dev/null"),undef,1);
+	$current=_iwdata($i=_getprg('iwconfig 2>/dev/null'),undef,1);
 }
 
 sub _iwdata{
@@ -285,6 +285,7 @@ my @ID=('ESSID','Frequency','Channel','Address|Access Point');
 sub _getprg{
 	my $cmd=$_[0];
 	my $n=$cmd;
+	$n=~s/\s+/ /gs;
 	$n=~s/\W/_/gs;
 	$n="$ENV{HOME}/.cache/ya/net.$n.tmp";
 	my $s;
