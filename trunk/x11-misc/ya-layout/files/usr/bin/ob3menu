@@ -10,7 +10,7 @@
 # "--slow" - +keybinds, 3.5.0+ menu icons, better with cache.
 #
 # OnlyShowIn is specified, but I newer want it. But you can think else.
-# Consensus: just respect it by --profile, not $ENV{YA_PROFILE}
+# Consensus: listed as "? ..."
 
 $SIG{__DIE__}=sub{
 return if(!exists($ENV{DBUS_SESSION_BUS_ADDRESS}));
@@ -35,6 +35,14 @@ my (%ico,%key,%cat,%cat1,%dir,@prof,$prof);
 'Utility'=>10000,
 #
 'Autostart'=>0,
+);
+%cname=(
+'Multimedia'=>'AudioVideo',
+'Utility'=>'Accessories',
+'Accessories'=>'Utility',
+'Applications'=>'Application',
+'Other'=>'Application',
+'InternetAndNetwork'=>'Network',
 );
 %xml_=('<'=>'lt','>'=>'gt',"'"=>'apos','"'=>'quot','&'=>'amp');
 $xml_='<>\'"&';
@@ -139,7 +147,8 @@ for $f(map{glob $_}('/usr/share/applications/*.desktop','/usr/share/applications
 		open($F,"<$f")||next;
 		while(<$F>){$d{$k}->{$l}=$v if(($k,$l,$v)=$_=~/^\s*([^#\s=\[\]#]+)($lang)\s*=([^#\n\r]*)/i)}
 		close($F);
-		$en{$i}=$en{$d{Name}->{''}}=undef;
+		$en{$i}=$en{$d{Name}->{''}}=1;
+#		print STDERR "$f $i = $cname{$i}\n" if(!exists($cc{$i}) && !exists($cc{$d{Name}->{''}}) && !exists($cc{$cname{$i}}) && !exists($cc{$cname{$d{Name}->{''}}}));
 		# same can be in next block (else) too, but fixme:
 		# in all known *.desktop "Name=" come before "Name[...]=". So, just can use more CPU.
 		# Here we need "Name=" too.
@@ -150,7 +159,7 @@ for $f(map{glob $_}('/usr/share/applications/*.desktop','/usr/share/applications
 		close($F);
 		exists($d{Exec}) || next;
 	}
-	next if((exists($P{profile}) && exists($d{OnlyShowIn}) && !($d{OnlyShowIn}=~/(?:^|;)(?:$prof)(?:;$)/i)) || (exists($d{TryExec}) && !eXist($d{TryExec})));
+	next if(exists($d{TryExec}) && !eXist($d{TryExec}));
 	$d{Exec}="/usr/bin/ya-session --run +$d{Exec}" if($d{Terminal} && lc($d{Terminal}) ne 'false');
 	if(!exists($d{Name})){
 		for(Comment,Exec){
@@ -162,6 +171,9 @@ for $f(map{glob $_}('/usr/share/applications/*.desktop','/usr/share/applications
 		next;
 	}
 N:
+	if($prof && exists($d{OnlyShowIn}) && !($d{OnlyShowIn}=~/(?:^|;)(?:$prof)(?:;$)/i)){
+		$d{Name}="? $d{Name}"
+	}
 	$i='';
 	~s/([$xml_])/\&$xml_{$1};/g for(values %d);
 	if(exists($P{slow}) && exists($d{Icon})){
@@ -185,14 +197,21 @@ N:
 		$d{Name}.=" 	[$key{$d{Exec}}]" if(exists($key{$d{Exec}}));
 		$i="<item label='$d{Name}'$i><action name='Execute'><execute>$d{Exec}</execute>".$notify{lc($d{StartupNotify})}.'</action></item>';
 	}elsif($d{Type} eq 'Directory'){
+		my $c;
+		for(keys %en){
+			$en{$c}||=0 if($c=$cname{$_});
+		}
 		for(keys %en){
 			if($d{Name} ne $_){
-				$dir{$_}->{"$d{Name}'$i"}++;
-				$base{$_}=$cc{$_}+=2000;
+				$c=2000;
 			}elsif($i){
-				$dir{$_}->{"$d{Name}'$i"}++;
-				$base{$_}=$cc{$_}+=1000;
+				$c=1000;
+			}else{
+				next;
 			}
+			$dir{$_}->{"$d{Name}'$i"}++;
+			$cc{$_}+=$c;
+			$base{$_}=$c if($en{$_});
 		}
 		next;
 	}else{next}
