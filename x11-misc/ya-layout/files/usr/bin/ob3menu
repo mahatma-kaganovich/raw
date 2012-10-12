@@ -19,6 +19,8 @@ exec('/usr/bin/notify-send','-t',6000,$e);
 };
 
 my (%ico,%key,%cat,%cat1,%dir,@prof,$prof);
+#$misc='Other';
+$misc='misc';
 %base=%cc=(
 # http://standards.freedesktop.org/menu-spec/menu-spec-1.1.html
 'AudioVideo'=>10000,
@@ -35,14 +37,15 @@ my (%ico,%key,%cat,%cat1,%dir,@prof,$prof);
 'Utility'=>10000,
 #
 'Autostart'=>0,
+'Other'=>-1,
+$misc=>-1,
 );
 %cname=(
-'Multimedia'=>'AudioVideo',
-'Utility'=>'Accessories',
-'Accessories'=>'Utility',
-'Applications'=>'Application',
-'Other'=>'Application',
-'InternetAndNetwork'=>'Network',
+	'Multimedia'=>'AudioVideo',
+	'Utility'=>'Accessories',
+	'Accessories'=>'Utility',
+	'Other'=>'Application',
+	'InternetAndNetwork'=>'Network',
 );
 %xml_=('<'=>'lt','>'=>'gt',"'"=>'apos','"'=>'quot','&'=>'amp');
 $xml_='<>\'"&';
@@ -197,21 +200,23 @@ N:
 		$d{Name}.=" 	[$key{$d{Exec}}]" if(exists($key{$d{Exec}}));
 		$i="<item label='$d{Name}'$i><action name='Execute'><execute>$d{Exec}</execute>".$notify{lc($d{StartupNotify})}.'</action></item>';
 	}elsif($d{Type} eq 'Directory'){
-		my $c;
+		my $d;
 		for(keys %en){
-			$en{$c}||=0 if($c=$cname{$_});
+			$en{$d}||=0 if($d=$cname{$_});
+			$en{$d}||=0 if((($d)=$_=~/^(.*)s$/) && exists($cc{$d}));
 		}
-		for(keys %en){
-			if($d{Name} ne $_){
-				$c=2000;
+		while(my ($n,$c)=each %en){
+			if(($d=$d{Name}) ne $n){
+				$c+=2000;
 			}elsif($i){
-				$c=1000;
+				$c+=1000;
 			}else{
 				next;
 			}
-			$dir{$_}->{"$d{Name}'$i"}++;
-			$cc{$_}+=$c;
-			$base{$_}=$c if($en{$_});
+			$dir_{$n}=length($d);
+			$dir{$n}->{"$d'$i"}++;
+			$cc{$n}+=$c;
+			$base{$_}||=1;
 		}
 		next;
 	}else{next}
@@ -226,18 +231,19 @@ N:
 		push @{$mime{$_}},$i for(split(/;/,$d{MimeType}));
 	}
 }
-($_)=(sort{$_->{$a}<=>$_->{$b}}keys %$_)[-1] for(values %dir);
-$_=defined($_)?[sort{$cc{$a} <=> $cc{$b}}(keys %{$_})]:['misc'] for(values %cat);
+($_)=(sort{$_->{$a}<=>$_->{$b}||-($dir_{$a}<=>$dir_{$b})}keys %$_)[-1] for(values %dir);
+$_=defined($_)?[sort{$cc{$a} <=> $cc{$b}}(keys %{$_})]:[$misc] for(values %cat);
 push @{$cat1{pop @{$cat{$_}}}},$_ for(keys %cat);
 for(keys %cat){
 	for $i (@{delete($cat{$_})}){
-		push @{$cat1{$i}},$_ if(exists($cat1{$i}) && (exists($base{$i})));
+		push @{$cat1{$i}},$_ if(exists($cat1{$i}) && $base{$i}>0);
 	}
 }
-$set=$dir{'Settings'}||"Settings'";
+$dir{$_}||="$_'" for(keys %cc);
+$set=$dir{'Settings'};
 print '<openbox_pipe_menu><menu id="client-list-combined-menu"/><separator/>';
-for(sort keys %cat1){
-	print "<menu id='$id' label='",$dir{$_}||"$_'",'>',(sort @{$cat1{$_}});
+for(sort{$dir{$a} cmp $dir{$b}}keys %cat1){
+	print "<menu id='$id' label='$dir{$_}>",(sort @{$cat1{$_}});
 	$id++;
 	if(delete($configs{$i="${0}_$_"})){
 		print "<separator/><menu id='$id' label='$set execute='$i'/>";
