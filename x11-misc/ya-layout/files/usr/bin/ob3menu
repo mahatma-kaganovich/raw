@@ -139,7 +139,7 @@ if(exists($P{slow})){
 }
 
 for $f(map{glob $_}('/usr/share/applications/*.desktop','/usr/share/applications/*/*.desktop','/usr/share/ya-layout/Desktop/*.desktop','/usr/share/ya-layout/Desktop/exit/*.desktop','/etc/xdg/autostart/*.desktop','/usr/share/desktop-directories/*.directory')){
-	my (%d,%en,$F);
+	my (%d,%dd,%en,$F,$c);
 	if(($i)=$f=~/\/([^\/]*)\.directory$/){
 		if($prof){
 			$i=~s/^(?:$prof)-//i or next;
@@ -148,8 +148,15 @@ for $f(map{glob $_}('/usr/share/applications/*.desktop','/usr/share/applications
 		}
 		$i=join('',map{ucfirst($_)}(split(/-/,$i)));
 		open($F,"<$f")||next;
-		while(<$F>){$d{$k}->{$l}=$v if(($k,$l,$v)=$_=~/^\s*([^#\s=\[\]#]+)($lang)\s*=([^#\n\r]*)/i)}
+		while(<$F>){
+			if(($k,$l,$v)=$_=~/^\s*([^#\s=\[\]#]+)($lang)\s*=([^#\n\r]*)/is){
+				$dd{$c}->{$k}->{$l}=$v;
+			}elsif(($k)=$_=~/^\s*\[(.*)\]\s*/s){
+				$c=$k;
+			}
+		}
 		close($F);
+		%d=%{$dd{'Desktop Entry'}};
 		$en{$i}=$en{$d{Name}->{''}}=1;
 #		print STDERR "$f $i = $cname{$i}\n" if(!exists($cc{$i}) && !exists($cc{$d{Name}->{''}}) && !exists($cc{$cname{$i}}) && !exists($cc{$cname{$d{Name}->{''}}}));
 		# same can be in next block (else) too, but fixme:
@@ -158,8 +165,15 @@ for $f(map{glob $_}('/usr/share/applications/*.desktop','/usr/share/applications
 		$_=$_->{(sort keys %$_)[-1]} for(values %d);
 	}else{
 		open($F,"<$f")||next;
-		while(<$F>){$d{$k}=$v if(($k,$v)=$_=~/^\s*([^#\s=\[\]#]+)$lang\s*=([^#\n\r]*)/i)};
+		while(<$F>){
+			if(($k,$v)=$_=~/^\s*([^#\s=\[\]#]+)$lang\s*=([^#\n\r]*)/is){
+				$dd{$c}->{$k}=$v;
+			}elsif(($k)=$_=~/^\s*\[(.*)\]\s*/s){
+				$c=$k;
+			}
+		}
 		close($F);
+		%d=%{$dd{'Desktop Entry'}};
 		exists($d{Exec}) || next;
 	}
 	next if(exists($d{TryExec}) && !eXist($d{TryExec}));
