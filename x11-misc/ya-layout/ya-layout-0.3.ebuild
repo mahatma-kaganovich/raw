@@ -2,10 +2,12 @@ EAPI=3
 SLOT=0
 DESCRIPTION="Simple desktop layout"
 LICENSE="*"
-IUSE="+udev libnotify minimal"
+IUSE="+udev libnotify minimal bluetooth wifi"
 RDEPEND="udev? ( sys-fs/udev net-fs/autofs )
 	libnotify? ( x11-libs/libnotify )
 	>=x11-wm/openbox-3.5.0
+	bluetooth? ( net-wireless/bluez[test-programs] net-dialup/ppp )
+	wifi? ( net-wireless/wireless-tools )
 	!minimal? ( || (
 		x11-misc/pcmanfm
 		xfce-base/xfdesktop[thunar]
@@ -26,6 +28,7 @@ src_install(){
 	else
 		rm "${D}/etc/udev" -Rf
 	fi
+	use bluetooth || rm "$D/etc/ppp" -Rf
 	use libnotify || sed -i -e 's:^notify=.*$:notify=:' "${D}"/usr/bin/*
 	ewarn "Edit /etc/conf.d/autofs: MASTER_MAP_NAME=\"/usr/share/${PN}/auto.master\"
 Then do: \"ya-session --layout [user]\" - to copy minimal Desktop/*
