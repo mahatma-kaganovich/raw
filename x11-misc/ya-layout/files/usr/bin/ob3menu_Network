@@ -641,7 +641,9 @@ sub netmenu{
 			}
 		}
 		print '<separator/>';
-		print _ex("_ simple-agent", 'Bluetooth simple-agent') if(-e '/usr/bin/simple-agent');
+		my $sc;
+		$sc.="hcitool -i $_ inq & hcitool -i $_ scan &" for(keys %btdev);
+		print _ex("_ $ENV{SHELL} -c \\\" $sc exec simple-agent\\\"", 'Bluetooth scan & agent') if($sc && -e '/usr/bin/simple-agent');
 		print _menu("--debug",'debug') if(!$ENV{OB3MENUNET_DEBUG});
 		if($iw){
 			if($>){
