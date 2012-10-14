@@ -524,7 +524,7 @@ sub btmodem{
 	# if ppp broken - something wrong. better to restart whole
 	if(exists($btconn{$a}->{$c})){
 		my $d=$btdev{$a};
-		return ("$d rfcomm release $d",'stop: ');
+		return ("$d rfcomm -i $a release $d",'stop: ');
 	}
 	if(!defined($ch)){
 		$ch='$ch';
