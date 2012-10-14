@@ -402,52 +402,26 @@ sub aplist{
 	}
 }
 
-sub dbus_bluez{
-	my $i=$if && "/org/bluez/$if";
-	`dbus-send --system --type=method_call --print-reply --dest=org.bluez $i $_[0]`
-}
-
-sub btscan{
-	my $if=$if && "-i $if";
-	if(open(my $F,'-|','hcitool $if scan')){
-		while(<$F>){
-			$_=~s/\s*([0-9a-z]{2}:[0-9a-z]*)\s+(.*?)\s*$/$i=$1;$2/is or next;
-#			print _ex("hcitool $if cc $i && hcitool $if auth $i",$_);
-			print _ex("hcitool $if cc $i","out: $_");
-# http://zitzlinux.wordpress.com/2011/02/28/connecting-bluetooth-devices-from-command-line/
-#			dbus-send --system --dest=org.bluez /org/bluez/hci0 org.bluez.Adapter.SetMode string:discoverable
-		}
-		close($F);
-	}
-	if(open(my $F,'-|','hcitool $if inq')){
-		while(<$F>){
-#			print _ex("hcitool $if cc $i","in: $_");
-		}
-		close($F);
-	}
-}
-
 sub btstat{
-	if(open(my $F,'-|','hcitool dev')){
-		while(<$F>){
-			my ($d,$a)=$_=~/^\s*(\S+)\s+$are\s*$/si or next;
-			$btdev{$a}=$d;
-			my $dir="/var/lib/bluetooth/$a";
-			if(open(my $F,'<',"$dir/names")){
-				while(<$F>){
-					chomp($_);
-					my ($c,$n)=split(/\s+/,$_,2);
-					$btname{$a}->{$c}=$n;
-				}
-				close($F);
+	for(glob('/sys/class/bluetooth/*')){
+		my $d=$_;
+		$d=~s/.*\///gs;
+		my $a=_read("$_/address",32);
+		chomp($a);
+		$btdev{$a}=$d;
+		my $dir="/var/lib/bluetooth/$a";
+		if(open(my $F,'<',"$dir/names")){
+			while(<$F>){
+				chomp($_);
+				my ($c,$n)=split(/\s+/,$_,2);
+				$btname{$a}->{$c}=$n;
 			}
+			close($F);
 		}
-		close($F);
 	}
 	if(open(my $F,'-|',"rfcomm -a")){
 		while(<$F>){
 			my ($d,$a,$c,$ch,$s)=$_=~/^(rfcomm[^\s:]+):\s*(?:$are\s*\->\s*)?(?:$are)?(?:\s*channel\s+(\S+))(?:\s*(\S+)\s*$)?/s;
-			
 			my @a;
 			if(defined($c) && !defined($a)){
 				for(keys %btname){
@@ -641,9 +615,15 @@ sub netmenu{
 			}
 		}
 		print '<separator/>';
-		my $sc;
-		$sc.="hcitool -i $_ inq & hcitool -i $_ scan &" for(keys %btdev);
-		print _ex("_ $ENV{SHELL} -c \\\" $sc exec simple-agent\\\"", 'Bluetooth scan & agent') if($sc && -e '/usr/bin/simple-agent');
+		my ($sc,$sc1,$sc2,$sc3,$sc4);
+		for(values %btdev){
+			$sc1.="hciconfig $_ up;hciconfig $_ piscan;";
+			$sc2.="hcitool -i $_ inq & hcitool -i $_ scan &";
+			$sc3.=";hciconfig $_ noscan";
+			$sc4.=";(hcitool -i $_ con|grep -q ACL || hciconfig $_ down)"
+		}
+		$sc="$sc1 $sc2 simple-agent $sc3 $sc4;false";
+		print _ex("_ $ENV{SHELL} -c \\\"$sc\\\"", 'Bluetooth ON - scan & agent - OFF') if(-e '/usr/bin/simple-agent');
 		print _menu("--debug",'debug') if(!$ENV{OB3MENUNET_DEBUG});
 		if($iw){
 			if($>){
