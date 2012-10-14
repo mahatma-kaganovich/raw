@@ -402,6 +402,35 @@ sub aplist{
 	}
 }
 
+# not working?
+sub btnet{
+	while(my ($a,$d)=each %btdev){
+		my $p=`dbus-send --system --dest=org.bluez --print-reply / org.bluez.Manager.FindAdapter string:$d`;
+		$p=~s/object path \"(.*?)\"/$btpath{$a}=$1/se;
+	}
+	while(my ($a,$p)=each %btpath){
+		if($_[0]){
+			for my $uuid('gn','panu','nap'){
+				my $net=`dbus-send --system --dest=org.bluez --print-reply $p org.bluez.NetworkServer.NetworkServer.Register string:$uuid string:$_[0]`;
+				print STDERR "$uuid:$net\n\n";
+				exit;
+				my $net=`dbus-send --system --dest=org.bluez --print-reply /org/bluez/$btdev{$a} org.bluez.NetworkServer.Register string:$uuid string:$_[0]`;
+				print STDERR "$uuid:$net\n\n";
+			}
+		}
+		for my $c(keys %{$btname{$a}}){
+			my $x=$c;
+			$x=~s/:/_/gs;
+			for my $uuid('gn','panu','nap'){
+				print "dbus-send --system --dest=org.bluez --print-reply $p/dev_$x org.bluez.Network.Connect string:$uuid\n";
+				my $net=`dbus-send --system --dest=org.bluez --print-reply $p/dev_$x org.bluez.Network.Connect string:$uuid`;
+				print STDERR "$uuid:$net\n\n";
+			}
+		}
+	}
+}
+
+
 sub btstat{
 	for(glob('/sys/class/bluetooth/*')){
 		my $d=$_;
@@ -421,7 +450,7 @@ sub btstat{
 	}
 	if(open(my $F,'-|',"rfcomm -a")){
 		while(<$F>){
-			my ($d,$a,$c,$ch,$s)=$_=~/^(rfcomm[^\s:]+):\s*(?:$are\s*\->\s*)?(?:$are)?(?:\s*channel\s+(\S+))(?:\s*(\S+)\s*$)?/s;
+			my ($d,$a,$c,$ch,$s)=$_=~/^(rfcomm[^\s:]+):\s*(?:$are\s*\->\s*)?$are?(?:\s*channel\s+(\S+))(?:\s*(.*?))?\s*$/s;
 			my @a;
 			if(defined($c) && !defined($a)){
 				for(keys %btname){
@@ -435,6 +464,7 @@ sub btstat{
 				$btdev{$a}||=undef;
 				my $n=$btname{$a}->{$c};
 				if(!defined($n)){
+					print "hcitool -i $a name $c\n";
 					if(open(my $F,'-|',"hcitool -i $a name $c")){
 						read($F,$n,65536);
 						chomp($n);
@@ -726,6 +756,9 @@ SUDO:
 		my %cmd;
 		$cmd{$_}=1 for(@cmd);
 		if(!$SUDO && $>){
+			for(@cmd){
+				$_="\"$_\"" if($_=~/\s/);
+			}
 			my $cmd=join(' ',@cmd,'--  root password:');
 #			$cmd=quotemeta($cmd);
 			$cmd=~s/([\"\'\\])/\\$1/gs;
@@ -773,5 +806,9 @@ sub _m{
 	$i=~s/(<execute>)([^[<>]*<\/execute>)/$1$p $2/gs;
 	$i;
 }
+
+#btstat();
+#btnet('br0');
+#exit;
 
 netmenu(@ARGV);
