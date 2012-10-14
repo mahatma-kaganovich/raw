@@ -144,6 +144,11 @@ sub _cur{
 	"<separator label='*$i'/>"
 }
 
+sub _undef{
+	xml(my $i=$_[0]);
+	"<separator label='$i'/>"
+}
+
 sub _menu{
 	xml(my $i=$_[0],my $l=$_[-1]);
 	"<menu id='$id $i' label='$l' execute='$id $i'/>\n";
@@ -395,7 +400,7 @@ sub aplist{
 				}
 			}
 			$s=substr($s,1);
-			$res[$avail].=$cur?_sep($s):_ex($i,$s);
+			$res[$avail].=$cur?_cur($s):_ex($i,$s);
 		}
 		print $res[0];
 		$res[$_] && print '<separator/>',$res[$_] for(1..$#_);
@@ -437,7 +442,22 @@ sub btstat{
 		$d=~s/.*\///gs;
 		my $a=_read("$_/address",32);
 		chomp($a);
+		my $u=_read("$_/uevent",1024);
+		if($u=~/(?:^|\n)DEVTYPE=link(?:\n|$)/){
+			$c=$a;
+			$a=_read("$_/device/address",32);
+			chomp($a);
+			$btlink{$d}=$c;
+			$btconn{$a}->{$c}=$d;
+			for(glob("$_/rfcomm*")){
+				~s/.*\///gs;
+				$rfcomm{$a}->{$c}->{$_}=undef;
+				$rfcomm_{$_}=$c;
+			}
+			next;
+		}
 		$btdev{$a}=$d;
+		$btdev_{$d}=$a;
 		my $dir="/var/lib/bluetooth/$a";
 		if(open(my $F,'<',"$dir/names")){
 			while(<$F>){
@@ -447,37 +467,103 @@ sub btstat{
 			}
 			close($F);
 		}
+		if(open(my $F,'<',"$dir/linkkeys")){
+			while(<$F>){
+				~s/^$are/$btkey{$1}=1/e;
+			}
+			close($F);
+		}
 	}
-	if(open(my $F,'-|',"rfcomm -a")){
+	my $xconn;
+	for(glob("/sys/class/tty/rfcomm*")){
+		~s/.*\///gs;
+		if(!exists($rfcomm_{$_})){
+			$rfcomm_{$_}=_read("$_/address");
+			$xconn++;
+		}
+	}
+	if($xconn && open(my $F,'-|',"rfcomm -a")){
 		while(<$F>){
-			my ($d,$a,$c,$ch,$s)=$_=~/^(rfcomm[^\s:]+):\s*(?:$are\s*\->\s*)?$are?(?:\s*channel\s+(\S+))(?:\s*(.*?))?\s*$/s;
-			my @a;
-			if(defined($c) && !defined($a)){
-				for(keys %btname){
-					push @a,$_ if(exists($btname{$_}->{$c}));
-				}
-			}else{
-				@a=($a);
-			}
-			for $a (@a){
-				$rfcomm{$d}=[$a,$c,$ch,$s];
-				$btdev{$a}||=undef;
-				my $n=$btname{$a}->{$c};
-				if(!defined($n)){
-					print "hcitool -i $a name $c\n";
-					if(open(my $F,'-|',"hcitool -i $a name $c")){
-						read($F,$n,65536);
-						chomp($n);
-						close($F);
-					}
-					$n=$a if(!defined($n));
-					$btname{$a}->{$c}=$n;
-				}
-			}
+			my ($d,$a,$c,$ch,$s)=$_=~/^(rfcomm[^\s:]+):\s*(?:$are\s*\->\s*)?(?:$are)?(?:\s*channel\s+(\S+))(?:\s*(\S+)\s*$)?/s or next;
+			next if(!defined($c) || (!defined($a) && scalar(($a)=(keys %btdev))!=1) || exists($rfcomm{$a}->{$c}->{$d}));
+			$rfcomm{$a}->{$c}->{$d}=undef;
+			$btconn{$a}->{$c}=$d;
 		}
 		close($F);
 	}
+	for my $a (keys %btconn){
+		for my $c (keys %{$btconn{$a}}){
+			my $n=$btname{$a}->{$c};
+			if(!defined($n)){
+				print "hcitool -i $a name $c\n";
+				if(open(my $F,'-|',"hcitool -i $a name $c")){
+					read($F,$n,65536);
+					chomp($n);
+					close($F);
+				}
+				$n=$a if(!defined($n));
+				$btname{$a}->{$c}=$n;
+			}
+		}
+	}
+#	scalar(%btdev)||return;
+	$rf=0;
+	while(exists($rfcomm_{"rfcomm$rf"})){$rf++};
+	$rf="rfcomm$rf";
 }
+
+sub btmodem{
+	my ($a,$c,$ch)=@_;
+	my $chan;
+	# we can check to restart ppp on existing closed connection, but simplify behaviour:
+	# if ppp broken - something wrong. better to restart whole
+	if(exists($btconn{$a}->{$c})){
+		my $d=$btdev{$a};
+		return ("$d rfcomm release $d",'stop: ');
+	}
+	if(!defined($ch)){
+		$ch='$ch';
+		$chan='ch=`sdptool search --bdaddr '.$c.' 0x1103|grep Channel` && ch=${ch##*Channel:} && ';
+	}
+	("$rf $ENV{SHELL} -c \"${chan}rfcomm -i $a bind $rf $c $ch && [ -e /dev/$rf ] && exec pppd $rf call $btppp$ppp1 \"");
+}
+
+sub pppstat{
+	if($default_route){
+		$ppp1.=' nodefaultroute';
+		$ppp2.=' !gw';
+	}
+	if($enable_ch_resolv){
+		$ppp1.=' usepeerdns';
+	}else{
+		$ppp2.=' !dns';
+	}
+	$ppp1.=' debug nodetach' if($ENV{OB3MENUNET_DEBUG});
+	for(glob('/var/run/ppp*.pid')){
+		open(my $F,'<',$_)||next;
+		my $p=<$F>;
+		chomp($p);
+		close($F);
+		open($F,'<',"/proc/$p/cmdline")||next;
+		my $s=<$F>;
+		close($F);
+		my @a=split(/\x0/,$s);
+		$i=$_;
+		$i=~s/^.*\/(.*?)\.pid$/$1/g;
+		for(0..$#a-1){
+			if($a[$_] eq 'call'){
+				$pppd{$a[$_+1]}=$p;
+				$ppp{$a[$_+1]}=$i;
+			}
+		}
+		$devppp{$a[1]}=$i;
+		$fd{readlink($_)}=undef for(glob('/proc/$p/fd/*')); # root
+	}
+}
+
+%btservice=(
+	'0x1103'=>{'modem'=>\&btmodem},
+);
 
 $are='((?:[0-9a-zA-Z]{2}:){5}[0-9a-zA-Z]{2})';
 
@@ -532,6 +618,7 @@ sub netmenu{
 	if($#_<0){
 		routestat();
 		resolvstat();
+		pppstat();
 		my (%if,%carrier);
 		print '<openbox_pipe_menu>';
 		for(glob('/sys/class/net/*')){
@@ -545,38 +632,6 @@ sub netmenu{
 			next if(exists($if_ip{$i}) && !-e "/var/run/dhcpcd-$i.pid");
 			$if{$i}=1;
 			print _menu(($ENV{OB3MENUNET_DEBUG}?'+':'').$i,$i.$carr{$c});
-		}
-		my (%ppp,%fd,%pppd,%devppp);
-		my $ppp1,$ppp2;
-		if($default_route){
-			$ppp1.=' nodefaultroute';
-			$ppp2.=' !gw';
-		}
-		if($enable_ch_resolv){
-			$ppp1.=' usepeerdns';
-		}else{
-			$ppp2.=' !dns';
-		}
-		$ppp1.=' debug nodetach' if($ENV{OB3MENUNET_DEBUG});
-		for(glob('/var/run/ppp*.pid')){
-			open(my $F,'<',$_)||next;
-			my $p=<$F>;
-			chomp($p);
-			close($F);
-			open($F,'<',"/proc/$p/cmdline")||next;
-			my $s=<$F>;
-			close($F);
-			my @a=split(/\x0/,$s);
-			$i=$_;
-			$i=~s/^.*\/(.*?)\.pid$/$1/g;
-			for(0..$#a-1){
-				if($a[$_] eq 'call'){
-					$pppd{$a[$_+1]}=$p;
-					$ppp{$a[$_+1]}=$i;
-				}
-			}
-			$devppp{$a[1]}=$i;
-			$fd{readlink($_)}=undef for(glob('/proc/$p/fd/*')); # root
 		}
 		for(glob('/etc/ppp/peers/*')){
 			$i=$_;
@@ -621,27 +676,26 @@ sub netmenu{
 			}
 		}
 		btstat();
-		my $rf=0;
-		my %hc;
-		for(sort keys %rfcomm){
-			my ($a,$c,$ch,$s)=@{$rfcomm{$_}};
-			$hc{$a}->{$c}=1;
-			print _ex("$_ rfcomm release $_","$_ stop $devppp{$_} \"$btname{$a}->{$c}\"");
+		my %bt;
+		for(sort values %btdev){
+			print _menu($_);
 		}
-		for(0..32){
-			if(!exists($rfcomm{"rfcomm$_"})){
-				$rf=$_;
-				last;
+		for my $a (keys %rfcomm){
+			for my $c (keys %{$rfcomm{$a}}){
+				for(keys %{$rfcomm{$a}->{$c}}){
+					my $n=$btname{$a}->{$c};
+					push @{$bt{$n}},_ex("$_ rfcomm release $_","$_ stop $devppp{$_} \"$n\"");
+				}
 			}
 		}
-		$rf="rfcomm$rf";
 		my $chat='/usr/sbin/chat';
 		$chat.=' -V' if($ENV{OB3MENUNET_DEBUG});
 		for my $a(keys %btname){
-			for my $c(keys %{$btname{$a}}){
-				exists($hc{$a}->{$c}) && next;
-				$chan='ch=`sdptool search --bdaddr '.$c.' 0x1103|grep Channel` && ch=${ch\#\#*Channel:}';
-				print _ex("$rf $ENV{SHELL} -c \\\"$chan && rfcomm -i $a bind $rf $c \$ch && [ -e /dev/$rf ] && exec pppd $rf call $btppp \\\"","$rf pppd $ppp2 \"$btname{$a}->{$c}\"");
+			while(my ($c,$n)=each %{$btname{$a}}){
+				exists($btconn{$a}->{$c}) && next;
+				my @r=btmodem($a,$c);
+				$r[1].="$rf pppd $ppp2 \"$n\"";
+				push @{$bt{$n}},_ex(@r);
 			}
 		}
 		print '<separator/>';
@@ -653,14 +707,14 @@ sub netmenu{
 			$sc4.=";(hcitool -i $_ con|grep -q ACL || hciconfig $_ down)"
 		}
 		$sc="$sc1 $sc2 simple-agent $sc3 $sc4;false";
-		print _ex("_ $ENV{SHELL} -c \\\"$sc\\\"", 'Bluetooth ON - scan & agent - OFF') if(-e '/usr/bin/simple-agent');
 		print _menu("--debug",'debug') if(!$ENV{OB3MENUNET_DEBUG});
+		print _ex("_ $ENV{SHELL} -c \\\"$sc\\\"", 'Bluetooth ON - scan & agent - OFF') if(-e '/usr/bin/simple-agent');
 		if($iw){
 			if($>){
 				die 'Security problem' if(substr($0,0,1) ne '/');
 				$i=join(' ',map{"$_=\"$ENV{$_}\""}grep(/$ENV/,keys %ENV));
 				$id="ya-session --run +sudo -p $0:root:password: $i $id";
-				print _ex("--sudo --rescan",'sudo rescan');
+				print _ex("--sudo --rescan",'Wi-Fi rescan');
 			}
 			_iwhelp();
 			for(@wlan){
@@ -671,6 +725,11 @@ sub netmenu{
 				aplist($_,'iwconfig',$_,'ap')
 			}
 		}
+		if(scalar(%bt)){
+				for my $k(" label='Bluetooth modems'",undef){
+					print "<separator$k/>",map{$btkey{$_} ne $k?(sort @{$bt{$_}}):()}sort keys %bt;
+				}
+		}
 		print '</openbox_pipe_menu>';
 		exit;
 	}elsif(!$#_){
@@ -678,6 +737,60 @@ sub netmenu{
 		resolvstat();
 		print '<openbox_pipe_menu>';
 		my $d="/sys/class/net/$if";
+		if(!-e $d){
+			my @d=split(/,/,$if);
+			$if=$d[0];
+			if(-e ($d="/sys/class/bluetooth/$if")){
+				pppstat();
+				btstat();
+				my $a=$btdev_{$if};
+				if(!$#d){
+					print '<separator label="Bluetooth devices"/>';
+					$id=$0;
+					for my $c(sort keys %{$btname{$a}}){
+						print _menu("$if,$c","$btname{$a}->{$c} $c");
+					}
+				}elsif($#d==1){
+					print '<separator label="Channels"/>';
+					my $c=$d[1];
+					open(my $F,'-|',"sdptool -i $if browse $c")||exit;
+					my @s=({});
+					$i=undef;
+					while(<$F>){
+						chomp($_);
+						if($_ eq ''){
+							push @s,{};
+							$i=undef;
+							next;
+						}
+						$_=~s/^(\S.*?):/$i=$1;''/e;
+						push @{$s[-1]->{$i}},$_;
+					}
+					close($F);
+					for(@s){
+						my $n=join(',',@{$_->{'Service Name'}});
+						my %i;
+						my $ch;
+						~s/^\s*Channel:\s*(\d+)\s*$/$ch=$1/e for(@{$_->{'Protocol Descriptor List'}});
+						~s/\((0x[0-9a-z]*)\)/$i{$1}=1/gie for(@{$_->{'Service Class ID List'}});
+#						print _ex("$ch:$n ".join(',',keys %i));
+						for my $s(sort keys %i){
+							if(exists($btservice{$s})){
+								for my $sn(sort keys %{$btservice{$s}}){
+									my @r=&{$btservice{$s}->{$sn}}($a,$c,$ch);
+									$r[1].="$ch:$n ($sn)";
+									print _ex(@r);
+								}
+							}else{
+								print _undef("$ch:$n ($s)");;
+							}
+						}
+					}
+				}
+			}
+			print '</openbox_pipe_menu>';
+			exit;
+		}
 		if(defined($i=_read("/var/run/dhcpcd-$if.pid",32))){
 			print _ex("kill $i",'stop dhcp');
 		}else{
@@ -757,7 +870,7 @@ SUDO:
 		$cmd{$_}=1 for(@cmd);
 		if(!$SUDO && $>){
 			for(@cmd){
-				$_="\"$_\"" if($_=~/\s/);
+				$_="\"$_\"" if($_=~/[\s\*\?]/);
 			}
 			my $cmd=join(' ',@cmd,'--  root password:');
 #			$cmd=quotemeta($cmd);
