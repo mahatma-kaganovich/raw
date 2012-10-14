@@ -1,0 +1,6 @@
+
+# 'AT+CGDCONT=1,\"IP\",\"'$APN'\",\"\",0,0'
+connect "/usr/sbin/chat -V ABORT BUSY ABORT 'NO CARRIER' '' +++ATH OK ATZ OK 'AT+CGDCONT=,\"IP\",\"'$APN'\"' OK ATD*99# TIMEOUT 10 CONNECT"
+disconnect "/usr/sbin/chat -V TIMEOUT 5 '' '+++ATH' ABORT OK 'NO CARRIER'"
+debug
+nodetach

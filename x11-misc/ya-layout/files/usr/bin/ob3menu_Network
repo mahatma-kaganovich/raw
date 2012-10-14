@@ -514,7 +514,12 @@ sub btstat{
 
 sub btmodem{
 	my ($a,$c,$ch)=@_;
-	my $chan;
+	my $cmd;
+	my $p=$btppp;
+	if($APN){
+		$p.='-apn';
+		$cmd.='echo;read -p APN: APN;export APN;';
+	}
 	# we can check to restart ppp on existing closed connection, but simplify behaviour:
 	# if ppp broken - something wrong. better to restart whole
 	if(exists($btconn{$a}->{$c})){
@@ -523,9 +528,9 @@ sub btmodem{
 	}
 	if(!defined($ch)){
 		$ch='$ch';
-		$chan='ch=`sdptool search --bdaddr '.$c.' 0x1103|grep Channel` && ch=${ch##*Channel:} && ';
+		$cmd.='ch=`sdptool search --bdaddr '.$c.' 0x1103|grep Channel` && ch=${ch##*Channel:} && ';
 	}
-	("$rf $ENV{SHELL} -c \"${chan}rfcomm -i $a bind $rf $c $ch && [ -e /dev/$rf ] && exec pppd $rf call $btppp$ppp1 \"");
+	("$rf $ENV{SHELL} -c \"${cmd}rfcomm -i $a bind $rf $c $ch && [ -e /dev/$rf ] && exec pppd $rf call $p$ppp1\"");
 }
 
 sub pppstat{
@@ -739,14 +744,15 @@ sub netmenu{
 		my $d="/sys/class/net/$if";
 		if(!-e $d){
 			my @d=split(/,/,$if);
+			$APN=1;
 			$if=$d[0];
 			if(-e ($d="/sys/class/bluetooth/$if")){
 				pppstat();
 				btstat();
+				$id=$0;
 				my $a=$btdev_{$if};
 				if(!$#d){
 					print '<separator label="Bluetooth devices"/>';
-					$id=$0;
 					for my $c(sort keys %{$btname{$a}}){
 						print _menu("$if,$c","$btname{$a}->{$c} $c");
 					}
