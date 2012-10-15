@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # (c) Denis Kaganovich, Anarchy or GPLv2
-# Network manager OpenBox pipe menu v0.1
+# Network manager OpenBox pipe menu v0.2
 #
 # This is very initial version...
 #
@@ -395,7 +395,9 @@ sub aplist{
 				for my $o (keys %{$v->{$_}}){
 					# current "Channel" don't visible in "iwconfig"
 					# ignore list?
+					if($o ne 'Channel'){
 					$cur&&=$current->{$_}->{$o} eq $v->{$_}->{$o};
+					}
 					$i.="$o $v->{$_}->{$o} "
 				}
 			}
@@ -407,34 +409,42 @@ sub aplist{
 	}
 }
 
-# not working?
+sub btpath{
+	my $i=_run("dbus-send --system --dest=org.bluez --print-reply / org.bluez.Manager.FindAdapter string:$_[0]");
+	my ($p)=$i=~/object path \"(.*?)\"/s;
+	$p||die "DBUS: org.bluez.Manager.FindAdapter($_[0]) empty answer\n";
+}
+
+# devel
 sub btnet{
 	while(my ($a,$d)=each %btdev){
-		my $p=`dbus-send --system --dest=org.bluez --print-reply / org.bluez.Manager.FindAdapter string:$d`;
-		$p=~s/object path \"(.*?)\"/$btpath{$a}=$1/se;
+		$btpath{$a}=btpath($d);
 	}
 	while(my ($a,$p)=each %btpath){
 		if($_[0]){
-			for my $uuid('gn','panu','nap'){
-				my $net=`dbus-send --system --dest=org.bluez --print-reply $p org.bluez.NetworkServer.NetworkServer.Register string:$uuid string:$_[0]`;
-				print STDERR "$uuid:$net\n\n";
-				exit;
-				my $net=`dbus-send --system --dest=org.bluez --print-reply /org/bluez/$btdev{$a} org.bluez.NetworkServer.Register string:$uuid string:$_[0]`;
-				print STDERR "$uuid:$net\n\n";
-			}
+			my $net=`dbus-send --system --dest=org.bluez --print-reply $p org.bluez.NetworkServer.Unregister string:nap`;
+#			my $net=`dbus-send --system --dest=org.bluez --print-reply $p org.bluez.NetworkServer.Register string:nap string:$_[0]`;
+			print STDERR "nap:$net\n\n";
+#			for my $uuid('gn','panu','nap'){
+#				print "===$uuid===\n";
+#				my $net=`dbus-send --system --dest=org.bluez --print-reply $p org.bluez.NetworkServer.Register string:$uuid string:$_[0]`;
+#				print STDERR "$uuid:$net\n\n";
+#			}
 		}
+#return;
 		for my $c(keys %{$btname{$a}}){
 			my $x=$c;
 			$x=~s/:/_/gs;
 			for my $uuid('gn','panu','nap'){
 				print "dbus-send --system --dest=org.bluez --print-reply $p/dev_$x org.bluez.Network.Connect string:$uuid\n";
-				my $net=`dbus-send --system --dest=org.bluez --print-reply $p/dev_$x org.bluez.Network.Connect string:$uuid`;
-				print STDERR "$uuid:$net\n\n";
+				my $net=`dbus-send --system --dest=org.bluez --print-reply $p/dev_$x org.bluez.Network.Connect string:$uuid string:what`;
+#				print STDERR "$uuid:$net\n\n";
+#				my $net=`dbus-send --system --dest=org.bluez --print-reply $p/dev_$x org.bluez.Network.GetProperties`;
+#				print STDERR "$uuid:$net\n\n";
 			}
 		}
 	}
 }
-
 
 sub btstat{
 	for(glob('/sys/class/bluetooth/*')){
@@ -448,11 +458,11 @@ sub btstat{
 			$a=_read("$_/device/address",32);
 			chomp($a);
 			$btlink{$d}=$c;
-			$btconn{$a}->{$c}=$d;
+#			$btconn{$a}->{$c}->{$d}=undef;
 			for(glob("$_/rfcomm*")){
 				~s/.*\///gs;
-				$rfcomm{$a}->{$c}->{$_}=undef;
-				$rfcomm_{$_}=$c;
+				$rfcomm{$a}->{$c}->{$_}=
+				$rfcomm_{$_}=$btname{$a}->{$c}||$c;
 			}
 			next;
 		}
@@ -474,42 +484,34 @@ sub btstat{
 			close($F);
 		}
 	}
-	my $xconn;
+	my $a;
+	($a)=(keys %btdev) if(scalar(keys %btdev)==1);
 	for(glob("/sys/class/tty/rfcomm*")){
-		~s/.*\///gs;
-		if(!exists($rfcomm_{$_})){
-			$rfcomm_{$_}=_read("$_/address");
-			$xconn++;
-		}
-	}
-	if($xconn && open(my $F,'-|',"rfcomm -a")){
-		while(<$F>){
-			my ($d,$a,$c,$ch,$s)=$_=~/^(rfcomm[^\s:]+):\s*(?:$are\s*\->\s*)?(?:$are)?(?:\s*channel\s+(\S+))(?:\s*(\S+)\s*$)?/s or next;
-			next if(!defined($c) || (!defined($a) && scalar(($a)=(keys %btdev))!=1) || exists($rfcomm{$a}->{$c}->{$d}));
-			$rfcomm{$a}->{$c}->{$d}=undef;
-			$btconn{$a}->{$c}=$d;
-		}
-		close($F);
-	}
-	for my $a (keys %btconn){
-		for my $c (keys %{$btconn{$a}}){
-			my $n=$btname{$a}->{$c};
-			if(!defined($n)){
-				print "hcitool -i $a name $c\n";
-				if(open(my $F,'-|',"hcitool -i $a name $c")){
-					read($F,$n,65536);
-					chomp($n);
-					close($F);
-				}
-				$n=$a if(!defined($n));
-				$btname{$a}->{$c}=$n;
-			}
+		my $r=$_;
+		$r=~s/.*\///gs;
+		if(!exists($rfcomm_{$r})){
+			my $c=_read("$_/address");
+			chomp($c);
+			$rfcomm{$a}->{$c}->{$r}=
+			$rfcomm_{$r}=$btname{$a}->{$c}||$c;
 		}
 	}
 #	scalar(%btdev)||return;
 	$rf=0;
 	while(exists($rfcomm_{"rfcomm$rf"})){$rf++};
 	$rf="rfcomm$rf";
+	if(defined($if)){
+		our $a=$btdev_{$if};
+		$id="$0 $if";
+		$APN=1;
+		if(open(my $F,'-|',"hcitool -i $if con")){
+			while(<$F>){
+				my ($c)=$_=~/$are/ or next;
+				$btconn{$a}->{$c}=$btname{$a}->{$c};
+			}
+			close($F);
+		}
+	}
 }
 
 sub btmodem{
@@ -522,15 +524,15 @@ sub btmodem{
 	}
 	# we can check to restart ppp on existing closed connection, but simplify behaviour:
 	# if ppp broken - something wrong. better to restart whole
-	if(exists($btconn{$a}->{$c})){
+	if(exists($rfcomm{$a}->{$c})){
 		my $d=$btdev{$a};
-		return ("$d rfcomm -i $a release $d",'stop: ');
+		return ("rfcomm -i $a release $d",'stop: ');
 	}
 	if(!defined($ch)){
 		$ch='$ch';
 		$cmd.='ch=`sdptool search --bdaddr '.$c.' 0x1103|grep Channel` && ch=${ch##*Channel:} && ';
 	}
-	("$rf $ENV{SHELL} -c \"${cmd}rfcomm -i $a bind $rf $c $ch && [ -e /dev/$rf ] && exec pppd $rf call $p$ppp1\"");
+	("$ENV{SHELL} -c \"${cmd}rfcomm -i $a bind $rf $c $ch && [ -e /dev/$rf ] && exec pppd $rf call $p$ppp1\"");
 }
 
 sub pppstat{
@@ -566,6 +568,27 @@ sub pppstat{
 	}
 }
 
+sub ifstat{
+	for(glob('/sys/class/net/*')){
+		$i=$_;
+		$i=~s/.*\///g;
+#		next if($i eq 'lo');
+		my $w=-e "$_/wireless";
+		$iw+=$w;
+		push @wlan,$i if($w);
+		$carrier{$i}=_read("$_/carrier",1);
+		if(-e "$_/bridge"){
+			$bridge{$i}=[];
+			for(glob("$_/brif")){
+				~s/.*\///g;
+				push @{$bridge{$i}},$_;
+			}
+		}
+		next if(exists($if_ip{$i}) && !-e "/var/run/dhcpcd-$i.pid");
+		$if{$i}=1;
+	}
+}
+
 %btservice=(
 	'0x1103'=>{'modem'=>\&btmodem},
 );
@@ -588,10 +611,106 @@ $ENV='^(?:OB3MENUNET_.*|DBUS_SESSION_BUS_ADDRESS|DISPLAY)$';
 	}
 	aplist(@_);
 },
-'hcitool scan'=>sub{
-	btscan(@_);
+#'hcitool scan'=>sub{btscan(@_);},
+'sdptool browse'=>sub{
+	routestat();
+	resolvstat();
+	pppstat();
+	btstat();
+	_btbrowse($_[2]);
+},
+'hcitool con'=>sub{
+	routestat();
+	resolvstat();
+	pppstat();
+	ifstat();
+	btstat();
+	my $c=$_[2];
+	my $h=`hcitool -h`;
+	for(exists($btconn{$a}->{$c})?('dc','auth','key'):('cc','con+auth')){
+		my $i;
+		if($_ eq 'con+auth'){
+			print _ex("$ENV{SHELL} -c \"hcitool -i $if cc $c && hcitool -i $if auth $c\"","Connect & auth");
+			next;
+		}elsif(($i)=$h=~/\n\s*$_\s+([^\n]*)/s){
+		}else{
+			$i=$_;
+		}
+		print _ex("hcitool -i $if $_ $c",$i);
+	}
+	# sdptool browse slow, then keep in separate menu
+	# todo: decode /var/lib/.../sdp file
+#	print '<separator label="Services:"/>'; _btbrowse($c);
+	print _menu("sdptool $c browse","Services");
 },
 );
+
+sub _run{
+	print "[run:$>] # $_[0]\n";
+	$out=`$_[0] 2>&1`;
+	print "$out";
+	$? && die "$_[0]:$? $!\n$out\n";
+	$out;
+}
+
+%sudo=(
+'-NAP'=>sub{
+	($if)=@_;
+	my $p=btpath($if);
+	_run("dbus-send --system --dest=org.bluez --print-reply $p org.bluez.NetworkServer.Unregister string:nap");
+	0;
+},
+'NAP'=>sub{
+	($if,$br)=@_;
+	my $p=btpath($if);
+	if(!defined($br)){
+		$br=0;
+		while(exists($bridge{"br$br"})){$br++};
+		$br="br$br";
+		_run("(brctl addbr $br && ifconfig $br promisc up)");
+		$? && return $?;
+	}
+	_run("dbus-send --system --dest=org.bluez --print-reply $p org.bluez.NetworkServer.Register string:nap string:$br");
+	0;
+},
+);
+
+sub _btbrowse{
+	my $c=$_[0];
+	open(my $F,'-|',"sdptool -i $if browse $c")||return;
+	my @s=({});
+	$i=undef;
+	while(<$F>){
+		chomp($_);
+		if($_ eq ''){
+			push @s,{};
+			$i=undef;
+			next;
+		}
+		$_=~s/^(\S.*?):/$i=$1;''/e;
+		push @{$s[-1]->{$i}},$_;
+	}
+	close($F);
+	for(@s){
+		my $n=join(',',@{$_->{'Service Name'}});
+		my %i;
+		my $ch;
+		~s/^\s*Channel:\s*(\d+)\s*$/$ch=$1/e for(@{$_->{'Protocol Descriptor List'}});
+		~s/\((0x[0-9a-z]*)\)/$i{$1}=1/gie for(@{$_->{'Service Class ID List'}});
+#		print _ex("$ch:$n ".join(',',keys %i));
+		for my $s(sort keys %i){
+			if(exists($btservice{$s})){
+				for my $sn(sort keys %{$btservice{$s}}){
+					my @r=&{$btservice{$s}->{$sn}}($a,$c,$ch);
+					$r[1].="$ch:$n ($sn)";
+					print _ex(@r);
+				}
+			}else{
+				print _undef("$ch:$n ($s)");;
+			}
+		}
+	}
+}
 
 sub netmenu{
 	my @cmd;
@@ -624,19 +743,10 @@ sub netmenu{
 		routestat();
 		resolvstat();
 		pppstat();
-		my (%if,%carrier);
+		ifstat();
 		print '<openbox_pipe_menu>';
-		for(glob('/sys/class/net/*')){
-			$i=$_;
-			$i=~s/.*\///g;
-#			next if($i eq 'lo');
-			my $w=-e "$_/wireless";
-			$iw+=$w;
-			push @wlan,$i if($w);
-			my $c=$carrier{$i}=_read("$_/carrier",1);
-			next if(exists($if_ip{$i}) && !-e "/var/run/dhcpcd-$i.pid");
-			$if{$i}=1;
-			print _menu(($ENV{OB3MENUNET_DEBUG}?'+':'').$i,$i.$carr{$c});
+		for(sort keys %if){
+			print _menu(($ENV{OB3MENUNET_DEBUG}?'+':'').$_,$_.$carr{$carrier{$_}});
 		}
 		for(glob('/etc/ppp/peers/*')){
 			$i=$_;
@@ -697,10 +807,9 @@ sub netmenu{
 		$chat.=' -V' if($ENV{OB3MENUNET_DEBUG});
 		for my $a(keys %btname){
 			while(my ($c,$n)=each %{$btname{$a}}){
-				exists($btconn{$a}->{$c}) && next;
+				exists($rfcomm{$a}->{$c}) && next;
 				my @r=btmodem($a,$c);
-				$r[1].="$rf pppd $ppp2 \"$n\"";
-				push @{$bt{$n}},_ex(@r);
+				push @{$bt{$n}},_ex("$rf $r[0]","$r[1] $rf pppd $ppp2 \"$n\"");
 			}
 		}
 		print '<separator/>';
@@ -743,59 +852,22 @@ sub netmenu{
 		print '<openbox_pipe_menu>';
 		my $d="/sys/class/net/$if";
 		if(!-e $d){
-			my @d=split(/,/,$if);
-			$APN=1;
-			$if=$d[0];
 			if(-e ($d="/sys/class/bluetooth/$if")){
-				pppstat();
 				btstat();
-				$id=$0;
-				my $a=$btdev_{$if};
-				if(!$#d){
-					print '<separator label="Bluetooth devices"/>';
-					for my $c(sort keys %{$btname{$a}}){
-						print _menu("$if,$c","$btname{$a}->{$c} $c");
-					}
-				}elsif($#d==1){
-					print '<separator label="Channels"/>';
-					my $c=$d[1];
-					open(my $F,'-|',"sdptool -i $if browse $c")||exit;
-					my @s=({});
-					$i=undef;
-					while(<$F>){
-						chomp($_);
-						if($_ eq ''){
-							push @s,{};
-							$i=undef;
-							next;
-						}
-						$_=~s/^(\S.*?):/$i=$1;''/e;
-						push @{$s[-1]->{$i}},$_;
-					}
-					close($F);
-					for(@s){
-						my $n=join(',',@{$_->{'Service Name'}});
-						my %i;
-						my $ch;
-						~s/^\s*Channel:\s*(\d+)\s*$/$ch=$1/e for(@{$_->{'Protocol Descriptor List'}});
-						~s/\((0x[0-9a-z]*)\)/$i{$1}=1/gie for(@{$_->{'Service Class ID List'}});
-#						print _ex("$ch:$n ".join(',',keys %i));
-						for my $s(sort keys %i){
-							if(exists($btservice{$s})){
-								for my $sn(sort keys %{$btservice{$s}}){
-									my @r=&{$btservice{$s}->{$sn}}($a,$c,$ch);
-									$r[1].="$ch:$n ($sn)";
-									print _ex(@r);
-								}
-							}else{
-								print _undef("$ch:$n ($s)");;
-							}
-						}
-					}
+				print _menu1('NAP server to bridge');
+				print _ex("NAP $if $_","$_: ".join(' ',@{$bridge{$_}})) for(sort keys %bridge);
+				print _ex("NAP $if",'Create new');
+				print _ex("-NAP $if",'Unregister (if any)');
+				print '</menu>';
+				print '<separator label="Bluetooth devices"/>';
+				my %bt;
+				$bt{"$btname{$a}->{$_} $_"}=$_ for(keys %{$btname{$a}},keys %{$btconn{$a}});
+				for(sort keys %bt){
+					my $c=$bt{$_};
+					print _menu("hcitool $c con",(exists($btconn{$a}->{$c})?'+':'-').$_);
 				}
 			}
-			print '</openbox_pipe_menu>';
-			exit;
+			goto EX;
 		}
 		if(defined($i=_read("/var/run/dhcpcd-$if.pid",32))){
 			print _ex("kill $i",'stop dhcp');
@@ -853,6 +925,7 @@ sub netmenu{
 			}
 			print map{$o{$_}}sort keys %o;
 		}
+EX:
 		print '</openbox_pipe_menu>';
 		exit;
 	}else{
@@ -894,7 +967,9 @@ SUDO:
 		$iw&&=!$cmd{'kill'};
 		$notify||=$iw;
 		my $out;
-		if($notify){
+		if($i=$sudo{$cmd[0]}){
+			$r=&{$i}(@cmd[1..$#cmd]);
+		}elsif($notify){
 			$r=system(@cmd);
 #			for(@cmd){
 #			}
