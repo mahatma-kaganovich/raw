@@ -6,7 +6,11 @@ IUSE="+udev libnotify minimal bluetooth wifi"
 RDEPEND="udev? ( sys-fs/udev net-fs/autofs )
 	libnotify? ( x11-libs/libnotify )
 	>=x11-wm/openbox-3.5.0
-	bluetooth? ( net-wireless/bluez[test-programs] net-dialup/ppp )
+	bluetooth? (
+		net-wireless/bluez[test-programs]
+		net-dialup/ppp
+		net-misc/bridge-utils
+	)
 	wifi? ( net-wireless/wireless-tools )
 	!minimal? ( || (
 		x11-misc/pcmanfm
