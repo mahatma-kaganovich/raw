@@ -19,8 +19,6 @@
 # - other tonnels;
 # - keys (via gtkdialog? or terminal+bash?);
 # - filter visible wifi over current keyset;
-# - root -> user notification;
-# - bluetooth;
 # - bridges (for VM, IMHO just connect/disconnect to active bridge).
 
 use bigint;
@@ -192,15 +190,15 @@ sub _read{
 sub ip2n{
 	my @i=@_;
 	my $x255='((?:1?[0-9]{1,2}|2[0-4][0-9]|25[1-5]))';
-	my $b6='([0-9a-z]{4}|)';
+	my $b6='([0-9a-f]{4}|)';
 	for(@i[0,1,2,5,6]){
 		if(!defined($_)){
 		}elsif($_=~s/^$x255\.$x255\.$x255\.$x255$/hex(sprintf('%02x%02x%02x%02x',$1,$2,$3,$4))/e){ # ipv4
 			$i[4]=0xFFFFFFFF;
 		}elsif($_=~s/^([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/hex($4.$3.$2.$1)/ie){ # /proc/net/route
 			$i[4]=0xFFFFFFFF;
-		}elsif($_=~s/^\[?([0-9a-z:]+)\]?$/$1/i){
-			~s/(^|:)([0-9a-z]{1,3})(:|$)/$1.sprintf('%04s',$2).$3/gei;
+		}elsif($_=~s/^\[?([0-9a-f:]+)\]?$/$1/i){
+			~s/(^|:)([0-9a-f]{1,3})(:|$)/$1.sprintf('%04s',$2).$3/gei;
 			while(length($_)<39){
 				$_=~s/::/::0000:/ or last;
 			}
@@ -215,7 +213,7 @@ sub ip2n{
 #		}elsif($i[4]==0xFFFFFFFF && ($_=~/^[0-9]{1,2}$/i)){
 #			my $x=32-hex($_);
 #			$_=($i[4]>>$x)<<$x;
-		}elsif($_=~/^[0-9a-z]{2}$/i){
+		}elsif($_=~/^[0-9a-f]{2}$/i){
 			my $x=128-hex($_);
 			$_=($i[4]>>$x)<<$x;
 		}else{
@@ -273,8 +271,8 @@ sub ip_in{
 
 sub n2ip{
 	my $x=sprintf('%08x',$_[0]);
-	my $X='([0-9a-zA-Z]{2})';
-	$x=~s/^$X$X$X$X$/hex($1).'.'.hex($2).'.'.hex($3).'.'.hex($4)/ge;
+	my $X='([0-9a-f]{2})';
+	$x=~s/^$X$X$X$X$/hex($1).'.'.hex($2).'.'.hex($3).'.'.hex($4)/gei;
 	$x;
 }
 
@@ -418,11 +416,12 @@ sub btpath{
 # devel
 sub btnet{
 	while(my ($a,$d)=each %btdev){
-		$btpath{$a}=btpath($d);
+		$btpath{$a}=btpath($a);
 	}
 	while(my ($a,$p)=each %btpath){
 		if($_[0]){
 			my $net=`dbus-send --system --dest=org.bluez --print-reply $p org.bluez.NetworkServer.Unregister string:nap`;
+#			my $net=`dbus-send --system --dest=org.bluez --print-reply $p org.bluez.NetworkServer.Unregister string:nap`;
 #			my $net=`dbus-send --system --dest=org.bluez --print-reply $p org.bluez.NetworkServer.Register string:nap string:$_[0]`;
 			print STDERR "nap:$net\n\n";
 #			for my $uuid('gn','panu','nap'){
@@ -436,14 +435,24 @@ sub btnet{
 			my $x=$c;
 			$x=~s/:/_/gs;
 			for my $uuid('gn','panu','nap'){
-				print "dbus-send --system --dest=org.bluez --print-reply $p/dev_$x org.bluez.Network.Connect string:$uuid\n";
-				my $net=`dbus-send --system --dest=org.bluez --print-reply $p/dev_$x org.bluez.Network.Connect string:$uuid string:what`;
+				my $s="dbus-send --system --dest=org.bluez --print-reply $p/dev_$x org.bluez.Network.Connect  string:$uuid";
+#				my $s="dbus-send --system --dest=org.bluez --print-reply $p org.bluez.Network.Connect string:$uuid";
+				print "## $s\n";
+				my $net=`$s`;
+#				my $net=`dbus-send --system --dest=org.bluez --print-reply $p/dev_$x org.bluez.Network.Connect string:$uuid string:what`;
 #				print STDERR "$uuid:$net\n\n";
 #				my $net=`dbus-send --system --dest=org.bluez --print-reply $p/dev_$x org.bluez.Network.GetProperties`;
 #				print STDERR "$uuid:$net\n\n";
 			}
 		}
 	}
+}
+
+sub dbus_bluez{
+	my $i=_run("dbus-send --system --dest=org.bluez --print-reply $_[0] org.bluez.$_[1]");
+	my $r={};
+	$i=~s/\n\s*([^:]*):\s*\"([^\"]*)\"/$r->{$1}=$2;''/ges;
+	$r;
 }
 
 sub btstat{
@@ -589,11 +598,21 @@ sub ifstat{
 	}
 }
 
+sub _nap{
+	my ($a,$c,$ch,$t,$on)=@_;
+	# todo: check local caps against $t
+	# || return;
+	$on?("NAP $a $c $ch $t",'Connect'):("-NAP $a $c $ch $t",'Disonnect')
+}
+
 %btservice=(
 	'0x1103'=>{'modem'=>\&btmodem},
+	'0x1115'=>{'PANU'=>[sub{_nap{@_,'panu',1}},sub{_nap{@_,'panu'}}]},
+	'0x1116'=>{'NAP'=>[sub{_nap{@_,'nap',1}},sub{_nap{@_,'nap'}}]},
+	'0x1117'=>{'GN'=>[sub{_nap{@_,'gn',1}},sub{_nap{@_,'gn'}}]},
 );
 
-$are='((?:[0-9a-zA-Z]{2}:){5}[0-9a-zA-Z]{2})';
+$are='((?:[0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2})';
 
 $ENV='^(?:OB3MENUNET_.*|DBUS_SESSION_BUS_ADDRESS|DISPLAY)$';
 
@@ -646,9 +665,12 @@ $ENV='^(?:OB3MENUNET_.*|DBUS_SESSION_BUS_ADDRESS|DISPLAY)$';
 );
 
 sub _run{
-	print "[run:$>] # $_[0]\n";
-	$out=`$_[0] 2>&1`;
-	print "$out";
+	for(@_){
+		print "[run:$>] # $_[0]\n";
+		$out=`$_[0] 2>&1`;
+		print "$out";
+		$? || last;
+	}
 	$? && die "$_[0]:$? $!\n$out\n";
 	$out;
 }
@@ -658,10 +680,13 @@ sub _run{
 	($if)=@_;
 	my $p=btpath($if);
 	_run("dbus-send --system --dest=org.bluez --print-reply $p org.bluez.NetworkServer.Unregister string:nap");
+	my $nap=sdprec('0x1116');
+	$nap && _run("sdptool -i $if del $nap");
 	0;
 },
 'NAP'=>sub{
 	($if,$br)=@_;
+	sdprec('0x1116') || _run("sdptool -i $if add NAP");
 	my $p=btpath($if);
 	if(!defined($br)){
 		$br=0;
@@ -673,41 +698,100 @@ sub _run{
 	_run("dbus-send --system --dest=org.bluez --print-reply $p org.bluez.NetworkServer.Register string:nap string:$br");
 	0;
 },
+'PAN'=>sub{
+	($a,$c,$ch,$t)=@_;
+#	my $s=serviceid($t);
+#	sdprec($s) || _run("sdptool -i $a add $s");
+	my $p=$c;
+	$p=~s/:/_/;
+	$p=btpath($a).'/dev_'.$p;
+#	my $pr=dbus_bluez($p,'Network.GetProperties');
+#	dbus_bluez($p,'Network.Connect string:$pr->{UUID}');
+	# src vs. doc
+	_run(
+		"dbus-send --system --dest=org.bluez --print-reply $p org.bluez.Network.Connect string:$t",
+		"dbus-send --system --dest=org.bluez --print-reply $p org.bluez.Network.Connect"
+	);
+#	dbus_bluez($p,'Network.Connect',"Network.Connect string:$t");
+#	dbus_bluez($p,'Network.Connect');
+},
+'-PAN'=>sub{
+	($a,$c,$ch,$t)=@_;
+	my $p=$c;
+	$p=~s/:/_/;
+	$p=btpath($a).'/dev_'.$p;
+#	my $pr=dbus_bluez($p,'Network.GetProperties');
+#	dbus_bluez($p,'Network.Connect string:$pr->{UUID}');
+	dbus_bluez($p,'Network.Disconnect');
+},
 );
 
-sub _btbrowse{
-	my $c=$_[0];
+sub _sdpread{
+	$c=$_[0];
+	return $sdp{$if}->{$c} if(exists($sdp{$if}->{$c}));
 	open(my $F,'-|',"sdptool -i $if browse $c")||return;
 	my @s=({});
-	$i=undef;
+	my ($s,$x,$i);
 	while(<$F>){
 		chomp($_);
 		if($_ eq ''){
 			push @s,{};
-			$i=undef;
-			next;
+			($s,$x,$i)=();
+		}elsif($_=~s/^(\S.*?): (.+)$/($i,$s[-1]->{$1},$s,$x)=($1,$2);''/e){
+		}elsif($_=~s/^(\S.*?):$/($i,$s,$x)=($1);''/e){
+		}elsif($_=~s/^  \"([^\"]*)\" \((\S+)\)$/($s,$x,$s[-1]->{$i}->{$2})=($1,$2);''/e){
+		}elsif($_=~s/^    (\S.*?): (\S+)$/$s[-1]->{$i}->{$x}->{$1}=$2;''/e){
 		}
-		$_=~s/^(\S.*?):/$i=$1;''/e;
-		push @{$s[-1]->{$i}},$_;
 	}
 	close($F);
-	for(@s){
-		my $n=join(',',@{$_->{'Service Name'}});
-		my %i;
-		my $ch;
-		~s/^\s*Channel:\s*(\d+)\s*$/$ch=$1/e for(@{$_->{'Protocol Descriptor List'}});
-		~s/\((0x[0-9a-z]*)\)/$i{$1}=1/gie for(@{$_->{'Service Class ID List'}});
-#		print _ex("$ch:$n ".join(',',keys %i));
-		for my $s(sort keys %i){
+	$sdp{$if}->{$c}=[@s];
+}
+
+sub serviceid{
+	my $t=lc($_[0]);
+	while(my ($x,$y)=each %btservice){
+		return $x if(ref($y)?grep(/^$t$/i,keys %$y):(lc($y) eq $t));
+	}
+}
+
+sub sdprec{
+	for(@{_sdpread('local')}){
+		return $_->{'Service RecHandle'} if(exists($_->{'Service Class ID List'}->{$_[0]}));
+	}
+}
+
+sub _btbrowse{
+	my $c=$_[0];
+	for(@{_sdpread($c)}){
+		my $n=$_->{'Service Name'};
+		my $ch=$_->{'Protocol Descriptor List'}->{'0x0003'}->{'Channel'};
+		for my $s(sort keys %{$_->{'Service Class ID List'}}){
+			my $nn;
 			if(exists($btservice{$s})){
 				for my $sn(sort keys %{$btservice{$s}}){
-					my @r=&{$btservice{$s}->{$sn}}($a,$c,$ch);
-					$r[1].="$ch:$n ($sn)";
-					print _ex(@r);
+					my $x=$btservice{$s}->{$sn};
+					my @m;
+					if(ref($x) eq 'ARRAY'){
+						for(@$x){
+							my @r=&{$_}($a,$c,$ch);
+							push @m,[@r] if(@r);
+						}
+					}else{
+						my @r=&{$x}($a,$c,$ch);
+						push @m,[@r] if(@r);
+					}
+					if($#m>0){
+						print _menu1("$ch:$n ($sn)");
+						print _ex(@$_) for(@m);
+						print'</menu>';
+					}elsif(!$#m){
+						$m[0]->[1].="$ch:$n ($sn)";
+						print _ex(@{$m[0]})
+					}
+					$nn+=scalar(@m);
 				}
-			}else{
-				print _undef("$ch:$n ($s)");;
 			}
+			$nn || print _undef("$ch:$n ($s)");
 		}
 	}
 }
@@ -793,15 +877,12 @@ sub netmenu{
 		btstat();
 		my %bt;
 		for(sort values %btdev){
-			print _menu($_);
+			my $n=_read("/sys/class/bluetooth/$_/name");
+			chomp($n);
+			print _menu($_,"$_ \"$n\"");
 		}
-		for my $a (keys %rfcomm){
-			for my $c (keys %{$rfcomm{$a}}){
-				for(keys %{$rfcomm{$a}->{$c}}){
-					my $n=$btname{$a}->{$c};
-					push @{$bt{$n}},_ex("$_ rfcomm release $_","$_ stop $devppp{$_} \"$n\"");
-				}
-			}
+		while(my ($r,$n)=each %rfcomm_){
+			push @{$bt{$n}},_ex("$r rfcomm release $r","$r stop $devppp{$r} \"$n\"");
 		}
 		my $chat='/usr/sbin/chat';
 		$chat.=' -V' if($ENV{OB3MENUNET_DEBUG});
@@ -854,10 +935,19 @@ sub netmenu{
 		if(!-e $d){
 			if(-e ($d="/sys/class/bluetooth/$if")){
 				btstat();
-				print _menu1('NAP server to bridge');
+				my $r=sdprec('0x1116');
+				print _menu1("Network Access Point (NAP) $r");
 				print _ex("NAP $if $_","$_: ".join(' ',@{$bridge{$_}})) for(sort keys %bridge);
-				print _ex("NAP $if",'Create new');
-				print _ex("-NAP $if",'Unregister (if any)');
+				print _ex("NAP $if",'Create new bridge');
+				if($r){
+					if(scalar(%bridge)){
+						print _ex("-NAP $if",'Remove');
+					}else{
+						print _ex("\@sdptool -i $if del $r",'Remove');
+					}
+				}else{
+					print _ex("\@sdptool -i $if add NAP",'Create without bridge');
+				}
 				print '</menu>';
 				print '<separator label="Bluetooth devices"/>';
 				my %bt;
@@ -947,7 +1037,7 @@ SUDO:
 	if(@cmd){
 		my %cmd;
 		$cmd{$_}=1 for(@cmd);
-		if(!$SUDO && $>){
+		if(!$SUDO && $> && !($cmd[0]=~s/^\@//)){
 			for(@cmd){
 				$_="\"$_\"" if($_=~/[\s\*\?]/);
 			}
