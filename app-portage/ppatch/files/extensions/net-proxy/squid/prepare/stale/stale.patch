@@ -1,0 +1,30 @@
+http://bugs.squid-cache.org/show_bug.cgi?id=3628
+If this patch broken in upcoming version (but not applied upstream) - can be used alt workaround:
+
+sed -i -e 's/digest_user->auth_type = Auth::AUTH_BROKEN;/digest_user->auth_type = Auth::AUTH_DIGEST;/' "$S/src/auth/digest/auth_digest.cc"
+
+--- src/auth/UserRequest.cc	2012-09-01 14:42:17 +0000
++++ src/auth/UserRequest.cc	2012-10-05 08:53:07 +0000
+@@ -515,7 +515,10 @@ 
+                 Auth::Config *scheme = *i;
+ 
+                 if (scheme->active())
+-                    scheme->fixHeader(NULL, rep, type, request);
++                    if (auth_user_request != NULL && auth_user_request->scheme()->type() == scheme->type())
++                        scheme->fixHeader(auth_user_request, rep, type, request);
++                    else
++                        scheme->fixHeader(NULL, rep, type, request);
+                 else
+                     debugs(29, 4, HERE << "Configured scheme " << scheme->type() << " not Active");
+             }
+--- src/auth/digest/auth_digest.cc
++++ src/auth/digest/auth_digest.cc
+@@ -556,7 +556,7 @@ 
+         Auth::Digest::UserRequest *digest_request = dynamic_cast<Auth::Digest::UserRequest*>(auth_user_request.getRaw());
+         assert (digest_request != NULL);
+ 
+-        stale = !digest_request->flags.invalid_password;
++        stale = !digest_request->nonce;
+     }
+ 
+     /* on a 407 or 401 we always use a new nonce */
