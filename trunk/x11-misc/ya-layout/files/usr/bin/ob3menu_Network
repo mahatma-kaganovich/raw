@@ -798,22 +798,18 @@ sub _btbrowse{
 }
 
 sub _modem{
-	my ($p,$f,$n)=@_;
-	if(defined($n)){
+	my ($p,$f)=@_;
+	return if(exists($btdev{$p}));
+	my $n;
+	if(defined($n=_read("/sys/class/tty/$p/device/interface"))){
 		chomp($n);
 		$n=~s/_/-/g;
 		$n="$p \"$n\"";
 	}else{
 		$n=$p;
 	}
-#	if(exists($devppp{$p})){
-	if(exists($pidppp{$p})){
-		print _ex("$p kill $pidppp{$p}","Stop: $n");
-	}elsif($f eq $cellppp){
-		print _ex("$p $ENV{SHELL} -c \"pppd $p call $f\"",$n);
-	}else{
-		print _ex("$p $ENV{SHELL} -c \"APN= ;PH= ;read -p APN: APN;read -p Number: PH;export APN PH;exec pppd $p call $f$ppp1\"",$n);
-	}
+	exists($pidppp{$p})?_ex("$p kill $pidppp{$p}","Stop: $n"):($f eq $cellppp)?_ex("$p $ENV{SHELL} -c \"pppd $p call $f\"",$n):
+		_ex("$p $ENV{SHELL} -c \"APN= ;PH= ;read -p APN: APN;read -p Number: PH;export APN PH;exec pppd $p call $f$ppp1\"",$n);
 }
 
 sub netmenu{
@@ -894,12 +890,8 @@ sub netmenu{
 				print _ex(($debugppp{$i}?'+':'').$i,$d);
 			}
 		}
-		if(my @m=glob('/sys/class/tty/*/device')){
-			print _menu1('Serial modems');
-			_modem(substr($_,15,-7),"$cellppp-apn",_read("$_/interface")) for(@m);
-			print '</menu>';
-		}
 		btstat();
+		print _menu1('Serial modems').$i.'</menu>' if($i=join('',map{_modem(substr($_,15,-7),"$cellppp-apn")}glob('/sys/class/tty/*/device')));
 		my %bt;
 		for(sort values %btdev){
 			my $n=_read("/sys/class/bluetooth/$_/name");
@@ -950,10 +942,7 @@ sub netmenu{
 					print "<separator$k/>",map{$btkey{$_} ne $k?(sort @{$bt{$_}}):()}sort keys %bt;
 				}
 		}
-		if(my @m=glob('/sys/class/tty/*/device/interface')){
-			print '<separator label="(Possible) cell modems"/>';
-			_modem(substr($_,15,-17),$cellppp,_read($_)) for(@m);
-		}
+		print '<separator label="(Possible) cell modems"/>',$i if($i=join('',map{_modem(substr($_,15,-17),$cellppp)}glob('/sys/class/tty/*/device/interface')));
 		print '</openbox_pipe_menu>';
 		exit;
 	}elsif(!$#_){
