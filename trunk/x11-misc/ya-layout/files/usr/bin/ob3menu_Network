@@ -52,7 +52,7 @@ if(exists($ENV{DBUS_SESSION_BUS_ADDRESS}) && !($SUDO && $NOTIFY>1)){
 delete($ENV{DBUS_SESSION_BUS_ADDRESS}) if($NOTIFY==3);
 $notify=$NOTIFY&&exists($ENV{DBUS_SESSION_BUS_ADDRESS});
 
-$btppp='ya-bluetooth-gprs';
+$cellppp='ya-cell';
 
 sub xml{
 	~s/([	\n<>\'\"\&\\])/'&#'.ord($1).';'/gse for(@_);
@@ -526,10 +526,10 @@ sub btstat{
 sub btmodem{
 	my ($a,$c,$ch)=@_;
 	my $cmd;
-	my $p=$btppp;
+	my $p=$cellppp;
 	if($APN){
 		$p.='-apn';
-		$cmd.='echo;read -p APN: APN;export APN;';
+		$cmd.='echo;read -p APN: APN;PH= ;export APN PH;';
 	}
 	# we can check to restart ppp on existing closed connection, but simplify behaviour:
 	# if ppp broken - something wrong. better to restart whole
@@ -573,6 +573,7 @@ sub pppstat{
 			}
 		}
 		$devppp{$a[1]}=$i;
+		$pidppp{$a[1]}=$p;
 		$fd{readlink($_)}=undef for(glob('/proc/$p/fd/*')); # root
 	}
 }
@@ -796,6 +797,25 @@ sub _btbrowse{
 	}
 }
 
+sub _modem{
+	my ($p,$f,$n)=@_;
+	if(defined($n)){
+		chomp($n);
+		$n=~s/_/-/g;
+		$n="$p \"$n\"";
+	}else{
+		$n=$p;
+	}
+#	if(exists($devppp{$p})){
+	if(exists($pidppp{$p})){
+		print _ex("$p kill $pidppp{$p}","Stop: $n");
+	}elsif($f eq $cellppp){
+		print _ex("$p $ENV{SHELL} -c \"pppd $p call $f\"",$n);
+	}else{
+		print _ex("$p $ENV{SHELL} -c \"APN= ;PH= ;read -p APN: APN;read -p Number: PH;export APN PH;exec pppd $p call $f$ppp1\"",$n);
+	}
+}
+
 sub netmenu{
 	my @cmd;
 	if($>){
@@ -836,7 +856,7 @@ sub netmenu{
 			$i=$_;
 			$i=~s/.*\///g;
 			if(exists($pppd{$i})){
-				print _ex("_ kill $pppd{$i}","$ppp{$i} stop $i") if($i ne $btppp);
+				print _ex("_ kill $pppd{$i}","$ppp{$i} stop $i") if($i ne $cellppp);
 			}else{
 				my ($default_route,$enable_ch_resolv)=($default_route,$enable_ch_resolv);
 				defined($d=_read($_))||next;
@@ -873,6 +893,11 @@ sub netmenu{
 				$d.="$ppp2";
 				print _ex(($debugppp{$i}?'+':'').$i,$d);
 			}
+		}
+		if(my @m=glob('/sys/class/tty/*/device')){
+			print _menu1('Serial modems');
+			_modem(substr($_,15,-7),"$cellppp-apn",_read("$_/interface")) for(@m);
+			print '</menu>';
 		}
 		btstat();
 		my %bt;
@@ -924,6 +949,10 @@ sub netmenu{
 				for my $k(" label='Bluetooth modems'",undef){
 					print "<separator$k/>",map{$btkey{$_} ne $k?(sort @{$bt{$_}}):()}sort keys %bt;
 				}
+		}
+		if(my @m=glob('/sys/class/tty/*/device/interface')){
+			print '<separator label="(Possible) cell modems"/>';
+			_modem(substr($_,15,-17),$cellppp,_read($_)) for(@m);
 		}
 		print '</openbox_pipe_menu>';
 		exit;
