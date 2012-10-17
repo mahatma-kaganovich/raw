@@ -54,6 +54,7 @@ delete($ENV{DBUS_SESSION_BUS_ADDRESS}) if($NOTIFY==3);
 $notify=$NOTIFY&&exists($ENV{DBUS_SESSION_BUS_ADDRESS});
 
 $cellppp='ya-cell';
+$pppask='APN= ;PH= ;echo;read -p APN: APN && read -p Number[*99#]: PH && export APN PH && ';
 
 sub xml{
 	~s/([	\n<>\'\"\&\\])/'&#'.ord($1).';'/gse for(@_);
@@ -530,7 +531,7 @@ sub btmodem{
 	my $p=$cellppp;
 	if($APN){
 		$p.='-apn';
-		$cmd.='echo;read -p APN: APN;PH= ;export APN PH;';
+		$cmd.=$pppask;
 	}
 	# we can check to restart ppp on existing closed connection, but simplify behaviour:
 	# if ppp broken - something wrong. better to restart whole
@@ -798,9 +799,10 @@ sub _btbrowse{
 	}
 }
 
+
 sub _modem{
 	my ($p,$f)=@_;
-	return if(exists($btdev{$p}));
+	return if(exists($rfcomm_{$p}));
 	if($ioctl && open(my $F,'<',"/dev/$p")){
 		my $r=ioctl($F,&TIOCMGET,my $x);
 		close($F);
@@ -822,7 +824,7 @@ OK:
 		$n=$p;
 	}
 	exists($pidppp{$p})?_ex("$p kill $pidppp{$p}","Stop: $n ($devppp{$p})"):($f eq $cellppp)?_ex("$p $ENV{SHELL} -c \"pppd $p call $f\"",$n):
-		_ex("$p $ENV{SHELL} -c \"APN= ;PH= ;read -p APN: APN;read -p Number: PH;export APN PH;exec pppd $p call $f$ppp1\"",$n);
+		_ex("$p $ENV{SHELL} -c \"$pppask exec pppd $p call $f$ppp1\"",$n);
 }
 
 sub netmenu{
