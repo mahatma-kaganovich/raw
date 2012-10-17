@@ -22,6 +22,7 @@
 # - bridges (for VM, IMHO just connect/disconnect to active bridge).
 
 use bigint;
+$ioctl=eval('require "sys/ioctl.ph"');
 
 $NOTIFY=2; # 0 - none; 1 - libnotify||terminal; 2 - terminal||libnotify; 3 - only terminal
 
@@ -800,6 +801,18 @@ sub _btbrowse{
 sub _modem{
 	my ($p,$f)=@_;
 	return if(exists($btdev{$p}));
+	if($ioctl && open(my $F,'<',"/dev/$p")){
+		my $r=ioctl($F,&TIOCMGET,my $x);
+		close($F);
+		return if(!(defined($r) && (unpack('i',$x) & (&TIOCM_DTR | &TIOCM_RTS))));
+	}else{
+		# dirty
+		for(glob("/sys/class/tty/$p/device/*")){
+			goto OK if(!($_=~/\/(?:driver|power|subsystem|tty|modalias|uevent)$/));
+		}
+		return;
+	}
+OK:
 	my $n;
 	if(defined($n=_read("/sys/class/tty/$p/device/interface"))){
 		chomp($n);
@@ -808,7 +821,7 @@ sub _modem{
 	}else{
 		$n=$p;
 	}
-	exists($pidppp{$p})?_ex("$p kill $pidppp{$p}","Stop: $n"):($f eq $cellppp)?_ex("$p $ENV{SHELL} -c \"pppd $p call $f\"",$n):
+	exists($pidppp{$p})?_ex("$p kill $pidppp{$p}","Stop: $n ($devppp{$p})"):($f eq $cellppp)?_ex("$p $ENV{SHELL} -c \"pppd $p call $f\"",$n):
 		_ex("$p $ENV{SHELL} -c \"APN= ;PH= ;read -p APN: APN;read -p Number: PH;export APN PH;exec pppd $p call $f$ppp1\"",$n);
 }
 
@@ -852,7 +865,7 @@ sub netmenu{
 			$i=$_;
 			$i=~s/.*\///g;
 			if(exists($pppd{$i})){
-				print _ex("_ kill $pppd{$i}","$ppp{$i} stop $i") if($i ne $cellppp);
+				print _ex("_ kill $pppd{$i}","$ppp{$i} stop $i") if($i ne $cellppp && $i ne "$cellppp-apn");
 			}else{
 				my ($default_route,$enable_ch_resolv)=($default_route,$enable_ch_resolv);
 				defined($d=_read($_))||next;
@@ -891,7 +904,7 @@ sub netmenu{
 			}
 		}
 		btstat();
-		print _menu1('Serial modems').$i.'</menu>' if($i=join('',map{_modem(substr($_,15,-7),"$cellppp-apn")}glob('/sys/class/tty/*/device')));
+		print _menu1('Serial (modem)').$i.'</menu>' if($i=join('',map{_modem(substr($_,15,-7),"$cellppp-apn")}glob('/sys/class/tty/*/device')));
 		my %bt;
 		for(sort values %btdev){
 			my $n=_read("/sys/class/bluetooth/$_/name");
