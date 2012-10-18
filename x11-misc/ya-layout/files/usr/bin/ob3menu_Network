@@ -28,6 +28,10 @@ $NOTIFY=2; # 0 - none; 1 - libnotify||terminal; 2 - terminal||libnotify; 3 - onl
 
 $AUTO=$>||$ENV{OB3MENUNET_USER}; # do some auto-ops: iface up/down. disable for root.
 
+# use absolute path to sbin to check permissions
+$iwconfig='/sbin/iwconfig';
+$iwlist='/sbin/iwlist';
+
 $SIG{__DIE__}=sub{
 	$SIG{__DIE__}=sub{};
 	unshift @_,"$0: ";
@@ -36,14 +40,14 @@ $SIG{__DIE__}=sub{
 };
 
 sub _waitkey{
-	$SUDO || return;
+	$SUDO || $notify_ || return;
 	print "\nPress enter...";
 	my $i=<STDIN>;
 }
 
 sub notify{
 print STDERR "\n",@_;
-if(exists($ENV{DBUS_SESSION_BUS_ADDRESS}) && !($SUDO && $NOTIFY>1)){
+if(exists($ENV{DBUS_SESSION_BUS_ADDRESS}) && !(($SUDO || $notify_) && $NOTIFY>1)){
 	($>,$))=($ENV{OB3MENUNET_USER},$ENV{OB3MENUNET_GRP}) if($SUDO);
 	@x=($bin.'notify-send','-t',6000,join('',@_));
 	$ENV{OB3MENUNET_DEBUG}?system(@x):exec(@x);
@@ -64,7 +68,7 @@ sub xml{
 sub _iwhelp{
 	my $NNN="(?:\"[^\"]*\"|'[^']*'|[^'\"\\s]*)";
 	$iw=1;
-	for $i(split(/\n/,_getprg('iwconfig --help 2>&1'))){
+	for $i(split(/\n/,_getprg($iwconfig.' --help 2>&1'))){
 	$i=~s/^\s*interface\s+(\S+)\s+(.*?)\s*$/
 		xml(my $x=$1); my $o=$2;
 		my $op=quotemeta($1);
@@ -101,7 +105,7 @@ sub _iwhelp{
 		}
 	''/e;
 	}
-	$current=_iwdata($i=_getprg('iwconfig 2>/dev/null'),undef,1);
+	$current=_iwdata($i=_getprg($iwconfig.' 2>/dev/null'),undef,1);
 }
 
 sub _iwdata{
@@ -136,7 +140,12 @@ sub _iwpattern{
 
 sub _ex{
 	xml(my $i=$_[0],my $l=$_[-1]);
-	"<item label='$l'><action name='execute'><execute>$id $i</execute></action></item>\n";
+	my $id="$id ";
+	if(!$NOTIFY){
+		my $x=join('|',keys %sudo,'--');
+		$id='' if(!($i=/^(?:$x)/));
+	}
+	"<item label='$l'><action name='execute'><execute>${id}$i</execute></action></item>\n";
 }
 
 sub _cur{
@@ -185,6 +194,7 @@ sub _read{
 
 %noerr=(
 	'pppd'=>{1280=>1,1536=>1},
+	'/usr/sbin/pppd'=>{1280=>1,1536=>1},
 	$ENV{SHELL}=>{4096=>1,1280=>1,1536=>1},
 );
 
@@ -303,7 +313,7 @@ sub _getprg{
 		read($F,$s,-s $F);
 		close($F);
 	}else{
-		if($AUTO && (my ($if)=$_[0]=~/^iwlist+\s+(\S+)/) && _read("/sys/class/net/$if/carrier",1) eq ''){
+		if($AUTO && (my ($if)=$_[0]=~/^$iwlist+\s+(\S+)/) && _read("/sys/class/net/$if/carrier",1) eq ''){
 			$cmd="$cmd || ( ifconfig $if up && ( $cmd || ( sleep 1 && $cmd ) ; ifconfig $if down ) )";
 		}
 		print "#:$AUTO:$ENV{OB3MENUNET_USER} $cmd\n" if($ENV{OB3MENUNET_DEBUG});
@@ -341,7 +351,7 @@ sub rescan{
 	@USER=($ENV{OB3MENUNET_USER},$ENV{OB3MENUNET_GRP});
 	$ENV{HOME}=$ENV{OB3MENUNET_HOME};
 	_iwhelp();
-	_getprg("iwlist $_ scanning 2>&1") for(keys %if_);
+	_getprg("$iwlist $_ scanning 2>&1") for(keys %if_);
 	for("$ENV{HOME}/.cache/ya/net.*.tmp"){
 		exists($tmp{$_})||unlink $_;
 	}
@@ -374,7 +384,7 @@ sub resolvstat{
 sub aplist{
 	pop @_;
 	$id=join(' ',$0,@_);
-	my $i=_getprg("iwlist $if scanning 2>&1");
+	my $i=_getprg("$iwlist $if scanning 2>&1");
 	my $keys=join('|',keys %{$iw{'Encryption key'}->{'key'}});
 	if(!$! && index($i,'Cell')>=0){
 		print '<separator label="'.$header.join(',',map{join('|',keys %{$iw{$_}})}@ID).'"/>';
@@ -418,14 +428,24 @@ sub btpath{
 # devel
 sub btnet{
 	while(my ($a,$d)=each %btdev){
-		$btpath{$a}=btpath($a);
+		my $p=$btpath{$a}=btpath($a);
+		_run("dbus-send --system --dest=org.bluez --print-reply $p org.bluez.Agent.RequestPinCode object:/bin/true");
+#		_run("dbus-send --system --dest=org.bluez --print-reply $p org.bluez.Adapter.GetProperties");
+		for my $c(keys %{$btname{$a}}){
+			my $x=$c;
+			$x=~s/:/_/gs;
+#			_run("dbus-send --system --dest=org.bluez --print-reply $p/dev_$x org.bluez.Device.GetProperties");
+#			_run("dbus-send --system --dest=org.bluez --print-reply $p/dev_$x org.bluez.Device.DiscoverServices string:");
+#			print "$c OK\n";
+		}
 	}
+	exit;
 	while(my ($a,$p)=each %btpath){
 		if($_[0]){
-			my $net=`dbus-send --system --dest=org.bluez --print-reply $p org.bluez.NetworkServer.Unregister string:nap`;
+#			my $net=`dbus-send --system --dest=org.bluez --print-reply $p org.bluez.NetworkServer.Unregister string:nap`;
 #			my $net=`dbus-send --system --dest=org.bluez --print-reply $p org.bluez.NetworkServer.Unregister string:nap`;
 #			my $net=`dbus-send --system --dest=org.bluez --print-reply $p org.bluez.NetworkServer.Register string:nap string:$_[0]`;
-			print STDERR "nap:$net\n\n";
+#			print STDERR "nap:$net\n\n";
 #			for my $uuid('gn','panu','nap'){
 #				print "===$uuid===\n";
 #				my $net=`dbus-send --system --dest=org.bluez --print-reply $p org.bluez.NetworkServer.Register string:$uuid string:$_[0]`;
@@ -525,6 +545,20 @@ sub btstat{
 	}
 }
 
+sub _pppname{
+	my $p='/usr/sbin/';
+	if($> && (my @s=stat("/dev/$_[0]"))){
+		if(-w _){
+			$grp0{$s[5]}=1;
+		}else{
+			$p='';
+			$grp1{$s[5]}=1;
+		}
+		$grp{$s[5]}->{$_[0]}=1;
+	}
+	$p
+}
+
 sub btmodem{
 	my ($a,$c,$ch)=@_;
 	my $cmd;
@@ -543,7 +577,7 @@ sub btmodem{
 		$ch='$ch';
 		$cmd.='ch=`sdptool search --bdaddr '.$c.' 0x1103|grep Channel` && ch=${ch##*Channel:} && ';
 	}
-	("$ENV{SHELL} -c \"${cmd}rfcomm -i $a bind $rf $c $ch && [ -e /dev/$rf ] && exec pppd $rf call $p$ppp1\"");
+	("$ENV{SHELL} -c \"${cmd}rfcomm -i $a bind $rf $c $ch && [ -e /dev/$rf ] && exec "._pppname($rf)."pppd $rf call $p$ppp1\"");
 }
 
 sub pppstat{
@@ -626,7 +660,7 @@ $ENV='^(?:OB3MENUNET_.*|DBUS_SESSION_BUS_ADDRESS|DISPLAY)$';
 );
 
 %submenu=(
-'iwconfig ap'=>sub{
+"$iwconfig ap"=>sub{
 	_iwhelp();
 	for(keys %{$iw{'Address|Access Point'}->{'ap'}}){
 		print _ex($_) if(!($_=~/[\[\(\|]/));
@@ -727,6 +761,12 @@ sub _run{
 #	dbus_bluez($p,'Network.Connect string:$pr->{UUID}');
 	dbus_bluez($p,'Network.Disconnect');
 },
+'GPASSWD'=>sub{
+	my ($c,$u,@g)=@_;
+	my $r;
+	$out=map{my $x=`gpasswd $c '$u' '$_'`;$r||=$?;$x}@g;
+	$r;
+},
 );
 
 sub _sdpread{
@@ -823,8 +863,10 @@ OK:
 	}else{
 		$n=$p;
 	}
-	exists($pidppp{$p})?_ex("$p kill $pidppp{$p}","Stop: $n ($devppp{$p})"):($f eq $cellppp)?_ex("$p $ENV{SHELL} -c \"pppd $p call $f\"",$n):
-		_ex("$p $ENV{SHELL} -c \"$pppask exec pppd $p call $f$ppp1\"",$n);
+	$f=_pppname($p)."pppd $p call $f$ppp1";
+	$n="pppd $n $ppp2";
+	exists($pidppp{$p})?_ex("$p kill $pidppp{$p}","Stop: $n ($devppp{$p})"):($f eq $cellppp)?_ex("$p $f",$n):
+		_ex("$p $ENV{SHELL} -c \"$pppask exec $f\"",$n);
 }
 
 sub netmenu{
@@ -843,6 +885,13 @@ sub netmenu{
 			rescan(@_);
 			exit;
 		}
+		@cmd=@_;
+		goto SUDO;
+	}
+	if($notify_=($_[0] eq '--notify')){
+		delete($ENV{DBUS_SESSION_BUS_ADDRESS}) if($NOTIFY==2);
+		$notify=$NOTIFY;
+		shift;
 		@cmd=@_;
 		goto SUDO;
 	}
@@ -900,7 +949,7 @@ sub netmenu{
 					$d="ppp $i";
 					$devppp{$d}=$i;
 				}
-				$i="_ pppd call $i$ppp1";
+				$i='_ '._pppname($d)."pppd call $i$ppp1";
 				$d.="$ppp2";
 				print _ex(($debugppp{$i}?'+':'').$i,$d);
 			}
@@ -926,6 +975,16 @@ sub netmenu{
 			}
 		}
 		print '<separator/>';
+		if(scalar(%grp)){
+			$grp{$_}=''.getgrgid($_)||"\#$_" for(keys %grp);
+			my $u=getpwuid($>);
+			if(my @g=sort map{$grp{$_}}keys %grp0){
+				print _ex("_ GPASSWD -d \"$u\" ".join(' ',map{'"'.$_.'"'}@g),"Leave group: ".join(',',@g));
+			}
+			if(my @g=sort map{$grp{$_}}keys %grp1){
+				print _ex("_ GPASSWD -a \"$u\" ".join(' ',map{'"'.$_.'"'}@g),"Join group: ".join(',',@g));
+			}
+		}
 		my ($sc,$sc1,$sc2,$sc3,$sc4);
 		for(values %btdev){
 			$sc1.="hciconfig $_ up;hciconfig $_ piscan;";
@@ -949,7 +1008,7 @@ sub netmenu{
 #				$carrier{$_} && next;
 				$header="$_ ";
 				$if=$_;
-				aplist($_,'iwconfig',$_,'ap')
+				aplist($_,$iwconfig,$_,'ap')
 			}
 		}
 		if(scalar(%bt)){
@@ -976,10 +1035,10 @@ sub netmenu{
 					if(scalar(%bridge)){
 						print _ex("-NAP $if",'Remove');
 					}else{
-						print _ex("\@sdptool -i $if del $r",'Remove');
+						print _ex("sdptool -i $if del $r",'Remove');
 					}
 				}else{
-					print _ex("\@sdptool -i $if add NAP",'Create without bridge');
+					print _ex("sdptool -i $if add NAP",'Create without bridge');
 				}
 				print '</menu>';
 				print '<separator label="Bluetooth devices"/>';
@@ -1014,7 +1073,7 @@ sub netmenu{
 			for my $s(keys %iw){
 				for my $o(keys %{$iw{$s}}){
 					if(!$s){
-						$o{$o}.=_ex("iwconfig $if $o",$o);
+						$o{$o}.=_ex("$iwconfig $if $o",$o);
 						next;
 					}
 					my $d=$current->{$s}->{$o};
@@ -1026,10 +1085,10 @@ sub netmenu{
 						$def=_cur($d);
 					}
 					if($o eq 'ap'){
-						$o{$o}.=_menu("iwconfig $if $o","$t:") if(scalar(%{$iw{'Address|Access Point'}->{'ap'}}));
+						$o{$o}.=_menu("$iwconfig $if $o","$t:") if(scalar(%{$iw{'Address|Access Point'}->{'ap'}}));
 						next;
 					}
-					$i.=_menu1("iwconfig $if $o",$t);
+					$i.=_menu1("$iwconfig $if $o",$t);
 					my $n;
 					for(sort keys %{$iw{$s}->{$o}}){
 						next if($_=~/[\[\(\|]/);
@@ -1038,7 +1097,7 @@ sub netmenu{
 							$i.=$def;
 							$def=undef;
 						}else{
-							$i.=_ex("iwconfig $if $o $_",$_);
+							$i.=_ex("$iwconfig $if $o $_",$_);
 						}
 					}
 					$i.=$def.'</menu>';
@@ -1068,24 +1127,51 @@ EX:
 SUDO:
 	die "Illegal --sudo context\n" if($SUDO && (!@cmd || $>));
 	if(@cmd){
-		my %cmd;
-		$cmd{$_}=1 for(@cmd);
-		if(!$SUDO && $> && !($cmd[0]=~s/^\@//)){
-			for(@cmd){
-				$_="\"$_\"" if($_=~/[\s\*\?]/);
+		$cmd{$_}++ for(@cmd);
+		my ($term,$root,$cmd);
+		if(!$SUDO && !$notify_ && $>){
+			$root||=exists($sudo{$cmd[0]});
+			# if path is absolute - check later
+			$i='iwconfig|iwlist|kill|pppd';
+			$root||=$cmd{$ENV{SHELL}}?grep(/ (?:$i) /,@cmd):grep(/^(?:$i)$/,@cmd);
+			if(!$root){ # to get permissions to /usr/sbin/ & /sbin/ sometimes we need sudo
+				if($cmd{$ENV{SHELL}}){
+					for(@cmd){
+						my $i=$_;
+						$i=~s/ ((?:\/usr)?\/sbin\/\w+)/$cmd{$1}++/e;
+					}
+				}
+				for(grep(/^(?:\/usr)?\/sbin\//,keys %cmd)){
+					my @s=stat($_);
+					next if(-x _ && $s[2] & 04000);
+					$root=1;
+					last;
+				}
 			}
-			my $cmd=join(' ',@cmd,'--  root password:');
-#			$cmd=quotemeta($cmd);
+		}
+		$term=!$notify_ && ($root || ($cmd{$ENV{SHELL}} && grep(/ read /,@cmd) || ($NOTIFY>1 && !$notify)));
+		if($term){
+			$_="\"$_\"" for(grep(/[\s\*\?]/,@cmd));
+		}
+		if($root){
+			$cmd.=join(' ',@cmd,'-- root password:');
 			$cmd=~s/([\"\'\\])/\\$1/gs;
+		}
+		if($root){
 			if($notify){
 				die 'Security problem' if(substr($0,0,1) ne '/');
+				shift @cmd if($cmd[0] eq $0);
 				unshift @cmd,$0,'--sudo';
-				unshift @cmd,map{"$_=\"$ENV{$_}\""}grep(/$ENV/,keys %ENV);
-				$cmd="[ob3menunet] $cmd";
 			}
-			@cmd=('ya-session','--run',join(' ','+sudo','-p',"\"$cmd\"",@cmd));
+			unshift @cmd,map{"$_=\"$ENV{$_}\""}grep(/$ENV/,keys %ENV);
+			$cmd="[ob3menunet] $cmd";
+			unshift @cmd,'sudo','-p',"\"$cmd\"";
+		}elsif($notify && !$notify_){
+			shift @cmd if($cmd[0] eq $0);
+			unshift @cmd,$0,'--notify';
 		}
-#		$iw=$SUDO && ($iw || $cmd{'iwconfig'}); # rescan if iwconfig+sudo
+		@cmd=('ya-session','--run','+'.join(' ',@cmd)) if($term);
+#		$iw=$SUDO && ($iw || $cmd{$iwconfig}); # rescan if iwconfig+sudo
 		$iw=$SUDO; # rescan as possible
 		$iw&&=!$cmd{'kill'};
 		$notify||=$iw;
@@ -1111,7 +1197,7 @@ SUDO:
 		}elsif($notify && !$>){
 			notify("OK\n$cmd\n");
 		}
-		exit $i;
+		exit $r
 	}
 }
 
