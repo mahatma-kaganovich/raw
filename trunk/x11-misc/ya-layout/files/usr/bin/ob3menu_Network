@@ -578,7 +578,7 @@ sub btmodem{
 	# if ppp broken - something wrong. better to restart whole
 	if(exists($rfcomm{$a}->{$c})){
 		my $d=$btdev{$a};
-		return ("rfcomm -i $a release $d",'stop: ');
+		return ("rfcomm -i $a release $d",'Stop: ');
 	}
 	if(!defined($ch)){
 		$ch='$ch';
@@ -871,7 +871,6 @@ OK:
 		$n=$p;
 	}
 	$f=_ppppath($p)."pppd $p call $f$ppp1";
-	$n="pppd $n $ppp2";
 	exists($pidppp{$p})?_ex("$p kill $pidppp{$p}","Stop: $n ($devppp{$p})"):($f eq $cellppp)?_ex("$p $f",$n):
 		_ex("$p $ENV{SHELL} -c \"$pppask $f\"",$n);
 }
@@ -923,7 +922,7 @@ sub netmenu{
 			$i=$_;
 			$i=~s/.*\///g;
 			if(exists($pppd{$i})){
-				print _ex("_ kill $pppd{$i}","$ppp{$i} stop $i") if($i ne $cellppp && $i ne "$cellppp-apn");
+				print _ex("_ kill $pppd{$i}","Stop: $ppp{$i} $i") if($i ne $cellppp && $i ne "$cellppp-apn");
 			}else{
 				my ($default_route,$enable_ch_resolv)=($default_route,$enable_ch_resolv);
 				defined($d=_read($_))||next;
@@ -962,7 +961,7 @@ sub netmenu{
 			}
 		}
 		btstat();
-		print _menu1('Serial (modem)').$i.'</menu>' if($i=join('',map{_modem(substr($_,15,-7),"$cellppp-apn")}glob('/sys/class/tty/*/device')));
+		print _menu1("Serial modems (pppd $ppp2)").$i.'</menu>' if($i=join('',map{_modem(substr($_,15,-7),"$cellppp-apn")}glob('/sys/class/tty/*/device')));
 		my %bt;
 		for(sort values %btdev){
 			my $n=_read("/sys/class/bluetooth/$_/name");
@@ -970,7 +969,7 @@ sub netmenu{
 			print _menu($_,"$_ \"$n\"");
 		}
 		while(my ($r,$n)=each %rfcomm_){
-			push @{$bt{$n}},_ex("$r rfcomm release $r","$r stop $devppp{$r} \"$n\"");
+			push @{$bt{$n}},_ex("$r rfcomm release $r","Stop: $r $devppp{$r} \"$n\"");
 		}
 		my $chat='/usr/sbin/chat';
 		$chat.=' -V' if($ENV{OB3MENUNET_DEBUG});
@@ -978,7 +977,7 @@ sub netmenu{
 			while(my ($c,$n)=each %{$btname{$a}}){
 				exists($rfcomm{$a}->{$c}) && next;
 				my @r=btmodem($a,$c);
-				push @{$bt{$n}},_ex("$rf $r[0]","$r[1] $rf pppd $ppp2 \"$n\"");
+				push @{$bt{$n}},_ex("$rf $r[0]","$r[1] $rf \"$n\"");
 			}
 		}
 		print '<separator/>';
@@ -1025,11 +1024,11 @@ sub netmenu{
 			}
 		}
 		if(scalar(%bt)){
-				for my $k(" label='Bluetooth modems'",undef){
+				for my $k(" label='Bluetooth modems (pppd $ppp2)'",undef){
 					print "<separator$k/>",map{$btkey{$_} ne $k?(sort @{$bt{$_}}):()}sort keys %bt;
 				}
 		}
-		print '<separator label="(Possible) cell modems"/>',$i if($i=join('',map{_modem(substr($_,15,-17),$cellppp)}glob('/sys/class/tty/*/device/interface')));
+		print "<separator label='Cell modems (pppd $ppp2)'/>",$i if($i=join('',map{_modem(substr($_,15,-17),$cellppp)}glob('/sys/class/tty/*/device/interface')));
 		print '</openbox_pipe_menu>';
 		exit;
 	}elsif(!$#_){
@@ -1152,14 +1151,11 @@ SUDO:
 				if($cmd{$ENV{SHELL}}){
 					for(@cmd){
 						my $i=$_;
-						$i=~s/ ((?:\/usr)?\/sbin\/\w+)/$cmd{$1}++/e;
+						$i=~s/ ((?:\/usr)?\/sbin\/\w+)/$cmd{$1}++/gse;
 					}
 				}
 				for(grep(/^(?:\/usr)?\/sbin\//,keys %cmd)){
-					my @s=stat($_);
-					next if(-x _ && $s[2] & 04000);
-					$root=1;
-					last;
+					last if($root=!((my @s=stat($_)) && -x _ && $s[2] & 04000));
 				}
 			}
 		}
