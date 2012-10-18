@@ -4,5 +4,7 @@ connect "/usr/sbin/chat -V ABORT BUSY ABORT 'NO CARRIER' '' +++ATH OK ATZ OK ${A
 # standard no compression, no 1 sec ERROR
 #connect "/usr/sbin/chat -V ABORT BUSY ABORT 'NO CARRIER' '' +++ATH OK ATZ OK ${APN:+'AT+CGDCONT=1,\"IP\",\"'$APN'\"' OK} ATD${PH:-*99#} TIMEOUT 10 CONNECT"
 disconnect "/usr/sbin/chat -V TIMEOUT 5 '' '+++ATH' ABORT OK 'NO CARRIER'"
-#debug
-#nodetach
+noauth
+ipcp-accept-remote
+noipdefault
+updetach

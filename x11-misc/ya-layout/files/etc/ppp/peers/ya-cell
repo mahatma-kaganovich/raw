@@ -1,3 +1,6 @@
 
 connect "/usr/sbin/chat -V ABORT BUSY ABORT 'NO CARRIER' ABORT ERROR '' +++ATHZ OK ATD*99# TIMEOUT 10 CONNECT"
 disconnect "/usr/sbin/chat -V TIMEOUT 5 '' '+++ATH' ABORT OK 'NO CARRIER'"
+noauth
+ipcp-accept-remote
+noipdefault
