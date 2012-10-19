@@ -856,7 +856,10 @@ sub _btbrowse{
 
 sub _modem{
 	my ($p,$f)=@_;
-	return if(exists($rfcomm_{$p}));
+	if(exists($rfcomm_{$p})){
+		_ppppath($p);
+		return
+	}
 	if($ioctl && open(my $F,'<',"/dev/$p")){
 		my $r=ioctl($F,&TIOCMGET,my $x);
 		close($F);
@@ -1151,7 +1154,7 @@ SUDO:
 		if(!$notify_ && $>){
 			$root||=exists($sudo{$cmd[0]});
 			# if path is absolute - check later
-			$i='iwconfig|iwlist|kill|pppd|dhcpcd';
+			$i='iwconfig|iwlist|kill|pppd|dhcpcd|rfcomm';
 			$root||=$cmd{$ENV{SHELL}}?grep(/ (?:$i) /,@cmd):grep(/^(?:$i)$/,@cmd);
 			if(!$root){ # to get permissions to /usr/sbin/ & /sbin/ sometimes we need sudo
 				if($cmd{$ENV{SHELL}}){
