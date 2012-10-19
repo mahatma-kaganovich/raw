@@ -32,6 +32,9 @@ $AUTO=$>||$ENV{OB3MENUNET_USER}; # do some auto-ops: iface up/down. disable for 
 $iwconfig='/sbin/iwconfig';
 $iwlist='/sbin/iwlist';
 
+# always offline scanning
+#$iwlast=" last";
+
 $SIG{__DIE__}=sub{
 	$SIG{__DIE__}=sub{};
 	unshift @_,"$0: ";
@@ -70,7 +73,7 @@ sub xml{
 sub _iwhelp{
 	my $NNN="(?:\"[^\"]*\"|'[^']*'|[^'\"\\s]*)";
 	$iw=1;
-	for $i(split(/\n/,_getprg($iwconfig.' --help 2>&1'))){
+	for $i(split(/\n/,`$iwconfig --help 2>&1`)){
 	$i=~s/^\s*interface\s+(\S+)\s+(.*?)\s*$/
 		xml(my $x=$1); my $o=$2;
 		my $op=quotemeta($1);
@@ -107,7 +110,8 @@ sub _iwhelp{
 		}
 	''/e;
 	}
-	$current=_iwdata($i=_getprg($iwconfig.' 2>/dev/null'),undef,1);
+#	$current=_iwdata($i=_getprg($iwconfig.' 2>/dev/null'),undef,1);
+	$current=_iwdata($i=`$iwconfig 2>/dev/null`,undef,1);
 }
 
 sub _iwdata{
@@ -304,7 +308,6 @@ sub checkroute{
 my @ID=('ESSID','Frequency','Channel','Address|Access Point');
 
 sub _getprg{
-	return `$_[0]`;
 	my $cmd=$_[0];
 	my $n=$cmd;
 	$n=~s/\s+/ /gs;
@@ -322,7 +325,6 @@ sub _getprg{
 		}
 		print "#:$AUTO:$ENV{OB3MENUNET_USER} $cmd\n" if($ENV{OB3MENUNET_DEBUG});
 		$s=`$cmd`;
-		return $s;
 	}
 	if($if eq ''){
 		$tmp{$n}=undef;
@@ -389,7 +391,7 @@ sub resolvstat{
 sub aplist{
 	pop @_;
 	$id=join(' ',$0,@_);
-	my $i=_getprg("$iwlist $if scanning 2>&1");
+	my $i=_getprg("$iwlist $if scanning$iwlast 2>&1");
 	my $keys=join('|',keys %{$iw{'Encryption key'}->{'key'}});
 	if(!$! && index($i,'Cell')>=0){
 		print '<separator label="'.$header.join(',',map{join('|',keys %{$iw{$_}})}@ID).'"/>';
@@ -724,6 +726,7 @@ sub _run{
 }
 
 %sudo=(
+'RESCAN'=>sub{rescan();exit;},
 '-NAP'=>sub{
 	($if)=@_;
 	my $p=btpath($if);
@@ -891,10 +894,6 @@ sub netmenu{
 		delete($ENV{DBUS_SESSION_BUS_ADDRESS}) if($NOTIFY==2);
 		$notify=$NOTIFY; # now we can notify in sudo'ed terminal
 		shift;
-		if($_[0] eq '--rescan'){
-			rescan(@_);
-			exit;
-		}
 		@cmd=@_;
 		goto SUDO;
 	}
@@ -1020,12 +1019,7 @@ sub netmenu{
 		print _menu("--debug",'debug') if(!$ENV{OB3MENUNET_DEBUG});
 		print _ex("_ $ENV{SHELL} -c \\\"$sc\\\"", 'Bluetooth ON - scan & agent - OFF') if(-e '/usr/bin/simple-agent');
 		if($iw){
-			if($>){
-				die 'Security problem' if(substr($0,0,1) ne '/');
-				$i=join(' ',map{"$_=\"$ENV{$_}\""}grep(/$ENV/,keys %ENV));
-				$id="ya-session --run +sudo -p $0:root:password: $i $id";
-#				print _ex("--sudo --rescan",'Wi-Fi rescan');
-			}
+			print _ex("_ RESCAN",'Wi-Fi rescan') if($> || $iwlast);
 			_iwhelp();
 			for(@wlan){
 				next if(!$AUTO && $carrier{$_} eq '');
@@ -1157,7 +1151,7 @@ SUDO:
 		if(!$notify_ && $>){
 			$root||=exists($sudo{$cmd[0]});
 			# if path is absolute - check later
-			$i='iwconfig|iwlist|kill|pppd';
+			$i='iwconfig|iwlist|kill|pppd|dhcpcd';
 			$root||=$cmd{$ENV{SHELL}}?grep(/ (?:$i) /,@cmd):grep(/^(?:$i)$/,@cmd);
 			if(!$root){ # to get permissions to /usr/sbin/ & /sbin/ sometimes we need sudo
 				if($cmd{$ENV{SHELL}}){
@@ -1212,7 +1206,7 @@ SUDO:
 		$cmd||=join(' ',@cmd);
 		$r=0 if(exists($noerr{$cmd[0]}->{$r1=$r}));
 		$r && die "$cmd\nError: $cmd[0]:$r $!\n$out\n";
-#		rescan() if($iw);
+		rescan() if($iw);
 		$ENV{OB3MENUNET_DEBUG} && (!$cmd{'kill'}) && _waitkey();
 		if($out ne ''){
 			notify("$cmd\n$out\n");
