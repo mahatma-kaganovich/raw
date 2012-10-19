@@ -60,6 +60,8 @@ $notify=$NOTIFY&&exists($ENV{DBUS_SESSION_BUS_ADDRESS});
 $cellppp='ya-cell';
 $pppask='APN= ;PH= ;echo;read -p APN: APN && read -p Number[*99#]: PH && export APN PH && ';
 
+@user=getpwuid($>);
+
 sub xml{
 	~s/([	\n<>\'\"\&\\])/'&#'.ord($1).';'/gse for(@_);
 	join(' ',@_);
@@ -302,6 +304,7 @@ sub checkroute{
 my @ID=('ESSID','Frequency','Channel','Address|Access Point');
 
 sub _getprg{
+	return `$_[0]`;
 	my $cmd=$_[0];
 	my $n=$cmd;
 	$n=~s/\s+/ /gs;
@@ -319,6 +322,7 @@ sub _getprg{
 		}
 		print "#:$AUTO:$ENV{OB3MENUNET_USER} $cmd\n" if($ENV{OB3MENUNET_DEBUG});
 		$s=`$cmd`;
+		return $s;
 	}
 	if($if eq ''){
 		$tmp{$n}=undef;
@@ -550,7 +554,7 @@ sub btstat{
 # remember GID of device if it is not active & user can be joined
 sub _ppppath{
 	my $p='/usr/sbin/';
-	if($> && (my @s=stat("/dev/$_[0]"))){
+	if($> && (my @s=stat("/dev/$_[0]")) && $s[4] ne $user[3]){
 		my $g=$s[5];
 		my $e=(" $) "=~/ $g /);
 		if(-w _){
@@ -922,15 +926,20 @@ sub netmenu{
 			$i=$_;
 			$i=~s/.*\///g;
 			if(exists($pppd{$i})){
-				print _ex("_ kill $pppd{$i}","Stop: $ppp{$i} $i") if($i ne $cellppp && $i ne "$cellppp-apn");
+				if($i=~/^ya-/){
+					push @ya_ppp,$i;
+				}else{
+					print _ex("_ kill $pppd{$i}","Stop: $ppp{$i} $i");
+				}
 			}else{
 				my ($default_route,$enable_ch_resolv)=($default_route,$enable_ch_resolv);
 				defined($d=_read($_))||next;
+				$d="\n$d\n";
 				$debugppp{$i}=$ENV{OB3MENUNET_DEBUG};
 #				$debug=1 if($d=~/\n\s*debug(\s|$)/);
 				$debugppp{$i}=1 if($d=~/\n\s*(?:nodetach|updetach)(\s|$)/);
 				# todo: if pptp goes via default network - CAN replace default network, but keep destination subnet
-				if($d=~s/^pty\s+\"pptp\s+(\S+).*/$1/gs){
+				if($d=~s/\npty\s+\"pptp\s+(\S+).*/$1/gs){
 					# todo: resolve host $d
 					my @r=checkroute(ip2n($d));
 					next if(!@r);
@@ -945,15 +954,18 @@ sub netmenu{
 						$default_route=0;
 					}
 					$d="pptp $i ($d)";
-				}elsif($d=~s/^pty\s+\"pppoe\s(?:.*\s)?-I\s+(\S+)\s.*/$1/gs){
+				}elsif($d=~s/\npty\s+\"pppoe\s(?:.*\s)?-I\s+(\S+)\s.*/$1/gs){
 					next if(!$carrier{$d});
 					$default_route-=(!$_->[0] && $_[3] eq $i) for(@routes);
 					$d="pppoe $i ($d)";
 				}else{
-					$d=~s/\s.*//gs;
-					next if(!($d && (!-e "/var/lock/LCK..$d") && -e "/dev/$d"));
+					my $dd;
+					($dd)=$d=~/\n\s*\/dev\/(\S+)/s or
+						$d=~s/\n\s*(\w+\d)\s/$dd=$1 if(-e "\/dev\/$1");''/gse or
+						next;
+					next if(!($dd && -e "/dev/$dd" && !-e "/var/lock/LCK..$dd"));
 					$d="ppp $i";
-					$devppp{$d}=$i;
+					$devppp{$dd}=$i;
 				}
 				$i='_ '._ppppath($d)."pppd call $i$ppp1";
 				$d.="$ppp2";
@@ -981,8 +993,8 @@ sub netmenu{
 			}
 		}
 		print '<separator/>';
-		if(scalar(%grp) && defined(my $u=getpwuid($>))){
-			my $uu=quotemeta($u);
+		if(scalar(%grp) && @user){
+			my $uu=quotemeta($user[0]);
 			my ($x10,$x11,$x00,$x01);
 			for(sort keys %grp){
 				my ($i,@g)=getgrgid($_) or next;
@@ -994,8 +1006,8 @@ sub netmenu{
 					$x11.=exists($grp1{$_})?" $i":" ($i)";
 				}
 			}
-			$x10 && print _ex("_ GPASSWD -a \"$u\" $x10","Join group: $x11");
-			$x00 && print _ex("_ GPASSWD -d \"$u\" $x00","Leave group: $x01");
+			$x10 && print _ex("_ GPASSWD -a \"$user[0]\" $x10","Join group: $x11");
+			$x00 && print _ex("_ GPASSWD -d \"$user[0]\" $x00","Leave group: $x01");
 		}
 		my ($sc,$sc1,$sc2,$sc3,$sc4);
 		for(values %btdev){
@@ -1012,7 +1024,7 @@ sub netmenu{
 				die 'Security problem' if(substr($0,0,1) ne '/');
 				$i=join(' ',map{"$_=\"$ENV{$_}\""}grep(/$ENV/,keys %ENV));
 				$id="ya-session --run +sudo -p $0:root:password: $i $id";
-				print _ex("--sudo --rescan",'Wi-Fi rescan');
+#				print _ex("--sudo --rescan",'Wi-Fi rescan');
 			}
 			_iwhelp();
 			for(@wlan){
@@ -1200,7 +1212,7 @@ SUDO:
 		$cmd||=join(' ',@cmd);
 		$r=0 if(exists($noerr{$cmd[0]}->{$r1=$r}));
 		$r && die "$cmd\nError: $cmd[0]:$r $!\n$out\n";
-		rescan() if($iw);
+#		rescan() if($iw);
 		$ENV{OB3MENUNET_DEBUG} && (!$cmd{'kill'}) && _waitkey();
 		if($out ne ''){
 			notify("$cmd\n$out\n");
