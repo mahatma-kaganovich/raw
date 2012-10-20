@@ -32,6 +32,7 @@ $AUTO=$>||$ENV{OB3MENUNET_USER}; # do some auto-ops: iface up/down. disable for 
 $iwconfig='/sbin/iwconfig';
 $iwlist='/sbin/iwlist';
 
+
 # always offline scanning
 #$iwlast=" last";
 
@@ -57,6 +58,7 @@ if(exists($ENV{DBUS_SESSION_BUS_ADDRESS}) && !(($SUDO || $notify_) && $NOTIFY>1)
 }
 }
 
+$DBUS=exists($ENV{DBUS_SESSION_BUS_ADDRESS});
 delete($ENV{DBUS_SESSION_BUS_ADDRESS}) if($NOTIFY==3);
 $notify=$NOTIFY&&exists($ENV{DBUS_SESSION_BUS_ADDRESS});
 
@@ -427,15 +429,20 @@ sub aplist{
 }
 
 sub btpath{
-	my $i=_run("dbus-send --system --dest=org.bluez --print-reply / org.bluez.Manager.FindAdapter string:$_[0]");
-	my ($p)=$i=~/object path \"(.*?)\"/s;
-	$p||die "DBUS: org.bluez.Manager.FindAdapter($_[0]) empty answer\n";
+	my ($d,$nodie)=(@_);
+	my $p=$btpath{$d};
+	$p && return $p;
+	my $i=_run_("dbus-send --system --dest=org.bluez --print-reply / org.bluez.Manager.FindAdapter string:$d");
+	if(!$? && (($p)=$i=~/object path \"(.*?)\"/s) && $p){
+		return $btpath{$d}=$p;
+	}
+	$nodie || die "DBUS: org.bluez.Manager.FindAdapter($d) error\n";
 }
 
 # devel
 sub btnet{
 	while(my ($a,$d)=each %btdev){
-		my $p=$btpath{$a}=btpath($a);
+		my $p=btpath($a);
 		_run("dbus-send --system --dest=org.bluez --print-reply $p org.bluez.Agent.RequestPinCode object:/bin/true");
 #		_run("dbus-send --system --dest=org.bluez --print-reply $p org.bluez.Adapter.GetProperties");
 		for my $c(keys %{$btname{$a}}){
@@ -478,10 +485,24 @@ sub btnet{
 }
 
 sub dbus_bluez{
-	my $i=_run("dbus-send --system --dest=org.bluez --print-reply $_[0] org.bluez.$_[1]");
+	my ($if,$x,$c)=@_;
+	if($c){
+		$c=~s/:/_/g;
+		$c="/dev_$c";
+	}
+	my $i=_run('dbus-send --system --dest=org.bluez --print-reply '.btpath($if)."$c org.bluez.$x");
 	my $r={};
 	$i=~s/\n\s*([^:]*):\s*\"([^\"]*)\"/$r->{$1}=$2;''/ges;
 	$r;
+}
+
+sub _btdbus{
+	my ($if,$x,$c)=@_;
+	if($c){
+		$c=~s/:/_/g;
+		$c="/dev_$c";
+	}
+	'dbus-send --system --dest=org.bluez --print-reply '.btpath($if,1)."$c org.bluez.$x";
 }
 
 sub btstat{
@@ -499,8 +520,8 @@ sub btstat{
 #			$btconn{$a}->{$c}->{$d}=undef;
 			for(glob("$_/rfcomm*")){
 				~s/.*\///gs;
-				$rfcomm{$a}->{$c}->{$_}=
-				$rfcomm_{$_}=$btname{$a}->{$c}||$c;
+				$rfcomm{$a}->{$c}->{$_}=$btname{$a}->{$c}||$c;
+				$rfcomm_{$_}=[$a,$c];
 			}
 			next;
 		}
@@ -530,14 +551,22 @@ sub btstat{
 		if(!exists($rfcomm_{$r})){
 			my $c=_read("$_/address");
 			chomp($c);
-			$rfcomm{$a}->{$c}->{$r}=
-			$rfcomm_{$r}=$btname{$a}->{$c}||$c;
+			$rfcomm{$a}->{$c}->{$r}=$btname{$a}->{$c}||$c;
+			$rfcomm_{$r}=[$a,$c];
 		}
 	}
-#	scalar(%btdev)||return;
+	scalar(%btdev)||return;
 	$rf=0;
 	while(exists($rfcomm_{"rfcomm$rf"})){$rf++};
 	$rf="rfcomm$rf";
+	if(open(my $F,'-|',"/usr/sbin/hciconfig")){
+		my $i;
+		while(<$F>){
+			$_=~s/^(\S*):/$i=$1/e and next;
+			$DOWN{$i}=1 if($_=~/^\s*DOWN\s*$/);
+		}
+		close($F);
+	}
 	if(defined($if)){
 		our $a=$btdev_{$if};
 		$id="$0 $if";
@@ -572,25 +601,37 @@ sub _ppppath{
 	$p
 }
 
+sub _btmisc{
+	my ($d,$c,$s)=@_;
+	return if(!$DBUS || !btpath($d,1));
+	my $chk=_btdbus($d,"$s.GetProperties",$c);
+	$chk=`$chk`;
+	return if($?);
+	return _ex(_btdbus($d,"$s.Connect",$c),"- $s") if($chk=~/disconnected|false/);
+	return _ex(_btdbus($d,"$s.Disonnect",$c),"+ $s") if($chk=~/connected|true/);
+	return _ex(_btdbus($d,"$s.Disonnect",$c),"* $s") if($chk=~/playing/);
+	return _ex(undef,"~ $s") if($chk=~/connecting/);
+	return _ex(undef,"? $s");
+}
+
+# too wanted to do "rfcomm bind/release" via dbus, but bluetoothd serial waiting for sender process
 sub btmodem{
-	my ($a,$c,$ch)=@_;
+	my ($a,$c,$ch)=(@_);
+	# we can check to restart ppp on existing closed connection, but simplify behaviour:
+	# if ppp broken - something wrong. better to restart whole
+	return ("rfcomm release $rfcomm{$a}->{$c}",'Stop: ') if(exists($rfcomm{$a}->{$c}));
+	my $d=$btdev{$a};
 	my $cmd;
 	my $p=$cellppp;
 	if($APN){
 		$p.='-apn';
 		$cmd.=$pppask;
 	}
-	# we can check to restart ppp on existing closed connection, but simplify behaviour:
-	# if ppp broken - something wrong. better to restart whole
-	if(exists($rfcomm{$a}->{$c})){
-		my $d=$btdev{$a};
-		return ("rfcomm -i $a release $d",'Stop: ');
-	}
-	if(!defined($ch)){
-		$ch='$ch';
-		$cmd.='ch=`sdptool search --bdaddr '.$c.' 0x1103|grep Channel` && ch=${ch##*Channel:} && ';
-	}
-	("$ENV{SHELL} -c \"${cmd}rfcomm -i $a bind $rf $c $ch && [ -e /dev/$rf ] && exec "._ppppath($rf)."pppd $rf call $p$ppp1\"");
+	$cmd.="/usr/sbin/hciconfig $d up &&" if($DOWN{$d});
+	$cmd.=($ch=~/\D/)?
+		"ch=`sdptool search --bdaddr $c $ch|grep Channel` && ch=\${ch##*Channel:} && rfcomm -i $d bind $rf $c \$ch":
+		"rfcomm -i $d bind $rf $c $ch";
+	("$ENV{SHELL} -c \"$cmd && exec "._ppppath($rf)."pppd $rf call $p$ppp1\"");
 }
 
 sub pppstat{
@@ -707,6 +748,7 @@ $ENV='^(?:OB3MENUNET_.*|DBUS_SESSION_BUS_ADDRESS|DISPLAY)$';
 		}
 		print _ex("hcitool -i $if $_ $c",$i);
 	}
+	print _btmisc($if,$c,$_) for('Audio','Input','SimAccess','HandsfreeGateway');
 	# sdptool browse slow, then keep in separate menu
 	# todo: decode /var/lib/.../sdp file
 #	print '<separator label="Services:"/>'; _btbrowse($c);
@@ -715,56 +757,33 @@ $ENV='^(?:OB3MENUNET_.*|DBUS_SESSION_BUS_ADDRESS|DISPLAY)$';
 );
 
 sub _run{
+	_run_(@_);
+	$? && die "$_[0]:$? $!\n$out\n";
+	$out;
+}
+
+sub _run_{
 	for(@_){
-		print "[run:$>] # $_[0]\n";
+		print STDERR "[run:$>] # $_[0]\n";
 		$out=`$_[0] 2>&1`;
-		print "$out";
+		print STDERR "$out";
 		$? || last;
 	}
-	$? && die "$_[0]:$? $!\n$out\n";
 	$out;
 }
 
 %sudo=(
 'RESCAN'=>sub{rescan();exit;},
-'-NAP'=>sub{
-	($if)=@_;
-	my $p=btpath($if);
-	_run("dbus-send --system --dest=org.bluez --print-reply $p org.bluez.NetworkServer.Unregister string:nap");
-	my $nap=sdprec('0x1116');
-	$nap && _run("sdptool -i $if del $nap");
-	0;
-},
-'NAP'=>sub{
-	($if,$br)=@_;
-	sdprec('0x1116') || _run("sdptool -i $if add NAP");
-	my $p=btpath($if);
-	if(!defined($br)){
-		$br=0;
-		while(exists($bridge{"br$br"})){$br++};
-		$br="br$br";
-		_run("(brctl addbr $br && ifconfig $br promisc up)");
-		$? && return $?;
-	}
-	_run("dbus-send --system --dest=org.bluez --print-reply $p org.bluez.NetworkServer.Register string:nap string:$br");
-	0;
-},
+'NAP2'=>\&NAP,
 'PAN'=>sub{
 	($a,$c,$ch,$t)=@_;
 #	my $s=serviceid($t);
 #	sdprec($s) || _run("sdptool -i $a add $s");
-	my $p=$c;
-	$p=~s/:/_/;
-	$p=btpath($a).'/dev_'.$p;
-#	my $pr=dbus_bluez($p,'Network.GetProperties');
+#	my $pr=dbus_bluez($a,'Network.GetProperties',$c);
 #	dbus_bluez($p,'Network.Connect string:$pr->{UUID}');
 	# src vs. doc
-	_run(
-		"dbus-send --system --dest=org.bluez --print-reply $p org.bluez.Network.Connect string:$t",
-		"dbus-send --system --dest=org.bluez --print-reply $p org.bluez.Network.Connect"
-	);
-#	dbus_bluez($p,'Network.Connect',"Network.Connect string:$t");
-#	dbus_bluez($p,'Network.Connect');
+	dbus_bluez($a,"Network.Connect string:$t",$c);
+#	dbus_bluez($a,'Network.Connect',$c);
 },
 '-PAN'=>sub{
 	($a,$c,$ch,$t)=@_;
@@ -783,8 +802,37 @@ sub _run{
 },
 );
 
+%nosudo=(
+'-NAP'=>sub{
+	($if)=@_;
+	dbus_bluez($if,"NetworkServer.Unregister string:nap");
+	my $nap=sdprec('0x1116');
+	$nap && _run("sdptool -i $if del $nap");
+	0;
+},
+'NAP'=>\&NAP,
+);
+
+sub NAP{
+	($if,$br)=@_;
+	if(!defined($br)){
+		for($br=0; -e "/sys/class/net/br$br"; $br++){};
+		$br="br$br";
+	}
+	if(!-e "/sys/class/net/$br"){
+		if($>){
+			@cmd2=('NAP2',$if,$br);
+			return;
+		}
+		_run("(brctl addbr $br && ifconfig $br promisc up)");
+	}
+	sdprec('0x1116') || _run("sdptool -i $if add NAP");
+	dbus_bluez($if,"NetworkServer.Register string:nap string:$br");
+	0;
+}
+
 sub _sdpread{
-	$c=$_[0];
+	my ($c)=@_;
 	return $sdp{$if}->{$c} if(exists($sdp{$if}->{$c}));
 	open(my $F,'-|',"sdptool -i $if browse $c")||return;
 	my @s=({});
@@ -980,17 +1028,20 @@ sub netmenu{
 		for(sort values %btdev){
 			my $n=_read("/sys/class/bluetooth/$_/name");
 			chomp($n);
-			print _menu($_,"$_ \"$n\"");
+			$n=$n?"$_ \"$n\"":$_;
+			print $DOWN{$_}?_ex("$_ /usr/sbin/hciconfig $_ up","$n up"):_menu($_,$n);
 		}
-		while(my ($r,$n)=each %rfcomm_){
-			push @{$bt{$n}},_ex("$r rfcomm release $r","Stop: $r $devppp{$r} \"$n\"");
+		while(my ($r,$x)=each %rfcomm_){
+			my ($a,$c)=@$x;
+			my $n=$btname{$a}->{$c}||$c;
+			push @{$bt{$n}},_ex("$r "."rfcomm release $r","Stop: $r $devppp{$r} \"$n\"");
 		}
 		my $chat='/usr/sbin/chat';
 		$chat.=' -V' if($ENV{OB3MENUNET_DEBUG});
 		for my $a(keys %btname){
 			while(my ($c,$n)=each %{$btname{$a}}){
 				exists($rfcomm{$a}->{$c}) && next;
-				my @r=btmodem($a,$c);
+				my @r=btmodem($a,$c,'dun');
 				push @{$bt{$n}},_ex("$rf $r[0]","$r[1] $rf \"$n\"");
 			}
 		}
@@ -1011,16 +1062,18 @@ sub netmenu{
 			$x10 && print _ex("_ GPASSWD -a \"$user[0]\" $x10","Join group: $x11");
 			$x00 && print _ex("_ GPASSWD -d \"$user[0]\" $x00","Leave group: $x01");
 		}
-		my ($sc,$sc1,$sc2,$sc3,$sc4);
-		for(values %btdev){
-			$sc1.="hciconfig $_ up;hciconfig $_ piscan;";
-			$sc2.="hcitool -i $_ inq & hcitool -i $_ scan &";
-			$sc3.=";hciconfig $_ noscan";
-			$sc4.=";(hcitool -i $_ con|grep -q ACL || hciconfig $_ down)"
-		}
-		$sc="$sc1 $sc2 simple-agent $sc3 $sc4;false";
 		print _menu("--debug",'debug') if(!$ENV{OB3MENUNET_DEBUG});
-		print _ex("_ $ENV{SHELL} -c \\\"$sc\\\"", 'Bluetooth ON - scan & agent - OFF') if(-e '/usr/bin/simple-agent');
+		my ($sc,$sc1,$sc2,$sc3,$sc4);
+		if($DBUS){
+			for(values %btdev){
+				$sc1.="hciconfig $_ up ; hciconfig $_ piscan;";
+				$sc2.="hcitool -i $_ inq & hcitool -i $_ scan &";
+				$sc3.="; hciconfig $_ noscan";
+				$sc4.=";( hcitool -i $_ con|grep -q ACL || hciconfig $_ down )"
+			}
+			$sc="$sc1 $sc2 simple-agent $sc3 $sc4;false";
+			print _ex("_ $ENV{SHELL} -c \"$sc\"", 'Bluetooth ON - scan & agent - OFF') if(-e '/usr/bin/simple-agent');
+		}
 		if($iw){
 			print _ex("_ RESCAN",'Wi-Fi rescan') if($> || $iwlast);
 			_iwhelp();
@@ -1048,10 +1101,18 @@ sub netmenu{
 		if(!-e $d){
 			if(-e ($d="/sys/class/bluetooth/$if")){
 				btstat();
+				if($DOWN{$if}){
+					print _ex("/usr/sbin/hciconfig $if up",'up');
+					goto EX;
+				}else{
+					print _ex("/usr/sbin/hciconfig $if down",'down');
+				}
 				my $r=sdprec('0x1116');
 				print _menu1("Network Access Point (NAP) $r");
-				print _ex("NAP $if $_","$_: ".join(' ',@{$bridge{$_}})) for(sort keys %bridge);
-				print _ex("NAP $if",'Create new bridge');
+				if($DBUS && btpath($if,1)){
+					print _ex("NAP $if $_","$_: ".join(' ',@{$bridge{$_}})) for(sort keys %bridge);
+					print _ex("NAP $if",'Create new bridge');
+				}
 				if($r){
 					if(scalar(%bridge)){
 						print _ex("-NAP $if",'Remove');
@@ -1148,13 +1209,13 @@ EX:
 SUDO:
 	die "Illegal --sudo context\n" if($SUDO && (!@cmd || $>));
 	if(@cmd){
-		$notify_||=$SUDO;
+		$notify_||=$SUDO||exists($nosudo{$cmd[0]});
 		$cmd{$_}++ for(@cmd);
 		my ($term,$root,$cmd);
 		if(!$notify_ && $>){
 			$root||=exists($sudo{$cmd[0]});
 			# if path is absolute - check later
-			$i='iwconfig|iwlist|kill|pppd|dhcpcd|rfcomm';
+			$i='iwconfig|iwlist|kill|pppd|dhcpcd|rfcomm|hciconfig';
 			$root||=$cmd{$ENV{SHELL}}?grep(/ (?:$i) /,@cmd):grep(/^(?:$i)$/,@cmd);
 			if(!$root){ # to get permissions to /usr/sbin/ & /sbin/ sometimes we need sudo
 				if($cmd{$ENV{SHELL}}){
@@ -1187,15 +1248,20 @@ SUDO:
 			shift @cmd if($cmd[0] eq $0);
 			unshift @cmd,$0,'--notify';
 		}
-		@cmd=('ya-session','--run','+'.join(' ',@cmd)) if($term);
+		@cmd=('ya-session','--run',($root?'+':'').join(' ',@cmd)) if($term);
 #		$iw=$SUDO && ($iw || $cmd{$iwconfig}); # rescan if iwconfig+sudo
 		$iw=$SUDO; # rescan as possible
 		$iw&&=!$cmd{'kill'};
 		$notify||=$iw;
 		my $out;
 		$!='';
-		if($i=$sudo{$cmd[0]}){
+		if($i=$sudo{$cmd[0]}||$nosudo{$cmd[0]}){
 			$r=&{$i}(@cmd[1..$#cmd]);
+			if(@cmd2){
+				$notify_=undef;
+				@cmd=@cmd2;
+				goto SUDO;
+			}
 		}elsif($notify){
 			$r=system(@cmd);
 #			for(@cmd){
