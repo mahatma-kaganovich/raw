@@ -4,3 +4,4 @@ disconnect "/usr/sbin/chat -V TIMEOUT 5 '' '+++ATH' ABORT OK 'NO CARRIER'"
 noauth
 ipcp-accept-remote
 noipdefault
+updetach
