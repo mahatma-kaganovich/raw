@@ -150,7 +150,7 @@ sub _ex{
 	xml(my $i=$_[0],my $l=$_[-1]);
 	my $id="$id ";
 	if(!$NOTIFY){
-		my $x=join('|',keys %sudo,'--');
+		my $x=join('|',keys %sudo,keys %nosudo'--');
 		$id='' if(!($i=/^(?:$x)/));
 	}
 	"<item label='$l'><action name='execute'><execute>${id}$i</execute></action></item>\n";
