@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # (c) Denis Kaganovich, Anarchy or GPLv2
-# Network manager OpenBox pipe menu v0.2
+# Network manager OpenBox pipe menu v0.3
 #
 # This is very initial version...
 #
@@ -24,14 +24,14 @@
 use bigint;
 $ioctl=eval('require "sys/ioctl.ph"');
 
-$NOTIFY=2; # 0 - none; 1 - libnotify||terminal; 2 - terminal||libnotify; 3 - only terminal
+$NOTIFY=1; # 0 - none; 1 - libnotify||terminal; 2 - terminal||libnotify; 3 - only terminal
 
 $AUTO=$>||$ENV{OB3MENUNET_USER}; # do some auto-ops: iface up/down. disable for root.
 
 # use absolute path to sbin to check permissions
 $iwconfig='/sbin/iwconfig';
 $iwlist='/sbin/iwlist';
-
+$rfcomm='/usr/bin/rfcomm';
 
 # always offline scanning
 #$iwlast=" last";
@@ -51,16 +51,16 @@ sub _waitkey{
 
 sub notify{
 print STDERR "\n",@_;
-if(exists($ENV{DBUS_SESSION_BUS_ADDRESS}) && !(($SUDO || $notify_) && $NOTIFY>1)){
+if($DBUS_NOTIFY && !(($SUDO || $notify_) && $NOTIFY>1)){
 	($>,$))=($ENV{OB3MENUNET_USER},$ENV{OB3MENUNET_GRP}) if($SUDO);
 	@x=($bin.'notify-send','-t',6000,join('',@_));
 	$ENV{OB3MENUNET_DEBUG}?system(@x):exec(@x);
 }
 }
 
-$DBUS=exists($ENV{DBUS_SESSION_BUS_ADDRESS});
-delete($ENV{DBUS_SESSION_BUS_ADDRESS}) if($NOTIFY==3);
-$notify=$NOTIFY&&exists($ENV{DBUS_SESSION_BUS_ADDRESS});
+$DBUS_NOTIFY=$DBUS=-e '/var/run/dbus/system_bus_socket';
+$DBUS_NOTIFY&&=($NOTIFY!=3) && exists($ENV{DBUS_SESSION_BUS_ADDRESS});
+$notify=$NOTIFY&&$DBUS_NOTIFY;
 
 $cellppp='ya-cell';
 $pppask='APN= ;PH= ;echo;read -p APN: APN && read -p Number[*99#]: PH && export APN PH && ';
@@ -619,7 +619,7 @@ sub btmodem{
 	my ($a,$c,$ch)=(@_);
 	# we can check to restart ppp on existing closed connection, but simplify behaviour:
 	# if ppp broken - something wrong. better to restart whole
-	return ("rfcomm release $rfcomm{$a}->{$c}",'Stop: ') if(exists($rfcomm{$a}->{$c}));
+	return ("$rfcomm release $rfcomm{$a}->{$c}",'Stop: ') if(exists($rfcomm{$a}->{$c}));
 	my $d=$btdev{$a};
 	my $cmd;
 	my $p=$cellppp;
@@ -627,10 +627,12 @@ sub btmodem{
 		$p.='-apn';
 		$cmd.=$pppask;
 	}
-	$cmd.="/usr/sbin/hciconfig $d up &&" if($DOWN{$d});
+	return ("RFCOMM_BIND $d $c $rf $ch ".($DOWN{$d}||0)." $p$ppp1");
+	$cmd.="/usr/sbin/hciconfig $d up && " if($DOWN{$d});
+#	$cmd.="/usr/sbin/hciconfig $d putkey $c && ";
 	$cmd.=($ch=~/\D/)?
-		"ch=`sdptool search --bdaddr $c $ch|grep Channel` && ch=\${ch##*Channel:} && rfcomm -i $d bind $rf $c \$ch":
-		"rfcomm -i $d bind $rf $c $ch";
+		"ch=`sdptool search --bdaddr $c $ch|grep Channel` && ch=\${ch##*Channel:} && $rfcomm -i $d bind $rf $c \$ch":
+		"/usr/bin/rfcomm -i $d bind $rf $c $ch";
 	("$ENV{SHELL} -c \"$cmd && exec "._ppppath($rf)."pppd $rf call $p$ppp1\"");
 }
 
@@ -798,8 +800,13 @@ sub _run_{
 	my ($c,$u,@g)=@_;
 	my $r;
 	$out=map{my $x=`gpasswd $c '$u' '$_'`;$r||=$?;$x}@g;
+	if(!$r && !$#g && $g[0] eq 'uucp'){
+		# lazy
+		_run($c eq '-d'?"chmod u-s,o+x '$_' && chown 0:0 '$_'":"chown 0:uucp '$_' && chmod u+s,g+x-w,o-x '$_'") for($rfcomm);
+	}
 	$r;
 },
+'RFCOMM_BIND_SUDO'=>\&RFCOMM_BIND,
 );
 
 %nosudo=(
@@ -811,7 +818,30 @@ sub _run_{
 	0;
 },
 'NAP'=>\&NAP,
+'RFCOMM_BIND'=>\&RFCOMM_BIND,
 );
+
+sub _system{
+	print STDERR join(' ',"[run:$>]#",@_),"\n";
+	system(@_);
+}
+
+# trying without login first
+sub RFCOMM_BIND{
+	my ($d,$c,$rf,$ch,$down,@ppp)=@_;
+	if(!stat("/dev/$rf")){
+		@cmd2=('RFCOMM_BIND_SUDO',@_) if($>);
+		# todo: read key vs. bluetoothd
+		$down && _system('/usr/sbin/hciconfig',$d,'up') && return $?;
+		($cmd2[4])=($ch)=_run("sdptool search --bdaddr $c $ch")=~/\n    Channel: (\d+)/s if($ch=~/\D/);
+		return $? if(_system('/usr/bin/rfcomm','-i',$d,'bind',$rf,$c,$ch) || !stat("/dev/$rf"));
+	}
+	my $s=join(' ',@ppp);
+	$s&&="pppd $rf call $s";
+	$s&&="/usr/sbin/$s" if(-w _);
+	$s='APN= ;PH= ;echo;read -p APN: APN && read -p Number[*99#]: PH && export APN PH && '.$s if($s=~/-apn/);
+	@cmd2=($s=~/\&\&/) ? ($ENV{SHELL},'-c',$s) : split(/\s+/,$s);
+}
 
 sub NAP{
 	($if,$br)=@_;
@@ -928,9 +958,11 @@ OK:
 	}else{
 		$n=$p;
 	}
+	$p=$p;
+	my $D=$debugppp{$f};
 	$f=_ppppath($p)."pppd $p call $f$ppp1";
-	exists($pidppp{$p})?_ex("$p kill $pidppp{$p}","Stop: $n ($devppp{$p})"):($f eq $cellppp)?_ex("$p $f",$n):
-		_ex("$p $ENV{SHELL} -c \"$pppask $f\"",$n);
+	exists($pidppp{$p})?_ex("$p kill $pidppp{$p}","Stop: $n ($devppp{$p})"):($f eq $cellppp)?_ex("$D$p $f",$n):
+		_ex("$D$p $ENV{SHELL} -c \"$pppask $f\"",$n);
 }
 
 sub netmenu{
@@ -942,14 +974,14 @@ sub netmenu{
 		$ENV{OB3MENUNET_GRP}=~s/\s.*//gs;
 	}
 	if($SUDO=($_[0] eq '--sudo')){
-		delete($ENV{DBUS_SESSION_BUS_ADDRESS}) if($NOTIFY==2);
+		$DBUS_NOTIFY&&=($NOTIFY!=2);
 		$notify=$NOTIFY; # now we can notify in sudo'ed terminal
 		shift;
 		@cmd=@_;
 		goto SUDO;
 	}
 	if($notify_=($_[0] eq '--notify')){
-		delete($ENV{DBUS_SESSION_BUS_ADDRESS}) if($NOTIFY==2);
+		$DBUS_NOTIFY&&=($NOTIFY!=2);
 		$notify=$NOTIFY;
 		shift;
 		@cmd=@_;
@@ -987,7 +1019,8 @@ sub netmenu{
 				$d="\n$d\n";
 				$debugppp{$i}=$ENV{OB3MENUNET_DEBUG};
 #				$debug=1 if($d=~/\n\s*debug(\s|$)/);
-				$debugppp{$i}=1 if($d=~/\n\s*(?:nodetach|updetach)(\s|$)/);
+				$debugppp{$i}=1 if($d=~/\n\s*(?:nodetach)(\s|$)/);
+				$debugppp{$i}=$debugppp{$i}?'+':'';
 				# todo: if pptp goes via default network - CAN replace default network, but keep destination subnet
 				if($d=~s/\npty\s+\"pptp\s+(\S+).*/$1/gs){
 					# todo: resolve host $d
@@ -1019,7 +1052,7 @@ sub netmenu{
 				}
 				$i='_ '._ppppath($d)."pppd call $i$ppp1";
 				$d.="$ppp2";
-				print _ex(($debugppp{$i}?'+':'').$i,$d);
+				print _ex($debugppp{$i}.$i,$d);
 			}
 		}
 		btstat();
@@ -1034,7 +1067,7 @@ sub netmenu{
 		while(my ($r,$x)=each %rfcomm_){
 			my ($a,$c)=@$x;
 			my $n=$btname{$a}->{$c}||$c;
-			push @{$bt{$n}},_ex("$r "."rfcomm release $r","Stop: $r $devppp{$r} \"$n\"");
+			push @{$bt{$n}},_ex("$r $rfcomm release $r","Stop: $r $devppp{$r} \"$n\"");
 		}
 		my $chat='/usr/sbin/chat';
 		$chat.=' -V' if($ENV{OB3MENUNET_DEBUG});
@@ -1042,15 +1075,16 @@ sub netmenu{
 			while(my ($c,$n)=each %{$btname{$a}}){
 				exists($rfcomm{$a}->{$c}) && next;
 				my @r=btmodem($a,$c,'dun');
-				push @{$bt{$n}},_ex("$rf $r[0]","$r[1] $rf \"$n\"");
+				push @{$bt{$n}},_ex("$debugppp{$cellppp}$rf $r[0]","$r[1] $rf \"$n\"");
 			}
 		}
 		print '<separator/>';
 		if(scalar(%grp) && @user){
 			my $uu=quotemeta($user[0]);
-			my ($x10,$x11,$x00,$x01);
+			my ($x10,$x11,$x00,$x01,$x,$s);
 			for(sort keys %grp){
 				my ($i,@g)=getgrgid($_) or next;
+				$x.="$i ";
 				if(" $g[2] "=~/ $uu /){
 					$x00.=" \"$i\"";
 					$x01.=exists($grp0{$_})?" $i":" ($i)";
@@ -1059,8 +1093,10 @@ sub netmenu{
 					$x11.=exists($grp1{$_})?" $i":" ($i)";
 				}
 			}
-			$x10 && print _ex("_ GPASSWD -a \"$user[0]\" $x10","Join group: $x11");
-			$x00 && print _ex("_ GPASSWD -d \"$user[0]\" $x00","Leave group: $x01");
+			$s=($x eq 'uucp ')?' & chmod u+s,g+x-w,o-x rfcomm':'';
+			$x10 && print _ex("_ GPASSWD -a \"$user[0]\" $x10","Join group: $x11$s");
+			$s=($x eq 'uucp ')?' & chmod u-s,o+x rfcomm':'';
+			$x00 && print _ex("_ GPASSWD -d \"$user[0]\" $x00","Leave group: $x01$s");
 		}
 		print _menu("--debug",'debug') if(!$ENV{OB3MENUNET_DEBUG});
 		my ($sc,$sc1,$sc2,$sc3,$sc4);
@@ -1209,7 +1245,8 @@ EX:
 SUDO:
 	die "Illegal --sudo context\n" if($SUDO && (!@cmd || $>));
 	if(@cmd){
-		$notify_||=$SUDO||exists($nosudo{$cmd[0]});
+#		$notify_||=$SUDO||exists($nosudo{$cmd[0]});
+		$notify_||=$SUDO;
 		$cmd{$_}++ for(@cmd);
 		my ($term,$root,$cmd);
 		if(!$notify_ && $>){
@@ -1217,21 +1254,24 @@ SUDO:
 			# if path is absolute - check later
 			$i='iwconfig|iwlist|kill|pppd|dhcpcd|rfcomm|hciconfig';
 			$root||=$cmd{$ENV{SHELL}}?grep(/ (?:$i) /,@cmd):grep(/^(?:$i)$/,@cmd);
-			if(!$root){ # to get permissions to /usr/sbin/ & /sbin/ sometimes we need sudo
+			if(!$root){ # to get permissions to [/usr]/[s]bin/ sometimes we need sudo
 				if($cmd{$ENV{SHELL}}){
 					for(@cmd){
 						my $i=$_;
-						$i=~s/ ((?:\/usr)?\/sbin\/\w+)/$cmd{$1}++/gse;
+						$i=~s/(?:^| )((?:\/usr)?\/s?bin\/\w+)/$cmd{$1}++/gse;
 					}
 				}
-				for(grep(/^(?:\/usr)?\/sbin\//,keys %cmd)){
-					last if($root=!((my @s=stat($_)) && -x _ && $s[2] & 04000));
+				for(grep(/^(?:\/usr)?\/s?bin\//,keys %cmd)){
+					my @s=stat($_);
+					last if($root=!(-x _ && ($s[2] & 04000)));
 				}
 			}
 		}
-		$term=!$notify_ && ($root || ($cmd{$ENV{SHELL}} && grep(/ read /,@cmd) || ($NOTIFY>1 && !$notify)));
+		$term=!$notify_ && ($root || ($cmd{$ENV{SHELL}} && grep(/ read /,@cmd)) || ($NOTIFY>1 && !$notify) || $ENV{OB3MENUNET_DEBUG});
+		$term=0 if($term0 && !$root);
+#		}elsif(!$notify_ && $notify && ($NOTIFY==3 || ($NOTIFY==2 && !$DBUS_NOTIFY))){
 		if($term){
-			$_="\"$_\"" for(grep(/[\s\*\?]/,@cmd));
+			~s/^(.*[\s\*\?].*)$/\"$1\"/s for(@cmd);
 		}
 		if($root){
 			$cmd.=join(' ',@cmd,'-- root password:');
@@ -1244,25 +1284,27 @@ SUDO:
 			unshift @cmd,map{"$_=\"$ENV{$_}\""}grep(/$ENV/,keys %ENV);
 			$cmd="[ob3menunet] $cmd";
 			unshift @cmd,'sudo','-p',"\"$cmd\"";
-		}elsif($notify && !$notify_){
+		}elsif($term && $NOTIFY){
 			shift @cmd if($cmd[0] eq $0);
 			unshift @cmd,$0,'--notify';
+			$term=1;
 		}
-		@cmd=('ya-session','--run',($root?'+':'').join(' ',@cmd)) if($term);
+		@cmd=('ya-session','--run','+'.join(' ',@cmd)) if($term);
 #		$iw=$SUDO && ($iw || $cmd{$iwconfig}); # rescan if iwconfig+sudo
 		$iw=$SUDO; # rescan as possible
 		$iw&&=!$cmd{'kill'};
-		$notify||=$iw;
 		my $out;
 		$!='';
+		print STDERR ($cmd=join(' ',$user[0],'#',@cmd)."\n");
 		if($i=$sudo{$cmd[0]}||$nosudo{$cmd[0]}){
 			$r=&{$i}(@cmd[1..$#cmd]);
 			if(@cmd2){
-				$notify_=undef;
+#				$notify_=undef;
+				$term0||=$term;
 				@cmd=@cmd2;
 				goto SUDO;
 			}
-		}elsif($notify){
+		}elsif($notify||($term && $NOTIFY)){
 			$r=system(@cmd);
 #			for(@cmd){
 #			}
@@ -1272,17 +1314,20 @@ SUDO:
 		}else{
 			$r=exec(@cmd);
 		}
-		$cmd||=join(' ',@cmd);
 		$r=0 if(exists($noerr{$cmd[0]}->{$r1=$r}));
 		$r && die "$cmd\nError: $cmd[0]:$r $!\n$out\n";
 		rescan() if($iw);
 		$ENV{OB3MENUNET_DEBUG} && (!$cmd{'kill'}) && _waitkey();
+		$cmd='' if($term||=$term0);
 		if($out ne ''){
-			notify("$cmd\n$out\n");
-		}elsif($notify && !$>){
-			$r1=" [$r1]" if(!$r1);
-			notify("OK$r1\n$cmd\n");
+			notify("[$r1] $cmd$out\n");
+#			_waitkey();
+		}elsif($DBUS_NOTIFY && $notify && !$term){
+			notify('OK'.($r1?" [$r1]":'')."\n$cmd");
+#		}elsif($DEBUG){
+#			_waitkey() 
 		}
+		_waitkey(); # terminal+pppd early exit problem: keep it
 		exit $r
 	}
 }
