@@ -24,7 +24,7 @@
 use bigint;
 $ioctl=eval('require "sys/ioctl.ph"');
 
-$NOTIFY=1; # 0 - none; 1 - libnotify||terminal; 2 - terminal||libnotify; 3 - only terminal
+$NOTIFY=2; # 0 - none; 1 - libnotify||terminal; 2 - terminal||libnotify; 3 - only terminal
 
 $AUTO=$>||$ENV{OB3MENUNET_USER}; # do some auto-ops: iface up/down. disable for root.
 
@@ -1304,14 +1304,13 @@ SUDO:
 		$cmd[0]=~s/\@//;
 		$term=!$notify_ && ($root || ($cmd{$ENV{SHELL}} && grep(/ read /,@cmd)) || ($NOTIFY>1 && !$notify) || $ENV{OB3MENUNET_DEBUG});
 		$term=0 if($term0 && !$root);
-#		}elsif(!$notify_ && $notify && ($NOTIFY==3 || ($NOTIFY==2 && !$DBUS_NOTIFY))){
 		if($term){
 			~s/^(.*[\s\*\?].*)$/\"$1\"/s for(@cmd);
 		}
 		if($root){
 			$cmd.=join(' ',@cmd,'-- root password:');
 			$cmd=~s/([\"\'\\])/\\$1/gs;
-			if($notify){
+			if($notify || exists($sudo{$cmd[0]}) || exists($nosudo{$cmd[0]})){
 				die 'Security problem' if(substr($0,0,1) ne '/');
 				shift @cmd if($cmd[0] eq $0);
 				unshift @cmd,$0,'--sudo';
@@ -1330,6 +1329,7 @@ SUDO:
 		$iw&&=!$cmd{'kill'};
 		my $out;
 		$!='';
+		print STDERR ($cmd=join(' ',$user[0],'#',@cmd)."\n");
 		if($i=$sudo{$cmd[0]}||$nosudo{$cmd[0]}){
 			$r=&{$i}(@cmd[1..$#cmd]);
 			if(@cmd2){
