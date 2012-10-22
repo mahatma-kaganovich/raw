@@ -827,7 +827,10 @@ sub _run_{
 	$out=map{my $x=`gpasswd $c '$u' '$_'`;$r||=$?;$x}@g;
 	if(!$r && !$#g && $g[0] eq 'uucp'){
 		# lazy
-		_run($c eq '-d'?"chmod u-s,o+x '$_' && chown 0:0 '$_'":"chown 0:uucp '$_' && chmod u+s,g+x-w,o-x '$_'") for($rfcomm);
+		# increase security level of pppd too: currently /dev/ serials
+		# permitted to group 'uucp', but 'pty' (ppporc, etc) can access same resources too.
+		# so, permit to run root'ed pppd only for unifyed 'uucp' group.
+		(-e $_) && _run($c eq '-d'?"chmod u-s,o+x '$_' && chown 0:0 '$_'":"chown 0:uucp '$_' && chmod u+s,g+x-w,o-x '$_'") for($rfcomm,'/usr/sbin/pppd');
 	}
 	$r;
 },
@@ -1122,9 +1125,9 @@ sub netmenu{
 					$x11.=exists($grp1{$_})?" $i":" ($i)";
 				}
 			}
-			$s=($x eq 'uucp ')?' & chmod u+s,g+x-w,o-x rfcomm':'';
+			$s=($x eq 'uucp ')?' & chmod u+s,g+x-w,o-x rfcomm pppd':'';
 			$x10 && print _ex("_ GPASSWD -a \"$user[0]\" $x10","Join group: $x11$s");
-			$s=($x eq 'uucp ')?' & chmod u-s,o+x rfcomm':'';
+			$s=($x eq 'uucp ')?' & chmod u-s,o+x rfcomm pppd':'';
 			$x00 && print _ex("_ GPASSWD -d \"$user[0]\" $x00","Leave group: $x01$s");
 		}
 		print _menu("--debug",'debug') if(!$ENV{OB3MENUNET_DEBUG});
