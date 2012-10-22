@@ -24,7 +24,7 @@
 use bigint;
 $ioctl=eval('require "sys/ioctl.ph"');
 
-$NOTIFY=2; # 0 - none; 1 - libnotify||terminal; 2 - terminal||libnotify; 3 - only terminal
+$NOTIFY=1; # 0 - none; 1 - libnotify||terminal; 2 - terminal||libnotify; 3 - only terminal
 
 $AUTO=$>||$ENV{OB3MENUNET_USER}; # do some auto-ops: iface up/down. disable for root.
 
@@ -1327,13 +1327,15 @@ SUDO:
 		$iw&&=!$cmd{'kill'};
 		my $out;
 		$!='';
-		print STDERR ($cmd=join(' ',$user[0],'#',@cmd)."\n");
 		if($i=$sudo{$cmd[0]}||$nosudo{$cmd[0]}){
 			$r=&{$i}(@cmd[1..$#cmd]);
 			if(@cmd2){
 #				$notify_=undef;
 				$term0||=$term;
 				@cmd=@cmd2;
+				@cmd2=();
+				$notify0_||=$notify_;
+				$notify_=0;
 				goto SUDO;
 			}
 		}elsif($notify||($term && $NOTIFY)){
@@ -1351,6 +1353,7 @@ SUDO:
 		rescan() if($iw);
 		$ENV{OB3MENUNET_DEBUG} && (!$cmd{'kill'}) && _waitkey();
 		$cmd='' if($term||=$term0);
+		$notify_||=$notify0_;
 		if($out ne ''){
 			notify("[$r1] $cmd$out\n");
 #			_waitkey();
