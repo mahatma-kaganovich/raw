@@ -24,7 +24,7 @@
 use bigint;
 $ioctl=eval('require "sys/ioctl.ph"');
 
-$NOTIFY=2; # 0 - none; 1 - libnotify||terminal; 2 - terminal||libnotify; 3 - only terminal
+$NOTIFY=1; # 0 - none; 1 - libnotify||terminal; 2 - terminal||libnotify; 3 - only terminal
 
 $AUTO=$>||$ENV{OB3MENUNET_USER}; # do some auto-ops: iface up/down. disable for root.
 
@@ -1125,10 +1125,10 @@ sub netmenu{
 					$x11.=exists($grp1{$_})?" $i":" ($i)";
 				}
 			}
-			$s=($x eq 'uucp ')?' & chmod u+s,g+x-w,o-x rfcomm pppd':'';
-			$x10 && print _ex("_ GPASSWD -a \"$user[0]\" $x10","Join group: $x11$s");
-			$s=($x eq 'uucp ')?' & chmod u-s,o+x rfcomm pppd':'';
-			$x00 && print _ex("_ GPASSWD -d \"$user[0]\" $x00","Leave group: $x01$s");
+			$s=($x eq 'uucp ')?' & u+s,g+x-w,o-x rfcomm pppd':'';
+			$x10 && print _ex("_ GPASSWD -a \"$user[0]\" $x10","Join $x11$s");
+			$s=($x eq 'uucp ')?' & u-s,o+x rfcomm pppd':'';
+			$x00 && print _ex("_ GPASSWD -d \"$user[0]\" $x00","Leave $x01$s");
 		}
 		print _menu("--debug",'debug') if(!$ENV{OB3MENUNET_DEBUG});
 		my ($sc,$sc1,$sc2,$sc3,$sc4);
@@ -1277,6 +1277,7 @@ EX:
 	}
 SUDO:
 	die "Illegal --sudo context\n" if($SUDO && (!@cmd || $>));
+	$DEBUG||=$ENV{OB3MENUNET_DEBUG};
 	if(@cmd){
 #		$notify_||=$SUDO||exists($nosudo{$cmd[0]});
 		$notify_||=$SUDO;
@@ -1310,10 +1311,14 @@ SUDO:
 		if($root){
 			$cmd.=join(' ',@cmd,'-- root password:');
 			$cmd=~s/([\"\'\\])/\\$1/gs;
-			if($notify || exists($sudo{$cmd[0]}) || exists($nosudo{$cmd[0]})){
+#			if($notify || exists($sudo{$cmd[0]}) || exists($nosudo{$cmd[0]})){
+			if($notify){
 				die 'Security problem' if(substr($0,0,1) ne '/');
 				shift @cmd if($cmd[0] eq $0);
 				unshift @cmd,$0,'--sudo';
+			}elsif(exists($sudo{$cmd[0]}) || exists($nosudo{$cmd[0]})){
+				die 'Security problem' if(substr($0,0,1) ne '/');
+				unshift @cmd,$0,'--notify';
 			}
 			unshift @cmd,map{"$_=\"$ENV{$_}\""}grep(/$ENV/,keys %ENV);
 			$cmd="[ob3menunet] $cmd";
@@ -1323,6 +1328,7 @@ SUDO:
 			unshift @cmd,$0,'--notify';
 			$term=1;
 		}
+		$DEBUG||=$term;
 		@cmd=('ya-session','--run','+'.join(' ',@cmd)) if($term);
 #		$iw=$SUDO && ($iw || $cmd{$iwconfig}); # rescan if iwconfig+sudo
 		$iw=$SUDO; # rescan as possible
@@ -1339,6 +1345,7 @@ SUDO:
 				@cmd2=();
 				$notify0_||=$notify_;
 				$notify_=0;
+				$steps++;
 				goto SUDO;
 			}
 		}elsif($notify||($term && $NOTIFY)){
@@ -1359,13 +1366,14 @@ SUDO:
 		$notify_||=$notify0_;
 		if($out ne ''){
 			notify("[$r1] $cmd$out\n");
-#			_waitkey();
+			_waitkey();
+			exit $r;
 		}elsif($DBUS_NOTIFY && $notify && !$term){
 			notify('OK'.($r1?" [$r1]":'')."\n$cmd");
-#		}elsif($DEBUG){
-#			_waitkey() 
 		}
-		_waitkey(); # terminal+pppd early exit problem: keep it
+		$DEBUG||=grep(/pppd/,@cmd) if($term);
+		# if debug or possible fork from terminal - wait (vs. early exit problem)
+		$DEBUG && _waitkey();
 		exit $r
 	}
 }
