@@ -24,7 +24,7 @@
 use bigint;
 $ioctl=eval('require "sys/ioctl.ph"');
 
-$NOTIFY=1; # 0 - none; 1 - libnotify||terminal; 2 - terminal||libnotify; 3 - only terminal
+$NOTIFY=2; # 0 - none; 1 - libnotify||terminal; 2 - terminal||libnotify; 3 - only terminal
 
 $AUTO=$>||$ENV{OB3MENUNET_USER}; # do some auto-ops: iface up/down. disable for root.
 
@@ -32,6 +32,7 @@ $AUTO=$>||$ENV{OB3MENUNET_USER}; # do some auto-ops: iface up/down. disable for 
 $iwconfig='/sbin/iwconfig';
 $iwlist='/sbin/iwlist';
 $rfcomm='/usr/bin/rfcomm';
+$ppporc='/usr/sbin/ppporc';
 
 # always offline scanning
 #$iwlast=" last";
@@ -614,12 +615,17 @@ sub _btmisc{
 	return _ex(undef,"? $s");
 }
 
+sub _btrelease{
+	my ($rf)=@_;
+	($rf=~s/^\w+ (.*)$/$1/)?"\@kill $rf":"$rfcomm release $rf";
+}
+
 # too wanted to do "rfcomm bind/release" via dbus, but bluetoothd serial waiting for sender process
 sub btmodem{
 	my ($a,$c,$ch)=(@_);
 	# we can check to restart ppp on existing closed connection, but simplify behaviour:
 	# if ppp broken - something wrong. better to restart whole
-	return ("$rfcomm release $rfcomm{$a}->{$c}",'Stop: ') if(exists($rfcomm{$a}->{$c}));
+	return (_btrelease($rfcomm{$a}->{$c}),'Stop: ') if(exists($rfcomm{$a}->{$c}));
 	my $d=$btdev{$a};
 	my $cmd;
 	my $p=$cellppp;
@@ -664,8 +670,27 @@ sub pppstat{
 				$ppp{$a[$_+1]}=$i;
 			}
 		}
-		$devppp{$a[1]}=$i;
-		$pidppp{$a[1]}=$p;
+		if($a[1]='pty'){
+			@a=split(' ',$a[2]);
+			if($a[0] eq $ppporc){
+				my @l;
+				my $c=$a[1];
+				while(my ($d,$c1)=each %btlink){
+					push @l,$d if($c1 eq $c);
+				}
+				if(!$#l){
+					my $d=$l[0];
+					$d=~s/:.*//g;
+					my $a=$btdev_{$d};
+					my $x=join(' ','ppporc',map{~s/.*\///g;$_}glob("/proc/$p/task/*"));
+					$rfcomm{$a}->{$c}=$x;
+					$rfcomm_{$x}=[$a,$c];
+				}
+			}
+		}else{
+			$devppp{$a[1]}=$i;
+			$pidppp{$a[1]}=$p;
+		}
 		$fd{readlink($_)}=undef for(glob('/proc/$p/fd/*')); # root
 	}
 }
@@ -727,16 +752,16 @@ $ENV='^(?:OB3MENUNET_.*|DBUS_SESSION_BUS_ADDRESS|DISPLAY)$';
 'sdptool browse'=>sub{
 	routestat();
 	resolvstat();
-	pppstat();
 	btstat();
+	pppstat();
 	_btbrowse($_[2]);
 },
 'hcitool con'=>sub{
 	routestat();
 	resolvstat();
+	btstat();
 	pppstat();
 	ifstat();
-	btstat();
 	my $c=$_[2];
 	my $h=`hcitool -h`;
 	for(exists($btconn{$a}->{$c})?('dc','auth','key'):('cc','con+auth')){
@@ -766,7 +791,7 @@ sub _run{
 
 sub _run_{
 	for(@_){
-		print STDERR "[run:$>] # $_[0]\n";
+		print STDERR "[run:$>:$user[0]] # $_[0]\n";
 		$out=`$_[0] 2>&1`;
 		print STDERR "$out";
 		$? || last;
@@ -829,18 +854,22 @@ sub _system{
 # trying without login first
 sub RFCOMM_BIND{
 	my ($d,$c,$rf,$ch,$down,@ppp)=@_;
+	my @rf=($rf);
 	if(!stat("/dev/$rf")){
 		@cmd2=('RFCOMM_BIND_SUDO',@_) if($>);
 		# todo: read key vs. bluetoothd
 		$down && _system('/usr/sbin/hciconfig',$d,'up') && return $?;
 		($cmd2[4])=($ch)=_run("sdptool search --bdaddr $c $ch")=~/\n    Channel: (\d+)/s if($ch=~/\D/);
-		return $? if(_system('/usr/bin/rfcomm','-i',$d,'bind',$rf,$c,$ch) || !stat("/dev/$rf"));
+		if(_system('/usr/bin/rfcomm','-i',$d,'bind',$rf,$c,$ch) || !stat("/dev/$rf")){
+			return $? if(!$ppporc || ! -x $ppporc);
+			$rf="pty \"$ppporc $c $ch\"";
+			@rf=('pty',"$ppporc $c $ch");
+		}
 	}
-	my $s=join(' ',@ppp);
-	$s&&="pppd $rf call $s";
-	$s&&="/usr/sbin/$s" if(-w _);
-	$s='APN= ;PH= ;echo;read -p APN: APN && read -p Number[*99#]: PH && export APN PH && '.$s if($s=~/-apn/);
-	@cmd2=($s=~/\&\&/) ? ($ENV{SHELL},'-c',$s) : split(/\s+/,$s);
+	my $s;
+	$s='APN= ;PH= ;echo;read -p APN: APN && read -p Number[*99#]: PH && export APN PH && '.$s if($ppp[0]=~/-apn/);
+	my $p=(-w _ || ($rf=~/^pty/))?'/usr/sbin/pppd':'pppd';
+	@cmd2=$s?($ENV{SHELL},'-c',join(' ',$s,$p,$rf,'call',@ppp)):@ppp?($p,@rf,'call',@ppp):();
 }
 
 sub NAP{
@@ -998,6 +1027,7 @@ sub netmenu{
 	if($#_<0){
 		routestat();
 		resolvstat();
+		btstat();
 		pppstat();
 		ifstat();
 		print '<openbox_pipe_menu>';
@@ -1022,7 +1052,7 @@ sub netmenu{
 				$debugppp{$i}=1 if($d=~/\n\s*(?:nodetach)(\s|$)/);
 				$debugppp{$i}=$debugppp{$i}?'+':'';
 				# todo: if pptp goes via default network - CAN replace default network, but keep destination subnet
-				if($d=~s/\npty\s+\"pptp\s+(\S+).*/$1/gs){
+				if($d=~s/\npty\s+\"(?:\S+\/)?pptp\s+(\S+).*/$1/gs){
 					# todo: resolve host $d
 					my @r=checkroute(ip2n($d));
 					next if(!@r);
@@ -1037,7 +1067,7 @@ sub netmenu{
 						$default_route=0;
 					}
 					$d="pptp $i ($d)";
-				}elsif($d=~s/\npty\s+\"pppoe\s(?:.*\s)?-I\s+(\S+)\s.*/$1/gs){
+				}elsif($d=~s/\npty\s+\"(?:\S+\/)?pppoe\s(?:.*\s)?-I\s+(\S+)\s.*/$1/gs){
 					next if(!$carrier{$d});
 					$default_route-=(!$_->[0] && $_[3] eq $i) for(@routes);
 					$d="pppoe $i ($d)";
@@ -1055,7 +1085,6 @@ sub netmenu{
 				print _ex($debugppp{$i}.$i,$d);
 			}
 		}
-		btstat();
 		print _menu1("Serial modems (pppd $ppp2)").$i.'</menu>' if($i=join('',map{_modem(substr($_,15,-7),"$cellppp-apn")}glob('/sys/class/tty/*/device')));
 		my %bt;
 		for(sort values %btdev){
@@ -1067,7 +1096,7 @@ sub netmenu{
 		while(my ($r,$x)=each %rfcomm_){
 			my ($a,$c)=@$x;
 			my $n=$btname{$a}->{$c}||$c;
-			push @{$bt{$n}},_ex("$r $rfcomm release $r","Stop: $r $devppp{$r} \"$n\"");
+			push @{$bt{$n}},_ex("_ "._btrelease($r),"Stop: $r $devppp{$r} \"$n\"");
 		}
 		my $chat='/usr/sbin/chat';
 		$chat.=' -V' if($ENV{OB3MENUNET_DEBUG});
@@ -1137,6 +1166,7 @@ sub netmenu{
 		if(!-e $d){
 			if(-e ($d="/sys/class/bluetooth/$if")){
 				btstat();
+				pppstat();
 				if($DOWN{$if}){
 					print _ex("/usr/sbin/hciconfig $if up",'up');
 					goto EX;
@@ -1262,11 +1292,13 @@ SUDO:
 					}
 				}
 				for(grep(/^(?:\/usr)?\/s?bin\//,keys %cmd)){
+					next if($_=~/\s/);
 					my @s=stat($_);
 					last if($root=!(-x _ && ($s[2] & 04000)));
 				}
 			}
 		}
+		$cmd[0]=~s/\@//;
 		$term=!$notify_ && ($root || ($cmd{$ENV{SHELL}} && grep(/ read /,@cmd)) || ($NOTIFY>1 && !$notify) || $ENV{OB3MENUNET_DEBUG});
 		$term=0 if($term0 && !$root);
 #		}elsif(!$notify_ && $notify && ($NOTIFY==3 || ($NOTIFY==2 && !$DBUS_NOTIFY))){
