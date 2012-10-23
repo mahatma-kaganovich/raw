@@ -676,9 +676,11 @@ sub pppstat{
 			}
 		}
 		my $x;
-		if($a[1]='pty'){
+		if($a[1] eq 'pty'){
 			@a=split(' ',$a[2]);
-			if($a[0] eq $ppporc){
+			my ($m)=$a[0]=~/([^\/\s]*)$//gs or goto FD;
+			$x=join(' ',$m,map{~s/.*\///g;$_}glob("/proc/$p/task/*"));
+			if($m eq 'ppporc'){
 				my @l;
 				my $c=$a[1];
 				while(my ($d,$c1)=each %btlink){
@@ -688,7 +690,6 @@ sub pppstat{
 					my $d=$l[0];
 					$d=~s/:.*//g;
 					my $a=$btdev_{$d};
-					$x=join(' ','ppporc',map{~s/.*\///g;$_}glob("/proc/$p/task/*"));
 					$rfcomm{$a}->{$c}=$x;
 					$rfcomm_{$x}=[$a,$c];
 				}
@@ -700,6 +701,7 @@ sub pppstat{
 			$devppp{$x}=$i;
 			$pidppp{$x}=$p;
 		}
+FD:
 		$fd{readlink($_)}=undef for(glob('/proc/$p/fd/*')); # root
 	}
 }
@@ -1100,11 +1102,11 @@ sub netmenu{
 		}
 		while(my ($r,$x)=each %rfcomm_){
 			my ($a,$c)=@$x;
-			exists($btname{$a}->{$c}) ||
-			push @{$bt{$c}},_ex("_ "._btrelease($r),"? $stop$r $devppp{$r} \"$c\"");
+			push @{$bt{$c}},_ex("_ "._btrelease($r),"$stop$devppp{$r} $r \"$c\"");
 		}
 		for my $a(keys %btname){
 			while(my ($c,$n)=each %{$btname{$a}}){
+				exists($rfcomm{$a}->{$c}) && next;
 				my @r=btmodem($a,$c,'dun');
 				push @{$bt{$n}},_ex("$debugppp{$cellppp}$rf $r[0]","$r[1]\"$n\"");
 			}
