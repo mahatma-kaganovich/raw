@@ -341,7 +341,7 @@ launch(){
 preferred(){
 	local i
 	while read i; do
-		YA_APPS+="\"$i\""
+		YA_APP+=" \"$i\""
 	done <"$HOME/.config/ya/preferred-apps1"
 }
 
