@@ -1,16 +1,20 @@
 #!/usr/bin/perl
 # (c) Denis Kaganovich, Anarchy or GPLv2
-# OpenBox3 pipe menu v0.5
+# OpenBox3 pipe menu v0.6
 # ob3menu {--<command> {params}}
-# 	--slow {<path/to/rc.xml>}
+# 	--slow [<path/to/rc.xml> [X Y]]
 #	--autostart {profile}
 #	--include {menu to include}
 #	--profile {profile}
 #	--mime <mime.sh> {dirs}
+#	--launcher x y <horizontal/vertical=0/1> <~/.cache/ya/desk.jpg> <~/.cache/ya/desk-sh> [<wallpaper>]
 # "--slow" - +keybinds, 3.5.0+ menu icons, better with cache.
 #
 # OnlyShowIn is specified, but I newer want it. But you can think else.
 # Consensus: listed as "? ..."
+#
+# Launcher: starting to do fullscreen trendy "desktop", I see I don't need it, but need
+# small launcher near tint2... So, fast partial...
 
 $SIG{__DIE__}=sub{
 return if(!exists($ENV{DBUS_SESSION_BUS_ADDRESS}));
@@ -118,13 +122,25 @@ sub ico{
 
 if(exists($P{slow})){
 	$configs{$_}=1 for(glob("${0}_*"));
-	for(@{$P{slow}}){
-		my $s;
-		open($F,"<$_") && read($F,$s,-s $F);
+	if(@{$P{slow}}){
+		($fconf,$X,$Y)=@{$P{slow}};
+	}else{
+		~s/^([A-Z0-9_]*)\([A-Z0-9_]*\) = (.*)?$/$prop{$1}=$2;''/ge  for(split(/\n/,`${bin}obxprop --root`));
+		($X,$Y)=$prop{'_NET_DESKTOP_GEOMETRY'}=~/(\d+), (\d+)/;
+		($fconf)=$prop{'_OB_CONFIG_FILE'}=~/\"(.*)\"/;
+	}
+	if(open(my $F,'<',$fconf)){
+		read($F,$s,-s $F);
 		close($F);
 		for $i (@conf){($conf{$i})=$s=~/<$i>([^<]*)<\/$i>/};
 		$P{'slow'}=$conf{showIcons} eq 'yes';
 		$s=~s/<keybind\s+key=\"(.*?)\".*?>\s*<action name=\"Execute\">.*?<command>(.*?)<\/command>/$key{$2}=$1;''/gse;
+		$fconf=~s/[^\/]*$//g;
+		if($X && $Y && open($F,'<',$fconf.'preferred-apps')){
+			read($F,$s,-s $F);
+			close($F);
+			$apps{$_}=undef for(@apps=split(/[\r\n]+/,$s));
+		}
 	};
 	icons('/usr/share/icons/');
 	while(</usr/share/pixmaps/*.???>){
@@ -193,10 +209,11 @@ N:
 	}
 	$i='';
 	~s/([$xml_])/\&$xml_{$1};/g for(values %d);
+	$icon=undef;
 	if(exists($P{slow}) && exists($d{Icon})){
 		$i=$d{Icon};
 		$i=~s/(?:.*\/)?(.*?).svg$/$1.png/;
-		$i=$ico{$i} if(exists($ico{$i}));
+		$icon=$i=$ico{$i} if(exists($ico{$i}));
 		$i=" icon='$i'";
 	}
 	if(substr($f,0,4) eq '/etc'){
@@ -213,6 +230,7 @@ N:
 		$d{Exec}=~s/\s+%\w$//;
 		$d{Name}.=" 	[$key{$d{Exec}}]" if(exists($key{$d{Exec}}));
 		$i="<item label='$d{Name}'$i><action name='Execute'><execute>$d{Exec}</execute>".$notify{lc($d{StartupNotify})}.'</action></item>';
+		$apps{$d{Exec}}=[$icon,$d{Exec},$i] if(exists($apps{$d{Exec}}));
 	}elsif($d{Type} eq 'Directory'){
 		my $d;
 		for(keys %en){
@@ -256,6 +274,47 @@ for(keys %cat){
 $dir{$_}||="$_'" for(keys %cc);
 $set=$dir{'Settings'};
 print '<openbox_pipe_menu><menu id="client-list-combined-menu"/><separator/>';
+if(@apps){
+	if(exists($P{launcher})){
+		print "<menu id='preferred-apps' label='Preferred Apps'>";
+		$id++;
+		print $apps{$_}->[2];
+		my ($a,$m,$xy);
+		my ($x,$y,$vert,$img,$sh,$wp)=@{$P{launcher}};
+		my ($tile,$a,$c,$p)=$vert ? ('1',"[ \$1 -lt $x ] && {\n",$y,'$2'):('x1',"[ \$2 -lt $y ] && {\n",$x,'$1');
+		for(@apps){
+			($i=$apps{$_})||next;
+			print $apps{$_}->[2];
+#			$m.=' '.($apps{$_}->[0]||$icon);
+			$m.=' '.$apps{$_}->[0];
+			$xy+=$c;
+			$a.="	[ $p -lt $xy ] && exec $apps{$_}->[1]\n";
+		}
+		$a.="	false\n}\n";
+		unlink($sh,$img);
+		$m="montage -background none -geometry ${x}x$y -tile $tile $m ";
+		if($wp || -r ($wp=(glob("$fconf/wallpaper.*"))[0])){
+			# ppm not transparent, mpc:- keep cache file
+			my $f="tiff:-";
+			$m.="$f |convert -background none -extent ${X}x$Y $f ";
+			$m.="$f |composite -compose atop $f -resize ${X}x$Y! $wp ";
+		}else{
+			$m.="ppm:- | convert -background none -extent ${X}x$Y "
+		}
+#		print STDERR $m;
+		`$m $img`;
+		if(!$? && open(my $F,'>',$sh)){
+			print $F $a;
+			chmod(0700,$F);
+			close($F);
+			system('/usr/bin/feh','--no-fehbg','--bg-center',$img);
+		}
+		print '</menu>';
+	}else{
+		($i=$apps{$_}) && print $i->[2] for(@apps);
+		print '<separator/>';
+	}
+}
 for(sort{$dir{$a} cmp $dir{$b}}keys %cat1){
 	print "<menu id='$id' label='$dir{$_}>",(sort @{$cat1{$_}});
 	$id++;

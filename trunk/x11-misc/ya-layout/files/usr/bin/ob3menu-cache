@@ -1,5 +1,5 @@
 #!/bin/bash
-# pipe menu cache for OpenBox3 v0.5
+# pipe menu cache for OpenBox3 v0.6
 # icons changes not tracked
 # param: generator command:
 
@@ -7,12 +7,11 @@ ob3menu-cache(){
 local cmd="${*:-/usr/bin/ob3menu --slow}"
 #local cmd="${*:-/usr/bin/mmaker -ci OpenBox3}"
 . "$HOME/.cache/ya/environment" && cmd=${cmd/ob3menu --slow/ob3menu --autostart $YA_XDG_AUTOSTART --profile $YA_PROFILE --slow}
-local m="$HOME/.cache/ya/menu.xml" c="/usr/share/applications /usr/share/applications/inputmethods /usr/share/desktop-directories $0 ${cmd%% *} /etc/xdg/autostart" mm=true cat=cat a=/dev/null i
+local m="$HOME/.cache/ya/menu.xml" c="/usr/share/applications /usr/share/applications/inputmethods /usr/share/desktop-directories $0 ${cmd%% *} /etc/xdg/autostart" mm=true a=/dev/null i
 case "$cmd" in
 *ob3menu*\ --autostart*)a="$HOME/.cache/ya/autostart";;&
-*ob3menu*\ --slow\ *)
-	i="${cmd##* --slow }"
-	c+=" ${i%% --*} /usr/share/mime/globs /etc/fstab" # /usr/share/icons/*/*/*
+*ob3menu*\ --slow)
+	c+=" $HOME/.config/ya/rc,xml $HOME/.config/ya/preferred-apps /usr/share/mime/globs /etc/fstab" # /usr/share/icons/*/*/*
 	cmd+=" --mime $m.sh $HOME"
 ;;
 *ob3menu*\ --mime\ *)c+=" /usr/share/mime/globs /etc/fstab";;
@@ -23,12 +22,13 @@ if ! (read k1 <"$m.key" && [ "$k1" = "$k" ]); then
 	mkdir -p "${m%/*}"
 	{
 	$mm '<openbox_pipe_menu>'
+	echo $cmd >&2
 	$cmd 2>"$a" || echo '' >"$a"
 	$mm '</openbox_pipe_menu>'
 	} >"$m"
 	echo "$k" >"$m.key"
 fi
-$cat "$m"
+cat "$m" || rm $m.key
 }
 
-ob3menu-cache "${@}" 2>/dev/null
+ob3menu-cache "${@}"

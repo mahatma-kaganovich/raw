@@ -157,6 +157,7 @@ obconfig(){
 	ob3menuconfig --config - --fix <"$2" | \
 	sed -e 's:<animateIconify>yes</animateIconify>:<animateIconify>no</animateIconify>:' \
 		-e 's:<file>menu\.xml</file>:<file>../ya/menu.xml</file>:' \
+		-e 's:<!-- Menus -->:<!-- Menus -->\n    <mousebind button="Left" action="Press">\n      <action name="execute"><execute>~/.cache/ya/desk-sh $pointer</execute></action>\n    </mousebind>:' \
 		-e 's:</keyboard>:<!-- ya.keybind -->\
 <keybind key="C-Escape"><action name="ShowMenu"><menu>client-list-combined-menu</menu></action></keybind>\
 <keybind key="Menu"><action name="ShowMenu"><menu>root-menu</menu></action></keybind>\
@@ -337,12 +338,20 @@ launch(){
 	exit
 }
 
+preferred(){
+	local i
+	while read i; do
+		YA_APPS+="\"$i\""
+	done <"$HOME/.config/ya/preferred-apps1"
+}
+
 sess(){
 	export XDG_MENU_PREFIX="${YA_PROFILE,,}-" DESKTOP_SESSION="ya"
 	# SESSION_MANAGER=
 }
 
 . "$cache/environment" || mkdir -p "$cache"
+preferred 2>/dev/null
 [ -z "$YA_DESKTOP" ] && YA_DESKTOP=`app $YA_STARTUP`
 desk="$YA_DESKTOP"
 sess
@@ -454,9 +463,13 @@ Launcher:
 	envir ya
 	[ -s "$obconf" ] || obconfig "$obconf" $(1cfg openbox/rc.xml)
 	xrdb -merge $(1cfg ya/Xresources) </dev/null
-	i=`1cfg "ya/wallpaper.*"` && case "$desk" in
+	[ -n "$desk" ] && i=`1cfg "ya/wallpaper.*"` && case "$desk" in
 	*pcmanfm*)desk+=" -w $i";;
 	esac
+	for i in "$cache/desk".*; do
+		[ -e "$i" ] && feh --no-fehbg --bg-center $i &
+		break
+	done
 	export YA_DESKTOP
 	[ -e /var/run/autofs.pid ] && (. /usr/share/ya-layout/autofs-all)
 	wm ${desk:+--startup "$desk"}
