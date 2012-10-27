@@ -11,7 +11,7 @@ local m="$HOME/.cache/ya/menu.xml" c="/usr/share/applications /usr/share/applica
 case "$cmd" in
 *ob3menu*\ --autostart*)a="$HOME/.cache/ya/autostart";;&
 *ob3menu*\ --slow)
-	c+=" $HOME/.config/ya/rc,xml $HOME/.config/ya/preferred-apps /usr/share/mime/globs /etc/fstab" # /usr/share/icons/*/*/*
+	c+=" $HOME/.config/ya/rc.xml $HOME/.config/ya/preferred-apps /usr/share/mime/globs /etc/fstab" # /usr/share/icons/*/*/*
 	cmd+=" --mime $m.sh $HOME"
 ;;
 *ob3menu*\ --mime\ *)c+=" /usr/share/mime/globs /etc/fstab";;
