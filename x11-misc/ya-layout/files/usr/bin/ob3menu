@@ -136,11 +136,13 @@ if(exists($P{slow})){
 		$P{'slow'}=$conf{showIcons} eq 'yes';
 		$s=~s/<keybind\s+key=\"(.*?)\".*?>\s*<action name=\"Execute\">.*?<command>(.*?)<\/command>/$key{$2}=$1;''/gse;
 		$fconf=~s/[^\/]*$//g;
+		exists($ENV{YA_APP}) && push @apps,split(/\s+/,$ENV{YA_APP});
 		if($X && $Y && open($F,'<',$fconf.'preferred-apps')){
 			read($F,$s,-s $F);
 			close($F);
-			$apps{$_}=undef for(@apps=split(/[\r\n]+/,$s));
+			push @apps,split(/[\r\n]+/,$s);
 		}
+		$apps{$_}=undef for(@apps);
 	};
 	icons('/usr/share/icons/');
 	while(</usr/share/pixmaps/*.???>){
