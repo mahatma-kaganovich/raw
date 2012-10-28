@@ -324,8 +324,9 @@ if(@apps){
 			$tint2=$P{tint2}->[0]||"$ENV{HOME}/.config/tint2/tint2rc";
 			$tint2_=_read("<$tint2");
 		}
-		my ($a,$m,$xx,$yy,$left,$bottom,$spliceX,$spliceY);
+		my ($a,$m,$xx,$yy,$left,$bottom);
 		my ($x,$y,$vert,$img,$sh,$wp)=@{$P{launcher}};
+		my ($spliceX,$spliceY)=(0,0);
 		my $n=scalar(@apps);
 		$vert='' if($vert eq '-');
 		my ($sx,$sy);
@@ -370,7 +371,7 @@ if(@apps){
 		}
 		$sx||=$x*$xx;
 		$sy||=$y*$yy;
-		my ($a,$c,$p,$xy)=$vert ? ('1',"[ \$1 -gt $spliceX -a \$1 -lt ".($spliceX+$x)." ] && {\n",$y,'$2',$yy):("[ \$2 -gt $spliceY -a \$2 -lt ".($spliceY+$y)." ] && {\n",$x,'$1',$spliceX);
+		my ($a,$c,$p,$xy)=$vert ? ('1',"[ \$1 -gt $spliceX -a \$1 -lt ".($spliceX+$sx)." ] && {\n",$y,'$2',$yy):("[ \$2 -gt $spliceY -a \$2 -lt ".($spliceY+$sy)." ] && {\n",$x,'$1',$spliceX);
 		for(@apps){
 			($i=$apps{$_})||next;
 #			$m.=' '.($apps{$_}->[0]||$icon);
@@ -396,6 +397,7 @@ if(@apps){
 			chmod(0700,$F);
 			close($F);
 			system('/usr/bin/feh','--no-fehbg','--bg-center',$img);
+			system('openbox','--reconfigure');
 		}
 		my ($sz,$sz1);
 		if($tint2_){
