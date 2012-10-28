@@ -307,10 +307,9 @@ if(@apps){
 		if(!exists($P{tint2}) && (my $pid=$prop{_OPENBOX_PID})){
 			if(my $c=_read("/proc/$pid/cmdline")){
 				my @c=split(/\x0/,$c);
-				for(2..$#c){
-					if($c[$_]=~/(?:^|.*\/)tint2$/){
-						$_++ if($c[++$_] eq '-c');
-						$P{tint2}->[0]=$c[$_];
+				for(@c){
+					if($_=~s/(?:^|\S*\/)tint2\s+-c\s+//){
+						$P{tint2}->[0]=$_;
 						last;
 					}
 				}

@@ -23,7 +23,6 @@ if ! (read k1 <"$m.key" && [ "$k1" = "$k" ]); then
 	mkdir -p "${m%/*}"
 	{
 	$mm '<openbox_pipe_menu>'
-	echo $cmd >&2
 	$cmd 2>"$a" || echo '' >"$a"
 	$mm '</openbox_pipe_menu>'
 	} >"$m"

@@ -44,6 +44,8 @@ sm2='--sm-client-disable'
 : ${YA_APP_XF86Panel:="\"xfce4-panel \$sm2\" \"lxpanel -p \$YA_PROFILE\"" \"gnome-panel \$sm2\"}
 : ${YA_APP_XF86Desktop:="\"spacefm --desktop --profile=\$YA_PROFILE\" \"pcmanfm --desktop -p \$YA_PROFILE\" \"xfdesktop \$sm2\" \"nautilus -n \$sm2\""}
 
+: ${YA_APP_TINT2:="'/usr/bin/tint2 -c $HOME/.config/ya/tint2rc'"}
+
 # 2run
 : ${YA_SESSION:="XF86SettingsManager XF86Panel XF86Desktop"}
 
@@ -423,6 +425,12 @@ case "$1" in
 	shift 2
 	continue
 ;;
+--tint2)
+	shift
+	YA_DESKTOP=`app TINT2`
+	desk="$YA_DESKTOP"
+	continue
+;;
 --fixrc)
 	shift
 	fixml "${@}" <"$obconf" >"$obconf"'.$$$' && rename '.$$$' '' "$obconf"'.$$$'
@@ -462,6 +470,7 @@ Launcher:
 	xprop -root -remove _NET_NUMBER_OF_DESKTOPS -remove _NET_DESKTOP_NAMES -remove _NET_CURRENT_DESKTOP
 	envir ya
 	[ -s "$obconf" ] || obconfig "$obconf" $(1cfg openbox/rc.xml)
+	[ "$YA_STARTUP" = TINT2 ] && ! [ -s "$HOME/.config/ya/tint2rc" ] && [ -s /etc/xdg/ya/tint2rc ] && cp /etc/xdg/ya/tint2rc "$HOME/.config/ya/tint2rc"
 	xrdb -merge $(1cfg ya/Xresources) </dev/null
 	[ -n "$desk" ] && i=`1cfg "ya/wallpaper.*"` && case "$desk" in
 	*pcmanfm*)desk+=" -w $i";;
