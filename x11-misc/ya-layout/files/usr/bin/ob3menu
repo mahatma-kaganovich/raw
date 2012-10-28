@@ -120,6 +120,33 @@ sub ico{
 	}
 }
 
+sub _read{
+	open(my $F,$_[0])||return;
+	my $s;
+	if(my $l=$_[1]||-s $F){
+		read($F,$s,$l);
+	}else{
+		while(<$F>){$s.=$_};
+	}
+	close($F);
+	$s;
+}
+
+sub _write{
+	open(my $F,$_[0])||return;
+	print($F $_[1]) && close($F);
+}
+
+sub _restart{
+	my $pid=fork();
+	$pid && return $pid;
+	close(STDOUT);
+	open STDOUT,">&2";
+	system('killall','-w',$_[0]);
+	exec(@_);
+	die $!;
+}
+
 if(exists($P{slow})){
 	$configs{$_}=1 for(glob("${0}_*"));
 	if(@{$P{slow}}){
@@ -232,7 +259,10 @@ N:
 		$d{Exec}=~s/\s+%\w$//;
 		$d{Name}.=" 	[$key{$d{Exec}}]" if(exists($key{$d{Exec}}));
 		$i="<item label='$d{Name}'$i><action name='Execute'><execute>$d{Exec}</execute>".$notify{lc($d{StartupNotify})}.'</action></item>';
-		$apps{$d{Exec}}=[$icon,$d{Exec},$i] if(exists($apps{$d{Exec}}));
+		if(exists($apps{$d{Exec}})){
+			$apps{$d{Exec}}=[$icon,$d{Exec},$i];
+			substr($i,13,0)=' ☑';
+		}
 	}elsif($d{Type} eq 'Directory'){
 		my $d;
 		for(keys %en){
@@ -278,15 +308,71 @@ $set=$dir{'Settings'};
 print '<openbox_pipe_menu><menu id="client-list-combined-menu"/><separator/>';
 if(@apps){
 	if(exists($P{launcher})){
-		print "<menu id='preferred-apps' label='Preferred Apps'>";
-		$id++;
-		print $apps{$_}->[2];
-		my ($a,$m,$xy);
+		if(!exists($P{tint2}) && (my $pid=$prop{_OPENBOX_PID})){
+			if(my $c=_read("/proc/$pid/cmdline")){
+				my @c=split(/\x0/,$c);
+				for(2..$#c){
+					if($c[$_]=~/(?:^|.*\/)tint2$/){
+						$_++ if($c[++$_] eq '-c');
+						$P{tint2}->[0]=$c[$_];
+						last;
+					}
+				}
+			}
+		}
+		if(exists($P{tint2})){
+			$tint2=$P{tint2}->[0]||"$ENV{HOME}/.config/tint2/tint2rc";
+			$tint2_=_read("<$tint2");
+		}
+		my ($a,$m,$xx,$yy,$left,$bottom,$spliceX,$spliceY);
 		my ($x,$y,$vert,$img,$sh,$wp)=@{$P{launcher}};
-		my ($tile,$a,$c,$p)=$vert ? ('1',"[ \$1 -lt $x ] && {\n",$y,'$2'):('x1',"[ \$2 -lt $y ] && {\n",$x,'$1');
+		my $n=scalar(@apps);
+		$vert='' if($vert eq '-');
+		my ($sx,$sy);
+		$x=50;
+		if(!$x || !$y){
+			if($tint2_){
+				my ($sz)=$tint2_=~/\n\s*panel_size\s*=.*?\%\s+(\d+)/s;
+				my ($p)=$tint2_=~/\n\s*panel_position\s*=\s*([^\n]+)/s;
+				$vert=$p=~/vertical/ if($vert eq '');
+				goto nolauncher if(!($bottom=$p=~/bottom/) && !($p=~/top/));
+				$sz=int($sz/2) if(!($left=$p=~/left/) && !($p=~/right/));
+				($sx,$sy)=$vert?($sz,0):(0,$sz);
+			}elsif(!$sx || !$sy){
+				my @splice=$prop{'_NET_WORKAREA'}=~/(\d+), (\d+), (\d+), (\d+)/;
+				if($vert ne 1 && ($sy=$splice[1])){
+				}elsif($vert ne 0 && ($sx=$splice[0])){
+					$vert=1;
+				}elsif($vert ne 1 && ($sy=$splice[3]-$Y)){
+					$bottom=1;
+				}elsif($vert ne 0 && ($sx=$splice[2]-$X)){
+					$vert=1;
+					$left=1;
+				}else{
+					goto nolauncher;
+				}
+			}
+		}
+		$xx=int($sx/$x) if($x);
+		$yy=int($sy/$y) if($y);
+		$xx||=$yy?int($n/$yy)+($n%$yy!=0):$vert?1:$n;
+		$yy||=$xx?int($n/$xx)+($n%$xx!=0):$vert?$n:1;
+		$x=$sx/$xx;
+		$y=$sy/$yy;
+		$x||=$y;
+		$y||=$x;
+		if($vert){
+			$spliceX=$X-$x*$xx if(!$left);
+			$spliceY=$Y-$y*$yy if(!$bottom);
+		}else{
+			$spliceX=$X-$x*$xx if($left);
+			$spliceY=$Y-$y*$yy if($bottom);
+		}
+		$sx||=$x*$xx;
+		$sy||=$y*$yy;
+		my ($a,$c,$p,$xy)=$vert ? ('1',"[ \$1 -gt $spliceX -a \$1 -lt ".($spliceX+$x)." ] && {\n",$y,'$2',$yy):("[ \$2 -gt $spliceY -a \$2 -lt ".($spliceY+$y)." ] && {\n",$x,'$1',$spliceX);
 		for(@apps){
 			($i=$apps{$_})||next;
-			print $apps{$_}->[2];
 #			$m.=' '.($apps{$_}->[0]||$icon);
 			$m.=' '.$apps{$_}->[0];
 			$xy+=$c;
@@ -294,28 +380,37 @@ if(@apps){
 		}
 		$a.="	false\n}\n";
 		unlink($sh,$img);
-		$m="montage -background none -geometry ${x}x$y -tile $tile $m ";
+		$m="montage -background none -geometry ${x}x$y -tile ${xx}x$yy $m ";
+		$splice=" -splice ${spliceX}x$spliceY" if($spliceX || $spliceY);
 		if($wp || -r ($wp=(glob("$fconf/wallpaper.*"))[0])){
 			# ppm not transparent, mpc:- keep cache file
 			my $f="tiff:-";
-			$m.="$f |convert -background none -extent ${X}x$Y $f ";
-			$m.="$f |composite -compose atop $f -resize ${X}x$Y! $wp ";
+			$m.="$f |convert -background none$splice $f -extent ${X}x$Y $f | composite -compose atop $f -resize ${X}x$Y! $wp ";
 		}else{
-			$m.="ppm:- | convert -background none -extent ${X}x$Y "
+			$m.="ppm:- | convert -background none$splice ppm:- -extent ${X}x$Y "
 		}
-#		print STDERR $m;
-		`$m $img`;
+		$out=`( $m $img ) 2>&1`;
+		die "$out" if($?);
 		if(!$? && open(my $F,'>',$sh)){
 			print $F $a;
 			chmod(0700,$F);
 			close($F);
 			system('/usr/bin/feh','--no-fehbg','--bg-center',$img);
 		}
-		print '</menu>';
+		my ($sz,$sz1);
+		if($tint2_){
+			my $sz=100-int(100*($vert?$sy/$Y:$sx/$X))-1;
+			my ($sz1)=$tint2_=~/\n\s*panel_size\s*=\s*(\S+)\%/s;
+#			if($sz1 ne $sz){
+				$tint2_=~s/(\n\s*panel_size\s*=\s*)\S+\%/$1$sz\%/s;
+				_write(">$tint2",$tint2_) && _restart('tint2','-c',$tint2);
+#			}
+		}
 	}else{
 		($i=$apps{$_}) && print $i->[2] for(@apps);
 		print '<separator/>';
 	}
+nolauncher:
 }
 for(sort{$dir{$a} cmp $dir{$b}}keys %cat1){
 	print "<menu id='$id' label='$dir{$_}>",(sort @{$cat1{$_}});

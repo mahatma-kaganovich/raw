@@ -1,4 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <openbox_menu>
-	<menu id="root-menu" label="OpenBox 3" execute="/usr/bin/ob3menu-cache /usr/bin/ob3menu --slow --launcher 20 20 0 ~/.cache/ya/desk.jpg ~/.cache/ya/desk-sh" />
+	<menu id="root-menu" label="OpenBox 3" execute="/usr/bin/ob3menu-cache /usr/bin/ob3menu --slow --launcher 0 0 - ~/.cache/ya/desk.jpg ~/.cache/ya/desk-sh" />
 </openbox_menu>
