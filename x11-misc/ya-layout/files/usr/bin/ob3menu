@@ -156,17 +156,13 @@ if(exists($P{slow})){
 		($X,$Y)=$prop{'_NET_DESKTOP_GEOMETRY'}=~/(\d+), (\d+)/;
 		($fconf)=$prop{'_OB_CONFIG_FILE'}=~/\"(.*)\"/;
 	}
-	if(open(my $F,'<',$fconf)){
-		read($F,$s,-s $F);
-		close($F);
+	if(my $s=_read("<$fconf")){
 		for $i (@conf){($conf{$i})=$s=~/<$i>([^<]*)<\/$i>/};
 		$P{'slow'}=$conf{showIcons} eq 'yes';
 		$s=~s/<keybind\s+key=\"(.*?)\".*?>\s*<action name=\"Execute\">.*?<command>(.*?)<\/command>/$key{$2}=$1;''/gse;
 		$fconf=~s/[^\/]*$//g;
 		exists($ENV{YA_APP}) && push @apps,split(/\s+/,$ENV{YA_APP});
-		if($X && $Y && open($F,'<',$fconf.'preferred-apps')){
-			read($F,$s,-s $F);
-			close($F);
+		if($X && $Y && (my $s=_read('<'.$fconf.'preferred-apps'))){
 			push @apps,split(/[\r\n]+/,$s);
 		}
 		$apps{$_}=undef for(@apps);
@@ -397,7 +393,6 @@ if(@apps){
 			chmod(0700,$F);
 			close($F);
 			system('/usr/bin/feh','--no-fehbg','--bg-center',$img);
-			system('openbox','--reconfigure');
 		}
 		my ($sz,$sz1);
 		if($tint2_){
