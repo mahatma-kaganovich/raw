@@ -10,7 +10,7 @@ local cmd="${*:-/usr/bin/ob3menu --slow}"
 local m="$HOME/.cache/ya/menu.xml" c="/usr/share/applications /usr/share/applications/inputmethods /usr/share/desktop-directories $0 ${cmd%% *} /etc/xdg/autostart" mm=true a=/dev/null i
 case "$cmd" in
 *ob3menu*\ --autostart*)a="$HOME/.cache/ya/autostart";;&
-#*ob3menu*\ --launcher*)c+=" $HOME/.config/ya/tint2rc";;&
+*ob3menu*\ --launcher*)c+=" $HOME/.config/ya/tint2rc";;&
 *ob3menu*\ --slow*)
 	c+=" $HOME/.config/ya/rc.xml $HOME/.config/ya/preferred-apps /usr/share/mime/globs /etc/fstab" # /usr/share/icons/*/*/*
 	cmd+=" --mime $m.sh $HOME"
