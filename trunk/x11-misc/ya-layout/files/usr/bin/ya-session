@@ -59,7 +59,7 @@ prefapps="$HOME/.config/ya/preferred-apps"
 : ${YA_XDG_AUTOSTART:="$YA_PROFILE"}
 
 # startup: minimal
-: ${YA_STARTUP:=XF86Desktop}
+: ${YA_STARTUP:=TINT2}
 
 _exit(){
 	return
@@ -358,7 +358,7 @@ tint2chk(){
 	[ -s "$b" ] && return
 	[ -s $a ] && cp $a "$b"
 	[ -e "$prefapps" ] || {
-		grep -sh '^Exec=' "$HOME/.config/xfce4/panel/launcher"{*.rc,*/*.desktop}|sed -e 's:^Exec=::'|sort -u >>"$prefapps"
+		grep -sh '^Exec=' "$HOME/.config/xfce4/panel/launcher"{*.rc,*/*.desktop}|sed -e 's:^Exec=::' -e 's:%[^ ]*$::' -e 's: *::g'|sort -u >>"$prefapps"
 	}
 }
 
