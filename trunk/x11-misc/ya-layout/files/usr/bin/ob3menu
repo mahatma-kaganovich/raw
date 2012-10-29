@@ -159,10 +159,10 @@ sub crc32_utf8{utf8::encode(my $s=$_[0]);crc32($s);}
 # cache-style hashed group naming
 sub newname{
 	my ($name,$key)=@_;
-	$_[0]=~s/\*/'kEy'.crc32($key)/gse or return 1;
+	$_[0]=~s/\+/'kEy'.crc32($key)/gse or return 1;
 	return 0 if(-e $_[0]);
 	$name=~s/\.[a-z0-9]*$//i;
-	$name=~s/\*/kEy*/gs;
+	$name=~s/\+/kEy*/gs;
 	my @l=glob($name);
 	die "Deleting '$name': $!\n" if(@l && !unlink(@l));
 	1;
