@@ -8,6 +8,8 @@
 #	--profile {profile}
 #	--mime <mime.sh> {dirs}
 #	--launcher x y <horizontal/vertical=0/1> <~/.cache/ya/desk.jpg> <~/.cache/ya/desk-sh> [<wallpaper>]
+#	--launcher <~/.cache/ya/desk.+.jpg> <~/.cache/ya/desk-sh> [<geometry|,> [<wallpaper+compositor_options>]]
+#		geometry = x,y,vert?,xx,yy,spliceX,spliceY,left?,bottom?
 # "--slow" - +keybinds, 3.5.0+ menu icons, better with cache.
 #
 # OnlyShowIn is specified, but I newer want it. But you can think else.
@@ -148,17 +150,16 @@ sub _restart{
 }
 
 # CRC32 code derived from work by Gary S. Brown.
-@crc=map{for(my $i=8;$i>0;$i--){$_=($_&1)?($_>>1)^0xedb88320:($_>>1)};$_}(0..255);
 sub crc32{
 my $c=$_[1] ^ 0xffffffff;
 $c=$crc[($c ^ ord(substr($_[0],$_,1))) & 0xFF] ^ ($c >> 8) for(0..length($_[0])-1);
 $c ^ 0xffffffff;
 }
-sub crc32_utf8{utf8::encode(my $s=$_[0]);crc32($s);}
 
 # cache-style hashed group naming
 sub newname{
 	my ($name,$key)=@_;
+#	utf8::encode($key);
 	$_[0]=~s/\+/'kEy'.crc32($key)/gse or return 1;
 	return 0 if(-e $_[0]);
 	$name=~s/\.[a-z0-9]*$//i;
@@ -325,6 +326,7 @@ $set=$dir{'Settings'};
 print '<openbox_pipe_menu><menu id="client-list-combined-menu"/><separator/>';
 if(@apps){
 	if(exists($P{launcher})){
+		@crc=map{for(my $i=8;$i>0;$i--){$_=($_&1)?($_>>1)^0xedb88320:($_>>1)};$_}(0..255);
 		if(!exists($P{tint2}) && (my $pid=$prop{_OPENBOX_PID})){
 			if(my $c=_read("/proc/$pid/cmdline")){
 				my @c=split(/\x0/,$c);
@@ -340,13 +342,11 @@ if(@apps){
 			$tint2=$P{tint2}->[0]||"$ENV{HOME}/.config/tint2/tint2rc";
 			$tint2_=_read("<$tint2");
 		}
-		my ($a,$m,$xx,$yy,$left,$bottom);
-		my ($x,$y,$vert,$img,$sh,$wp)=@{$P{launcher}};
-		my ($spliceX,$spliceY)=(0,0);
+		my ($a,$m,$sx,$sy);
+		my ($img,$sh,$geo,@wp)=@{$P{launcher}};
+		my ($x,$y,$vert,$xx,$yy,$spliceX,$spliceY,$left,$bottom)=split(/\,/,$geo);
+		my $wp=join(' ',@wp);
 		my $n=scalar(@apps);
-		$vert='' if($vert eq '-');
-		my ($sx,$sy);
-		$x=50;
 		if(!$x || !$y){
 			if($tint2_){
 				my ($sz)=$tint2_=~/\n\s*panel_size\s*=.*?\%\s+(\d+)/s;
@@ -370,24 +370,20 @@ if(@apps){
 				}
 			}
 		}
-		$xx=int($sx/$x) if($x);
-		$yy=int($sy/$y) if($y);
+		$xx||=int($sx/$x) if($x);
+		$yy||=int($sy/$y) if($y);
 		$xx||=$yy?int($n/$yy)+($n%$yy!=0):$vert?1:$n;
 		$yy||=$xx?int($n/$xx)+($n%$xx!=0):$vert?$n:1;
-		$x=$sx/$xx;
-		$y=$sy/$yy;
+		$x||=int($sx/$xx);
+		$y||=int($sy/$yy);
 		$x||=$y;
 		$y||=$x;
-		if($vert){
-			$spliceX=$X-$x*$xx if(!$left);
-			$spliceY=$Y-$y*$yy if(!$bottom);
-		}else{
-			$spliceX=$X-$x*$xx if($left);
-			$spliceY=$Y-$y*$yy if($bottom);
-		}
 		$sx||=$x*$xx;
 		$sy||=$y*$yy;
-		my ($a,$c,$p,$xy)=$vert ? ("[ \$1 -gt $spliceX -a \$1 -lt ".($spliceX+$sx)." ] && {\n",$y,'$2',$yy):("[ \$2 -gt $spliceY -a \$2 -lt ".($spliceY+$sy)." ] && {\n",$x,'$1',$spliceX);
+		$spliceX||=($vert xor $left)?$X-$sx:0;
+		$spliceY||=($vert xor $bottom)?$Y-$sy:0;
+		my ($a,$c,$p,$xy)=$vert?('[ $1 -lt '.($spliceX+$sx),$y,'$2',$spliceY):('[ $2 -lt '.($spliceY+$sy),$x,'$1',$spliceX);
+		$a.=($spliceX?" -a \$1 -gt $spliceX":'').($spliceY?" -a \$2 -gt $spliceY":'')." ] && {\n";
 		for(@apps){
 			if(!($i=$apps{$_})){
 				print STDERR "$0: Unknown preferred app:$_\n";
@@ -398,7 +394,7 @@ if(@apps){
 			$xy+=$c;
 			$a.="	[ $p -lt $xy ] && exec $apps{$_}->[1]\n";
 		}
-		$a.="	false\n}\n";
+		$a.=($m?'':"false\n")."}\n";
 		$m="montage -background none -geometry ${x}x$y -tile ${xx}x$yy $m ";
 		$splice=" -splice ${spliceX}x$spliceY" if($spliceX || $spliceY);
 		if($wp || -r ($wp=(glob("$fconf/wallpaper.*"))[0])){
