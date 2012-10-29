@@ -354,7 +354,7 @@ sess(){
 }
 
 tint2chk(){
-	my a='/etc/xdg/ya/tint2rc' b="$HOME/.config/ya/tint2rc"
+	local a='/etc/xdg/ya/tint2rc' b="$HOME/.config/ya/tint2rc"
 	[ -s "$b" ] && return
 	[ -s $a ] && cp $a "$b"
 	[ -e "$prefapps" ] || {
