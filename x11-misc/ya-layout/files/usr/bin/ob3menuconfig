@@ -713,7 +713,9 @@ for(keys %P){
 
 &{$config{$_}->{${$_}}}() for(keys %config);
 
-sort_xsd($_,'ob') for(load_xml(open_($F,'<',reverse glob('/usr/share/doc/openbox*/rc.xsd')),1));
+my @fx=('<',(glob('/usr/share/doc/openbox*/rc.xsd*'))[-1]);
+@fx=('-|',"bzip2 -dc $fx[1]") if($fx[1]=~/.bz2$/);
+sort_xsd($_,'ob') for(load_xml(open_($F,@fx),1));
 xsd();
 
 $type{'ob:openbox_config:theme:name'}=[(map{substr($_,18,-10)}glob('/usr/share/themes/*/openbox-3')),'/dev/null'];

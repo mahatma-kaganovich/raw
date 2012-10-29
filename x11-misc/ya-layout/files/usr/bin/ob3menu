@@ -387,9 +387,12 @@ if(@apps){
 		}
 		$sx||=$x*$xx;
 		$sy||=$y*$yy;
-		my ($a,$c,$p,$xy)=$vert ? ('1',"[ \$1 -gt $spliceX -a \$1 -lt ".($spliceX+$sx)." ] && {\n",$y,'$2',$yy):("[ \$2 -gt $spliceY -a \$2 -lt ".($spliceY+$sy)." ] && {\n",$x,'$1',$spliceX);
+		my ($a,$c,$p,$xy)=$vert ? ("[ \$1 -gt $spliceX -a \$1 -lt ".($spliceX+$sx)." ] && {\n",$y,'$2',$yy):("[ \$2 -gt $spliceY -a \$2 -lt ".($spliceY+$sy)." ] && {\n",$x,'$1',$spliceX);
 		for(@apps){
-			($i=$apps{$_})||next;
+			if(!($i=$apps{$_})){
+				print STDERR "$0: Unknown preferred app:$_\n";
+				next;
+			}
 #			$m.=' '.($apps{$_}->[0]||$icon);
 			$m.=' '.$apps{$_}->[0];
 			$xy+=$c;
