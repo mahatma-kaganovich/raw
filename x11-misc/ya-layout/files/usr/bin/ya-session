@@ -9,6 +9,7 @@ obconf="$HOME/.config/ya/rc.xml"
 cache="$HOME/.cache/ya"
 sm='--sm-disable'
 sm2='--sm-client-disable'
+prefapps="$HOME/.config/ya/preferred-apps"
 
 : ${YA_APP_WebBrowser:="'exo-open --launch WebBrowser' 'seamonkey --browser' firefox chromium midori"}
 : ${YA_APP_TerminalEmulator:="'exo-open --launch TerminalEmulator' Terminal lxterminal \"gnome-terminal \$sm2\" kterm xterm"}
@@ -344,12 +345,21 @@ preferred(){
 	local i
 	while read i; do
 		YA_APP+=" \"$i\""
-	done <"$HOME/.config/ya/preferred-apps1"
+	done <"$prefapps"
 }
 
 sess(){
 	export XDG_MENU_PREFIX="${YA_PROFILE,,}-" DESKTOP_SESSION="ya"
 	# SESSION_MANAGER=
+}
+
+tint2chk(){
+	my a='/etc/xdg/ya/tint2rc' b="$HOME/.config/ya/tint2rc"
+	[ -s "$b" ] && return
+	[ -s $a ] && cp $a "$b"
+	[ -e "$prefapps" ] || {
+		grep -sh '^Exec=' "$HOME/.config/xfce4/panel/launcher"{*.rc,*/*.desktop}|sed -e 's:^Exec=::'|sort -u >>"$prefapps"
+	}
 }
 
 . "$cache/environment" || mkdir -p "$cache"
@@ -429,6 +439,7 @@ case "$1" in
 	shift
 	YA_DESKTOP=`app TINT2`
 	desk="$YA_DESKTOP"
+	tint2chk
 	continue
 ;;
 --fixrc)
@@ -470,7 +481,7 @@ Launcher:
 	xprop -root -remove _NET_NUMBER_OF_DESKTOPS -remove _NET_DESKTOP_NAMES -remove _NET_CURRENT_DESKTOP
 	envir ya
 	[ -s "$obconf" ] || obconfig "$obconf" $(1cfg openbox/rc.xml)
-	[ "$YA_STARTUP" = TINT2 ] && ! [ -s "$HOME/.config/ya/tint2rc" ] && [ -s /etc/xdg/ya/tint2rc ] && cp /etc/xdg/ya/tint2rc "$HOME/.config/ya/tint2rc"
+	[ "$YA_STARTUP" = TINT2 ] && tint2chk
 	xrdb -merge $(1cfg ya/Xresources) </dev/null
 	[ -n "$desk" ] && i=`1cfg "ya/wallpaper.*"` && case "$desk" in
 	*pcmanfm*)desk+=" -w $i";;

@@ -147,6 +147,27 @@ sub _restart{
 	die $!;
 }
 
+# CRC32 code derived from work by Gary S. Brown.
+@crc=map{for(my $i=8;$i>0;$i--){$_=($_&1)?($_>>1)^0xedb88320:($_>>1)};$_}(0..255);
+sub crc32{
+my $c=$_[1] ^ 0xffffffff;
+$c=$crc[($c ^ ord(substr($_[0],$_,1))) & 0xFF] ^ ($c >> 8) for(0..length($_[0])-1);
+$c ^ 0xffffffff;
+}
+sub crc32_utf8{utf8::encode(my $s=$_[0]);crc32($s);}
+
+# cache-style hashed group naming
+sub newname{
+	my ($name,$key)=@_;
+	$_[0]=~s/\*/'kEy'.crc32($key)/gse or return 1;
+	return 0 if(-e $_[0]);
+	$name=~s/\.[a-z0-9]*$//i;
+	$name=~s/\*/kEy*/gs;
+	my @l=glob($name);
+	die "Deleting '$name': $!\n" if(@l && !unlink(@l));
+	1;
+}
+
 if(exists($P{slow})){
 	$configs{$_}=1 for(glob("${0}_*"));
 	if(@{$P{slow}}){
@@ -375,7 +396,6 @@ if(@apps){
 			$a.="	[ $p -lt $xy ] && exec $apps{$_}->[1]\n";
 		}
 		$a.="	false\n}\n";
-		unlink($sh,$img);
 		$m="montage -background none -geometry ${x}x$y -tile ${xx}x$yy $m ";
 		$splice=" -splice ${spliceX}x$spliceY" if($spliceX || $spliceY);
 		if($wp || -r ($wp=(glob("$fconf/wallpaper.*"))[0])){
@@ -385,6 +405,8 @@ if(@apps){
 		}else{
 			$m.="ppm:- | convert -background none$splice ppm:- -extent ${X}x$Y "
 		}
+		newname($img,$m.$img.':'.$tint2_)||goto nolauncher;
+		unlink($sh);
 		$out=`( $m $img ) 2>&1`;
 		die "$out" if($?);
 		if(!$? && open(my $F,'>',$sh)){
