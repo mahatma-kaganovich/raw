@@ -411,7 +411,15 @@ NOGEO:
 		}else{
 			$m.="ppm:- | convert -background none$splice ppm:- -extent ${X}x$Y "
 		}
-		newname($img,$m.$img.':'.$tint2_)||goto nolauncher;
+		if($tint2_){
+			my $sz=100-int(100*($vert?$sy/$Y:$sx/$X))-1;
+			my ($sz1)=$tint2_=~/\n\s*panel_size\s*=\s*(\S+)\%/s;
+			if($tint2ch=($sz1 ne $sz)){
+				$tint2_=~s/(\n\s*panel_size\s*=\s*)\S+\%/$1$sz\%/s;
+				_write(">$tint2",$tint2_);
+			}
+		}
+		newname($img,$m.$img.$tint2_)||goto nolauncher;
 		unlink($sh);
 		$out=`( $m $img ) 2>&1`;
 		die "$out" if($?);
@@ -421,16 +429,7 @@ NOGEO:
 			close($F);
 			system('/usr/bin/feh','--no-fehbg','--bg-center',$img);
 		}
-		my ($sz,$sz1);
-		if($tint2_){
-			my $sz=100-int(100*($vert?$sy/$Y:$sx/$X))-1;
-			my ($sz1)=$tint2_=~/\n\s*panel_size\s*=\s*(\S+)\%/s;
-			if($sz1 ne $sz){
-				$tint2_=~s/(\n\s*panel_size\s*=\s*)\S+\%/$1$sz\%/s;
-				_write(">$tint2",$tint2_);
-			}
-			_restart('tint2','-c',$tint2);
-		}
+		$tint2ch && _restart('tint2','-c',$tint2);
 	}else{
 		print map{
 			if($#$_==1){
