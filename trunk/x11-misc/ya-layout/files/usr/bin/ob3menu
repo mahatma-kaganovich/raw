@@ -183,11 +183,15 @@ if(exists($P{slow})){
 		$P{'slow'}=$conf{showIcons} eq 'yes';
 		$s=~s/<keybind\s+key=\"(.*?)\".*?>\s*<action name=\"Execute\">.*?<command>(.*?)<\/command>/$key{$2}=$1;''/gse;
 		$fconf=~s/[^\/]*$//g;
-		exists($ENV{YA_APP}) && push @apps,split(/\s+/,$ENV{YA_APP});
-		if($X && $Y && (my $s=_read('<'.$fconf.'preferred-apps'))){
-			push @apps,split(/[\r\n]+/,$s);
+		$vanilla=$fconf=~/\/openbox$/;
+		if($X && $Y){
+			for(split(/\s+/,$ENV{YA_APP}),split(/\s*[\r\n]+\s*/,_read('<'.$fconf.'preferred-apps'))){
+				$_ || next;
+				my $x=$_;
+				push(@apps,($x=~s/.*\///gs)?[$x,$_,$_]:[$_,$x="/usr/bin/$x",$_]);
+				$apps{$x}=$apps{$_}=undef;
+			}
 		}
-		$apps{$_}=undef for(@apps);
 	};
 	icons('/usr/share/icons/');
 	while(</usr/share/pixmaps/*.???>){
@@ -325,6 +329,8 @@ $dir{$_}||="$_'" for(keys %cc);
 $set=$dir{'Settings'};
 print '<openbox_pipe_menu><menu id="client-list-combined-menu"/><separator/>';
 if(@apps){
+	my $ico=$ico{'image-missing'}||$ico{'application-other'}||$ico{'application-x-executable'};
+	@apps=map{$apps{$_->[2]}||$apps{$_->[0]}||$apps{$_->[1]}||[$ico{$_->[0]}||$ico,$_->[2]]}@apps;
 	if(exists($P{launcher})){
 		@crc=map{for(my $i=8;$i>0;$i--){$_=($_&1)?($_>>1)^0xedb88320:($_>>1)};$_}(0..255);
 		if(!exists($P{tint2}) && (my $pid=$prop{_OPENBOX_PID})){
@@ -339,15 +345,18 @@ if(@apps){
 			}
 		}
 		if(exists($P{tint2})){
-			$tint2=$P{tint2}->[0]||"$ENV{HOME}/.config/tint2/tint2rc";
+			$tint2=$P{tint2}->[0]||($vanilla?"$ENV{HOME}/.config/tint2/tint2rc":"$fconf/tint2rc");
 			$tint2_=_read("<$tint2");
 		}
 		my ($a,$m,$sx,$sy);
 		my ($img,$sh,$geo,@wp)=@{$P{launcher}};
-		my ($x,$y,$vert,$xx,$yy,$spliceX,$spliceY,$left,$bottom)=split(/\,/,$geo);
 		my $wp=join(' ',@wp);
-		my $n=scalar(@apps);
-		if(!$x || !$y){
+		my ($x,$y,$vert,$xx,$yy,$spliceX,$spliceY,$left,$bottom)=my @geo=split(/\,/,$geo);
+		my $n=($xx*$yy)||scalar(@apps);
+		$geo=0;
+		$geo+=($_ ne '') for(@geo);
+		goto NOGEO if($geo>=9);
+		if($x eq '' || $y eq ''){
 			if($tint2_){
 				my ($sz)=$tint2_=~/\n\s*panel_size\s*=.*?\%\s+(\d+)/s;
 				my ($p)=$tint2_=~/\n\s*panel_position\s*=\s*([^\n]+)/s;
@@ -362,9 +371,10 @@ if(@apps){
 					$vert=1;
 				}elsif($vert ne 1 && ($sy=$splice[3]-$Y)){
 					$bottom=1;
+					$spliceY=$splice[3];
 				}elsif($vert ne 0 && ($sx=$splice[2]-$X)){
-					$vert=1;
-					$left=1;
+					$left=$vert=1;
+					$spliceX=$splice[2];
 				}else{
 					goto nolauncher;
 				}
@@ -372,27 +382,24 @@ if(@apps){
 		}
 		$xx||=int($sx/$x) if($x);
 		$yy||=int($sy/$y) if($y);
+		($n||=$xx*$yy)||goto nolauncher;
 		$xx||=$yy?int($n/$yy)+($n%$yy!=0):$vert?1:$n;
 		$yy||=$xx?int($n/$xx)+($n%$xx!=0):$vert?$n:1;
 		$x||=int($sx/$xx);
 		$y||=int($sy/$yy);
 		$x||=$y;
 		$y||=$x;
+NOGEO:
 		$sx||=$x*$xx;
 		$sy||=$y*$yy;
-		$spliceX||=($vert xor $left)?$X-$sx:0;
-		$spliceY||=($vert xor $bottom)?$Y-$sy:0;
+		$spliceX=($vert xor $left)?$X-$sx:0 if($spliceX eq '');
+		$spliceY=($vert xor $bottom)?$Y-$sy:0 if($spliceY eq '');
 		my ($a,$c,$p,$xy)=$vert?('[ $1 -lt '.($spliceX+$sx),$y,'$2',$spliceY):('[ $2 -lt '.($spliceY+$sy),$x,'$1',$spliceX);
 		$a.=($spliceX?" -a \$1 -gt $spliceX":'').($spliceY?" -a \$2 -gt $spliceY":'')." ] && {\n";
 		for(@apps){
-			if(!($i=$apps{$_})){
-				print STDERR "$0: Unknown preferred app:$_\n";
-				next;
-			}
-#			$m.=' '.($apps{$_}->[0]||$icon);
-			$m.=' '.$apps{$_}->[0];
+			$m.=' '.($_->[0]||next);
 			$xy+=$c;
-			$a.="	[ $p -lt $xy ] && exec $apps{$_}->[1]\n";
+			$a.="	[ $p -lt $xy ] && exec $_->[1]\n";
 		}
 		$a.=($m?'':"false\n")."}\n";
 		$m="montage -background none -geometry ${x}x$y -tile ${xx}x$yy $m ";
@@ -425,7 +432,13 @@ if(@apps){
 			_restart('tint2','-c',$tint2);
 		}
 	}else{
-		($i=$apps{$_}) && print $i->[2] for(@apps);
+		print map{
+			if($#$_==1){
+				$_->[1]=~s/([$xml_])/\&$xml_{$1};/g;
+				$_->[2]="<item label='$_->[1]'><action name='execute'><execute>$_->[1]</execute></action></item>";
+			}
+			$_->[2];
+		}@apps;
 		print '<separator/>';
 	}
 nolauncher:
