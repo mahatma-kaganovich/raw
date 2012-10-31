@@ -7,9 +7,10 @@
 #	--include {menu to include}
 #	--profile {profile}
 #	--mime <mime.sh> {dirs}
-#	--launcher x y <horizontal/vertical=0/1> <~/.cache/ya/desk.jpg> <~/.cache/ya/desk-sh> [<wallpaper>]
 #	--launcher <~/.cache/ya/desk.+.jpg> <~/.cache/ya/desk-sh> [<geometry|,> [<wallpaper+compositor_options>]]
 #		geometry = x,y,vert?,xx,yy,spliceX,spliceY,left?,bottom?
+#	--tint2 [<config>]
+#	--dock
 # "--slow" - +keybinds, 3.5.0+ menu icons, better with cache.
 #
 # OnlyShowIn is specified, but I newer want it. But you can think else.
@@ -65,7 +66,7 @@ $xml_='<>\'"&';
 	'mount'=>['xfce-mount','gdu-mount'],
 );
 # to configure more - need xml parsing
-@conf=('showIcons');
+@conf=(['showIcons'],['dock','position'],['dock','direction']);
 $id=0;
 
 for(@ARGV){
@@ -144,7 +145,7 @@ sub _restart{
 	$pid && return $pid;
 	close(STDOUT);
 	open STDOUT,">&2";
-	system('killall','-w',$_[0]);
+	system('killall','-w',$_[0],'-u',$ENV{'USER'});
 	exec(@_);
 	die $!;
 }
@@ -179,7 +180,11 @@ if(exists($P{slow})){
 		($fconf)=$prop{'_OB_CONFIG_FILE'}=~/\"(.*)\"/;
 	}
 	if(my $s=_read("<$fconf")){
-		for $i (@conf){($conf{$i})=$s=~/<$i>([^<]*)<\/$i>/};
+		for(@conf){
+			my $s=$s;
+			for $i (@$_){($s)=$s=~/<$i>(.*?)<\/$i>/s}
+			$conf{join('.',@$_)}=$s;
+		};
 		$P{'slow'}=$conf{showIcons} eq 'yes';
 		$s=~s/<keybind\s+key=\"(.*?)\".*?>\s*<action name=\"Execute\">.*?<command>(.*?)<\/command>/$key{$2}=$1;''/gse;
 		$fconf=~s/[^\/]*$//g;
@@ -333,7 +338,7 @@ if(@apps){
 	@apps=map{$apps{$_->[2]}||$apps{$_->[0]}||$apps{$_->[1]}||[$ico{$_->[0]}||$ico,$_->[2]]}@apps;
 	if(exists($P{launcher})){
 		@crc=map{for(my $i=8;$i>0;$i--){$_=($_&1)?($_>>1)^0xedb88320:($_>>1)};$_}(0..255);
-		if(!exists($P{tint2}) && (my $pid=$prop{_OPENBOX_PID})){
+		if(!exists($P{dock}) && !exists($P{tint2}) && (my $pid=$prop{_OPENBOX_PID})){
 			if(my $c=_read("/proc/$pid/cmdline")){
 				my @c=split(/\x0/,$c);
 				for(@c){
@@ -348,38 +353,47 @@ if(@apps){
 			$tint2=$P{tint2}->[0]||($vanilla?"$ENV{HOME}/.config/tint2/tint2rc":"$fconf/tint2rc");
 			$tint2_=_read("<$tint2");
 		}
-		my ($a,$m,$sx,$sy);
+		my ($a,$m);
 		my ($img,$sh,$geo,@wp)=@{$P{launcher}};
 		my $wp=join(' ',@wp);
 		my ($x,$y,$vert,$xx,$yy,$spliceX,$spliceY,$left,$bottom)=my @geo=split(/\,/,$geo);
 		my $n=($xx*$yy)||scalar(@apps);
+		my ($sx,$sy)=($x*$xx,$y*$yy);
 		$geo=0;
 		$geo+=($_ ne '') for(@geo);
 		goto NOGEO if($geo>=9);
-		if($x eq '' || $y eq ''){
-			if($tint2_){
-				my ($sz)=$tint2_=~/\n\s*panel_size\s*=.*?\%\s+(\d+)/s;
-				my ($p)=$tint2_=~/\n\s*panel_position\s*=\s*([^\n]+)/s;
-				$vert=$p=~/vertical/ if($vert eq '');
-				goto nolauncher if(!($bottom=$p=~/bottom/) && !($p=~/top/));
-				$sz=int($sz/2) if(!($left=$p=~/left/) && !($p=~/right/));
+		$sx||=$X-$spliceX if($spliceX);
+		$sy||=$Y-$spliceY if($spliceY);
+		if(!$sx && !$sy){
+			my ($p,$sz);
+			if(exists($P{dock})){
+				$p=$conf{'dock.position'}.$conf{'dock.direction'};
+			}elsif($tint2_){
+				($sz)=$tint2_=~/\n\s*panel_size\s*=.*?\%\s+(\d+)/s;
+				($p)=$tint2_=~/\n\s*panel_position\s*=\s*([^\n]+)/s;
+			}
+			if($p){
+				$vert=($p=~/vertical/i)||0 if($vert eq '');
+				goto nolauncher if(!($bottom=$p=~/bottom/i) && !($p=~/top/i));
+				$sz=int($sz/2) if(!($left=$p=~/left/i) && !($p=~/right/i));
 				($sx,$sy)=$vert?($sz,0):(0,$sz);
-			}elsif(!$sx || !$sy){
+			}
+			if(!$sx && !$sy){
 				my @splice=$prop{'_NET_WORKAREA'}=~/(\d+), (\d+), (\d+), (\d+)/;
 				if($vert ne 1 && ($sy=$splice[1])){
 				}elsif($vert ne 0 && ($sx=$splice[0])){
-					$vert=1;
-				}elsif($vert ne 1 && ($sy=$splice[3]-$Y)){
+				}elsif($vert ne 1 && ($sy=$Y-$splice[3])){
 					$bottom=1;
 					$spliceY=$splice[3];
-				}elsif($vert ne 0 && ($sx=$splice[2]-$X)){
-					$left=$vert=1;
+				}elsif($vert ne 0 && ($sx=$X-$splice[2])){
+					$left=1;
 					$spliceX=$splice[2];
 				}else{
 					goto nolauncher;
 				}
 			}
 		}
+		$vert=$sx && !$sy if($vert eq '');
 		$xx||=int($sx/$x) if($x);
 		$yy||=int($sy/$y) if($y);
 		($n||=$xx*$yy)||goto nolauncher;
@@ -389,9 +403,9 @@ if(@apps){
 		$y||=int($sy/$yy);
 		$x||=$y;
 		$y||=$x;
-NOGEO:
 		$sx||=$x*$xx;
 		$sy||=$y*$yy;
+NOGEO:
 		$spliceX=($vert xor $left)?$X-$sx:0 if($spliceX eq '');
 		$spliceY=($vert xor $bottom)?$Y-$sy:0 if($spliceY eq '');
 		my ($a,$c,$p,$xy)=$vert?('[ $1 -lt '.($spliceX+$sx),$y,'$2',$spliceY):('[ $2 -lt '.($spliceY+$sy),$x,'$1',$spliceX);
