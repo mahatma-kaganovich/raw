@@ -65,8 +65,7 @@ $xml_='<>\'"&';
 	'umount'=>['usbpendrive_unmount','gdu-unmount'],
 	'mount'=>['xfce-mount','gdu-mount'],
 );
-# to configure more - need xml parsing
-@conf=(['showIcons'],['dock','position'],['dock','direction']);
+@conf=(['showIcons'],['dock',['position'],['direction']]);
 $id=0;
 
 for(@ARGV){
@@ -170,6 +169,20 @@ sub newname{
 	1;
 }
 
+sub _tag{
+	my @s;
+	my $i=$_[2];
+	$_[0]=~s/<$i>(.*?)<\/$i>/push @s,$1;''/gse;
+	$i=$_[1].'.'.$i;
+	if($#_==2){
+		$conf{$i}.="@s";
+	}else{
+		for my $s(@s){
+			_tag($s,$i,@$_) for(@_[3..$#_]);
+		}
+	}
+}
+
 if(exists($P{slow})){
 	$configs{$_}=1 for(glob("${0}_*"));
 	if(@{$P{slow}}){
@@ -180,12 +193,8 @@ if(exists($P{slow})){
 		($fconf)=$prop{'_OB_CONFIG_FILE'}=~/\"(.*)\"/;
 	}
 	if(my $s=_read("<$fconf")){
-		for(@conf){
-			my $s=$s;
-			for $i (@$_){($s)=$s=~/<$i>(.*?)<\/$i>/s}
-			$conf{join('.',@$_)}=$s;
-		};
-		$P{'slow'}=$conf{showIcons} eq 'yes';
+		_tag($s,'',@$_) for(@conf);
+		$P{'slow'}=$conf{'.showIcons'} eq 'yes';
 		$s=~s/<keybind\s+key=\"(.*?)\".*?>\s*<action name=\"Execute\">.*?<command>(.*?)<\/command>/$key{$2}=$1;''/gse;
 		$fconf=~s/[^\/]*$//g;
 		$vanilla=$fconf=~/\/openbox$/;
@@ -367,7 +376,7 @@ if(@apps){
 		if(!$sx && !$sy){
 			my ($p,$sz);
 			if(exists($P{dock})){
-				$p=$conf{'dock.position'}.$conf{'dock.direction'};
+				$p=$conf{'.dock.position'}.$conf{'.dock.direction'};
 			}elsif($tint2_){
 				($sz)=$tint2_=~/\n\s*panel_size\s*=.*?\%\s+(\d+)/s;
 				($p)=$tint2_=~/\n\s*panel_position\s*=\s*([^\n]+)/s;
