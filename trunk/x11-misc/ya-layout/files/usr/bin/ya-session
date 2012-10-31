@@ -5,11 +5,12 @@
 
 wm=/usr/bin/openbox
 Desk=/usr/share/ya-layout/Desktop
-obconf="$HOME/.config/ya/rc.xml"
+obconfdir="$HOME/.config/ya"
+obconf="$obconfdir/rc.xml"
 cache="$HOME/.cache/ya"
 sm='--sm-disable'
 sm2='--sm-client-disable'
-prefapps="$HOME/.config/ya/preferred-apps"
+prefapps="$obconfdir/preferred-apps"
 
 : ${YA_APP_WebBrowser:="'exo-open --launch WebBrowser' 'seamonkey --browser' firefox chromium midori"}
 : ${YA_APP_TerminalEmulator:="'exo-open --launch TerminalEmulator' Terminal lxterminal \"gnome-terminal \$sm2\" kterm xterm"}
@@ -45,7 +46,7 @@ prefapps="$HOME/.config/ya/preferred-apps"
 : ${YA_APP_XF86Panel:="\"xfce4-panel \$sm2\" \"lxpanel -p \$YA_PROFILE\"" \"gnome-panel \$sm2\"}
 : ${YA_APP_XF86Desktop:="\"spacefm --desktop --profile=\$YA_PROFILE\" \"pcmanfm --desktop -p \$YA_PROFILE\" \"xfdesktop \$sm2\" \"nautilus -n \$sm2\""}
 
-: ${YA_APP_TINT2:="'/usr/bin/tint2 -c $HOME/.config/ya/tint2rc'"}
+: ${YA_APP_TINT2:="'/usr/bin/tint2 -c $obconfdir/tint2rc'"}
 
 # 2run
 : ${YA_SESSION:="XF86SettingsManager XF86Panel XF86Desktop"}
@@ -354,7 +355,7 @@ sess(){
 }
 
 tint2chk(){
-	local a='/etc/xdg/ya/tint2rc' b="$HOME/.config/ya/tint2rc"
+	local a='/etc/xdg/ya/tint2rc' b="$obconfdir/tint2rc"
 	[ -s "$b" ] && return
 	[ -s $a ] && cp $a "$b"
 	[ -e "$prefapps" ] || {
@@ -478,6 +479,10 @@ Launcher:
 	rm -f "$cache/"[1-9]* "$cache/environment"
 	[ -e /etc/udev/rules.d/88-autofs.rules -a ! -e /var/run/auto.dev ] && . /usr/share/ya-layout/autofs-all
 	[ -x /usr/bin/dbus-launch ] && _env /usr/bin/dbus-launch --sh-syntax --exit-with-session
+	read i <"$obconfdir/xkbmap" 2>/dev/null && {
+		setxkbmap $i
+		[ "$DISPLAY" != :0.0 ] && setxkbmap $i -print|xkbcomp - $DISPLAY
+	}
 	xprop -root -remove _NET_NUMBER_OF_DESKTOPS -remove _NET_DESKTOP_NAMES -remove _NET_CURRENT_DESKTOP
 	envir ya
 	[ -s "$obconf" ] || obconfig "$obconf" $(1cfg openbox/rc.xml)
