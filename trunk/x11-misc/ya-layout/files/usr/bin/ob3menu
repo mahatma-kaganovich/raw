@@ -481,8 +481,8 @@ for(map{glob $_}(@{$P{include}})){
 if(defined($P{mime})){
 	for(values %mime){
 		for(@$_){
-			($_=~s/(<item label=').*?(' icon=)/$1\$F$2/g) ||
-			($_=~s/(<item label=')(.*?)'/$1\$F  [$2]'/g); #'
+			($_=~s/(<item label='(?: ☑)?).*?(' icon=)/$1\$F$2/g) ||
+			($_=~s/(<item label='(?: ☑)?)(.*?)'/$1\$F  [$2]'/g); #'
 			$_=~s/(<\/execute)/ \$X$1/g;
 		}
 	}
