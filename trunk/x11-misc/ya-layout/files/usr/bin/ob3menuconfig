@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # (c) Denis Kaganovich, Anarchy or GPLv2
-# openbox config pipe menu v0.8
+# openbox config pipe menu v0.9
 # using /usr/share/openbox*/rc.xsd
 
 %xml_=('<'=>'lt','>'=>'gt',"'"=>'apos','"'=>'quot','&'=>'amp');
@@ -83,6 +83,7 @@ $ID='ob:openbox_config';
 %menu=(
 'ob:keyname'=>\&keymap,
 'ob:button'=>\&button,
+'setxkbmap'=>\&setxkbmap,
 );
 
 %cmd=(
@@ -706,6 +707,180 @@ for(sort grep(/^$i[^:]*$/,keys %type)){
 "<$r1>$r2</$e[-1]>"
 }
 
+sub _xkbmap{
+	my %k;
+	my %ch;
+	while(my ($c,$v)=each %kb){
+		$k{$c}=[@$v];
+	}
+	my $n;
+	if(defined($_[2])){
+		for(0..$#{$_[0]}){
+			$ch{$_[0]->[$_]}=1;
+			$k{$_[0]->[$_]}->[$_[1]]=$_[2]->[$_];
+			$n||=$c{$_[0]->[$_]}->{$_[2]->[$_]};
+		}
+	}elsif($_[1]>=0){
+		for(@{$_[0]}){
+			$ch{$_}=1;
+			$n||=$c{$_}->{$k{$_}->[$_[1]]};
+			splice(@{$k{$_}},$_[1],1)
+		}
+		$n="- *$n";
+	}else{
+		$kch{$_} || return for(@{$_[0]});
+		$kch{$_}=0 for(@{$_[0]});
+		$n.='DEFAULT';
+	}
+	print "<item label='$n'><action name='execute'><execute>$0 --menu setxkbmap";
+	my $n;
+	while(my ($c,$v)=each %k){
+		$kch{$c}||$ch{$c}||next;
+		$n++;
+		if($c eq 'option'){
+			print join(" -$c ",'','',@$v);
+		}else{
+			print " -$c ".join(',',@$v);
+		}
+	}
+	$n||print ' -';
+	print '</execute></action></item>';
+}
+
+# can be separated to another module
+sub setxkbmap{
+	if($#_>-1){
+		for(@_){
+			~s/^\&apos\;//;
+			~s/\&apos\;$//;
+		}
+		my $s="@_";
+		if($s eq '-'){
+			unlink($cfg.'xkbmap');
+			exit;
+		}
+		open_(my $F,'>',$cfg.'xkbmap');
+		print($F $s);
+		close($F);
+		`setxkbmap $s -print|xkbcomp - $ENV{DISPLAY}` if($ENV{DISPLAY} ne ':0.0');
+		exec('setxkbmap',@_);
+		die;
+	}
+	if(open($F,'<',$cfg.'xkbmap')){
+		my $s=<$F>;
+		close($F);
+		for(split(/\s+/,$s)){
+			$kch{$_}=1 if($_=~s/^-//);
+		}
+	}
+	($kb{'rules'},$kb{'model'},$kb{'layout'},$kb{'variant'},$kb{'options'},$err)=split(/, /,$prop{_XKB_RULES_NAMES},-1);
+	if($err || !$kb{'options'}){
+		# ???
+		open_($F,'-|','setxkbmap -query');
+		while(<$F>){
+			chomp($_);
+			my ($c,$x)=split(/:\s*/,$_,2);
+			$c='option' if($c eq 'options');
+			$kb{$c}=$x;
+		}
+		close($F);
+	}else{
+		~s/\"//g for(values %kb);
+	}
+	$_=[split(/,/,$_,-1)] for(values %kb);
+	# lst is simple, but xml have vendor
+	open_(my $F,'<','/usr/share/X11/xkb/rules/base.lst');
+	while(<$F>){
+		chomp($_);
+		next if(!$_ || ($_=~s/^\!\s+(.*)/$c=$1/e));
+		~s/^\s+//;
+		my ($x,$y)=split(/\s+/,$_,2);
+		# base.lst partially xml'ed. safe:
+		$y=~s/\&lt;/</gsi;
+		$y=~s/\&gt;/>/gsi;
+		$y=~s/([$xml_])/\&$xml_{$1};/g;
+		$c{$c}->{$x}=$y;
+	}
+	close($F);
+	open_(my $F,'<','/usr/share/X11/xkb/rules/base.xml');
+	read($F,my $s,-s $F);
+	close($F);
+	my $sl='/';
+	$s=~s/<configItem>(.*?)<\/configItem>/
+		my $x=$1;
+		if((my ($n)=$x=~\/<name>(.*?)<${sl}name>\/s) && (my ($v)=$x=~\/<vendor>(.*?)<${sl}vendor>\/s)){
+			$vendor{$v}->{$n}=undef if(exists($c{'model'}->{$n}));
+		}
+	;''/gse;
+	while(my ($v,$t)=each %{$c{'variant'}}){
+		my ($l,$t)=$t=~/^(\S+): (.*)$/;
+		if(exists($c{'layout'}->{$l})){
+			my $ln="$c{'layout'}->{$l} ";
+			substr($t,0,length($ln))='' if(substr($t,0,length($ln)) eq $ln);
+			$lv{$l}->{$v}=$c{'variant'}->{$v}=$t;
+		}
+	}
+	$ko{$kb{'option'}->[$_]}=$_ for(0..$#{$kb{'option'}});
+	$conf++;
+	print "<menu id='$MENU:$conf' label='model'>";
+	_xkbmap(['model'],-1);
+	for(sort keys %vendor){
+		$conf++;
+		print "<menu id='$MENU:$conf' label='$_'>";
+		for(sort keys %{$vendor{$_}}){
+			_xkbmap(['model'],0,[$_]);
+		}
+		print '</menu>';
+	}
+	for(values %vendor){
+		delete($c{'model'}->{$_}) for(keys %$_);
+	}
+	_xkbmap(['model'],0,[$_]) for(sort keys %{$c{'model'}});
+	print '</menu>';
+	$conf++;
+	print "<menu id='$MENU:$conf' label='options'>";
+	_xkbmap(['option'],-1);
+	my $xx;
+	my $n=$#{$kb{'option'}}+1;
+	_xkbmap(['option'],$ko{$_}) for(@{$kb{'option'}});
+	print '<separator/>';
+	for(sort keys %{$c{'option'}}){
+		my $t=$c{option}->{$_};
+		my ($x)=$_=~/^([^:]+):/;
+		$x||=$_;
+		if($x ne $xx){
+			print '</menu>' if($xx);
+			$xx=$x;
+			$conf++;
+			print "<menu id='$MENU:$conf' label='".($x eq $_?$t:"[$x]")."'>";
+			next if($x eq $_);
+		}
+		_xkbmap(['option'],exists($ko{$_})?($ko{$_}):($n,[$_]));
+	}
+	print '</menu>' if($xx);
+	print '</menu>';
+	print '<separator/>';
+	_xkbmap(['variant','layout'],-1);
+	_xkbmap(['variant','layout'],$_) for(0..$#{$kb{'layout'}});
+	$conf++;
+	print "<menu id='$MENU:$conf' label='+'>";
+	my $n=$#{$kb{'layout'}}+1;
+	for(sort keys %{$c{'layout'}}){
+		my $i=$c{'layout'}->{$_};
+		$conf++;
+		print "<menu id='$MENU:$conf' label='$i'>";
+		_xkbmap(['variant','layout'],$n,['',$_]);
+		if(exists($lv{$_})){
+			print '<separator/>';
+			for my $v (sort keys %{$lv{$_}}){
+				_xkbmap(['variant','layout'],$n,[$v,$_]);
+			}
+		}
+		print '</menu>';
+	}
+	print '</menu>';
+}
+
 ###########################################
 for(keys %P){
 	&{$cmd{$_}}(@{$P{$_}}) if(exists($cmd{$_}));
@@ -738,5 +913,9 @@ if(!exists($P{id})){
 		push @a,$a[0];
 		print "<item label='${$_}'><action name='execute'><execute>$fix &quot;$a[$x] &quot; &apos;&lt;!-- ob3menuconfig:$_:&apos; ${$_}</execute></action></item>";
 	}
+}
+for('setxkbmap'){
+	$conf++;
+	print "<menu id='$MENU:$conf' label='$_' execute='$0 --menu $_'/>";
 }
 print '</openbox_pipe_menu>';
