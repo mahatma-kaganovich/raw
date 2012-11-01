@@ -861,21 +861,22 @@ sub setxkbmap{
 	print '</menu>' if($xx);
 	print '</menu>';
 	print '<separator/>';
-	_xkbmap(['variant','layout'],-1);
-	_xkbmap(['variant','layout'],$_) for(0..$#{$kb{'layout'}});
+	_xkbmap(my $i=['variant','layout'],-1);
+	_xkbmap($i,$_) for(0..$#{$kb{'layout'}});
 	$conf++;
 	print "<menu id='$MENU:$conf' label='+'>";
 	my $n=$#{$kb{'layout'}}+1;
-	for(sort keys %{$c{'layout'}}){
-		my $i=$c{'layout'}->{$_};
+	for(sort{$c{'layout'}->{$a} cmp $c{'layout'}->{$b}}keys %{$c{'layout'}}){
+		if(!exists($lv{$_})){
+			_xkbmap($i,$n,['',$_]);
+			next;
+		}
 		$conf++;
-		print "<menu id='$MENU:$conf' label='$i'>";
-		_xkbmap(['variant','layout'],$n,['',$_]);
-		if(exists($lv{$_})){
-			print '<separator/>';
-			for my $v (sort keys %{$lv{$_}}){
-				_xkbmap(['variant','layout'],$n,[$v,$_]);
-			}
+		print "<menu id='$MENU:$conf' label='$c{'layout'}->{$_}'>";
+		_xkbmap($i,$n,['',$_]);
+		print '<separator/>';
+		for my $v (sort keys %{$lv{$_}}){
+			_xkbmap($i,$n,[$v,$_]);
 		}
 		print '</menu>';
 	}
