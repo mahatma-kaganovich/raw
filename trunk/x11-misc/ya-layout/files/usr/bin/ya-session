@@ -365,8 +365,8 @@ tint2chk(){
 		i=`cat /etc/xdg/ya/menu.xml "$obconfdir/menu.xml"`
 		i="${i##*execute=\"}"
 		i="${i%%\"*}"
-		i="${i// \~/ $HOME}"
-		desk="$i --tint2"
+		desk="${i// \~/ $HOME}"
+		[ -n "${desk##* --tint2*}" ] && desk+=" --init --tint2"
 	}
 }
 
