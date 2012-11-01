@@ -794,6 +794,7 @@ sub setxkbmap{
 		chomp($_);
 		next if(!$_ || ($_=~s/^\!\s+(.*)/$c=$1/e));
 		~s/^\s+//;
+		~s/^Compose key/compose/; # fixme. possible there are Compose+key, but I get no working
 		my ($x,$y)=split(/\s+/,$_,2);
 		# base.lst partially xml'ed. safe:
 		$y=~s/\&lt;/</gsi;
