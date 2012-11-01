@@ -361,6 +361,13 @@ tint2chk(){
 	[ -e "$prefapps" ] || {
 		grep -sh '^Exec=' "$HOME/.config/xfce4/panel/launcher"{*.rc,*/*.desktop}|sed -e 's:^Exec=::' -e 's:%[^ ]*$::' -e 's: *::g'|sort -u >>"$prefapps"
 	}
+	[ -e "$cache/desk-sh" ] || {
+		i=`cat /etc/xdg/ya/menu.xml "$obconfdir/menu.xml"`
+		i="${i##*execute=\"}"
+		i="${i%%\"*}"
+		i="${i// \~/ $HOME}"
+		desk="$i --tint2"
+	}
 }
 
 . "$cache/environment" || mkdir -p "$cache"
