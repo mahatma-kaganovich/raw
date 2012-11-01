@@ -875,7 +875,7 @@ sub setxkbmap{
 		print "<menu id='$MENU:$conf' label='$c{'layout'}->{$_}'>";
 		_xkbmap($i,$n,['',$_]);
 		print '<separator/>';
-		for my $v (sort keys %{$lv{$_}}){
+		for my $v (sort{$c{'variant'}->{$a} cmp $c{'variant'}->{$b}}keys %{$lv{$_}}){
 			_xkbmap($i,$n,[$v,$_]);
 		}
 		print '</menu>';
