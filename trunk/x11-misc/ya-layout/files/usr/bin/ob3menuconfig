@@ -972,9 +972,11 @@ if(_mparam(@_)){
 	exec($bin.'openbox','--restart'); # ???
 	die $!;
 }
-my $b=['false','true'];
+#my $b=['false','true'];
+my $b=[0,1];
 simple_menu({
 'Xft.antialias'=>$b,
+'Xft.autohint'=>$b,
 'Xft.hinting'=>$b,
 'Xft.hintstyle'=>['hintnone','hintslight','hintmedium','hintfull'],
 'Xft.rgba'=>['rgb','bgr','vrgb','vbgr','none'],
