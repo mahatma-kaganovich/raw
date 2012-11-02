@@ -422,14 +422,22 @@ NOGEO:
 			$a.="	[ $p -lt $xy ] && exec $_->[1]\n";
 		}
 		$a.=($m?'':"false\n")."}\n";
-		$m="montage -background none -geometry ${x}x$y -tile ${xx}x$yy $m ";
-		$splice=" -splice ${spliceX}x$spliceY" if($spliceX || $spliceY);
-		if($wp || -r ($wp=(glob("$fconf/wallpaper.*"))[0])){
-			# ppm not transparent, mpc:- keep cache file
-			my $f="tiff:-";
-			$m.="$f |convert -background none$splice $f -extent ${X}x$Y $f | composite -compose atop $f -resize ${X}x$Y! $wp ";
+		$wp='' if(!$wp && ! -r ($wp=(glob("$fconf/wallpaper.*"))[0]));
+		# for top-left use feh, else - ImageMagick
+		if(!$spliceX && !$spliceY){
+#			$wp||='trans'; # artefacts
+			$wp&&=" -b $wp";
+			$m="feh -m -W $X -H $Y -y $x -E $y $m$wp -O ";
 		}else{
-			$m.="ppm:- | convert -background none$splice ppm:- -extent ${X}x$Y "
+			$m="montage -background none -geometry ${x}x$y -tile ${xx}x$yy $m ";
+			$splice=" -splice ${spliceX}x$spliceY";
+			if($wp){
+				# ppm not transparent, mpc:- keep cache file
+				my $f="tiff:-";
+				$m.="$f |convert -background none$splice $f -extent ${X}x$Y $f | composite -compose atop $f -resize ${X}x$Y! $wp ";
+			}else{
+				$m.="ppm:- | convert -background none$splice ppm:- -extent ${X}x$Y "
+			}
 		}
 		if($tint2_){
 			my $sz=100-int(100*($vert?$sy/$Y:$sx/$X))-1;
