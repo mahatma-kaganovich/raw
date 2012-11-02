@@ -708,18 +708,22 @@ for(sort grep(/^$i[^:]*$/,keys %type)){
 }
 
 sub _xkbmap{
-	my %k;
-	my %ch;
+	my (%k,%k1,%ch);
 	while(my ($c,$v)=each %kb){
 		$k{$c}=[@$v];
+		$k1{$c}->{$_}=undef for(@$v);
 	}
 	my $n;
 	if(defined($_[2])){
+		my $s=1;
 		for(0..$#{$_[0]}){
-			$ch{$_[0]->[$_]}=1;
-			$k{$_[0]->[$_]}->[$_[1]]=$_[2]->[$_];
-			$n||=$c{$_[0]->[$_]}->{$_[2]->[$_]};
+			my ($c,$v)=($_[0]->[$_],$_[2]->[$_]);
+			$ch{$c}=1;
+			$k{$c}->[$_[1]]=$v;
+			$n||=exists($c{$c}->{$v})?$c{$c}->{$v}:$v;
+			$s&&=exists($k1{$c}->{$v})==($v ne '');
 		}
+		$n="*$n" if($s);
 	}elsif($_[1]>=0){
 		for(@{$_[0]}){
 			$ch{$_}=1;
@@ -773,7 +777,7 @@ sub setxkbmap{
 			$kch{$_}=1 if($_=~s/^-//);
 		}
 	}
-	($kb{'rules'},$kb{'model'},$kb{'layout'},$kb{'variant'},$kb{'options'},$err)=split(/, /,$prop{_XKB_RULES_NAMES},-1);
+	($kb{'rules'},$kb{'model'},$kb{'layout'},$kb{'variant'},$kb{'option'},$err)=split(/, /,$prop{_XKB_RULES_NAMES},-1);
 	if($err || !$kb{'options'}){
 		# ???
 		open_($F,'-|','setxkbmap -query');
@@ -821,13 +825,15 @@ sub setxkbmap{
 			$lv{$l}->{$v}=$c{'variant'}->{$v}=$t;
 		}
 	}
+	$s='';
 	$ko{$kb{'option'}->[$_]}=$_ for(0..$#{$kb{'option'}});
 	$conf++;
 	print "<menu id='$MENU:$conf' label='model'>";
 	_xkbmap(['model'],-1);
 	for(sort keys %vendor){
+		my $s=exists($vendor{$_}->{"@{$kb{'model'}}"})?'*':'';
 		$conf++;
-		print "<menu id='$MENU:$conf' label='$_'>";
+		print "<menu id='$MENU:$conf' label='$s$_'>";
 		for(sort keys %{$vendor{$_}}){
 			_xkbmap(['model'],0,[$_]);
 		}
@@ -847,14 +853,15 @@ sub setxkbmap{
 	print '<separator/>';
 	for(sort keys %{$c{'option'}}){
 		my $t=$c{option}->{$_};
-		my ($x)=$_=~/^([^:]+):/;
-		$x||=$_;
+		my $x=$_;
+		$x=~s/:.*//gs;
 		if($x ne $xx){
 			print '</menu>' if($xx);
 			$xx=$x;
+			$x=quotemeta($x);
 			$conf++;
-			print "<menu id='$MENU:$conf' label='".($x eq $_?$t:"[$x]")."'>";
-			next if($x eq $_);
+			print "<menu id='$MENU:$conf' label='".(grep(/^$x:/,@{$kb{'option'}})?'*':'').($xx eq $_?$t:"[$xx]")."'>";
+			next if($xx eq $_);
 		}
 		_xkbmap(['option'],exists($ko{$_})?($ko{$_}):($n,[$_]));
 	}
