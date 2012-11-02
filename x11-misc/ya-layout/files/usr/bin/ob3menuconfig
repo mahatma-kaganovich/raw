@@ -84,7 +84,7 @@ $ID='ob:openbox_config';
 'ob:keyname'=>\&keymap,
 'ob:button'=>\&button,
 'setxkbmap'=>\&setxkbmap,
-'xresources'=>\&xresources,
+'.Xresources'=>\&xresources,
 );
 
 %cmd=(
@@ -986,10 +986,11 @@ simple_menu({
 'Xft.embeddedbitmap'=>$b,
 'Xft.verticallayout'=>$b,
 'Xcursor.theme'=>['default',(map{substr($_,28)}glob('/usr/share/cursors/xorg-x11/*'))],
+'Xcursor.theme_core'=>$b,
+'Xcursor.size'=>[3..32],
 #'Xft.dpi'=>
 #'Xft.scale'=>
 #'Xft.maxglyphmemory'=>
-#'Xcursor.size'=>,
 #'*Font'=>
 },$s);
 }
