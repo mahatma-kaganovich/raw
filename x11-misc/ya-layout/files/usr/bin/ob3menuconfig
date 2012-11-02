@@ -711,7 +711,6 @@ sub _xkbmap{
 	my (%k,%k1,%ch);
 	while(my ($c,$v)=each %kb){
 		$k{$c}=[@$v];
-		$k1{$c}->{$_}=undef for(@$v);
 	}
 	my $n;
 	if(defined($_[2])){
@@ -721,7 +720,7 @@ sub _xkbmap{
 			$ch{$c}=1;
 			$k{$c}->[$_[1]]=$v;
 			$n||=exists($c{$c}->{$v})?$c{$c}->{$v}:$v;
-			$s&&=exists($k1{$c}->{$v})==($v ne '');
+			$s&&=exists($kb1{$c}->{$v})==($v ne '');
 		}
 		$n="*$n" if($s);
 	}elsif($_[1]>=0){
@@ -792,6 +791,9 @@ sub setxkbmap{
 		~s/\"//g for(values %kb);
 	}
 	$_=[split(/,/,$_,-1)] for(values %kb);
+	while(my ($o,$v)=each %kb){
+		$kb1{$o}->{$_}=undef for(@$v);
+	}
 	# lst is simple, but xml have vendor
 	open_(my $F,'<','/usr/share/X11/xkb/rules/base.lst');
 	while(<$F>){
