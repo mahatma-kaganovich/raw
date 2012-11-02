@@ -486,7 +486,29 @@ Launcher:
 	rm -f "$cache/"[1-9]* "$cache/environment"
 	[ -e /etc/udev/rules.d/88-autofs.rules -a ! -e /var/run/auto.dev ] && . /usr/share/ya-layout/autofs-all
 	[ -x /usr/bin/dbus-launch ] && _env /usr/bin/dbus-launch --sh-syntax --exit-with-session
-	read i <"$obconfdir/xkbmap" 2>/dev/null && {
+
+	# add keyboards for all used locales
+	i="
+`setxkbmap -query`"
+	o="${i##*options: }"
+	o="${o%%
+*}"
+	o="${o// }"
+	i="${i##*layout: }"
+	i="${i%%
+*}"
+	i="${i// }"
+	i1=
+	for l in "$LANG" "${!LC_@}"; do
+		l="${l#*_}"
+		l="${l%%[.@]*}"
+		l="${l,,}"
+		[ -n "${i##*$l*}" ] && i1+=",$l"
+	done
+	[ -z "$o" ] && o='-option grp:ctrl_shift_toggle' || o=
+	[ -n "$i1" ] && i+="$i1" && setxkbmap -layout "${i#,}" $o
+
+	read i 2>/dev/null <"$obconfdir/xkbmap" && {
 		setxkbmap $i
 		[ "$DISPLAY" != :0.0 ] && setxkbmap $i -print|xkbcomp - $DISPLAY
 	}
@@ -494,7 +516,7 @@ Launcher:
 	envir ya
 	[ -s "$obconf" ] || obconfig "$obconf" $(1cfg openbox/rc.xml)
 	[ "$YA_STARTUP" = TINT2 ] && tint2chk
-	xrdb -merge $(1cfg ya/Xresources) </dev/null
+	cat {/etc/X11,/etc/xdg/ya,"$HOME"/.config/ya}/Xresources "$HOME/.Xresources" 2>/dev/null  | xrdb -merge
 	[ -n "$desk" ] && i=`1cfg "ya/wallpaper.*"` && case "$desk" in
 	*pcmanfm*)desk+=" -w $i";;
 	esac
