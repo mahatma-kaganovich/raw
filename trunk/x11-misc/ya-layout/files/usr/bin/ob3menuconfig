@@ -84,6 +84,7 @@ $ID='ob:openbox_config';
 'ob:keyname'=>\&keymap,
 'ob:button'=>\&button,
 'setxkbmap'=>\&setxkbmap,
+'xresources'=>\&xresources,
 );
 
 %cmd=(
@@ -751,13 +752,17 @@ sub _xkbmap{
 	print '</execute></action></item>';
 }
 
+sub _mparam{
+	for(@_){
+		~s/^\&apos\;//;
+		~s/\&apos\;$//;
+	}
+	$#_>-1;
+}
+
 # can be separated to another module
 sub setxkbmap{
-	if($#_>-1){
-		for(@_){
-			~s/^\&apos\;//;
-			~s/\&apos\;$//;
-		}
+	if(_mparam(@_)){
 		my $s="@_";
 		if($s eq '-'){
 			unlink($cfg.'xkbmap');
@@ -766,8 +771,8 @@ sub setxkbmap{
 		open_(my $F,'>',$cfg.'xkbmap');
 		print($F $s);
 		close($F);
-		`setxkbmap $s -print|xkbcomp - $ENV{DISPLAY}` if($ENV{DISPLAY} ne ':0.0');
-		exec('setxkbmap',@_);
+		`${bin}setxkbmap $s -print|${bin}xkbcomp - $ENV{DISPLAY}` if($ENV{DISPLAY} ne ':0.0');
+		exec($bin.'setxkbmap',@_);
 		die;
 	}
 	if(open($F,'<',$cfg.'xkbmap')){
@@ -780,7 +785,7 @@ sub setxkbmap{
 	my @prop=split(/, /,$prop{_XKB_RULES_NAMES},-1);
 	if($#prop!=4){
 		# ???
-		open_($F,'-|','setxkbmap -query');
+		open_($F,'-|',$bin.'setxkbmap -query');
 		while(<$F>){
 			chomp($_);
 			my ($c,$x)=split(/:\s*/,$_,2);
@@ -901,12 +906,91 @@ sub setxkbmap{
 		$conf++;
 		print "<separator/><menu id='$MENU:$conf' label='IDs'>";
 		for(values %c){
-			while(my ($v,$t)=each %$_){
+			for my $v(keys %$_){
 				$_->{$v}=$v;
 			}
 		}
 	}
     }
+}
+
+sub simple_menu{
+	for(sort keys %{$_[0]}){
+		my $m=$_;
+		$m=~s/ .*//g;
+		my $i=quotemeta($m);
+		my ($d)=$_[1]=~/^\s*$i(?::\s*|\s*=\s*|\s+)(.*?)\s*$/m;
+		$i=$_;
+		~s/([$xml_])/\&$xml_{$1};/g for($i,$d,$m);
+		$conf++;
+		print "<menu id='$MENU:$conf' label='$i'>";
+		my $def="<separator label='$d'/>" if($d ne '');
+		for(sort @{$_[0]->{$_}}){
+			my $i=$_;
+			$i=~s/([$xml_])/\&$xml_{$1};/g;
+			if($i eq $d){
+				print $def;
+				$def=undef;
+			}else{
+				print "<item label='$i'><action name='execute'><execute>$0 --@ARGV $m $i</execute></action></item>";
+			}
+		}
+		print $def,'</menu>';
+	}
+}
+
+sub _conffile{
+	my ($f,$r,$v,$x)=@_;
+	my $s;
+	if(open(my $F,'<',$f)){
+		read($F,$s,-s $F);
+		close($F);
+	}elsif(-e $f){
+		die $!;
+	}
+	my $i=quotemeta($v);
+	if(!($s=~s/^(\s*$i$r).*$/$1$x/gm)){
+		$s.="\n" if($s ne '' && substr($s,-1) ne "\n");
+		$r=~s/\*//;
+		$r=~s/\\s/ /;
+		$s.="$v$r$x\n";
+	}
+	open_(my $F,'>',$f);
+	print $F $s;
+	close($F);
+}
+
+sub xresources{
+my $s=`${bin}xrdb -query`;
+$? && return;
+if(_mparam(@_)){
+	open_($F,'|-',$bin.'xrdb -merge');
+	print $F $i="$_[0]: $_[1]","\n";
+	close($F);
+	$? && die "Merging xrdb: '$i'";
+	_conffile("$ENV{HOME}/.Xresources",':\s*',@_),
+	exec($bin.'openbox','--restart'); # ???
+	die $!;
+}
+simple_menu({
+'Xft.antialias'=>['true','false'],
+'Xft.hinting'=>['true','false'],
+'Xft.hintstyle'=>['hintnone','hintslight','hintmedium','hintfull'],
+'Xft.rgba'=>['rgb','bgr','vrgb','vbgr','none'],
+'Xft.lcdfilter'=>['lcdnone','lcddefault','lcdlight','lcdlegacy'],
+'Xft.embolden'=>['true','false'],
+'Xft.minspace'=>['true','false'],
+'Xft.render (Xft client-side)'=>['true','false'],
+'Xft.core (Xft server-side)'=>['true','false'],
+'Xft.embeddedbitmap'=>['true','false'],
+'Xft.verticallayout'=>['true','false'],
+'Xcursor.theme'=>['default',(map{substr($_,28)}glob('/usr/share/cursors/xorg-x11/*'))],
+#'Xft.dpi'=>
+#'Xft.scale'=>
+#'Xft.maxglyphmemory'=>
+#'Xcursor.size'=>,
+#'*Font'=>
+},$s);
 }
 
 ###########################################
@@ -942,7 +1026,8 @@ if(!exists($P{id})){
 		print "<item label='${$_}'><action name='execute'><execute>$fix &quot;$a[$x] &quot; &apos;&lt;!-- ob3menuconfig:$_:&apos; ${$_}</execute></action></item>";
 	}
 }
-for('setxkbmap'){
+for(sort keys %menu){
+	$_=~/:/ and next;
 	$conf++;
 	print "<menu id='$MENU:$conf' label='$_' execute='$0 --menu $_'/>";
 }
