@@ -925,7 +925,7 @@ sub simple_menu{
 		$conf++;
 		print "<menu id='$MENU:$conf' label='$i'>";
 		my $def="<separator label='$d'/>" if($d ne '');
-		for(sort @{$_[0]->{$_}}){
+		for(@{$_[0]->{$_}}){
 			my $i=$_;
 			$i=~s/([$xml_])/\&$xml_{$1};/g;
 			if($i eq $d){
@@ -972,18 +972,19 @@ if(_mparam(@_)){
 	exec($bin.'openbox','--restart'); # ???
 	die $!;
 }
+my $b=['false','true'];
 simple_menu({
-'Xft.antialias'=>['true','false'],
-'Xft.hinting'=>['true','false'],
+'Xft.antialias'=>$b,
+'Xft.hinting'=>$b,
 'Xft.hintstyle'=>['hintnone','hintslight','hintmedium','hintfull'],
 'Xft.rgba'=>['rgb','bgr','vrgb','vbgr','none'],
 'Xft.lcdfilter'=>['lcdnone','lcddefault','lcdlight','lcdlegacy'],
-'Xft.embolden'=>['true','false'],
-'Xft.minspace'=>['true','false'],
-'Xft.render (Xft client-side)'=>['true','false'],
-'Xft.core (Xft server-side)'=>['true','false'],
-'Xft.embeddedbitmap'=>['true','false'],
-'Xft.verticallayout'=>['true','false'],
+'Xft.embolden'=>$b,
+'Xft.minspace'=>$b,
+'Xft.render (Xft client-side)'=>$b,
+'Xft.core (Xft server-side)'=>$b,
+'Xft.embeddedbitmap'=>$b,
+'Xft.verticallayout'=>$b,
 'Xcursor.theme'=>['default',(map{substr($_,28)}glob('/usr/share/cursors/xorg-x11/*'))],
 #'Xft.dpi'=>
 #'Xft.scale'=>
