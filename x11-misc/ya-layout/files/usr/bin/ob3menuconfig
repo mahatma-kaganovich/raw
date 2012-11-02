@@ -726,7 +726,8 @@ sub _xkbmap{
 	}elsif($_[1]>=0){
 		for(@{$_[0]}){
 			$ch{$_}=1;
-			$n||=$c{$_}->{$k{$_}->[$_[1]]};
+			my $v=$k{$_}->[$_[1]];
+			$n||=exists($c{$_}->{$v})?$c{$_}->{$v}:$v;
 			splice(@{$k{$_}},$_[1],1)
 		}
 		$n="- *$n";
@@ -776,8 +777,8 @@ sub setxkbmap{
 			$kch{$_}=1 if($_=~s/^-//);
 		}
 	}
-	($kb{'rules'},$kb{'model'},$kb{'layout'},$kb{'variant'},$kb{'option'},$err)=split(/, /,$prop{_XKB_RULES_NAMES},-1);
-	if($err || !$kb{'options'}){
+	my @prop=split(/, /,$prop{_XKB_RULES_NAMES},-1);
+	if($#prop!=4){
 		# ???
 		open_($F,'-|','setxkbmap -query');
 		while(<$F>){
@@ -788,6 +789,7 @@ sub setxkbmap{
 		}
 		close($F);
 	}else{
+		($kb{'rules'},$kb{'model'},$kb{'layout'},$kb{'variant'},$kb{'option'})=@prop;
 		~s/\"//g for(values %kb);
 	}
 	$_=[split(/,/,$_,-1)] for(values %kb);
@@ -819,6 +821,9 @@ sub setxkbmap{
 			$vendor{$v}->{$n}=undef if(exists($c{'model'}->{$n}));
 		}
 	;''/gse;
+	for(['Cherry','cherryblue'],['BTC','btc9116u']){
+		$vendor{$_->[0]}->{$_->[1]}=undef if(exists($vendor{$_->[0]}) && exists($c{'model'}->{$_->[1]}));
+	}
 	while(my ($v,$t)=each %{$c{'variant'}}){
 		my ($l,$t)=$t=~/^(\S+): (.*)$/;
 		if(exists($c{'layout'}->{$l})){
@@ -829,22 +834,22 @@ sub setxkbmap{
 	}
 	$s='';
 	$ko{$kb{'option'}->[$_]}=$_ for(0..$#{$kb{'option'}});
+    for(0,1){
 	$conf++;
 	print "<menu id='$MENU:$conf' label='model'>";
 	_xkbmap(['model'],-1);
+	my %m;
 	for(sort keys %vendor){
 		my $s=exists($vendor{$_}->{"@{$kb{'model'}}"})?'*':'';
 		$conf++;
 		print "<menu id='$MENU:$conf' label='$s$_'>";
 		for(sort keys %{$vendor{$_}}){
+			$m{$_}=undef;
 			_xkbmap(['model'],0,[$_]);
 		}
 		print '</menu>';
 	}
-	for(values %vendor){
-		delete($c{'model'}->{$_}) for(keys %$_);
-	}
-	_xkbmap(['model'],0,[$_]) for(sort keys %{$c{'model'}});
+	exists($m{$_}) || _xkbmap(['model'],0,[$_]) for(sort keys %{$c{'model'}});
 	print '</menu>';
 	$conf++;
 	print "<menu id='$MENU:$conf' label='options'>";
@@ -862,7 +867,7 @@ sub setxkbmap{
 			$xx=$x;
 			$x=quotemeta($x);
 			$conf++;
-			print "<menu id='$MENU:$conf' label='".(grep(/^$x:/,@{$kb{'option'}})?'*':'').($xx eq $_?$t:"[$xx]")."'>";
+			print "<menu id='$MENU:$conf' label='".(grep(/^$x:/,@{$kb{'option'}})?'*':'').($xx eq $_?$t:$xx)."'>";
 			next if($xx eq $_);
 		}
 		_xkbmap(['option'],exists($ko{$_})?($ko{$_}):($n,[$_]));
@@ -890,6 +895,18 @@ sub setxkbmap{
 		print '</menu>';
 	}
 	print '</menu>';
+	if($_){
+		print '</menu>';
+	}else{
+		$conf++;
+		print "<separator/><menu id='$MENU:$conf' label='IDs'>";
+		for(values %c){
+			while(my ($v,$t)=each %$_){
+				$_->{$v}=$v;
+			}
+		}
+	}
+    }
 }
 
 ###########################################
