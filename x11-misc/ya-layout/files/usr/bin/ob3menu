@@ -424,7 +424,7 @@ NOGEO:
 		$a.=($m?'':"false\n")."}\n";
 		$wp='' if(!$wp && ! -r ($wp=(glob("$fconf/wallpaper.*"))[0]));
 		# for top-left use feh, else - ImageMagick
-		if(!$spliceX && !$spliceY){
+		if(!$spliceX && !$spliceY && $yy==1){
 #			$wp||='trans'; # artefacts
 			$wp&&=" -b $wp";
 			$m="feh -m -W $X -H $Y -y $x -E $y $m$wp -O ";
