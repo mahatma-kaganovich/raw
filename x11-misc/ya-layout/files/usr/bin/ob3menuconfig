@@ -1025,10 +1025,10 @@ if(!exists($P{id})){
 		push @a,$a[0];
 		print "<item label='${$_}'><action name='execute'><execute>$fix &quot;$a[$x] &quot; &apos;&lt;!-- ob3menuconfig:$_:&apos; ${$_}</execute></action></item>";
 	}
-}
-for(sort keys %menu){
-	$_=~/:/ and next;
-	$conf++;
-	print "<menu id='$MENU:$conf' label='$_' execute='$0 --menu $_'/>";
+	for(sort keys %menu){
+		$_=~/:/ and next;
+		$conf++;
+		print "<menu id='$MENU:$conf' label='$_' execute='$0 --menu $_'/>";
+	}
 }
 print '</openbox_pipe_menu>';
