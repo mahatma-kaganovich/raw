@@ -14,6 +14,8 @@ RDEPEND=" ${DEPEND}
 		net-misc/bridge-utils
 	)
 	wifi? ( net-wireless/wireless-tools )
+	media-libs/imlib2[png,jpeg?,tiff?]
+	media-gfx/feh
 	!minimal? (
 		!tint2? ( || (
 		x11-misc/pcmanfm
@@ -21,9 +23,7 @@ RDEPEND=" ${DEPEND}
 		gnome-base/nautilus
 		x11-misc/spacefm
 		) )
-		media-libs/imlib2[png,jpeg?,tiff?]
 		media-gfx/imagemagick[png,jpeg?,tiff?]
-		media-gfx/feh
 		x11-wm/openbox[imlib]
 		x11-apps/setxkbmap
 		x11-apps/xkbcomp
