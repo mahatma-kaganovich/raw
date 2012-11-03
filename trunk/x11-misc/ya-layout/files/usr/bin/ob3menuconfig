@@ -940,7 +940,7 @@ sub simple_menu{
 }
 
 sub _conffile{
-	my ($f,$r,$v,$x)=@_;
+	my ($f,$r,$v,$x,$noa)=@_;
 	my $s;
 	if(open(my $F,'<',$f)){
 		read($F,$s,-s $F);
@@ -950,6 +950,7 @@ sub _conffile{
 	}
 	my $i=quotemeta($v);
 	if(!($s=~s/^(\s*$i$r).*$/$1$x/gm)){
+		$noa && return;
 		$s.="\n" if($s ne '' && substr($s,-1) ne "\n");
 		$r=~s/\*//;
 		$r=~s/\\s/ /;
@@ -958,6 +959,26 @@ sub _conffile{
 	open_(my $F,'>',$f);
 	print $F $s;
 	close($F);
+}
+
+# try to sync .gtkrc-2.0
+# how to send properity-changed?
+sub xftgtk2{
+my ($x,$y)=@_;
+$x=~s/\./-/g;
+$x='gtk-'.lc($x);
+$y="\"$y\"" if($y=~/\D/);
+_conffile("$ENV{HOME}/.gtkrc-2.0",'=',$x,$y,1) && eval q(
+#dev-perl/gtk2-perl
+use Gtk2 '-init';
+my $event = Gtk2::Gdk::Event->new("GDK_CLIENT_EVENT");
+$event->send_event(1);
+$event->window(undef);
+$event->message_type(Gtk2::Gdk::Atom->intern("_GTK_READ_RCFILES", 0));
+$event->data_format(8);
+$event->data('burp');
+Gtk2::Gdk::Event->send_clientmessage_toall($event);
+);
 }
 
 sub xresources{
@@ -969,10 +990,10 @@ if(_mparam(@_)){
 	close($F);
 	$? && die "Merging xrdb: '$i'";
 	_conffile("$ENV{HOME}/.Xresources",':\s*',@_),
+	xftgtk2(@_);
 	exec($bin.'openbox','--restart'); # ???
 	die $!;
 }
-#my $b=['false','true'];
 my $b=[0,1];
 simple_menu({
 'Xft.antialias'=>$b,

@@ -19,10 +19,12 @@
 # Launcher: starting to do fullscreen trendy "desktop", I see I don't need it, but need
 # small launcher near tint2... So, fast partial...
 
+$bin='/usr/bin/';
+
 $SIG{__DIE__}=sub{
 return if(!exists($ENV{DBUS_SESSION_BUS_ADDRESS}));
 print STDERR ($e=join('',"$0: ",@_));
-exec('/usr/bin/notify-send','-t',6000,$e);
+exec($bin.'notify-send','-t',6000,$e);
 };
 
 my (%ico,%key,%cat,%cat1,%dir,@prof,$prof);
@@ -67,8 +69,6 @@ $xml_='<>\'"&';
 );
 @conf=(['showIcons'],['dock',['position'],['direction']]);
 $id=0;
-
-$bin='/usr/bin/';
 
 for(@ARGV){
 	if($_=~s/^--//){
@@ -446,11 +446,12 @@ NOGEO:
 		unlink($sh);
 		if($m){
 			$out=`( $m $img ) 2>&1`;
-			die "$out" if($?);
 		}else{
-			system(@m,$img) && die "Picture montage failed: @m $img";
+			system(@m,$img);
 		}
-		if(!$? && open(my $F,'>',$sh)){
+		if($?){
+			system($bin.'notify-send','Picture montage failed: '.($m||"@m")." $img \n$out");
+		}elsif(open(my $F,'>',$sh)){
 			print $F $a;
 			chmod(0700,$F);
 			close($F);
