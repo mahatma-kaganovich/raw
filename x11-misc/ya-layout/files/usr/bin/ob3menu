@@ -68,6 +68,8 @@ $xml_='<>\'"&';
 @conf=(['showIcons'],['dock',['position'],['direction']]);
 $id=0;
 
+$bin='/usr/bin/';
+
 for(@ARGV){
 	if($_=~s/^--//){
 		undef $P{$i=$_};
@@ -254,7 +256,7 @@ for $f(map{glob $_}('/usr/share/applications/*.desktop','/usr/share/applications
 		exists($d{Exec}) || next;
 	}
 	next if(exists($d{TryExec}) && !eXist($d{TryExec}));
-	$d{Exec}="/usr/bin/ya-session --run +$d{Exec}" if($d{Terminal} && lc($d{Terminal}) ne 'false');
+	$d{Exec}="${bin}ya-session --run +$d{Exec}" if($d{Terminal} && lc($d{Terminal}) ne 'false');
 	if(!exists($d{Name})){
 		for(Comment,Exec){
 			if(exists($d{$_})){
@@ -316,11 +318,7 @@ N:
 		}
 		next;
 	}else{next}
-	for(split(/;/,$d{Categories})){
-		next if(exists($cat{$i}->{$_}));
-		$cat{$i}->{$_}=1;
-		$cc{$_}++;
-	}
+	$cat{$i}->{$_}++ && $cc{$_}++ for(split(/;/,$d{Categories}));
 	$cat{$i}=undef if(!exists($cat{$i}));
 	if(exists($P{mime}) && exists($d{MimeType})){
 		$d{MimeType}=~s/;$//;
@@ -358,10 +356,9 @@ if(@apps){
 			$tint2=$P{tint2}->[0]||($vanilla?"$ENV{HOME}/.config/tint2/tint2rc":"$fconf/tint2rc");
 			$tint2_=_read("<$tint2");
 		}
-		my ($a,$m);
+		my ($a,@m,$m);
 		my ($img,$sh,$geo,@wp)=@{$P{launcher}};
-		my $wp=join(' ',@wp);
-		my ($x,$y,$vert,$xx,$yy,$spliceX,$spliceY,$left,$bottom)=my @geo=split(/\,/,$geo);
+		my ($x,$y,$vert,$xx,$yy,$spliceX,$spliceY,$left,$bottom)=my @geo=split(/\,/,$geo,-1);
 		my $n=($xx*$yy)||scalar(@apps);
 		my ($sx,$sy)=($x*$xx,$y*$yy);
 		$geo=0;
@@ -416,27 +413,26 @@ NOGEO:
 		my ($a,$c,$p,$xy)=$vert?('[ $1 -lt '.($spliceX+$sx),$y,'$2',$spliceY):('[ $2 -lt '.($spliceY+$sy),$x,'$1',$spliceX);
 		$a.=($spliceX?" -a \$1 -gt $spliceX":'').($spliceY?" -a \$2 -gt $spliceY":'')." ] && {\n";
 		for(@apps){
-			$m.=' '.($_->[0]||next);
+			$_->[0]||next;
+			push @m,$_->[0];
 			$xy+=$c;
 			$a.="	[ $p -lt $xy ] && exec $_->[1]\n";
 		}
-		$a.=($m?'':"false\n")."}\n";
-		$wp='' if(!$wp && ! -r ($wp=(glob("$fconf/wallpaper.*"))[0]));
-		# for top-left or composite use feh, else - ImageMagick
+		$a.=(@m?'':"false\n")."}\n";
+		@wp=() if(!@wp && ! -r ($wp[0]=(glob("$fconf/wallpaper.*"))[0]));
+		# for top-left & !composite cmd use feh, else - ImageMagick
 		if(!$spliceX && !$spliceY && $yy==1 && ($#wp<1||$wp[1] eq '-a')){
-#			$wp||='trans'; # artefacts
-			$wp&&=" -b $wp";
-			$m="feh -m -W $X -H $Y -y $x -E $y $m$wp -O ";
+#			$wp[0]||='trans'; # artefacts
+			@wp && unshift(@wp,'-b');
+			@m=($bin.'feh','-m','-W',$X,'-H',$Y,'-y',$x,'-E',$y,@m,@wp,'-O');
 		}else{
-			$m="montage -background none -geometry ${x}x$y -tile ${xx}x$yy $m ";
-			$splice=" -splice ${spliceX}x$spliceY";
-			if($wp){
+			my $f='ppm:-';
+			if(@wp){
 				# ppm not transparent, mpc:- keep cache file
-				my $f="tiff:-";
-				$m.="$f |convert -background none$splice $f -extent ${X}x$Y $f | composite -compose atop $f -resize ${X}x$Y! $wp ";
-			}else{
-				$m.="ppm:- | convert -background none$splice ppm:- -extent ${X}x$Y "
+				$f='tiff:-';
+				$m=" $f |${bin}composite -background none -compose atop $f -resize ${X}x$Y! @wp";
 			}
+			$m="${bin}montage -background none -geometry ${x}x$y -tile ${xx}x$yy @m $f |${bin}convert -background none -splice ${spliceX}x$spliceY $f -extent ${X}x$Y$m";
 		}
 		if($tint2_){
 			my $sz=100-int(100*($vert?$sy/$Y:$sx/$X))-1;
@@ -446,17 +442,21 @@ NOGEO:
 				_write(">$tint2",$tint2_);
 			}
 		}
-		newname($img,$m.$img.$tint2_)||goto nolauncher;
+		newname($img,($m||"@m").$img.$tint2_)||goto nolauncher;
 		unlink($sh);
-		$out=`( $m $img ) 2>&1`;
-		die "$out" if($?);
+		if($m){
+			$out=`( $m $img ) 2>&1`;
+			die "$out" if($?);
+		}else{
+			system(@m,$img) && die "Picture montage failed: @m $img";
+		}
 		if(!$? && open(my $F,'>',$sh)){
 			print $F $a;
 			chmod(0700,$F);
 			close($F);
-			system('/usr/bin/feh','--no-fehbg','--bg-center',$img);
+			system($bin.'feh','--no-fehbg','--bg-center',$img);
 		}
-		$tint2_ && _restart('tint2','-c',$tint2);
+		$tint2_ && _restart($bin.'tint2','-c',$tint2);
 	}else{
 		print map{
 			if($#$_==1){
@@ -562,7 +562,7 @@ if $a || [ -d "$f" ]; then
 $a || [ -e "$f" ] &&
 echo "<menu id='fs:$x' label='$F/' execute='/bin/bash &apos;$0&apos; $X'),$fold,q( />"
 else
-( [ -x "$f" ] && echo "<item label='*$F'><action name='Execute'><execute>/usr/bin/ya-session --run +$X</execute></action></item>" ) ||
+( [ -x "$f" ] && echo "<item label='*$F'><action name='Execute'><execute>${bin}ya-session --run +$X</execute></action></item>" ) ||
 [ -r "$f" ] &&
 case "${f,,}" in
 );
