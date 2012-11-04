@@ -276,8 +276,9 @@ N:
 	if(exists($P{slow}) && exists($d{Icon})){
 		$i=$d{Icon};
 		$i=~s/(?:.*\/)?(.*?).svg$/$1.png/;
-		$icon=$i=$ico{$i} if(exists($ico{$i}));
-		$i=" icon='$i'";
+#		$icon=$i=$ico{$i} if(exists($ico{$i}));
+#		$i=" icon='$i'";
+		$i=" icon='$i'" if($i=$icon=$ico{$i});
 	}
 	if(substr($f,0,4) eq '/etc'){
 		$d{Categories}='Autostart';
@@ -450,7 +451,8 @@ NOGEO:
 			system(@m,$img);
 		}
 		if($?){
-			system($bin.'notify-send','Picture montage failed: '.($m||"@m")." $img \n$out");
+			system($bin.'notify-send',$out='Picture montage failed: '.($m||"@m")." $img \n$out");
+			print STDERR $out,"\n";
 		}elsif(open(my $F,'>',$sh)){
 			print $F $a;
 			chmod(0700,$F);
