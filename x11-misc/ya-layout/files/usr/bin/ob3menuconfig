@@ -47,7 +47,8 @@ if($prof=$P{profile}->[0]){
 	@rc=("$cfg/rc.xml");
 }else{
 	if(!($cfg=$P{config}->[0])){
-		~s/^([A-Z0-9_]*)\([A-Z0-9_]*\) = (.*)?$/$prop{$1}=$2;''/ge for(split(/\n/,`${bin}obxprop --root`));
+		my $s=`${bin}obxprop --root`;
+		$s=~s/^([A-Z0-9_]*)\([A-Z0-9_]*\) = (\"[^\"]*\"(?:, \"[^\"]*\")*|[^\n]*)$/$prop{$1}=$2;''/gme;
 		$cfg=$prop{'_OB_CONFIG_FILE'};
 		$cfg=~s/\"//gs;
 	}
@@ -461,9 +462,21 @@ sub _fixrc{
 	$r
 }
 
+sub _write{
+if($_[0] ne '-'){
+	open_(my $F,'>',my $f=$_[0].'.$$$');
+	flock($F,2);
+	(print($F $_[1]) && close($F) && rename($f,$_[0])) || die $!;
+	return 1;
+}else{
+	open_(my $F,'>','-');
+	flock($F,2);
+	print($F $_[1]) || die $!;
+	return 0;
+}
+}
+
 sub fixrc(){
-my $rc1=$rc[0];
-$rc1.='.$$$' if($rc1 ne '-');
 open_(my $F,'<',@rc);
 mkdir($cfg)||die $! if($cfg && ! -d $cfg);
 my $s;
@@ -524,13 +537,7 @@ my $sl='/';
 /se) || ($mycfg?($s.=join('',@_,$to,"-->\n")):die "Not found");
 FIX:
 utf8_encode($s);
-open_($F,'>',$rc1);
-flock($F,2);
-print($F $s) || die $!;
-if($rc1 ne '-'){
-	close($F) && rename($rc1,$rc[0]) || die $!;
-	exec($bin.'openbox','--reconfigure');
-}
+_write($rc[0],$s) && exec($bin.'openbox','--reconfigure');
 exit;
 }
 
@@ -768,9 +775,7 @@ sub setxkbmap{
 			unlink($cfg.'xkbmap');
 			exit;
 		}
-		open_(my $F,'>',$cfg.'xkbmap');
-		print($F $s);
-		close($F);
+		_write($cfg.'xkbmap',$s);
 		`${bin}setxkbmap $s -print|${bin}xkbcomp - $ENV{DISPLAY}` if($ENV{DISPLAY} ne ':0.0');
 		exec($bin.'setxkbmap',@_);
 		die;
@@ -915,16 +920,18 @@ sub setxkbmap{
 }
 
 sub simple_menu{
+	$s='[ 	]*';
 	for(sort keys %{$_[0]}){
 		my $m=$_;
 		$m=~s/ .*//g;
 		my $i=quotemeta($m);
-		my ($d)=$_[1]=~/^\s*$i(?::\s*|\s*=\s*|\s+)(.*?)\s*$/m;
+		my ($d)=$_[1]=~/^$s$i(?::$s|$s=$s|$s)(.*?)$s$/m;
 		$i=$_;
 		~s/([$xml_])/\&$xml_{$1};/g for($i,$d,$m);
 		$conf++;
 		print "<menu id='$MENU:$conf' label='$i'>";
-		my $def="<separator label='$d'/>" if($d ne '');
+		my $def;
+		$def="<separator label='$d'/>" if($d ne '');
 		for(@{$_[0]->{$_}}){
 			my $i=$_;
 			$i=~s/([$xml_])/\&$xml_{$1};/g;
@@ -949,20 +956,18 @@ sub _conffile{
 		die $!;
 	}
 	my $i=quotemeta($v);
-	if(!($s=~s/^(\s*$i$r).*$/$1$x/gm)){
+	if(!($s=~s/^([ 	]*$i$r).*$/$1$x/gm)){
 		$noa && return;
 		$s.="\n" if($s ne '' && substr($s,-1) ne "\n");
 		$r=~s/\*//;
-		$r=~s/\\s/ /;
+		$r=~s/\\s|\[ 	\]/ /;
 		$s.="$v$r$x\n";
 	}
-	open_(my $F,'>',$f);
-	print $F $s;
-	close($F);
+	_write($f,$s);
+	$s;
 }
 
 # try to sync .gtkrc-2.0
-# how to send properity-changed?
 sub xftgtk2{
 my ($x,$y)=@_;
 $x=~s/\./-/g;
@@ -982,14 +987,21 @@ Gtk2::Gdk::Event->send_clientmessage_toall($event);
 }
 
 sub xresources{
-my $s=`${bin}xrdb -query`;
+#my $s=`${bin}xrdb -query`;
+my $s=$prop{'RESOURCE_MANAGER'};
+$s=~s/^\"//s;
+$s=~s/\"$//s;
 $? && return;
 if(_mparam(@_)){
-	open_($F,'|-',$bin.'xrdb -merge');
-	print $F $i="$_[0]: $_[1]","\n";
-	close($F);
-	$? && die "Merging xrdb: '$i'";
-	_conffile("$ENV{HOME}/.Xresources",':\s*',@_),
+	my $i="$_[0]: $_[1]";
+	for('all','screen','screens','global'){
+#	for('all','screen'){
+		open_($F,'|-',$bin."xrdb -merge -$_");
+		print $F "$i\n";
+		close($F);
+		$? && die "Merging xrdb: '$i'";
+	}
+	my $s=_conffile("$ENV{HOME}/.Xresources",':[ 	]*',@_);
 	xftgtk2(@_);
 	exec($bin.'openbox','--restart'); # ???
 	die $!;
