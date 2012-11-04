@@ -25,9 +25,8 @@ RDEPEND=" ${DEPEND}
 		) )
 		media-gfx/imagemagick[png,jpeg?,tiff?]
 		x11-wm/openbox[imlib]
-		x11-apps/setxkbmap
-		x11-apps/xkbcomp
 	)"
+#	x11-apps/setxkbmap x11-apps/xkbcomp x11-apps/xrdb
 KEYWORDS="~x86 ~amd64"
 HOMEPAGE="http://raw.googlecode.com/"
 

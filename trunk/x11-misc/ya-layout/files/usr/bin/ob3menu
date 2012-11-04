@@ -276,9 +276,7 @@ N:
 	if(exists($P{slow}) && exists($d{Icon})){
 		$i=$d{Icon};
 		$i=~s/(?:.*\/)?(.*?).svg$/$1.png/;
-#		$icon=$i=$ico{$i} if(exists($ico{$i}));
-#		$i=" icon='$i'";
-		$i=" icon='$i'" if($i=$icon=$ico{$i});
+		$i=" icon='$i'" if($i=$icon=$ico{$i}||((substr($i,0,1) eq '/' && -e $i)?$i:undef));
 	}
 	if(substr($f,0,4) eq '/etc'){
 		$d{Categories}='Autostart';
