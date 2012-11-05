@@ -116,7 +116,11 @@ unsafe(){
 	local i s=`$* cstate`
 	for i in 1 0; do
 		case "$s" in
-		*SyncS*|*MapS*) ;;
+#		*SyncS*|*MapS*) ;;
+		# possible, we want SyncSource|StartingSyncS|PausedSyncS|WFBitMapS
+		# or some of them. but keep only SyncSource in doubts.
+		# other states is not too long
+		SyncSource) ;;
 		*Sync*|*Map*)
 			echo -n "$2$s "
 			[[ "$i" == 0 ]] && return 0
