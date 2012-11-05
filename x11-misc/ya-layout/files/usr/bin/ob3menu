@@ -325,7 +325,7 @@ N:
 		}
 		next;
 	}else{next}
-	$cat{$i}->{$_}++ && $cc{$_}++ for(split(/;/,$d{Categories}));
+	$cat{$i}->{$_}++ || $cc{$_}++ for(split(/;/,$d{Categories}));
 	$cat{$i}=undef if(!exists($cat{$i}));
 	if(exists($P{mime}) && exists($d{MimeType})){
 		$d{MimeType}=~s/;$//;
