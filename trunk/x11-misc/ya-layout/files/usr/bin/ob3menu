@@ -137,8 +137,9 @@ sub _read{
 }
 
 sub _write{
-	open(my $F,$_[0])||return;
-	print($F $_[1]) && close($F);
+	open(my $F,'>',my $f=$_[0].'$$$')||return;
+	flock($F,2);
+	print($F $_[1]) && close($F) && rename($f,$_[0]);
 }
 
 sub _restart{
@@ -149,6 +150,21 @@ sub _restart{
 	system('killall','-w',$_[0],'-u',$ENV{'USER'});
 	exec(@_);
 	die $!;
+}
+
+sub tint2set{
+	my $v=$_[0];
+	$tint2_=~s/^[ 	]*$v[ 	]*\=[ 	]*([^\n]*?)[ 	]*$/
+		my @x=split(\/\s+\/,$1);
+		$x[$_[1]]=$_[2];
+		"$v = @x"
+	/emg;
+}
+
+sub tint2get{
+	my $x=$_[0];
+	($x)=$tint2_=~/^[ 	]*$x[ 	]*=[ 	]*([^\n]*?)[ 	]*$/m;
+	$_[1]==-1?$x:(split(/\s+/,$x))[$_[1]];
 }
 
 # CRC32 code derived from work by Gary S. Brown.
@@ -380,8 +396,8 @@ if(@apps){
 			if(exists($P{dock})){
 				$p=$conf{'.dock.position'}.$conf{'.dock.direction'};
 			}elsif($tint2_){
-				($sz)=$tint2_=~/\n\s*panel_size\s*=.*?\%\s+(\d+)/s;
-				($p)=$tint2_=~/\n\s*panel_position\s*=\s*([^\n]+)/s;
+				$sz=tint2get('panel_size',1);
+				$p=tint2get('panel_position',-1);
 			}
 			if($p){
 				$vert=($p=~/vertical/i)||0 if($vert eq '');
@@ -457,12 +473,28 @@ NOGEO:
 			$m="${bin}montage -background none -geometry ${x}x$y -tile ${xx}x$yy @m $f |${bin}convert -background none -splice ${spliceX}x$spliceY $f -extent ${X}x$Y$m";
 		}
 		if($tint2_){
-			my $sz=100-int(100*($vert?$sy/$Y:$sx/$X))-1;
-			my ($sz1)=$tint2_=~/\n\s*panel_size\s*=\s*(\S+)\%/s;
-			if($sz1 ne $sz){
-				$tint2_=~s/(\n\s*panel_size\s*=\s*)\S+\%/$1$sz\%/s;
-				_write(">$tint2",$tint2_);
+			my $tint2_0=$tint2;
+			my $sz;
+			my @margin=(0,0);;
+			my $pad=0;
+			if(tint2get('autohide',0) && !tint2get('panel_background_id',0)){
+				if($vert){
+					$sz=$Y+$sy;
+					$margin[1]=-($pad=$sy);
+				}else{
+					$sz=$X+$sx;
+					$margin[0]=-($pad=$sx);
+				}
+				tint2set('wm_menu',0,1);
+			}else{
+				$sz=$vert?$Y-$sy:$X-$sx;
 			}
+			if($pad || tint2get('panel_size',0)>($vert?$Y:$X)){
+				tint2set('panel_margin',$_,$margin[$_]) for(0,1);
+				tint2set('panel_padding',0,$pad);
+			}
+			tint2set('panel_size',0,$sz-2);
+			_write($tint2,$tint2_) if($tint2_0 ne $tint2_);
 		}
 		$?=0;
 		goto (nolauncher,NEWIMG,NEWSH)[newname($img,($m||"@m").$img.$tint2_)];
