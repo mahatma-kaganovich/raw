@@ -120,7 +120,7 @@ unsafe(){
 		# possible, we want SyncSource|StartingSyncS|PausedSyncS|WFBitMapS
 		# or some of them. but keep only SyncSource in doubts.
 		# other states is not too long
-		SyncSource) ;;
+		*SyncSource*) ;;
 		*Sync*|*Map*)
 			echo -n "$2$s "
 			[[ "$i" == 0 ]] && return 0
