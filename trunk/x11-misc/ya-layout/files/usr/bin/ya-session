@@ -522,7 +522,7 @@ Launcher:
 	[ -n "$desk" ] && i=`_1cfg "ya/wallpaper.*"` && case "$desk" in
 	*pcmanfm*)desk+=" -w $i";;
 	esac
-	for i in "$cache/desk".*; do
+	for i in "$cache/desk.$DSP".*; do
 		[ -e "$i" ] && feh --no-fehbg --bg-center $i &
 		break
 	done
