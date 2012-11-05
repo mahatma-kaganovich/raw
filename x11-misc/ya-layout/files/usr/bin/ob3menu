@@ -162,10 +162,18 @@ $c ^ 0xffffffff;
 sub newname{
 	my ($name,$key)=@_;
 #	utf8::encode($key);
-	$_[0]=~s/\+/'kEy'.crc32($key)/gse or return 1;
-	return 0 if(-e $_[0]);
+	$_[0]=~s/\+/"kEy.$DSP.".($key=crc32($key))/gse or return 1;
+	return 0 if(-e $_[0]); # exists
+	my $d=$name;
+	$d=~s/\+/kEy.*.$key/gs;
+	if(my @d=glob($d)){
+		link($d[0],$_[0])||
+		($_[0]=$d[0]);
+		return 2; # same file for other head
+	}
 	$name=~s/\.[a-z0-9]*$//i;
-	$name=~s/\+/kEy*/gs;
+	$d=$name; $d=~s/\+/kEy[0-9]*/gs; unlink(glob($d)); # migrate
+	$name=~s/\+/kEy.$DSP.*/gs;
 	my @l=glob($name);
 	die "Deleting '$name': $!\n" if(@l && !unlink(@l));
 	1;
@@ -276,7 +284,7 @@ N:
 	if(exists($P{slow}) && exists($d{Icon})){
 		$i=$d{Icon};
 		$i=~s/(?:.*\/)?(.*?).svg$/$1.png/;
-		$i=" icon='$i'" if($i=$icon=$ico{$i}||((index($i,'/')>=0 && -e $i)?$i:undef));
+		$i=" icon='$i'" if($i=$icon=$ico{$i}||(index($i,'/')>=0?$i:undef));
 	}
 	if(substr($f,0,4) eq '/etc'){
 		$d{Categories}='Autostart';
@@ -340,6 +348,8 @@ if(@apps){
 	@apps=map{$apps{$_->[2]}||$apps{$_->[0]}||$apps{$_->[1]}||[$ico{$_->[0]}||$ico,$_->[2]]}@apps;
 	if(exists($P{launcher})){
 		@crc=map{for(my $i=8;$i>0;$i--){$_=($_&1)?($_>>1)^0xedb88320:($_>>1)};$_}(0..255);
+		$DSP=$ENV{'DISPLAY'};
+		$DSP=~s/[\/\\_\.\*]/_/gs;
 		if(!exists($P{dock}) && !exists($P{tint2}) && (my $pid=$prop{_OPENBOX_PID})){
 			if(my $c=_read("/proc/$pid/cmdline")){
 				my @c=split(/\x0/,$c);
@@ -409,7 +419,18 @@ if(@apps){
 NOGEO:
 		$spliceX=($vert xor $left)?$X-$sx:0 if($spliceX eq '');
 		$spliceY=($vert xor $bottom)?$Y-$sy:0 if($spliceY eq '');
-		my ($a,$c,$p,$xy)=$vert?('[ $1 -lt '.($spliceX+$sx),$y,'$2',$spliceY):('[ $2 -lt '.($spliceY+$sy),$x,'$1',$spliceX);
+		$a.=q([ "$DISPLAY" = ':0.0' ] || ( . "$0.${DISPLAY//[\/\\\\_.*]/_}";exit 1)
+);
+		if($DSP ne ':0_0'){
+			if((!-x $sh) && open(my $F,'>',$sh)){
+				print $F,$a;
+				chmod(0700,$F);
+				close($F);
+			}
+			$a='';
+			$sh.='.'.$DSP
+		}
+		my ($a,$c,$p,$xy)=$vert?($a.'[ $1 -lt '.($spliceX+$sx),$y,'$2',$spliceY):($a.'[ $2 -lt '.($spliceY+$sy),$x,'$1',$spliceX);
 		$a.=($spliceX?" -a \$1 -gt $spliceX":'').($spliceY?" -a \$2 -gt $spliceY":'')." ] && {\n";
 		for(@apps){
 			$_->[0]||next;
@@ -441,13 +462,16 @@ NOGEO:
 				_write(">$tint2",$tint2_);
 			}
 		}
-		newname($img,($m||"@m").$img.$tint2_)||goto nolauncher;
+		$?=0;
+		goto (nolauncher,NEWIMG,NEWSH)[newname($img,($m||"@m").$img.$tint2_)];
+NEWIMG:
 		unlink($sh);
 		if($m){
 			$out=`( $m $img ) 2>&1`;
 		}else{
 			system(@m,$img);
 		}
+NEWSH:
 		if($?){
 			system($bin.'notify-send',$out='Picture montage failed: '.($m||"@m")." $img \n$out");
 			print STDERR $out,"\n";

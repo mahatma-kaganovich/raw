@@ -11,6 +11,8 @@ cache="$HOME/.cache/ya"
 sm='--sm-disable'
 sm2='--sm-client-disable'
 prefapps="$obconfdir/preferred-apps"
+DSP="${DISPLAY//[\/\\_.*]/_}"
+ENV="$cache/environment.$DSP"
 
 : ${YA_APP_WebBrowser:="'exo-open --launch WebBrowser' 'seamonkey --browser' firefox chromium midori"}
 : ${YA_APP_TerminalEmulator:="'exo-open --launch TerminalEmulator' Terminal lxterminal \"gnome-terminal \$sm2\" kterm xterm"}
@@ -113,7 +115,7 @@ wm(){
 
 envir(){
 	local A
-	A=`_1cfg "$1/environment"` && [ -r "$A" ] && . "$A"
+	A=`_1cfg "$1/environment.$DSP"` && [ -r "$A" ] && . "$A"
 }
 
 fixml(){
@@ -201,7 +203,7 @@ killer(){
 		echo -n "[wait]"
 	done
 	killall -w xfce-mcs-manager gnome-settings-daemon
-	} 9>>"$cache/environment"
+	} 9>>"$ENV"
 }
 
 _run(){
@@ -233,7 +235,7 @@ _env(){
 	{
 	flock -x 1
 	"${@}"
-	} >>"$cache/environment" && . "$cache/environment"
+	} >>"$ENV" && . "$ENV"
 }
 
 envcache(){
@@ -241,10 +243,10 @@ envcache(){
 	{
 	flock -x 1
 	for i in "${@}"; do
-		sed -i -e "/^$i=/d" "$cache/environment"
-		echo "$i='${!i}';" >>"$cache/environment"
+		sed -i -e "/^$i=/d" "$ENV"
+		echo "$i='${!i}';" >>"$ENV"
 	done
-	} >>"$cache/environment"
+	} >>"$ENV"
 }
 
 by_category(){
@@ -370,7 +372,7 @@ tint2chk(){
 	}
 }
 
-. "$cache/environment" || mkdir -p "$cache"
+. "$ENV" || mkdir -p "$cache"
 preferred 2>/dev/null
 [ -z "$YA_DESKTOP" ] && YA_DESKTOP=`app $YA_STARTUP`
 desk="$YA_DESKTOP"
@@ -483,7 +485,7 @@ Launcher:
 	break
 ;;
 *)
-	rm -f "$cache/"[1-9]* "$cache/environment"
+	rm -f "$cache/"[1-9]* "$ENV"
 	[ -e /etc/udev/rules.d/88-autofs.rules -a ! -e /var/run/auto.dev ] && . /usr/share/ya-layout/autofs-all
 	[ -x /usr/bin/dbus-launch ] && _env /usr/bin/dbus-launch --sh-syntax --exit-with-session
 
