@@ -147,7 +147,10 @@ sub _restart{
 	$pid && return $pid;
 	close(STDOUT);
 	open STDOUT,">&2";
-	system('killall','-w',$_[0],'-u',$ENV{'USER'});
+	my $n=$_[0];
+	$n=~s/^.*\///g;
+	killwin($n);
+#	system('killall','-w',$_[0],'-u',$ENV{'USER'});
 	exec(@_);
 	die $!;
 }
@@ -206,12 +209,31 @@ sub _tag{
 	}
 }
 
+sub prop{
+# obxprop deadloop on window
+my $s=defined($_[1])?"xprop -id $_[1]":'obxprop --root';
+$s=`$bin$s`;
+$s=~s/^([A-Z0-9_]*)\([A-Z0-9_]*\) = (\"[^\"]*\"(?:, \"[^\"]*\")*|[^\n]*)$/$_[0]->{$1}=$2;''/gme;
+}
+
+sub killwin{
+my $n="\"$_[0]\"";
+for(split(/, /,$prop{_NET_CLIENT_LIST})){
+	prop(my $p,$_);
+	if($p->{_OB_APP_NAME} eq $n){
+		system($bin.'xkill','-id',$_);
+		return !$?;
+	}
+}
+-1
+}
+
 if(exists($P{slow})){
 	$configs{$_}=1 for(glob("${0}_*"));
 	if(@{$P{slow}}){
 		($fconf,$X,$Y)=@{$P{slow}};
 	}else{
-		~s/^([A-Z0-9_]*)\([A-Z0-9_]*\) = (.*)?$/$prop{$1}=$2;''/ge  for(split(/\n/,`${bin}obxprop --root`));
+		prop(\%prop);
 		($X,$Y)=$prop{'_NET_DESKTOP_GEOMETRY'}=~/(\d+), (\d+)/;
 		($fconf)=$prop{'_OB_CONFIG_FILE'}=~/\"(.*)\"/;
 	}
