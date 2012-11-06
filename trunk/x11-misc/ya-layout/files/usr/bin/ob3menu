@@ -11,6 +11,7 @@
 #		geometry = x,y,vert?,xx,yy,spliceX,spliceY,left?,bottom?
 #	--tint2 [<config>]
 #	--dock
+#	--multiserver
 # "--slow" - +keybinds, 3.5.0+ menu icons, better with cache.
 #
 # OnlyShowIn is specified, but I newer want it. But you can think else.
@@ -147,10 +148,15 @@ sub _restart{
 	$pid && return $pid;
 	close(STDOUT);
 	open STDOUT,">&2";
-	my $n=$_[0];
-	$n=~s/^.*\///g;
-	system($bin.'xkill','-id',$n) if(($n)=`${bin}xwininfo -name $n`=~/ Window id: (0x\S+) /s);
-#	system('killall','-w',$_[0],'-u',$ENV{'USER'});
+	# xkill don't properly close tray [on some X], so tray icons not restarting
+	# this criteria is not good, but don't know simple alternative
+	if($DISPLAY ne ':0.0' || exists($P{multiserver})){
+		my $n=$_[0];
+		$n=~s/^.*\///g;
+		system($bin.'xkill','-id',$n) if(($n)=`${bin}xwininfo -name $n`=~/ Window id: (0x\S+) /s);
+	}else{
+		system('killall','-w',$_[0],'-u',$ENV{'USER'});
+	}
 	exec(@_);
 	die $!;
 }
