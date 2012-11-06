@@ -150,7 +150,7 @@ sub _restart{
 	open STDOUT,">&2";
 	# xkill don't properly close tray [on some X], so tray icons not restarting
 	# this criteria is not good, but don't know simple alternative
-	if($DISPLAY ne ':0.0' || exists($P{multiserver})){
+	if($ENV{'DISPLAY'} ne ':0.0' || exists($P{multiserver})){
 		my $n=$_[0];
 		$n=~s/^.*\///g;
 		system($bin.'xkill','-id',$n) if(($n)=`${bin}xwininfo -name $n`=~/ Window id: (0x\S+) /s);
