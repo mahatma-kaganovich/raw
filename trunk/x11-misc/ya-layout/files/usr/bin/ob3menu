@@ -149,7 +149,7 @@ sub _restart{
 	open STDOUT,">&2";
 	my $n=$_[0];
 	$n=~s/^.*\///g;
-	system($bin.'xkill','-id',$n) if(($n)=`${bin}xwininfo -name $n`=~/ Window id: (0x\d+) /s);
+	system($bin.'xkill','-id',$n) if(($n)=`${bin}xwininfo -name $n`=~/ Window id: (0x\S+) /s);
 #	system('killall','-w',$_[0],'-u',$ENV{'USER'});
 	exec(@_);
 	die $!;
