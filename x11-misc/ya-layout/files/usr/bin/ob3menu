@@ -218,7 +218,7 @@ $s=~s/^([A-Z0-9_]*)\([A-Z0-9_]*\) = (\"[^\"]*\"(?:, \"[^\"]*\")*|[^\n]*)$/$_[0]-
 
 sub killwin{
 my $n="\"$_[0]\"";
-for(split(/, /,$prop{_NET_CLIENT_LIST})){
+for(reverse split(/, /,$prop{_NET_CLIENT_LIST})){ # or _NET_CLIENT_LIST_STACKING?
 	prop(my $p,$_);
 	if($p->{_OB_APP_NAME} eq $n){
 		system($bin.'xkill','-id',$_);
