@@ -149,7 +149,7 @@ sub _restart{
 	open STDOUT,">&2";
 	my $n=$_[0];
 	$n=~s/^.*\///g;
-	killwin($n);
+	system($bin.'xkill','-id',$n) if(($n)=`${bin}xwininfo -name $n`=~/ Window id: (0x\d+) /s);
 #	system('killall','-w',$_[0],'-u',$ENV{'USER'});
 	exec(@_);
 	die $!;
@@ -214,18 +214,6 @@ sub prop{
 my $s=defined($_[1])?"xprop -id $_[1]":'obxprop --root';
 $s=`$bin$s`;
 $s=~s/^([A-Z0-9_]*)\([A-Z0-9_]*\) = (\"[^\"]*\"(?:, \"[^\"]*\")*|[^\n]*)$/$_[0]->{$1}=$2;''/gme;
-}
-
-sub killwin{
-my $n="\"$_[0]\"";
-for(reverse split(/, /,$prop{_NET_CLIENT_LIST})){ # or _NET_CLIENT_LIST_STACKING?
-	prop(my $p,$_);
-	if($p->{_OB_APP_NAME} eq $n){
-		system($bin.'xkill','-id',$_);
-		return !$?;
-	}
-}
--1
 }
 
 if(exists($P{slow})){
