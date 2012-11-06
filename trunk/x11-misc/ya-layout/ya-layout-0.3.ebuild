@@ -44,12 +44,12 @@ src_install(){
 	use jpeg || sed -i -e 's:jpg:tiff:g' "${D}"{/usr/bin/ob3menu,/etc/xdg/ya/menu.xml}
 	use tiff || sed -i -e 's:tiff:png:g' "${D}"{/usr/bin/ob3menu,/etc/xdg/ya/menu.xml}
 	if use tint2; then
-		sed -e 's:^\(task_font = sans\) 7$:\1 12:i' \
-		-e 's:^panel_position = bottom center horizontal$:panel_position = top right horizontal:' \
-		-e 's:^rounded = [0-9]*:rounded = 3:' \
-		-e 's:^wm_menu = 0:wm_menu=1:' \
-		-e 's:^font_shadow = 1:font_shadow = 0:' \
-			</etc/xdg/tint2/tint2rc >"${D}"/etc/xdg/ya/tint2rc
+		# hate effects & decorations - non-ergonomic for eyes
+		# top-right is also faster
+		cp /etc/xdg/tint2/tint2rc "${D}"/etc/xdg/ya/tint2rc &&
+		for i in 'task_font sans 12' 'panel_position top right horizontal' 'rounded 3' 'wm_menu 1' 'font_shadow 0' 'border_width 0' 'panel_padding 0 0 0' 'taskbar_padding 0 0 2' 'task_padding 0 0' 'panel_size 0 20'; do
+			sed -i -e "s:^${i%% *} = .*\$:${i%% *} = ${i#* }:" "${D}"/etc/xdg/ya/tint2rc
+		done
 		sed -i -e 's%YA_STARTUP:=XF86Desktop%YA_STARTUP:=TINT2%' "${D}"/usr/bin/ya-session
 	fi
 	use bluetooth || rm "$D/etc/ppp" -Rf
