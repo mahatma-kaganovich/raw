@@ -131,7 +131,7 @@ sub _read{
 	if(my $l=$_[1]||-s $F){
 		read($F,$s,$l);
 	}else{
-		while(<$F>){$s.=$_};
+		while(defined(my $x=<$F>)){$s.=$x};
 	}
 	close($F);
 	$s;
@@ -154,8 +154,8 @@ sub _restart{
 	my @p;
 	my $n=$_[0];
 	$n=~s/^.*\///g;
-	for my $p (split(/\n/,`${bin}pgrep $n -u "$ENV{'USER'}"`)){
-		push @p,$p if(_read("</proc/$p/environ")=~/(?:^|\x0)DISPLAY=$d(?:\x0|\$)/s);
+	for(split(/\n/,`${bin}pgrep $n -u "$ENV{'USER'}"`)){
+		push @p,$_ if(_read("</proc/$_/environ")=~/(?:^|\x0)DISPLAY=$d(?:\x0|\$)/s);
 	}
 	if(@p){
 		system('kill',@p);
