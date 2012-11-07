@@ -149,8 +149,17 @@ sub _restart{
 	close(STDOUT);
 	open STDOUT,">&2";
 	# xkill don't properly close tray [on some X], so tray icons not restarting
-	# this criteria is not good, but don't know simple alternative
-	if($ENV{'DISPLAY'} ne ':0.0' || exists($P{multiserver})){
+	# try to kill by pid first
+	my $d=quotemeta($ENV{'DISPLAY'});
+	my @p;
+	for(split(/\n/,`${bin}pgrep $_[0] -u "$ENV{'USER'}"`)){
+		push @p,$_ if(_read('<',"/proc/$_/environ")=~/(?:^|\x0)DISPLAY=$d(?:\x0|$)/s);
+	}
+	if(@p){
+		system($bin.'kill',@p);
+		while(map{-e "/proc/$_" || ()}@p){sleep(1)};
+	}
+	if($^O eq 'linux' || $ENV{'DISPLAY'} ne ':0.0' || exists($P{multiserver})){
 		my $n=$_[0];
 		$n=~s/^.*\///g;
 		system($bin.'xkill','-id',$n) if(($n)=`${bin}xwininfo -name $n`=~/ Window id: (0x\S+) /s);
