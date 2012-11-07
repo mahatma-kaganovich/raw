@@ -501,7 +501,7 @@ NOGEO:
 			$m="${bin}montage -background none -geometry ${x}x$y -tile ${xx}x$yy @m $f |${bin}convert -background none -splice ${spliceX}x$spliceY $f -extent ${X}x$Y$m";
 		}
 		if($tint2_){
-			my $tint2_0=$tint2;
+			my $t2=$tint2_;
 			my $sz;
 			my @margin=(0,0);;
 			my $pad=0;
@@ -522,7 +522,7 @@ NOGEO:
 				tint2set('panel_padding',0,$pad);
 			}
 			tint2set('panel_size',0,$sz-2);
-			_write($tint2,$tint2_) if($tint2_0 ne $tint2_);
+			_write($tint2,$tint2_) if($t2 ne $tint2_);
 		}
 		$?=0;
 		goto (nolauncher,NEWIMG,NEWSH)[newname($img,($m||"@m").$img.$tint2_)];
