@@ -564,6 +564,7 @@ sub btstat{
 	$rf=0;
 	while(exists($rfcomm_{"rfcomm$rf"})){$rf++};
 	$rf="rfcomm$rf";
+	unlink("/var/lock/LCK..$rf");
 	if(open(my $F,'-|',"/usr/sbin/hciconfig")){
 		my $i;
 		while(<$F>){
