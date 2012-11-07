@@ -420,6 +420,7 @@ if(@apps){
 			my ($p,$sz);
 			if(exists($P{dock})){
 				$p=$conf{'.dock.position'}.$conf{'.dock.direction'};
+				$x=$y=66 if(!$x && !$y);
 			}elsif($tint2_){
 				$sz=tint2get('panel_size',1);
 				$p=tint2get('panel_position',-1);
@@ -440,6 +441,8 @@ if(@apps){
 				}elsif($vert ne 0 && ($sx=$X-$splice[2])){
 					$left=1;
 					$spliceX=$splice[2];
+				}elsif(exists($P{dock})){
+					($sx,$sy)=$vert?(66,0):(0,66);
 				}else{
 					goto nolauncher;
 				}
