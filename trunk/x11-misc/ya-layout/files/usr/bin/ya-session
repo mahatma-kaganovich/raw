@@ -357,7 +357,7 @@ sess(){
 }
 
 xrdb_q(){
-	local x=`xrdb -query` i v xset=xset xs=
+	local x=`xrdb -query` i v t=0 c=0 xset=xset dpms=true b=true xx= s1=0 s2=0 s3=0 lock=true
 	while [ -n "$x" ]; do
 		i="${x%%
 *}"
@@ -367,14 +367,29 @@ xrdb_q(){
 		v="${i#*:	}"
 		case "$i" in
 		xscreensaver.mode:\	X)xset=xset;;
-		xscreensaver.mode:\	off)xset=false;xset -dpms s off;;
-		xscreensaver.mode:\	*)_run xscreensaver;;
-		xscreensaver.dpmsEnabled:\	true)xs+=' +dpms s noblank';;
-		xscreensaver.dpmsEnabled:\	false)xs+=' -dpms s blank';;
-		xscreensaver.timeout:*)xs+=" s $v";;
+		xscreensaver.mode:\	off)xset=false;xset -dpms;xset s off;;
+		xscreensaver.mode:\	*)xs=true;;
+#		xscreensaver.lock:\	true)lock=<alt lock cmd>;;
+		xscreensaver.dpmsEnabled:\	true)dpms=true;;
+		xscreensaver.dpmsEnabled:\	false)dpms=false;;
+		xscreensaver.timeout:*)t=$[v*60];;
+		xscreensaver.cycle:*)c=$[v*60];;
+		xscreensaver.dpmsStandby:*)s1=$[v*60];;
+		xscreensaver.dpmsSuspend:*)s2=$[v*60];;
+		xscreensaver.dpmsOff:*)s3=$[v*60];;
+		xscreensaver.dpmsQuickOff:\	true)b=false;;
 		esac
 	done
-	$xset${xs:-+dpms}
+	[ $s2 -lt $s1 ] && s2=$s1
+	[ $s3 -lt $s2 ] && s3=$s2
+#	! $b && s1=$t && s2=$t && s3=$t
+	$dpms && $xset +dpms s $s1 $s2 $s3 || $xset -dpms s $s1 $s2 $s3
+	$b && $xset s on s blank s expose || $xset s off
+	if $xs; then
+		_run xscreensaver
+	else
+		$lock
+	fi
 }
 
 tint2chk(){
