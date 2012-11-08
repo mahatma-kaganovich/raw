@@ -153,7 +153,7 @@ sub _restart{
 	# xkill don't properly close tray [on some X], so tray icons not restarting
 	# try to kill by pid first
 	my $d=quotemeta($ENV{'DISPLAY'});
-	my @p;
+	my (@p,$w);
 	my $n=$_[0];
 	$n=~s/^.*\///g;
 	for(split(/\n/,`${bin}pgrep $n -u "$ENV{'USER'}"`)){
@@ -164,11 +164,11 @@ sub _restart{
 		while(map{-e "/proc/$_" || ()}@p){sleep(1)};
 	}
 	if($^O eq 'linux' || $ENV{'DISPLAY'} ne ':0.0' || exists($P{multiserver})){
-		system($bin.'xkill','-id',$n) if(($n)=`${bin}xwininfo -name $n`=~/ Window id: (0x\S+) /s);
+		system($bin.'xkill','-id',$w) if(($w)=`${bin}xwininfo -name $n`=~/ Window id: (0x\S+) /s);
 	}else{
 		system('killall','-w',$_[0],'-u',$ENV{'USER'});
 	}
-	sleep(1); # [x]kill need it (to change font)
+	sleep(1) if(@p || $w); # font
 	exec(@_);
 	die $!;
 }
