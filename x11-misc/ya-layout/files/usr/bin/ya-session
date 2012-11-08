@@ -356,40 +356,55 @@ sess(){
 	# SESSION_MANAGER=
 }
 
-xrdb_q(){
-	local x=`xrdb -query` i v t=0 c=0 xset=xset dpms=true b=true xx= s1=0 s2=0 s3=0 lock=true
+# do not start xscreensaver if xset
+xssaver(){
+	local x=`xrdb -query|grep '^xscreensaver\.'|sed -e 's:[ 	]::g' -e 's:^xscreensaver\.::'|cat - "$HOME/.xscreensaver" 2>/dev/null` i v t=0 c=0 xset=xset dpms=true b=true s1=0 s2=0 s3=0 lock=true mode=X lock=false h m s
+	x="${x,,}"
 	while [ -n "$x" ]; do
 		i="${x%%
 *}"
 		[ "$i" = "$x" ] && x=
 		x="${x#*
 }"
-		v="${i#*:	}"
+		v="${i#*:}"
+		if [ -n "$v" && -z "${v//[0-9:]}" ]; then
+			s="${v##*:}"
+			if [ "$s" = "$v" ]; then
+				v=$[s*60]
+			else
+				v="${v%:*}"
+				m="${v##*:}"
+				m="${m:-0}"
+				v="${v%:*}"
+				h="${v##*:}"
+				h="${h:-0}"
+				v=$[h*60*60+m*60+s]
+			fi
+		fi
 		case "$i" in
-		xscreensaver.mode:\	X)xset=xset;;
-		xscreensaver.mode:\	off)xset=false;xset -dpms;xset s off;;
-		xscreensaver.mode:\	*)xs=true;;
-#		xscreensaver.lock:\	true)lock=<alt lock cmd>;;
-		xscreensaver.dpmsEnabled:\	true)dpms=true;;
-		xscreensaver.dpmsEnabled:\	false)dpms=false;;
-		xscreensaver.timeout:*)t=$[v*60];;
-		xscreensaver.cycle:*)c=$[v*60];;
-		xscreensaver.dpmsStandby:*)s1=$[v*60];;
-		xscreensaver.dpmsSuspend:*)s2=$[v*60];;
-		xscreensaver.dpmsOff:*)s3=$[v*60];;
-		xscreensaver.dpmsQuickOff:\	true)b=false;;
+		mode:*)mode=$v;;
+		lock:true|lock:false)lock=$v;;
+		dpmsenabled:true|dpmsenabled:false)dpms=$v;;
+		timeout:*)t=$v;;
+		cycle:*)c=$v;;
+		dpmsstandby:*)s1=$v;;
+		dpmssuspend:*)s2=$v;;
+		dpmsoff:*)s3=$v;;
+		dpmsquickoff:true)b=false;;
+		dpmsquickoff:false)b=true;;
 		esac
 	done
+	case "$mode" in
+	x);;
+	off)dpms=false;b=false;;
+	*)xset=true;lock=false;_run xscreensaver;;
+	esac
 	[ $s2 -lt $s1 ] && s2=$s1
 	[ $s3 -lt $s2 ] && s3=$s2
 #	! $b && s1=$t && s2=$t && s3=$t
 	$dpms && $xset +dpms s $s1 $s2 $s3 || $xset -dpms s $s1 $s2 $s3
 	$b && $xset s on s blank s expose || $xset s off
-	if $xs; then
-		_run xscreensaver
-	else
-		$lock
-	fi
+#	$lock && ...
 }
 
 tint2chk(){
@@ -555,7 +570,7 @@ Launcher:
 	[ -s "$obconf" ] || obconfig "$obconf" $(_1cfg openbox/rc.xml)
 	[ "$YA_STARTUP" = TINT2 ] && tint2chk
 	cat {/etc/X11,/etc/xdg/ya,"$HOME"/.config/ya}/Xresources "$HOME/.Xresources" 2>/dev/null  | xrdb -merge
-	xrdb_q
+	xssaver
 	[ -n "$desk" ] && i=`_1cfg "ya/wallpaper.*"` && case "$desk" in
 	*pcmanfm*)desk+=" -w $i";;
 	esac

@@ -931,7 +931,7 @@ sub simple_menu{
 		$conf++;
 		print "<menu id='$MENU:$conf' label='$i'>";
 		my $def;
-		$def="<separator label='$d'/>" if($d ne '');
+		$def="<separator label='*$d'/>" if($d ne '');
 		for(@{$_[0]->{$_}}){
 			my $i=$_;
 			$i=~s/([$xml_])/\&$xml_{$1};/g;
@@ -947,7 +947,7 @@ sub simple_menu{
 }
 
 sub _conffile{
-	my ($f,$r,$v,$x,$noa)=@_;
+	my ($f,$r,$r1,$v,$x,$noa)=@_;
 	my $s;
 	if(open(my $F,'<',$f)){
 		read($F,$s,-s $F);
@@ -956,24 +956,24 @@ sub _conffile{
 		die $!;
 	}
 	my $i=quotemeta($v);
-	if(!($s=~s/^([ 	]*$i$r).*$/$1$x/gm)){
+	if(!($s=~s/^([ 	]*$i$r[ 	]*).*?$/$1$x/gm)){
 		$noa && return;
 		$s.="\n" if($s ne '' && substr($s,-1) ne "\n");
-		$r=~s/\*//;
-		$r=~s/\\s|\[ 	\]/ /;
-		$s.="$v$r$x\n";
+		$s.="$v$r1$x\n";
 	}
 	_write($f,$s);
 	$s;
 }
 
-# try to sync .gtkrc-2.0
-sub xftgtk2{
-my ($x,$y)=@_;
-$x=~s/\./-/g;
-$x='gtk-'.lc($x);
-$y="\"$y\"" if($y=~/\D/);
-_conffile("$ENV{HOME}/.gtkrc-2.0",'=',$x,$y,1) && eval q(
+sub xresources{
+
+my @xfiles=(
+['.gtkrc-2.0','=','=',sub{
+	$_[0]=~s/\./-/g;
+	$_[0]='gtk-'.lc($_[0]);
+},
+sub{$_[0]="\"$_[0]\"" if($_[0]=~/\D/)},
+sub{eval q(
 #dev-perl/gtk2-perl
 use Gtk2 '-init';
 my $event = Gtk2::Gdk::Event->new("GDK_CLIENT_EVENT");
@@ -983,55 +983,14 @@ $event->message_type(Gtk2::Gdk::Atom->intern("_GTK_READ_RCFILES", 0));
 $event->data_format(8);
 $event->data('burp');
 Gtk2::Gdk::Event->send_clientmessage_toall($event);
+);}],
+['.xscreensaver',':',':	',sub{$_[0]=~s/^xscreensaver\.//},sub{},sub{},1]
 );
-}
 
-sub xresources{
-#my $s=`${bin}xrdb -query`;
-my $s=$prop{'RESOURCE_MANAGER'};
-$s=~s/^\"//s;
-$s=~s/\"$//s;
-$? && return;
-if(_mparam(@_)){
-	my $i="$_[0]: $_[1]";
-	for('all','screen','screens','global'){
-#	for('all','screen'){
-		open_($F,'|-',$bin."xrdb -merge -$_");
-		print $F "$i\n";
-		close($F);
-		$? && die "Merging xrdb: '$i'";
-	}
-	my $s=_conffile("$ENV{HOME}/.Xresources",':[ 	]*',@_);
-	xftgtk2(@_);
-	if($i=~/^X.*/){
-		exec($bin.'openbox','--restart');
-	}elsif($i=~/^xscreensaver/){
-		my %x;
-		$s=~s/^(\S+): (\S+)$/$x{$1}=$2;''/mge;
-		if($i eq 'xscreensaver.mode: off' || $i eq 'xscreensaver.mode: X'){
-			system($bin.'xscreensaver-command','-exit');
-			system($bin.'xset','-dpms','s','off');
-		}
-		if($x{'xscreensaver.mode'} eq 'X'){
-			my @t=($x{'xscreensaver.dpmsStandby'},$x{'xscreensaver.dpmsSuspend'},$x{'xscreensaver.dpmsOff'});
-			my $x=0;
-			for(@t){
-				$_=$x if($_<$x);
-				$x=$_;
-				$_*=60;
-			}
-			system($bin.'xset',$x{'xscreensaver.dpmsEnables'} eq 'false'?'-dpms':'+dpms','dpms',@t);
-			exec($bin.'xset','s','blank','s','expose','s','on','s',$x{'xscreensaver.timeout'}*60,$x{'xscreensaver.cycle'}*60);
-		}elsif($x{'xscreensaver.mode'} ne 'off'){
-			system($bin.'xscreensaver-command','-restart') && exec($bin.'xscreensaver');
-		}
-	}
-	exit;
-}
 my $b=[0,1];
-my $bb=['true','false'];
-my $tm=[1,3,5,10,15,30,60,90,120];
-simple_menu({
+my $bb=['True','False'];
+my $tm=[1,3,5,10,15,30,40,60,90,120];
+my %xrparam=(
 'Xft.antialias'=>$b,
 'Xft.autohint'=>$b,
 'Xft.hinting'=>$b,
@@ -1057,7 +1016,7 @@ simple_menu({
 'xscreensaver.dpmsSuspend'=>$tm,
 'xscreensaver.dpmsOff'=>$tm,
 'xscreensaver.dpmsQuickOff'=>$bb,
-'xscreensaver.visualID'=>['best','mono','gray','color','GL'], # number: xdpyinfo
+'xscreensaver.visualID'=>['default','best','mono','gray','color','GL'], # number: xdpyinfo
 'xscreensaver.installColormap'=>$bb,
 'xscreensaver.splash'=>$bb,
 'xscreensaver.nice'=>[-20..19],
@@ -1074,7 +1033,80 @@ simple_menu({
 #'Xft.scale'=>
 #'Xft.maxglyphmemory'=>
 #'*Font'=>
-},$s);
+);
+#my $s=`${bin}xrdb -query`;
+#$? && return;
+my $s=$prop{'RESOURCE_MANAGER'};
+$s=~s/^\"//s;
+$s=~s/\"$//s;
+$s.="\n";
+my $ss='[ 	]*';
+for(@xfiles){
+#	$_->[6] || next; # .gtkrc global?
+	open(my $F,'<',"$ENV{HOME}/$_->[0]")||next;
+	read($F,my $f,-s $F);
+	close($F);
+	for my $x(keys %xrparam){
+		my $i=$x;
+		my $r=$_->[1];
+		&{$_->[3]}($i) || next;
+		my ($d)=$f=~/^$i$r$ss(.*?)$ss$/m or next;
+		($d=~s/^\"//) && ($d=~s/\"$//);
+		my ($d1)=$s=~/^$x:$ss(.*?)$ss$/m;
+		next if($d1 eq $d);
+		# collect all
+		#_conffile("$ENV{HOME}/.Xresources",':',':	',$x,$d);
+		if(defined($d1)){
+			# or not collect?
+			_conffile("$ENV{HOME}/.Xresources",':',':	',$x,$d,1);
+			$s=~s/^($x:$ss).*?$/$1$d/gm;
+		}else{
+			$s.="$x:	$d\n";
+		}
+	}
+}
+if(_mparam(@_)){
+	my $i="$_[0]: $_[1]";
+	for('all','screen','screens','global'){
+#	for('all','screen'){
+		open_($F,'|-',$bin."xrdb -merge -$_");
+		print $F "$i\n";
+		close($F);
+		$? && die "Merging xrdb: '$i'";
+	}
+	my $s=_conffile("$ENV{HOME}/.Xresources",':',':	',@_);
+	for(@xfiles){
+		my ($x,$y)=@_;
+		&{$_->[3]}($x) || next;
+		&{$_->[4]}($y);
+		_conffile("$ENV{HOME}/$_->[0]",$_->[1],$_->[2],$x,$y,1) && &{$_->[5]}();
+	}
+	if($i=~/^X.*/){
+		exec($bin.'openbox','--restart');
+	}elsif($i=~/^xscreensaver/){
+		my %x;
+		$s=~s/^(\S+): (\S+)$/$x{$1}=$2;''/mge;
+		if($i eq 'xscreensaver.mode: off' || $i eq 'xscreensaver.mode: X'){
+			system($bin.'xscreensaver-command','-exit');
+			system($bin.'xset','-dpms','s','off');
+		}
+		if($x{'xscreensaver.mode'} eq 'X'){
+			my @t=($x{'xscreensaver.dpmsStandby'},$x{'xscreensaver.dpmsSuspend'},$x{'xscreensaver.dpmsOff'});
+			my $x=0;
+			for(@t){
+				$_=$x if($_<$x);
+				$x=$_;
+				$_*=60;
+			}
+			system($bin.'xset',$x{'xscreensaver.dpmsEnables'} eq 'false'?'-dpms':'+dpms','dpms',@t);
+			exec($bin.'xset','s','blank','s','expose','s','on','s',$x{'xscreensaver.timeout'}*60,$x{'xscreensaver.cycle'}*60);
+		}elsif($x{'xscreensaver.mode'} ne 'off'){
+			system($bin.'xscreensaver-command','-restart') && exec($bin.'xscreensaver');
+		}
+	}
+	exit;
+}
+simple_menu(\%xrparam,$s);
 }
 
 ###########################################
