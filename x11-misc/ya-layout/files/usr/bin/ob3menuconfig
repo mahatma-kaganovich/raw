@@ -924,9 +924,8 @@ sub simple_menu{
 	for(sort keys %{$_[0]}){
 		my $m=$_;
 		$m=~s/ .*//g;
-		my $i=quotemeta($m);
-		my ($d)=$_[1]=~/^$s$i(?::$s|$s=$s|$s)(.*?)$s$/m;
-		$i=$_;
+		my $d=$_[1]->{$m};
+		my $i=$_;
 		~s/([$xml_])/\&$xml_{$1};/g for($i,$d,$m);
 		$conf++;
 		print "<menu id='$MENU:$conf' label='$i'>";
@@ -1041,31 +1040,43 @@ $s=~s/^\"//s;
 $s=~s/\"$//s;
 $s.="\n";
 my $ss='[ 	]*';
+my %x;
+for(keys %xrparam){
+	my $m=$_;
+	$m=~s/ .*//g;
+	my $x=quotemeta($m);
+	($x{$m})=$s=~/^$x:$ss(.*?)$ss$/m;
+}
 for(@xfiles){
 #	$_->[6] || next; # .gtkrc global?
 	open(my $F,'<',"$ENV{HOME}/$_->[0]")||next;
 	read($F,my $f,-s $F);
 	close($F);
 	for my $x(keys %xrparam){
-		my $i=$x;
+		my $m=$x;
+		$m=~s/ .*//g;
+		my $i=$m;
 		my $r=$_->[1];
 		&{$_->[3]}($i) || next;
+		$i=quotemeta($i);
 		my ($d)=$f=~/^$i$r$ss(.*?)$ss$/m or next;
 		($d=~s/^\"//) && ($d=~s/\"$//);
-		my ($d1)=$s=~/^$x:$ss(.*?)$ss$/m;
-		next if($d1 eq $d);
+		next if($x{$m} eq $d);
 		# collect all
-		#_conffile("$ENV{HOME}/.Xresources",':',':	',$x,$d);
-		if(defined($d1)){
+		#_conffile("$ENV{HOME}/.Xresources",':',':	',$m,$d);
+		$x{$m}=$d;
+		if(defined($x{$m})){
 			# or not collect?
-			_conffile("$ENV{HOME}/.Xresources",':',':	',$x,$d,1);
-			$s=~s/^($x:$ss).*?$/$1$d/gm;
+			_conffile("$ENV{HOME}/.Xresources",':',':	',$m,$d,1);
+			$m=quotemeta($m);
+			$s=~s/^($m:$ss).*?$/$1$d/gm;
 		}else{
-			$s.="$x:	$d\n";
+			$s.="$m:	$d\n";
 		}
 	}
 }
 if(_mparam(@_)){
+	$x{$_[0]}=$_[1];
 	my $i="$_[0]: $_[1]";
 	for('all','screen','screens','global'){
 #	for('all','screen'){
@@ -1084,8 +1095,6 @@ if(_mparam(@_)){
 	if($i=~/^X.*/){
 		exec($bin.'openbox','--restart');
 	}elsif($i=~/^xscreensaver/){
-		my %x;
-		$s=~s/^(\S+): (\S+)$/$x{$1}=$2;''/mge;
 		if($i eq 'xscreensaver.mode: off' || $i eq 'xscreensaver.mode: X'){
 			system($bin.'xscreensaver-command','-exit');
 			system($bin.'xset','-dpms','s','off');
@@ -1094,9 +1103,12 @@ if(_mparam(@_)){
 			my @t=($x{'xscreensaver.dpmsStandby'},$x{'xscreensaver.dpmsSuspend'},$x{'xscreensaver.dpmsOff'});
 			my $x=0;
 			for(@t){
+				if(my ($h,$m,$s)=$_=~/^(\d+):(\d+):(\d+)$/){
+					$_=$s+60*($m+60*$h);
+				}else{
+					$_*=60;
+				}
 				$_=$x if($_<$x);
-				$x=$_;
-				$_*=60;
 			}
 			system($bin.'xset',$x{'xscreensaver.dpmsEnables'} eq 'false'?'-dpms':'+dpms','dpms',@t);
 			exec($bin.'xset','s','blank','s','expose','s','on','s',$x{'xscreensaver.timeout'}*60,$x{'xscreensaver.cycle'}*60);
@@ -1106,7 +1118,7 @@ if(_mparam(@_)){
 	}
 	exit;
 }
-simple_menu(\%xrparam,$s);
+simple_menu(\%xrparam,\%x);
 }
 
 ###########################################
