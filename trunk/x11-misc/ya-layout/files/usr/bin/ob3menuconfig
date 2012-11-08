@@ -1003,10 +1003,27 @@ if(_mparam(@_)){
 	}
 	my $s=_conffile("$ENV{HOME}/.Xresources",':[ 	]*',@_);
 	xftgtk2(@_);
-	exec($bin.'openbox','--restart'); # ???
-	die $!;
+	if($i=~/^X.*/){
+		exec($bin.'openbox','--restart');
+	}elsif($i=~/^xscreensaver/){
+		my %x;
+		$s=~s/^(\S+): (\S+)$/$x{$1}=$2;''/mge;
+		if($i eq 'xscreensaver.mode: off' || $i eq 'xscreensaver.mode: X'){
+			system($bin.'xscreensaver-command','-exit');
+			system($bin.'xset','-dpms','s','off');
+		}
+		if($x{'xscreensaver.mode'} eq 'X'){
+			my $i=$x{'xscreensaver.timeout'};
+			exec($bin.'xset',$x{'xscreensaver.dpmsEnables'} eq 'false'?('-dpms','s','blank'):('+dpms','s','noblank'),'s','on',$i?('s',$i):());
+		}elsif($x{'xscreensaver.mode'} ne 'off'){
+			system($bin.'xscreensaver-command','-restart') && exec($bin.'xscreensaver');
+		}
+	}
+	exit;
 }
 my $b=[0,1];
+my $bb=['true','false'];
+my $tm=[1,3,5,10,15,30,60,90,120];
 simple_menu({
 'Xft.antialias'=>$b,
 'Xft.autohint'=>$b,
@@ -1023,6 +1040,29 @@ simple_menu({
 'Xcursor.theme'=>['default',(map{substr($_,28)}glob('/usr/share/cursors/xorg-x11/*'))],
 'Xcursor.theme_core'=>$b,
 'Xcursor.size'=>[3..32],
+'xscreensaver.timeout'=>$tm,
+'xscreensaver.cycle'=>$tm,
+'xscreensaver.lock'=>$bb,
+'xscreensaver.lockTimeout'=>$tm,
+'xscreensaver.passwdTimeout'=>$tm,
+'xscreensaver.dpmsEnabled'=>$bb,
+'xscreensaver.dpmsStandby'=>$tm,
+'xscreensaver.dpmsSuspend'=>$tm,
+'xscreensaver.dpmsOff'=>$tm,
+'xscreensaver.dpmsQuickOff'=>$bb,
+'xscreensaver.visualID'=>['best','mono','gray','color','GL'], # number: xdpyinfo
+'xscreensaver.installColormap'=>$bb,
+'xscreensaver.splash'=>$bb,
+'xscreensaver.nice'=>[-20..19],
+'xscreensaver.fade'=>$bb,
+'xscreensaver.unfade'=>$bb,
+'xscreensaver.fadeSeconds'=>[0..20],
+'xscreensaver.fadeTicks'=>[5,10,20,30,40],
+'xscreensaver.ignoreUninstalledPrograms'=>$bb,
+'xscreensaver.GetViewPortIsFullOfLies'=>$bb,
+'xscreensaver.mode'=>['random','random-same','one','blank','off','X'],
+#'xscreensaver.selected'=>,
+'xscreensaver.procInterrupts'=>$bb,
 #'Xft.dpi'=>
 #'Xft.scale'=>
 #'Xft.maxglyphmemory'=>

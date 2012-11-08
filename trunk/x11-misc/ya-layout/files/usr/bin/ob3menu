@@ -28,7 +28,7 @@ print STDERR ($e=join('',"$0: ",@_));
 exec($bin.'notify-send','-t',6000,$e);
 };
 
-$tint2font=1; # link to ob MenuItem font, but size is not equal
+$tint2font=1; # = ob MenuItem
 
 my (%ico,%key,%cat,%cat1,%dir,@prof,$prof);
 #$misc='Other';
@@ -532,10 +532,10 @@ NOGEO:
 				my $f=$conf{'.font.name'}.' '.$conf{'.font.weight'}.' '.$conf{'.font.slant'}.' ';
 				my $s=$conf{'.font.size'};
 				$f=~s/normal //g;
-				tint2set('task_font',-1,$f.($s+2));
-				tint2set('time1_font',-1,$f.($s));
+				tint2set('task_font',-1,$f.($s));
+				tint2set('time1_font',-1,$f.($s-2));
 				tint2set('time2_font',-1,$f.($s-3));
-				tint2set('bat1_font',-1,$f.($s));
+				tint2set('bat1_font',-1,$f.($s-2));
 				tint2set('bat2_font',-1,$f.($s-3));
 			}
 			_write($tint2,$tint2_) if($t2 ne $tint2_);
