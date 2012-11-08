@@ -356,6 +356,27 @@ sess(){
 	# SESSION_MANAGER=
 }
 
+xrdb_q(){
+	local x=`xrdb -query` i v xset=xset xs=
+	while [ -n "$x" ]; do
+		i="${x%%
+*}"
+		[ "$i" = "$x" ] && x=
+		x="${x#*
+}"
+		v="${i#*:	}"
+		case "$i" in
+		xscreensaver.mode:\	X)xset=xset;;
+		xscreensaver.mode:\	off)xset=false;xset -dpms s off;;
+		xscreensaver.mode:\	*)_run xscreensaver;;
+		xscreensaver.dpmsEnabled:\	true)xs+=' +dpms s noblank';;
+		xscreensaver.dpmsEnabled:\	false)xs+=' -dpms s blank';;
+		xscreensaver.timeout:*)xs+=" s $v";;
+		esac
+	done
+	$xset${xs:-+dpms}
+}
+
 tint2chk(){
 	local a='/etc/xdg/ya/tint2rc' b="$obconfdir/tint2rc"
 	[ -s "$b" ] && return
@@ -519,6 +540,7 @@ Launcher:
 	[ -s "$obconf" ] || obconfig "$obconf" $(_1cfg openbox/rc.xml)
 	[ "$YA_STARTUP" = TINT2 ] && tint2chk
 	cat {/etc/X11,/etc/xdg/ya,"$HOME"/.config/ya}/Xresources "$HOME/.Xresources" 2>/dev/null  | xrdb -merge
+	xrdb_q
 	[ -n "$desk" ] && i=`_1cfg "ya/wallpaper.*"` && case "$desk" in
 	*pcmanfm*)desk+=" -w $i";;
 	esac
