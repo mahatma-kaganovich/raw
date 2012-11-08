@@ -51,6 +51,8 @@ src_install(){
 			sed -i -e "s:^${i%% *} = .*\$:${i%% *} = ${i#* }:" "${D}"/etc/xdg/ya/tint2rc
 		done
 		sed -i -e 's%YA_STARTUP:=XF86Desktop%YA_STARTUP:=TINT2%' "${D}"/usr/bin/ya-session
+	else
+		sed -i -e 's%YA_STARTUP:=TINT2%YA_STARTUP:=XF86Desktop%' "${D}"/usr/bin/ya-session
 	fi
 	use bluetooth || rm "$D/etc/ppp" -Rf
 	use libnotify || sed -i -e 's:^notify=.*$:notify=:' "${D}"/usr/bin/*
