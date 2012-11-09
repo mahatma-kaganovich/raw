@@ -401,7 +401,6 @@ xssaver(){
 	esac
 	[ $s2 -lt $s1 ] && s2=$s1
 	[ $s3 -lt $s2 ] && s3=$s2
-#	! $b && s1=$t && s2=$t && s3=$t
 	$dpms && $xset +dpms s $s1 $s2 $s3 || $xset -dpms s $s1 $s2 $s3
 	$b && $xset s on s blank s expose || $xset s off
 #	$lock && ...
