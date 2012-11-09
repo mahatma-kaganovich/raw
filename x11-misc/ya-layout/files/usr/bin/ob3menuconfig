@@ -1097,7 +1097,9 @@ if(_mparam(@_)){
 	}elsif($i=~/^xscreensaver/){
 		if($i eq 'xscreensaver.mode: off' || $i eq 'xscreensaver.mode: X'){
 			system($bin.'xscreensaver-command','-exit');
-			system($bin.'xset','-dpms','s','off');
+			# xset code make dpms optional. let's separate
+			system($bin.'xset','-dpms');
+			system($bin.'xset','s','off');
 		}
 		if($x{'xscreensaver.mode'} eq 'X'){
 			my @t=($x{'xscreensaver.dpmsStandby'},$x{'xscreensaver.dpmsSuspend'},$x{'xscreensaver.dpmsOff'});
@@ -1107,8 +1109,8 @@ if(_mparam(@_)){
 			for(@t){
 				$_=$x if($_<$x);
 			}
-			system($bin.'xset',lc($x{'xscreensaver.dpmsEnables'}) eq 'false'?'-dpms':'+dpms','dpms',@t);
-			exec($bin.'xset','s','blank','s','expose','s',lc($x{'xscreensaver.dpmsQuickOff'}) eq 'true'?'off':'on','s',@t1);
+			system($bin.'xset',lc($x{'xscreensaver.dpmsEnabled'}) eq 'false'?'-dpms':'+dpms','dpms',@t);
+			exec($bin.'xset','s','blank','s','expose','s',lc($x{'xscreensaver.dpmsQuickOff'}) eq 'true'?'off':('on','s',@t1));
 		}elsif(lc($x{'xscreensaver.mode'}) ne 'off'){
 			system($bin.'xscreensaver-command','-restart') && exec($bin.'xscreensaver');
 		}
