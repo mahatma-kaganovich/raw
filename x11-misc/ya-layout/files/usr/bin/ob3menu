@@ -163,7 +163,7 @@ sub _restart{
 		system('kill',@p);
 		while(map{-e "/proc/$_" || ()}@p){sleep(1)};
 	}
-	if($^O eq 'linux' || $ENV{'DISPLAY'} ne ':0.0' || exists($P{multiserver})){
+	if($^O eq 'linux' || !($ENV{'DISPLAY'}=~/^\:0\.?/) || exists($P{multiserver})){
 		system($bin.'xkill','-id',$w) if(($w)=`${bin}xwininfo -name $n`=~/ Window id: (0x\S+) /s);
 	}else{
 		system('killall','-w',$_[0],'-u',$ENV{'USER'});
@@ -209,7 +209,6 @@ sub newname{
 		return 2; # same file for other head
 	}
 	$name=~s/\.[a-z0-9]*$//i;
-	$d=$name; $d=~s/\+/kEy[0-9]*/gs; unlink(glob($d)); # migrate
 	$name=~s/\+/kEy.$DSP.*/gs;
 	my @l=glob($name);
 	die "Deleting '$name': $!\n" if(@l && !unlink(@l));
@@ -395,7 +394,7 @@ if(@apps){
 	if(exists($P{launcher})){
 		@crc=map{for(my $i=8;$i>0;$i--){$_=($_&1)?($_>>1)^0xedb88320:($_>>1)};$_}(0..255);
 		$DSP=$ENV{'DISPLAY'};
-		$DSP=~s/[\/\\_\.\*]/_/gs;
+		$DSP.='_0' if(!($DSP=~s/[\\\/\*\.]/_/gs));
 		if(!exists($P{dock}) && !exists($P{tint2}) && (my $pid=$prop{_OPENBOX_PID})){
 			if(my $c=_read("/proc/$pid/cmdline")){
 				my @c=split(/\x0/,$c);
@@ -469,7 +468,7 @@ if(@apps){
 NOGEO:
 		$spliceX=($vert xor $left)?$X-$sx:0 if($spliceX eq '');
 		$spliceY=($vert xor $bottom)?$Y-$sy:0 if($spliceY eq '');
-		$a.=q([ "$DISPLAY" = ':0.0' ] || ( . "$0.${DISPLAY//[\/\\\\_.*]/_}";exit 1)
+		$a.=q([ "${DISPLAY%.0}" = ':0' ] || ( . "$0.${DISPLAY//[\/\\\\_.*]/_}";exit 1)
 );
 		if($DSP ne ':0_0'){
 			if((!-x $sh) && open(my $F,'>',$sh)){

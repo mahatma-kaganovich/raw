@@ -11,7 +11,9 @@ cache="$HOME/.cache/ya"
 sm='--sm-disable'
 sm2='--sm-client-disable'
 prefapps="$obconfdir/preferred-apps"
-DSP="${DISPLAY//[\/\\_.*]/_}"
+DSP="${DISPLAY//[\\\/*.]/_}"
+[ "$DISPLAY" = "$DSP" ] && DSP+='_0'
+DSP1="${DISPLAY%.*}"
 ENV="$cache/environment.$DSP"
 
 : ${YA_APP_WebBrowser:="'exo-open --launch WebBrowser' 'seamonkey --browser' firefox chromium midori"}
@@ -69,8 +71,9 @@ _exit(){
 }
 
 pid_ok(){
-	grep -sqxf "$cache/$1" /proc/$1/cmdline && return
-	rm "$cache/$1"
+	my $f="$cache/$DSP1-$1"
+	grep -sqxf "$f" /proc/$1/cmdline && return
+	rm "$f"
 	return 1
 }
 
@@ -193,12 +196,12 @@ killer(){
 	xfdesktop --quit
 	lxpanelctl exit
 	local k i p
-	p=`cd "$cache" && ls -1 [1-9]* 2>/dev/null` &&
+	p=`cd "$cache" && ls -1 $DSP1-[1-9]* 2>/dev/null` &&
 	for k in kill false false false 'kill -s KILL' false; do
 		for i in $p; do
 			pid_ok $i && $k $i
 		done
-		p=`cd "$cache" && ls -1 [1-9]* 2>/dev/null` || break
+		p=`cd "$cache" && ls -1 $DSP1-[1-9]* 2>/dev/null` || break
 		sleep 1
 		echo -n "[wait]"
 	done
@@ -215,7 +218,7 @@ _run(){
 	esac
 	c="${c//[^a-zA-Z0-9\/-]/.*}"
 	c="${c//.\*.\*/.*}"
-	echo "$c." >"$cache/$!"
+	echo "$c." >"$cache/$DSP1-$!"
 	return $i
 }
 
@@ -358,7 +361,7 @@ sess(){
 
 # do not start xscreensaver if xset
 xssaver(){
-	local x=`xrdb -query|grep '^xscreensaver\.'|sed -e 's:[ 	]::g' -e 's:^xscreensaver\.::'|cat - "$HOME/.xscreensaver" 2>/dev/null` i v t=0 c=0 xset=xset dpms=true b=true s1=0 s2=0 s3=0 lock=true mode=X lock=false h m s
+	local x=`xrdb -query|grep '^xscreensaver\.'|cat - "$HOME/.xscreensaver" 2>/dev/null|sed -e 's:[ \t]::g' -e 's:^xscreensaver\.::'` i v t=0 c=0 xset=xset dpms=true b=true s1=0 s2=0 s3=0 lock=true mode=X lock=false h m s
 	x="${x,,}"
 	while [ -n "$x" ]; do
 		i="${x%%
@@ -367,7 +370,7 @@ xssaver(){
 		x="${x#*
 }"
 		v="${i#*:}"
-		if [ -n "$v" && -z "${v//[0-9:]}" ]; then
+		if [ -n "$v" -a -z "${v//[0-9:]}" ]; then
 			s="${v##*:}"
 			if [ "$s" = "$v" ]; then
 				v=$[s*60]
@@ -422,7 +425,7 @@ tint2chk(){
 	}
 }
 
-. "$ENV" || mkdir -p "$cache"
+[ -e "$ENV" ] && . "$ENV" || mkdir -p "$cache"
 preferred 2>/dev/null
 [ -z "$YA_DESKTOP" ] && YA_DESKTOP=`app $YA_STARTUP`
 desk="$YA_DESKTOP"
@@ -535,7 +538,7 @@ Launcher:
 	break
 ;;
 *)
-	rm -f "$cache/"[1-9]* "$ENV"
+	rm -f "$cache/"$DSP1-[1-9]* "$ENV"
 	[ -e /etc/udev/rules.d/88-autofs.rules -a ! -e /var/run/auto.dev ] && . /usr/share/ya-layout/autofs-all
 	[ -x /usr/bin/dbus-launch ] && _env /usr/bin/dbus-launch --sh-syntax --exit-with-session
 
@@ -562,7 +565,7 @@ Launcher:
 
 	read i 2>/dev/null <"$obconfdir/xkbmap" && {
 		setxkbmap $i
-		[ "$DISPLAY" != :0.0 ] && setxkbmap $i -print|xkbcomp - $DISPLAY
+		[ "$DSP1" != :0 ] && setxkbmap $i -print|xkbcomp - $DISPLAY
 	}
 	xprop -root -remove _NET_NUMBER_OF_DESKTOPS -remove _NET_DESKTOP_NAMES -remove _NET_CURRENT_DESKTOP
 	envir ya
