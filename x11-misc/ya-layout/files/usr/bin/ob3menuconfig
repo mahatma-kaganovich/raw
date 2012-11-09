@@ -1101,18 +1101,15 @@ if(_mparam(@_)){
 		}
 		if($x{'xscreensaver.mode'} eq 'X'){
 			my @t=($x{'xscreensaver.dpmsStandby'},$x{'xscreensaver.dpmsSuspend'},$x{'xscreensaver.dpmsOff'});
-			my $x=0;
+			my @t1=($x{'xscreensaver.timeout'},$x{'xscreensaver.cycle'});
+			my ($h,$m,$s);
+			$_=(($h,$m,$s)=$_=~/^(\d+):(\d+):(\d+)$/)?$s+60*($m+60*$h):$_*60 for(@t,@t1);
 			for(@t){
-				if(my ($h,$m,$s)=$_=~/^(\d+):(\d+):(\d+)$/){
-					$_=$s+60*($m+60*$h);
-				}else{
-					$_*=60;
-				}
 				$_=$x if($_<$x);
 			}
-			system($bin.'xset',$x{'xscreensaver.dpmsEnables'} eq 'false'?'-dpms':'+dpms','dpms',@t);
-			exec($bin.'xset','s','blank','s','expose','s','on','s',$x{'xscreensaver.timeout'}*60,$x{'xscreensaver.cycle'}*60);
-		}elsif($x{'xscreensaver.mode'} ne 'off'){
+			system($bin.'xset',lc($x{'xscreensaver.dpmsEnables'}) eq 'false'?'-dpms':'+dpms','dpms',@t);
+			exec($bin.'xset','s','blank','s','expose','s',lc($x{'xscreensaver.dpmsQuickOff'}) eq 'true'?'off':'on','s',@t1);
+		}elsif(lc($x{'xscreensaver.mode'}) ne 'off'){
 			system($bin.'xscreensaver-command','-restart') && exec($bin.'xscreensaver');
 		}
 	}
