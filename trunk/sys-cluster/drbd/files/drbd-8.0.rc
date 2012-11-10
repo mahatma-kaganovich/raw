@@ -93,11 +93,11 @@ function adjust_with_progress() {
 
 # alt status-based waiting
 _wait(){
-	local s1="" s=`$* sh-status`
+	local s1="" s=`"${@}" sh-status`
 	while true; do
 		echo -n "."
 		sleep 10
-		s1=`$* sh-status`
+		s1=`"${@}" sh-status`
 		[[ "$s1" == "$s" ]] && break
 		s="$s1"
 	done
@@ -106,14 +106,14 @@ _wait(){
 }
 
 standalone(){
-	case "`$* cstate`" in
+	case "`"${@}" cstate`" in
 	StandAlone*) return 0 ;;
 	esac
 	return 1
 }
 
 unsafe(){
-	local i s=`$* cstate`
+	local i s=`"${@}" cstate`
 	for i in 1 0; do
 		case "$s" in
 #		*SyncS*|*MapS*) ;;
@@ -122,9 +122,9 @@ unsafe(){
 		# other states is not too long
 		*SyncSource*) ;;
 		*Sync*|*Map*)
-			echo -n "$2$s "
+			echo -n "$2u$s "
 			[[ "$i" == 0 ]] && return 0
-			_wait $*
+			_wait "${@}"
 		;;
 		esac
 	done
@@ -134,29 +134,38 @@ unsafe(){
 # node configured to be only SyncSource (master/slave dual-primary)
 # overcoded to avoid stacked (unsure)
 only_source(){
-	$* show|grep "^[ 	]*after-sb-0pri"|grep -qv "^[ 	]*after-sb-0pri[ 	]*discard-remote;" && return 1
-	$* show|grep "^[ 	]*after-sb-1pri"|grep -qv "^[ 	]*after-sb-1pri[ 	]*violently-as0p;" && return 1
-	$* show|grep -q "^[ 	]*after-sb-0pri[ 	]*discard-remote;" || return 1
-	$* show|grep -q "^[ 	]*after-sb-1pri[ 	]*violently-as0p;" || return 1
+	"${@}" show|grep "^[ 	]*after-sb-0pri"|grep -qv "^[ 	]*after-sb-0pri[ 	]*discard-remote;" && return 1
+	"${@}" show|grep "^[ 	]*after-sb-1pri"|grep -qv "^[ 	]*after-sb-1pri[ 	]*violently-as0p;" && return 1
+	"${@}" show|grep -q "^[ 	]*after-sb-0pri[ 	]*discard-remote;" || return 1
+	"${@}" show|grep -q "^[ 	]*after-sb-1pri[ 	]*violently-as0p;" || return 1
 	return 0
 }
 
 primary(){
-	local r s=`$* cstate`
-	if ! only_source $* ; then
-	[[ -z "$DRBD_WAIT_PRIMARY" ]] && _wait $* || case "$s" in
-	SyncSource*|StandAlone*|WFConnection*) echo -n "$2$s " ;;
-	*)
-		$* $DRBD_WAIT_PRIMARY
-		r=$?
-		echo -n "$2w$? "
-	;;
-	esac
+	local r s=`"${@}" cstate`
+	if ! only_source "${@}" ; then
+		[[ -z "$DRBD_WAIT_PRIMARY" ]] && _wait "${@}" || while true; do
+			case "$s" in
+			SyncSource*|StandAlone*|WFConnection*) echo -n "$2$s " ;;
+			*)
+				"${@}" $DRBD_WAIT_PRIMARY
+				r=$?
+				echo -n "$2w$? "
+				# bug - unable to wait forever
+				s=`"${@}" cstate`
+				[[ "$s" == SyncTarget* ]] && {
+					sleep 3
+					continue
+				}
+			;;
+			esac
+			break
+		done
 	fi
 	for s in 1 1 0 ; do
 		r=1
-		unsafe $* && continue
-		$* primary
+		unsafe "${@}" && continue
+		"${@}" primary
 		r="$?"
 		echo -n "$2p$r "
 		[[ "$r" == 0 ]] && return 0
@@ -164,14 +173,14 @@ primary(){
 	done
 	[[ "$r" == 17 ]] || return $r
 	[[ "$DRBD_FORCE_PRIMARY" == "yes" ]] || return $r
-	if ! standalone $*; then
-		unsafe $* && return 1
-		$* disconnect
+	if ! standalone "${@}"; then
+		unsafe "${@}" && return 1
+		"${@}" disconnect
 		echo -n "$2d$? "
 		sleep 1
-		standalone $* || return 1
+		standalone "${@}" || return 1
 	fi
-	$* primary -o
+	"${@}" primary -o
 	r="$?"
 	echo -n "$2f$r "
 	$DRBDADM connect minor-$2
