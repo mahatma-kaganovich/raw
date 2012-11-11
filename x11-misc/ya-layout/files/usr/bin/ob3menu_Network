@@ -1139,7 +1139,7 @@ sub netmenu{
 		if($DBUS){
 			for(values %btdev){
 				$sc1.="hciconfig $_ up ; hciconfig $_ piscan;";
-				$sc2.="(hcitool -i $_ inq & hcitool -i $_ scan & )|tee \"$hciscan$_\" &";
+				$sc2.="(hcitool -i $_ inq & hcitool -i $_ scan & )|tee $hciscan$_ &";
 				$sc3.="; hciconfig $_ noscan";
 				$sc4.=";( hcitool -i $_ con|grep -q ACL || hciconfig $_ down )"
 			}
