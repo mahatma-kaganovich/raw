@@ -1137,6 +1137,11 @@ $type{'ob:openbox_config:desktops:firstdesk'}=[$prop{'_NET_CURRENT_DESKTOP'}+1];
 $type{'ob:openbox_config:desktops:number'}=[$prop{'_NET_NUMBER_OF_DESKTOPS'}||()];
 $type{'ob:openbox_config:theme:font:name'}=\%fonts;
 $type{'ob:openbox_config:theme:font:size'}=[(5..32)];
+($X,$Y)=$prop{'_NET_DESKTOP_GEOMETRY'}=~/(\d+), (\d+)/;
+$X||=256;
+$Y||=256;
+$i=0;
+$type{'ob:openbox_config:margins:'.$_}=[0..8,12,16,20,24,28,32,map{$_*8}5..(($i++&1)?$Y:$X)/16] for('left','top','right','bottom');
 
 print '<openbox_pipe_menu>';
 sort_tags($_,'ob') for(load_xml(open_($F,'<',@rc),2));
