@@ -19,18 +19,18 @@ case "$cmd" in
 *ob3menu*\ --mime\ *)c+=" /usr/share/mime/globs /etc/fstab";;
 *mmaker\ *)mm=echo;;
 esac
-local k="${cmd%% --init *}:$LANG:`stat --printf=%Z $c`" k1
-if ! (read k1 <"$m.key" && [ "$k1" = "$k" ]); then
+local k="${cmd%% --init *}:$LANG:`stat --printf=%Z $c`" k1 mk="$m.${DISPLAY%.*}.key"
+if ! (read k1 <"$mk" && [ "$k1" = "$k" ]); then
 	mkdir -p "${m%/*}"
 	{
 	$mm '<openbox_pipe_menu>'
 	$cmd || rm "$m"
 	$mm '</openbox_pipe_menu>'
 	} >"$m"
-	echo "$k" >"$m.key"
+	echo "$k" >"$mk"
 fi
 cat "$m" && return
-rm "$m.key"
+rm "$mk"
 $m1
 notify-send 'Advanced menu error. Trying simple.'
 ${cmd%% *}
