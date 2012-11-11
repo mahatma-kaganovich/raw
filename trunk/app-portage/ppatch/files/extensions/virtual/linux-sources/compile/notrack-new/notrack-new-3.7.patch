@@ -1,0 +1,122 @@
+--- a/net/netfilter/Kconfig	2010-10-30 23:33:06.550989187 +0300
++++ b/net/netfilter/Kconfig	2010-10-30 23:37:23.540989187 +0300
+@@ -499,6 +499,12 @@ config NETFILTER_XT_TARGET_NOTRACK
+ 	  If you want to compile it as a module, say M here and read
+ 	  <file:Documentation/kbuild/modules.txt>.  If unsure, say `N'.
+ 
++config NETFILTER_XT_TARGET_NOTRACK_NEW
++	bool "NOTRACK safe (only new)"
++	depends on NETFILTER_XT_TARGET_CT
++	help
++	  Slow but safe way to NOTRACK only new/untracked connections.
++
+ config NETFILTER_XT_TARGET_RATEEST
+ 	tristate '"RATEEST" target support'
+ 	depends on NETFILTER_ADVANCED
+--- a/net/netfilter/nf_conntrack_core.c	2010-10-30 23:33:06.560989187 +0300
++++ b/net/netfilter/nf_conntrack_core.c	2010-10-30 23:37:23.540989187 +0300
+@@ -818,6 +818,19 @@ resolve_normal_ct(struct net *net, struc
+ 	hash = hash_conntrack_raw(&tuple, zone);
+ 	h = __nf_conntrack_find_get(net, zone, &tuple, hash);
+ 	if (!h) {
++#ifdef CONFIG_NETFILTER_XT_TARGET_NOTRACK_NEW
++		if(skb->nfctinfo == IP_CT_NEW) {
++			struct nf_conntrack_expect *exp;
++
++			exp = nf_ct_expect_find_get(net, zone, &tuple);
++			if (!exp) {
++				skb->nfct = &nf_conntrack_untracked.ct_general;
++				nf_conntrack_get(skb->nfct);
++				return NULL;
++			}
++			nf_ct_expect_put(exp);
++		}
++#endif
+ 		h = init_conntrack(net, tmpl, &tuple, l3proto, l4proto,
+ 				   skb, dataoff, hash);
+ 		if (!h)
+@@ -906,6 +919,12 @@ nf_conntrack_in(struct net *net, u_int8_
+ 	ct = resolve_normal_ct(net, tmpl, skb, dataoff, pf, protonum,
+ 			       l3proto, l4proto, &set_reply, &ctinfo);
+ 	if (!ct) {
++#ifdef CONFIG_NETFILTER_XT_TARGET_NOTRACK_NEW
++		if(skb->nfct == &nf_conntrack_untracked.ct_general){
++		    NF_CT_STAT_INC_ATOMIC(net, ignore);
++		    return NF_ACCEPT;
++		}
++#endif
+ 		/* Not valid part of a connection */
+ 		NF_CT_STAT_INC_ATOMIC(net, invalid);
+ 		ret = NF_ACCEPT;
+--- a/net/netfilter/xt_CT.c	2012-11-11 12:56:59.000000000 +0300
++++ b/net/netfilter/xt_CT.c	2012-11-11 13:09:27.000000000 +0300
+@@ -30,8 +30,10 @@ static unsigned int xt_ct_target_v0(stru
+ 	if (skb->nfct != NULL)
+ 		return XT_CONTINUE;
+ 
+-	atomic_inc(&ct->ct_general.use);
+-	skb->nfct = &ct->ct_general;
++	if (ct != NULL) {
++		atomic_inc(&ct->ct_general.use);
++		skb->nfct = &ct->ct_general;
++	}
+ 	skb->nfctinfo = IP_CT_NEW;
+ 
+ 	return XT_CONTINUE;
+@@ -47,8 +49,10 @@ static unsigned int xt_ct_target_v1(stru
+ 	if (skb->nfct != NULL)
+ 		return XT_CONTINUE;
+ 
+-	atomic_inc(&ct->ct_general.use);
+-	skb->nfct = &ct->ct_general;
++	if (ct != NULL) {
++		atomic_inc(&ct->ct_general.use);
++		skb->nfct = &ct->ct_general;
++	}
+ 	skb->nfctinfo = IP_CT_NEW;
+ 
+ 	return XT_CONTINUE;
+@@ -115,8 +119,12 @@ static int xt_ct_tg_check_v0(const struc
+ 		return -EINVAL;
+ 
+ 	if (info->flags & XT_CT_NOTRACK) {
++#ifdef CONFIG_NETFILTER_XT_TARGET_NOTRACK_NEW
++		ct = NULL;
++#else
+ 		ct = nf_ct_untracked_get();
+ 		atomic_inc(&ct->ct_general.use);
++#endif
+ 		goto out;
+ 	}
+ 
+@@ -249,8 +257,12 @@ static int xt_ct_tg_check_v1(const struc
+ 		return -EINVAL;
+ 
+ 	if (info->flags & XT_CT_NOTRACK) {
++#ifdef CONFIG_NETFILTER_XT_TARGET_NOTRACK_NEW
++		ct = NULL;
++#else
+ 		ct = nf_ct_untracked_get();
+ 		atomic_inc(&ct->ct_general.use);
++#endif
+ 		goto out;
+ 	}
+ 
+@@ -307,6 +319,8 @@ static void xt_ct_tg_destroy_v0(const st
+ 	struct nf_conn *ct = info->ct;
+ 	struct nf_conn_help *help;
+ 
++	if (ct == NULL)
++		return;
+ 	if (!nf_ct_is_untracked(ct)) {
+ 		help = nfct_help(ct);
+ 		if (help)
+@@ -341,6 +355,8 @@ static void xt_ct_tg_destroy_v1(const st
+ 	struct nf_conn *ct = info->ct;
+ 	struct nf_conn_help *help;
+ 
++	if (ct == NULL)
++		return;
+ 	if (!nf_ct_is_untracked(ct)) {
+ 		help = nfct_help(ct);
+ 		if (help)
