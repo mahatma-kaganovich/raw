@@ -36,6 +36,8 @@ $ppporc='/usr/sbin/ppporc';
 
 $stop='-- ';
 
+$hciscan="$ENV{HOME}/.cache/ya/hciscan.";
+
 @IAM=($0);
 
 # always offline scanning
@@ -1137,7 +1139,7 @@ sub netmenu{
 		if($DBUS){
 			for(values %btdev){
 				$sc1.="hciconfig $_ up ; hciconfig $_ piscan;";
-				$sc2.="hcitool -i $_ inq & hcitool -i $_ scan &";
+				$sc2.="(hcitool -i $_ inq & hcitool -i $_ scan & )|tee \"$hciscan$_\" &";
 				$sc3.="; hciconfig $_ noscan";
 				$sc4.=";( hcitool -i $_ con|grep -q ACL || hciconfig $_ down )"
 			}
@@ -1172,6 +1174,7 @@ sub netmenu{
 			if(-e ($d="/sys/class/bluetooth/$if")){
 				btstat();
 				pppstat();
+				print "<separator label='$a'/>";
 				if($DOWN{$if}){
 					print _ex("/usr/sbin/hciconfig $if up",'up');
 					goto EX;
@@ -1200,6 +1203,16 @@ sub netmenu{
 				for(sort keys %bt){
 					my $c=$bt{$_};
 					print _menu("hcitool $c con",(exists($btconn{$a}->{$c})?'+':'-').$_);
+				}
+				if(open(my $F,'<',$hciscan.$if)){
+					print '<separator label="Scanned to pair"/>';
+					while(<$F>){
+						chomp($_);
+						my ($c,$n)=$_=~/^$are\s+(.*)$/ or next;
+						exists($btname{$a}->{$c}) && next;
+						print _ex("$ENV{SHELL} -c \"hcitool -i $if cc $c && hcitool -i $if auth $c\"","$c $n");
+					}
+					close($F);
 				}
 			}
 			goto EX;
@@ -1339,9 +1352,6 @@ SUDO:
 		$iw&&=!$cmd{'kill'};
 		my $out;
 		$!='';
-		open LOG,'>>/home/mahatma/.cache/log';
-		print LOG ($cmd=join(' ',$user[0],'#',@cmd)." ==$DEBUG:$ENV{OB3MENUNET_DEBUG}\n");
-		close LOG;
 		print STDERR ($cmd=join(' ',$user[0],'#',@cmd)."\n");
 		if($i=$sudo{$cmd[0]}||$nosudo{$cmd[0]}){
 			$r=&{$i}(@cmd[1..$#cmd]);
