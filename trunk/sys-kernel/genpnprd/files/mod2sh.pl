@@ -14,12 +14,14 @@ my %OPT=(
 	'sed'=>1,
 );
 
-my @order=(\&order3,\&order1,\&order2,\&order3);
+my @order=(0,[\&order1],[\&order2],[\&order3],[\&order2,\&order3]);
+$order[0]=$order[$OPT{'order'}];
 
 # to load second/last
 my @reorder=(
- '/ide/|usb-storage|/oss/|/nvidia/|\/radeon/|/intelfb/|/snd-pcsp',
- '/pata_acpi|/ata_generic'
+# I have pata_amd + sata_nv onboard. first found load pata_acpi before second, system die on kernel 3.6[.6]
+# so, ALL generic drivers must be loaded strictly after all
+ '/ide/|usb-storage|/oss/|/nvidia/|\/radeon/|/intelfb/|/snd-pcsp|/pata_acpi|/ata_generic',
 );
 
 sub read_aliases{
@@ -262,9 +264,11 @@ local i=""
 				$pnp0{$_}=1 for (lines(mod($_)));
 			}
 		}
-		my $k=join(' ',
+		for my $o (@{$order[$OPT{'order'}]}){
 		#	$re eq 2?'0000':
-			sprintf("%04i",&{$order[$OPT{'order'}]}($_)),@d);
+			unshift @d,sprintf("%04i",&{$o}($_));
+		}
+		$k="@d";
 		$k=~s/\/([^\/.]+)/'\/'.($_ eq $1?'$1':$1)/ge if($OPT{'subst'} && !exists($res{$k}));
 		if($re){
 			push @{$res{$k}},$_;
@@ -291,8 +295,9 @@ local i=""
 
 	my $tail;
 	my @r=();
+	my $nk=scalar(@{$order[$OPT{'order'}]})*5;
 	for (sort keys %res){
-		$r[substr($_,0,4)].=fix_(join('|',@{$res{$_}})).')i="$i '.substr($_,5)."\";;\n"
+		$r[substr($_,0,4)].=fix_(join('|',@{$res{$_}})).')i="$i '.substr($_,$nk)."\";;\n"
 	}
 	for(0..$#r){
 		my $s=$r[$_];
