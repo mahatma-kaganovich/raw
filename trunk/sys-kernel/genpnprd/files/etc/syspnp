@@ -277,9 +277,9 @@ pnp_options(){
 	$cmd_nofb && p="*/fb.ko|*/drm_kms_helper.ko)INSMOD=continue;;$p"
 	[[ -n "$cmd_noload" ]] && p="*/$(echo "$cmd_noload"|sed -e 's/,/.ko|*\//g').ko)INSMOD=continue;;$p"
 	echo "modparam(){
-INSMOD=""
-case \$1 in
-1)INSMOD=${REORDER:-continue};;
+INSMOD=
+case \"\$1\" in
+1)INSMOD=\${REORDER:-continue};;
 $p
 *)PARAM='';;
 esac
