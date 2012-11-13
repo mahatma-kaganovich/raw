@@ -670,7 +670,7 @@ native)
 		svm)CF1 XEN +KVM{,_AMD} VIRTUALIZATION;;
 		hypervisor)
 			CF1 PARAVIRT{,_GUEST,_SPINLOCKS} XEN KVM_GUEST
-			case `lscpu|grep "^Hypervisor vendor:"` in
+			case "`lscpu|grep "^Hypervisor vendor:"`" in
 			*KVM)CF1 -XEN;;
 			*XEN)CF1 -KVM_GUEST;;
 			esac;
