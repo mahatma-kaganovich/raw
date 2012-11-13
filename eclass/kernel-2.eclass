@@ -668,7 +668,14 @@ native)
 		longrun)freq+=" X86_LONGRUN";;
 		vmx)CF1 XEN +KVM{,_INTEL} VIRTUALIZATION;;
 		svm)CF1 XEN +KVM{,_AMD} VIRTUALIZATION;;
-		hypervisor)CF1 XEN PARAVIRT{,_GUEST,_SPINLOCKS};;
+		hypervisor)
+			CF1 PARAVIRT{,_GUEST,_SPINLOCKS} XEN KVM_GUEST
+			case `lscpu|grep "^Hypervisor vendor:"` in
+			*KVM)CF1 -XEN;;
+			*XEN)CF1 -KVM_GUEST;;
+			esac;
+			use xen && CF1 XEN
+		;;
 #		xtopology)CF1 SCHED_SMT;;
 		esac
 	done
