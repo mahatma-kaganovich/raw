@@ -14,13 +14,10 @@ my %OPT=(
 	'sed'=>1,
 );
 
-my @order=(0,[\&order1],[\&order2],[\&order3],[\&order2,\&order3]);
-$order[0]=$order[$OPT{'order'}];
+my @order=(\&order3,\&order1,\&order2,\&order3);
 
 # to load second/last
 my @reorder=(
-# I have pata_amd + sata_nv onboard. first found load pata_acpi before second, system die on kernel 3.6[.6]
-# so, ALL generic drivers must be loaded strictly after all
  '/ide/|usb-storage|/oss/|/nvidia/|\/radeon/|/intelfb/|/snd-pcsp|/pata_acpi|/ata_generic',
 );
 
@@ -187,29 +184,33 @@ sub order2{
 #todo: try to resolve "[...]" matches to best result
 sub order3{
 	my $a=$_[0];
-	$a=~s/([^a-zA-Z0-9\[\]*?] )/\\$1/g;
-	my $s=$a;
-	$a=~s/\*/.*/g;
-	$a=~s/\[.*?\]|\?/(?:\\\[.*?\\\]|.)/g;
+	if(exists($re{$a})){
+		$a=$re{$a};
+	}else{
+		$a=~s/([^a-zA-Z0-9\[\]*?] )/\\$1/g;
+		my $s=$a;
+		$a=~s/\*/.*/g;
+		$a=~s/\[.*?\]|\?/(?:\\\[.*?\\\]|.)/g;
+		$re{$_[0]}=$a;
+		return $ord3{$a}=1 if($a eq $s);
+	}
 	return $ord3{$a} if(exists($ord3{$a}));
-	if($a ne $s){
-		my @l=grep(/^$a$/,@k_alias);
-		if($#l){
-			die "ERROR $s=$#l" if($#l<0);
-			my %ll;
-			$ll{join(' ',@{$alias{$_}})}=1 for (@l);
-			my @r=keys %ll;
-			return $ord3{$a}=0 if ($#r>$OPT{'barrier'});
-			$ord3{$a}=$#r+1;
-			my $n=0;
-			for(@r){
-				if($_ ne $_[0]){
-					my $n1=order3($_);
-					$n=$n1 if($n1>$n);
-				}
+	my @l=grep(/^$a$/,@k_alias);
+	if($#l){
+		die "ERROR $s=$#l" if($#l<0);
+		my %ll;
+		$ll{join(' ',@{$alias{$_}})}=1 for (@l);
+		my @r=keys %ll;
+		return $ord3{$a}=0 if ($#r>$OPT{'barrier'});
+		$ord3{$a}=$#r+1;
+		my $n=0;
+		for(@r){
+			if($_ ne $_[0]){
+				my $n1=order3($_);
+				$n=$n1 if($n1>$n);
 			}
-			return $ord3{$a}=$n+1;
 		}
+		return $ord3{$a}=$n+1;
 	}
 	$ord3{$a}=1;
 }
@@ -264,11 +265,9 @@ local i=""
 				$pnp0{$_}=1 for (lines(mod($_)));
 			}
 		}
-		for my $o (@{$order[$OPT{'order'}]}){
+		my $k=join(' ',
 		#	$re eq 2?'0000':
-			unshift @d,sprintf("%04i",&{$o}($_));
-		}
-		$k="@d";
+			sprintf("%04i",&{$order[$OPT{'order'}]}($_)),@d);
 		$k=~s/\/([^\/.]+)/'\/'.($_ eq $1?'$1':$1)/ge if($OPT{'subst'} && !exists($res{$k}));
 		if($re){
 			push @{$res{$k}},$_;
@@ -295,9 +294,8 @@ local i=""
 
 	my $tail;
 	my @r=();
-	my $nk=scalar(@{$order[$OPT{'order'}]})*5;
 	for (sort keys %res){
-		$r[substr($_,0,4)].=fix_(join('|',@{$res{$_}})).')i="$i '.substr($_,$nk)."\";;\n"
+		$r[substr($_,0,4)].=fix_(join('|',@{$res{$_}})).')i="$i '.substr($_,5)."\";;\n"
 	}
 	for(0..$#r){
 		my $s=$r[$_];
