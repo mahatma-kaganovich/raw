@@ -700,7 +700,7 @@ print qq(
 <separator/>
 <menu id=").($id++).qq(" label='$set execute="${0}config"/>
 <separator label=""/>
-<item label="PowerOFF"><action name="execute"><execute>/sbin/poweroff</execute></action></item>
+<item label="PowerOFF"><action name="execute"><execute>/sbin/poweroff -i -h</execute></action></item>
 <item label="Reboot"><action name="execute"><execute>/sbin/reboot</execute></action></item>
 <item label="Exit"><action name="Exit"/></item>
 </menu>
