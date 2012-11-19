@@ -813,6 +813,7 @@ sub _run_{
 	$out;
 }
 
+
 %sudo=(
 'RESCAN'=>sub{rescan();exit;},
 'NAP2'=>\&NAP,
@@ -837,14 +838,19 @@ sub _run_{
 },
 'GPASSWD'=>sub{
 	my ($c,$u,@g)=@_;
+	my %chmod=( 'uucp'=>[$rfcomm,'/usr/sbin/pppd'], 'plugdev'=>['/sbin/halt']);
 	my $r;
-	$out=map{my $x=`gpasswd $c '$u' '$_'`;$r||=$?;$x}@g;
-	if(!$r && !$#g && $g[0] eq 'uucp'){
-		# lazy
-		# increase security level of pppd too: currently /dev/ serials
-		# permitted to group 'uucp', but 'pty' (ppporc, etc) can access same resources too.
-		# so, permit to run root'ed pppd only for unifyed 'uucp' group.
-		(-e $_) && _run($c eq '-d'?"chmod u-s,o+x '$_' && chown 0:0 '$_'":"chown 0:uucp '$_' && chmod u+s,g+x-w,o-x '$_'") for($rfcomm,'/usr/sbin/pppd');
+	for my $g (@g){
+		exists($chmod{$g}) || next;
+#		$out=map{my $x=`gpasswd $c '$u' '$_'`;$r||=$?;$x}@g;
+		_run("gpasswd $c '$u' '$g'");
+		if(!$r && !$#g){
+			# lazy
+			# increase security level of pppd too: currently /dev/ serials
+			# permitted to group 'uucp', but 'pty' (ppporc, etc) can access same resources too.
+			# so, permit to run root'ed pppd only for unifyed 'uucp' group.
+			(-e $_) && _run($c eq '-d'?"chmod u-s,o+x '$_' && chown 0:0 '$_'":"chown 0:$g '$_' && chmod u+s,g+x-w,o-x '$_'") for(@{$chmod{$g}});
+		}
 	}
 	$r;
 },
@@ -1115,8 +1121,8 @@ sub netmenu{
 			}
 		}
 		print '<separator/>';
+		my $uu=quotemeta($user[0]);
 		if(scalar(%grp) && @user){
-			my $uu=quotemeta($user[0]);
 			my ($x10,$x11,$x00,$x01,$x,$s);
 			for(sort keys %grp){
 				my ($i,@g)=getgrgid($_) or next;
@@ -1133,6 +1139,14 @@ sub netmenu{
 			$x10 && print _ex("_ GPASSWD -a \"$user[0]\" $x10","Join $x11$s");
 			$s=($x eq 'uucp ')?' & u-s,o+x rfcomm pppd':'';
 			$x00 && print _ex("_ GPASSWD -d \"$user[0]\" $x00","Leave $x01$s");
+		}
+		# other context, but I don't want to overcode
+		if(@user && (my ($i,@g)=getgrnam('plugdev'))){
+			if(" $g[2] "=~/ $uu /){
+				print _ex("_ GPASSWD -d \"$user[0]\" plugdev","Leave plugdev & u-s,o+x halt");
+			}else{
+				print _ex("_ GPASSWD -a \"$user[0]\" plugdev","Join plugdev & u+s,g+x-w,o-x halt");
+			}
 		}
 		print _menu("--debug",'debug') if(!$ENV{OB3MENUNET_DEBUG});
 		my ($sc,$sc1,$sc2,$sc3,$sc4);
