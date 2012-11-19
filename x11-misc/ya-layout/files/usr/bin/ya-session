@@ -163,7 +163,7 @@ obconfig(){
 	for i in 'C-Menu +/usr/bin/sudo /usr/bin/mc' 'Super_R TerminalEmulator' 'C-Super_R +/usr/bin/sudo -s'; do
 		a+="<keybind key='${i%% *}'><action name='Execute'><command>ya-session --run ${i#* }</command></action></keybind>\n"
 	done
-	for i in 'C-A-KP_Delete /usr/bin/slock'; do
+	for i in 'C-A-KP_Delete /usr/bin/slock' 'XF86AudioLowerVolume amixer -q set Master 1-' 'XF86AudioRaiseVolume amixer -q set Master 1+' 'XF86AudioMute amixer -q set Master 0'; do
 		a+="<keybind key='${i%% *}'><action name='Execute'><command>${i#* }</command></action></keybind>\n"
 	done
 	ob3menuconfig --config - --fix <"$2" | \
