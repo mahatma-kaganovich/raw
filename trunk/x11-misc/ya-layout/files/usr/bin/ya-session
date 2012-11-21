@@ -3,6 +3,8 @@
 # wm is not reloadable
 # startup is compromise pure openbox & some accessibility
 
+shopt -s expand_aliases
+
 wm=/usr/bin/openbox
 Desk=/usr/share/ya-layout/Desktop
 obconfdir="$HOME/.config/ya"
@@ -16,16 +18,16 @@ DSP="${DISPLAY//[\\\/*.]/_}"
 DSP1="${DISPLAY%.*}"
 ENV="$cache/environment.$DSP"
 
-: ${YA_APP_WebBrowser:="'exo-open --launch WebBrowser' 'seamonkey --browser' firefox chromium midori"}
-: ${YA_APP_TerminalEmulator:="'exo-open --launch TerminalEmulator' Terminal lxterminal \"gnome-terminal \$sm2\" kterm xterm"}
-: ${YA_APP_FileManager:="'exo-open --launch FileManager' \"spacefm --profile=\$YA_PROFILE\" \"pcmanfm -p \$YA_PROFILE\" Thunar \"nautilus --no-desktop \$sm2\" qtfm @FileManager +mc"}
-: ${YA_APP_Email:="'exo-open --launch MailReader' 'seamonkey --mail' claws-mail thunderbird"}
-: ${YA_APP_InstantMessaging:="pidgin"}
+: ${YA_APP_WebBrowser:="'exo-open --launch WebBrowser' @WebBrowser"}
+: ${YA_APP_TerminalEmulator:="'exo-open --launch TerminalEmulator' @TerminalEmulator"}
+: ${YA_APP_FileManager:="'exo-open --launch FileManager' \"spacefm --profile=\$YA_PROFILE\" \"pcmanfm -p \$YA_PROFILE\" \"nautilus --no-desktop \$sm2\" @FileManager +mc"}
+: ${YA_APP_Email:="'exo-open --launch MailReader' 'seamonkey --mail' @Email"}
+: ${YA_APP_InstantMessaging:="@InstantMessaging"}
 
 : ${YA_APP_XF86WWW:="WebBrowser"}
 : ${YA_APP_XF86Mail:="Email"}
-: ${YA_APP_XF86AudioMedia:="audacious aqualung vlc mplayer '@Player;Audio|Player;AudioVideo;!Video' '@Player;AudioVideo'"}
-: ${YA_APP_XF86VideoMedia:="mplayer2 mplayer vlc '@Player;Video|Player;AudioVideo;!Audio' '@Player;AudioVideo'"}
+: ${YA_APP_XF86AudioMedia:="'@Player;Audio|Player;AudioVideo;!Video' '@Player;AudioVideo' mplayer2 mplayer"}
+: ${YA_APP_XF86VideoMedia:="mplayer2 mplayer '@Player;Video|Player;AudioVideo;!Audio' '@Player;AudioVideo'"}
 : ${YA_APP_XF86Calendar:="orage"}
 : ${YA_APP_XF86Calculator:="gpe-calculator"}
 : ${YA_APP_XF86Messenger:="InstantMessaging"}
@@ -64,7 +66,7 @@ ENV="$cache/environment.$DSP"
 : ${YA_XDG_AUTOSTART:="$YA_PROFILE"}
 
 # startup: minimal
-: ${YA_STARTUP:=TINT2}
+: ${YA_STARTUP:=XF86Desktop}
 
 _exit(){
 	return
@@ -278,46 +280,59 @@ done
 }
 
 _app(){
-	local p="$1" x p1
+	local p="$1" x x1 p1 al_="$al" al
 	shift
 	for i in "${@}"; do
 		x="${i%% *}"
 		[ "$x" = "$i" ] && p1="$p" || p1=" ${i#* }$p"
 		pref="${x:0:1}"
+		al="${x//;/@}"
+		al="${al//\|/:}"
+	    if x1=`alias "$al" 2>/dev/null`; then
+		# exec alias don't working. subst now
+		x="${x1#*=\'}"
+		x="${x%\'}"
+	    else
 		x="${x#[+@]}"
 		case "$pref" in
 		@)
 			# categories are slow, last resort
-			[ -n "$min" ] && continue
+#			[ -n "$min" ] && continue
 			eval "_app '$p1' $(by_category "$x")"
 			continue
 		;;
 		esac
 		v="YA_APP_${x//-/_}"
 		if [ -n "${!v}" ]; then
+			# do not too cache
+			al=
 			eval "_app '$p1' ${!v}"
 			continue
 		fi
-#		which "$x" >/dev/null 2>&1 || continue
 		x=`which "$x" 2>/dev/null` || continue
+	    fi
+		x1="${x// /\\ }"
 		a="$aa"
-		a="${a%% $x *}"
-		a="${a%% ${x##*/} *}"
-#		[ $a ] || return
+		a="${a%% $x1 *}"
+		a="${a%% ${x1##*/} *}"
+#		[ $a ] || break
 		a="${#a}"
 		[ $a -lt $mina ] || continue
 		mina=$a
 		min="$x$p1"
 		minpref="$pref"
 	done
+	[ -n "$al_" ] && alias "$al_"="$min" &>/dev/null && alias "$al_" >>$ENV
 }
+
+#alias WebBrowser=/usr/bin/seamonkey-X
 
 # select one preferred app
 # $YA_APP - global preferred list
 # $YA_APP_<name> - substitution list for "name"
 # +command - in term
 app(){
-	local i v a aa min= mina pref minpref=
+	local i v a aa min= mina pref minpref= al=
 	v="YA_PROFILE_$YA_PROFILE"
 	aa=" $YA_APP ${!v} "
 	mina=$((${#aa}+1))
@@ -353,7 +368,7 @@ launch(){
 preferred(){
 	local i
 	while read i; do
-		YA_APP+=" \"$i\""
+		YA_APP+=" ${i// /\\ }"
 	done <"$prefapps"
 }
 
@@ -428,7 +443,13 @@ tint2chk(){
 	}
 }
 
+_unalias(){
+	echo "YA_ENV_KEY=$i;unalias -a"
+}
+
 [ -e "$ENV" ] && . "$ENV" || mkdir -p "$cache"
+i=`stat --printf=%Z $prefapps /usr/share/applications /usr/bin/ya-session`
+[ "$i" != "$YA_ENV_KEY" ] && _env _unalias
 preferred 2>/dev/null
 [ -z "$YA_DESKTOP" ] && YA_DESKTOP=`app $YA_STARTUP`
 desk="$YA_DESKTOP"
