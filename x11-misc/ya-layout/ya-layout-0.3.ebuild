@@ -2,7 +2,7 @@ EAPI=3
 SLOT=0
 DESCRIPTION="Simple desktop layout"
 LICENSE="*"
-IUSE="+udev libnotify minimal bluetooth wifi +jpeg +tiff tint2"
+IUSE="+udev libnotify minimal bluetooth wifi +jpeg +tiff tint2 alsa"
 DEPEND="tint2? ( x11-misc/tint2 )
 	>=x11-wm/openbox-3.5.0"
 RDEPEND=" ${DEPEND}
@@ -17,6 +17,7 @@ RDEPEND=" ${DEPEND}
 	media-libs/imlib2[png,jpeg?,tiff?]
 	media-gfx/feh
 	x11-misc/slock
+	alsa? ( media-sound/alsa-utils )
 	!minimal? (
 		!tint2? ( || (
 		x11-misc/pcmanfm
