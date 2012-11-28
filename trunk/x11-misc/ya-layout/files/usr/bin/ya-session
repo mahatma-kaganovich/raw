@@ -280,7 +280,7 @@ done
 }
 
 _app(){
-	local p="$1" x x1 p1 al_="$al" al
+	local p="$1" x x1 p1= al_="$al" al
 	shift
 	for i in "${@}"; do
 		x="${i%% *}"
@@ -322,7 +322,7 @@ _app(){
 		min="$x$p1"
 		minpref="$pref"
 	done
-	[ -n "$al_" ] && alias "$al_"="$min" &>/dev/null && alias "$al_" >>$ENV
+	[ -n "$al_" ] && alias "$al_"="${min%$p1}" &>/dev/null && alias "$al_" >>$ENV
 }
 
 #alias WebBrowser=/usr/bin/seamonkey-X
