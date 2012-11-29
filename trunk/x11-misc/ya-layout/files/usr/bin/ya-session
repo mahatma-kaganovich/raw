@@ -66,7 +66,7 @@ ENV="$cache/environment.$DSP"
 : ${YA_XDG_AUTOSTART:="$YA_PROFILE"}
 
 # startup: minimal
-: ${YA_STARTUP:=XF86Desktop}
+: ${YA_STARTUP:=TINT2}
 
 _exit(){
 	return
@@ -360,6 +360,7 @@ launch(){
 	i="$(app "${@}")"
 	case "$i" in
 	*exo-open\ --launch\ TerminalEmulator\ -e\ *)i="${i/ -e}";;
+	/usr/bin/[Tt]erminal\ *-e\ *)exec ${i%% -e *} -e "${i#* -e }";;
 	esac
 	exec $i
 	exit
