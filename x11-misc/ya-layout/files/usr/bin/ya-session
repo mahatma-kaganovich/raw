@@ -423,7 +423,7 @@ xssaver(){
 	esac
 	[ $s2 -lt $s1 ] && s2=$s1
 	[ $s3 -lt $s2 ] && s3=$s2
-	$dpms && $xset +dpms s $s1 $s2 $s3 || $xset -dpms s $s1 $s2 $s3
+	$dpms && $xset +dpms dpms $s1 $s2 $s3 || $xset -dpms dpms $s1 $s2 $s3
 	$b && $xset s on s blank s expose s $t $c || $xset s off
 #	$lock && ...
 }
