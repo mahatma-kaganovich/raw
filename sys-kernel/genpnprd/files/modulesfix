@@ -1,6 +1,6 @@
 #!/bin/bash
 ## (c) Denis Kaganovich
-## v5.3
+## v5.4
 
 : ${TMPDIR:=/tmp}
 
@@ -26,23 +26,15 @@ hdr(){
 	done
 }
 
-fnd(){
-local i h
-grep -sPrhl "$STR" $1 --include "*.[hc]"|while read h; do
-	case "$h" in
-	*.h)for i in $(hdr $1 "$h"); do
-		echo "$i $h"
-	done;;
-	*)echo "$h $h";;
-	esac
-done|while read i h; do
-#grep -Prhl "$STR" $1 --include="*.c" | while read i ; do h:="$i"
-	local bus n
-	if bus=`grep -Prho "$STR" $i`; then
-		h="$i"
-	else
-		bus=`grep -Prho "$STR" $h` || continue
-	fi
+str(){
+local bus b i=$1 h=$2
+b=`grep -Prho "$STR" $i` && h=$i || bus=`grep -Prho "$STR" $h`
+while [ -n "$b" ]; do
+	bus="${b%%
+*}"
+	[ "$bus" = "$b" ] && b=
+	b="${b#*
+}"
 	case "$bus" in
 	*DEFINE_*_DEVICE_TABLE*)
 		bus="${bus#*DEFINE_}"
@@ -59,12 +51,30 @@ done|while read i h; do
 		bus="${bus%%_device_id*}"
 	;;
 	esac
+	echo "$i $h $bus $n"
+done|tail -n 1
+# todo: multiple buses
+}
+
+fnd(){
+local i h bus n
+grep -sPrhl "$STR" $1 --include "*.[hc]"|while read h; do
+	case "$h" in
+	*.h)for i in $(hdr $1 "$h"); do
+		str $i $h
+	done;;
+	*)str $h $h;;
+	esac
+done|while read i h bus n; do
+#grep -Prhl "$STR" $1 --include="*.c" | while read i ; do h:="$i"
 	while [ -z "${n%%* }" -a -n "$n" ]; do
 		n="${n%% }"
 	done
 	n="${n##* }"
 	grep -q "^module_init[ 	]*(\|^MODULE_DESCRIPTION(" $i || continue
 	grep -q "MODULE_DEVICE_TABLE" $i && continue
+#	[ -z "${bus_##*
+#*}" ] && echo "TODO: multi-bus device: $i - ${bus_}" && continue
 	local ii="${i#$1}"
 	ii="${ii#/}"
 #	case $bus:$ii in
@@ -98,7 +108,7 @@ done|while read i h; do
 	[[ "$i" == "$h" ]] && add='
 /* _module_id_ */
 '
-	export add
+	export add n
 	if perl -e 'sub fix{
 			my ($s0,$s)=(@_);
 			my $s1=$s;
@@ -119,7 +129,7 @@ done|while read i h; do
 			$s1
 		}
 		while(<STDIN>){$s.=$_}
-	exit !($s=~s/('"${STR//^/\n}"'[^=;\{\}\]\)]*)([\]\)]?\s*=\s*\{)([^;]*)(\s*?\};)/$1.fix("$2","$3").$4.$ENV{add}/es && print $s)' <$h >"$TMPDIR/modulesfix.tmp" ; then
+	exit !($s=~s/('"${STR//^/\n}"'[^=;\{\}\]\)]*)([\]\)]?\s*=\s*\{)([^;]*)(\s*?\};)/index($1,$ENV{n})>=0?$1.fix("$2","$3").$4.$ENV{add}:$1.$2.$3.$4/ges && print $s)' <$h >"$TMPDIR/modulesfix.tmp" ; then
 		cmp -s "$TMPDIR/modulesfix.tmp" $h && rm "$TMPDIR/modulesfix.tmp" || {
 			[[ "$i" != "$h" ]] && echo "Fixing: ($n) ${h#$1/}"
 			mv "$TMPDIR/modulesfix.tmp" $h
