@@ -1,6 +1,6 @@
 #!/bin/bash
 ## (c) Denis Kaganovich
-## v5.4
+## v5.5
 
 : ${TMPDIR:=/tmp}
 
@@ -27,12 +27,14 @@ hdr(){
 }
 
 str(){
-local bus b i=$1 h=$2
+local bus b i=$1 h=$2 m=
+grep -q "MODULE_DEVICE_TABLE" $i $h && return
 b=`grep -Prho "$STR" $i` && h=$i || bus=`grep -Prho "$STR" $h`
+# ???
 while [ -n "$b" ]; do
 	bus="${b%%
 *}"
-	[ "$bus" = "$b" ] && b=
+	[ "$bus" = "$b" ] && b='' || m='+'
 	b="${b#*
 }"
 	case "$bus" in
@@ -41,7 +43,7 @@ while [ -n "$b" ]; do
 		n="${bus%%)*}"
 		n="${n##*(}"
 		bus="${bus%%_*}"
-		[[ "$bus" != PCI ]] && echo "Debug: DEFINE_$bus_*DEVICE_TABLE in $i"
+		[[ "$bus" != PCI ]] && echo "Debug: DEFINE_$bus_*DEVICE_TABLE in $i" >&2
 		bus="${bus,,}"
 	;;
 	*)
@@ -51,13 +53,16 @@ while [ -n "$b" ]; do
 		bus="${bus%%_device_id*}"
 	;;
 	esac
-	echo "$i $h $bus $n"
-done|tail -n 1
-# todo: multiple buses
+	while [ -z "${n%%* }" -a -n "$n" ]; do
+		n="${n%% }"
+	done
+	n="${n##* }"
+	echo "$i $h $bus $n $m"
+done
 }
 
 fnd(){
-local i h bus n
+local i h bus n m
 grep -sPrhl "$STR" $1 --include "*.[hc]"|while read h; do
 	case "$h" in
 	*.h)for i in $(hdr $1 "$h"); do
@@ -65,14 +70,10 @@ grep -sPrhl "$STR" $1 --include "*.[hc]"|while read h; do
 	done;;
 	*)str $h $h;;
 	esac
-done|while read i h bus n; do
+done|while read i h bus n m; do
 #grep -Prhl "$STR" $1 --include="*.c" | while read i ; do h:="$i"
-	while [ -z "${n%%* }" -a -n "$n" ]; do
-		n="${n%% }"
-	done
-	n="${n##* }"
 	grep -q "^module_init[ 	]*(\|^MODULE_DESCRIPTION(" $i || continue
-	grep -q "MODULE_DEVICE_TABLE" $i && continue
+	grep -q "MODULE_DEVICE_TABLE.*$n" $i $h && continue
 #	[ -z "${bus_##*
 #*}" ] && echo "TODO: multi-bus device: $i - ${bus_}" && continue
 	local ii="${i#$1}"
@@ -139,10 +140,10 @@ done|while read i h bus n; do
 		continue
 	fi
 	if grep -Prq "^\s*(?:menu)?config\s+$BU(?:\s.*)?$" $1 --include="Kconfig*"; then
-		echo "Fixing: $BU: ($n) $ii"
+		echo "Fixing$m: $BU: ($n) $ii"
 		xx='\n#ifdef CONFIG_'"$BU"'\nMODULE_DEVICE_TABLE('"$bus, $n"');\n#endif'
 	else
-		echo "Fixing: $bus: ($n) $ii"
+		echo "Fixing$m: $bus: ($n) $ii"
 		xx='\nMODULE_DEVICE_TABLE('"$bus, $n"');'
 	fi
 	sed -i -e 's%^/\* _module_id_ \*/$%'"$xx"'\n%' $i
