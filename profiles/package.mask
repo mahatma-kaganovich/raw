@@ -1,6 +1,6 @@
 # prefer to mask >=sys-cluster/drbd-8.3.9999 to kernel mainline, but looking to gentoo mainline
->=sys-cluster/drbd-8.4.9999
->=sys-cluster/drbd-kernel-8.4.9999
+>=sys-cluster/drbd-9.0
+>=sys-cluster/drbd-kernel-9.0
 >=www-client/seamonkey-9999
 >=www-client/fennec-9999
 =sys-fs/ocfs2-tools-1.4.9999
