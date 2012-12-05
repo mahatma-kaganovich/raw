@@ -27,7 +27,7 @@ S="${WORKDIR}/${MY_P}"
 
 case ${MY_MAJ_PV} in
 8.3)v="";;
-8.4)v="-$MY_MAJ_PV";;
+8.4|9.0)v="-8.4";;
 *)die "Unknown version";;
 esac
 
