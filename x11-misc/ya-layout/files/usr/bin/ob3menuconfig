@@ -1,12 +1,14 @@
 #!/usr/bin/perl
 # (c) Denis Kaganovich, Anarchy or GPLv2
-# openbox config pipe menu v0.9
+# openbox config pipe menu v0.10
 # using /usr/share/openbox*/rc.xsd
 
 %xml_=('<'=>'lt','>'=>'gt',"'"=>'apos','"'=>'quot','&'=>'amp');
 $xml_=join('',keys %xml_);
 $MENU='config';
 $bin='/usr/bin/';
+
+$allfont='MenuItem';
 
 my %config=(
 'config_mode'=>{
@@ -488,7 +490,7 @@ if(my $l=-s $F){
 	while(<$F>){$s.=$_}
 }
 utf8_decode($s);
-goto FIX if(_fixrc($s) && $#_<0);
+goto FIX if((_fixrc($s) || $rc[0] eq '-') && $#_<0);
 exit if($#_<0);
 my ($from,$to);
 $to=shift;
@@ -537,7 +539,10 @@ my $sl='/';
 /se) || ($mycfg?($s.=join('',@_,$to,"-->\n")):die "Not found");
 FIX:
 utf8_encode($s);
-_write($rc[0],$s) && exec($bin.'openbox','--reconfigure');
+if(_write($rc[0],$s)){
+	xresources($s='-') if($_[2] eq "<font place=\"$allfont\">");
+	exec($bin.'openbox','--reconfigure');
+}
 exit;
 }
 
@@ -971,7 +976,7 @@ sub _conffile{
 sub getcfg{
 	my @font;
 	for(load_xml(open_($F,'<',@rc),2)){
-		for my $f (walk($_,undef,undef,undef,'theme',undef,undef,'font',['\splace=["\']MenuItem["\']'],undef)){
+		for my $f (walk($_,undef,undef,undef,'theme',undef,undef,'font',['\splace=["\']'.$allfont.'["\']'],undef)){
 			for('name','weight','slant','size'){
 				for(walk($f,$_,undef,undef)){
 					push @font,$_ if(!ref($_) && $_ ne 'normal');
@@ -1062,7 +1067,7 @@ my %xrparam=(
 #'Xft.scale'=>
 #'Xft.maxglyphmemory'=>
 );
-($xrparam{'*Font (=MenuItem)'})=getcfg();
+($xrparam{"*Font (=$allfont)"})=getcfg();
 #my $s=`${bin}xrdb -query`;
 #$? && return;
 my $s=$prop{'RESOURCE_MANAGER'};
@@ -1122,10 +1127,8 @@ for(@xfiles){
 		}
 	}
 }
-if($x{'xscreensaver.mode'} eq 'X'){
-	delete($xrparam{$_}) for(grep(/xscreensaver\.(?!mode|dpms|timeout|cycle)/,keys %xrparam));
-}
 if(_mparam(@_)){
+	return if("@_" eq '-'); # todo: run menu here to resize panel
 	$x{$_[0]}=$_[1];
 	my $i="$_[0]: $_[1]";
 	for('all','screen','screens','global'){
@@ -1166,6 +1169,9 @@ if(_mparam(@_)){
 		}
 	}
 	exit;
+}
+if($x{'xscreensaver.mode'} eq 'X'){
+	delete($xrparam{$_}) for(grep(/xscreensaver\.(?!mode|dpms|timeout|cycle)/,keys %xrparam));
 }
 simple_menu(\%xrparam,\%x);
 }
