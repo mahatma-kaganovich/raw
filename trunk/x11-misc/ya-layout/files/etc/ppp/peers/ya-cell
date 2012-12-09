@@ -1,8 +1,12 @@
 
 #connect "/usr/sbin/chat -V ABORT BUSY ABORT 'NO CARRIER' ABORT ERROR '' ATHZ OK-+++ATHZ-OK ATD*99# TIMEOUT 10 CONNECT"
 connect '/usr/bin/perl /usr/share/ya-layout/cell-chat.pl 20'
-disconnect "/usr/sbin/chat -V TIMEOUT 5 '' '+++ATH' ABORT OK 'NO CARRIER'"
+disconnect "/usr/sbin/chat -V TIMEOUT 5 '' '+++ATHZ' ABORT ERROR ABORT 'NO ' OK"
+#name localhost
 noauth
+ipcp-accept-local
 ipcp-accept-remote
 noipdefault
+modem
+crtscts
 updetach
