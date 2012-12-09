@@ -3,10 +3,10 @@
 
 # only server, minimally from gentoo's main
 
+EAPI="3"
 inherit eutils autotools flag-o-matic linux-info
 
 MY_P=accel-pptp-0.8.5
-EAPI="3"
 DESCRIPTION="Linux Point-to-Point Tunnelling Protocol Server, accelerated"
 SRC_URI="mirror://sourceforge/accel-pptp/${MY_P}.tar.bz2"
 HOMEPAGE="http://accel-pptp.sourceforge.net/"
