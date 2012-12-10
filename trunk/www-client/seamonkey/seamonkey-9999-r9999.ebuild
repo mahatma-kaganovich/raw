@@ -342,6 +342,11 @@ endif' >>"${S1}"/gfx/gl/Makefile.in
 			sed -i -e 's:^NECKO_PROTOCOLS_DEFAULT=":NECKO_PROTOCOLS_DEFAULT="device :' "${i}"/configure.in
 	done
 
+	if [[ -e "${S}/suite" ]]; then
+		mkdir -p "${WORKDIR}"/l10n/en-US/suite
+		ln -s "${S}"/suite/debugQA/locales/en-US "${WORKDIR}"/l10n/en-US/suite/debugQA
+	fi
+
 	for i in "${S1}/js/src" "${S1}" "${S}" "${S}/ldap/sdks/c-sdk" "${S}/directory/c-sdk" ; do
 		cd "${i}" && eautoreconf
 	done
