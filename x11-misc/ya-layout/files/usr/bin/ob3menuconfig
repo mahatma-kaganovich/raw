@@ -960,7 +960,7 @@ sub _conffile{
 		die $!;
 	}
 	my $i=quotemeta($v);
-	if(!($s=~s/^([ 	]*$i$r[ 	]*).*?$/$1$x/gm)){
+	if(!($s=~s/^([ 	]*$i[ 	]*$r[ 	]*).*?$/$1$x/gm)){
 		defined($a)||return;
 		my $s1=($a&&"$a\n")."$v$r1$x";
 		my $a1=quotemeta($a);
@@ -1013,10 +1013,13 @@ Gtk2::Gdk::Event->send_clientmessage_toall($event);
 sub{$_[0]="$_[0]" if($_[0]=~/\D/)},
 sub{},'[Settings]'],
 ['.xscreensaver',':',':	',sub{$_[0]=~s/^xscreensaver\.//},sub{},sub{}],
-### don't follow fontconfig subst
-#['.config/Trolltech.conf','=','=',sub{
-#	return $_[0]='Font' if($_[0] eq '*Font');
-#},sub{$_[0]=~s/\s+(\d+)$/,$1/;$_[0]="\"$_[0]\""},sub{},'[Qt]'],
+['.config/Trolltech.conf','=','=',sub{
+	return $_[0]='font' if($_[0] eq '*Font');
+},sub{
+	my $x=(($_[0]=~s/ bold / /)+50).','.(($_[0]=~s/ italic / /)+0);
+	$_[0]=~s/\s+(\d+)$/,$1,-1,5,$x,0,0,0,0/;
+	$_[0]="\"$_[0]\"";
+},sub{},'[Qt]'],
 );
 
 my $b=[0,1];
@@ -1106,7 +1109,7 @@ for(@xfiles){
 		&{$_->[3]}($i) || next;
 		my $i1=quotemeta($i);
 #		my ($d)=$f=~/^$i1$r$ss(.*?)$ss$/m or next;
-		my ($d)=$f=~/^$i1$ss$r$ss(.*?)$ss$/m or (ref($y) && next);
+		my ($d)=$f=~/^$ss$i1$ss$r$ss(.*?)$ss$/m or (ref($y) && next);
 		($d=~s/^\"//) && ($d=~s/\"$//);
 		next if($x{$m} eq $d);
 		if(!ref($y)){
