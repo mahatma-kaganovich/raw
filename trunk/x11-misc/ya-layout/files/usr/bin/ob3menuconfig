@@ -940,11 +940,11 @@ sub simple_menu{
 		for(@{$_[0]->{$_}}){
 			my $i=$_;
 			$i=~s/([$xml_])/\&$xml_{$1};/g;
-			if($i eq $d){
+			if($i eq $d && defined($def)){
 				print $def;
 				$def=undef;
 			}else{
-				print "<item label='$i'><action name='execute'><execute>$0 --@ARGV $m $i</execute></action></item>";
+				print "<item label='$i'><action name='execute'><execute>$0 --@ARGV &quot;$m&quot; &quot;$i&quot;</execute></action></item>";
 			}
 		}
 		print $def,'</menu>';
@@ -1072,7 +1072,7 @@ my %xrparam=(
 'xscreensaver.procInterrupts'=>$bb,
 #'XTerm.*.faceName'=>'*',
 #'XTerm.*.faceSize'=>$fontsz,
-'XTerm.*.faceName'=>['-',split(/\n/,`$bin/fc-list :scalable=true:spacing=mono: family`)],
+'XTerm.*.faceName'=>['','*',split(/\n/,`$bin/fc-list :scalable=true:spacing=mono: family`)],
 'XTerm.*.faceSize'=>[5..32],
 'XTerm.*.background'=>'black',
 'XTerm.*.foreground'=>'white',
