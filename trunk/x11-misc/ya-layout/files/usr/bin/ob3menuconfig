@@ -1070,10 +1070,10 @@ my %xrparam=(
 'xscreensaver.GetViewPortIsFullOfLies'=>$bb,
 #'xscreensaver.selected'=>,
 'xscreensaver.procInterrupts'=>$bb,
-# hardcode XTerm
-'XTerm.*.faceSize'=>$fontsz,
-# default mono vs. custom is good
-'XTerm.*.faceName'=>'*',
+#'XTerm.*.faceName'=>'*',
+#'XTerm.*.faceSize'=>$fontsz,
+'XTerm.*.faceName'=>['-',split(/\n/,`$bin/fc-list :scalable=true:spacing=mono: family`)],
+'XTerm.*.faceSize'=>[5..32],
 'XTerm.*.background'=>'black',
 'XTerm.*.foreground'=>'white',
 "$xrfont (=$allfont)"=>$font,
@@ -1159,7 +1159,7 @@ if(_mparam(@_)){
 		&{$_->[4]}($y);
 		_conffile("$ENV{HOME}/$_->[0]",$_->[1],$_->[2],$x,$y) && &{$_->[5]}();
 	}
-	if($i=~/^X.*/){
+	if($i=~/^X\..*/){
 		exec($bin.'openbox','--restart');
 	}elsif($i=~/^xscreensaver/){
 		if($i eq 'xscreensaver.mode: off' || $i eq 'xscreensaver.mode: X'){
