@@ -1099,7 +1099,7 @@ for(@xfiles){
 		my $d=$fn;
 		mkdir($d) if($d=~s/\/[^\/]*$//);
 	}else{
-		return;
+		next;
 	}
 	while(my ($x,$y)=each %xrparam){
 		my $m=$x;
