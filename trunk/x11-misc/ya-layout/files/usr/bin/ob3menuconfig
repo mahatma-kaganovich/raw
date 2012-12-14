@@ -9,6 +9,7 @@ $MENU='config';
 $bin='/usr/bin/';
 
 $allfont='MenuItem';
+$xrfont='!Font';
 
 my %config=(
 'config_mode'=>{
@@ -960,11 +961,12 @@ sub _conffile{
 		die $!;
 	}
 	my $i=quotemeta($v);
-	if(!($s=~s/^([ 	]*$i[ 	]*$r[ 	]*).*?$/$1$x/gm)){
+	my $ss='[ 	]*';
+	if(!($s=~s/^($ss$i$ss$r$ss).*?$/$1$x/gm)){
 		defined($a)||return;
 		my $s1=($a&&"$a\n")."$v$r1$x";
 		my $a1=quotemeta($a);
-		if(!($a && ($s=~s/^$a1$/$s1/m))){
+		if(!($a && ($s=~s/^$ss$a1$ss$/$s1/m))){
 			$s.="\n" if($s ne '' && substr($s,-1) ne "\n");
 			$s.="$s1\n";
 		}
@@ -988,7 +990,7 @@ sub getcfg{
 }
 
 sub _gtk1{
-	return $_[0]='gtk-font-name' if($_[0] eq '*Font');
+	return $_[0]='gtk-font-name' if($_[0] eq $xrfont);
 	$_[0]=~s/\./-/g;
 	$_[0]='gtk-'.lc($_[0]);
 }
@@ -1009,22 +1011,25 @@ $event->data_format(8);
 $event->data('burp');
 Gtk2::Gdk::Event->send_clientmessage_toall($event);
 );},''],
-['.config/gtk-3.0/settings.ini','=',' = ',\&_gtk1,
+['.config/gtk-3.0/settings.ini','=','=',\&_gtk1,
 sub{$_[0]="$_[0]" if($_[0]=~/\D/)},
 sub{},'[Settings]'],
 ['.xscreensaver',':',':	',sub{$_[0]=~s/^xscreensaver\.//},sub{},sub{}],
 ['.config/Trolltech.conf','=','=',sub{
-	return $_[0]='font' if($_[0] eq '*Font');
+	return $_[0]='font' if($_[0] eq $xrfont);
 },sub{
-	my $x=(($_[0]=~s/ bold / /)+50).','.(($_[0]=~s/ italic / /)+0);
-	$_[0]=~s/\s+(\d+)$/,$1,-1,5,$x,0,0,0,0/;
-	$_[0]="\"$_[0]\"";
+	$_[0]='"'.join(',',$fontn,$fontsz,-1,5,$fontb*25+50,$fonti+0,'0,0,0,0').'"';
 },sub{},'[Qt]'],
 );
 
 my $b=[0,1];
 my $bb=['True','False'];
 my $tm=[1,3,5,10,15,30,40,60,90,120];
+($font)=getcfg();
+$fontn=$font;
+$fontb=($fontn=~s/ bold / /);
+$fonti=($fontn=~s/ italic / /);
+($fontn,$fontsz)=$fontn=~/^(.*?)\s+(\d+)$/;
 my %xrparam=(
 'Xft.antialias'=>$b,
 'Xft.autohint'=>$b,
@@ -1065,12 +1070,17 @@ my %xrparam=(
 'xscreensaver.GetViewPortIsFullOfLies'=>$bb,
 #'xscreensaver.selected'=>,
 'xscreensaver.procInterrupts'=>$bb,
-
+# hardcode XTerm
+'XTerm.*.faceSize'=>$fontsz,
+# default mono vs. custom is good
+'XTerm.*.faceName'=>'*',
+'XTerm.*.background'=>'black',
+'XTerm.*.foreground'=>'white',
+"$xrfont (=$allfont)"=>$font,
 #'Xft.dpi'=>
 #'Xft.scale'=>
 #'Xft.maxglyphmemory'=>
 );
-($xrparam{"*Font (=$allfont)"})=getcfg();
 #my $s=`${bin}xrdb -query`;
 #$? && return;
 my $s=$prop{'RESOURCE_MANAGER'};
@@ -1086,7 +1096,7 @@ while(my ($x,$y)=each %xrparam){
 		my $x=quotemeta($m);
 		($x{$m})=$s=~/^$x:$ss(.*?)$ss$/m;
 	}elsif($y ne $x{$m}){
-		_conffile("$ENV{HOME}/.Xresources",':',':	',$m,$x{$m}=$y);
+		_conffile("$ENV{HOME}/.Xresources",':',':	',$m,$x{$m}=$y,'');
 	}
 }
 for(@xfiles){
@@ -1113,6 +1123,7 @@ for(@xfiles){
 		($d=~s/^\"//) && ($d=~s/\"$//);
 		next if($x{$m} eq $d);
 		if(!ref($y)){
+			next if($m ne $xrfont);
 			&{$_->[4]}(my $x=$x{$m});
 			_conffile($fn,$_->[1],$_->[2],$i,$x,$_->[6]) && &{$_->[5]}();
 			next;
