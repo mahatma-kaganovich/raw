@@ -256,6 +256,17 @@ if(exists($P{slow})){
 				push(@apps,($x=~s/.*\///gs)?[$x,$_,$_]:[$_,$x="/usr/bin/$x",$_]);
 				$apps{$x}=$apps{$_}=undef;
 			}
+			if(!@apps){
+				for(map{("$_/mimeapps.list","$_/defaults.list")}("$ENV{HOME}/.local/share/applications",'/usr/share/applications')){
+					open(my $F,'<',$_) or next;
+					while(defined($s=<$F>)){
+						($s)=$s=~/^.*=(.*?)\s*$/m or next;
+						$apps2{$_}=undef for(split(/;/,$s));
+					}
+					close($F);
+				}
+				$apps2=scalar(%apps2);
+			}
 		}
 	};
 	icons('/usr/share/icons/');
@@ -345,7 +356,15 @@ N:
 		$d{Exec}=~s/\s+%\w$//;
 		$d{Name}.=" 	[$key{$d{Exec}}]" if(exists($key{$d{Exec}}));
 		$i="<item label='$d{Name}'$i><action name='Execute'><execute>$d{Exec}</execute>".$notify{lc($d{StartupNotify})}.'</action></item>';
-		if(exists($apps{$d{Exec}})){
+		if($apps2){
+			my $ff=$f;
+			$ff=~s/.*\///g;
+			if(exists($apps2{$ff})){
+				push @apps,[$d{Exec}];
+				$apps{$d{Exec}}=[$icon,$d{Exec},$i];
+				substr($i,13,0)=' ☑';
+			}
+		}elsif(exists($apps{$d{Exec}})){
 			$apps{$d{Exec}}=[$icon,$d{Exec},$i];
 			substr($i,13,0)=' ☑';
 		}
