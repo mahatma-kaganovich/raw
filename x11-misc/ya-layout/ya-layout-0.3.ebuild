@@ -18,6 +18,7 @@ RDEPEND=" ${DEPEND}
 	media-gfx/feh
 	x11-misc/slock
 	alsa? ( media-sound/alsa-utils )
+	x11-apps/xfontsel
 	!minimal? (
 		!tint2? ( || (
 		x11-misc/pcmanfm
