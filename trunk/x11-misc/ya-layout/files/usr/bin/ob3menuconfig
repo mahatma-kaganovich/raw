@@ -995,6 +995,18 @@ sub _gtk1{
 	$_[0]='gtk-'.lc($_[0]);
 }
 
+sub _xrdb{
+	my $i="$_[0]:	$_[1]";
+	for('all','screen','screens','global'){
+#		for('all','screen'){
+		open_($F,'|-',$bin."xrdb -merge -$_");
+		print $F "$i\n";
+		close($F);
+		$? && die "Merging xrdb: '$i'";
+	}
+	_conffile("$ENV{HOME}/.Xresources",':',':	',@_,'')
+}
+
 sub xresources{
 
 my @xfiles=(
@@ -1073,17 +1085,26 @@ my %xrparam=(
 #'XTerm.*.faceName'=>'*',
 #'XTerm.*.faceSize'=>$fontsz,
 'XTerm.*.faceName'=>['','*',split(/\n/,`$bin/fc-list :scalable=true:spacing=mono: family`)],
-'XTerm.*.faceSize'=>[5..32],
+'XTerm.*.faceSize'=>['',5..32],
 'XTerm.*.background'=>'black',
 'XTerm.*.foreground'=>'white',
 "$xrfont (=$allfont)"=>$font,
-'*font (non-Xft)'=>['[xfontsel]'],
+'Font_ (non-Xft)'=>['','auto','[xfontsel]'],
 #'Xft.dpi'=>
 #'Xft.scale'=>
 #'Xft.maxglyphmemory'=>
 );
 my %exec=(
-'[xfontsel]'=>"$bin/xfontsel -print",
+'[xfontsel]'=>sub{`$bin/xfontsel -print -fn ''`},
+);
+my %cname=(
+'Font_'=>['XTerm.*.font','*font'],
+);
+my %def=(
+'Font_'=>'auto',
+);
+my %auto=(
+'Font_: auto'=>sub{"-*-*-medium-r-normal-*-$fontsz-*-*-*-*-*-*-*"},
 );
 #my $s=`${bin}xrdb -query`;
 #$? && return;
@@ -1098,9 +1119,14 @@ while(my ($x,$y)=each %xrparam){
 	$m=~s/ .*//g;
 	if(ref($y)){
 		my $x=quotemeta($m);
-		($x{$m})=$s=~/^$x:$ss(.*?)$ss$/m;
+		($x{$m})=$s=~/^$x:$ss(.*?)$ss$/m or ($x{$m}=$def{$m});
 	}elsif($y ne $x{$m}){
-		_conffile("$ENV{HOME}/.Xresources",':',':	',$m,$x{$m}=$y,'');
+		_xrdb($m,$x{$m}=$y);
+	}
+	my $x="$m: $x{$m}";
+	$x=exists($auto{$x})?&{$auto{$x}}():$x{$m};
+	for(@{$cname{$m}}){
+		_xrdb($_,$x{$_}=$xrparam{"$_ (=$m)"}=$x) if($x{$_} ne $x);
 	}
 }
 for(@xfiles){
@@ -1147,19 +1173,12 @@ for(@xfiles){
 }
 if(_mparam(@_)){
 	return if("@_" eq '-'); # todo: run menu here to resize panel
-	if(exists($exec{$_[1]})){
-		$_[1]=`$exec{$_[1]}`;
-	}
+	return if(exists($exec{$_[1]}) && ($_[1]=&{$exec{$_[1]}}()) eq '');
 	$x{$_[0]}=$_[1];
+	my $s;
 	my $i="$_[0]: $_[1]";
-	for('all','screen','screens','global'){
-#	for('all','screen'){
-		open_($F,'|-',$bin."xrdb -merge -$_");
-		print $F "$i\n";
-		close($F);
-		$? && die "Merging xrdb: '$i'";
-	}
-	my $s=_conffile("$ENV{HOME}/.Xresources",':',':	',@_,'');
+	my $x=exists($auto{$i})?&{$auto{$i}}():$_[1];
+	$s=_xrdb($_,$_ eq $_[0]?$_[1]:$x) for($_[0],@{$cname{$_[0]}});
 	for(@xfiles){
 		my ($x,$y)=@_;
 		&{$_->[3]}($x) || next;
@@ -1191,9 +1210,7 @@ if(_mparam(@_)){
 	}
 	exit;
 }
-if($x{'xscreensaver.mode'} eq 'X'){
-	delete($xrparam{$_}) for(grep(/xscreensaver\.(?!mode|dpms|timeout|cycle)/,keys %xrparam));
-}
+delete($xrparam{$_}) for($x{'xscreensaver.mode'} eq 'X'?grep(/xscreensaver\.(?!mode|dpms|timeout|cycle)/,keys %xrparam):());
 simple_menu(\%xrparam,\%x);
 }
 
