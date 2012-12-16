@@ -1077,9 +1077,13 @@ my %xrparam=(
 'XTerm.*.background'=>'black',
 'XTerm.*.foreground'=>'white',
 "$xrfont (=$allfont)"=>$font,
+'*font (non-Xft)'=>['[xfontsel]'],
 #'Xft.dpi'=>
 #'Xft.scale'=>
 #'Xft.maxglyphmemory'=>
+);
+my %exec=(
+'[xfontsel]'=>"$bin/xfontsel -print",
 );
 #my $s=`${bin}xrdb -query`;
 #$? && return;
@@ -1143,6 +1147,9 @@ for(@xfiles){
 }
 if(_mparam(@_)){
 	return if("@_" eq '-'); # todo: run menu here to resize panel
+	if(exists($exec{$_[1]})){
+		$_[1]=`$exec{$_[1]}`;
+	}
 	$x{$_[0]}=$_[1];
 	my $i="$_[0]: $_[1]";
 	for('all','screen','screens','global'){
