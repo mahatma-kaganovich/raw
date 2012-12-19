@@ -4,8 +4,9 @@ _dirtyaufs3(){
 	local i f=
 	while read i; do
 		case "$i" in
-		---\ *)
-			f="$S/${i#--- a/}"
+		---\ *);;
+		+++\ *)
+			f="$S/${i#+++ ?/}"
 			echo "
 /* AuFS3 */" >>"$f" || return 1
 		;;
