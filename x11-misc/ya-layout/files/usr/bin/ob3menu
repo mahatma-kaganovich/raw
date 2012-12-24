@@ -718,10 +718,11 @@ print qq(
 <item label="Restart"><action name="Restart"/></item>
 <separator/>
 <menu id=").($id++).qq(" label='$set execute="${0}config"/>
-<separator label=""/>
-<item label="PowerOFF"><action name="execute"><execute>/sbin/poweroff -i -h</execute></action></item>
-<item label="Reboot"><action name="execute"><execute>/sbin/reboot</execute></action></item>
-<item label="Exit"><action name="Exit"/></item>
+<separator label=""/>);
+print "<item label='$_->[0]'><action name='execute'><prompt>$_->[0]</prompt><execute>$_->[1]</execute></action></item>\n" for(['PowerOFF','/sbin/poweroff -i -h'],['Reboot','/sbin/reboot'],
+	#-w '/sys/power/state'?(map{["Suspend to $_","/bin/bash -c &quot;echo $_ &gt;/sys/power/state&quot;"]}split(/\s+/,_read('</sys/power/state'))):()
+);
+print qq(<item label="Exit"><action name="Exit"/></item>
 </menu>
 </openbox_pipe_menu>
 );
