@@ -1,6 +1,11 @@
+# if no USE=multitarget - use only present ABIs
 abis="$MULTILIB_ABIS"
 use !multilib && abis=''
-use multitarget && use x86 && abis+=' x86'
+if use multitarget; then
+	use x86 && abis+=' x86'
+	use amd64 && abis+=' x86 x32'
+	use x32 && abis+=' x86 amd64'
+fi
 abis=" $abis "
 aa=' '
 for a1 in x86:IA32_EMULATION x32:IA32_EMULATION x32:X86_X32; do
