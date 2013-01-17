@@ -604,7 +604,9 @@ acpi_detect(){
 		_PR_.*|_SB_*.CP[0-9]*)let n=n+1;;
 		esac
 	done
-	[[ "$CF" == *-SCHED_SMT* ]] && grep -q "^flags\s*:.*\sht\s" /proc/cpuinfo && let n=n/2
+	# FIXME: on bare metal + ht flag without true HT acpi report double CPUs number
+	# comment out next line to workaround any other cases to lost core|CPU
+	[[ "$CF" == *-PARAVIRT' '* ]] && [[ "$CF" == *-SCHED_SMT* ]] && grep -q "^flags\s*:.*\sht\s" /proc/cpuinfo && let n=n/2
 	[[ $n == 0 ]] && die "ACPI CPU enumeration wrong. Say 'USE=-acpi'"
 	[[ $n -gt 1 ]] && CF1 SMP
 	[[ $n -gt 8 ]] && CF1 X86_BIGSMP
