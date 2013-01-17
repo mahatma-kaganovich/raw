@@ -122,17 +122,17 @@ start() {
 
 	# Voluntary fsck. Will be happened only ondemand -
 	# on both unmounted/double fault, placed in fstab.
+	# mount -at broken in util-linux 2.22
 	[[ "$OCFS2_FSCK_SWAPOFF" == "yes" ]] && swapoff -a
-	for i in `mount -invfat ocfs2 2>/dev/null|sed -e 's: .*::g'` ; do
-		[[ -e "$i" ]] || continue
-		einfo "OCFS2: Trying 'fsck.ocfs2 $OCFS2_FSCK $i' (fs check if possible)"
-		/sbin/fsck.ocfs2 $OCFS2_FSCK "$i" 2>/dev/null
+	local r=0
+	sed -e 's:#.*$::g' </etc/fstab|while read d m t i; do
+#		[ "$t" = auto ] # blkid ... broken too!
+		[ "$t" = ocfs2 -a -e "$d" ] || continue
+		einfo "OCFS2: Trying 'fsck.ocfs2 $OCFS2_FSCK $d' (fs check if possible)"
+		/sbin/fsck.ocfs2 $OCFS2_FSCK "$d" 2>/dev/null
+		ebegin "Mounting OCFS2 filesystem on $m"
+		mount $m || r=$?
 	done
-	[[ "$OCFS2_FSCK_SWAPOFF" == "yes" ]] && swapon -a
-
-	# Any behaviour
-	ebegin "Mounting OCFS2 filesystems"
-	mount -at ocfs2
 	eend $?
 	return $?
 }
