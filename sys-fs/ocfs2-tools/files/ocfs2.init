@@ -133,6 +133,7 @@ start() {
 		ebegin "Mounting OCFS2 filesystem on $m"
 		mount $m || r=$?
 	done
+	[[ "$OCFS2_FSCK_SWAPOFF" == "yes" ]] && swapon -a
 	eend $?
 	return $?
 }
