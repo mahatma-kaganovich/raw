@@ -134,8 +134,8 @@ start() {
 		mount $m || r=$?
 	done
 	[[ "$OCFS2_FSCK_SWAPOFF" == "yes" ]] && swapon -a
-	eend $?
-	return $?
+	eend $r
+	return $r
 }
 
 _fuser(){
