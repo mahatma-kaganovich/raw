@@ -6,7 +6,7 @@ IUSE="+udev libnotify minimal bluetooth wifi +jpeg +tiff tint2 alsa"
 DEPEND="tint2? ( x11-misc/tint2 )
 	>=x11-wm/openbox-3.5.0"
 RDEPEND=" ${DEPEND}
-	udev? ( sys-fs/udev net-fs/autofs )
+	udev? ( virtual/udev net-fs/autofs )
 	libnotify? ( x11-libs/libnotify )
 	bluetooth? (
 		net-wireless/bluez[test-programs]

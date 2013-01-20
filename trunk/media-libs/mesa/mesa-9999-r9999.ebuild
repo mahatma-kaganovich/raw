@@ -111,7 +111,7 @@ RDEPEND="app-admin/eselect-opengl
 	vdpau? ( >=x11-libs/libvdpau-0.4.1 )
 	wayland? ( dev-libs/wayland )
 	xvmc? ( x11-libs/libXvMC )
-	gbm? ( sys-fs/udev )
+	gbm? ( virtual/udev )
 	!<=x11-base/xorg-x11-6.9"
 DEPEND="${RDEPEND}
 	glut? ( !media-libs/freeglut )
