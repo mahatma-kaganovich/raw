@@ -1,8 +1,8 @@
 # OCFS2_FS must be embedded with ramster to avoid conflicts both nodemanager
 # to ramster clustering completly disable OCFS2_FS, but I need OCFS2 clustering
 # but not ramster clustering.
-#KERNEL_CONFIG+="CLEANCACHE CONFIGFS_FS OCFS2_FS RAMSTER;ZCACHE +ZRAM FRONTSWAP XEN_SELFBALLOONING"
+#KERNEL_CONFIG+="CLEANCACHE CONFIGFS_FS OCFS2_FS RAMSTER;ZCACHE +ZRAM FRONTSWAP XEN_SELFBALLOONING ZSMALLOC"
 # death by "ramster: bad accounting for curr_pers_pampd_count". so, use old zcache while
 
-KERNEL_CONFIG+="CLEANCACHE ZCACHE +ZRAM FRONTSWAP XEN_SELFBALLOONING"
+KERNEL_CONFIG+="CLEANCACHE ZCACHE +ZRAM FRONTSWAP XEN_SELFBALLOONING ZSMALLOC"
 LICENSE "drivers/staging/zcache/tmem.c" "Dual BSD/GPL"
