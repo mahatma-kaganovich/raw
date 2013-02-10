@@ -130,12 +130,11 @@ start() {
 		[ "$t" = ocfs2 -a -e "$d" ] || continue
 		einfo "OCFS2: Trying 'fsck.ocfs2 $OCFS2_FSCK $d' (fs check if possible)"
 		/sbin/fsck.ocfs2 $OCFS2_FSCK "$d" 2>/dev/null
-		ebegin "Mounting OCFS2 filesystem on $m"
-		mount $m || r=$?
 	done
 	[[ "$OCFS2_FSCK_SWAPOFF" == "yes" ]] && swapon -a
-	eend $r
-	return $r
+	ebegin "Mounting OCFS2 filesystems"
+	mount -at ocfs2
+	eend $?
 }
 
 _fuser(){
