@@ -1,0 +1,5 @@
+--- a/src/forward.cc	2013-02-14 18:06:46.000000000 +0300
++++ b/src/forward.cc	2013-02-14 18:07:26.000000000 +0300
+@@ -961 +961 @@ FwdState::connectStart()
+-    if (serverDestinations[0]->getPeer() && request->flags.sslBumped) {
++    if (serverDestinations[0]->getPeer() && request->flags.sslBumped && !serverDestinations[0]->getPeer()->options.originserver) {
