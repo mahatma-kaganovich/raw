@@ -721,7 +721,7 @@ native)
 		4:*)CF1 M586;;
 		5:*)CF1 MK6;freq=X86_POWERNOW_K6;;
 		6:*)CF1 MK7;freq="X86_POWERNOW_K7 X86_CPUFREQ_NFORCE2";;
-		7:*|*\ k8\ *|*\ lm\ *)CF1 MK8;freq=X86_POWERNOW_K8;gov=CONSERVATIVE;;
+		7:*|*\ k8\ *|*\ lm\ *)CF1 MK8;freq="X86_POWERNOW_K8 X86_ACPI_CPUFREQ";gov=CONSERVATIVE;;
 		*Geode*)CF1 GEODE_LX;;
 		*)CF1 GENERIC_CPU X86_GENERIC;;
 		esac
@@ -794,7 +794,7 @@ pentium4|pentium4m|prescott|nocona)
 core2|atom)CF1 M${march^^} $m64g;freq=X86_ACPI_CPUFREQ;;
 k6-3)CF1 MK6 $m64g -SCHED_SMT;freq=X86_POWERNOW_K6;V=AMD;;
 athlon|athlon-tbird|athlon-4|athlon-xp|athlon-mp)CF1 MK7 $m64g -SCHED_SMT;freq=X86_POWERNOW_K7;V=AMD;;
-bdver1|k8|opteron|athlon64|athlon-fx|k8-sse3|opteron-sse3|athlon64-sse3|amdfam10|barcelona)CF1 MK8 $m64g -SCHED_SMT;freq=X86_POWERNOW_K8;gov=CONSERVATIVE;V=AMD;;
+bdver1|k8|opteron|athlon64|athlon-fx|k8-sse3|opteron-sse3|athlon64-sse3|amdfam10|barcelona)CF1 MK8 $m64g -SCHED_SMT;freq="X86_POWERNOW_K8 X86_ACPI_CPUFREQ";gov=CONSERVATIVE;V=AMD;;
 *)CF1 GENERIC_CPU X86_GENERIC;;
 esac
 case "${CTARGET:-${CHOST}}:$CF" in
