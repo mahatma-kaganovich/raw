@@ -682,7 +682,7 @@ native)
 	use xen && CF1 PARAVIRT{,_GUEST}
 
 	[[ "${processor:=0}" -gt 0 ]] && CF1 SMP
-	[[ $((processor+1)) == "${cpu_cores:-1}" ]] && [[ "${siblings:-1}" == "${cpu_cores:-1}" ]] && CF1 -NUMA
+	[[ $((processor+1)) == "${cpu_cores:-1}" ]] && [[ "${siblings:-1}" == "${cpu_cores:-1}" ]] && CF1 -NUMA || CF1 NUMA
 	# xtopology & other flags present only on SMP running anymore
 	[[ "${cpu_cores:-1}" -gt 1 ]] && CF1 SMP SCHED_MC
 	[[ "${siblings:-0}" -gt "${cpu_cores:-1}" ]] && CF1 SMP SCHED_SMT
