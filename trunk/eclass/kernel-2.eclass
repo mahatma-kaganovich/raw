@@ -622,7 +622,7 @@ local vendor_id="" model_name="" flags="" cpu_family="" model="" cache_alignment
 export PNP_VENDOR="^vendor_id\|"
 CF1 -SMP -X86{BIGSMP,GENERIC} X86_{X2APIC,UP_APIC,UP_IOAPIC} -SPARSE_IRQ -CPUSETS
 use xen && CF1 -HIGHMEM64G -HIGHMEM4G NOHIGHMEM X86_PAE
-use smp && CF1 SMP X86_BIGSMP SCHED_{SMT,MC} SPARSE_IRQ CPUSETS
+use smp && CF1 SMP X86_BIGSMP SCHED_{SMT,MC} SPARSE_IRQ CPUSETS NUMA
 [[ "$(march mtune)" == generic ]] && CF1 X86_GENERIC
 if [[ -z "${march}" ]]; then
 	CF1 GENERIC_CPU X86_GENERIC
@@ -682,7 +682,7 @@ native)
 	use xen && CF1 PARAVIRT{,_GUEST}
 
 	[[ "${processor:=0}" -gt 0 ]] && CF1 SMP
-	[[ $((processor+1)) == "${cpu_cores:-1}" ]] && [[ "${siblings:-1}" == "${cpu_cores:-1}" ]] && CF1 -NUMA || CF1 NUMA
+	[[ $((processor+1)) == "${cpu_cores:-1}" ]] && [[ "${siblings:-1}" == "${cpu_cores:-1}" ]] && CF1 -NUMA
 	# xtopology & other flags present only on SMP running anymore
 	[[ "${cpu_cores:-1}" -gt 1 ]] && CF1 SMP SCHED_MC
 	[[ "${siblings:-0}" -gt "${cpu_cores:-1}" ]] && CF1 SMP SCHED_SMT
