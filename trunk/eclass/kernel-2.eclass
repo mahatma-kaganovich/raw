@@ -675,6 +675,8 @@ native)
 			*XEN)CF1 -KVM_GUEST;;
 			esac;
 			use xen && CF1 XEN
+			# at least KVM migration & other asymmetry
+			CF1 -NO_HZ -SCHED_HRTICK -IRQ_TIME_ACCOUNTING
 		;;
 #		xtopology)CF1 SCHED_SMT;;
 		esac
@@ -805,6 +807,7 @@ use lguest && CF1 -HIGHMEM64G
 use acpi && use embed-hardware && acpi_detect
 use embed-hardware && [[ -n "$freq" ]] && CF1 -X86_POWERNOW_K8 -X86_ACPI_CPUFREQ $freq CPU_FREQ_GOV_${gov} CPU_FREQ_DEFAULT_GOV_${gov}
 CF1 "-CPU_SUP_.*" "CPU_SUP_${V:-.*}"
+[[ -n "${CF##-NUMA}" -o -n "${CF##-PARAVIRT}" ]] && CF RCU_NOCB_CPU
 KERNEL_CONFIG="#-march=${march}# ${CF//  / }
 ${KERNEL_CONFIG}"
 }
