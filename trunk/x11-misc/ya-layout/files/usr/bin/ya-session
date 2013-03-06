@@ -361,7 +361,7 @@ launch(){
 	i="$(app "${@}")"
 	case "$i" in
 	*exo-open\ --launch\ TerminalEmulator\ -e\ *)i="${i/ -e}";;
-	/usr/bin/[Tt]erminal\ *-e\ *)exec ${i%% -e *} -e "${i#* -e }";;
+	/usr/bin/[Tt]erminal\ *-e\ *|/usr/bin/xfce4-terminal\ *-e\ *)exec ${i%% -e *} -e "${i#* -e }";;
 	esac
 	exec $i
 	exit
