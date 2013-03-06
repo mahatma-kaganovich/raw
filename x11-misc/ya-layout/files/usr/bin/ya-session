@@ -19,7 +19,8 @@ DSP1="${DISPLAY%.*}"
 ENV="$cache/environment.$DSP"
 
 : ${YA_APP_WebBrowser:="'exo-open --launch WebBrowser' @WebBrowser"}
-: ${YA_APP_TerminalEmulator:="'exo-open --launch TerminalEmulator' @TerminalEmulator"}
+# exo-open going mad with params, but we want terminal with params NOW!
+#: ${YA_APP_TerminalEmulator:="'exo-open --launch TerminalEmulator' @TerminalEmulator"}
 : ${YA_APP_FileManager:="'exo-open --launch FileManager' \"spacefm --profile=\$YA_PROFILE\" \"pcmanfm -p \$YA_PROFILE\" \"nautilus --no-desktop \$sm2\" @FileManager +mc"}
 : ${YA_APP_Email:="'exo-open --launch MailReader' 'seamonkey --mail' @Email"}
 : ${YA_APP_InstantMessaging:="@InstantMessaging"}
