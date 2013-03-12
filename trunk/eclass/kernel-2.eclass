@@ -620,7 +620,7 @@ cpu2K(){
 local i v V="" CF="" march=$(march) m64g="HIGHMEM64G -HIGHMEM4G -NOHIGHMEM" freq='' gov='ONDEMAND'
 local vendor_id="" model_name="" flags="" cpu_family="" model="" cache_alignment="" fpu="" siblings="" cpu_cores="" processor=""
 export PNP_VENDOR="^vendor_id\|"
-CF1 -SMP -X86{BIGSMP,GENERIC} X86_{X2APIC,UP_APIC,UP_IOAPIC} -SPARSE_IRQ -CPUSETS
+CF1 -SMP -X86{BIGSMP,GENERIC} X86_{X2APIC,UP_APIC,UP_IOAPIC} -SPARSE_IRQ -CPUSETS X86_INTEL_PSTATE
 use xen && CF1 -HIGHMEM64G -HIGHMEM4G NOHIGHMEM X86_PAE
 use smp && CF1 SMP X86_BIGSMP SCHED_{SMT,MC} SPARSE_IRQ CPUSETS NUMA
 [[ "$(march mtune)" == generic ]] && CF1 X86_GENERIC
@@ -679,6 +679,7 @@ native)
 			CF1 -NO_HZ -SCHED_HRTICK -IRQ_TIME_ACCOUNTING
 		;;
 #		xtopology)CF1 SCHED_SMT;;
+		hwpstate)grep -qsF X86_FEATURE_HW_PSTATE "${S}/drivers/cpufreq/powernow-k8.c" && freq+=" X86_ACPI_CPUFREQ -X86_POWERNOW_K8";;
 		esac
 	done
 	use xen && CF1 PARAVIRT{,_GUEST}
@@ -712,7 +713,11 @@ native)
 		[3-6]:*)CF1 M${cpu_family}86;;
 		*)CF1 GENERIC_CPU X86_GENERIC;;
 		esac
-		[[ "$cpu_family" == 6 ]] && [[ "$model" -gt 25 ]] && CF1 INTEL_IDLE
+		if [[ "$cpu_family" == 6 ]]; then
+			[[ "$model" -gt 25 ]] && CF1 INTEL_IDLE
+			# 42 or 45, but+
+			[[ "$model" -lt 42 ]] && CF1 -X86_INTEL_PSTATE
+		fi
 	;;
 	*AMD*)
 		V=AMD
@@ -723,7 +728,7 @@ native)
 		4:*)CF1 M586;;
 		5:*)CF1 MK6;freq=X86_POWERNOW_K6;;
 		6:*)CF1 MK7;freq="X86_POWERNOW_K7 X86_CPUFREQ_NFORCE2";;
-		7:*|*\ k8\ *|*\ lm\ *)CF1 MK8;freq="X86_POWERNOW_K8 X86_ACPI_CPUFREQ";gov=CONSERVATIVE;;
+		7:*|*\ k8\ *|*\ lm\ *)CF1 MK8;freq="X86_POWERNOW_K8 X86_ACPI_CPUFREQ $freq";gov=CONSERVATIVE;;
 		*Geode*)CF1 GEODE_LX;;
 		*)CF1 GENERIC_CPU X86_GENERIC;;
 		esac
@@ -807,6 +812,7 @@ use lguest && CF1 -HIGHMEM64G
 use acpi && use embed-hardware && acpi_detect
 use embed-hardware && [[ -n "$freq" ]] && CF1 -X86_POWERNOW_K8 -X86_ACPI_CPUFREQ $freq CPU_FREQ_GOV_${gov} CPU_FREQ_DEFAULT_GOV_${gov}
 CF1 "-CPU_SUP_.*" "CPU_SUP_${V:-.*}"
+[ "$V" != INTEL -a -n "$V" ] && CF1 -X86_INTEL_PSTATE
 [ -n "${CF##*-NUMA*}" -o -n "${CF##*-PARAVIRT*}" ] && CF1 RCU_NOCB_CPU
 KERNEL_CONFIG="#-march=${march}# ${CF//  / }
 ${KERNEL_CONFIG}"
