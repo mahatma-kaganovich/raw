@@ -714,7 +714,7 @@ sub ifstat{
 		$i=$_;
 		$i=~s/.*\///g;
 #		next if($i eq 'lo');
-		my $w=-e "$_/wireless";
+		my $w=(-e "$_/phy80211" || -e "$_/wireless");
 		$iw+=$w;
 		push @wlan,$i if($w);
 		$carrier{$i}=_read("$_/carrier",1);
@@ -1245,7 +1245,7 @@ sub netmenu{
 			}
 			print _ex("dhcpcd -$p $if","start dhcp$i");
 		}
-		if(-e "$d/wireless"){
+		if(-e "$d/phy80211" || -e "$d/wireless"){
 			print '<separator label="Wi-Fi"/>';
 			my $i;
 			_iwhelp();
