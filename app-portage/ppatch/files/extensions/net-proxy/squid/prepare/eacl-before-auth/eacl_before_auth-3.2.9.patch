@@ -1,0 +1,12 @@
+???
+--- a/src/external_acl.cc	2013-03-20 08:18:48.000000000 +0300
++++ b/src/external_acl.cc	2013-03-20 20:58:39.239467995 +0300
+@@ -830,7 +830,7 @@ aclMatchExternal(external_acl_data *acl,
+             if (acl->def->theHelper->stats.queue_size <= (int)acl->def->theHelper->childs.n_active) {
+                 debugs(82, 2, "aclMatchExternal: \"" << key << "\": queueing a call.");
+                 ch->changeState(ExternalACLLookup::Instance());
+-                if (!entry) {
++                if (!entry || !entry->result) {
+                     debugs(82, 2, "aclMatchExternal: \"" << key << "\": return -1.");
+                     return -1; // to get here we have to have an expired cache entry. MUST not use.
+                 }
