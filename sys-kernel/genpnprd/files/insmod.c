@@ -5,6 +5,7 @@ extern long init_module(void *, unsigned long, const char *);
 int main(int argc, char *argv[]){
 	if (argc<2) return 0;
 	int f = strcmp(argv[1],"-")?open(argv[1], 0, 0):STDIN_FILENO, i, l = argc;
+	if (f<0) return 0;
 	off_t len = lseek(f, 0, 2);
 	char *buf = malloc(len), *opt;
 	lseek(f, 0, 0);
