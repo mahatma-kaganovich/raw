@@ -1,10 +1,12 @@
 # if no USE=multitarget - use only present ABIs
-abis="$MULTILIB_ABIS"
+abis="$MULTILIB_ABIS $(get_all_abis)"
 use !multilib && abis=''
 if use multitarget; then
 	use x86 && abis+=' x86'
-	use amd64 && abis+=' x86 x32'
-	use x32 && abis+=' x86 amd64'
+	use amd64 && abis+=' x86 x32 amd64'
+	# this is amd64
+#	use x32 && abis+=' x86 amd64'
+#	has x32 $abis && abis+=' x86 amd64'
 fi
 abis=" $abis "
 aa=' '
