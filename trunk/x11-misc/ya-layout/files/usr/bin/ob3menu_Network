@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # (c) Denis Kaganovich, Anarchy or GPLv2
-# Network manager OpenBox pipe menu v0.3
+# Network manager OpenBox pipe menu v0.4
 #
 # This is very initial version...
 #
@@ -196,6 +196,9 @@ sub _menu1{
 	'Retry  long limit'=>{'retry limit'=>{}},
 	'Address|Access Point'=>{'ap'=>{}},
 	'Bit Rates?|Bit Rate'=>{'rate'=>{},'bit'=>{}},
+#	'Signal level'=>{'Signal level'=>{'[0-9-]*'=>''}},
+#	'Quality'=>{'Link Quality'=>{'[0-9/]*'=>''}},
+	'Quality'=>{'Quality'=>{'[0-9]*'=>''}},
 #	'Retry  long lifetime'=>{'retry lifetime'=>{}},
 	''=>{'commit'=>{}},
 );
@@ -314,7 +317,7 @@ sub checkroute{
 	$r;
 }
 
-my @ID=('ESSID','Frequency','Channel','Address|Access Point');
+my @ID=('Quality','ESSID','Frequency','Channel','Address|Access Point');
 
 sub _getprg{
 	my $cmd=$_[0];
