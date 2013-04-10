@@ -26,7 +26,7 @@ RDEPEND=" ${DEPEND}
 		gnome-base/nautilus
 		x11-misc/spacefm
 		) )
-		media-gfx/imagemagick[png,jpeg?,tiff?]
+		|| ( media-gfx/imagemagick[png,jpeg?,tiff?] media-gfx/graphicsmagick[imagemagick,png,jpeg?,tiff?] )
 		x11-wm/openbox[imlib]
 	)"
 #	x11-apps/setxkbmap x11-apps/xkbcomp x11-apps/xrdb x11-apps/xwininfo x11-apps/xkill
