@@ -1,0 +1,39 @@
+--- a/source3/modules/vfs_scannedonly.c	2013-04-14 12:56:03.000000000 +0300
++++ b/source3/modules/vfs_scannedonly.c	2013-04-16 19:02:17.000000000 +0300
+@@ -436,13 +436,24 @@ static bool scannedonly_allow_access(vfs
+ 			return true;
+ 		}
+ 		/* no cachefile or too old */
++
++		/* stacking vfs with ceph: ceph_unlink() stuck on readdir without voodoo */
++#if 0
++		// DEBUG(0,("scannedonly: expired: %s\n",cache_smb_fname->base_name));
++		char *time_str = current_timestring(NULL, 0);
++		dbgtext("\n", time_str);
++		talloc_free(time_str);
+ 		SMB_VFS_NEXT_UNLINK(handle, cache_smb_fname);
++#else
++		unlink(cache_smb_fname->base_name);
++#endif
+ 		retval = -1;
++
+ 	}
+ 
+ 	notify_scanner(handle, smb_fname->base_name);
+ 
+-	if (loop && sDIR && sDIR->recheck_tries_done == 0) {
++	if (0 && loop && sDIR && sDIR->recheck_tries_done == 0) {
+ 		/* check the rest of the directory and notify the
+ 		   scanner if some file needs scanning */
+ 		long offset;
+@@ -497,8 +508,10 @@ static bool scannedonly_allow_access(vfs
+ 				  &cache_smb_fname->st.st_ex_ctime)) {
+ 		DEBUG(SCANNEDONLY_DEBUG,
+ 		      ("retval=%d, return 0\n",retval));
++		talloc_free(cache_smb_fname);
+ 		return false;
+ 	}
++	talloc_free(cache_smb_fname);
+ 	return true;
+ }
+ 
