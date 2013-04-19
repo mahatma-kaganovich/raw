@@ -156,7 +156,7 @@ kernel-2_src_configure() {
 	local cflags="${KERNEL_CFLAGS}" aflags="${KERNEL_ASFLAGS}" ldflags="${KERNEL_LDFLAGS}"
 	if use custom-cflags; then
 		use custom-arch || filter-flags "-march=*"
-		filter-flags "-msse*" -mmmx -m3dnow
+		filter-flags "-msse*" -mmmx -m3dnow -mavx "-mfpmath=*"
 		cflags="$(flags_nosp "${CFLAGS} ${cflags}")"
 		aflags="$(flags_nosp "$(extract_aflags) ${aflags}")"
 		ldflags="$(flags_nosp "$(extract_flags -Wl, ${LDFLAGS}) ${ldflags}")"
