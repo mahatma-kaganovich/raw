@@ -449,6 +449,8 @@ N:
 			$l || push @m2,"<item label='$mimemenu/$ff'><action name='Execute'><execute>$0 --$ma + $ff $mimemenu/$ff</execute></action></item>";
 			$l||=exists($P{$ma});
 			$l && push @apps,[$d{Exec}];
+		}else{
+			$l=1
 		}
 		if(exists($P{$ma}) && ($i=~s/^<item (.*?)>.*$/<menu $1 id='$ID$id'>/)){
 			$id++;
