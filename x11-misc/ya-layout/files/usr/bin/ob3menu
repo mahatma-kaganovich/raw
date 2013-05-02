@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # (c) Denis Kaganovich, Anarchy or GPLv2
-# OpenBox3 pipe menu v0.6
+# OpenBox3 pipe menu v0.7
 # ob3menu {--<command> {params}}
 # 	--slow [<path/to/rc.xml> [X Y]]
 #	--autostart {profile}
@@ -69,6 +69,12 @@ $xml_='<>\'"&';
 	'fs'=>['mount-point'],
 	'umount'=>['usbpendrive_unmount','gdu-unmount'],
 	'mount'=>['xfce-mount','gdu-mount'],
+);
+$ma='Apps';
+$mimemenu='_app';
+%CatMime=(
+	'WebBrowser'=>['x-scheme-handler/http','x-scheme-handler/https'],
+#	'seamonkey.desktop'=>[],
 );
 @conf=(['showIcons'],['dock',['position'],['direction']],['font place="MenuItem"',['name'],['size'],['weight'],['slant']]);
 $id=0;
@@ -235,8 +241,60 @@ $s=`$bin$s`;
 $s=~s/^([A-Z0-9_]*)\([A-Z0-9_]*\) = (\"[^\"]*\"(?:, \"[^\"]*\")*|[^\n]*)$/$_[0]->{$1}=$2;''/gme;
 }
 
+sub _xdg_mime{
+	my ($a,$d,@t)=@_;
+	my $f="$ENV{HOME}/.local/share/applications/mimeapps.list";
+	my $s=_read($f);
+	my $p='Default Applications';
+	if(!defined($s)){
+		mkdir("$ENV{HOME}/.local");
+		mkdir("$ENV{HOME}/.local/share");
+		mkdir("$ENV{HOME}/.local/share/applications");
+	}
+FIX2:
+	$s=~s/(\[$p\].*?)(.*?)(\n\[|)$/
+		my ($x,$y,$z)=($1,$2,$3);
+		for(@t){
+			my $i=quotemeta($_);
+			$y=~s\/\n$i\=[^\n]*\/\/gs;
+		}
+		$x.$y.$z;
+	/gse;
+	if($a eq '+'){
+		$s.="\n[$p]\n" if(!($s=~/^\[$p\]/m));
+		my $i="\n";
+		$s=~s/^(\[$p\].*?)$/$1$i$_=$d/m for(@t);
+	}else{
+		my @t1;
+		for(@t){
+			push @t1,$_ if($_=~/^$mimemenu\//);
+		}
+		if(@t1){
+			@t=@t1;
+			$a='+';
+			$p='Removed Associations';
+			goto FIX2;
+		}
+	}
+	_write($f,$s);
+}
+
+if(exists($P{$ma})){
+	if(@{$P{$ma}}){
+		_xdg_mime(@{$P{$ma}});
+		exit;
+	}
+	$mapps=1;
+	$ID=join(':',$ma,$P{$ma},'');
+}
+
+
+$subcmd.=" --slow";
 if(exists($P{slow})){
-	$configs{$_}=1 for(glob("${0}_*"));
+	$mapps=1;
+	if(!exists($P{$ma})){
+		$configs{$_}=1 for(glob("${0}_*"));
+	}
 	if(@{$P{slow}}){
 		($fconf,$X,$Y)=@{$P{slow}};
 	}else{
@@ -244,31 +302,14 @@ if(exists($P{slow})){
 		($X,$Y)=$prop{'_NET_DESKTOP_GEOMETRY'}=~/(\d+), (\d+)/;
 		($fconf)=$prop{'_OB_CONFIG_FILE'}=~/\"(.*)\"/;
 	}
+	$subcmd.=" &quot;$fconf&quot;";
 	if(my $s=_read("<$fconf")){
 		_tag($s,'',@$_) for(@conf);
 		$P{'slow'}=$conf{'.showIcons'} eq 'yes';
 		$s=~s/<keybind\s+key=\"(.*?)\".*?>\s*<action name=\"Execute\">.*?<command>(.*?)<\/command>/$key{$2}=$1;''/gse;
 		$fconf=~s/[^\/]*$//g;
 		$vanilla=$fconf=~/\/openbox$/;
-		if($X && $Y){
-			for(split(/\s+/,$ENV{YA_APP}),split(/\s*[\r\n]+\s*/,_read('<'.$fconf.'preferred-apps'))){
-				my $x=$_;
-				push(@apps,($x=~s/.*\///gs)?[$x,$_,$_]:[$_,$x="/usr/bin/$x",$_]);
-				$apps{$x}=$apps{$_}=undef;
-			}
-			if(!@apps){
-				for(map{("$_/mimeapps.list","$_/defaults.list")}("$ENV{HOME}/.local/share/applications",'/usr/share/applications')){
-					open(my $F,'<',$_) or next;
-					while(defined($s=<$F>)){
-						($s)=$s=~/^.*=(.*?)\s*$/m or next;
-						$apps2{$_}=undef for(split(/;/,$s));
-					}
-					close($F);
-				}
-				$apps2=scalar(%apps2);
-			}
-		}
-	};
+	}
 	icons('/usr/share/icons/');
 	while(</usr/share/pixmaps/*.???>){
 		chomp($_);
@@ -279,6 +320,29 @@ if(exists($P{slow})){
 		~s/\....$//;
 		$ico{$_}=$i;
 	}
+}
+if(($X && $Y) || $mapps){
+			for(split(/\s+/,$ENV{YA_APP}),split(/\s*[\r\n]+\s*/,_read('<'.$fconf.'preferred-apps'))){
+				if(substr($_,-8) eq '.desktop'){
+					$mimeapps{'Default Applications'}->{$_}=undef;
+				}else{
+					my $x=$_;
+					push(@apps,($x=~s/.*\///gs)?[$x,$_,$_]:[$_,$x="/usr/bin/$x",$_]);
+					$apps{$x}=$apps{$_}=undef;
+				}
+			}
+			for(map{("$_/mimeapps.list","$_/defaults.list")}("$ENV{HOME}/.local/share/applications",'/usr/share/applications')){
+				my $x;
+				open(my $F,'<',$_) or next;
+				while(defined($s=<$F>)){
+					if($s=~s/^\s*\[(.*)\]\s*$/$1/){
+						$x=$s;
+					}elsif(($m,$s)=$s=~/^(.*)=(.*?)\s*$/m){
+						$mimeapps{$x}->{$m}->{$_}=$mimeapps{$x}->{$_}->{$m}=1 for(split(/;/,$s));
+					}
+				}
+				close($F);
+			}
 }
 
 for $f(map{glob $_}('/usr/share/applications/*.desktop','/usr/share/applications/*/*.desktop','/usr/share/ya-layout/Desktop/*.desktop','/usr/share/ya-layout/Desktop/exit/*.desktop','/etc/xdg/autostart/*.desktop','/usr/share/desktop-directories/*.directory')){
@@ -347,26 +411,61 @@ N:
 		if(exists($P{autostart})){
 			my $i;
 			if(($i=join('|',@{$P{autostart}})||$prof) && !exists($d{OnlyShowIn}) || grep(/^(?:$i)$/i,split(';',$d{OnlyShowIn}))){
-				print STDERR "$d{Exec} &\n";
+#				print STDERR "$d{Exec} &\n";
 				$d{Name}="+ $d{Name}";
 			}
 		}
 	}
 	if($d{Type} eq 'Application'){
+		my (@def,@m1,@m2,$ff,$l);
+		$ff=$f;
+		$ff=~s/.*\///g;
+		$_=[split(/;/,$_)] for($d{Categories});
+		$mimeapps{'Added Associations'}->{$ff}->{$_}=$mimeapps{'Added Associations'}->{$_}->{$ff}=1 for(split(/;/,$d{MimeType}),"$mimemenu/$ff",map{@{$CatMime{$_}}}@{$d{Categories}},$ff);
+		for my $x(keys %{$mimeapps{'Removed Associations'}->{$ff}}){
+			delete($_->{$ff}->{$x}) && delete($_->{$x}->{$ff}) for($mimeapps{'Added Associations'},$mimeapps{'Default Applications'});
+		}
+		$d{MimeType}=[keys %{$mimeapps{'Added Associations'}->{$ff}}];
 		$d{Exec}=~s/\s+%\w$//;
 		$d{Name}.=" 	[$key{$d{Exec}}]" if(exists($key{$d{Exec}}));
-		$i="<item label='$d{Name}'$i><action name='Execute'><execute>$d{Exec}</execute>".$notify{lc($d{StartupNotify})}.'</action></item>';
-		if($apps2){
-			my $ff=$f;
-			$ff=~s/.*\///g;
-			if(exists($apps2{$ff})){
-				push @apps,[$d{Exec}];
-				$apps{$d{Exec}}=[$icon,$d{Exec},$i];
-				substr($i,13,0)=' ☑';
+		if($mapps){
+			for(sort @{$d{MimeType}}){
+				if(!exists($mimeapps{'Default Applications'}->{$_})){
+					push @def,$_;
+				}elsif(!exists($mimeapps{'Default Applications'}->{$_}->{$ff})){
+					push @m2,"<item label='$_'><action name='Execute'><execute>$0 --$ma + $ff $_</execute></action></item>";
+					next;
+				}
+				push @m1,"<item label='$_'><action name='Execute'><execute>$0 --$ma - $ff $_</execute></action></item>"
 			}
-		}elsif(exists($apps{$d{Exec}})){
-			$apps{$d{Exec}}=[$icon,$d{Exec},$i];
-			substr($i,13,0)=' ☑';
+		}
+		if(exists($P{$ma})){
+			$i="<item label='$d{Name}'$i><action name='Execute'><execute></execute>$0 --$ma + $ff @def</action></item>";
+		}else{
+			$i="<item label='$d{Name}'$i><action name='Execute'><execute>$d{Exec}</execute>".$notify{lc($d{StartupNotify})}.'</action></item>' 
+		}
+		if(!exists($apps{$d{Exec}})){
+			goto NOAPPS if(!(exists($mimeapps{'Default Applications'}->{$ff})));
+			$l=exists($mimeapps{'Default Applications'}->{"$mimemenu/$ff"});
+			$l || push @m2,"<item label='$mimemenu/$ff'><action name='Execute'><execute>$0 --$ma + $ff $mimemenu/$ff</execute></action></item>";
+			$l||=exists($P{$ma});
+			$l && push @apps,[$d{Exec}];
+		}
+		if(exists($P{$ma}) && ($i=~s/^<item (.*?)>.*$/<menu $1 id='$ID$id'>/)){
+			$id++;
+			$i.="<separator label='-'/>@m1<separator label='+'/>@m2</menu>";
+		}
+		if(@def){
+			$mimeapps{'Default Applications'}->{$_}->{$ff}=$mimeapps{'Default Applications'}->{$ff}->{$_}=1 for(@def);
+			_xdg_mime('+',$ff,@def);
+		}
+		substr($i,13,0)=' ☑';
+		$apps{$d{Exec}}=[$icon,$d{Exec},$i] if($l);
+NOAPPS:
+		$cat{$i}->{$_}++ || $cc{$_}++ for(@{$d{Categories}});
+		$cat{$i}=undef if(!exists($cat{$i}));
+		if(exists($P{mime})){
+			push @{$mime{$_}},$i for(@{$d{MimeType}});
 		}
 	}elsif($d{Type} eq 'Directory'){
 		my $d;
@@ -387,13 +486,6 @@ N:
 			$cc{$n}+=$c;
 			$base{$_}||=1;
 		}
-		next;
-	}else{next}
-	$cat{$i}->{$_}++ || $cc{$_}++ for(split(/;/,$d{Categories}));
-	$cat{$i}=undef if(!exists($cat{$i}));
-	if(exists($P{mime}) && exists($d{MimeType})){
-		$d{MimeType}=~s/;$//;
-		push @{$mime{$_}},$i for(split(/;/,$d{MimeType}));
 	}
 }
 ($_)=(sort{$_->{$a}<=>$_->{$b}||-($dir_{$a}<=>$dir_{$b})}keys %$_)[-1] for(values %dir);
@@ -406,7 +498,11 @@ for(keys %cat){
 }
 $dir{$_}||="$_'" for(keys %cc);
 $set=$dir{'Settings'};
-print '<openbox_pipe_menu><menu id="client-list-combined-menu"/><separator/>';
+if(exists($P{$ma})){
+	print '<openbox_pipe_menu>';
+}else{
+	print '<openbox_pipe_menu><menu id="client-list-combined-menu"/><separator/>';
+}
 if(@apps){
 	my $ico=$ico{'image-missing'}||$ico{'application-other'}||$ico{'application-x-executable'};
 	@apps=map{$apps{$_->[2]}||$apps{$_->[0]}||$apps{$_->[1]}||[$ico{$_->[0]}||$ico,$_->[2]]}@apps;
@@ -585,25 +681,28 @@ NEWSH:
 		}
 		$tint2_ && _restart($bin.'tint2','-c',$tint2);
 	}else{
-		print map{
+		print((map{
 			if($#$_==1){
 				$_->[1]=~s/([$xml_])/\&$xml_{$1};/g;
 				$_->[2]="<item label='$_->[1]'><action name='execute'><execute>$_->[1]</execute></action></item>";
 			}
 			$_->[2];
-		}@apps;
-		print '<separator/>';
+		}@apps),'<separator/>');
 	}
 nolauncher:
 }
 for(sort{$dir{$a} cmp $dir{$b}}keys %cat1){
-	print "<menu id='$id' label='$dir{$_}>",(sort @{$cat1{$_}});
+	print "<menu id='$ID$id' label='$dir{$_}>",(sort @{$cat1{$_}});
 	$id++;
 	if(delete($configs{$i="${0}_$_"})){
-		print "<separator/><menu id='$id' label='$set execute='$i'/>";
+		print "<separator/><menu id='$ID$id' label='$set execute='$i'/>";
 		$id++;
 	}
 	print '</menu>';
+}
+if(exists($P{$ma})){
+	print '</openbox_pipe_menu>';
+	exit;
 }
 for(map{glob $_}(@{$P{include}})){
 	if(open(my $F,(-x $_)?"$_|":"<$_")){
@@ -718,6 +817,7 @@ print qq(
 <item label="Restart"><action name="Restart"/></item>
 <separator/>
 <menu id=").($id++).qq(" label='$set execute="${0}config"/>
+<menu id=").($id++).qq(" label='Default Applications' execute='$0$subcmd --$ma'/>
 <separator label=""/>);
 print "<item label='$_->[0]'><action name='execute'><prompt>$_->[0]</prompt><execute>$_->[1]</execute></action></item>\n" for(['PowerOFF','/sbin/poweroff -i -h'],['Reboot','/sbin/reboot'],
 	#-w '/sys/power/state'?(map{["Suspend to $_","/bin/bash -c &quot;echo $_ &gt;/sys/power/state&quot;"]}split(/\s+/,_read('</sys/power/state'))):()

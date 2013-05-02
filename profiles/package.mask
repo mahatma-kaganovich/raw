@@ -6,6 +6,7 @@
 =sys-fs/ocfs2-tools-1.4.9999
 =sys-fs/ocfs2-tools-9999
 =sys-kernel/genpnprd-9999
+=x11-misc/ya-layout-9999
 >=media-libs/mesa-9999
 # Sirius
 >=net-libs/ptlib-2.8

@@ -14,7 +14,7 @@ case "$cmd" in
 *ob3menu*\ --autostart*)a="$HOME/.cache/ya/autostart";;&
 *ob3menu*\ --launcher*)c+=" $HOME/.config/ya/tint2rc";;&
 *ob3menu*\ --slow*)
-	c+=" $HOME/.config/ya/rc.xml $HOME/.config/ya/preferred-apps /usr/share/mime/globs /etc/fstab" # /usr/share/icons/*/*/*
+	c+=" $HOME/.config/ya/rc.xml $HOME/.config/ya/preferred-apps /usr/share/mime/globs /etc/fstab $HOME/.local/share/applications" # /usr/share/icons/*/*/*
 	cmd+=" --mime $m.sh $HOME"
 	m1=
 ;;
