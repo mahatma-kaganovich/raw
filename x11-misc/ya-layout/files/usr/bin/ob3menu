@@ -365,7 +365,6 @@ for $f(map{glob $_}('/usr/share/applications/*.desktop','/usr/share/applications
 		close($F);
 		%d=%{$dd{'Desktop Entry'}};
 		$en{$i}=$en{$d{Name}->{''}}=1;
-#		print STDERR "$f $i = $cname{$i}\n" if(!exists($cc{$i}) && !exists($cc{$d{Name}->{''}}) && !exists($cc{$cname{$i}}) && !exists($cc{$cname{$d{Name}->{''}}}));
 		# same can be in next block (else) too, but fixme:
 		# in all known *.desktop "Name=" come before "Name[...]=". So, just can use more CPU.
 		# Here we need "Name=" too.
@@ -411,7 +410,7 @@ N:
 		if(exists($P{autostart})){
 			my $i;
 			if(($i=join('|',@{$P{autostart}})||$prof) && !exists($d{OnlyShowIn}) || grep(/^(?:$i)$/i,split(';',$d{OnlyShowIn}))){
-#				print STDERR "$d{Exec} &\n";
+				print STDERR "$d{Exec} &\n";
 				$d{Name}="+ $d{Name}";
 			}
 		}
