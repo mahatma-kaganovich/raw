@@ -93,25 +93,6 @@ $ID='ob:openbox_config';
 
 %cmd=(
 'fix'=>\&fixrc,
-# todo
-'app'=>sub{
-#	open_(my $F,'<',"$ENV{HOME}/.cache/$prof/menu.xml");
-#	read($F,my $s,-s $F);
-	open_(my $F,'|-',"${bin}ob3menu-cache /usr/bin/ob3menu --slow $ENV{HOME}/.config/ya/rc.xml");
-	$s=join('',<$F>);
-	close($F);
-	utf8_decode($s);
-	$s=~s/(<menu id=[\'\"])/$1$$:/gs;
-	~s/([$xml_])/\&$xml_{$1};/g for(@_);
-	my $p=join("' '",@_);
-	$s=~s/(<action.*?<\/action>)/
-		my $i=$1;
-		$i=~s\/([$xml_])\/\&$xml_{$1};\/g;
-		"<action name='execute'><execute>$fix '$i' '$p'<\/execute><\/action>"
-	/gse;
-	print $s;
-	exit;
-},
 'id'=>sub{
 	$ID=$_[0];
 	&{$subinit{$ID}}(@_) if(exists($subinit{$ID}));
@@ -919,6 +900,7 @@ sub setxkbmap{
 		for(values %c){
 			for my $v(keys %$_){
 				$_->{$v}=$v;
+				$_->{$v}=~s/_/ /g;
 			}
 		}
 	}
