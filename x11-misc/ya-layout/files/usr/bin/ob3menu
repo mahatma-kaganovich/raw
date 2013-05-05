@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # (c) Denis Kaganovich, Anarchy or GPLv2
-# OpenBox3 pipe menu v0.7
+# OpenBox3 pipe menu v0.8
 # ob3menu {--<command> {params}}
 # 	--slow [<path/to/rc.xml> [X Y]]
 #	--autostart {profile}
@@ -260,10 +260,10 @@ FIX2:
 		}
 		$x.$y.$z;
 	/gse;
-	if($a eq '+'){
-		$s.="\n[$p]\n" if(!($s=~/^\[$p\]/m));
-		my $i="\n";
-		$s=~s/^(\[$p\].*?)$/$1$i$_=$d/m for(@t);
+	if($a ne '-'){
+		$s.="\n[$p]\n" if(!($s=~/^\[$p\]$/m));
+		my $n=($a=~/\d/)?$a:'';
+		$s=~s/((?:^|\n)\[$p\]\n(?:\_[^\n]*\n){0,$n})/$1$_=$d\n/s for(@t);
 	}else{
 		my @t1;
 		for(@t){
@@ -332,17 +332,19 @@ if(($X && $Y) || $mapps){
 				}
 			}
 			for(map{("$_/mimeapps.list","$_/defaults.list")}("$ENV{HOME}/.local/share/applications",'/usr/share/applications')){
-				my $x;
+				my ($x,$i);
 				open(my $F,'<',$_) or next;
 				while(defined($s=<$F>)){
 					if($s=~s/^\s*\[(.*)\]\s*$/$1/){
 						$x=$s;
+						$i=0;
 					}elsif(($m,$s)=$s=~/^(.*)=(.*?)\s*$/m){
-						$mimeapps{$x}->{$m}->{$_}=$mimeapps{$x}->{$_}->{$m}=1 for(split(/;/,$s));
+						$mimeapps{$x}->{$m}->{$_}=$mimeapps{$x}->{$_}->{$m}=++$i for(split(/;/,$s));
 					}
 				}
 				close($F);
 			}
+			$napps=scalar(grep(/^$mimemenu\//,keys %{$mimeapps{'Default Applications'}})) if($mapps);
 }
 
 for $f(map{glob $_}('/usr/share/applications/*.desktop','/usr/share/applications/*/*.desktop','/usr/share/ya-layout/Desktop/*.desktop','/usr/share/ya-layout/Desktop/exit/*.desktop','/etc/xdg/autostart/*.desktop','/usr/share/desktop-directories/*.directory')){
@@ -435,20 +437,29 @@ N:
 					push @m2,"<item label='$_'><action name='Execute'><execute>$0 --$ma + $ff $_</execute></action></item>";
 					next;
 				}
-				push @m1,"<item label='$_'><action name='Execute'><execute>$0 --$ma - $ff $_</execute></action></item>"
+				if($_ eq "$mimemenu/$ff"){
+					push @m1,join('',"<menu label='$mimemenu/$ff' id='$ID$id'>",
+					(map{"<item label='$_'><action name='Execute'><execute>$0 --$ma $_ $ff $mimemenu/$ff</execute></action></item>"}'-',0..$napps),
+					'</menu>');
+					$id++;
+				}else{
+					push @m1,"<item label='$_'><action name='Execute'><execute>$0 --$ma - $ff $_</execute></action></item>"
+				}
 			}
 		}
 		if(exists($P{$ma})){
-			$i="<item label='$d{Name}'$i><action name='Execute'><execute></execute>$0 --$ma + $ff @def</action></item>";
+			$i="<item label='$d{Name}'$i><action name='Execute'><execute>$0 --$ma + $ff @def</execute></action></item>";
 		}else{
 			$i="<item label='$d{Name}'$i><action name='Execute'><execute>$d{Exec}</execute>".$notify{lc($d{StartupNotify})}.'</action></item>' 
 		}
 		if(!exists($apps{$d{Exec}})){
 			goto NOAPPS if(!(exists($mimeapps{'Default Applications'}->{$ff})));
-			$l=exists($mimeapps{'Default Applications'}->{"$mimemenu/$ff"});
-			$l || push @m2,"<item label='$mimemenu/$ff'><action name='Execute'><execute>$0 --$ma + $ff $mimemenu/$ff</execute></action></item>";
-			$l||=exists($P{$ma});
-			$l && push @apps,[$d{Exec}];
+			if(!($l=exists($mimeapps{'Default Applications'}->{"$mimemenu/$ff"}))){
+				push @m2,"<item label='$mimemenu/$ff'><action name='Execute'><execute>$0 --$ma + $ff $mimemenu/$ff</execute></action></item>";
+				push @apps,[$d{Exec}] if($l=exists($P{$ma}));
+			}else{
+				splice(@apps,$mimeapps{'Default Applications'}->{"$mimemenu/$ff"}->{$ff}-1,0,[$d{Exec}]);
+			}
 		}else{
 			$l=1
 		}
