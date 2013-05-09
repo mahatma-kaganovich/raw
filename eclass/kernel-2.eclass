@@ -676,7 +676,11 @@ native)
 			esac;
 			use xen && CF1 XEN
 			# at least KVM migration & other asymmetry
-			CF1 -NO_HZ -SCHED_HRTICK -IRQ_TIME_ACCOUNTING
+			#CF1 -NO_HZ -SCHED_HRTICK -IRQ_TIME_ACCOUNTING
+			ewarn "*************************************************************"
+			ewarn "** With QEMU VM migration I get best results with cmdline: **"
+			ewarn "** nohz=off divider=10 clocksource=acpi_pm notsc  (FIXME!) **"
+			ewarn "*************************************************************"
 		;;
 #		xtopology)CF1 SCHED_SMT;;
 		hwpstate)grep -qsF X86_FEATURE_HW_PSTATE "${S}/drivers/cpufreq/powernow-k8.c" && freq+=" X86_ACPI_CPUFREQ -X86_POWERNOW_K8";;
