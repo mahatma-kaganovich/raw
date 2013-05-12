@@ -149,7 +149,7 @@ _umount(){
 		return 0
 	}
 	echo "$i"
-	_fuser -mM `echo "$i"|grep "^umount: .* device is busy\.\$"|sed -e 's%^umount: \([^ 	]*\): device is busy\.$%\1%g'` || return 1
+	_fuser -mM `echo "$i"|grep "^umount: .* \(device\|target\) is busy\.\$"|sed -e 's%^umount: \([^ 	]*\): [^ ]* is busy\.$%\1%g'` || return 1
 	[[ -z "${OCFS2_UMOUNT_KILL}" ]] && return 1
 	umount $* && return 0
 	sleep 1
