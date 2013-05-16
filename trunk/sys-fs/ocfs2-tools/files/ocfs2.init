@@ -143,18 +143,22 @@ _fuser(){
 }
 
 _umount(){
-	local i m
+	local i m x=0
 	i=`umount $* 2>&1` && {
 		echo -n "$i"
 		return 0
 	}
 	echo "$i"
-	_fuser -mM `echo "$i"|grep "^umount: .* \(device\|target\) is busy\.\$"|sed -e 's%^umount: \([^ 	]*\): [^ ]* is busy\.$%\1%g'` || return 1
-	[[ -z "${OCFS2_UMOUNT_KILL}" ]] && return 1
-	umount $* && return 0
-	sleep 1
-	umount $*
-	return $?
+	local p=`echo "$i"|grep "^umount: .* \(device\|target\) is busy\.\$"|sed -e 's%^umount: \([^ 	]*\): [^ ]* is busy\.$%\1%g'`
+	while [ -n "$p" -a "$x" -lt 3 ]; do
+		_fuser -mM "$p" || return 1
+		[[ -z "${OCFS2_UMOUNT_KILL}" ]] && break
+		umount $* && return 0
+		sleep 1
+		umount $* && return 0
+		let x=[x+1]
+	done
+	return 1
 }
 
 stop() {
