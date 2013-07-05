@@ -1,0 +1,19 @@
+
+_sed(){
+	local t=$4.'$$$'
+	cp $4 $t || exit 1
+	sed "${@}"
+	cmp -s $4 $t || {
+		unlink $t
+		return 0
+	}
+	echo "Failed sed: $*"
+	exit 1
+}
+
+# patch is too unsafe with modifyed scripts. use script instead
+cd "$1"
+_sed -i -e 's:^\(\. /etc/initrd\.scripts\)$:\1\n. /etc/syspnp:' init
+_sed -i -e 's:^\(/bin/busybox --install -s\)$:\1\n\npnp_init:' init
+_sed -i -e 's:^\(	good_msg .Loading modules.\)$:\1\n	syspnp:' init
+_sed -i -e 's:^\(mkdir "${CHROOT}/proc".*\)$:\1\nmod_unload:' init
