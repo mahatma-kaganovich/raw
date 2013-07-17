@@ -1,0 +1,18 @@
+#!/sbin/runscript
+
+depend() {
+	need localmount
+	before samba
+}
+
+start() {
+	ebegin "Starting scannedonly_clamd"
+	/usr/bin/scannedonly_clamd.pl $SCANNEDONLY_CLAMD >>${SCANNEDONLY_CLAMD_LOG:-/dev/null} 2>&1 &
+	eend $? "Failed to start scannedonly_clamd"
+}
+
+stop() {
+	ebegin "Stopping scannedonly_clamd"
+	killall -w scannedonly_clamd.pl
+	eend $? "Failed to stop scannedonly_clamd"
+}

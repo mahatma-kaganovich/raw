@@ -1,0 +1,4 @@
+#!/bin/bash
+
+. /etc/conf.d/scannedonly_clamd &&
+[ -n "$SCANNEDONLY_CLAMD_DAILY" ] && /usr/bin/scannedonly_clamd.pl $SCANNEDONLY_CLAMD_DAILY >>${SCANNEDONLY_CLAMD_LOG:-/dev/null} 2>&1 &
