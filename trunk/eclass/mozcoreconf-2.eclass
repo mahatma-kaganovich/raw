@@ -1,24 +1,4 @@
-
-inherit multilib flag-o-matic
-
-IUSE="${IUSE} +custom-optimization debug moznosystem +pic"
-case "${ARCH}" in
-alpha|ia64|amd64|ppc64) IUSE="${IUSE} +pic" ;;
-x86) IUSE="${IUSE} sse" ;;
-esac
-[[ "${ARCH}" == *86 ]] && IUSE="${IUSE} sse"
-
-
-RDEPEND="!moznosystem? ( >=sys-libs/zlib-1.1.4 )"
-
-DEPEND="${RDEPEND}
-	dev-util/pkgconfig"
-
-# Set by configure (plus USE_AUTOCONF=1), but useful for NSPR
-export MOZILLA_CLIENT=1
-export BUILD_OPT=1
-export NO_STATIC_LIB=1
-export USE_PTHREADS=1
+source "${PORTDIR}/eclass/mozcoreconf-2.eclass"
 
 mozconfig_init() {
 	declare enable_optimize pango_version myext x
@@ -95,15 +75,13 @@ mozconfig_init() {
 	else
 		# Enable Mozilla's default
 		mozconfig_annotate "mozilla default" --enable-optimize
-		strip-flags
 	fi
 
 	# Now strip optimization from CFLAGS so it doesn't end up in the
 	# compile string
 	filter-flags '-O*'
 
-	# I forget about stripping!
-#	strip-flags
+	use custom-cflags || strip-flags
 
 	# Historically we have needed to add -fPIC manually for 64-bit.
 	# I don't know why -fPIC needed for 64bit and want to off
@@ -204,9 +182,6 @@ mozconfig_init() {
 		mozconfig_use_enable !debug install-strip
 	fi
 
-		# This doesn't work yet
-		#--with-system-png \
-
 	if [[ ${PN} != seamonkey ]]; then
 		mozconfig_annotate gentoo \
 			--enable-single-profile \
@@ -217,6 +192,12 @@ mozconfig_init() {
 	# Here is a strange one...
 	if is-flag '-mcpu=ultrasparc*' || is-flag '-mtune=ultrasparc*'; then
 		mozconfig_annotate "building on ultrasparc" --enable-js-ultrasparc
+	fi
+
+	# Currently --enable-elf-dynstr-gc only works for x86,
+	# thanks to Jason Wever <weeve@gentoo.org> for the fix.
+	if use x86 && [[ ${enable_optimize} != -O0 ]]; then
+		mozconfig_annotate "${ARCH} optimized build" --enable-elf-dynstr-gc
 	fi
 
 	# jemalloc won't build with older glibc
