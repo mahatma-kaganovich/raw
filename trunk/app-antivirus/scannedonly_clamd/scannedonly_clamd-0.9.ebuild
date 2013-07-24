@@ -1,6 +1,6 @@
 EAPI="5"
 SLOT="0"
-DESCRIPTION="Simple drop-in replacement for scannedonly package for clamd, written on perl"
+DESCRIPTION="Simple replacement for scannedonly package for clamd, written on perl"
 LICENSE="Anarchy"
 KEYWORDS="amd64 x86"
 RDEPEND="net-fs/samba app-antivirus/clamav dev-lang/perl"
