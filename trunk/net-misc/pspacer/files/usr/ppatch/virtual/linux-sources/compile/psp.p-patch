@@ -1,0 +1,26 @@
+my $psp="$ENV{S}/psp";
+mkdir $psp;
+print `tar -xjf $ENV{PPATCH}/psp.tar.bz2 -C $psp`;
+my $f1="$ENV{S}/net/sched/sch_psp.c";
+if(-d "$psp"){
+ $Kconfig=rf("$psp/kernel/Kconfig");
+ if(! -e $f1){
+  file("$psp/kernel/sch_psp.c",$f1);
+  file("$psp/kernel/sch_psp.h","$ENV{S}/net/sched/sch_psp.h");
+  ($ENV{PN} eq 'mm-sources') && $f{$f1}=~s/KERNEL_VERSION\(2,6,(22)\)/my $x=$1-1;"KERNEL_VERSION(2,6,$x)"/gse;
+ }
+ pp("$ENV{S}/net/sched/Kconfig",0,"\$s=~s/config NET_SCH_CBQ/\$Kconfig\nconfig NET_SCH_CBQ/g","index(\$s,\"NET_SCH_PSP\n\")>=0");
+ pp("$ENV{S}/net/sched/Makefile",0,"\$s=~s/= sch_cbq.o/= sch_cbq.o\nobj-\\\$(CONFIG_NET_SCH_PSP)       += sch_psp.o/g","index(\$s,\"sch_psp.o\")>=0");
+}
+`rm $psp -Rf`;
+
+## -malign-double:
+for("net/sched"){
+ for(wild("$ENV{S}/$_",'Makefile')){
+  my $x=substr($_,length($ENV{S})+1);
+  substr($x,-8)='CFLAGS4psp';
+  $x=~s/\//_/g;
+  addon($_,'#','psp.p-patch',"\nifeq (\$(VERSION).\$(PATCHLEVEL).\$(SUBLEVEL),2.6.20)\nifeq (\$(ARCH),i386)\nexport $x\n$x := -malign-double\nEXTRA_CFLAGS += \$($x)\nendif\nendif\n",0)
+ }
+}
+	  

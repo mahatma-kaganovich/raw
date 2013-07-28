@@ -1,0 +1,17 @@
+#!/sbin/runscript
+
+depend() {
+	need net
+}
+
+start() {
+	ebegin "Starting pspd"
+	/usr/sbin/pspd -d
+	eend $?
+}
+
+stop() {
+	ebegin "Stopping pspd"
+	killall /usr/sbin/pspd
+	eend $?
+}

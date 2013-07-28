@@ -1,0 +1,3 @@
+my $p="$ENV{PPATCH}/$ENV{PF}.psp.patch";
+-e $p||($p="$ENV{PPATCH}/libnl-1.0-pre6.psp.patch");
+print `patch -p1 -tNi $p -d $ENV{S}`

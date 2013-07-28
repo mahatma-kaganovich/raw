@@ -1,0 +1,8 @@
+my $d="$ENV{D}/usr/sbin";
+print `mkdir $d $ENV{D}/etc/init.d --parents`;
+system("tar -xjf $ENV{PPATCH}/../psp.tar.bz2 -C $ENV{S}");
+if(! -e "$d/pspd"){
+ my $c="$ENV{CFLAGS} ".(isflag($ENV{USE},'static')?'-static':"");
+# print `cd $ENV{S}/pspd && cc -g -Wall -I $ENV{S}/include -L $ENV{S}/lib -lnl  pspd.c conf.c -o pspd $c && install pspd $d && install $ENV{PPATCH}/pspd $ENV{D}/etc/init.d/`;
+ print `cd $ENV{S}/pspd && cc -g -Wall -I $ENV{S}/include -L $ENV{S}/lib -lnl  pspd.c -o pspd $c && install pspd $d && install $ENV{PPATCH}/pspd $ENV{D}/etc/init.d/`;
+}

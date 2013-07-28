@@ -1,0 +1,12 @@
+my $psp="$ENV{S}/psp";
+mkdir $psp;
+print `tar -xjf $ENV{PPATCH}/psp.tar.bz2 -C $psp`;
+
+if(! -e "$ENV{S}/tc/q_psp.c"){
+file("$psp/kernel/sch_psp.h","$ENV{S}/tc/sch_psp.h");
+file("$psp/tc/q_psp.c","$ENV{S}/tc/q_psp.c");
+file("$psp/man/man8/tc-psp.8","$ENV{S}/man/man8/tc-psp.8");
+pp("$ENV{S}/tc/Makefile",0,"\$s=~s/= q_cbq.o/= q_cbq.o\nTCMODULES += q_psp.o/g","index(\$s,\"q_psp.o\")>=0")
+}
+
+#$ENV{CFLAGS}.=" -malign-double" if($ENV{ARCH} eq 'x86');
