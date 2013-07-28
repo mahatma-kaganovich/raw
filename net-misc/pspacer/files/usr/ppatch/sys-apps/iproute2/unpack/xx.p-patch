@@ -1,0 +1,1 @@
+#$ENV{CFLAGS}.=" -malign-double" if($ENV{ARCH} eq 'x86')

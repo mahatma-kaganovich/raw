@@ -25,9 +25,8 @@ test ${m} && econf ${cf} && emake ${m}
 }
 
 src_install(){
-cd ${FILESDIR}
-tar -xjf psp-pp-2.1.tar.bz2 -C ${D}
-test -d root && cd root && cp -at ${D} * --parents
+cp -aT "$FILESDIR" "${D}" || die
+rm -Rf `find "${D}" -name ".*"`
 cd ${S}
 #use doc && einstall DESTDIR=${D} docs-install
 use doc && cd doc && dodoc * && cp -at ${D}usr/share/doc/${PF}/${DOCDESTTREE} fig/* --parents
