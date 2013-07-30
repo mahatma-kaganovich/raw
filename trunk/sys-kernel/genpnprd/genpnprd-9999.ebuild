@@ -16,9 +16,8 @@ src_install(){
 	for i in $(find|sort|grep -v "/\.\|^\.$" ); do
 		i="${i#.}"
 		d="/usr/share/${PN}${i%/*}"
-		if [[ -L "$i" ]]; then
-			dosym "`readlink "$i"`" "$d"
-			cp -a "$i" "$D$d"
+		if [[ -L ".$i" ]]; then
+			dosym "`readlink ".$i"`" "$d"
 		elif [[ -d ".$i" ]]; then
 			dodir "/usr/share/$PN$i"
 		else
