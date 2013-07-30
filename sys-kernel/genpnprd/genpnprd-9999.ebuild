@@ -15,10 +15,14 @@ src_install(){
 	doins kernel.conf genkernel.conf
 	for i in $(find|sort|grep -v "/\.\|^\.$" ); do
 		i="${i#.}"
-		if [[ -d ".$i" ]]; then
+		d="/usr/share/${PN}${i%/*}"
+		if [[ -L "$i" ]]; then
+			dosym "`readlink "$i"`" "$d"
+			cp -a "$i" "$D$d"
+		elif [[ -d ".$i" ]]; then
 			dodir "/usr/share/$PN$i"
 		else
-			insinto "/usr/share/${PN}${i%/*}"
+			insinto "$d"
 			doins "${i#/}"
 		fi
 	done

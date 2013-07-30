@@ -818,6 +818,7 @@ use embed-hardware && [[ -n "$freq" ]] && CF1 -X86_POWERNOW_K8 -X86_ACPI_CPUFREQ
 CF1 "-CPU_SUP_.*" "CPU_SUP_${V:-.*}"
 [ "$V" != INTEL -a -n "$V" ] && CF1 -X86_INTEL_PSTATE
 [ -n "${CF##*-NUMA*}" -o -n "${CF##*-PARAVIRT*}" ] && CF1 RCU_NOCB_CPU RCU_NOCB_CPU_ALL
+[ -z "${CF##*-PARAVIRT*}" ] && CF1 JUMP_LABEL
 KERNEL_CONFIG="#-march=${march}# ${CF//  / }
 ${KERNEL_CONFIG}"
 }
