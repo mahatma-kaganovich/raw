@@ -13,18 +13,9 @@ S="${FILESDIR}"
 src_install(){
 	insinto /etc/kernels
 	doins kernel.conf genkernel.conf
-	for i in $(find|sort|grep -v "/\.\|^\.$" ); do
-		i="${i#.}"
-		d="/usr/share/${PN}${i%/*}"
-		if [[ -L ".$i" ]]; then
-			cp -a ".$i" "$D$d"
-		elif [[ -d ".$i" ]]; then
-			dodir "/usr/share/$PN$i"
-		else
-			insinto "$d"
-			doins "${i#/}"
-		fi
-	done
+	dodir /usr/share
+	cp -aT "$FILESDIR" "${D}/usr/share/${PN}" || die
+	rm -Rf `find "${D}" -name ".*"`
 	dobin ${PN}
 	dosym ../../bin/${PN} /usr/share/${PN}
 	# suddenly
