@@ -17,7 +17,7 @@ src_install(){
 		i="${i#.}"
 		d="/usr/share/${PN}${i%/*}"
 		if [[ -L ".$i" ]]; then
-			dosym "`readlink ".$i"`" "$d"
+			cp -a ".$i" "$D$d"
 		elif [[ -d ".$i" ]]; then
 			dodir "/usr/share/$PN$i"
 		else
