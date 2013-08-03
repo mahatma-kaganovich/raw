@@ -1,4 +1,4 @@
-EAPI="3"
+EAPI=5
 WANT_AUTOCONF="2.1"
 
 
