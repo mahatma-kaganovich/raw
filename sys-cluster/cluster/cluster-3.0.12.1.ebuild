@@ -1,6 +1,5 @@
-inherit eutils linux-mod versionator
-
 EAPI=3
+inherit eutils linux-mod versionator
 
 DESCRIPTION="RedHat cluster packages"
 HOMEPAGE="http://sources.redhat.com/cluster/wiki/"
