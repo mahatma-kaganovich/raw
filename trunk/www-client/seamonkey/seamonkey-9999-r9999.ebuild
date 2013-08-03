@@ -4,7 +4,7 @@ WANT_AUTOCONF="2.1"
 
 hg=""
 [[ "${PV}" == 9999* ]] && hg="mercurial cvs git-2"
-inherit ${hg} flag-o-matic toolchain-funcs eutils mozcoreconf-2 mozconfig-3 makeedit multilib autotools mozextension fdo-mime java-pkg-opt-2 python
+inherit ${hg} flag-o-matic toolchain-funcs eutils mozcoreconf-2 mozconfig-3 makeedit multilib autotools mozextension fdo-mime java-pkg-opt-2 python-r1
 
 : ${FILESDIR:=${EBUILD%/*}/files}
 
@@ -217,8 +217,8 @@ pkg_setup() {
 		*)use $f && ! use $i && die "Useflags mismatch: $f? ( $i )";;
 		esac
 	done
-	python_set_active_version 3
-	python_pkg_setup
+#	python_set_active_version 3
+	python-r1_pkg_setup
 }
 
 src_unpack() {

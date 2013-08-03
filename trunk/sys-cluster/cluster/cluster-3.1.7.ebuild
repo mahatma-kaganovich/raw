@@ -1,6 +1,5 @@
-inherit eutils
-
 EAPI=3
+inherit eutils
 
 DESCRIPTION="RedHat cluster packages"
 HOMEPAGE="http://sources.redhat.com/cluster/wiki/"
