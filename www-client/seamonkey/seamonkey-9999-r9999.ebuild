@@ -4,7 +4,8 @@ WANT_AUTOCONF="2.1"
 
 hg=""
 [[ "${PV}" == 9999* ]] && hg="mercurial cvs git-2"
-inherit ${hg} flag-o-matic toolchain-funcs eutils mozcoreconf-2 mozconfig-3 makeedit multilib autotools mozextension fdo-mime java-pkg-opt-2 python-r1
+inherit ${hg} flag-o-matic toolchain-funcs eutils mozcoreconf-2 mozconfig-3 makeedit multilib autotools mozextension fdo-mime java-pkg-opt-2
+#python
 
 : ${FILESDIR:=${EBUILD%/*}/files}
 
@@ -209,6 +210,7 @@ LDAP(){
 }
 
 pkg_setup() {
+	moz_pkgsetup
 	local i f f1
 	[[ "$EAPI" == 3 ]] && for i in ${REQUIRED_USE_}; do
 		case "$i" in
@@ -218,7 +220,7 @@ pkg_setup() {
 		esac
 	done
 #	python_set_active_version 3
-	python-r1_pkg_setup
+#	python-_pkg_setup
 }
 
 src_unpack() {
