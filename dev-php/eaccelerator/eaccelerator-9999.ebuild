@@ -11,7 +11,7 @@ PHP_EXT_ZENDEXT="no"
 EGIT_REPO_URI="https://github.com/eaccelerator/eaccelerator.git"
 [[ -z "${EACCELERATOR_CACHEDIR}" ]] && EACCELERATOR_CACHEDIR="/var/cache/eaccelerator-php5/"
 
-USE_PHP="php5-3 php5-4 php5-5"
+USE_PHP="php5-3 php5-4"
 
 inherit php-ext-source-r2 eutils depend.apache user git-2
 
@@ -56,14 +56,12 @@ pkg_setup() {
 }
 
 #src_prepare() {
-#	touch "$S/php_logos.h"
 #	epatch "${FILESDIR}/eaccelerator-openbasedir.patch"
 #	php-ext-source-r2_src_prepare
 #	git-2_src_prepare
 #}
 
 src_configure() {
-	touch "$S/php_logos.h"
 	my_conf="--enable-eaccelerator=shared --with-eaccelerator-userid=`id -u ${HTTPD_USER}`"
 	use debug && my_conf="${my_conf} --with-eaccelerator-debug"
 	use disassembler && my_conf="${my_conf} --with-eaccelerator-disassembler"
