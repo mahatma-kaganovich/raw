@@ -11,6 +11,8 @@ PHP_EXT_ZENDEXT="no"
 EGIT_REPO_URI="https://github.com/eaccelerator/eaccelerator.git"
 [[ -z "${EACCELERATOR_CACHEDIR}" ]] && EACCELERATOR_CACHEDIR="/var/cache/eaccelerator-php5/"
 
+USE_PHP="php5-3 php5-4 php5-5"
+
 inherit php-ext-source-r2 eutils depend.apache user git-2
 
 KEYWORDS="amd64 x86"
@@ -27,8 +29,6 @@ RDEPEND="${DEPEND}
 	>=dev-lang/php-5.1[zlib,session?]
 	virtual/httpd-php
 "
-
-USE_PHP="php5-3 php5-4 php5-5"
 
 # Webserver user and group, here for Apache by default
 HTTPD_USER="${HTTPD_USER:-apache}"
