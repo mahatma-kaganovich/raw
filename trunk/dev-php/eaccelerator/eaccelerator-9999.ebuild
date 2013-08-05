@@ -1,7 +1,6 @@
 # Copyright 1999-2012 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
 # $Header: /var/cvsroot/gentoo-x86/dev-php/eaccelerator/eaccelerator-0.9.6.1-r5.ebuild,v 1.5 2012/08/11 12:43:16 maekke Exp $
-# - fastbump from. since pecl-apc is horrible with mpm-itk, php 5.4 eaccelerator branch is very useful (for me)
 
 EAPI="4"
 
@@ -14,10 +13,11 @@ EGIT_REPO_URI="https://github.com/eaccelerator/eaccelerator.git"
 
 inherit php-ext-source-r2 eutils depend.apache user git-2
 
-KEYWORDS="~amd64 ~x86"
+KEYWORDS="amd64 x86"
 
 DESCRIPTION="A PHP Accelerator & Encoder."
 HOMEPAGE="http://www.eaccelerator.net/"
+#SRC_URI="http://bart.eaccelerator.net/source/${PV}/${P}.tar.bz2"
 LICENSE="GPL-2"
 SLOT="0"
 IUSE="debug disassembler inode doccommentinclusion session"
@@ -27,6 +27,8 @@ RDEPEND="${DEPEND}
 	>=dev-lang/php-5.1[zlib,session?]
 	virtual/httpd-php
 "
+
+USE_PHP="php5-3 php5-4 php5-5"
 
 # Webserver user and group, here for Apache by default
 HTTPD_USER="${HTTPD_USER:-apache}"
@@ -53,7 +55,15 @@ pkg_setup() {
 	fi
 }
 
+#src_prepare() {
+#	touch "$S/php_logos.h"
+#	epatch "${FILESDIR}/eaccelerator-openbasedir.patch"
+#	php-ext-source-r2_src_prepare
+#	git-2_src_prepare
+#}
+
 src_configure() {
+	touch "$S/php_logos.h"
 	my_conf="--enable-eaccelerator=shared --with-eaccelerator-userid=`id -u ${HTTPD_USER}`"
 	use debug && my_conf="${my_conf} --with-eaccelerator-debug"
 	use disassembler && my_conf="${my_conf} --with-eaccelerator-disassembler"
