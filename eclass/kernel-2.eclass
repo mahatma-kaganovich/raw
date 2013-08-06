@@ -162,6 +162,7 @@ kernel-2_src_configure() {
 		aflags="$cflags" # at least now
 		ldflags="$(flags_nosp "$(extract_flags -Wl, ${LDFLAGS}) ${ldflags}")"
 	fi
+	: ${aflags:="${_aflags}"}
 	[[ -n "${cflags}" ]] && sed -i -e "s/^\(KBUILD_CFLAGS.*-O.\)/\1 ${cflags}/g" Makefile
 	[[ -n "${aflags}" ]] && sed -i -e "s/^\(AFLAGS_[A-Z]*[	 ]*=\)$/\1 ${aflags}/" Makefile
 	[[ -n "${ldflags}" ]] && sed -i -e "s/^\(LDFLAGS_[A-Z]*[	 ]*=\)$/\1 ${ldflags}/" Makefile
@@ -618,6 +619,7 @@ acpi_detect(){
 # Kernel-config CPU from CFLAGS and|or /proc/cpuinfo (native)
 # use smp: when 'native' = single/multi cpu, ht/mc will be forced ON
 cpu2K(){
+_aflags=
 local i v V="" CF="" march=$(march) m64g="HIGHMEM64G -HIGHMEM4G -NOHIGHMEM" freq='' gov='ONDEMAND'
 local vendor_id="" model_name="" flags="" cpu_family="" model="" cache_alignment="" fpu="" siblings="" cpu_cores="" processor=""
 export PNP_VENDOR="^vendor_id\|"
@@ -662,7 +664,7 @@ native)
 		mtrr)CF1 ${i^^};;
 		pae)CF1 X86_PAE $m64g;;
 		mp)CF1 SMP;; # ?
-		lm)use multitarget && CF1 64BIT;;
+		lm)use multitarget && _aflags+=" -march=nocona -mno-mmx -mno-sse -mno-sse2 -mno-sse3" && CF1 64BIT;;
 		cmp_legacy)CF1 SMP SCHED_MC -SCHED_SMT;;
 		up)ewarn "Running SMP on UP. Recommended useflag '-smp' and '-SMP' in ${KERNEL_CONF}";;
 		est)freq+=" X86_ACPI_CPUFREQ";;
