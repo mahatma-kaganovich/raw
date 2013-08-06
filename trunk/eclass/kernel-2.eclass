@@ -158,7 +158,8 @@ kernel-2_src_configure() {
 		use custom-arch || filter-flags "-march=*"
 		filter-flags "-msse*" -mmmx -m3dnow -mavx "-mfpmath=*"
 		cflags="$(flags_nosp "${CFLAGS} ${cflags}")"
-		aflags="$(flags_nosp "$(extract_aflags) ${aflags}")"
+#		aflags="$(flags_nosp "$(extract_aflags) ${aflags}")"
+		aflags="$cflags" # at least now
 		ldflags="$(flags_nosp "$(extract_flags -Wl, ${LDFLAGS}) ${ldflags}")"
 	fi
 	[[ -n "${cflags}" ]] && sed -i -e "s/^\(KBUILD_CFLAGS.*-O.\)/\1 ${cflags}/g" Makefile
