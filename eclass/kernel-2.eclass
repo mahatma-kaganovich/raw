@@ -65,10 +65,11 @@ PROVIDE="sources? ( virtual/linux-sources )
 	kernel-alsa? ( virtual/alsa )"
 
 CF1(){
-	local i
+	local i s='[ 	
+]'
 	for i in "${@}"; do
-		CF="${CF// [+-]${i#[+-]} }"
-		CF="${CF// ${i#[+-]} } ${i} "
+		CF="${CF//$s[+-]${i#[+-]}$s}"
+		CF="${CF//$s${i#[+-]}$s} ${i} "
 	done
 }
 
@@ -617,7 +618,11 @@ acpi_detect(){
 # Kernel-config CPU from CFLAGS and|or /proc/cpuinfo (native)
 # use smp: when 'native' = single/multi cpu, ht/mc will be forced ON
 cpu2K(){
-local i v V="" CF="" march=$(march) m64g="HIGHMEM64G -HIGHMEM4G -NOHIGHMEM" freq='' gov='ONDEMAND'
+local i v V="" march=$(march) m64g="HIGHMEM64G -HIGHMEM4G -NOHIGHMEM" freq='' gov='ONDEMAND'
+local CF="#
+${KERNEL_CONFIG//	/ }
+-march=${march}# ${CF//  / }
+"
 local vendor_id="" model_name="" flags="" cpu_family="" model="" cache_alignment="" fpu="" siblings="" cpu_cores="" processor=""
 export PNP_VENDOR="^vendor_id\|"
 CF1 -SMP -X86{BIGSMP,GENERIC} X86_{X2APIC,UP_APIC,UP_IOAPIC} -SPARSE_IRQ -CPUSETS X86_INTEL_PSTATE
@@ -817,10 +822,15 @@ use acpi && use embed-hardware && acpi_detect
 use embed-hardware && [[ -n "$freq" ]] && CF1 -X86_POWERNOW_K8 -X86_ACPI_CPUFREQ $freq CPU_FREQ_GOV_${gov} CPU_FREQ_DEFAULT_GOV_${gov}
 CF1 "-CPU_SUP_.*" "CPU_SUP_${V:-.*}"
 [ "$V" != INTEL -a -n "$V" ] && CF1 -X86_INTEL_PSTATE
-[ -n "${CF##*-NUMA*}" -o -n "${CF##*-PARAVIRT*}" ] && CF1 RCU_NOCB_CPU RCU_NOCB_CPU_ALL
-[ -z "${CF##*-PARAVIRT*}" ] && CF1 JUMP_LABEL
-KERNEL_CONFIG="#-march=${march}# ${CF//  / }
-${KERNEL_CONFIG}"
+_is_CF1 NUMA || _is_CF1 PARAVIRT && CF1 RCU_NOCB_CPU RCU_NOCB_CPU_ALL
+_is_CF1 -PARAVIRT && CF1 JUMP_LABEL
+KERNEL_CONFIG="${CF//  / }"
+}
+
+_is_CF1(){
+	local s='[ 	
+]'
+	[ -z "${CF//*$s$1$s*}" ]
 }
 
 march(){
