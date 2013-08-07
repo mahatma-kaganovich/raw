@@ -158,11 +158,9 @@ kernel-2_src_configure() {
 		use custom-arch || filter-flags "-march=*"
 		filter-flags "-msse*" -mmmx -m3dnow -mavx "-mfpmath=*"
 		cflags="$(flags_nosp "${CFLAGS} ${cflags}")"
-#		aflags="$(flags_nosp "$(extract_aflags) ${aflags}")"
 		aflags="$cflags" # at least now
-		ldflags="$(flags_nosp "$(extract_flags -Wl, ${LDFLAGS}) ${ldflags}")"
+		ldflags="$(flags_nosp "$(extract_flags -Wl, ${LDFLAGS}) ${ldflags}")" #"
 	fi
-	: ${aflags:="${_aflags}"}
 	[[ -n "${cflags}" ]] && sed -i -e "s/^\(KBUILD_CFLAGS.*-O.\)/\1 ${cflags}/g" Makefile
 	[[ -n "${aflags}" ]] && sed -i -e "s/^\(AFLAGS_[A-Z]*[	 ]*=\)$/\1 ${aflags}/" Makefile
 	[[ -n "${ldflags}" ]] && sed -i -e "s/^\(LDFLAGS_[A-Z]*[	 ]*=\)$/\1 ${ldflags}/" Makefile
@@ -619,7 +617,6 @@ acpi_detect(){
 # Kernel-config CPU from CFLAGS and|or /proc/cpuinfo (native)
 # use smp: when 'native' = single/multi cpu, ht/mc will be forced ON
 cpu2K(){
-_aflags=
 local i v V="" CF="" march=$(march) m64g="HIGHMEM64G -HIGHMEM4G -NOHIGHMEM" freq='' gov='ONDEMAND'
 local vendor_id="" model_name="" flags="" cpu_family="" model="" cache_alignment="" fpu="" siblings="" cpu_cores="" processor=""
 export PNP_VENDOR="^vendor_id\|"
@@ -664,7 +661,7 @@ native)
 		mtrr)CF1 ${i^^};;
 		pae)CF1 X86_PAE $m64g;;
 		mp)CF1 SMP;; # ?
-		lm)use multitarget && _aflags+=" -march=nocona -mno-mmx -mno-sse -mno-sse2 -mno-sse3" && CF1 64BIT;;
+		lm)use multitarget && CF1 64BIT;;
 		cmp_legacy)CF1 SMP SCHED_MC -SCHED_SMT;;
 		up)ewarn "Running SMP on UP. Recommended useflag '-smp' and '-SMP' in ${KERNEL_CONF}";;
 		est)freq+=" X86_ACPI_CPUFREQ";;
@@ -929,8 +926,10 @@ kernel-2_src_prepare(){
 	# prevent to build twice
 #	sed -i -e 's%-I$(srctree)/arch/$(hdr-arch)/include%%' Makefile
 	# gcc 4.5+ -O3 -ftracer
-	sed -i -e 's:^static unsigned long vmcs_readl:static noinline unsigned long vmcs_readl:' arch/x86/kvm/vmx.c
-	sed -i -e 's:^static void sleep_delay:static noinline void sleep_delay:' drivers/media/radio/radio-aimslab.c
+	if is-flagq -ftracer; then
+		sed -i -e 's:^static unsigned long vmcs_readl:static noinline unsigned long vmcs_readl:' arch/x86/kvm/vmx.c
+		sed -i -e 's:^static void sleep_delay:static noinline void sleep_delay:' drivers/media/radio/radio-aimslab.c
+	fi
 	# gcc 4.7 -O3 or -finline-functions
 #	echo "CFLAGS_phy.o += -fno-inline-functions" >>drivers/net/ethernet/intel/e1000e/Makefile
 #	echo "CFLAGS_e1000_phy.o += -fno-inline-functions" >>drivers/net/ethernet/intel/igb/Makefile
@@ -939,7 +938,7 @@ kernel-2_src_prepare(){
 	# ;)
 	sed -i -e 's:^#if 0$:#if 1:' drivers/net/tokenring/tms380tr.c
 	# amdfam10 (???)
-	if [[ "$a" == i?86-* ]] || [[ "$a" == x86_* ]]; then
+	if ( [[ "$a" == i?86-* ]] || [[ "$a" == x86_* ]] ) && is-flagq -fselective-scheduling2; then
 	echo "CFLAGS_events.o += -fno-selective-scheduling2" >>drivers/xen/Makefile
 	echo "CFLAGS_mballoc.o += -fno-selective-scheduling2" >>fs/ext4/Makefile
 	echo "CFLAGS_virtio_balloon.o += -fno-selective-scheduling2" >>drivers/virtio/Makefile
@@ -948,9 +947,15 @@ kernel-2_src_prepare(){
 	echo "CFLAGS_tail_conversion.o += -fno-selective-scheduling2" >>fs/reiser4/Makefile
 	fi
 	# core2+
-	echo "CFLAGS_ti_usb_3410_5052.o += -fno-tree-loop-distribution" >>drivers/usb/serial/Makefile
+	is-flagq -ftree-loop-distribution && echo "CFLAGS_ti_usb_3410_5052.o += -fno-tree-loop-distribution" >>drivers/usb/serial/Makefile
 	# deprecated
 	sed -i -e 's:defined(@:(@:' kernel/timeconst.pl
+	if use multitarget && test_cc -S -m64 -march=nocona && ! test_cc -S -m64 2>/dev/null; then
+		einfo "-m64 arch fix"
+		i=" -march=nocona -mno-mmx -mno-sse -mno-sse2 -mno-sse3"
+		sed -i -e "s/ -mcmodel=small/ -mcmodel=small$i/" arch/x86/boot/compressed/Makefile
+		sed -i -e "s/\(KBUILD_AFLAGS += -m64\)$/\1$i/" arch/x86/Makefile*
+	fi
 	# pnp
 	use pnp || return
 	einfo "Fixing modules hardware info exports (forced mode, waiting for bugs!)"
@@ -1030,6 +1035,10 @@ for i in "${@}"; do
 done
 }
 
+test_cc(){
+	echo "int main(){}"|$(tc-getBUILD_CC) "${@}" -x c - -o /dev/null
+}
+
 extract_aflags(){
 # ASFLAGS used for yasm too, -mtune is unsure
 local i a aflags="${ASFLAGS}"
@@ -1039,7 +1048,7 @@ for i in $(extract_flags -Wa, ${CFLAGS}); do
 	esac
 	aflags="${aflags% ${i}} ${i}"
 done
-for i in $(echo "int main(){}"|$(tc-getBUILD_CC) ${CFLAGS} "${@}" -x c - -v -o /dev/null |& grep "^[ ]*[^ ]*/as"); do #"
+for i in $(test_cc ${CFLAGS} "${@}" -v |& grep "^[ ]*[^ ]*/as"); do #"
 	case "${i}" in
 	-mtune=*)aflags="${aflags% ${i}} ${i}";;
 	esac
