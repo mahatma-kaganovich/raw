@@ -641,6 +641,7 @@ native)
 	case "${CTARGET:-${CHOST}}" in
 	x86*|i?86*)
 		use multitarget && CF1 -64BIT
+		use multitarget && [ "$KERNEL_ARCH" = x86_64 ] && CF1 64BIT
 		CF1 -XEN # -KVM
 		use lguest || CF1 -{PARAVIRT,LGUEST}{,_GUEST} -VIRTUALIZATION
 	;;
