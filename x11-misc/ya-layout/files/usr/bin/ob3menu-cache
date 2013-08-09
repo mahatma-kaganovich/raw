@@ -9,19 +9,20 @@ local cmd="${*:-/usr/bin/ob3menu --slow}"
 DSP="${DISPLAY//[\\\/*.]/_}"
 [ "$DISPLAY" = "$DSP" ] && DSP+='_0'
 . "$HOME/.cache/ya/environment.$DSP" && cmd=${cmd/ob3menu --slow/ob3menu --autostart $YA_XDG_AUTOSTART --profile $YA_PROFILE --slow}
-local m="$HOME/.cache/ya/menu.xml" c="/usr/share/applications /usr/share/applications/inputmethods /usr/share/desktop-directories $0 ${cmd%% *} /etc/xdg/autostart" mm=true i m1=return
+local m="$HOME/.cache/ya/menu.xml" c1="/usr/share/applications /usr/share/applications/inputmethods /usr/share/desktop-directories" c="$0 ${cmd%% *} /etc/xdg/autostart" mm=true i m1=return
 case "$cmd" in
 *ob3menu*\ --autostart*)a="$HOME/.cache/ya/autostart";;&
 *ob3menu*\ --launcher*)c+=" $HOME/.config/ya/tint2rc";;&
 *ob3menu*\ --slow*)
-	c+=" $HOME/.config/ya/rc.xml $HOME/.config/ya/preferred-apps /usr/share/mime/globs /etc/fstab $HOME/.local/share/applications" # /usr/share/icons/*/*/*
+	c+=" $HOME/.config/ya/rc.xml $HOME/.config/ya/preferred-apps /etc/fstab"
+	c1+=" /usr/share/mime/globs" # /usr/share/icons/*/*/*
 	cmd+=" --mime $m.sh $HOME"
 	m1=
 ;;
 *ob3menu*\ --mime\ *)c+=" /usr/share/mime/globs /etc/fstab";;
 *mmaker\ *)mm=echo;;
 esac
-local k="${cmd%% --init *}:$LANG:`stat --printf=%Z $c`" k1 mk="$m.${DISPLAY%.*}.key"
+local k="${cmd%% --init *}:$LANG:`stat --printf=%Z $c $c1 ${c1//\/usr\/share/$HOME/.local}`" k1 mk="$m.${DISPLAY%.*}.key"
 if ! (read k1 <"$mk" && [ "$k1" = "$k" ]); then
 	mkdir -p "${m%/*}"
 	{

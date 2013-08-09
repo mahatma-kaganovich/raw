@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # (c) Denis Kaganovich, Anarchy or GPLv2
-# OpenBox3 pipe menu v0.8
+# OpenBox3 pipe menu v0.9
 # ob3menu {--<command> {params}}
 # 	--slow [<path/to/rc.xml> [X Y]]
 #	--autostart {profile}
@@ -311,7 +311,8 @@ if(exists($P{slow})){
 		$vanilla=$fconf=~/\/openbox$/;
 	}
 	icons('/usr/share/icons/');
-	while(</usr/share/pixmaps/*.???>){
+	icons($ENV{HOME}.'/.local/share/icons/');
+	while(<{/usr,~/.local}/share/pixmaps/*.???>){
 		chomp($_);
 		next if($_=~/\.svg$/);
 		$i=$_;
@@ -347,7 +348,7 @@ if(($X && $Y) || $mapps){
 			$napps=scalar(grep(/^$mimemenu\//,keys %{$mimeapps{'Default Applications'}})) if($mapps);
 }
 
-for $f(map{glob $_}('/usr/share/applications/*.desktop','/usr/share/applications/*/*.desktop','/usr/share/ya-layout/Desktop/*.desktop','/usr/share/ya-layout/Desktop/exit/*.desktop','/etc/xdg/autostart/*.desktop','/usr/share/desktop-directories/*.directory')){
+for $f(map{glob $_}('{/usr,~/.local}/share/applications/{,*/}*.desktop','/usr/share/ya-layout/Desktop/{,exit/}*.desktop','/etc/xdg/autostart/*.desktop','{/usr,~/.local}/share/desktop-directories/*.directory')){
 	my (%d,%dd,%en,$F,$c);
 	if(($i)=$f=~/\/([^\/]*)\.directory$/){
 		if($prof){
