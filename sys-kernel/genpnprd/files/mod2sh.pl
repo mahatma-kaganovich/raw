@@ -18,7 +18,7 @@ my @order=(\&order3,\&order1,\&order2,\&order3);
 
 # to load second/last
 my @reorder=(
- '/ide/|usb-storage|/oss/|/nvidia/|\/radeon/|/intelfb/|/snd-pcsp|/pata_acpi|/ata_generic',
+ '/ide/|usb-storage|/oss/|/video/|/snd-pcsp|/pata_acpi|/ata_generic',
 );
 
 sub read_aliases{
@@ -187,6 +187,7 @@ sub order3{
 	if(exists($re{$a})){
 		$a=$re{$a};
 	}else{
+		return $dup++ if($a=~/^x86cpu:vendor:/);
 		$a=~s/([^a-zA-Z0-9\[\]*?] )/\\$1/g;
 		my $s=$a;
 		$a=~s/\*/.*/g;
