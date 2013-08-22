@@ -264,17 +264,15 @@ FIX2:
 		$s.="\n[$p]\n" if(!($s=~/^\[$p\]$/m));
 		my $n=($a=~/\d/)?$a:'';
 		$s=~s/((?:^|\n)\[$p\]\n(?:\_[^\n]*\n){0,$n})/$1$_=$d\n/s for(@t);
-	}else{
-		my @t1;
-		for(@t){
-			push @t1,$_ if($_=~/^$mimemenu\//);
+	}elsif($p eq 'Default Applications'){
+		my $d1=quotemeta($d);
+		if(!($s=~/\[$p\][^\[]*\=$d1$/m)){
+			@t=("$mimemenu/$d")
+		}elsif(@t=grep(/^$mimemenu\//,@t)){
+			$a='+'
 		}
-		if(@t1){
-			@t=@t1;
-			$a='+';
-			$p='Removed Associations';
-			goto FIX2;
-		}
+		$p='Removed Associations';
+		goto FIX2 if(@t);
 	}
 	_write($f,$s);
 }
@@ -426,7 +424,9 @@ N:
 		$mimeapps{'Added Associations'}->{$ff}->{$_}=$mimeapps{'Added Associations'}->{$_}->{$ff}=1 for(split(/;/,$d{MimeType}),"$mimemenu/$ff",map{@{$CatMime{$_}}}@{$d{Categories}},$ff);
 		for my $x(keys %{$mimeapps{'Removed Associations'}->{$ff}}){
 			delete($_->{$ff}->{$x}) && delete($_->{$x}->{$ff}) for($mimeapps{'Added Associations'},$mimeapps{'Default Applications'});
+			%{$mimeapps{'Default Applications'}->{$x}} || delete($mimeapps{'Default Applications'}->{$x});
 		}
+		%{$mimeapps{'Default Applications'}->{$ff}} || delete($mimeapps{'Default Applications'}->{$ff});
 		$d{MimeType}=[keys %{$mimeapps{'Added Associations'}->{$ff}}];
 		$d{Exec}=~s/\s+%\w$//;
 		$d{Name}.=" 	[$key{$d{Exec}}]" if(exists($key{$d{Exec}}));
@@ -454,7 +454,7 @@ N:
 			$i="<item label='$d{Name}'$i><action name='Execute'><execute>$d{Exec}</execute>".$notify{lc($d{StartupNotify})}.'</action></item>' 
 		}
 		if(!exists($apps{$d{Exec}})){
-			goto NOAPPS if(!(exists($mimeapps{'Default Applications'}->{$ff})));
+			goto NOAPPS if(!exists($mimeapps{'Default Applications'}->{$ff}));
 			if(!($l=exists($mimeapps{'Default Applications'}->{"$mimemenu/$ff"}))){
 				push @m2,"<item label='$mimemenu/$ff'><action name='Execute'><execute>$0 --$ma + $ff $mimemenu/$ff</execute></action></item>";
 				push @apps,[$d{Exec}] if($l=exists($P{$ma}));
