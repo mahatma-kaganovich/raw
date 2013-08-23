@@ -245,34 +245,36 @@ sub _xdg_mime{
 	my ($a,$d,@t)=@_;
 	my $f="$ENV{HOME}/.local/share/applications/mimeapps.list";
 	my $s=_read($f);
-	my $p='Default Applications';
+	my $p0='Default Applications';
+	my $p=$p0;
+	my $i;
 	if(!defined($s)){
-		mkdir("$ENV{HOME}/.local");
-		mkdir("$ENV{HOME}/.local/share");
-		mkdir("$ENV{HOME}/.local/share/applications");
+		mkdir($i.=$_) for("$ENV{HOME}/.local",'/share','/applications');
 	}
-FIX2:
-	$s=~s/(\[$p\].*?)(.*?)(\n\[|)$/
-		my ($x,$y,$z)=($1,$2,$3);
-		for(@t){
-			my $i=quotemeta($_);
-			$y=~s\/\n$i\=[^\n]*\/\/gs;
+	while(@t){
+		$s=~s/^(\[$p\]\n[^\[]*)$/
+			my $x=$1;
+			for(@t){
+				$i=quotemeta($_);
+				$x=~s\/\n$i=[^\n]*\/\/sg;
+			}
+			$x;
+		/mge;
+		if($a ne '-'){
+			$s.="\n[$p]\n" if(!($s=~/^\[$p\]$/m));
+			$i=($a=~/\d/)?$a:'';
+			$s=~s/((?:^|\n)\[$p\]\n(?:\_[^\n]*\n){0,$i})/$1$_=$d\n/s for(@t);
+			$a='-';
+		}elsif($p eq $p0){
+			$i=quotemeta($d);
+			if(!($s=~/\[$p\][^\[]*\=$i$/m)){
+				@t=("$mimemenu/$d")
+			}elsif(@t=grep(/^$mimemenu\//,@t)){
+				$a='+'
+			}
 		}
-		$x.$y.$z;
-	/gse;
-	if($a ne '-'){
-		$s.="\n[$p]\n" if(!($s=~/^\[$p\]$/m));
-		my $n=($a=~/\d/)?$a:'';
-		$s=~s/((?:^|\n)\[$p\]\n(?:\_[^\n]*\n){0,$n})/$1$_=$d\n/s for(@t);
-	}elsif($p eq 'Default Applications'){
-		my $d1=quotemeta($d);
-		if(!($s=~/\[$p\][^\[]*\=$d1$/m)){
-			@t=("$mimemenu/$d")
-		}elsif(@t=grep(/^$mimemenu\//,@t)){
-			$a='+'
-		}
+		last if($p ne $p0);
 		$p='Removed Associations';
-		goto FIX2 if(@t);
 	}
 	_write($f,$s);
 }
