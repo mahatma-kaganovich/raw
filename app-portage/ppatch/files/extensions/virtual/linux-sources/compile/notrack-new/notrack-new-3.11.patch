@@ -1,0 +1,71 @@
+--- a/net/netfilter/Kconfig	2013-09-02 23:46:10.000000000 +0300
++++ b/net/netfilter/Kconfig	2013-09-09 18:14:14.740125793 +0300
+@@ -689,6 +689,12 @@ config NETFILTER_XT_TARGET_NOTRACK
+ 	depends on NETFILTER_ADVANCED
+ 	select NETFILTER_XT_TARGET_CT
+ 
++config NETFILTER_XT_TARGET_NOTRACK_NEW
++	bool "NOTRACK safe (only new)"
++	depends on NETFILTER_XT_TARGET_CT
++	help
++	  Slow but safe way to NOTRACK only new/untracked connections.
++
+ config NETFILTER_XT_TARGET_RATEEST
+ 	tristate '"RATEEST" target support'
+ 	depends on NETFILTER_ADVANCED
+--- a/net/netfilter/nf_conntrack_core.c	2013-09-02 23:46:10.000000000 +0300
++++ b/net/netfilter/nf_conntrack_core.c	2013-09-09 18:14:14.740125793 +0300
+@@ -892,6 +892,19 @@ resolve_normal_ct(struct net *net, struc
+ 	hash = hash_conntrack_raw(&tuple, zone);
+ 	h = __nf_conntrack_find_get(net, zone, &tuple, hash);
+ 	if (!h) {
++#ifdef CONFIG_NETFILTER_XT_TARGET_NOTRACK_NEW
++		if(skb->nfctinfo == IP_CT_NEW) {
++			struct nf_conntrack_expect *exp;
++
++			exp = nf_ct_expect_find_get(net, zone, &tuple);
++			if (!exp) {
++				skb->nfct = &per_cpu(nf_conntrack_untracked, cpu).ct_general;
++				nf_conntrack_get(skb->nfct);
++				return NULL;
++			}
++			nf_ct_expect_put(exp);
++		}
++#endif
+ 		h = init_conntrack(net, tmpl, &tuple, l3proto, l4proto,
+ 				   skb, dataoff, hash);
+ 		if (!h)
+@@ -984,6 +997,12 @@ nf_conntrack_in(struct net *net, u_int8_
+ 	ct = resolve_normal_ct(net, tmpl, skb, dataoff, pf, protonum,
+ 			       l3proto, l4proto, &set_reply, &ctinfo);
+ 	if (!ct) {
++#ifdef CONFIG_NETFILTER_XT_TARGET_NOTRACK_NEW
++		if(skb->nfct == &per_cpu(nf_conntrack_untracked, cpu).ct_general){
++		    NF_CT_STAT_INC_ATOMIC(net, ignore);
++		    return NF_ACCEPT;
++		}
++#endif
+ 		/* Not valid part of a connection */
+ 		NF_CT_STAT_INC_ATOMIC(net, invalid);
+ 		ret = NF_ACCEPT;
+--- a/net/netfilter/xt_CT.c	2013-09-02 23:46:10.000000000 +0300
++++ b/net/netfilter/xt_CT.c	2013-09-09 18:24:27.472224222 +0300
+@@ -26,11 +26,18 @@ static inline int xt_ct_target(struct sk
+ 	if (skb->nfct != NULL)
+ 		return XT_CONTINUE;
+ 
++#ifndef CONFIG_NETFILTER_XT_TARGET_NOTRACK_NEW
+ 	/* special case the untracked ct : we want the percpu object */
+ 	if (!ct)
+ 		ct = nf_ct_untracked_get();
++#else
++	if (ct) {
++#endif
+ 	atomic_inc(&ct->ct_general.use);
+ 	skb->nfct = &ct->ct_general;
++#ifdef CONFIG_NETFILTER_XT_TARGET_NOTRACK_NEW
++	}
++#endif
+ 	skb->nfctinfo = IP_CT_NEW;
+ 
+ 	return XT_CONTINUE;
