@@ -25,7 +25,7 @@
 +
 +			exp = nf_ct_expect_find_get(net, zone, &tuple);
 +			if (!exp) {
-+				skb->nfct = &per_cpu(nf_conntrack_untracked, cpu).ct_general;
++				skb->nfct = &nf_ct_untracked_get()->ct_general;
 +				nf_conntrack_get(skb->nfct);
 +				return NULL;
 +			}
@@ -40,7 +40,7 @@
  			       l3proto, l4proto, &set_reply, &ctinfo);
  	if (!ct) {
 +#ifdef CONFIG_NETFILTER_XT_TARGET_NOTRACK_NEW
-+		if(skb->nfct == &per_cpu(nf_conntrack_untracked, cpu).ct_general){
++		if(skb->nfct == &nf_ct_untracked_get()->ct_general){
 +		    NF_CT_STAT_INC_ATOMIC(net, ignore);
 +		    return NF_ACCEPT;
 +		}
