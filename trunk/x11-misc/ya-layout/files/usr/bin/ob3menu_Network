@@ -546,6 +546,14 @@ sub btstat{
 			}
 			close($F);
 		}
+		if(open(my $F,'<',"$dir/profiles")){
+			while(<$F>){
+				chomp($_);
+				my ($c,@a)=split(/\s+/,$_);
+				$_=~s/^0000([0-9A-F]{4}).*$/$bts{$a}->{$c}->{$1}=1;$bts_{$a}->{$1}->{$c}=1;''/ie for(@a);
+			}
+			close($F);
+		}
 		if(open(my $F,'<',"$dir/linkkeys")){
 			while(<$F>){
 				~s/^$are/$btkey{$1}=1/e;
@@ -619,8 +627,8 @@ sub _btmisc{
 	$chk=`$chk`;
 	return if($?);
 	return _ex(_btdbus($d,"$s.Connect",$c),"- $s") if($chk=~/disconnected|false/);
-	return _ex(_btdbus($d,"$s.Disonnect",$c),"+ $s") if($chk=~/connected|true/);
-	return _ex(_btdbus($d,"$s.Disonnect",$c),"* $s") if($chk=~/playing/);
+	return _ex(_btdbus($d,"$s.Disconnect",$c),"+ $s") if($chk=~/connected|true/);
+	return _ex(_btdbus($d,"$s.Disconnect",$c),"* $s") if($chk=~/playing/);
 	return _ex(undef,"~ $s") if($chk=~/connecting/);
 	return _ex(undef,"? $s");
 }
@@ -1112,15 +1120,18 @@ sub netmenu{
 			$n=$n?"$_ \"$n\"":$_;
 			print $DOWN{$_}?_ex("$_ /usr/sbin/hciconfig $_ up","$n up"):_menu($_,$n);
 		}
+		$btm_="Bluetooth modems (pppd $ppp2)";
 		while(my ($r,$x)=each %rfcomm_){
 			my ($a,$c)=@$x;
-			push @{$bt{$c}},_ex("_ "._btrelease($r),"$stop$devppp{$r} $r \"$c\"");
+			push @{$bt{$btm_}->{$c}},_ex("_ "._btrelease($r),"$stop$devppp{$r} $r \"$c\"");
 		}
 		for my $a(keys %btname){
 			while(my ($c,$n)=each %{$btname{$a}}){
-				exists($rfcomm{$a}->{$c}) && next;
-				my @r=btmodem($a,$c,'dun');
-				push @{$bt{$n}},_ex("$debugppp{$cellppp}$rf $r[0]","$r[1]\"$n\"");
+				if(exists($bts{$a}->{$c}->{1103})){
+					exists($rfcomm{$a}->{$c}) && continue;
+					my @r=btmodem($a,$c,'dun');
+					push @{$bt{$btm_}->{$n}},_ex("$debugppp{$cellppp}$rf $r[0]","$r[1]\"$n\"");
+				}
 			}
 		}
 		print '<separator/>';
@@ -1174,10 +1185,10 @@ sub netmenu{
 				aplist($_,$iwconfig,$_,'ap')
 			}
 		}
-		if(scalar(%bt)){
-				for my $k(" label='Bluetooth modems (pppd $ppp2)'",undef){
-					print "<separator$k/>",map{$btkey{$_} ne $k?(sort @{$bt{$_}}):()}sort keys %bt;
-				}
+		for my $t(keys %bt){
+			for my $k(" label='$t'",undef){
+				print "<separator$k/>",map{$btkey{$_} ne $k?(sort @{$bt{$t}->{$_}}):()}sort keys %{$bt{$t}};
+			}
 		}
 		print "<separator label='Cell modems (pppd $ppp2)'/>",$i if($i=join('',map{_modem(substr($_,15,-17),$cellppp)}glob('/sys/class/tty/*/device/interface')));
 		print '</openbox_pipe_menu>';
@@ -1225,7 +1236,7 @@ sub netmenu{
 					print '<separator label="Scanned to pair"/>';
 					while(<$F>){
 						chomp($_);
-						my ($c,$n)=$_=~/^$are\s+(.*)$/ or next;
+						my ($c,$n)=$_=~/^\s*$are\s+(.*)$/ or next;
 						exists($btname{$a}->{$c}) && next;
 						print _ex("$ENV{SHELL} -c \"hcitool -i $if cc $c && hcitool -i $if auth $c\"","$c $n");
 					}
