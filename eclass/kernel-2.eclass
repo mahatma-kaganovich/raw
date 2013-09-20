@@ -215,6 +215,7 @@ kernel-2_src_compile() {
 		if use embed-hardware; then
 			einfo "Reconfiguring kernel with hardware detect"
 			KERNEL_CONFIG+=" ###detect: $(detects)"
+			use external-firmware && KERNEL_CONFIG+=" EXTRA_FIRMWARE_DIR=\"$ROOT/lib/firmware\""
 			kconfig
 			i="${KERNEL_CLEANUP:-arch/$(arch) drivers/dma}"
 			einfo "Applying KERNEL_CLEANUP='$i'"
