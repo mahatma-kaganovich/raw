@@ -2,7 +2,7 @@ EAPI=3
 SLOT=0
 DESCRIPTION="Simple desktop layout"
 LICENSE="*"
-IUSE="+udev libnotify minimal bluetooth wifi +jpeg +tiff tint2 alsa"
+IUSE="+udev libnotify minimal bluetooth wifi +jpeg +tiff +svg tint2 alsa"
 DEPEND="tint2? ( x11-misc/tint2 )
 	>=x11-wm/openbox-3.5.0"
 RDEPEND=" ${DEPEND}
@@ -26,8 +26,8 @@ RDEPEND=" ${DEPEND}
 		gnome-base/nautilus
 		x11-misc/spacefm
 		) )
-		|| ( media-gfx/imagemagick[png,jpeg?,tiff?] media-gfx/graphicsmagick[imagemagick,png,jpeg?,tiff?] )
-		x11-wm/openbox[imlib]
+		|| ( media-gfx/imagemagick[png,jpeg?,tiff?,svg?] media-gfx/graphicsmagick[imagemagick,png,jpeg?,tiff?,svg?] )
+		x11-wm/openbox[imlib,svg?]
 	)"
 #	x11-apps/setxkbmap x11-apps/xkbcomp x11-apps/xrdb x11-apps/xwininfo x11-apps/xkill
 KEYWORDS="~x86 ~amd64"
@@ -46,6 +46,7 @@ src_install(){
 	fi
 	use jpeg || sed -i -e 's:jpg:tiff:g' "${D}"{/usr/bin/ob3menu,/etc/xdg/ya/menu.xml}
 	use tiff || sed -i -e 's:tiff:png:g' "${D}"{/usr/bin/ob3menu,/etc/xdg/ya/menu.xml}
+	use svg || sed -i -e 's: --svg::g' "${D}"/etc/xdg/ya/menu.xml
 	if use tint2; then
 		# hate effects & decorations - non-ergonomic for eyes
 		# top-right is also faster

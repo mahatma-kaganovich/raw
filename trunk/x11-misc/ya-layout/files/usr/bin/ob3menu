@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # (c) Denis Kaganovich, Anarchy or GPLv2
-# OpenBox3 pipe menu v0.9
+# OpenBox3 pipe menu v0.10
 # ob3menu {--<command> {params}}
 # 	--slow [<path/to/rc.xml> [X Y]]
 #	--autostart {profile}
@@ -12,6 +12,7 @@
 #	--tint2 [<config>]
 #	--dock
 #	--multiserver
+#	--svg
 # "--slow" - +keybinds, 3.5.0+ menu icons, better with cache.
 #
 # OnlyShowIn is specified, but I newer want it. But you can think else.
@@ -118,8 +119,9 @@ sub icons{
 	closedir($D);
 	for(@d){
 		if(my ($i,$j)=$_=~/^(.*)\.(...)$/){
-			$ico{$i}=$ico{$_}=$_[0].$_ if($j && $j ne 'svg');
-		}elsif(!($_=~/^\.|scalable/)){
+			$ico{$_}=$_[0].$_;
+			$ico{$i}=$_[0].$_ if($j ne 'svg');
+		}elsif(!($_=~/^\.*$/)){
 			icons("$_[0]$_/");
 		}
 	}
@@ -314,12 +316,17 @@ if(exists($P{slow})){
 	icons($ENV{HOME}.'/.local/share/icons/');
 	while(<{/usr,~/.local}/share/pixmaps/*.???>){
 		chomp($_);
-		next if($_=~/\.svg$/);
 		$i=$_;
 		~s/.*\///;
 		$ico{$_}=$i;
+		next if($_=~/\.svg$/);
 		~s/\....$//;
 		$ico{$_}=$i;
+	}
+	if(exists($P{'svg'})){
+		$ico{substr($_,0,-4)}=$ico{$_} for(grep(/\.svg$/,keys %ico));
+	}else{
+		$ico{$_}=$ico{substr($_,0,-4)} for(grep(/\.svg$/,keys %ico));
 	}
 }
 if(($X && $Y) || $mapps){
@@ -405,7 +412,7 @@ N:
 	$icon=undef;
 	if(exists($P{slow}) && exists($d{Icon})){
 		$i=$d{Icon};
-		$i=~s/(?:.*\/)?(.*?).svg$/$1.png/;
+		$i=~s/.*\///g;
 		$i=" icon='$i'" if($i=$icon=$ico{$i}||(index($i,'/')>=0?$i:undef));
 	}
 	if(substr($f,0,4) eq '/etc'){
@@ -619,10 +626,11 @@ NOGEO:
 		}
 		$a.=(@m?'':"false\n")."}\n";
 		@wp=() if(!@wp && ! -r ($wp[0]=(glob("$fconf/wallpaper.*"))[0]));
-		# for top-left & !composite cmd use feh, else - ImageMagick
+		# for top-left & !composite & !svg cmd use feh, else - ImageMagick
+		# todo: since openbox support svg, think about un-feh. bud feh still thin
 		if(!@m){
 			@m=($bin.'feh','-m','-W',$X,'-H',$Y,'-y',0,'-E',0,$wp[0],'-b',$wp[0],'-O') if($wp[0]);
-		}elsif(!$spliceX && !$spliceY && $yy==1 && ($#wp<1||$wp[1] eq '-a')){
+		}elsif(!$spliceX && !$spliceY && $yy==1 && ($#wp<1||$wp[1] eq '-a') && ! grep(/\.svg$/,@m)){
 #			$wp[0]||='trans'; # artefacts
 			@wp && unshift(@wp,'-b');
 			@m=($bin.'feh','-m','-W',$X,'-H',$Y,'-y',$x,'-E',$y,@m,@wp,'-O');
