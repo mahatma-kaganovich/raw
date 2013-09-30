@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # (c) Denis Kaganovich, Anarchy or GPLv2
-# OpenBox3 pipe menu v0.10
+# OpenBox3 pipe menu v0.11
 # ob3menu {--<command> {params}}
 # 	--slow [<path/to/rc.xml> [X Y]]
 #	--autostart {profile}
@@ -13,6 +13,7 @@
 #	--dock
 #	--multiserver
 #	--svg
+#	--theme {theme}
 # "--slow" - +keybinds, 3.5.0+ menu icons, better with cache.
 #
 # OnlyShowIn is specified, but I newer want it. But you can think else.
@@ -117,13 +118,47 @@ sub icons{
 	opendir(my $D,$_[0])||return;
 	my @d=readdir($D);
 	closedir($D);
+	if($_[1]){
+	for(@d){
+		if(my ($i,$j)=$_=~/^(.*)\.(...)$/){
+			$ico1{$_}=$_[0].$_;
+			$ico1{$i}=$_[0].$_ if($j ne 'svg');
+		}elsif(!($_=~/^\.*$/)){
+			icons("$_[0]$_/",1);
+		}
+	}
+	}else{
 	for(@d){
 		if(my ($i,$j)=$_=~/^(.*)\.(...)$/){
 			$ico{$_}=$_[0].$_;
 			$ico{$i}=$_[0].$_ if($j ne 'svg');
 		}elsif(!($_=~/^\.*$/)){
-			icons("$_[0]$_/");
+			icons("$_[0]$_/",$_=~/$THEME/);
 		}
+	}
+	}
+}
+
+sub icons_svg{
+	opendir(my $D,$_[0])||return;
+	my @d=readdir($D);
+	closedir($D);
+	if($_[1]){
+	for(@d){
+		if(my ($i,$j)=$_=~/^(.*)\.(...)$/){
+			$ico1{$i}=$ico1{$_}=$_[0].$_;
+		}elsif(!($_=~/^\.*$/)){
+			icons("$_[0]$_/",1);
+		}
+	}
+	}else{
+	for(@d){
+		if(my ($i,$j)=$_=~/^(.*)\.(...)$/){
+			$ico{$i}=$ico{$_}=$_[0].$_;
+		}elsif(!($_=~/^\.*$/)){
+			icons("$_[0]$_/",$_=~/$THEME/);
+		}
+	}
 	}
 }
 
@@ -312,22 +347,20 @@ if(exists($P{slow})){
 		$fconf=~s/[^\/]*$//g;
 		$vanilla=$fconf=~/\/openbox$/;
 	}
+	$THEME='(?:'.join('|',@{$P{'theme'}}).')';
+	*icons=*icons_svg if(exists($P{'svg'}));
 	icons('/usr/share/icons/');
+	icons('/usr/share/pixmaps/');
 	icons($ENV{HOME}.'/.local/share/icons/');
-	while(<{/usr,~/.local}/share/pixmaps/*.???>){
-		chomp($_);
-		$i=$_;
-		~s/.*\///;
-		$ico{$_}=$i;
-		next if($_=~/\.svg$/);
-		~s/\....$//;
-		$ico{$_}=$i;
-	}
+	icons($ENV{HOME}.'/.local/share/pixmaps/');
 	if(exists($P{'svg'})){
 		$ico{substr($_,0,-4)}=$ico{$_} for(grep(/\.svg$/,keys %ico));
+		$ico1{substr($_,0,-4)}=$ico1{$_} for(grep(/\.svg$/,keys %ico1));
 	}else{
 		$ico{$_}=$ico{substr($_,0,-4)} for(grep(/\.svg$/,keys %ico));
+		$ico1{$_}=$ico1{substr($_,0,-4)} for(grep(/\.svg$/,keys %ico1));
 	}
+	%ico=(%ico,%ico1) if(%ico1);
 }
 if(($X && $Y) || $mapps){
 			for(split(/\s+/,$ENV{YA_APP}),split(/\s*[\r\n]+\s*/,_read('<'.$fconf.'preferred-apps'))){
