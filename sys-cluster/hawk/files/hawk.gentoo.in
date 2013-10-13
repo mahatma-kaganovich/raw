@@ -1,0 +1,126 @@
+#!/sbin/runscript
+#
+#     Gentoo system startup script for hawk
+#
+#     Copyright (C) 2013  Denis Kaganovich
+#     Based on original RedHat & SUSE and Gentoo's lighttpd script
+#     Inherited GPL 2.1, nevermind
+
+extra_started_commands="reload graceful"
+
+depend(){
+	need net
+	use logger spawn-fcgi ldap slapd netmount dns
+#	after famd
+#	after sshdd
+}
+
+# Check for missing binaries (stale symlinks should not happen)
+# Note: Special treatment of stop for LSB conformance
+LIGHTTPD_BIN=/usr/sbin/lighttpd
+test -x $LIGHTTPD_BIN || { echo "$LIGHTTPD_BIN not installed"; 
+	if [ "$1" = "stop" ]; then exit 0;
+	else exit 5; fi; }
+
+# Check for existence of needed config file and read it
+LIGHTTPD_CONFIG=@WWW_BASE@/hawk/config/lighttpd.conf
+test -r $LIGHTTPD_CONFIG || { echo "$LIGHTTPD_CONFIG does not exist";
+	if [ "$1" = "stop" ]; then exit 0;
+	else exit 6; fi; }
+
+PID_FILE=/var/run/hawk.pid
+
+# Generate a self-signed SSL certificate if necessary.  Will not
+# generate certificate if one already exists, so administrator can
+# install a "real" certificate by simply replacing the generated
+# (combined) one at /etc/lighttpd/certs/hawk-combined.pem
+# NOTE: This is essentially a heavily stripped-back shell version
+# of the more generic check-create-certificate.pl script from WebYaST.
+# If this latter script becomes generally available, we should prefer
+# using it over this little function here.
+generate_ssl_cert() {
+	openssl_bin=/usr/bin/openssl
+	c_rehash_bin=/usr/bin/c_rehash
+	cert_file=/etc/lighttpd/certs/hawk.pem
+	cert_key_file=/etc/lighttpd/certs/hawk.key
+	combined_cert_file=/etc/lighttpd/certs/hawk-combined.pem
+	log_file=@WWW_BASE@/hawk/log/certificate.log
+	[ -e "$combined_cert_file" ] && return 0
+
+	echo "No certificate found. Creating one now."
+	mkdir -p $(dirname $combined_cert_file)
+
+	old_mask=$(umask)
+	umask 177
+	CN=$(hostname -f)
+	[ -z "$CN" ] && CN=$(hostname)
+	[ -z "$CN" ] && CN=localhost
+	$openssl_bin req -newkey rsa:2048 -x509 -nodes -days 1095 -batch -config /dev/fd/0 -out $cert_file -keyout $cert_key_file >$log_file 2>&1 <<CONF
+[req]
+distinguished_name = user_dn
+prompt = no
+[user_dn]
+commonName=$CN
+emailAddress=root@$CN
+organizationName=HA Web Konsole
+organizationalUnitName=Automatically Generated Certificate
+CONF
+	rc=$?
+	if [ $rc -eq 0 ]; then
+		cat $cert_key_file $cert_file > $combined_cert_file
+		[ -x "$c_rehash_bin" ] && $c_rehash_bin $(dirname $combined_cert_file) >/dev/null 2>&1
+	else
+		echo "Could not generate certificate.  Please see $log_file for details"
+	fi
+	umask $old_mask
+	return $rc
+}
+
+print_hawk_url() {
+	IP=$(LC_ALL=C grep "^server.bind" $LIGHTTPD_CONFIG | cut -d ' ' -f 3|tr -d '"')
+	if [ -z "$IP" ]; then
+		IFC=$(LC_ALL=C ip route show default|awk '/^default / { print $5; exit }')
+		[ -n "$IFC" ] && IP=$(LC_ALL=C ifconfig $IFC | awk '/inet / { print $2 }' | sed -s 's/[^0-9.]//g')
+	fi
+	PORT=$(LC_ALL=C grep "^server.port" $LIGHTTPD_CONFIG | cut -d " " -f 3)
+	if [ -n "$IP" ]; then
+		echo -e "\thawk is running at https://$IP:$PORT/"
+	else
+		echo -e "\tcould not determine the IP/hostname hawk is running on"
+	fi
+}
+
+start(){
+    	generate_ssl_cert || {
+		return 1
+    	}
+	ebegin "Starting hawk "
+	start-stop-daemon --start --pidfile $PID_FILE --exec $LIGHTTPD_BIN -- -f $LIGHTTPD_CONFIG
+	RETVAL=$?
+
+	if test "$RETVAL" -eq 0; then
+		print_hawk_url
+	fi
+	eend $RETVAL
+}
+
+stop(){
+	ebegin "Shutting down hawk "
+	start-stop-daemon --stop --pidfile $PID_FILE --exec $LIGHTTPD_BIN
+	eend $?
+}
+
+reload(){
+	ebegin "Reload service hawk "
+	start-stop-daemon --signal HUP --pidfile $PID_FILE --exec $LIGHTTPD_BIN
+	eend $?
+}
+
+graceful(){
+	ebegin "Gracefully stopping hawk "
+	start-stop-daemon --signal INT --pidfile $PID_FILE --exec $LIGHTTPD_BIN
+	if eend $? ; then
+		rm -f "${PID_FILE}"
+		start
+	fi
+}
