@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # (c) Denis Kaganovich, Anarchy or GPLv2
-# Network manager OpenBox pipe menu v0.4
+# Network manager OpenBox pipe menu v0.5
 #
 # This is very initial version...
 #
@@ -1127,8 +1127,7 @@ sub netmenu{
 		}
 		for my $a(keys %btname){
 			while(my ($c,$n)=each %{$btname{$a}}){
-				if(exists($bts{$a}->{$c}->{1103})){
-					exists($rfcomm{$a}->{$c}) && continue;
+				if(exists($bts{$a}->{$c}->{1103}) && !exists($rfcomm{$a}->{$c})){
 					my @r=btmodem($a,$c,'dun');
 					push @{$bt{$btm_}->{$n}},_ex("$debugppp{$cellppp}$rf $r[0]","$r[1]\"$n\"");
 				}
