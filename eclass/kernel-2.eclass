@@ -947,6 +947,8 @@ kernel-2_src_prepare(){
 #	echo "CFLAGS_e1000_phy.o += -fno-inline-functions" >>drivers/net/ethernet/intel/igb/Makefile
 	sed -i -e 's:^s32 e1000e_phy_has_link_generic:s32 noinline e1000e_phy_has_link_generic:' drivers/net/ethernet/intel/e1000e/phy.c
 	sed -i -e 's:^s32 igb_phy_has_link:s32 noinline igb_phy_has_link:' drivers/net/ethernet/intel/igb/e1000_phy.c
+	# gcc 4.8 -O3
+	echo "CFLAGS_phy.o += -fno-ipa-cp-clone" >>drivers/net/ethernet/intel/e1000e/Makefile
 	# ;)
 	sed -i -e 's:^#if 0$:#if 1:' drivers/net/tokenring/tms380tr.c
 	# amdfam10 (???)
