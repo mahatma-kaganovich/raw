@@ -158,6 +158,7 @@ kernel-2_src_configure() {
 	if use custom-cflags; then
 		use custom-arch || filter-flags "-march=*"
 		filter-flags "-msse*" -mmmx -m3dnow -mavx "-mfpmath=*"
+		[[ "$(gcc-version)" == 4.8 ]] && append-flags -fno-inline-functions
 		cflags="$(flags_nosp "${CFLAGS} ${cflags}")"
 		aflags="$cflags" # at least now
 		ldflags="$(flags_nosp "$(extract_flags -Wl, ${LDFLAGS}) ${ldflags}")" #"
