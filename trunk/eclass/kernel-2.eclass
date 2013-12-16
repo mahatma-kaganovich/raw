@@ -607,9 +607,18 @@ acpi_detect(){
 		_PR_.*|_SB_*.CP[0-9]*)let n=n+1;;
 		esac
 	done
-	# FIXME: on bare metal + ht flag without true HT acpi report double CPUs number
-	# comment out next line to workaround any other cases to lost core|CPU
-	[[ "$CF" == *-PARAVIRT' '* ]] && [[ "$CF" == *-SCHED_SMT* ]] && $fakeHT && grep -q "^flags\s*:.*\sht\s" /proc/cpuinfo && let n=n/2
+	# On some of bare metal + ht flag without true HT, acpi reports double CPUs number.
+	# Dividing to 2 can reduce SMP tables or even make code UP, but many of modern CPUs|MBs
+	# use other logic, so try to /2 only if it can do UP (n=2) and USE=-smp
+	# - to avoid complete loss of cores power (IMHO 2xSMP overhead is too small).
+	# Also using all acpi reported cores have sense for CPU plugging.
+	[[ "$CF" == *-PARAVIRT' '* ]] && [[ "$CF" == *-SCHED_SMT* ]] && $fakeHT && grep -q "^flags\s*:.*\sht\s" /proc/cpuinfo &&
+		if [[ $n == 2 ]] && use smp; then
+			ewarn "On my opinion you have SMP with 2 CPU cores. To force UP build - say USE=-smp"
+#		elif [[ $n -gt 1 ]]; then
+		elif [[ $n == 2 ]]; then # try UP
+			let n=n/2
+		fi
 	[[ $n == 0 ]] && die "ACPI CPU enumeration wrong. Say 'USE=-acpi'"
 	[[ $n -gt 1 ]] && CF1 SMP
 	[[ $n -gt 8 ]] && CF1 X86_BIGSMP
