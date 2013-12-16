@@ -144,8 +144,7 @@ sub Kcload{
 		$s=~s/^\s*(?:def_)?bool(?:\s+\S*|$)/if($c eq 'menuconfig'){$menu{$v}=1}else{$bool{$v}=1};next/e;
 		$s=~s/^\s*select\s+(.*)$/push @{$select{preif($1)}},$v;next/e;
 		$s=~s/^\s*depends\s+on\s+(.*)$/push @{$depends{$v}},prelogic($1);next/e;
-		$s=~s/(?:If\s+unsure,\s+s|If\s+in\s+doubt,\s+s|S)ay\s+Y\./$yes{$v}=1;next/e;
-		$s=~s/(?:If\s+unsure,\s+s|If\s+in\s+doubt,\s+s|S)ay\s+N\./$no{$v}=1;next/e;
+		$s=~s/(?:If\s+(?:[a-z\s]*\s)?(?:unsure|doubts?)(?:\s+about\s+this)?,\s+s|S)ay\s+\'?([YN])\'?(?:\s+here)?\./${$1 eq 'Y'?'yes':'no'}{$v}=1;next/e;
 		next if(!$ENV{SRCARCH});
 		$s=~s/^\s*option\s+env="(\w+)"/$env{$1}=1;next/e;
 		$s=~s/\$(\w+)/$env{$1}?$ENV{$1}:"\$$1"/e;
