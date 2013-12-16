@@ -4,6 +4,9 @@
 
 : ${TMPDIR:=/tmp}
 
+# grep 2.15 utf8
+export LANG=C
+
 #BUS="PCI"
 BUS="\w+"
 STR="(?:^(?:static\s+)?(?:const\s+)?struct\s+${BUS,,}_device_id(?:\s+\w+)+|^(?:static\s+)?DEFINE_${BUS}_DEVICE_TABLE\(.*?\))"
