@@ -938,6 +938,7 @@ kernel-2_src_prepare(){
 	use custom-arch && sed -i -e 's/-march=[a-z0-9\-]*//g' -e 's/-mtune=[a-z0-9\-]*//g' arch/*/Makefile*
 	# prevent to build twice
 #	sed -i -e 's%-I$(srctree)/arch/$(hdr-arch)/include%%' Makefile
+    if use custom-cflags; then
 	# gcc 4.5+ -O3 -ftracer
 	if is-flagq -ftracer; then
 		sed -i -e 's:^static unsigned long vmcs_readl:static noinline unsigned long vmcs_readl:' arch/x86/kvm/vmx.c
@@ -950,8 +951,6 @@ kernel-2_src_prepare(){
 	sed -i -e 's:^s32 igb_phy_has_link:s32 noinline igb_phy_has_link:' drivers/net/ethernet/intel/igb/e1000_phy.c
 	# gcc 4.8 -O3
 	echo "CFLAGS_phy.o += -fno-ipa-cp-clone" >>drivers/net/ethernet/intel/e1000e/Makefile
-	# ;)
-	sed -i -e 's:^#if 0$:#if 1:' drivers/net/tokenring/tms380tr.c
 	# amdfam10 (???)
 	if ( [[ "$a" == i?86-* ]] || [[ "$a" == x86_* ]] ) && is-flagq -fselective-scheduling2; then
 	echo "CFLAGS_events.o += -fno-selective-scheduling2" >>drivers/xen/Makefile
@@ -963,6 +962,9 @@ kernel-2_src_prepare(){
 	fi
 	# core2+
 	is-flagq -ftree-loop-distribution && echo "CFLAGS_ti_usb_3410_5052.o += -fno-tree-loop-distribution" >>drivers/usb/serial/Makefile
+    fi
+	# ;)
+	sed -i -e 's:^#if 0$:#if 1:' drivers/net/tokenring/tms380tr.c
 	# deprecated
 	sed -i -e 's:defined(@:(@:' kernel/timeconst.pl
 	if use multitarget && test_cc -S -m64 -march=nocona && ! test_cc -S -m64 2>/dev/null; then
