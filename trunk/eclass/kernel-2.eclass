@@ -68,8 +68,8 @@ CF1(){
 	local i s='[ 	
 ]'
 	for i in "${@}"; do
-		CF="${CF//$s[+-]${i#[+-]}$s}"
-		CF="${CF//$s${i#[+-]}$s} ${i} "
+		CF="${CF//$s[+-]${i#[+-]}$s/ }"
+		CF="${CF//$s${i#[+-]}$s/ } ${i} "
 	done
 }
 
@@ -609,7 +609,7 @@ acpi_detect(){
 	done
 	# FIXME: on bare metal + ht flag without true HT acpi report double CPUs number
 	# comment out next line to workaround any other cases to lost core|CPU
-	[[ "$CF" == *-PARAVIRT' '* ]] && [[ "$CF" == *-SCHED_SMT* ]] && grep -q "^flags\s*:.*\sht\s" /proc/cpuinfo && let n=n/2
+	[[ "$CF" == *-PARAVIRT' '* ]] && [[ "$CF" == *-SCHED_SMT* ]] && $fakeHT && grep -q "^flags\s*:.*\sht\s" /proc/cpuinfo && let n=n/2
 	[[ $n == 0 ]] && die "ACPI CPU enumeration wrong. Say 'USE=-acpi'"
 	[[ $n -gt 1 ]] && CF1 SMP
 	[[ $n -gt 8 ]] && CF1 X86_BIGSMP
@@ -620,7 +620,7 @@ acpi_detect(){
 # Kernel-config CPU from CFLAGS and|or /proc/cpuinfo (native)
 # use smp: when 'native' = single/multi cpu, ht/mc will be forced ON
 cpu2K(){
-local i v V="" march=$(march) m64g="HIGHMEM64G -HIGHMEM4G -NOHIGHMEM" freq='' gov='ONDEMAND'
+local i v V="" march=$(march) m64g="HIGHMEM64G -HIGHMEM4G -NOHIGHMEM" freq='' gov='ONDEMAND' fakeHT=false
 local CF="#
 ${KERNEL_CONFIG//	/ }
 -march=${march}# ${CF//  / }
@@ -657,6 +657,7 @@ native)
 	done </proc/cpuinfo
 	flags=" ${flags:-.} "
 
+	fakeHT=true
 	for i in ${flags}; do
 		case $i in
 		apic)CF1 X86_UP_APIC;;
@@ -690,7 +691,7 @@ native)
 			ewarn "** nohz=off divider=10 clocksource=acpi_pm notsc  (FIXME!) **"
 			ewarn "*************************************************************"
 		;;
-#		xtopology)CF1 SCHED_SMT;;
+		xtopology)fakeHT=false;;
 		hwpstate)grep -qsF X86_FEATURE_HW_PSTATE "${S}/drivers/cpufreq/powernow-k8.c" && freq+=" X86_ACPI_CPUFREQ -X86_POWERNOW_K8";;
 		esac
 	done
@@ -701,6 +702,7 @@ native)
 	# xtopology & other flags present only on SMP running anymore
 	[[ "${cpu_cores:-1}" -gt 1 ]] && CF1 SMP SCHED_MC
 	[[ "${siblings:-0}" -gt "${cpu_cores:-1}" ]] && CF1 SMP SCHED_SMT
+#	grep -Fqs ',' /sys/devices/system/cpu/cpu*/topology/thread_siblings_list && CF1 SMP SCHED_SMT
 	[[ "$(grep "^siblings\s*:\|^cpu cores\s*:" /proc/cpuinfo|sort -u|wc -l)" -gt 2 ]] && CF1 SMP SCHED_{SMT,MC} NUMA
 	[[ "${fpu}" != yes ]] && CF1 MATH_EMULATION
 
