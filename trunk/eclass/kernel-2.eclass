@@ -163,7 +163,11 @@ kernel-2_src_configure() {
 		aflags="$cflags" # at least now
 		ldflags="$(flags_nosp "$(extract_flags -Wl, ${LDFLAGS}) ${ldflags}")" #"
 	fi
-	is-flagq -fstack-protector && KERNEL_CONFIG+=" ###CFLAGS: CC_STACKPROTECTOR"
+	cfg_ '###CFLAGS:'
+	is-flagq -fstack-protector && cfg_ CC_STACKPROTECTOR
+	[[ "$(cflg O)" == s ]] && cfg_ CC_OPTIMIZE_FOR_SIZE
+	cfg_ "
+"
 	[[ -n "${cflags}" ]] && sed -i -e "s/^\(KBUILD_CFLAGS.*-O.\)/\1 ${cflags}/g" Makefile
 	[[ -n "${aflags}" ]] && sed -i -e "s/^\(AFLAGS_[A-Z]*[	 ]*=\)$/\1 ${aflags}/" Makefile
 	[[ -n "${ldflags}" ]] && sed -i -e "s/^\(LDFLAGS_[A-Z]*[	 ]*=\)$/\1 ${ldflags}/" Makefile
@@ -216,12 +220,12 @@ kernel-2_src_compile() {
 		i=false
 		if use embed-hardware; then
 			einfo "Reconfiguring kernel with hardware detect"
-			KERNEL_CONFIG+=" ###detect: $(detects)"
-			use external-firmware && KERNEL_CONFIG+=" EXTRA_FIRMWARE_DIR=\"$ROOT/lib/firmware\""
+			cfg_ "###detect: $(detects)"
+			use external-firmware && cfg_ "EXTRA_FIRMWARE_DIR=\"$ROOT/lib/firmware\""
 			kconfig
 			i="${KERNEL_CLEANUP:-arch/$(arch) drivers/dma}"
 			einfo "Applying KERNEL_CLEANUP='$i'"
-			KERNEL_CONFIG+=" ###cleanup: ${KERNEL_CONFIG2} $(detects_cleanup $i)"
+			cfg_ "###cleanup: ${KERNEL_CONFIG2} $(detects_cleanup $i)"
 			kconfig
 			i=true
 		fi
@@ -630,7 +634,7 @@ acpi_detect(){
 # Kernel-config CPU from CFLAGS and|or /proc/cpuinfo (native)
 # use smp: when 'native' = single/multi cpu, ht/mc will be forced ON
 cpu2K(){
-local i v V="" march=$(march) m64g="HIGHMEM64G -HIGHMEM4G -NOHIGHMEM" freq='' gov='ONDEMAND' fakeHT=false
+local i v V="" march=$(cflg) m64g="HIGHMEM64G -HIGHMEM4G -NOHIGHMEM" freq='' gov='ONDEMAND' fakeHT=false
 local CF="#
 ${KERNEL_CONFIG//	/ }
 -march=${march}# ${CF//  / }
@@ -640,7 +644,7 @@ export PNP_VENDOR="^vendor_id\|"
 CF1 -SMP -X86{BIGSMP,GENERIC} X86_{X2APIC,UP_APIC,UP_IOAPIC} -SPARSE_IRQ -CPUSETS X86_INTEL_PSTATE
 use xen && CF1 -HIGHMEM64G -HIGHMEM4G NOHIGHMEM X86_PAE
 use smp && CF1 SMP X86_BIGSMP SCHED_{SMT,MC} SPARSE_IRQ CPUSETS NUMA
-[[ "$(march mtune)" == generic ]] && CF1 X86_GENERIC
+[[ "$(cflg mtune=)" == generic ]] && CF1 X86_GENERIC
 if [[ -z "${march}" ]]; then
 	CF1 GENERIC_CPU X86_GENERIC
 	march="${CTARGET:-${CHOST}}"
@@ -815,7 +819,7 @@ pentium3|pentium3m)CF1 MPENTIUMIII;freq="X86_SPEEDSTEP_SMI X86_SPEEDSTEP_ICH";;
 pentium-m)CF1 MPENTIUMM;;
 # sure 64G
 pentium4|pentium4m|prescott|nocona)
-	case "$(march mtune)" in
+	case "$(cflg mtune=)" in
 	pentium4|pentium4m|prescott|nocona)CF1 MPENTIUM4 MPSC $m64g;;
 	?*)CF1 MPENTIUMM X86_GENERIC GENERIC_CPU $m64g;;
 	*)CF1 MPENTIUM4 MPSC $m64g;;
@@ -848,9 +852,9 @@ _is_CF1(){
 	[ -z "${CF//*$s$1$s*}" ]
 }
 
-march(){
+cflg(){
 local a=" ${CFLAGS} ${KERNEL_CFLAGS}"
-a="${a##* -${1:-march}=}"
+a="${a##* -${1:-march=}}"
 echo "${a%% *}"
 }
 
@@ -884,10 +888,10 @@ arch(){
 	local h="${1:-${CTARGET:-${CHOST}}}"
 	case ${h} in
 		# x86 profile sometimes buggy. to kernel when not 32/64 - do old
-		i?86*) ( [[ -n "$2" ]] || ( use multitarget && [[ "$(march)" == native ]] ) ) &&
+		i?86*) ( [[ -n "$2" ]] || ( use multitarget && [[ "$(cflg)" == native ]] ) ) &&
 			echo "x86" || echo "i386"
 		;;
-		x86_64*) [[ -z "$2" ]] && use multitarget && [[ "$(march)" == native ]] &&
+		x86_64*) [[ -z "$2" ]] && use multitarget && [[ "$(cflg)" == native ]] &&
 			echo "x86" || echo "x86_64"
 		;;
 		*) tc-ninja_magic_to_arch kern ${h};;
