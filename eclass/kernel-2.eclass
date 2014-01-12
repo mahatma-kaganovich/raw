@@ -163,6 +163,7 @@ kernel-2_src_configure() {
 		aflags="$cflags" # at least now
 		ldflags="$(flags_nosp "$(extract_flags -Wl, ${LDFLAGS}) ${ldflags}")" #"
 	fi
+	is-flagq -fstack-protector && KERNEL_CONFIG+=" ###CFLAGS: CC_STACKPROTECTOR"
 	[[ -n "${cflags}" ]] && sed -i -e "s/^\(KBUILD_CFLAGS.*-O.\)/\1 ${cflags}/g" Makefile
 	[[ -n "${aflags}" ]] && sed -i -e "s/^\(AFLAGS_[A-Z]*[	 ]*=\)$/\1 ${aflags}/" Makefile
 	[[ -n "${ldflags}" ]] && sed -i -e "s/^\(LDFLAGS_[A-Z]*[	 ]*=\)$/\1 ${ldflags}/" Makefile
