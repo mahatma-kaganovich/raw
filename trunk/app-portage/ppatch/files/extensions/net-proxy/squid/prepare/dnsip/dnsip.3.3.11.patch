@@ -1,0 +1,434 @@
+diff -pruN a/src/acl/Asn.cc b/src/acl/Asn.cc
+--- a/src/acl/Asn.cc	2013-11-30 16:55:13.000000000 +0300
++++ b/src/acl/Asn.cc	2014-01-14 13:41:26.829083186 +0300
+@@ -37,6 +37,7 @@
+ #include "acl/Checklist.h"
+ #include "acl/DestinationAsn.h"
+ #include "acl/DestinationIp.h"
++#include "acl/DnsIp.h"
+ #include "acl/SourceAsn.h"
+ #include "cache_cf.h"
+ #include "forward.h"
+diff -pruN a/src/acl/DnsIp.cc b/src/acl/DnsIp.cc
+--- a/src/acl/DnsIp.cc	1970-01-01 03:00:00.000000000 +0300
++++ b/src/acl/DnsIp.cc	2014-01-14 13:41:26.829083186 +0300
+@@ -0,0 +1,55 @@
++#include "squid.h"
++#include "acl/DnsIp.h"
++#include "acl/FilledChecklist.h"
++#include "client_side.h"
++#include "comm/Connection.h"
++#include "HttpRequest.h"
++#include "SquidConfig.h"
++
++char const *
++ACLDNSIP::typeString() const
++{
++    return "dst";
++}
++
++// copy of ACLDestinationIP::match with "|IP_LOOKUP_NS"
++int
++ACLDNSIP::match(ACLChecklist *cl)
++{
++    ACLFilledChecklist *checklist = Filled(cl);
++
++    // Bug 3243: CVE 2009-0801
++    // Bypass of browser same-origin access control in intercepted communication
++    // To resolve this we will force DIRECT and only to the original client destination.
++    // In which case, we also need this ACL to accurately match the destination
++    if (Config.onoff.client_dst_passthru && (checklist->request->flags.intercepted || checklist->request->flags.spoofClientIp)) {
++        assert(checklist->conn() && checklist->conn()->clientConnection != NULL);
++        return ACLIP::match(checklist->conn()->clientConnection->local);
++    }
++
++    const ipcache_addrs *ia = ipcache_gethostbyname(checklist->request->GetHost(), IP_LOOKUP_IF_MISS|IP_LOOKUP_NS);
++
++    if (ia) {
++        /* Entry in cache found */
++
++        for (int k = 0; k < (int) ia->count; ++k) {
++            if (ACLIP::match(ia->in_addrs[k]))
++                return 1;
++        }
++
++        return 0;
++    } else if (!checklist->request->flags.destinationIpLookedUp) {
++        /* No entry in cache, lookup not attempted */
++        debugs(28, 3, "aclMatchAcl: Can't yet compare '" << name << "' ACL for '" << checklist->request->GetHost() << "'");
++        checklist->changeState (DestinationIPLookup::Instance());
++        return 0;
++    } else {
++        return 0;
++    }
++}
++
++ACL *
++ACLDNSIP::clone() const
++{
++    return new ACLDNSIP(*this);
++}
+diff -pruN a/src/acl/DnsIp.h b/src/acl/DnsIp.h
+--- a/src/acl/DnsIp.h	1970-01-01 03:00:00.000000000 +0300
++++ b/src/acl/DnsIp.h	2014-01-14 13:41:26.829083186 +0300
+@@ -0,0 +1,21 @@
++#ifndef SQUID_ACLDNSIP_H
++#define SQUID_ACLDNSIP_H
++#include "acl/DestinationIp.h"
++
++class ACLDNSIP : public ACLDestinationIP
++{
++
++public:
++    MEMPROXY_CLASS(ACLDNSIP);
++
++    virtual char const *typeString() const;
++    virtual int match(ACLChecklist *checklist);
++    virtual ACL *clone()const;
++private:
++    static Prototype RegistryProtoype;
++    static ACLDNSIP RegistryEntry_;
++};
++
++MEMPROXY_CLASS_INLINE(ACLDNSIP);
++
++#endif /* SQUID_ACLDNSIP_H */
+diff -pruN a/src/acl/Makefile.am b/src/acl/Makefile.am
+--- a/src/acl/Makefile.am	2013-11-30 16:55:13.000000000 +0300
++++ b/src/acl/Makefile.am	2014-01-14 13:41:26.829083186 +0300
+@@ -43,6 +43,8 @@ libacls_la_SOURCES = \
+ 	DestinationDomain.h \
+ 	DestinationIp.cc \
+ 	DestinationIp.h \
++	DnsIp.cc \
++	DnsIp.h \
+ 	DomainData.cc \
+ 	DomainData.h \
+ 	ExtUser.cc \
+diff -pruN a/src/acl/Makefile.in b/src/acl/Makefile.in
+--- a/src/acl/Makefile.in	2013-11-30 16:55:46.000000000 +0300
++++ b/src/acl/Makefile.in	2014-01-14 13:41:26.829083186 +0300
+@@ -65,6 +65,7 @@ am__libacls_la_SOURCES_DIST = IntRange.c
+ 	TimeData.cc TimeData.h Asn.cc Asn.h Browser.cc Browser.h \
+ 	DestinationAsn.h DestinationDomain.cc DestinationDomain.h \
+ 	DestinationIp.cc DestinationIp.h DomainData.cc DomainData.h \
++	DnsIp.cc DnsIp.h \
+ 	ExtUser.cc ExtUser.h HierCodeData.cc HierCodeData.h \
+ 	HierCode.cc HierCode.h HttpHeaderData.cc HttpHeaderData.h \
+ 	HttpRepHeader.cc HttpRepHeader.h HttpReqHeader.cc \
+@@ -97,7 +98,7 @@ am_libacls_la_OBJECTS = IntRange.lo Rege
+ 	PeerName.lo Protocol.lo ProtocolData.lo Random.lo Referer.lo \
+ 	ReplyMimeType.lo RequestMimeType.lo SourceDomain.lo \
+ 	SourceIp.lo Tag.lo Url.lo UrlLogin.lo UrlPath.lo UrlPort.lo \
+-	UserData.lo Gadgets.lo $(am__objects_2) $(am__objects_4)
++	UserData.lo Gadgets.lo DnsIp.lo $(am__objects_2) $(am__objects_4)
+ libacls_la_OBJECTS = $(am_libacls_la_OBJECTS)
+ libapi_la_LIBADD =
+ am_libapi_la_OBJECTS = Acl.lo Checklist.lo
+@@ -381,6 +382,7 @@ libacls_la_SOURCES = IntRange.cc IntRang
+ 	TimeData.h Asn.cc Asn.h Browser.cc Browser.h DestinationAsn.h \
+ 	DestinationDomain.cc DestinationDomain.h DestinationIp.cc \
+ 	DestinationIp.h DomainData.cc DomainData.h ExtUser.cc \
++	DnsIp.cc DnsIp.h \
+ 	ExtUser.h HierCodeData.cc HierCodeData.h HierCode.cc \
+ 	HierCode.h HttpHeaderData.cc HttpHeaderData.h HttpRepHeader.cc \
+ 	HttpRepHeader.h HttpReqHeader.cc HttpReqHeader.h HttpStatus.cc \
+@@ -484,6 +486,7 @@ distclean-compile:
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Checklist.Plo@am__quote@
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/DestinationDomain.Plo@am__quote@
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/DestinationIp.Plo@am__quote@
++@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/DnsIp.Plo@am__quote@
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/DomainData.Plo@am__quote@
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Eui64.Plo@am__quote@
+ @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ExtUser.Plo@am__quote@
+diff -pruN a/src/AclRegs.cc b/src/AclRegs.cc
+--- a/src/AclRegs.cc	2013-11-30 16:55:13.000000000 +0300
++++ b/src/AclRegs.cc	2014-01-14 13:41:26.830083194 +0300
+@@ -17,6 +17,7 @@
+ #include "acl/DestinationAsn.h"
+ #include "acl/DestinationDomain.h"
+ #include "acl/DestinationIp.h"
++#include "acl/DnsIp.h"
+ #include "acl/DomainData.h"
+ #if USE_AUTH
+ #include "acl/ExtUser.h"
+@@ -75,6 +76,9 @@
+ #include "ident/AclIdent.h"
+ #endif
+ 
++ACL::Prototype ACLDNSIP::RegistryProtoype(&ACLDNSIP::RegistryEntry_, "dst_dns");
++ACLDNSIP ACLDNSIP::RegistryEntry_;
++
+ ACL::Prototype ACLBrowser::RegistryProtoype(&ACLBrowser::RegistryEntry_, "browser");
+ ACLStrategised<char const *> ACLBrowser::RegistryEntry_(new ACLRegexData, ACLRequestHeaderStrategy<HDR_USER_AGENT>::Instance(), "browser");
+ ACL::Prototype ACLDestinationDomain::LiteralRegistryProtoype(&ACLDestinationDomain::LiteralRegistryEntry_, "dstdomain");
+diff -pruN a/src/cf.data.pre b/src/cf.data.pre
+--- a/src/cf.data.pre	2013-11-30 16:55:13.000000000 +0300
++++ b/src/cf.data.pre	2014-01-14 13:41:26.831083202 +0300
+@@ -995,6 +995,12 @@ IF USE_SSL
+ 	  # sslproxy_cert_sign, and sslproxy_cert_adapt options.
+ ENDIF
+ 
++	acl aclname dst_dns ip-address/mask ...
++	  # match DNS IP address, positive resolved destination domain [slow]
++	  # see also dns_nameservers
++	  # primary designed to failover channel selection
++	  # only for internal DNS resolver
++
+ 	Examples:
+ 		acl macaddress arp 09:00:2b:23:45:67
+ 		acl myexample dst_as 1241
+diff -pruN a/src/defines.h b/src/defines.h
+--- a/src/defines.h	2013-11-30 16:55:13.000000000 +0300
++++ b/src/defines.h	2014-01-14 13:41:26.832083210 +0300
+@@ -85,6 +85,7 @@
+ #define IDENT_DONE 2
+ 
+ #define IP_LOOKUP_IF_MISS	0x01
++#define IP_LOOKUP_NS		0x02
+ 
+ #define MAX_MIME 4096
+ 
+diff -pruN a/src/dns_internal.cc b/src/dns_internal.cc
+--- a/src/dns_internal.cc	2013-11-30 16:55:13.000000000 +0300
++++ b/src/dns_internal.cc	2014-01-14 13:42:53.792784683 +0300
+@@ -253,7 +253,7 @@ static IOCB idnsSentQueryVC;
+ 
+ static int idnsFromKnownNameserver(Ip::Address const &from);
+ static idns_query *idnsFindQuery(unsigned short id);
+-static void idnsGrokReply(const char *buf, size_t sz, int from_ns);
++static void idnsGrokReply(const char *buf, size_t sz, int from_ns, void const *from);
+ static PF idnsRead;
+ static EVH idnsCheckQueue;
+ static void idnsTickleQueue(void);
+@@ -1006,7 +1006,7 @@ idnsQueryID(void)
+ }
+ 
+ static void
+-idnsCallback(idns_query *q, const char *error)
++idnsCallback(idns_query *q, const char *error, void const *from)
+ {
+     IDNSCB *callback;
+     void *cbdata;
+@@ -1072,7 +1072,7 @@ idnsCallback(idns_query *q, const char *
+     const rfc1035_rr *answers = message ? message->answer : NULL;
+ 
+     if (cbdataReferenceValidDone(q->callback_data, &cbdata))
+-        callback(cbdata, answers, n, error);
++        callback(cbdata, answers, n, error, from);
+ 
+     while (q->queue) {
+         idns_query *q2 = q->queue;
+@@ -1081,7 +1081,7 @@ idnsCallback(idns_query *q, const char *
+         q2->callback = NULL;
+ 
+         if (cbdataReferenceValidDone(q2->callback_data, &cbdata))
+-            callback(cbdata, answers, n, error);
++            callback(cbdata, answers, n, error, from);
+ 
+         cbdataFree(q2);
+     }
+@@ -1095,8 +1095,9 @@ idnsCallback(idns_query *q, const char *
+     cbdataFree(q);
+ }
+ 
++// FIXME? reply from 'nameservers[from_ns].S' may be from multiple 'from', then add param
+ static void
+-idnsGrokReply(const char *buf, size_t sz, int from_ns)
++idnsGrokReply(const char *buf, size_t sz, int from_ns, void const *from)
+ {
+     int n;
+     rfc1035_message *message = NULL;
+@@ -1164,7 +1165,7 @@ idnsGrokReply(const char *buf, size_t sz
+             // Strange: A TCP DNS response with the truncation bit (TC) set.
+             // Return an error and cleanup; no point in trying TCP again.
+             debugs(78, 3, HERE << "TCP DNS response");
+-            idnsCallback(q, "Truncated TCP DNS response");
++            idnsCallback(q, "Truncated TCP DNS response", NULL);
+         }
+ 
+         return;
+@@ -1223,7 +1224,7 @@ idnsGrokReply(const char *buf, size_t sz
+             q->sz = rfc3596BuildAQuery(q->name, q->buf, sizeof(q->buf), q->query_id, &q->query, 0);
+             if (q->sz < 0) {
+                 /* problem with query data -- query not sent */
+-                idnsCallback(q, "Internal error");
++                idnsCallback(q, "Internal error", NULL);
+                 return;
+             }
+ 
+@@ -1240,9 +1241,9 @@ idnsGrokReply(const char *buf, size_t sz
+     q->ancount = n;
+ 
+     if (n >= 0)
+-        idnsCallback(q, NULL);
++        idnsCallback(q, NULL, from);
+     else
+-        idnsCallback(q, rfc1035ErrorMessage(q->rcode));
++        idnsCallback(q, rfc1035ErrorMessage(q->rcode), from);
+ 
+ }
+ 
+@@ -1328,7 +1329,7 @@ idnsRead(int fd, void *data)
+             continue;
+         }
+ 
+-        idnsGrokReply(rbuf, len, ns);
++        idnsGrokReply(rbuf, len, ns, &from);
+     }
+ }
+ 
+@@ -1377,9 +1378,9 @@ idnsCheckQueue(void *unused)
+                    std::setw(5)<< std::setprecision(2) << tvSubDsec(q->start_t, current_time) << " seconds");
+ 
+             if (q->rcode != 0)
+-                idnsCallback(q, rfc1035ErrorMessage(q->rcode));
++                idnsCallback(q, rfc1035ErrorMessage(q->rcode), NULL);
+             else
+-                idnsCallback(q, "Timeout");
++                idnsCallback(q, "Timeout", NULL);
+         }
+     }
+ 
+@@ -1412,7 +1413,7 @@ idnsReadVC(const Comm::ConnectionPointer
+     assert(vc->ns < nns);
+     debugs(78, 3, HERE << conn << ": received " << vc->msg->contentSize() << " bytes via TCP from " << nameservers[vc->ns].S << ".");
+ 
+-    idnsGrokReply(vc->msg->buf, vc->msg->contentSize(), vc->ns);
++    idnsGrokReply(vc->msg->buf, vc->msg->contentSize(), vc->ns, &nameservers[vc->ns].S);
+     vc->msg->clean();
+     AsyncCall::Pointer call = commCbCall(5,4, "idnsReadVCHeader",
+                                          CommIoCbPtrFun(idnsReadVCHeader, vc));
+@@ -1674,7 +1675,7 @@ idnsALookup(const char *name, IDNSCB * c
+     // Prevent buffer overflow on q->name
+     if (nameLength > NS_MAXDNAME) {
+         debugs(23, DBG_IMPORTANT, "SECURITY ALERT: DNS name too long to perform lookup: '" << name << "'. see access.log for details.");
+-        callback(data, NULL, 0, "Internal error");
++        callback(data, NULL, 0, "Internal error", NULL);
+         return;
+     }
+ 
+@@ -1712,7 +1713,7 @@ idnsALookup(const char *name, IDNSCB * c
+ 
+     if (q->sz < 0) {
+         /* problem with query data -- query not sent */
+-        callback(data, NULL, 0, "Internal error");
++        callback(data, NULL, 0, "Internal error", NULL);
+         cbdataFree(q);
+         return;
+     }
+@@ -1755,7 +1756,7 @@ idnsPTRLookup(const Ip::Address &addr, I
+ 
+     if (q->sz < 0) {
+         /* problem with query data -- query not sent */
+-        callback(data, NULL, 0, "Internal error");
++        callback(data, NULL, 0, "Internal error", NULL);
+         cbdataFree(q);
+         return;
+     }
+diff -pruN a/src/fqdncache.cc b/src/fqdncache.cc
+--- a/src/fqdncache.cc	2013-11-30 16:55:13.000000000 +0300
++++ b/src/fqdncache.cc	2014-01-14 13:41:26.833083218 +0300
+@@ -499,7 +499,7 @@ static void
+ #if USE_DNSHELPER
+ fqdncacheHandleReply(void *data, char *reply)
+ #else
+-fqdncacheHandleReply(void *data, const rfc1035_rr * answers, int na, const char *error_message)
++fqdncacheHandleReply(void *data, const rfc1035_rr * answers, int na, const char *error_message, void const *from)
+ #endif
+ {
+     fqdncache_entry *f;
+diff -pruN a/src/ipcache.cc b/src/ipcache.cc
+--- a/src/ipcache.cc	2013-11-30 16:55:13.000000000 +0300
++++ b/src/ipcache.cc	2014-01-14 13:41:26.833083218 +0300
+@@ -105,6 +105,7 @@ public:
+     time_t lastref;
+     time_t expires;
+     ipcache_addrs addrs;
++    Ip::Address from;
+     IPH *handler;
+     void *handlerData;
+     char *error_message;
+@@ -151,7 +152,7 @@ static int ipcacheExpiredEntry(ipcache_e
+ #if USE_DNSHELPER
+ static int ipcacheParse(ipcache_entry *, const char *buf);
+ #else
+-static int ipcacheParse(ipcache_entry *, const rfc1035_rr *, int, const char *error);
++static int ipcacheParse(ipcache_entry *, const rfc1035_rr *, int, const char *error, void const *from);
+ #endif
+ static ipcache_entry *ipcache_get(const char *);
+ static void ipcacheLockEntry(ipcache_entry *);
+@@ -463,7 +464,7 @@ ipcacheParse(ipcache_entry *i, const cha
+ 
+ #else
+ static int
+-ipcacheParse(ipcache_entry *i, const rfc1035_rr * answers, int nr, const char *error_message)
++ipcacheParse(ipcache_entry *i, const rfc1035_rr * answers, int nr, const char *error_message, void const *from)
+ {
+     int k;
+     int j = 0;
+@@ -577,6 +578,9 @@ ipcacheParse(ipcache_entry *i, const rfc
+     else
+         i->addrs.count = 255;
+ 
++    if(na)
++        i->from = from ? (Ip::Address *)from : 0;
++
+     if (ttl > Config.positiveDnsTtl)
+         ttl = Config.positiveDnsTtl;
+ 
+@@ -597,7 +601,7 @@ static void
+ #if USE_DNSHELPER
+ ipcacheHandleReply(void *data, char *reply)
+ #else
+-ipcacheHandleReply(void *data, const rfc1035_rr * answers, int na, const char *error_message)
++ipcacheHandleReply(void *data, const rfc1035_rr * answers, int na, const char *error_message, void const *from)
+ #endif
+ {
+     ipcache_entry *i;
+@@ -610,7 +614,7 @@ ipcacheHandleReply(void *data, const rfc
+     ipcacheParse(i, reply);
+ #else
+ 
+-    int done = ipcacheParse(i, answers, na, error_message);
++    int done = ipcacheParse(i, answers, na, error_message, from);
+ 
+     /* If we have not produced either IPs or Error immediately, wait for recursion to finish. */
+     if (done != 0 || error_message != NULL)
+@@ -779,6 +783,15 @@ ipcache_gethostbyname(const char *name,
+         ++IpcacheStats.negative_hits;
+         // ignore i->error_message: the caller just checks IP cache presence
+         return NULL;
++    } else if (flags & IP_LOOKUP_NS) {
++        static_addrs.count = 1;
++        static_addrs.cur = 0;
++        static_addrs.in_addrs[0] = i->from;
++        static_addrs.bad_mask[0] = FALSE;
++        static_addrs.badcount = 0;
++        // TODO: ipbtree(i->addrs, &i->from);
++        IpcacheStats.hits++;
++        return &static_addrs;
+     } else {
+         ++IpcacheStats.hits;
+         i->lastref = squid_curtime;
+@@ -789,6 +802,8 @@ ipcache_gethostbyname(const char *name,
+     /* no entry [any more] */
+ 
+     if ((addrs = ipcacheCheckNumeric(name))) {
++        if (flags & IP_LOOKUP_NS)
++            return NULL; // TODO: return ipbtree(addrs, NULL);
+         ++IpcacheStats.numeric_hits;
+         return addrs;
+     }
+diff -pruN a/src/typedefs.h b/src/typedefs.h
+--- a/src/typedefs.h	2013-11-30 16:55:13.000000000 +0300
++++ b/src/typedefs.h	2014-01-14 13:41:26.833083218 +0300
+@@ -94,7 +94,7 @@ typedef void HLPCB(void *, char *buf);
+ typedef int HLPSAVAIL(void *);
+ typedef void HLPSONEQ(void *);
+ typedef void HLPCMDOPTS(int *argc, char **argv);
+-typedef void IDNSCB(void *, const rfc1035_rr *, int, const char *);
++typedef void IDNSCB(void *, const rfc1035_rr *, int, const char *, void const *);
+ 
+ /* MD5 cache keys */
+ typedef unsigned char cache_key;
