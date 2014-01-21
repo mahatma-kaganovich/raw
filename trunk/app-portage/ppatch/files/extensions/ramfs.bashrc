@@ -1,13 +1,14 @@
 #### RAMTMPDIR="<enable_temp=yes|no> <max_dist_size> <ramfs_size>"
 #### example: RAMTMPDIR="no 5M 1000M" - always ramfs if dist < 50000000
-#### example: RAMTMPDIR="yes 5M 1000M" - same, but else - mount temp
+#### example: RAMTMPDIR="yes 5M 1000M" - same, but else - mount $TMPDIR & $D
 #### ramfs_size may be omitted, but some of distros need to check free space
 
 _ramtmpdir(){
-	local s=0 i c=`pwd` m="${2^^}"
+	local s=0 i c=`pwd` m="${2^^}" o="none -t ramfs -o noatime"
 	m="${m//G/000M}"
 	m="${m//M/000K}"
 	m="${m//K/000}"
+	[ "$3" = '' ] || s+=",size=$3"
 	for i in "$DISTDIR"/*; do
 		s=$[s+$(stat "`readlink -f "$i"`" --format='%s')]
 	done
@@ -15,16 +16,18 @@ _ramtmpdir(){
 		echo ">>> Size=$s > $2"
 		[ "$1" = yes ] && {
 			echo ">>> Mounting ramfs to temp"
-			mount -t ramfs -o noatime none "$TMPDIR"
+			mount $o "$TMPDIR"
+			# workaround for install+strip hardlink
+			i=$"$TMPDIR/...image"
+			mkdir "$i"  && ln -sf "$i" "${D%/}"
 		}
 		return
 	fi
 	rm "$PORTAGE_BUILDDIR.tmp" -Rf
-	[ "$3" = '' ] && s='' || s=",size=$3"
-	echo ">>> Mounting ramfs$s"
+	echo ">>> Mounting ramfs"
 	rename "${PORTAGE_BUILDDIR##*/}" "${PORTAGE_BUILDDIR##*/}.tmp" "$PORTAGE_BUILDDIR" &&
 	    mkdir "$PORTAGE_BUILDDIR" &&
-	    mount -t ramfs -o noatime$s none "$PORTAGE_BUILDDIR" && {
+	    mount $o "$PORTAGE_BUILDDIR" && {
 		chown portage:portage "$PORTAGE_BUILDDIR"
 		mv "$PORTAGE_BUILDDIR".tmp/* "$PORTAGE_BUILDDIR/"
 		for i in "$PORTAGE_BUILDDIR".tmp/.*; do ln -s "$i" "$PORTAGE_BUILDDIR/${i##*/}"; done 2>/dev/null
