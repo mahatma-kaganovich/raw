@@ -34,7 +34,8 @@ _ramtmpdir(){
 
 [ "${RAMTMPDIR:-no}" != no -a -n "$TMPDIR" -a -n "$PORTAGE_BUILDDIR" -a -z "${TMPDIR##$PORTAGE_BUILDDIR/*}" ] && case "$EBUILD_PHASE" in
 clean)
-	umount -l "$PORTAGE_BUILDDIR" ||
+	umount -l "$PORTAGE_BUILDDIR" &&
+	rm "$PORTAGE_BUILDDIR.tmp" -Rf ||
 	umount -l "$TMPDIR"
 ;;
 setup)
