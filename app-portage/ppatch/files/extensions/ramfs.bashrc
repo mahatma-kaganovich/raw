@@ -18,7 +18,7 @@ _ramtmpdir(){
 			echo ">>> Mounting ramfs to temp"
 			mount $o "$TMPDIR"
 			# workaround for install+strip hardlink
-			i=$"$TMPDIR/...image"
+			i="$TMPDIR/...image"
 			mkdir "$i"  && ln -sf "$i" "${D%/}"
 		}
 		return
