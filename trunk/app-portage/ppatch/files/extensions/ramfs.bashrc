@@ -8,7 +8,7 @@ _ramtmpdir(){
 	m="${m//G/000M}"
 	m="${m//M/000K}"
 	m="${m//K/000}"
-	[ "$3" = '' ] || s+=",size=$3"
+	[ "$3" = '' ] || o+=",size=$3"
 	for i in "$DISTDIR"/*; do
 		s=$[s+$(stat "`readlink -f "$i"`" --format='%s')]
 	done
