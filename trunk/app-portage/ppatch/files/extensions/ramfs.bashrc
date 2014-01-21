@@ -1,10 +1,10 @@
 #### RAMTMPDIR="<enable_temp=yes|no> <max_dist_size> <ramfs_size>"
 #### example: RAMTMPDIR="no 5M 1000M" - always ramfs if dist < 50000000
 #### example: RAMTMPDIR="yes 5M 1000M" - same, but else - mount temp
-#### max_dist_size may be omitted, but some of distros need to check size
+#### ramfs_size may be omitted, but some of distros need to check free space
 
 _ramtmpdir(){
-	local s=0 i c=`pwd` m="$2"
+	local s=0 i c=`pwd` m="${2^^}"
 	m="${m//G/000M}"
 	m="${m//M/000K}"
 	m="${m//K/000}"
