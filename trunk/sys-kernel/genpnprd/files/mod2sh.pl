@@ -18,8 +18,10 @@ my @order=(\&order3,\&order1,\&order2,\&order3);
 
 # to load second/last
 my @reorder=(
- '/ide/|usb-storage|/oss/|/video/.*/|/video/.+fb\.ko|/snd-pcsp|/pata_acpi|/ata_generic',
+ '/ide/|usb-storage|/oss/|/video/|/snd-pcsp|/pata_acpi|/ata_generic',
 );
+
+my $noreorder='/drm/';
 
 sub read_aliases{
 	my ($s,$id,$m);
@@ -250,7 +252,7 @@ local i=""
 		my @d=();
 		for (@{$alias{$_}}){
 			for my $r (0..$#reorder){
-				if(grep(/$reorder[$r]/,@{$dep{$_}})){
+				if(grep(/$reorder[$r]/,@{$dep{$_}}) && !grep(/$noreorder/,@{$dep{$_}})){
 					push(@d,$re=$r+1,@{$dep{$_}});
 					goto NN;
 				}
