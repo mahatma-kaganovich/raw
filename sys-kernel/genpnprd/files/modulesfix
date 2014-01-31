@@ -98,18 +98,12 @@ done|while read i h bus n m; do
 		}
 	fi
 	bus="${bus%%_*}"
-	case "$bus:$ii" in
+#	case "$bus:$ii" in
 #	*/neo1973_wm8753.c)
 #		echo "SKIPPED: $bus: $ii"
 #		continue
 #	;;
-	*/hvc_xen.c)
-		grep -qF "#include <linux/module.h>" "$i" || {
-			echo "SKIPPED $bus: $ii"
-			continue
-		}
-	;;
-	esac
+#	esac
 	local BU
 	case "$bus" in
 	sdio)BU=MMC;;
