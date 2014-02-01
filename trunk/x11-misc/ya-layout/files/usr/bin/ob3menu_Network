@@ -21,6 +21,7 @@
 # - filter visible wifi over current keyset;
 # - bridges (for VM, IMHO just connect/disconnect to active bridge).
 
+use POSIX;
 use bigint;
 $ioctl=eval('require "sys/ioctl.ph"');
 
@@ -33,6 +34,7 @@ $iwconfig='/sbin/iwconfig';
 $iwlist='/sbin/iwlist';
 $rfcomm='/usr/bin/rfcomm';
 $ppporc='/usr/sbin/ppporc';
+$wpa_cli='/usr/bin/wpa_cli';
 
 $stop='-- ';
 
@@ -121,6 +123,11 @@ sub _iwhelp{
 	}
 #	$current=_iwdata($i=_getprg($iwconfig.' 2>/dev/null'),undef,1);
 	$current=_iwdata($i=`$iwconfig 2>/dev/null`,undef,1);
+}
+
+sub term{
+	system('ya-session','--run',"+@_");
+
 }
 
 sub _iwdata{
@@ -318,6 +325,8 @@ sub checkroute{
 }
 
 my @ID=('Quality','ESSID','Frequency','Channel','Address|Access Point');
+my @WPAID=('signal level','ssid','frequency','bssid','proto');
+my @WPAID1=('network id','ssid','bssid','proto');
 
 sub _getprg{
 	my $cmd=$_[0];
@@ -436,6 +445,153 @@ sub aplist{
 		print $res[0];
 		$res[$_] && print '<separator/>',$res[$_] for(1..$#_);
 	}
+}
+
+sub wpaopen{
+	open my $F,'-|',"$wpa_cli @_ -i $if" or die $!;
+	$F;
+}
+
+sub wpa_vars{
+	my ($f,@f,%f,$p);
+	$p->{'ssid'}='"\"'.$_[0]->{'ssid'}.'\""';
+	$f=$_[0]->{'flags'};
+#	if($f eq '[ESS]'){
+		$p->{'key_mgmt'}='NONE';
+#	}
+	$f=~s/^\[|\]$//gs;
+	@f=split(/\]\[/,$f);
+	for my $c ('WPA2-PSK','WPA-PSK','WEP'){
+		for(grep(/^$c/,@f)){
+			$f{$_}=1 for(split(/[+-]/,$_));
+		}
+		%f && last;
+	}
+	$f{$_} && ($p->{'pairwise'}=$_) for('TKIP','CCMP');
+	$f{$_} && ($p->{'proto'}=$_) for('WPA','WPA2');
+	if(($f{'WPA2'}||$f{'WPA'})){
+		$p->{'auth_alg'}='OPEN';
+		$f{$_} && ($p->{'key_mgmt'}="WPA-$_") for('PSK','EAP');
+		$p->{'auth_alg'}='LEAP' if($f{'LEAP'});
+	}elsif($f{'WEP'}){
+		$p->{'auth_alg'}='SHARED';
+	}
+	$p->{'psk'}=undef if(%f);
+	$p->{'bssid'}=$_[0]->{'bssid'} if(!%f);
+	$p;
+}
+
+sub wpa_cli_{
+	my $F;
+	(open($F,'|-',"$wpa_cli -i $if") && print($F join("\n",@_)) && close($F)) || die $!;
+}
+
+# ssid flags bssid
+# do not reconnect if add failed
+sub WPA_ADD{
+	wpa_cli_("disconnect\nreconfigure\n");
+	wpa_cli('add_network')||die;
+	my ($id)=$RES=~/^(\d+)$/;
+	my $s;
+	$|=1;
+	for(@_){
+		$_=~s/=/ /;
+		if($_ eq 'psk '){
+			my $psk=getline(1,'PSK:');
+			$_.='"'.$psk.'"';
+		}
+		$s.="set_network $id $_\n";
+	}
+#	$s.="select_network $id\nsave_config\n";
+	$s.="save_config\nreconfigure\n";
+	wpa_cli_($s);
+	wpa_cli1('select_network',$id);
+	wpa_cli1('reconnect');
+	$cmd="WPA_ADD";
+	0;
+}
+
+sub WPA_REMOVE{
+	wpa_cli1("remove_network $_[0]");
+	wpa_cli_("save_config\nreconfigure\n");
+	0;
+}
+
+sub _wpalist{
+	my (@a,@f,$i,$res);
+	my $F=wpaopen(@_);
+	$i="$if";
+	while(my $s=readline($F)){
+		chomp($s);
+		@a=split(/ \/ /,$s);
+		if($#a){
+			@f=@a;
+			next;
+		}
+		@a=split(/	/,$s,-1);
+		if($#a==$#f){
+			my $x={};
+			$x->{$f[$_]}=$a[$_] for(0..$#f);
+			if(exists($x->{'network id'})){
+				for('proto'){
+					wpa_cli('get_network',$x->{'network id'},'proto')||next;
+					$RES=~s/.*\n//gs;
+					$RES=~s/RSN/WPA2/g;
+					$x->{$_}=$RES;
+				}
+			}else{
+				$x->{''}=my $v=wpa_vars($x);
+				exists($v->{$_}) && ($x->{$_}=$v->{$_}) for('proto');
+			}
+			push @{$res->{$i}},$x;
+			next;
+		}
+		$s=~s/\'(.*?)\'$/$i=$1/gse;
+	}
+	close($F);
+	$res;
+}
+
+sub wpa_status{
+	wpa_cli(@_)||return;
+	my $r;
+	$RES=~s/^([a-z]+)=(.*)$/$r->{$1}=$2/gme;
+	$r;
+}
+
+sub wpalist{
+	my $sr=_wpalist('scan_results');
+	my $ln=_wpalist('list_networks');
+	my $st=wpa_status('status');
+	print '<separator/><separator label="Configured: '.join(',',@WPAID1),'"/>';
+#	for $if (keys %$ln){
+		for my $cf (@{$ln->{$if}}){
+			for my $sc (@{$sr->{$if}}){
+				next if(!(($cf->{'ssid'} eq '' || $cf->{'ssid'} eq $sc->{'ssid'}) && ($cf->{'bssid'} eq 'any' || $cf->{'bssid'} eq $sc->{'bssid'})));
+				my $id=$cf->{'network id'};
+				my $s=join(',',map{$cf->{$_}}@WPAID1);
+				$sc->{'*'}=1;
+				print $cf->{'flags'} eq '[CURRENT]'?
+				    _cur($s.($cf->{$bssid} eq 'any'?" ($sc->{'bssid'})":'')):
+				    _ex("$if $wpa_cli select_network $id -i $if",$s);
+				last;
+			}
+		}
+#	}
+	print '<separator/><separator label="Scanned: '.join(',',@WPAID).'"/>';
+#	for $if (keys %$ln){
+		for my $ap (@{$sr->{$if}}){
+			$ap->{'signal level'}=abs($ap->{'signal level'});
+			my $l=join(',',map{$ap->{$_}}@WPAID);
+			if($ap->{'*_'}){
+				print _cur($l);
+			}else{
+				my $s="$if WPA_ADD";
+				while(my ($x,$y)=each(%{$ap->{''}})){$s.=" $x=$y"};
+				print _ex($s,$l);
+			}
+		}
+#	}
 }
 
 sub btpath{
@@ -720,14 +876,33 @@ FD:
 	}
 }
 
+sub wpa_cli{
+	my @x=@_;
+	push @x,'-i',$if if(defined($if));
+	$RES=`$wpa_cli @x`;
+	!$?
+#	!system($wpa_cli,@_);
+}
+
+sub wpa_cli1{
+	wpa_cli(@_)||die $!;
+	($RES=~/OK$/gs)||die "\n$RES";
+}
+
 sub ifstat{
 	for(glob('/sys/class/net/*')){
 		$i=$_;
 		$i=~s/.*\///g;
+		$if=$i;
 #		next if($i eq 'lo');
 		my $w=(-e "$_/phy80211" || -e "$_/wireless");
-		$iw+=$w;
-		push @wlan,$i if($w);
+		if(!$w){
+		}elsif(wpa_cli('ping')){
+			$wpa+=($wpa{$i}=1);
+		}else{
+			$iw+=1;
+			push @wlan,$i;
+		}
 		$carrier{$i}=_read("$_/carrier",1);
 		if(-e "$_/bridge"){
 			$bridge{$i}=[];
@@ -739,6 +914,7 @@ sub ifstat{
 		next if(exists($if_ip{$i}) && !-e "/var/run/dhcpcd-$i.pid");
 		$if{$i}=1;
 	}
+	$if=undef;
 }
 
 sub _nap{
@@ -878,6 +1054,8 @@ sub _run_{
 },
 'NAP'=>\&NAP,
 'RFCOMM_BIND'=>\&RFCOMM_BIND,
+'WPA_ADD'=>\&WPA_ADD,
+'WPA_REMOVE'=>\&WPA_REMOVE,
 );
 
 sub _system{
@@ -1029,6 +1207,18 @@ OK:
 		_ex("$D$p $ENV{SHELL} -c \"$pppask $f\"",$n);
 }
 
+sub getline{
+	my $pipe="termpipe.$$";
+	unlink($pipe) if(-e $pipe);
+	mkfifo($pipe,0600)||die $!;
+	system('ya-session','--run',"+$0 --input $pipe @_");
+	open(my $F,'<',$pipe) or die $!;
+	unlink($pipe);
+	sysread($F,my $s,65536);
+	close($F);
+	$s;
+}
+
 sub netmenu{
 	my @cmd;
 	if($>){
@@ -1040,6 +1230,40 @@ sub netmenu{
 	while($_[0] eq '--debug'){
 		shift;
 		$ENV{OB3MENUNET_DEBUG}=1;
+	}
+	if($_[0] eq '--input'){
+		my ($xx,$pipe,$N,@o)=@_;
+		open(my $F,'>>',$pipe) or die $!;
+		unlink($pipe);
+		$N && system('stty', '-echo');
+		my $s;
+		if($N eq 2){
+			while(1){
+				print "\n[".(defined($s)+1)."] @o";
+				my $s1=readline(STDIN);
+				defined($s1)||die;
+				if(defined($s)){
+					if($s eq $s1){
+						open(my $F,'|-','(/usr/sbin/cracklib-check||echo OK)|grep -sq OK') or die $!;
+						print $F "$s\n";
+						close($F);
+						$? || last;
+						print " - too simple!";
+					}else{
+						print " - not same!";
+					}
+					$s1=undef;
+				}
+				$s=$s1;
+			}
+		}else{
+			print "@o";
+			$s=readline(STDIN);
+		}
+		chomp($s);
+		syswrite($F,$s)||die $!;
+		close($F);
+		exit;
 	}
 	my $i=$_[0];
 	$ENV{OB3MENUNET_DEBUG}=1 if($i=~s/^\++//);
@@ -1173,6 +1397,11 @@ sub netmenu{
 			$sc="$sc1 $sc2 simple-agent $sc3 $sc4;false";
 			print _ex("_ $ENV{SHELL} -c \"$sc\"", 'Bluetooth ON - scan & agent - OFF') if(-e '/usr/bin/simple-agent');
 		}
+		if($wpa){
+			for $if (keys %wpa) { print _ex("$if $wpa_cli scan -i $if","rescan $if"); }
+#			print _ex("_ $wpa_cli scan","Wireless rescan");
+			for $if (keys %wpa){ wpalist() }
+		}
 		if($iw){
 			print _ex("_ RESCAN",'Wi-Fi rescan') if($> || $iwlast);
 			_iwhelp();
@@ -1260,6 +1489,14 @@ sub netmenu{
 		}
 		if(-e "$d/phy80211" || -e "$d/wireless"){
 			print '<separator label="Wi-Fi"/>';
+		    if(wpa_cli('ping')){
+			print _ex("$wpa_cli $_ -i $if",$_) for('scan','disconnect','reconnect','reconfigure','terminate','logon','logoff','reassociate','reauthenticate');
+			my $ln=_wpalist('list_networks');
+			print '<separator label="Delete: '.join(',',@WPAID1),'"/>';
+			for my $c (@{$ln->{$if}}){
+				print _ex("WPA_REMOVE $c->{'network id'}",join(',',map{$c->{$_}}@WPAID1));
+			}
+		    }else{
 			my $i;
 			_iwhelp();
 			my %o;
@@ -1299,6 +1536,7 @@ sub netmenu{
 				}
 			}
 			print map{$o{$_}}sort keys %o;
+		    }
 		}
 EX:
 		print '</openbox_pipe_menu>';
@@ -1324,13 +1562,13 @@ SUDO:
 #		$notify_||=$SUDO||exists($nosudo{$cmd[0]});
 		$notify_||=$SUDO;
 		$cmd{$_}++ for(@cmd);
-		my ($term,$root,$cmd);
+		my ($term,$root);
 		if(!$notify_ && $>){
 			$root||=exists($sudo{$cmd[0]});
 			# if path is absolute - check later
 			$i='iwconfig|iwlist|kill|pppd|dhcpcd|rfcomm|hciconfig';
 			$root||=$cmd{$ENV{SHELL}}?grep(/ (?:$i) /,@cmd):grep(/^(?:$i)$/,@cmd);
-			if(!$root){ # to get permissions to [/usr]/[s]bin/ sometimes we need sudo
+			if(!$root && !$cmd{$wpa_cli}){ # to get permissions to [/usr]/[s]bin/ sometimes we need sudo
 				if($cmd{$ENV{SHELL}}){
 					for(@cmd){
 						my $i=$_;
