@@ -512,6 +512,7 @@ sub WPA_ADD{
 }
 
 sub WPA_REMOVE{
+	wpa_cli_("disconnect\nreconfigure\n");
 	wpa_cli1("remove_network $_[0]");
 	wpa_cli_("save_config\nreconfigure\n");
 	0;
