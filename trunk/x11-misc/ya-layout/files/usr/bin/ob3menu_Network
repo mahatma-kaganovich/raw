@@ -503,7 +503,7 @@ sub WPA_ADD{
 		$s.="set_network $id $_\n";
 	}
 #	$s.="select_network $id\nsave_config\n";
-	$s.="save_config\nreconfigure\n";
+	$s.="enable_network $id\nsave_config\nreconfigure\n";
 	wpa_cli_($s);
 	wpa_cli1('select_network',$id);
 	wpa_cli1('reconnect');
@@ -1492,7 +1492,7 @@ sub netmenu{
 		    if(wpa_cli('ping')){
 			print _ex("$wpa_cli $_ -i $if",$_) for('scan','disconnect','reconnect','reconfigure','terminate','logon','logoff','reassociate','reauthenticate');
 			my $ln=_wpalist('list_networks');
-			print '<separator label="Delete: '.join(',',@WPAID1),'"/>';
+			print '<separator label="remove '.join(',',@WPAID1),'"/>';
 			for my $c (@{$ln->{$if}}){
 				print _ex("WPA_REMOVE $c->{'network id'}",join(',',map{$c->{$_}}@WPAID1));
 			}
