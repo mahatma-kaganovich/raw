@@ -21,6 +21,7 @@ ENV="$cache/environment.$DSP"
 : ${YA_APP_WebBrowser:="'exo-open --launch WebBrowser' @WebBrowser"}
 # exo-open going mad with params, but we want terminal with params NOW!
 #: ${YA_APP_TerminalEmulator:="'exo-open --launch TerminalEmulator' @TerminalEmulator"}
+: ${YA_APP_TerminalEmulator:="@TerminalEmulator 'vte --reverse'"}
 : ${YA_APP_FileManager:="'exo-open --launch FileManager' \"spacefm --profile=\$YA_PROFILE\" \"pcmanfm -p \$YA_PROFILE\" \"nautilus --no-desktop \$sm2\" @FileManager +mc"}
 : ${YA_APP_Email:="'exo-open --launch MailReader' 'seamonkey --mail' @Email"}
 : ${YA_APP_InstantMessaging:="@InstantMessaging"}
@@ -332,7 +333,8 @@ _app(){
 		min="$x$p1"
 		minpref="$pref"
 	done
-	[ -n "$al_" ] && alias "$al_"="${min%$p1}" &>/dev/null && alias "$al_" >>$ENV
+	x="${min%$p1}"
+	[ -n "$al_" -a -n "$x" ] && alias "$al_"="$x" &>/dev/null && alias "$al_" >>$ENV
 }
 
 #alias WebBrowser=/usr/bin/seamonkey-X
@@ -371,6 +373,7 @@ launch(){
 	case "$i" in
 	*exo-open\ --launch\ TerminalEmulator\ -e\ *)i="${i/ -e}";;
 	/usr/bin/[Tt]erminal\ *-e\ *|/usr/bin/xfce4-terminal\ *-e\ *)exec ${i%% -e *} -e "${i#* -e }";;
+	/usr/bin/vte\ *-e\ *|/usr/bin/vte\ --reverse\ *-e\ *)exec ${i%% -e *} -c "${i#* -e }";;
 	esac
 	exec $i
 	exit
@@ -459,7 +462,7 @@ _unalias(){
 }
 
 [ -e "$ENV" ] && . "$ENV" || mkdir -p "$cache"
-i=`stat --printf=%Z $prefapps /usr/share/applications /usr/bin/ya-session`
+i=`stat --printf=%Z $prefapps /usr/share/applications /usr/bin/ya-session 2>/dev/null`
 [ "$i" != "$YA_ENV_KEY" ] && _env _unalias
 preferred 2>/dev/null
 [ -z "$YA_DESKTOP" ] && YA_DESKTOP=`app $YA_STARTUP`
