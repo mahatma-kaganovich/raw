@@ -1,4 +1,3 @@
 KERNEL_CONFIG+="-.*_RCU TINY_PREEMPT_RCU;TREE_PREEMPT_RCU =RCU_BOOST -PREEMPT_(?:NONE|VOLUNTARY) PREEMPT_RT PREEMPT PREEMPT_RT =.*_TIME_ACCOUNTING HIGH_RES_TIMERS -HZ_100 -HZ_250 HZ_1000"
-## possible bugs + no IRQ accounting. test with +laptop
-#use experimental && KERNEL_CONFIG+=" (?:RCU_NOCB_CPU|NO_HZ_FULL)(?:_ALL)?"
+use experimental && KERNEL_CONFIG+=" RCU_NOCB_CPU(?:_ALL)?"
 cfg_use_ laptop HZ_300
