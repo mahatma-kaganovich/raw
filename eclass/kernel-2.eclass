@@ -96,7 +96,7 @@ load_conf
 #IUSE="${IUSE} md5cfg:${USEKEY%% *}"
 
 for i in "${SHARE}"/*.{-use,use}; do
-	i="${i##*/}"
+	i="${i##*[/:]}"
 	i="${i%.use}"
 	i="${i%.-use}"
 	IUSE="$IUSE ${i#[0-9]}"
