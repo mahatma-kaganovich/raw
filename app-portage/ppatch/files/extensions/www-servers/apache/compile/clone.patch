@@ -1,16 +1,18 @@
 This is experimental clone() (vs. fork()) patch for mpm-itk apache 2.2.
 Really I see no perfomance benefits, but only little RAM. But using
-CLONE_VFORK must relax cheduling in theory.
+CLONE_VFORK must relax scheduling in theory.
 
 Primary - for experiments with LXC.
 
 (c) Denis Kaganovich, <mahatma@eu.by>
 Licensed under the same terms as the rest of Apache (or Anarchy license).
 
-In this version I remove vfork by default die to segfaults.
+First I remove vfork by default die to segfaults. But then I back to vfork
+on my servers, keepend defaults. So, to use vfork add "CloneFlags 16384" in
+mpm_itk config section.
 
---- a/server/mpm/experimental/itk/itk.c	2012-05-18 14:49:06.000000000 +0300
-+++ b/server/mpm/experimental/itk/itk.c	2012-05-18 15:02:49.000000000 +0300
+--- a/server/mpm/experimental/itk/itk.c	2014-02-28 11:04:38.000000000 +0300
++++ b/server/mpm/experimental/itk/itk.c	2014-02-28 11:37:45.292890651 +0300
 @@ -104,6 +104,19 @@
  #define HARD_THREAD_LIMIT 1
  #endif
@@ -31,7 +33,7 @@ In this version I remove vfork by default die to segfaults.
  /* config globals */
  
  int ap_threads_per_child=0;         /* Worker threads per child */
-@@ -715,7 +728,11 @@ static void child_main(int child_num_arg
+@@ -713,7 +726,11 @@ static void child_main(int child_num_arg
           */
  
          {
@@ -43,7 +45,20 @@ In this version I remove vfork by default die to segfaults.
              int status;
              switch (pid) {
              case -1:
-@@ -806,6 +823,8 @@ static int make_child(server_rec *s, int
+@@ -728,6 +745,12 @@ static void child_main(int child_num_arg
+                 }
+                 exit(0);
+             default: /* parent; just wait for child to be done */
++#if ITK_USE_CLONE
++                if (clone_flags1 & CLONE_VFORK) {
++                    /* pid always done, ignore interrupts (die means die) */
++                    child_pid = waitpid(pid, &status, WNOHANG);
++                } else
++#endif
+                 do {
+                     child_pid = waitpid(pid, &status, 0);
+                 } while (child_pid == -1 && errno == EINTR);
+@@ -804,6 +827,8 @@ static int make_child(server_rec *s, int
      if ((pid = os_fork(unixd_config.user_name)) == -1) {
  #elif defined(TPF)
      if ((pid = os_fork(s, slot)) == -1) {
@@ -52,7 +67,7 @@ In this version I remove vfork by default die to segfaults.
  #else
      if ((pid = fork()) == -1) {
  #endif
-@@ -1428,6 +1447,10 @@ static int itk_pre_config(apr_pool_t *p,
+@@ -1426,6 +1451,10 @@ static int itk_pre_config(apr_pool_t *p,
  #ifdef AP_MPM_WANT_SET_MAX_MEM_FREE
      ap_max_mem_free = APR_ALLOCATOR_MAX_FREE_UNLIMITED;
  #endif
@@ -63,7 +78,7 @@ In this version I remove vfork by default die to segfaults.
  
      apr_cpystrn(ap_coredump_dir, ap_server_root, sizeof(ap_coredump_dir));
  
-@@ -1722,6 +1745,19 @@ static const char *set_chroot(cmd_parms
+@@ -1678,6 +1707,19 @@ static const char *set_nice_value (cmd_p
      return NULL;
  }
  
@@ -83,7 +98,7 @@ In this version I remove vfork by default die to segfaults.
  static const command_rec itk_cmds[] = {
  UNIX_DAEMON_COMMANDS,
  LISTEN_COMMANDS,
-@@ -1743,6 +1779,10 @@ AP_INIT_TAKE1("MaxClientsVHost", set_max
+@@ -1697,6 +1739,10 @@ AP_INIT_TAKE1("MaxClientsVHost", set_max
                "Maximum number of children alive at the same time for this virtual host."),
  AP_INIT_TAKE1("NiceValue", set_nice_value, NULL, RSRC_CONF|ACCESS_CONF,
                "Set nice value for the given vhost, from -20 (highest priority) to 19 (lowest priority)."),
