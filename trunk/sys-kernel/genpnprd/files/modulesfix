@@ -149,7 +149,7 @@ done|while read i h bus n m; do
 		continue
 	fi
 	xx='\nMODULE_DEVICE_TABLE('"$bus, $n"');'
-	$mh || xx='\n#indclude <linux/module.h>'"$xx"
+	$mh || xx='\n#include <linux/module.h>'"$xx"
 	if grep -Prq "^\s*(?:menu)?config\s+$BU(?:\s.*)?$" $1 --include="Kconfig*"; then
 		echo "Fixing$m: $BU: ($n) $ii"
 		xx='\n#ifdef CONFIG_'"$BU$xx"'\n#endif'
