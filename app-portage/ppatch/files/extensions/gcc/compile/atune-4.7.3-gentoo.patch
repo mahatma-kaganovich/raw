@@ -1,0 +1,177 @@
+2014-03-08 Dzianis Kahanovich <mahatma@eu.by>
+
+PR target/40171
+* config/i386/driver-i386.c (host_detect_local_cpu): Add "astune" mode (assembler mtune).
+* config/i386/i386.h (ASM_SPEC_MTUNE): Detect & pass -mtune=native to the GNU assembler.
+* config/i386/linux64.h (ASM_SPEC): Append ASM_SPEC_MTUNE.
+* config/i386/linux.h (ASM_SPEC): Likewise.
+* config/i386/mingw-w64.h (ASM_SPEC): Likewise.
+* config/i386/sol2-10.h (ASM_SPEC): Likewise.
+* config/i386/vxworks.h (ASM_SPEC): Likewise.
+* config/i386/x86-64.h (ASM_SPEC): Likewise.
+
+--- a/gcc/config/i386/driver-i386.c	2014-03-08 14:28:06.666847036 +0300
++++ b/gcc/config/i386/driver-i386.c	2014-03-08 14:32:41.343681195 +0300
+@@ -400,7 +400,7 @@ const char *host_detect_local_cpu (int a
+   unsigned int has_rdrnd = 0, has_f16c = 0, has_fsgsbase = 0;
+   unsigned int has_osxsave = 0;
+ 
+-  bool arch;
++  bool arch, tune, astune;
+ 
+   unsigned int l2sizekb = 0;
+ 
+@@ -408,8 +408,10 @@ const char *host_detect_local_cpu (int a
+     return NULL;
+ 
+   arch = !strcmp (argv[0], "arch");
++  tune = !strcmp (argv[0], "tune");
++  astune = !strcmp (argv[0], "astune");
+ 
+-  if (!arch && strcmp (argv[0], "tune"))
++  if (!arch && !tune && !astune)
+     return NULL;
+ 
+   max_level = __get_cpuid_max (0, &vendor);
+@@ -508,7 +510,7 @@ const char *host_detect_local_cpu (int a
+       has_3dnow = edx & bit_3DNOW;
+     }
+ 
+-  if (!arch)
++  if (tune)
+     {
+       if (vendor == SIG_AMD)
+ 	cache = detect_caches_amd (ext_level);
+@@ -591,7 +593,7 @@ const char *host_detect_local_cpu (int a
+ 	case 0x1c:
+ 	case 0x26:
+ 	  /* Atom.  */
+-	  cpu = "atom";
++	  cpu = astune ? "core2" : "atom";
+ 	  break;
+ 	case 0x0f:
+ 	  /* Merom.  */
+@@ -614,12 +616,12 @@ const char *host_detect_local_cpu (int a
+ 	case 0x2a:
+ 	case 0x2d:
+ 	  /* Sandy Bridge.  */
+-	  cpu = "corei7-avx";
++	  cpu = astune ? "corei7" : "corei7-avx";
+ 	  break;
+ 	case 0x3a:
+ 	case 0x3e:
+ 	  /* Ivy Bridge.  */
+-	  cpu = "core-avx-i";
++	  cpu = astune ? "core" : "core-avx-i";
+ 	  break;
+ 	default:
+ 	  if (arch)
+@@ -627,7 +629,7 @@ const char *host_detect_local_cpu (int a
+ 	      /* This is unknown family 0x6 CPU.  */
+ 	      if (has_avx)
+ 		/* Assume Sandy Bridge.  */
+-		cpu = "corei7-avx";
++		cpu = astune ? "corei7" : "corei7-avx";
+ 	      else if (has_sse4_2)
+ 		/* Assume Core i7.  */
+ 		cpu = "corei7";
+@@ -658,7 +660,7 @@ const char *host_detect_local_cpu (int a
+ 	    }
+ 	  else
+ 	    /* For -mtune, we default to -mtune=generic.  */
+-	    cpu = "generic";
++	    cpu = astune ? NULL : "generic";
+ 	  break;
+ 	}
+       break;
+@@ -730,7 +732,7 @@ const char *host_detect_local_cpu (int a
+ 	    cpu = "pentium";
+ 	}
+       else
+-	cpu = "generic";
++	cpu = astune ? NULL : "generic";
+     }
+ 
+   if (arch)
+@@ -765,7 +767,10 @@ const char *host_detect_local_cpu (int a
+     }
+ 
+ done:
+-  return concat (cache, "-m", argv[0], "=", cpu, options, NULL);
++  return cpu ? (astune ?
++	concat (cache, "-mtune=", cpu, NULL) :
++	concat (cache, "-m", argv[0], "=", cpu, options, NULL)) :
++		cache;
+ }
+ #else
+ 
+--- a/gcc/config/i386/gnu-user64.h	2013-02-09 09:58:54.000000000 +0300
++++ b/gcc/config/i386/gnu-user64.h	2014-03-08 14:31:33.946461060 +0300
+@@ -67,7 +67,7 @@ see the files COPYING3 and COPYING.RUNTI
+ #endif
+ 
+ #undef ASM_SPEC
+-#define ASM_SPEC "%{" SPEC_32 ":--32} \
++#define ASM_SPEC ASM_SPEC_MTUNE "%{" SPEC_32 ":--32} \
+  %{" SPEC_64 ":--64} \
+  %{" SPEC_X32 ":--x32} \
+  %{!mno-sse2avx:%{mavx:-msse2avx}} %{msse2avx:%{!mavx:-msse2avx}}"
+--- a/gcc/config/i386/gnu-user.h	2013-02-09 09:58:54.000000000 +0300
++++ b/gcc/config/i386/gnu-user.h	2014-03-08 14:31:33.946461060 +0300
+@@ -90,6 +90,7 @@ along with GCC; see the file COPYING3.
+ 
+ #undef  ASM_SPEC
+ #define ASM_SPEC \
++  ASM_SPEC_MTUNE \
+   "--32 %{!mno-sse2avx:%{mavx:-msse2avx}} %{msse2avx:%{!mavx:-msse2avx}}"
+ 
+ #undef  SUBTARGET_EXTRA_SPECS
+--- a/gcc/config/i386/i386.h	2013-03-23 05:23:44.000000000 +0300
++++ b/gcc/config/i386/i386.h	2014-03-08 14:31:33.946461060 +0300
+@@ -568,6 +568,13 @@ extern const char *host_detect_local_cpu
+ %{mtune=native:%>mtune=native %:local_cpu_detect(tune)}"
+ #endif
+ #endif
++
++#if defined(HAVE_LOCAL_CPU_DETECT) && defined(HAVE_GNU_AS)
++#define ASM_SPEC_MTUNE "%{march=native:%{!mtune=*:%>march=native %:local_cpu_detect(astune)}} \
++ %{mtune=native:%>mtune=native %:local_cpu_detect(astune)}"
++#else
++#define ASM_SPEC_MTUNE ""
++#endif
+ 
+ /* Target CPU builtins.  */
+ #define TARGET_CPU_CPP_BUILTINS() ix86_target_macros ()
+--- a/gcc/config/i386/mingw-w64.h	2011-10-04 19:42:35.000000000 +0300
++++ b/gcc/config/i386/mingw-w64.h	2014-03-08 14:31:33.946461060 +0300
+@@ -38,7 +38,7 @@ along with GCC; see the file COPYING3.
+ /* Enable multilib.  */
+ 
+ #undef ASM_SPEC
+-#define ASM_SPEC "%{m32:--32} %{m64:--64}"
++#define ASM_SPEC ASM_SPEC_MTUNE "%{m32:--32} %{m64:--64}"
+ 
+ #undef LIB_SPEC
+ #define LIB_SPEC "%{pg:-lgmon} %{" SPEC_PTHREAD1 ":-lpthread} " \
+--- a/gcc/config/i386/vxworks.h	2011-03-31 15:13:13.000000000 +0300
++++ b/gcc/config/i386/vxworks.h	2014-03-08 14:31:33.946461060 +0300
+@@ -20,7 +20,7 @@ along with GCC; see the file COPYING3.
+ <http://www.gnu.org/licenses/>.  */
+ 
+ #undef  ASM_SPEC
+-#define ASM_SPEC ""
++#define ASM_SPEC ASM_SPEC_MTUNE
+ 
+ #define TARGET_OS_CPP_BUILTINS()			\
+   do							\
+--- a/gcc/config/i386/x86-64.h	2011-07-31 21:10:41.000000000 +0300
++++ b/gcc/config/i386/x86-64.h	2014-03-08 14:31:33.946461060 +0300
+@@ -50,7 +50,7 @@ see the files COPYING3 and COPYING.RUNTI
+ #define WCHAR_TYPE_SIZE 32
+ 
+ #undef ASM_SPEC
+-#define ASM_SPEC "%{m32:--32} %{m64:--64}"
++#define ASM_SPEC ASM_SPEC_MTUNE "%{m32:--32} %{m64:--64}"
+ 
+ #undef ASM_OUTPUT_ALIGNED_BSS
+ #define ASM_OUTPUT_ALIGNED_BSS(FILE, DECL, NAME, SIZE, ALIGN) \
