@@ -534,11 +534,11 @@ cfg_loop(){
 			if diff -U 0 $k1 $k >"$k1.diff"; then
 				unlink "$k1.diff"
 			else
-				ewarn "Config deadloop! See details in 'k1.diff'"
+				ewarn "Config deadloop! See details in '$k1.diff'"
 			fi
 		fi
 	done
-	$ne || rm -f $k1
+	$ne || rm -f $rm
 	$ne
 }
 
