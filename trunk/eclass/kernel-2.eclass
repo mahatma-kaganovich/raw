@@ -525,7 +525,7 @@ _cfg_use_(){
 cfg_loop(){
 	local k=".config.loop.$1" i=0 k1 ne=true rm=
 	grep "CONFIG" .config >$k
-	while [[ $i < $1 ]]; do
+	while [[ $i -lt $1 ]]; do
 		k1=".config.loop.$[i++]"
 		rm+=" $k1"
 		if cmp -s $k1 $k ; then
