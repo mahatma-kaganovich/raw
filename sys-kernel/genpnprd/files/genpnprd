@@ -240,14 +240,20 @@ else
 			eval "$(/usr/bin/perl "${UROOT}/usr/share/genpnprd/Kconfig.pl" -config)"
 			. $i
 		fi
-		i="$(cat "$c")"
+		i=1
+		cfgs=( "$(cat "$c")" )
 		export S ${!KERNEL_@}
 		while true; do
 			/usr/bin/perl "${UROOT}/usr/share/genpnprd/Kconfig.pl"
 			yes '' 2>/dev/null | kmake oldconfig >/dev/null
-			j="$(cat "$c")"
-			[[ "$i" == "$j" ]] && break
-			i="$j"
+			cfgs[i]="$(cat "$c")"
+			j=0
+			while [[ $j < $i ]]; do
+				[[ "${cfgs[i]}" == "${cfgs[j]}" ]] && break
+				i=$[i+1]
+			done
+			[[ "${cfgs[i]}" == "${cfgs[j]}" ]] && break
+			i=$[i+1]
 		done
 		rm "$c.old"
 		kmake bzImage

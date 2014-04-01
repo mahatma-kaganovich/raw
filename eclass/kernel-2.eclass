@@ -523,14 +523,23 @@ _cfg_use_(){
 }
 
 cfg_loop(){
-	grep "CONFIG" .config >$1
-	if cmp -s $1 $2 ; then
-		rm $1 $2
-		return 1
-	else
-		cp $1 $2
-		return 0
-	fi
+	local k=".config.loop.$1" i=0 k1 ne=true rm=
+	grep "CONFIG" .config >$k
+	while [[ $i < $1 ]]; do
+		k1=".config.loop.$[i++]"
+		rm+=" $k1"
+		if cmp -s $k1 $k ; then
+			ne=false
+		elif ! $ne; then
+			if diff -U 0 $k1 $k >"$k1.diff"; then
+				unlink "$k1.diff"
+			else
+				ewarn "Config deadloop! See details in 'k1.diff'"
+			fi
+		fi
+	done
+	$ne || rm -f $k1
+	$ne
 }
 
 useconfig(){
@@ -867,7 +876,8 @@ kconfig(){
 
 	[[ -e .config ]] || kmake defconfig >/dev/null
 	export ${!KERNEL_@}
-	while cfg_loop .config.{3,4} ; do
+	local i=1
+	while cfg_loop $[i++]; do
 		local ok=false o a
 		for o in '' '-relax'; do
 		for a in "$(arch)" ''; do
