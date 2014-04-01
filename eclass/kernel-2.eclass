@@ -523,7 +523,7 @@ _cfg_use_(){
 }
 
 cfg_loop(){
-	local k=".config.loop.$1" i=0 k1 ne=true rm=
+	local k=".config.loop.$1" i=0 k1 ne=true rm= l=false
 	grep "CONFIG" .config >$k
 	while [[ $i -lt $1 ]]; do
 		k1=".config.loop.$[i++]"
@@ -534,10 +534,14 @@ cfg_loop(){
 			if diff -U 0 $k1 $k >"$k1.diff"; then
 				unlink "$k1.diff"
 			else
-				ewarn "Config deadloop! See details in '$k1.diff'"
+				l=true
 			fi
 		fi
 	done
+	$l && {
+		ewarn "Config deadloop! Details in: $(echo .config.loop.*.diff)."
+		ewarn "Dub options: $(grep -o "CONFIG_[^ =]*" .config.loop.*.diff|sort -u)"
+	}
 	$ne || rm -f $rm
 	$ne
 }
