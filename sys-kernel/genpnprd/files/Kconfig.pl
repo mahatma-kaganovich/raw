@@ -118,6 +118,7 @@ sub Kcload{
 		$s=~s/#.*//gs;
 		$s=~s/\s*$//s;
 		$s=~s/^\s*((?:menu)?config)\s+(\S+)/
+			$order1{$2}=++$order1;
 			$c=$1;$v1=$2;
 			for(my $i;exists($depends{$v="$d$i:$2"});$i++){};
 			$ch{$v}="!$2";
@@ -181,8 +182,8 @@ sub load_config{
 	open(my $F,"<$_[0]") || return;
 	while(defined(my $s=<$F>)){
 		chomp($s);
-		$s=~s/^CONFIG_([^=\s]*)=(.*)/$config{$1}=$2;$vars{$1}=1;next/se;
-		$s=~s/^# CONFIG_([^=\s]*) is not set/$config{$1}=undef;$vars{$1}=1;next/se;
+		($s=~s/^CONFIG_([^=\s]*)=(.*)/$config{$1}=$2;$order{$_}=++$order;$vars{$1}=1;next/se) ||
+		($s=~s/^# CONFIG_([^=\s]*) is not set/$config{$1}=undef;$order{$_}=++$order;$vars{$1}=1;next/se);
 	}
 	close($F);
 }
@@ -200,11 +201,13 @@ sub set_config{
 	}
 	my $x=join('|',keys %unset);
 	$s=~s/\n(?:# )?CONFIG_(?:$x)(?:=[^\n]*| is not set)//gs;
-	while(my ($x,$y)=each %config){
-		$x=~/^["'_]/ && next; #"
-#		next if(defined($oldconfig{$x}) && $oldconfig{$x} eq $y);
-		$y=$y ne ''?"CONFIG_$x=$y":"# CONFIG_$x is not set";
-		$s.="$y\n" if(!($s=~s/\nCONFIG_$x=[^\n]*\n|\n# CONFIG_$x is not set\n/\n$y\n/s));
+	# de-randomized:
+	for(sort{$order{$a} && $order{$b} ? $order{$a}<=>$order{$b} : $order1{$a} && $order1{$b} ? $order1{$a}<=>$order1{$b} : $a cmp $b}keys %config){
+		my $y=$config{$_};
+		$_=~/^["'_]/ && next; #"
+#		next if(defined($oldconfig{$_}) && $oldconfig{$_} eq $y);
+		$y=$y ne ''?"CONFIG_$_=$y":"# CONFIG_$_ is not set";
+		$s.="$y\n" if(!($s=~s/\nCONFIG_$_=[^\n]*\n|\n# CONFIG_$_ is not set\n/\n$y\n/s));
 	}
 	open(my $F,">$_[0]") || die $!;
 	print $F $s;
@@ -399,6 +402,7 @@ sub onoff{
 		return 1;
 	}
 	$config{$_[0]}=$v;
+	$order{$_[0]}=++$order;
 	0;
 }
 
