@@ -542,7 +542,7 @@ cfg_loop(){
 		ewarn "Config deadloop! Details in: $(echo .config.loop.*.diff)."
 		ewarn "Dub options: $(grep -o "CONFIG_[^ =]*" .config.loop.*.diff|sort -u)"
 	}
-	$ne || rm -f $rm
+	$ne || rm -f $rm $k
 	$ne
 }
 
