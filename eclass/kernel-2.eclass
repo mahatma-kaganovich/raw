@@ -563,6 +563,7 @@ useconfig(){
 	cfg $o
 	cfg_ "
 "
+	ewarn "If failed here after update ('not in IUSE') - touch kernel-2.eclass"
 	for i in "${SHARE}"/*use; do
 		o="${i##*[/:]}"
 		o="${o%.*}"
