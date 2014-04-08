@@ -1,0 +1,2 @@
+# staging submenu will be opened, but no auto-m
+KERNEL_MODULES="${KERNEL_MODULES// -drivers/staging} -drivers/staging"

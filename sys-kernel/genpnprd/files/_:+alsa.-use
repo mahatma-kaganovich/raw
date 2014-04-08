@@ -1,0 +1,2 @@
+# this & other _:* are from /usr/portage/profiles/use.desc
+KERNEL_CONFIG+="-SND"

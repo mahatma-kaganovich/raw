@@ -12,8 +12,8 @@ COMP='GZIP BZIP2'
 if [[ ${ETYPE} == sources ]]; then
 
 IUSE="${IUSE} +build-kernel custom-cflags +pnp +compressed integrated
-	netboot custom-arch embed-hardware staging
-	+kernel-drm +kernel-alsa kernel-firmware +sources pnponly lzma xz lzo
+	netboot custom-arch embed-hardware
+	kernel-firmware +sources pnponly lzma xz lzo
 	external-firmware xen +smp tools multitarget +multislot thin
 	lvm evms device-mapper unionfs luks gpg iscsi e2fsprogs mdadm
 	lguest acpi klibc +genkernel monolythe update-boot"
@@ -25,8 +25,6 @@ DEPEND="${DEPEND}
 	lzo? ( app-arch/lzop )
 	build-kernel? (
 		compressed? ( sys-kernel/genpnprd )
-		kernel-drm? ( !x11-base/x11-drm )
-		kernel-alsa? ( !media-sound/alsa-driver )
 		kernel-firmware? ( !sys-kernel/linux-firmware )
 		klibc? ( dev-libs/klibc )
 		genkernel? (
@@ -61,8 +59,7 @@ eval "`/usr/bin/perl ${SHARE}/Kconfig.pl -config`"
 KERNEL_CONFIG+=" +TR"
 
 PROVIDE="sources? ( virtual/linux-sources )
-	!sources? ( virtual/linux-kernel )
-	kernel-alsa? ( virtual/alsa )"
+	!sources? ( virtual/linux-kernel )"
 
 CF1(){
 	local i s='[ 	
@@ -549,21 +546,12 @@ cfg_loop(){
 useconfig(){
 	einfo "Preparing KERNEL_CONFIG"
 	local i o j
-	# staging submenu will be opened, but no auto-m
-	use staging || KERNEL_MODULES="${KERNEL_MODULES} -drivers/staging"
 	if use !embed-hardware; then
 		cfg EXT2_FS
 		use compressed || use pnp && cfg +SQUASHFS +CRAMFS +BLK_DEV_LOOP
 	fi
 	local cfg_exclude=" HAVE_DMA_API_DEBUG "
 	local cfg_exclude=
-	if use kernel-drm ; then
-		cfg +DRM
-	else
-		cfg -DRM
-	fi
-	cfg_use kernel-alsa SND
-	use kernel-alsa || cfg +SOUND_PRIME
 	use lzo && COMP+=' LZO'
 	use lzma && COMP+=' LZMA XZ'
 	use xz && COMP+=' XZ'
