@@ -92,6 +92,7 @@ $ENV{KERNEL_CONFIG}||='
 	###beleave_last_binutils: X86_X32
 	###bugs: -TR -ECONET
 	###udev: -IDE
+	###3.14.0_nosound SND_HDA_CODEC_.+ SND_HDA_GENERIC
 	#######
 	';
 $ENV{KERNEL_CONFIG2}||='?DMA_ENGINE';
