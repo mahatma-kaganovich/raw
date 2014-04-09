@@ -4,6 +4,18 @@ inherit flag-o-matic
 source "${PORTDIR}/eclass/kernel-2.eclass"
 EXPORT_FUNCTIONS src_configure src_prepare pkg_prerm
 
+reexport(){
+local i f p=$1
+shift
+for i in "${@}"; do
+	f="$(declare -f ${p}_${i})"
+	[[ -z "$f" ]] && f='f(){ return;}'
+	eval "_saved_${i}() ${f/*()}"
+done
+}
+
+reexport kernel-2 pkg_setup src_compile src_install pkg_postinst pkg_preinst
+
 #UROOT="${ROOT}"
 UROOT=""
 SHARE="${UROOT}/usr/share/genpnprd"
@@ -191,14 +203,7 @@ kernel-2_src_compile() {
 	fi
 	####
 
-	cd "${S}"
-	[[ ${ETYPE} == headers ]] && compile_headers
-
-	if [[ $K_DEBLOB_AVAILABLE == 1 ]] && use deblob ; then
-		echo ">>> Running deblob script ..."
-		sh "${T}/${DEBLOB_A}" --force || \
-			die "Deblob script failed to run!!!"
-	fi
+	_saved_src_compile
 
 	####
 	[[ ${ETYPE} == sources ]] || return
@@ -427,9 +432,7 @@ kernel-2_src_install() {
 		fi
 		[[ -n "$sym" ]] && dosym "$sym" /usr/src/linux-${SLOT}
 	fi
-	install_universal
-	[[ ${ETYPE} == headers ]] && install_headers
-	[[ ${ETYPE} == sources ]] && install_sources
+	_saved_src_install
 }
 
 to_overlay(){
@@ -1025,9 +1028,14 @@ kernel-2_pkg_prerm() {
 	_umount
 }
 
+kernel-2_pkg_setup() {
+	# once apon a time portage starts to check RO before pkg_prerm
+	_umount
+	_saved_pkg_setup
+}
+
 kernel-2_pkg_preinst() {
-	[[ ${ETYPE} == headers ]] && preinst_headers
-	####
+	_saved_pkg_preinst
 	_umount
 	[[ ${ETYPE} == sources ]] &&  use build-kernel || return
 	local i="/lib/modules/${REAL_KV}/kernel"
@@ -1043,8 +1051,7 @@ kernel-2_pkg_preinst() {
 }
 
 kernel-2_pkg_postinst() {
-	[[ ${ETYPE} == sources ]] && postinst_sources
-	####
+	_saved_pkg_postinst
 	[[ ${ETYPE} == sources ]] && use build-kernel || return
 	use pnp && use compressed && mount -o loop,ro "${ROOT}"/usr/src/linux-"${REAL_KV}"{.squashfs,} && elog "Mounted sources: ${REAL_KV}"
 	if use update-boot; then
