@@ -89,6 +89,7 @@ $ENV{KERNEL_CONFIG}||='
 	BINFMT_SCRIPT
 	PARAVIRT -PARAVIRT_SPINLOCKS
 	=SND_.+_INPUT(?:_.+)?
+	=PCI_IOAPIC =MICROCODE_.*EARLY
 	###beleave_last_binutils: X86_X32
 	###bugs: -TR -ECONET
 	###udev: -IDE
