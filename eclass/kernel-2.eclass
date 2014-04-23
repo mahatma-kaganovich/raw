@@ -158,7 +158,8 @@ flags_nosp(){
 }
 
 mknod(){
-	echo "mknod $*" >>"${TMPDIR}/overlay-rd/etc/mknod.sh"
+#	echo "mknod $*" >>"${TMPDIR}/overlay-rd/etc/mknod.sh"
+	true
 }
 
 kernel-2_src_configure() {
