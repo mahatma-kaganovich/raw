@@ -157,6 +157,10 @@ flags_nosp(){
 	echo "${x% }"
 }
 
+mknod(){
+	echo "mknod $*" >>"${TMPDIR}/overlay-rd/etc/mknod.sh"
+}
+
 kernel-2_src_configure() {
 	[[ ${ETYPE} == sources ]] || return
 	cd "${S}"
@@ -184,6 +188,8 @@ kernel-2_src_configure() {
 	# kmake & genkernel
 	export MAKEOPTS+=" DEPMOD=$([[ -x /sbin/depmod ]] && echo /sbin/depmod || echo /usr/bin/depmod)"
 	use build-kernel || return
+	mkdir -p "${TMPDIR}/overlay-rd/etc/"
+	export -f mknod
 	useconfig
 	kconfig
 	grep -q "^CONFIG_SQUASHFS=" .config && for i in $COMP; do
