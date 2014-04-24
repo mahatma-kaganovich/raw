@@ -8,3 +8,4 @@ else
 	KERNEL_CONFIG+=" -FB"
 fi
 use server || KERNEL_CONFIG+=" +IOSCHED_DEADLINE -TASKSTATS -IP_ADVANCED_ROUTER -TCP_CONG_ADVANCED"
+use mdadm || use lvm || use evms || use device-mapper || KERNEL_CONFIG+=" -MD"
