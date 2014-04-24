@@ -7,13 +7,19 @@ LICENSE="GPL-2"
 DESCRIPTION="HA Web Konsole (Hawk). A web-based GUI for managing and monitoring Pacemaker HA clusters."
 HOMEPAGE="http://clusterlabs.org/wiki/Hawk"
 
+KEYWORDS=""
 case "$PV" in
 9999)
 	EGIT_REPO_URI="git://github.com/ClusterLabs/hawk.git https://github.com/ClusterLabs/hawk.git"
 	SRC_URI=""
 ;;
-0.5.2)SRC_URI="http://download.opensuse.org/source/distribution/12.3/repo/oss/suse/src/hawk-0.5.2-7.2.1.src.rpm";;
-0.7.0)SRC_URI="http://download.opensuse.org/source/factory-snapshot/repo/oss/suse/src/hawk-0.7.0+git.1393841819.910a788-1.1.src.rpm";;
+0.6.1)
+	KEYWORDS="~amd64" # relative stable URL
+	SRC_URI="http://download.opensuse.org/source/distribution/13.1/repo/oss/suse/src/hawk-0.6.1+git.1376993239.ab692f7-2.1.5.src.rpm"
+;;
+0.7.0)
+	SRC_URI="http://download.opensuse.org/source/factory-snapshot/repo/oss/suse/src/hawk-0.7.0+git.1393841819.910a788-1.1.src.rpm"
+;;
 esac
 
 KEYWORDS="~amd64"
