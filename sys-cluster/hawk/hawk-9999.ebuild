@@ -2,30 +2,25 @@ EAPI=5
 SLOT=0
 USE_RUBY="ruby18 ruby19"
 [[ "$PV" == *999 ]] && unp="git-2" || unp="rpm"
-inherit flag-o-matic $unp ruby-fakegem
+inherit flag-o-matic $unp ruby-fakegem versionator
 LICENSE="GPL-2"
 DESCRIPTION="HA Web Konsole (Hawk). A web-based GUI for managing and monitoring Pacemaker HA clusters."
 HOMEPAGE="http://clusterlabs.org/wiki/Hawk"
-if [[ "$PV" == *999 ]]; then
+
+case "$PV" in
+9999)
 	EGIT_REPO_URI="git://github.com/ClusterLabs/hawk.git https://github.com/ClusterLabs/hawk.git"
 	SRC_URI=""
-else
-#	SRC_URI="http://download.opensuse.org/source/distribution/12.3/repo/oss/suse/src/hawk-0.5.2-7.2.1.src.rpm"
-	SRC_URI="http://download.opensuse.org/source/factory-snapshot/repo/oss/suse/src/hawk-0.6.1+git.1376993239.ab692f7-1.1.src.rpm"
-fi
+;;
+0.5.2)SRC_URI="http://download.opensuse.org/source/distribution/12.3/repo/oss/suse/src/hawk-0.5.2-7.2.1.src.rpm";;
+0.7.0)SRC_URI="http://download.opensuse.org/source/factory-snapshot/repo/oss/suse/src/hawk-0.7.0+git.1393841819.910a788-1.1.src.rpm";;
+esac
+
 KEYWORDS="~amd64"
 IUSE="fcgi"
 DEPEND="sys-cluster/pacemaker
 	sys-cluster/crmsh
 	sys-libs/pam
-	dev-lang/ruby
-	virtual/rubygems
-	dev-ruby/bundler
-	>=dev-ruby/rails-3.2
-	dev-ruby/fast_gettext
-	dev-ruby/gettext_i18n_rails
-	dev-ruby/ruby-gettext
-	<dev-ruby/tzinfo-1.0
 	dev-libs/glib
 	dev-libs/libxml2
 	www-servers/lighttpd
@@ -33,6 +28,30 @@ DEPEND="sys-cluster/pacemaker
 "
 #	<dev-ruby/rails-3.3
 RDEPEND="${DEPEND}"
+
+ruby_add_bdepend "
+	dev-ruby/activeresource
+	virtual/rubygems
+	dev-ruby/bundler
+"
+
+# dev-ruby/gettext_i18n_rails-0.10.0 incompatible with 
+ruby_add_rdepend "
+	|| (
+		>=dev-ruby/gettext_i18n_rails-1.0.5
+		(
+			<dev-ruby/locale-2.1.0
+			<dev-ruby/ruby-gettext-3.0
+		)
+	)
+	dev-ruby/ruby-gettext
+	dev-ruby/railties
+	>=dev-ruby/rails-3.2
+	dev-ruby/fast_gettext
+	dev-ruby/gettext_i18n_rails
+	virtual/ruby-threads
+"
+#	<dev-ruby/tzinfo-1.0
 
 #base="/srv/www"
 base="/usr/lib/hawk"
@@ -44,10 +63,13 @@ all_ruby_unpack() {
 
 all_ruby_prepare() {
 	append-flags ${LDFLAGS}
+	export RAILS_ENV=production
 	local c="${S}/scripts/${PN}.gentoo.in"
 	[ -e "$c" ] || cp "${FILESDIR}/${PN}.gentoo.in" "$c" || die
-	# 4.0 looks working too
-	sed -i -e "s:gem 'rails', '\~\> 3.2':gem 'rails', '>= 3.2':" "${S}"/Gemfile
+	if has_version '>=dev-ruby/rails-4.0.0'; then
+		sed -i -e "s:gem 'rails', '~> 3\.2':gem 'rails', '>= 3.2'\ngem 'activeresource', '>= 4.0.0':" "${S}"/hawk/Gemfile
+		sed -i -e 's%^\( *match .*\)$%\1, :via => [:get]%' "$S/hawk/config/routes.rb"
+	fi
 }
 
 _make(){
