@@ -10,7 +10,7 @@ Separated to vendors-caches-4.8.patch to 4.9 compats
  
    unsigned int l2sizekb = 0;
  
-@@ -560,6 +561,24 @@ const char *host_detect_local_cpu (int a
+@@ -560,6 +561,32 @@ const char *host_detect_local_cpu (int a
        else
  	processor = PROCESSOR_PENTIUM;
      }
@@ -25,13 +25,21 @@ Separated to vendors-caches-4.8.patch to 4.9 compats
 +	else if (model >= 6)
 +	  cpu = "c3";
 +	else
++#ifdef PROCESSOR_GENERIC32
 +	  processor = PROCESSOR_GENERIC32;
++#else
++	  processor = PROCESSOR_GENERIC;
++#endif
 +     else if (has_3dnow)
 +	cpu = "winchip2";
 +     else if (has_mmx)
 +	cpu = "winchip-c6";
 +     else
++#ifdef PROCESSOR_GENERIC32
 +	processor = PROCESSOR_GENERIC32;
++#else
++	processor = PROCESSOR_GENERIC;
++#endif
    else
      {
        switch (family)
