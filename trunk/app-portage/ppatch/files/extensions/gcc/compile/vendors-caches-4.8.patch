@@ -1,0 +1,11 @@
+
+--- a/gcc/config/i386/driver-i386.c	2013-04-27 14:53:15.376967086 +0300
++++ b/gcc/config/i386/driver-i386.c	2013-04-27 15:05:31.890844461 +0300
+@@ -521,5 +521,6 @@ const char *host_detect_local_cpu (int a
+     {
+-      if (vendor == signature_AMD_ebx)
++      if (vendor == signature_AMD_ebx || signature_CENTAUR_ebx || signature_CYRIX_ebx ||
++	    vendor == signature_TM1_ebx || vendor == signature_TM2_ebx)
+ 	cache = detect_caches_amd (ext_level);
+       else if (vendor == signature_INTEL_ebx)
+ 	{

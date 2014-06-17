@@ -1,3 +1,4 @@
+Separated to vendors-caches-4.8.patch to 4.9 compats
 --- a/gcc/config/i386/driver-i386.c	2013-04-27 14:57:09.000000000 +0300
 +++ b/gcc/config/i386/driver-i386.c	2013-04-27 15:04:32.859793073 +0300
 @@ -391,7 +391,7 @@ const char *host_detect_local_cpu (int a
@@ -9,16 +10,6 @@
  
    unsigned int l2sizekb = 0;
  
-@@ -517,7 +517,8 @@ const char *host_detect_local_cpu (int a
- 
-   if (!arch)
-     {
--      if (vendor == signature_AMD_ebx)
-+      if (vendor == signature_AMD_ebx || signature_CENTAUR_ebx || signature_CYRIX_ebx ||
-+	    vendor == signature_TM1_ebx || vendor == signature_TM2_ebx)
- 	cache = detect_caches_amd (ext_level);
-       else if (vendor == signature_INTEL_ebx)
- 	{
 @@ -560,6 +561,24 @@ const char *host_detect_local_cpu (int a
        else
  	processor = PROCESSOR_PENTIUM;
