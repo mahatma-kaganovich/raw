@@ -1,3 +1,4 @@
+diff -pruN a/include/net/netfilter/nf_conntrack.h b/include/net/netfilter/nf_conntrack.h
 --- a/include/net/netfilter/nf_conntrack.h	2014-06-08 21:19:54.000000000 +0300
 +++ b/include/net/netfilter/nf_conntrack.h	2014-06-18 21:29:39.867575974 +0300
 @@ -97,6 +97,9 @@ struct nf_conn {
@@ -10,6 +11,7 @@
  
  #if defined(CONFIG_NF_CONNTRACK_MARK)
  	u_int32_t mark;
+diff -pruN a/net/netfilter/Kconfig b/net/netfilter/Kconfig
 --- a/net/netfilter/Kconfig	2014-06-08 21:19:54.000000000 +0300
 +++ b/net/netfilter/Kconfig	2014-06-18 21:29:39.867575974 +0300
 @@ -995,6 +995,15 @@ config NETFILTER_XT_MATCH_CONNLIMIT
@@ -28,6 +30,7 @@
  config NETFILTER_XT_MATCH_CONNMARK
  	tristate  '"connmark" connection mark match support'
  	depends on NF_CONNTRACK
+diff -pruN a/net/netfilter/nf_conntrack_core.c b/net/netfilter/nf_conntrack_core.c
 --- a/net/netfilter/nf_conntrack_core.c	2014-06-08 21:19:54.000000000 +0300
 +++ b/net/netfilter/nf_conntrack_core.c	2014-06-18 21:29:39.867575974 +0300
 @@ -670,6 +670,9 @@ __nf_conntrack_confirm(struct sk_buff *s
@@ -51,8 +54,9 @@
  	/* Only update if this is not a fixed timeout */
  	if (test_bit(IPS_FIXED_TIMEOUT_BIT, &ct->status))
  		goto acct;
+diff -pruN a/net/netfilter/xt_connlimit.c b/net/netfilter/xt_connlimit.c
 --- a/net/netfilter/xt_connlimit.c	2014-06-08 21:19:54.000000000 +0300
-+++ b/net/netfilter/xt_connlimit.c	2014-06-18 21:32:02.755383584 +0300
++++ b/net/netfilter/xt_connlimit.c	2014-06-19 15:59:26.358059654 +0300
 @@ -42,6 +42,11 @@
  
  #define CONNLIMIT_GC_MAX_NODES	8
@@ -143,3 +147,12 @@
  
  	spin_unlock_bh(&xt_connlimit_locks[hash % CONNLIMIT_LOCK_SLOTS]);
  
+@@ -343,7 +365,7 @@ connlimit_mt(const struct sk_buff *skb,
+ 	}
+ 
+ 	connections = count_them(net, info->data, tuple_ptr, &addr,
+-	                         &info->mask, par->family);
++	                         &info->mask, par->family, ct);
+ 	if (connections == 0)
+ 		/* kmalloc failed, drop it entirely */
+ 		goto hotdrop;
