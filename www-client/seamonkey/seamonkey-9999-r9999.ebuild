@@ -4,7 +4,7 @@ WANT_AUTOCONF="2.1"
 
 hg=""
 [[ "${PV}" == 9999* ]] && hg="mercurial cvs git-2"
-inherit ${hg} flag-o-matic toolchain-funcs eutils mozcoreconf-2 mozconfig-3 makeedit multilib autotools mozextension fdo-mime java-pkg-opt-2
+inherit ${hg} flag-o-matic toolchain-funcs eutils mozcoreconf-2_ mozconfig-3 makeedit multilib autotools mozextension fdo-mime java-pkg-opt-2
 #python
 
 : ${FILESDIR:=${EBUILD%/*}/files}
