@@ -621,7 +621,7 @@ acpi_detect(){
 		*.SRAT)CF1 NUMA;;
 		_SB_.PCI*)CF1 PCI;;
 		_SB_.PCCH)CF2 PCC_CPUFREQ;freq+=" PCC_CPUFREQ";;
-		_PR_.*|_SB_*.CP[0-9]*)let n=n+1;;
+		_PR_.*|_SB_*.CP[0-9]*|_SB_*.SCK[0-9]*)let n=n+1;;
 		esac
 	done
 	# On some of bare metal + ht flag without true HT, acpi reports double CPUs number.
