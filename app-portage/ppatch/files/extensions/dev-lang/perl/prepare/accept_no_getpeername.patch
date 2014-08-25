@@ -1,10 +1,10 @@
-Linux accept() make getsockname() if buffer != NULL and close connection on failure.
+Linux accept() make getpeername() if buffer != NULL and close connection on failure.
 In current Perl API this make impossible to access socket protocols with 'sock_no_getname'
 stub. I want AF_ALG crypto API, but same stub used in can, caif, axrpc, ieee802154 and
-other places. Separating this calls and ignoring getsockname() error make this accept()
+other places. Separating this calls and ignoring getpeername() error make this accept()
 possible in price of one more socketcall. I use AF_ALG to bound system & versions.
 
-In other words, make accept() success even if getsockname() failed.
+In other words, make accept() success even if getpeername() failed.
 
 --- a/pp_sys.c	2011-09-26 12:44:34.000000000 +0300
 +++ b/pp_sys.c	2012-02-26 13:49:42.000000000 +0300
@@ -18,7 +18,7 @@ In other words, make accept() success even if getsockname() failed.
 +    /* just do similar via separated calls & ignore getname error */
 +    fd = PerlSock_accept(PerlIO_fileno(IoIFP(gstio)), NULL, 0);
 +    if (fd >= 0) {
-+	if (PerlSock_getsockname(PerlIO_fileno(IoIFP(gstio)), (struct sockaddr *) namebuf, &len) < 0) {
++	if (PerlSock_getpeername(fd, (struct sockaddr *) namebuf, &len) < 0) {
 +	    namebuf[0] = 0;   /* sun_len */
 +	    namebuf[1] = -1;  /* sun_family */
 +	    len = 2;
