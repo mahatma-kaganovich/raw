@@ -853,8 +853,7 @@ use acpi && use embed-hardware && acpi_detect
 use embed-hardware && [[ -n "$freq" ]] && CF1 -X86_POWERNOW_K8 -X86_ACPI_CPUFREQ $freq CPU_FREQ_GOV_${gov} CPU_FREQ_DEFAULT_GOV_${gov}
 CF1 "-CPU_SUP_.*" "CPU_SUP_${V:-.*}"
 [ "$V" != INTEL -a -n "$V" ] && CF1 -X86_INTEL_PSTATE
-## still unsure in some failures, so disable this experimentil feature now (may be not right)
-#_is_CF1 NUMA || _is_CF1 PARAVIRT && CF1 RCU_NOCB_CPU RCU_NOCB_CPU_ALL
+_is_CF1 NUMA || _is_CF1 PARAVIRT && CF1 RCU_NOCB_CPU RCU_NOCB_CPU_ALL
 _is_CF1 -PARAVIRT && CF1 JUMP_LABEL
 KERNEL_CONFIG="${CF//  / }"
 }
