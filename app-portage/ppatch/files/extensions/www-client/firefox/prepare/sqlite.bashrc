@@ -1,0 +1,1 @@
+use system-sqlite || append-flags -fno-fast-math
