@@ -1,5 +1,5 @@
 #!/bin/bash
-# pipe menu cache for OpenBox3 v0.7
+# pipe menu cache for OpenBox3 v0.8
 # icons changes not tracked
 # param: generator command:
 
@@ -23,6 +23,13 @@ case "$cmd" in
 *mmaker\ *)mm=echo;;
 esac
 local k="${cmd%% --init *}:$LANG:`stat --printf=%Z $c $c1 ${c1//\/usr\/share/$HOME/.local/share}`" k1 mk="$m.${DISPLAY%.*}.key"
+local mk1="${mk}1"
+if [ -e "$mk1" ]; then
+	k1="`xrandr`"
+	[ "$k1" = "`cat "$mk1"`" ] || rm "$mk"
+	rm "$mk1" # once
+#	echo "$k1" >"$mk1" # runtime mode changes
+fi
 if ! (read k1 <"$mk" && [ "$k1" = "$k" ]); then
 	mkdir -p "${m%/*}"
 	{

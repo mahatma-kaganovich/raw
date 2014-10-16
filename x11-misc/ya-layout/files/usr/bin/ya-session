@@ -610,6 +610,7 @@ Launcher:
 	[ -s "$obconf" ] || obconfig "$obconf" $(_1cfg openbox/rc.xml)
 	[ "$YA_STARTUP" = TINT2 ] && tint2chk
 	cat {/etc/X11,/etc/xdg/ya,"$HOME"/.config/ya}/Xresources "$HOME/.Xresources" 2>/dev/null  | xrdb -merge
+	xrandr >"$cache/menu.xml.$DSP1.key1" &
 	xssaver
 	[ -n "$desk" ] && i=`_1cfg "ya/wallpaper.*"` && case "$desk" in
 	*pcmanfm*)desk+=" -w $i";;
