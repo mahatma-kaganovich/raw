@@ -1,0 +1,13 @@
+https://bugzilla.kernel.org/show_bug.cgi?id=81761
+
+--- a/fs/ocfs2/cluster/tcp.c	2014-08-06 02:52:15.000000000 +0300
++++ b/fs/ocfs2/cluster/tcp.c	2014-09-22 15:47:56.000000000 +0300
+@@ -925,7 +925,7 @@ static int o2net_send_tcp_msg(struct soc
+ 			      size_t veclen, size_t total)
+ {
+ 	int ret;
+-	struct msghdr msg;
++	struct msghdr msg = { };
+ 
+ 	if (sock == NULL) {
+ 		ret = -EINVAL;
