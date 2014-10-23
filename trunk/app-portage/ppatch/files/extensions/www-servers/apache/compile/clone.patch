@@ -45,19 +45,6 @@ mpm_itk config section.
              int status;
              switch (pid) {
              case -1:
-@@ -728,6 +745,12 @@ static void child_main(int child_num_arg
-                 }
-                 exit(0);
-             default: /* parent; just wait for child to be done */
-+#if ITK_USE_CLONE
-+                if (clone_flags1 & CLONE_VFORK) {
-+                    /* pid always done, ignore interrupts (die means die) */
-+                    child_pid = waitpid(pid, &status, WNOHANG);
-+                } else
-+#endif
-                 do {
-                     child_pid = waitpid(pid, &status, 0);
-                 } while (child_pid == -1 && errno == EINTR);
 @@ -804,6 +827,8 @@ static int make_child(server_rec *s, int
      if ((pid = os_fork(unixd_config.user_name)) == -1) {
  #elif defined(TPF)
