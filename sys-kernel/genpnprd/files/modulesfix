@@ -1,6 +1,6 @@
 #!/bin/bash
 ## (c) Denis Kaganovich
-## v5.6
+## v5.7
 
 : ${TMPDIR:=/tmp}
 
@@ -139,7 +139,7 @@ done|while read i h bus n m; do
 			$s1
 		}
 		while(<STDIN>){$s.=$_}
-	exit !($s=~s/('"${STR//^/\n}"'[^=;\{\}\]\)]*)([\]\)]?\s*=\s*\{)([^;]*)(\s*?\};)/index($1,$ENV{n})>=0?$1.fix("$2","$3").$4.$ENV{add}:$1.$2.$3.$4/ges && print $s)' <$h >"$TMPDIR/modulesfix.tmp" ; then
+	exit !($s=~s/('"${STR//^/\\n}"'[^=;\{\}\]\)]*)([\]\)]?\s*=\s*\{)([^;]*)(\s*?\};)/index($1,$ENV{n})>=0?$1.fix("$2","$3").$4.$ENV{add}:$1.$2.$3.$4/ges && print $s)' <$h >"$TMPDIR/modulesfix.tmp" ; then
 		cmp -s "$TMPDIR/modulesfix.tmp" $h && rm "$TMPDIR/modulesfix.tmp" || {
 			[[ "$i" != "$h" ]] && echo "Fixing: ($n) ${h#$1/}"
 			mv "$TMPDIR/modulesfix.tmp" $h
