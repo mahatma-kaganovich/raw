@@ -5,7 +5,7 @@
 depend() {
 	need net localmount
 	before netmount
-	after drbd
+	after drbd sshd
 }
 
 pseudofs() {
@@ -74,11 +74,18 @@ online(){
 }
 
 start() {
+	local i
 	(	fmod /sys/fs/ocfs2 ocfs2 &&
 		fmod /sys/fs/ocfs2/cluster_stack ocfs2_stackglue &&
 		pseudofs configfs /sys/kernel/config &&
 		pseudofs ocfs2_dlmfs /dlm
 	) || return 1
+	i=`mount -l -t ocfs2_dlmfs`
+	if [ -z "${i##* /dlm *}" -a -n "${i##* /sys/kernel/dlm *}" ]; then
+		mount -B /dlm /sys/kernel/dlm
+	elif [ -n "${i##* /dlm *}" -a -z "${i##* /sys/kernel/dlm *}" ]; then
+		mount -B /sys/kernel/dlm /dlm
+	fi
 	echo o2cb >/sys/fs/ocfs2/cluster_stack 2>/dev/null
 	if [[ "`cat /sys/fs/ocfs2/cluster_stack`" != "o2cb" ]]; then
 		eerror "OCFS2: Stack 'o2cb' not loaded. Check your kernel config."
@@ -110,7 +117,6 @@ start() {
 		echo $OCFS2_DEAD_THRESHOLD > /sys/kernel/config/cluster/${cluster}/heartbeat/dead_threshold
 	done
 
-	local i
 	for i in 9 8 7 6 5 4 3 2 1 0; do
 		online && break
 		echo -n "$i"
@@ -129,7 +135,7 @@ start() {
 #		[ "$t" = auto ] # blkid ... broken too!
 		[ "$t" = ocfs2 -a -e "$d" ] || continue
 		einfo "OCFS2: Trying 'fsck.ocfs2 $OCFS2_FSCK $d' (fs check if possible)"
-		/sbin/fsck.ocfs2 $OCFS2_FSCK "$d" 2>/dev/null
+		/sbin/fsck.ocfs2 $OCFS2_FSCK "$d" 2>&1 |tee /var/log/ocfs2-fsck.log
 	done
 	[[ "$OCFS2_FSCK_SWAPOFF" == "yes" ]] && swapon -a
 	ebegin "Mounting OCFS2 filesystems"
