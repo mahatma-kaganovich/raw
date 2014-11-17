@@ -189,7 +189,7 @@ sub order3{
 	if(exists($re{$a})){
 		$a=$re{$a};
 	}else{
-		return $dup++ if($a=~/^x86cpu:vendor:|^cpu:type:/);
+		return $dup++ if($a=~/^x86cpu:vendor:|^cpu:type:.*\,ven\*fam\*mod\*:/);
 		$a=~s/([^a-zA-Z0-9\[\]*?] )/\\$1/g;
 		my $s=$a;
 		$a=~s/\*/.*/g;
