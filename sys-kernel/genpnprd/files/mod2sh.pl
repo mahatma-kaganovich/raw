@@ -186,10 +186,13 @@ sub order2{
 #todo: try to resolve "[...]" matches to best result
 sub order3{
 	my $a=$_[0];
+	my $dup=0;
 	if(exists($re{$a})){
 		$a=$re{$a};
 	}else{
-		return $dup++ if($a=~/^x86cpu:vendor:|^cpu:type:.*\,ven\*fam\*mod\*:/);
+		if(my ($i)=$a=~/^(.*?\:.+?\*.*?):/){
+			$dup+=$dup{$i}++;
+		}
 		$a=~s/([^a-zA-Z0-9\[\]*?] )/\\$1/g;
 		my $s=$a;
 		$a=~s/\*/.*/g;
@@ -204,7 +207,7 @@ sub order3{
 		my %ll;
 		$ll{join(' ',@{$alias{$_}})}=1 for (@l);
 		my @r=keys %ll;
-		return $ord3{$a}=0 if ($#r>$OPT{'barrier'});
+		return $ord3{$a}=$dup if ($#r>$OPT{'barrier'});
 		$ord3{$a}=$#r+1;
 		my $n=0;
 		for(@r){
@@ -213,9 +216,9 @@ sub order3{
 				$n=$n1 if($n1>$n);
 			}
 		}
-		return $ord3{$a}=$n+1;
+		return $ord3{$a}=$n+$dup+1;
 	}
-	$ord3{$a}=1;
+	$ord3{$a}=$dup+1;
 }
 
 sub lines1_{
