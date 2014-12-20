@@ -1,0 +1,8 @@
+
+# main goal: experimental in older kernel & even can not build in various configurations
+use samba && KERNEL_CONFIG+="CIFS_SMB2"
+
+# by the way
+use force-modules || KERNEL_CONFIG+=" CIFS"
+
+# in doubt: todo|! - unswitch whole CIFS on "-"?
