@@ -1,0 +1,5 @@
+dev-libs/klibc custom-cflags
+sys-boot/grub custom-cflags
+dev-vcs/subversion dso
+dev-db/mariadb tcmalloc
+sys-apps/portage xattr

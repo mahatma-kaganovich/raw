@@ -1,0 +1,6 @@
+sys-libs/gdbm berkdb
+dev-lang/perl berkdb
+sys-libs/talloc python
+sys-libs/tdb python
+sys-libs/ntdb python
+sys-libs/tevent python
