@@ -3,3 +3,4 @@ sys-boot/grub custom-cflags
 dev-vcs/subversion dso
 dev-db/mariadb tcmalloc
 sys-apps/portage xattr
+net-firewall/ipset modules
