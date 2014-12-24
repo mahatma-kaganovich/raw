@@ -1,0 +1,3 @@
+USE="gnutls cups udev gudev gpm slang X xcb xft xkb dmx glamor cairo xv xlib-xcb xrandr pango glut fontconfig infinality libkms truetype corefonts wxwidgets minizip lzma gtk -gnome gui video sound audio -pulseaudio opengl openvg egl gles1 gles2 xa xvmc vaapi nsplugin kernel-alsa kernel-drm alsa v4l -bluetooth dri -pcmcia desktop imlib png apng jpeg tiff svg aalib exif jpeg2k gif lcms mng pdf gsm ogg vorbis cdda rtp srtp amr theora x264 aac dv encode ffmpeg lame schroedinger mp3 pvr vcd vdpau wayland rtmp faad kate libass libsamplerate libtiger mtp projectm speex taglib djvu fftw sndfile wavpack quicktime bs2b flac chardet openal dvdr silc aacplus vpx nut nas pnm tga libmpeg2 openexr libv4l a52 dts dvd mpeg musepack xvid"
+ACCEPT_LICENSE="*"
+
