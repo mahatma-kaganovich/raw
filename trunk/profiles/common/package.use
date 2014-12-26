@@ -1,12 +1,15 @@
+sys-libs/gdbm berkdb
+dev-lang/perl berkdb
 app-crypt/heimdal -ssl
 dev-db/mariadb -tcmalloc jemalloc tokudb extraengine
 sys-cluster/ceph xfs
 net-dns/bind threads caps
 app-emulation/qemu doc tls usbredir spice sasl
-sys-boot/grub multislot
 net-fs/samba cluster ads addns ldap client
 net-fs/cifs-utils ads
 net-dns/bind-tools gssapi
 net-libs/libssh server
 media-gfx/imagemagick corefonts jpeg jpeg2k lzma png tiff truetype webp wmf xml
 sys-boot/syslinux -custom-cflags
+sys-devel/llvm clang gold
+sys-apps/util-linux tty-helpers
