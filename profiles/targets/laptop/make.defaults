@@ -1,1 +1,1 @@
-USE="bluetooth pcmcia dvb ieee1394 fbcon laptop"
+USE="bluetooth pcmcia dvb ieee1394 fbcon laptop tslib"
