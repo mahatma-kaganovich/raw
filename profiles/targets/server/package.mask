@@ -1,2 +1,0 @@
-# ceph comnpatibility
->=sys-libs/glibc-2.20
