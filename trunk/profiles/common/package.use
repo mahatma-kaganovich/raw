@@ -15,3 +15,5 @@ sys-devel/llvm clang gold
 sys-apps/util-linux tty-helpers
 sys-fs/ntfs3g -external-fuse
 dev-libs/libxml2 python
+x11-libs/libdrm libkms
+media-libs/mesa xa r600-llvm-compiler
