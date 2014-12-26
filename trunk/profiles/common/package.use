@@ -8,3 +8,5 @@ net-fs/samba cluster ads addns ldap client
 net-fs/cifs-utils ads
 net-dns/bind-tools gssapi
 net-libs/libssh server
+media-gfx/imagemagick corefonts jpeg jpeg2k lzma png tiff truetype webp wmf xml
+sys-boot/syslinux -custom-cflags
