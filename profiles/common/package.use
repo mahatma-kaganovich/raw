@@ -13,3 +13,4 @@ media-gfx/imagemagick corefonts jpeg jpeg2k lzma png tiff truetype webp wmf xml
 sys-boot/syslinux -custom-cflags
 sys-devel/llvm clang gold
 sys-apps/util-linux tty-helpers
+sys-fs/ntfs3g -external-fuse
