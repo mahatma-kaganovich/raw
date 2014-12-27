@@ -3,5 +3,5 @@ But anybody can use it too.
 
 Currently requred
 
-gcc 4.9 - /etc/portage/package.keywords:
-sys-devel/gcc **
+gcc 4.9:
+echo '=sys-devel/gcc-4.9* **' >>/etc/portage/package.keywords
