@@ -1,10 +1,10 @@
 # Some of packages are tested on single arch, but works both.
-# So, juist use all (universal) keywords.
+# So, just use all (universal) keywords.
 ACCEPT_KEYWORDS="~amd64 ~x86 amd64 x86"
 
 # Used some exclusive/inclusive flags mixed, to avoid filtering, etc
 
-# if use one this line (or even none to -O2):
+# if use this line (or even none to -O2):
 #CFLAGS="$CFLAGS -O3"
 # - will almost no package conflicts, but I use next (and haunt for the -ffast-math haters):
 CFLAGS="-O3 -Ofast -ffast-math -pipe"
