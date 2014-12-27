@@ -2,7 +2,7 @@ sys-libs/gdbm berkdb
 dev-lang/perl berkdb
 app-crypt/heimdal -ssl
 dev-db/mariadb -tcmalloc jemalloc tokudb extraengine
-dev-db/mariadb-galera -tcmalloc jemalloc tokudb extraengine
+dev-db/mariadb-galera -tcmalloc jemalloc tokudb extraengine sst-xtrabackup
 sys-cluster/ceph xfs
 net-dns/bind threads caps
 app-emulation/qemu doc tls usbredir spice sasl
