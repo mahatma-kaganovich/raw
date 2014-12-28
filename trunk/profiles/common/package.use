@@ -2,8 +2,7 @@ sys-libs/gdbm berkdb
 dev-lang/perl berkdb
 mail-filter/spamassassin berkdb
 dev-libs/cyrus-sasl berkdb
-mail-filter/opendkim
-
+mail-filter/opendkim berkdb
 app-crypt/heimdal -ssl
 dev-db/mariadb -tcmalloc jemalloc tokudb extraengine
 dev-db/mariadb-galera -tcmalloc jemalloc tokudb extraengine sst-xtrabackup
@@ -19,7 +18,6 @@ sys-boot/syslinux -custom-cflags
 sys-devel/llvm clang gold
 sys-apps/util-linux tty-helpers
 sys-fs/ntfs3g -external-fuse
-dev-libs/libxml2 python
 x11-libs/libdrm libkms
 media-libs/mesa xa r600-llvm-compiler
 sys-fs/cryptsetup -openssl
