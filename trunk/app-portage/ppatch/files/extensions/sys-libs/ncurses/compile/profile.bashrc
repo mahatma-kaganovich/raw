@@ -1,1 +1,0 @@
-use profile && filter-flags -fomit-frame-pointer

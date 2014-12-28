@@ -5,8 +5,8 @@
  endif
  
 +ifdef CFLAGS_BASE
-+CFLAGS-.o += $(CFLAGS_BASE) -fno-fast-math -fno-tracer -DNDEBUG=1 # -D__USE_STRING_INLINES # 2.17 broken
-+CFLAGS-.os += $(CFLAGS_BASE) -fno-fast-math -fno-tracer -DNDEBUG=1 # -D__USE_STRING_INLINES
++CFLAGS-.o += $(CFLAGS_BASE) -DNDEBUG=1 # -D__USE_STRING_INLINES # 2.17 broken
++CFLAGS-.os += $(CFLAGS_BASE) -DNDEBUG=1 # -D__USE_STRING_INLINES
 +endif
 +
  object-suffixes-for-libc := $(object-suffixes)
