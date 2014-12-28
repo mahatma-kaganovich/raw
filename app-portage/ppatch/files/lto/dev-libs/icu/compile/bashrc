@@ -1,3 +1,0 @@
-# some of new gcc4.4+ cflags conflicts with old. dirty strip
-export CFLAGS="-w -pipe -O3 -march=native -fomit-frame-pointer"
-export CXXFLAGS="$CFLAGS"

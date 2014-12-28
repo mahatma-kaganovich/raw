@@ -1,1 +1,0 @@
-append-flags -fno-fast-math
