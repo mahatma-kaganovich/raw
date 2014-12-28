@@ -1,1 +1,1 @@
-USE="xattr rbd -tmem -cups -X -gtk -gui -kernel-alsa -kernel-drm -hibernate -alsa -bluetooth -dri -joystick -pcmcia -v4l -wifi server minimal2 rt -introspection milter"
+USE="xattr rbd -tmem -cups -X -gtk -gui -kernel-alsa -kernel-drm -hibernate -alsa -bluetooth -dri -joystick -pcmcia -v4l -wifi server minimal2 rt -introspection milter vhosts"
