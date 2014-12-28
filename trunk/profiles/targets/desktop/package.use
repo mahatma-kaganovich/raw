@@ -6,3 +6,4 @@ dev-lang/python sqlite
 net-libs/webkit-gtk -gles2
 abiword/abiword math latex
 net-p2p/mldonkey bittorrent fasttrack gd gnutella magic
+media-gfx/imagemagick opencl
