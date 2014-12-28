@@ -36,7 +36,7 @@ src_install(){
     exeinto /usr/sbin
     doexe p-patch
     insinto /usr/ppatch
-    doins *.p-patch
+    doins *.p-patch *.bashrc
     dodir /usr/ppatch/virtual
     dosym linux-sources /usr/ppatch/virtual/linux-kernel
     for d in $IUSE ; do
