@@ -23,3 +23,4 @@ media-libs/mesa xa r600-llvm-compiler
 sys-fs/cryptsetup -openssl
 app-portage/layman cvs bazaar mercurial g-sorcery squashfs
 net-firewall/ipsec-tools nat hybrid
+x11-misc/bmpanel -libev
