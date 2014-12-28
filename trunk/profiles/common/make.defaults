@@ -1,3 +1,3 @@
-USE="profile lto -pam gnutls openssl icu -berkdb -tcpd samba graphite build-kernel embed-hardware external-firmware subversion extensions acpi custom-cflags custom-arch tmem xz -lzma lzo snappy -multislot update-boot multitarget idn urandom libatomic tcmalloc radosgw -largepages -debug threads aio winbind fuse ntp usb libnet numa python2 -oss openipmi perl ithreads ssh -atm -dvb -ieee1394 clamd clamav numa opencl sftp"
+USE="profile lto -pam gnutls openssl truetype icu -berkdb -tcpd samba graphite build-kernel embed-hardware external-firmware subversion extensions acpi custom-cflags custom-arch tmem xz -lzma lzo snappy -multislot update-boot multitarget idn urandom libatomic tcmalloc radosgw -largepages -debug threads aio winbind fuse ntp usb libnet numa python2 -oss openipmi perl ithreads ssh -atm -dvb -ieee1394 clamd clamav numa opencl sftp jpeg2k tiff png apng gif jpeg lcms"
 PORTAGE_RSYNC_EXTRA_OPTS="--exclude=/metadata/cache"
 GRUB_PLATFORMS="pc"

@@ -19,3 +19,4 @@ dev-libs/libxml2 python
 x11-libs/libdrm libkms
 media-libs/mesa xa r600-llvm-compiler
 sys-fs/cryptsetup -openssl
+app-portage/layman cvs bazaar mercurial g-sorcery squashfs
