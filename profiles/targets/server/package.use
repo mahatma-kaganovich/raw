@@ -1,4 +1,4 @@
 #x11-base/xorg-server minimal
-media-gfx/imagemagick -opencl
+media-gfx/imagemagick -opencl hdri
 net-mail/mailbase pam
 sys-boot/grub -truetype
