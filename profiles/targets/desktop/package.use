@@ -7,3 +7,4 @@ net-libs/webkit-gtk -gles2
 app-office/abiword math latex
 net-p2p/mldonkey bittorrent fasttrack gd gnutella magic
 media-gfx/imagemagick opencl
+app-cdr/cdrdao gcdmaster
