@@ -26,7 +26,7 @@ if [[ ${ETYPE} == sources ]]; then
 IUSE="${IUSE} +build-kernel custom-cflags +pnp +compressed integrated
 	netboot custom-arch embed-hardware
 	kernel-firmware +sources pnponly lzma xz lzo
-	external-firmware xen +smp tools multitarget +multislot thin
+	external-firmware xen +smp kernel-tools multitarget +multislot thin
 	lvm evms device-mapper unionfs luks gpg iscsi e2fsprogs mdadm
 	lguest acpi klibc +genkernel monolythe update-boot"
 DEPEND="${DEPEND}
@@ -294,7 +294,7 @@ kernel-2_src_compile() {
 
 	use klibc && userspace
 
-	if use tools; then
+	if use kernel-tools; then
 		einfo "Compiling tools"
 		mktools
 	fi
@@ -389,7 +389,7 @@ kernel-2_src_install() {
 		fi
 		[[ -e "${BDIR}" ]] && ( mv "${BDIR}"/* "${D}/" || die )
 		kmake INSTALL_PATH="${D}/boot" install
-		use tools && mktools INSTALL_PATH="${D}" DESTDIR="${D}" install
+		use kernel-tools && mktools INSTALL_PATH="${D}" DESTDIR="${D}" install
 		for f in vmlinuz System.map config ; do
 			f1="${D}/boot/${f}"
 			if [[ -e "${f1}" ]] ; then
