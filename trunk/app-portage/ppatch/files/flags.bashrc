@@ -17,6 +17,7 @@ mit-krb5|ceph)export CFLAGS="${CFLAGS//-Os/-O2}";export CXXFLAGS="${CXXFLAGS//-O
 dirac|mpv)filterflag -fgraphite-identity;;
 wine)filter-flags -ftree-loop-distribut*;;
 ncurses)use profile && filter-flags -fomit-frame-pointer;;
+xf86-video-siliconmotion)append-flags -w;;
 esac
 
 [ "${CFLAGS//-flto}" != "$CFLAGS" ] &&
