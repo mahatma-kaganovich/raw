@@ -20,6 +20,7 @@ sys-apps/util-linux tty-helpers
 sys-fs/ntfs3g -external-fuse
 x11-libs/libdrm libkms
 media-libs/mesa xa r600-llvm-compiler
+x11-base/xorg-drivers -video_cards_vmware
 sys-fs/cryptsetup -openssl
 app-portage/layman cvs bazaar mercurial g-sorcery squashfs
 net-firewall/ipsec-tools nat hybrid
