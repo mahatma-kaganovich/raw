@@ -3,3 +3,5 @@ USE="berkdb xml xinerama dmx libnotify qt3support startup-notifications krb5 ker
 # probably don't want to build monster twice?
 USE="$USE bindist cpudetection -faac -aacplus"
 LIBREOFFICE_EXTENSIONS="*"
+INPUT_DEVICES="*"
+ABI_X86="*"
