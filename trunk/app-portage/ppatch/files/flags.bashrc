@@ -14,7 +14,7 @@ glibc)filterflag -Ofast -ffast-math -ftracer;;
 sqlite|postgresql*|goffice|db)filterflag -Ofast -ffast-math;;
 fontforge)filterflag -Ofast;;
 mit-krb5|ceph)export CFLAGS="${CFLAGS//-Os/-O2}";export CXXFLAGS="${CXXFLAGS//-Os/-O2}";;
-dirac)filterflag -fgraphite-identity;;
+dirac|mpv)filterflag -fgraphite-identity;;
 wine)filter-flags -ftree-loop-distribut*;;
 ncurses)use profile && filter-flags -fomit-frame-pointer;;
 esac
