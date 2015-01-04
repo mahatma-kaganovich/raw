@@ -27,5 +27,5 @@ sys-kernel/*-sources|sys-devel/gcc|dev-lang/swig|dev-lang/orc|media-plugins/live
 dev-libs/icu)export CFLAGS="-w -pipe -O3 -march=native -fomit-frame-pointer";export CXXFLAGS="$CFLAGS";;
 esac
 
-[ "${USE//system-sqlite}" != "$USE" -a "${IUSE//system-sqlite}" != "$IUSE" ] && filterflag -Ofast -ffast-math
+[ "${USE//system-sqlite}" = "$USE" -a "${IUSE//system-sqlite}" != "$IUSE" ] && filterflag -Ofast -ffast-math
 
