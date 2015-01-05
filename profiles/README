@@ -5,8 +5,3 @@ WARNING!! Some developers hate this multiple CFLAGS and will
 say you multiple bad words. Some software hate it too and you
 can copy it into own make.conf, removing "-Ofast -ffast-math"
 first (need to be filtered or -fno-fast-math for some packages).
-
-Currently requred
-
-gcc 4.9:
-echo '=sys-devel/gcc-4.9* **' >>/etc/portage/package.keywords
