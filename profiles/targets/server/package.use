@@ -2,3 +2,4 @@
 media-gfx/imagemagick -opencl hdri
 net-mail/mailbase pam
 sys-boot/grub -truetype
+gnome-base/librsvg -tools
