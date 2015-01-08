@@ -1,0 +1,2 @@
+net-dns/bind -ssl
+media-video/ffmpeg -openssl

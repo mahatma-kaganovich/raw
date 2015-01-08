@@ -1,0 +1,1 @@
+USE="$USE bindist auto-hinter harfbuzz cpudetection -faac -aacplus"
