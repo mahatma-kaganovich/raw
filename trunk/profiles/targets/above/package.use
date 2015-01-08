@@ -1,2 +1,2 @@
-net-dns/bind -threads -ssl
+net-dns/bind -threads
 dev-lang/php phar posix
