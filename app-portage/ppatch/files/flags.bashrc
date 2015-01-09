@@ -1,7 +1,7 @@
 filterflag(){
 local p v
 for p in $* ; do
-for v in LDFLAGS CFLAGS CPPFLAGS CXXFLAGS; do
+for v in LDFLAGS CFLAGS CPPFLAGS CXXFLAGS FFLAGS FCFLAGS; do
 	export $v="${!v// $p / }"
 	export $v="${!v#$p }"
 	export $v="${!v% $p}"

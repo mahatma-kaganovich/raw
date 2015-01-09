@@ -1,0 +1,4 @@
+CFLAGS="$CFLAGS -march=i486 -mtune=generic"
+CXXFLAGS="$CXXFLAGS -march=i486 -mtune=generic"
+FFLAGS="$CFLAGS"
+FCFLAGS="$CFLAGS"
