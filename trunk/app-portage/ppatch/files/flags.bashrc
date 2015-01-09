@@ -18,6 +18,7 @@ dirac|mpv)filterflag -fgraphite-identity;;
 wine)filter-flags -ftree-loop-distribut*;;
 ncurses)use profile && filter-flags -fomit-frame-pointer;;
 xf86-video-siliconmotion)append-flags -w;;
+libX11)is-flag -Os && (is-flag -Ofast || is-flag -ffast-math || is-flag -funsafe-math-optimizations) && append-flags -fno-unsafe-math-optimizations;;
 esac
 
 [ "${CFLAGS//-flto}" != "$CFLAGS" ] &&
