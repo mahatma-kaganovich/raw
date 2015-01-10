@@ -45,6 +45,6 @@ CFLAGS="$CFLAGS -finline-small-functions -findirect-inlining"
 
 LDFLAGS="-Wl,-O1 -Wl,--as-needed -Wl,--hash-style=gnu -Wl,--sort-common"
 CXXFLAGS="${CFLAGS} -fvisibility-inlines-hidden"
-#CPPFLAGS=""
+CPPFLAGS="-pipe"
 FFLAGS="${CFLAGS}"
 FCFLAGS="${CFLAGS}"
