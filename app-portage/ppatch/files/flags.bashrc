@@ -1,12 +1,20 @@
+[ "$EBUILD_PHASE" = setup ] && {
+
 filterflag(){
-local p v
+local p v x r=false
 for p in $* ; do
 for v in LDFLAGS CFLAGS CPPFLAGS CXXFLAGS FFLAGS FCFLAGS; do
-	export $v="${!v// $p / }"
-	export $v="${!v#$p }"
-	export $v="${!v% $p}"
+	x="${!v}"
+	x="${x// $p / }"
+	x="${x#$p }"
+	x="${x% $p}"
+	[ "${!v}" = "$x" ] || {
+		export $v="$x"
+		r=true
+	}
 done
 done
+$r
 }
 
 case "$PN" in
@@ -18,7 +26,7 @@ dirac|mpv)filterflag -fgraphite-identity;;
 wine)filter-flags -ftree-loop-distribut*;;
 ncurses)use profile && filter-flags -fomit-frame-pointer;;
 xf86-video-siliconmotion)append-flags -w;;
-libX11|wget)is-flag -Os && (is-flag -Ofast || is-flag -ffast-math || is-flag -funsafe-math-optimizations) && append-flags -fno-unsafe-math-optimizations;;
+libX11|wget)is-flag -Os && (is-flag -Ofast || is-flag -ffast-math || is-flag -funsafe-math-optimizations) && ! is-flag -fno-unsafe-math-optimizations && append-flags -fno-unsafe-math-optimizations -fno-signed-zeros -fno-trapping-math -fassociative-math -freciprocal-math;;
 esac
 
 [ "${CFLAGS//-flto}" != "$CFLAGS" ] &&
@@ -31,3 +39,4 @@ esac
 
 [ "${USE//system-sqlite}" = "$USE" -a "${IUSE//system-sqlite}" != "$IUSE" ] && filterflag -Ofast -ffast-math
 
+}
