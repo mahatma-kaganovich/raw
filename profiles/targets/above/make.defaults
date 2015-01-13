@@ -1,5 +1,5 @@
 # mindless "all"
-USE="berkdb xml xinerama dmx libnotify qt3support startup-notifications krb5 kerberos smbkrb5passwd tcpd odbc -minimal -minimal2 lxc tmem mdadm hibernate device-mapper dlz postgres mysql mysqli ldap sasl dbus introspection javascript java python gstreamer telepathy emacs"
+USE="gcj awt berkdb xml xinerama dmx libnotify qt3support startup-notifications krb5 kerberos smbkrb5passwd tcpd odbc -minimal -minimal2 lxc tmem mdadm hibernate device-mapper dlz postgres mysql mysqli ldap sasl dbus introspection javascript java tagsoup python gstreamer telepathy emacs"
 USE="$USE wayland xwayland"
 LIBREOFFICE_EXTENSIONS="*"
 INPUT_DEVICES="*"
