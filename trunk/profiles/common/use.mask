@@ -1,2 +1,4 @@
 video_cards_nvidia
 video_cards_fglrx
+# removed from mesa 10.4
+openvg
