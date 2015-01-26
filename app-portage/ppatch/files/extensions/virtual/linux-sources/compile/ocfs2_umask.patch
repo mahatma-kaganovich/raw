@@ -1,0 +1,16 @@
+ocfs2 (at least o2cb stack + default mode) ignores umask.
+Adding umask support.
+
+Signed-off-by: Dzianis Kahanovich <mahatma@eu.by>
+
+--- a/fs/ocfs2/namei.c	2014-12-08 01:21:05.000000000 +0300
++++ b/fs/ocfs2/namei.c	2015-01-26 16:03:31.959682600 +0300
+@@ -200,7 +200,7 @@ static struct inode *ocfs2_get_init_inod
+ 	 * callers. */
+ 	if (S_ISDIR(mode))
+ 		set_nlink(inode, 2);
+-	inode_init_owner(inode, dir, mode);
++	inode_init_owner(inode, dir, mode & ~current_umask());
+ 	dquot_initialize(inode);
+ 	return inode;
+ }
