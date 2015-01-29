@@ -1,0 +1,2 @@
+USE="mmxext"
+CPU_FLAGS_X86="mmxext"
