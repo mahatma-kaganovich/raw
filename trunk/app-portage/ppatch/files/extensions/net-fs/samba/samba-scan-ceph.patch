@@ -1,6 +1,6 @@
-Looks fixed or workarounded (tests in progress):
-samba 4.1.14
-vfs = scannedonly acl_xattr ceph fileid
+workarounded by dirsort:
+vfs = scannedonly dirsort ceph
+(or even with fuse too, vfs not tested)
 --- a/source3/modules/vfs_scannedonly.c	2013-04-14 12:56:03.000000000 +0300
 +++ b/source3/modules/vfs_scannedonly.c	2013-04-16 19:02:17.000000000 +0300
 @@ -436,13 +436,24 @@ static bool scannedonly_allow_access(vfs
