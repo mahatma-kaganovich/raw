@@ -1,0 +1,11 @@
+--- a/gentoo/net-dialup/accel-pptp/files/pptpd-init	2010-10-06 16:27:46.000000000 +0300
++++ b/gentoo/net-dialup/accel-pptp/files/pptpd-init	2015-02-02 21:05:58.000000000 +0300
+@@ -15,7 +15,6 @@ stop() {
+ 	ebegin "Stopping pptpd"
+ 	start-stop-daemon --stop --quiet --pidfile /var/run/pptpd.pid
+ 	result=$?
+-	start-stop-daemon --stop --quiet --oknodo --exec /usr/sbin/pptpctrl
+-	result=$(( $result + $? ))
++	killall -SIGTERM pptpctrl &>/dev/null
+ 	eend $result
+ }
