@@ -37,6 +37,7 @@ src_prepare() {
 }
 
 src_configure(){
+	export KDIR=/usr
 	use gre-extreme-debug && append-flags "-DLOG_DEBUG_GRE_ACCEPTING_PACKET"
 	econf --enable-bcrelay $(use tcpd && echo --with-libwrap)
 }
