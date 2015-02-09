@@ -25,6 +25,7 @@ mit-krb5|ceph)export CFLAGS="${CFLAGS//-Os/-O2}";export CXXFLAGS="${CXXFLAGS//-O
 dirac|mpv)filterflag -fgraphite-identity;;
 wine)filterflag -ftree-loop-distribution -ftree-loop-distribute-patterns;;
 ncurses)use profile && filterflag -fomit-frame-pointer;;
+protobuf)filterflag -fvisibility-inlines-hidden;;
 xf86-video-siliconmotion)append-flags -w;;
 libX11|wget)is-flag -Os && (is-flag -Ofast || is-flag -ffast-math || is-flag -funsafe-math-optimizations) && ! is-flag -fno-unsafe-math-optimizations && append-flags -fno-unsafe-math-optimizations -fno-signed-zeros -fno-trapping-math -fassociative-math -freciprocal-math;;
 esac
