@@ -114,7 +114,7 @@ src_install() {
 	newins "${S}"/documentation/samples/cluster.conf cluster.conf
 
 	# vs. keepdir
-	dodir /dlm
+#	dodir /dlm
 
 }
 
