@@ -1,11 +1,6 @@
-# Some of packages are tested on single arch, but works both.
-# So, just use all (universal) keywords.
-ACCEPT_KEYWORDS="~amd64 ~x86 amd64 x86"
-
-# Used some exclusive/inclusive flags mixed, to avoid filtering, etc
-
 CFLAGS="$CFLAGS -fno-ident -fexcess-precision=fast -fomit-frame-pointer -momit-leaf-frame-pointer -minline-stringops-dynamically -maccumulate-outgoing-args -fivopts -ftracer -fbranch-target-load-optimize2"
 CFLAGS="$CFLAGS -finline-small-functions -findirect-inlining"
+CFLAGS="$CFLAGS -ffast-math"
 # ?
 #CFLAGS="$CFLAGS -fgcse-sm -fgcse-las"
 #CFLAGS="$CFLAGS$PROFILE_CFLAGS"

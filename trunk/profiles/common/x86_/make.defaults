@@ -4,11 +4,7 @@ ACCEPT_KEYWORDS="~amd64 ~x86 amd64 x86"
 
 # Used some exclusive/inclusive flags mixed, to avoid filtering, etc
 
-# if use this line (or even none to -O2):
-#CFLAGS="$CFLAGS -O3"
-# - will almost no package conflicts, but I use next (and haunt for the -ffast-math haters):
-CFLAGS="$CFLAGS -O3 -Ofast -ffast-math -pipe"
-# - sorry
+CFLAGS="$CFLAGS -O3 -Ofast -pipe"
 
 CFLAGS="$CFLAGS -mtune=native -march=native"
 
