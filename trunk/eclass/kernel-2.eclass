@@ -706,8 +706,8 @@ native)
 		hypervisor)
 			CF1 PARAVIRT{,_GUEST,_SPINLOCKS,_TIME_ACCOUNTING} XEN KVM_GUEST
 			case "`lscpu|grep "^Hypervisor vendor:"`" in
-			*KVM)CF1 -XEN;;
-			*XEN)CF1 -KVM_GUEST;;
+			*XEN)CF1 -KVM_GUEST -HYPERV;;
+			*)CF1 -XEN;; # my KVM = "Microsoft"
 			esac;
 			use xen && CF1 XEN
 			# at least KVM migration & other asymmetry
@@ -812,6 +812,22 @@ native)
 		esac
 	;;
 	esac
+	for i in `find /sys -name modalias`; do
+		local scsi=''
+		read s <"$i" || continue
+		case "$s" in
+		virtio:*)CF1 -HYPERV;use xen || CF1 -XEN;;&
+		virtio:d00000001v*)CF1 VIRTIO_NET -ETHERNET;;
+		virtio:d00000002v*)CF1 VIRTIO_BLK -ATA -IDE;: ${scsi:=false};;
+		virtio:d00000008v*)CF1 VIRTIO_SCSI;scsi=true;;
+		virtio:d00000004v*)CF1 -HW_RANDOM_.+ HW_RANDOM_VIRTIO;;
+		esac
+		${scsi:-true} || if use iscsi; then
+			CF1 '~SCSI_.+'
+		else
+			CF1 -SCSI
+		fi
+	done
 ;;
 i386)CF1 M386 MATH_EMULATION;;
 i486)CF1 M486 MATH_EMULATION;;
