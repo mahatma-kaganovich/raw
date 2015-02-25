@@ -707,7 +707,7 @@ native)
 			CF1 PARAVIRT{,_GUEST,_SPINLOCKS,_TIME_ACCOUNTING} XEN KVM_GUEST
 			case "`lscpu|grep "^Hypervisor vendor:"`" in
 			*XEN)CF1 -KVM_GUEST -HYPERV;;
-			*)CF1 -XEN;; # my KVM = "Microsoft"
+			?*)CF1 -XEN;; # my KVM = "Microsoft"
 			esac;
 			# at least KVM migration & other asymmetry
 			#CF1 -NO_HZ -SCHED_HRTICK -IRQ_TIME_ACCOUNTING
