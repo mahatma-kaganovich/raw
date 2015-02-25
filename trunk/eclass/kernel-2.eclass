@@ -811,15 +811,23 @@ native)
 		esac
 	;;
 	esac
+	# virtio: speedup build & smart embedding
 	for i in `find /sys -name modalias`; do
 		local scsi=''
 		read s <"$i" || continue
 		case "$s" in
-		virtio:*)CF1 -HYPERV -XEN;;&
+		virtio:*)CF1 VIRTIO -HYPERV -XEN;;&
 		virtio:d00000001v*)CF1 VIRTIO_NET -ETHERNET;;
 		virtio:d00000002v*)CF1 VIRTIO_BLK -ATA -IDE;: ${scsi:=false};;
 		virtio:d00000008v*)CF1 VIRTIO_SCSI;scsi=true;;
-		virtio:d00000004v*)CF1 -HW_RANDOM_.+ HW_RANDOM_VIRTIO;;
+		virtio:d00000004v*)CF1 -HW_RANDOM_.+ HW_RANDOM_VIRTIO HW_RANDOM;;
+		pci:v00001AF4d*)CF1 VIRTIO_PCI;; # required for embedding
+		# ...
+		virtio:d00000003v*)CF1 VIRTIO_CONSOLE;;
+		virtio:d00000005v*)CF1 VIRTIO_BALLOON;;
+		virtio:d00000009v*)CF1 NET_9P_VIRTIO;;
+		virtio:d0000000Cv*)CF1 CAIF_VIRTIO;;
+		*virtio,mmio*)CF1 VIRTIO_MMIO;;
 		esac
 		${scsi:-true} || if use iscsi; then
 			CF1 '~SCSI_.+'
