@@ -709,7 +709,6 @@ native)
 			*XEN)CF1 -KVM_GUEST -HYPERV;;
 			*)CF1 -XEN;; # my KVM = "Microsoft"
 			esac;
-			use xen && CF1 XEN
 			# at least KVM migration & other asymmetry
 			#CF1 -NO_HZ -SCHED_HRTICK -IRQ_TIME_ACCOUNTING
 			ewarn "*************************************************************"
@@ -816,7 +815,7 @@ native)
 		local scsi=''
 		read s <"$i" || continue
 		case "$s" in
-		virtio:*)CF1 -HYPERV;use xen || CF1 -XEN;;&
+		virtio:*)CF1 -HYPERV -XEN;;&
 		virtio:d00000001v*)CF1 VIRTIO_NET -ETHERNET;;
 		virtio:d00000002v*)CF1 VIRTIO_BLK -ATA -IDE;: ${scsi:=false};;
 		virtio:d00000008v*)CF1 VIRTIO_SCSI;scsi=true;;
@@ -828,6 +827,7 @@ native)
 			CF1 -SCSI
 		fi
 	done
+	use xen && CF1 XEN
 ;;
 i386)CF1 M386 MATH_EMULATION;;
 i486)CF1 M486 MATH_EMULATION;;
