@@ -812,14 +812,18 @@ native)
 	;;
 	esac
 	# virtio: speedup build & smart embedding
+	local scsi=''
 	for i in `find /sys -name modalias`; do
-		local scsi=''
 		read s <"$i" || continue
 		case "$s" in
-		virtio:*)CF1 VIRTIO -HYPERV -XEN;;&
+		virtio:*)
+			CF1 VIRTIO -HYPERV -XEN
+			use iscsi && scsi=true && CF1 ISCSI_TARGET
+			use !embed-hardware && scsi=true && CF1 VIRTIO_.+ .+_VIRTIO
+		;;&
 		virtio:d00000001v*)CF1 VIRTIO_NET -ETHERNET;;
-		virtio:d00000002v*)CF1 VIRTIO_BLK -ATA -IDE;: ${scsi:=false};;
-		virtio:d00000008v*)CF1 VIRTIO_SCSI;scsi=true;;
+		virtio:d00000002v*)CF1 VIRTIO_BLK -ATA -IDE; : ${scsi:=false};;
+		virtio:d00000008v*)CF1 SCSI_VIRTIO;scsi=true;;
 		virtio:d00000004v*)CF1 -HW_RANDOM_.+ HW_RANDOM_VIRTIO HW_RANDOM;;
 		pci:v00001AF4d*)CF1 VIRTIO_PCI;; # required for embedding
 		# ...
@@ -829,12 +833,15 @@ native)
 		virtio:d0000000Cv*)CF1 CAIF_VIRTIO;;
 		*virtio,mmio*)CF1 VIRTIO_MMIO;;
 		esac
-		${scsi:-true} || if use iscsi; then
-			CF1 '~SCSI_.+'
-		else
-			CF1 -SCSI
-		fi
 	done
+	if [ -z "$scsi" ]; then
+		true
+	elif $scsi; then
+		CF1 SCSI
+		KERNEL_MODULES+=' -drivers/scsi'
+	else
+		CF1 -SCSI
+	fi
 	use xen && CF1 XEN
 ;;
 i386)CF1 M386 MATH_EMULATION;;
