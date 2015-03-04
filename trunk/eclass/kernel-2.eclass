@@ -643,6 +643,70 @@ acpi_detect(){
 	CF1 NR_CPUS=$n
 }
 
+pre_embed(){
+	# virtio: speedup build & smart embedding
+	local ata='' vblk='' scsi='' vscsi='' e='+' qemu='' unknown='' cc=''
+	use embed-hardware && e='&'
+	for i in `find /sys -mount -name modalias`; do
+		read s <"$i" || continue
+		case "$s" in
+		virtio:*d*v00001AF4): ${qemu:=true};;
+		virtio:*d*v*)echo "virtio non-qemu device $s";qemu=false;;
+		esac
+		case "$s" in
+		pci:v00001AF4d*sv00001AF4*);; # just ignore all PCI aliases for qemu virtio
+		virtio:d00000001v*)CF1 VIRTIO_NET -ETHERNET -FDDI -ATM;;
+		virtio:d00000002v*)CF1 VIRTIO_BLK;vblk=true;;
+		pci:v00008086d00007010sv*sd*bc*sc*i*)CF1 ${e}ATA_PIIX;ata=true;;
+		pci:v00008086d000025ABsv*sd*bc*sc*i*)CF1 _/drivers/watchdog/.+ I6300ESB_WDT;;
+		pci:*bc02sc00i*)echo "any ethernet $s";cc+=' ETHERNET';;
+		pci:*bc02sc02i*)echo "any FDDI $s";cc+=' +FDDI';;
+		pci:*bc02sc03i*)echo "any ATM $s";cc+=' +ATM';;
+#		pci:*bc04sc01i*)echo "sound $s";cc+=' +SND';;
+		pci:*bc01sc06i01)cc+=" ${e}SATA_AHCI";ata=true;;
+		pci:*bc01*)echo "unknown PCI storage $s";unknown=true;;
+		pci:v00008086d00007020sv*)CF1 USB_UHCI_HCD;;
+		pci:v00001B36d00000100sv*);; # qxl
+		virtio:d00000008v*)CF1 SCSI_VIRTIO;vscsi=true;;
+		virtio:d00000004v*)CF1 -HW_RANDOM_.+ HW_RANDOM_VIRTIO HW_RANDOM;;
+		pci:v00001AF4d*)CF1 VIRTIO_PCI;: ${qemu:=true};; # required for embedding
+		# ...
+		virtio:d00000003v*)CF1 VIRTIO_CONSOLE;;
+		virtio:d00000005v*)CF1 VIRTIO_BALLOON;;
+		virtio:d00000009v*)CF1 NET_9P_VIRTIO;;
+		virtio:d0000000Cv*)CF1 CAIF_VIRTIO;;
+		*virtio,mmio*)CF1 VIRTIO_MMIO;;
+#		pci:*v00001AF4*)echo "unknown possible qemu PCI device $s";unknown=true;;
+#		*v00001AF4*)echo "unknown possible qemu device $s";;
+		virtio:*)echo "virtio unknown device $s";;
+		esac
+	done
+	if ${qemu:-false}; then
+		use xen && [[ " $CF " != *' -XEN '* ]] && continue # xen have virtio too + unknown 2me others
+		einfo "QEMU virtio environment"
+		CF1 VIRTIO -HYPERV -XEN
+		use iscsi && scsi=true && CF1 ISCSI_TARGET
+		use !embed-hardware && vscsi=true && CF1 VIRTIO_.+ .+_VIRTIO
+		if ${vblk:-${vscsi:-false}} && ! ${unknown:-false}; then
+			einfo " - skip hardware ATA & SCSI drivers"
+			CF="_/drivers/(?:scsi|ata)/.+  $CF"
+			if ${scsi:-${vscsi:-false}}; then
+				CF1 SCSI
+			elif ${ata:-false}; then
+				CF1 ${e}SCSI +VIRTIO_SCSI # as soon...
+			else
+				CF1 -SCSI
+			fi
+			if ${ata:-false}; then
+				CF1 ${e}ATA
+			else
+				CF1 -ATA
+			fi
+		fi
+	fi
+	CF1 $cc
+}
+
 # Kernel-config CPU from CFLAGS and|or /proc/cpuinfo (native)
 # use smp: when 'native' = single/multi cpu, ht/mc will be forced ON
 cpu2K(){
@@ -664,6 +728,7 @@ if [[ -z "${march}" ]]; then
 fi
 case "${march}" in
 native)
+	einfo 'Found "-march=native" in CFLAGS, detecting CPU & arch hardware constants'
 	export PNP_VENDOR=""
 	CF1 -SCHED_{SMT,MC} -X86_{UP_APIC,TSC,PAT,MSR,MCE,CMOV,X2APIC} -MTRR -INTEL_IDLE -KVM_INTEL -KVM_AMD -SPARSE_IRQ -CPUSETS
 	case "${CTARGET:-${CHOST}}" in
@@ -811,37 +876,7 @@ native)
 		esac
 	;;
 	esac
-	# virtio: speedup build & smart embedding
-	local scsi=''
-	for i in `find /sys -name modalias`; do
-		read s <"$i" || continue
-		case "$s" in
-		virtio:*)
-			CF1 VIRTIO -HYPERV -XEN
-			use iscsi && scsi=true && CF1 ISCSI_TARGET
-			use !embed-hardware && scsi=true && CF1 VIRTIO_.+ .+_VIRTIO
-		;;&
-		virtio:d00000001v*)CF1 VIRTIO_NET -ETHERNET;;
-		virtio:d00000002v*)CF1 VIRTIO_BLK -ATA -IDE; : ${scsi:=false};;
-		virtio:d00000008v*)CF1 SCSI_VIRTIO;scsi=true;;
-		virtio:d00000004v*)CF1 -HW_RANDOM_.+ HW_RANDOM_VIRTIO HW_RANDOM;;
-		pci:v00001AF4d*)CF1 VIRTIO_PCI;; # required for embedding
-		# ...
-		virtio:d00000003v*)CF1 VIRTIO_CONSOLE;;
-		virtio:d00000005v*)CF1 VIRTIO_BALLOON;;
-		virtio:d00000009v*)CF1 NET_9P_VIRTIO;;
-		virtio:d0000000Cv*)CF1 CAIF_VIRTIO;;
-		*virtio,mmio*)CF1 VIRTIO_MMIO;;
-		esac
-	done
-	if [ -z "$scsi" ]; then
-		true
-	elif $scsi; then
-		CF1 SCSI
-		KERNEL_MODULES+=' -drivers/scsi'
-	else
-		CF1 -SCSI
-	fi
+	pre_embed
 	use xen && CF1 XEN
 ;;
 i386)CF1 M386 MATH_EMULATION;;
@@ -1189,8 +1224,8 @@ detects(){
 	sort -u "${WORKDIR}"/modules.pnp0 "${SHARE}"/etc/modflags/* >>"${WORKDIR}"/modules.pnp0_
 	{
 		# /sys
-		cat `find /sys -name modalias`
-		grep -sh "^MODALIAS=" $(find /sys -name uevent)|sed -e 's:^MODALIAS=::'
+		cat `find /sys -mount -name modalias`
+		grep -sh "^MODALIAS=" $(find /sys -mount -name uevent)|sed -e 's:^MODALIAS=::'
 		# rootfs
 		while read a b c d; do
 			[[ "$b" == / ]] && [[ "$c" != rootfs ]] && echo "$c" && {

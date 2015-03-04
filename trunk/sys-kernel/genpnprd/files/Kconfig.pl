@@ -108,6 +108,7 @@ $ENV{KERNEL_CONFIG2}||='?DMA_ENGINE';
 	'='=>'y if undefined bool',
 	'&'=>'m->y recursive embed',
 	'?'=>'n if none embedded module dependences (use after detects)',
+	'_'=>'m->n',
 	'#'=>'#',
 );
 
@@ -481,9 +482,11 @@ sub conf{
 			%off=();
 			cfg($_);
 		}elsif($c eq '~'){
-			exists($oldconfig{$i})?cfg($_,$oldconfig{$i}):delete($config{$i});
+			exists($oldconfig{$_})?cfg($_,$oldconfig{$_}):delete($config{$_});
 		}elsif($c eq '&'){
 			_and($_,$y,$_);
+		}elsif($c eq '_'){
+			cfg($_) if($config{$_} eq 'm');
 		}elsif($c eq '?'){
 			%off=();
 			if_cfg($_)||next;
@@ -563,3 +566,4 @@ if($ARGV[0]=~/^-(?:help|-help|h|--h)$/){
 }
 $ENV{S}||=$ARGV[0]||'.';
 Kconfig();
+print 'Kconfig.pl times='.join("/",times);
