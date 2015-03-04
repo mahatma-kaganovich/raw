@@ -645,7 +645,7 @@ acpi_detect(){
 
 pre_embed(){
 	# virtio: speedup build & smart embedding
-	local ata='' vblk='' scsi='' vscsi='' e='+' qemu='' unknown='' cc=''
+	local ata='' vblk='' scsi='' vscsi='' e='+' qemu='' cc=''
 	use embed-hardware && e='&'
 	for i in `find /sys -mount -name modalias`; do
 		read s <"$i" || continue
@@ -664,7 +664,7 @@ pre_embed(){
 		pci:*bc02sc03i*)echo "any ATM $s";cc+=' +ATM';;
 #		pci:*bc04sc01i*)echo "sound $s";cc+=' +SND';;
 		pci:*bc01sc06i01)cc+=" ${e}SATA_AHCI";ata=true;;
-		pci:*bc01*)echo "unknown PCI storage $s";unknown=true;;
+		pci:*bc01*)echo "unknown PCI storage $s";vblk=false;vscsi=false;;
 		pci:v00008086d00007020sv*)CF1 USB_UHCI_HCD;;
 		pci:v00001B36d00000100sv*);; # qxl
 		virtio:d00000008v*)CF1 SCSI_VIRTIO;vscsi=true;;
@@ -687,7 +687,7 @@ pre_embed(){
 		CF1 VIRTIO -HYPERV -XEN
 		use iscsi && scsi=true && CF1 ISCSI_TARGET
 		use !embed-hardware && vscsi=true && CF1 VIRTIO_.+ .+_VIRTIO
-		if ${vblk:-${vscsi:-false}} && ! ${unknown:-false}; then
+		if ${vblk:-${vscsi:-false}} ; then
 			einfo " - skip hardware ATA & SCSI drivers"
 			CF="_/drivers/(?:scsi|ata)/.+  $CF"
 			if ${scsi:-${vscsi:-false}}; then
