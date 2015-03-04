@@ -655,11 +655,11 @@ pre_embed(){
 		esac
 		case "$s" in
 		pci:v00001AF4d*sv00001AF4*);; # just ignore all PCI aliases for qemu virtio
-		virtio:d00000001v*)CF1 VIRTIO_NET -ETHERNET -FDDI -ATM;;
+		virtio:d00000001v*)CF1 VIRTIO_NET -ETHERNET -PHYLIB -FDDI -ATM;;
 		virtio:d00000002v*)CF1 VIRTIO_BLK;vblk=true;;
 		pci:v00008086d00007010sv*sd*bc*sc*i*)CF1 ${e}ATA_PIIX;ata=true;;
 		pci:v00008086d000025ABsv*sd*bc*sc*i*)CF1 _/drivers/watchdog/.+ I6300ESB_WDT;;
-		pci:*bc02sc00i*)echo "any ethernet $s";cc+=' ETHERNET';;
+		pci:*bc02sc00i*)echo "any ethernet $s";cc+=' ETHERNET +PHYLIB';;
 		pci:*bc02sc02i*)echo "any FDDI $s";cc+=' +FDDI';;
 		pci:*bc02sc03i*)echo "any ATM $s";cc+=' +ATM';;
 #		pci:*bc04sc01i*)echo "sound $s";cc+=' +SND';;
