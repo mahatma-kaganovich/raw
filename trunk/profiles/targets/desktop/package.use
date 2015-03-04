@@ -1,5 +1,5 @@
 app-text/djvu xml
-media-video/vlc vlm -rdc
+media-video/vlc vlm
 dev-db/sqlite secure-delete
 media-sound/audacious -gtk
 dev-lang/python sqlite
