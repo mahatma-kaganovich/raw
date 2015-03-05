@@ -9,6 +9,7 @@ S="$WORKDIR"
 
 src_install() {
 	f="${FILESDIR}/${PN}"
+	keepdir "/var/lib/scannedonly"
 	dobin "$f.pl" &&
 	newinitd "$f.init" "$PN" &&
 	newconfd "$f.conf" "$PN" &&
