@@ -34,7 +34,6 @@ start()
 {
 	kv
 	ebegin "Mount compressed kernel & modules tree $MNT"
-	mod
 	if ! [ -L "/lib/modules/$KV/kernel" -a -e "$MNT.squashfs" ]; then
 		einfo "not required"
 	elif ok; then
