@@ -1,0 +1,56 @@
+#!/sbin/openrc-run
+# Copyright (c) 2015 mahatma
+# Released under the 2-clause BSD license or Anarchy license.
+
+description="Do some genpnprd initrd stuff for faster boot around initrd (now only for USE="embed-hardware compressed")."
+
+depend()
+{
+	provide kernelmount
+	before *
+}
+
+ok(){
+	grep -sq " $MNT " /proc/mounts
+}
+
+kv(){
+	KV=`uname -r`
+	MNT="/usr/src/linux-$KV"
+	r=0
+}
+
+mod(){
+	einfo "load modules"
+	local i=`cat /proc/modules` j='--'
+	while [ "$i" != "$j" ]; do
+		modprobe -qva $((cat `find /sys -mount -name modalias` ; (grep -sh MODALIAS= `find /sys -mount -name uevent`|sed -e 's:^MODALIAS=::') ) | sort -u)
+		j="$i"
+		i=`cat /proc/modules`
+	done
+}
+
+start()
+{
+	kv
+	ebegin "Mount compressed kernel & modules tree $MNT"
+	mod
+	if ! [ -L "/lib/modules/$KV/kernel" -a -e "$MNT.squashfs" ]; then
+		einfo "not required"
+	elif ok; then
+		einfo "mounted by initrd"
+	else
+		mount -o ro,noatime "$MNT".squashfs "$MNT" && mod
+		r=$?
+	fi
+	eend $r
+#	false # probably you don't need to stop it, but you can
+}
+
+stop()
+{
+	kv
+	ebegin "Umount compressed kernel & modules tree"
+	umount "$MNT"
+	eend $? || ! ok
+}
