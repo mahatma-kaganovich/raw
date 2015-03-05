@@ -15,4 +15,5 @@ stop() {
 	ebegin "Stopping scannedonly_clamd"
 	killall -w scannedonly_clamd.pl
 	eend $? "Failed to stop scannedonly_clamd"
+	true
 }
