@@ -20,7 +20,6 @@ src_install(){
 	dosym ../../bin/${PN} /usr/share/${PN}
 	# suddenly
 	dosym _SB_.PCCH "/usr/share/$PN/etc/modflags/"'\_SB_.PCCH'
-	newinitd "$FILESDIR"/rawboot rawboot
 }
 
 pkg_postinst(){
