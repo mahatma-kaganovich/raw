@@ -27,6 +27,7 @@ wine)filterflag -ftree-loop-distribution -ftree-loop-distribute-patterns;;
 ncurses)use profile && filterflag -fomit-frame-pointer;;
 xf86-video-siliconmotion|vlc)append-flags -w;;
 libX11|wget)is-flag -Os && (is-flag -Ofast || is-flag -ffast-math || is-flag -funsafe-math-optimizations) && ! is-flag -fno-unsafe-math-optimizations && append-flags -fno-unsafe-math-optimizations -fno-signed-zeros -fno-trapping-math -fassociative-math -freciprocal-math;;
+cairo)[[ "$PV" == 1.12.16* ]] && export CFLAGS="$CFLAGS -fno-lto"
 esac
 
 [ "${CFLAGS//-flto}" != "$CFLAGS" ] &&
