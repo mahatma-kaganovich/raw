@@ -644,6 +644,7 @@ acpi_detect(){
 }
 
 pre_embed(){
+	use custom-arch || return
 	# virtio: speedup build & smart embedding
 	local ata='' vblk='' scsi='' vscsi='' e='+' qemu='' cc=''
 	use embed-hardware && e='&'
@@ -683,7 +684,7 @@ pre_embed(){
 	done
 	if ${qemu:-false}; then
 		use xen && [[ " $CF " != *' -XEN '* ]] && continue # xen have virtio too + unknown 2me others
-		einfo "QEMU virtio environment"
+		einfo "QEMU virtio environment + USE=custom-arch"
 		CF1 VIRTIO -HYPERV -XEN
 		use iscsi && scsi=true && CF1 ISCSI_TARGET
 		use !embed-hardware && vscsi=true && CF1 VIRTIO_.+ .+_VIRTIO
