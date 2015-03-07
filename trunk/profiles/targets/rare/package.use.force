@@ -1,2 +1,2 @@
-media-libs/mesa egl
+media-libs/mesa egl classic
 x11-libs/cairo opengl
