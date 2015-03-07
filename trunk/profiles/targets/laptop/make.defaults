@@ -1,2 +1,3 @@
 USE="bluetooth pcmcia dvb ieee1394 fbcon laptop tslib battery hid"
 LCD_DEVICES="*"
+INPUT_DEVICES="synaptics"

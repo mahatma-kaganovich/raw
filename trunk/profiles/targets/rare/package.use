@@ -1,0 +1,3 @@
+media-libs/mesa opengl openvg egl gles1 gles2 xa xvmc vaapi openmax classic gallium vdpau dri3 llvm opencl r600-llvm-compiler gbm g3dvl shared-dricore motif
+=media-libs/mesa-7* -llvm -gallium
+x11-libs/cairo opengl openvg gles gles1 gles2
