@@ -1,4 +1,4 @@
-USE="-egl -opencl -opengl gles -gles1 -gles2 -openvg -vdpau -llvm -glamor -xvmc -glu svg -gallium"
+USE="-egl -opencl -opengl gles -gles1 -gles2 -openvg -vdpau -vaapi -llvm -glamor -xvmc -glu svg -gallium"
 VIDEO_CARDS="-* mach64 mga r128 savage sis tdfx via  intel"
 CFLAGS="$CFLAGS -O3 -Ofast -mtune=native -march=native"
 CXXFLAGS="$CXXFLAGS -O3 -Ofast -mtune=native -march=native"
