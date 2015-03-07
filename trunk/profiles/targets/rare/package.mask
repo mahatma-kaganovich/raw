@@ -9,3 +9,6 @@
 >=x11-proto/glproto-1.4.15
 >=app-admin/eselect-opengl-1.2.6
 >x11-libs/cairo-1.12.16
+
+# +sis
+>x11-base/xorg-drivers-1.13
