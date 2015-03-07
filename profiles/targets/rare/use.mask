@@ -1,0 +1,4 @@
+-openvg
+# vulnerable, but for localhost
+-video_cards_intel
+-video_cards_i965
