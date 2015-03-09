@@ -1,0 +1,2 @@
+# non-auto to separate bugs
+KERNEL_CONFIG+="TINY_RCU"

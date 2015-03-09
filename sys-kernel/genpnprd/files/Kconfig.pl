@@ -92,6 +92,7 @@ $ENV{KERNEL_CONFIG}||='
 	PARAVIRT -PARAVIRT_SPINLOCKS
 	=SND_.+_INPUT(?:_.+)?
 	=PCI_IOAPIC =MICROCODE_.*EARLY
+	NR_CPUS==!1;-SLUB_CPU_PARTIAL -SQUASHFS_DECOMP_.+ NR_CPUS==!1;SQUASHFS_DECOMP_SINGLE NR_CPUS==1;SQUASHFS_DECOMP_MULTI_PERCPU
 	###beleave_last_binutils: X86_X32
 	###bugs: -TR -ECONET
 	###udev: -IDE
@@ -367,10 +368,8 @@ if(!defined($_[1])){
 		my $i=$_;
 		$i=~s/.*://;
 		my $r=$config{$i};
-		cfg($i,undef,$_[2]) || return 0;
-		$msg.=" -$i" if($r && !defined($_[2]));
+		$msg.=" -$i" if($r);
 	}
-	defined($_[2]) && return &{$_[2]}($_[0]);
 }
 dep($_[0]) if($config{$_[0]} ne ($config{$_[0]}="$_[1]"));
 1;
@@ -412,53 +411,14 @@ sub onoff{
 	0;
 }
 
-# deprecated
-sub _if{
-#	return 1 if(!$config{$_[0]});
-	my $r;
-	my $y='y';
-	if(grep(/.*:$_[0]$/,keys %tristate)){
-		return 0 if($config{$_[0]} eq 'y');
-		$y='m';
-		$r++;
-	}
-	my $i;
-	for(keys %tristate){
-		onoff($_[0],$_,$y) || next;
-		$i=$_;
-		$i=~s/.*://;
-		return 0 if($config{$i} eq 'y' || !cfg($i,undef,\&_if));
-		$r++;
-	}
-	for(keys %bool,keys %menu){
-		onoff($_[0],$_,$y) || next;
-		$i=$_;
-		$i=~s/.*://;
-		return 0 if(!cfg($i,undef,\&_if));
-		$r++;
-	}
-	$r;
-}
-
-# deprecated
-sub if_cfg_{
-	cfg($_[0],undef,\&_if) || next;
-	$msg='';
-	%off=();
-	cfg($_[0]);
-}
-
-sub if_cfg{
-	depcfg($_) || ($msg='');
-}
-
 sub conf{
     return if($_[0] eq '');
     for(split(/;/,$_[0])){
 	my ($c,$d)=spl($_);
 	return if($c eq '#');
 	my $y='y';
-	$d=~s/(.*?)=(.*)/$y=$2;$1/se;
+	my ($eq,$ne);
+	$ne=($eq=($d=~s/(.*?)=(.*)/$y=$2;$1/se) && ($y=~s/^=//)) && ($y=~s/^\!//);
 	my @l;
 	if(exists($vars{$d})){
 		@l=($d);
@@ -487,11 +447,12 @@ sub conf{
 			_and($_,$y,$_);
 		}elsif($c eq '_'){
 			cfg($_) if($config{$_} eq 'm');
-		}elsif($c eq '?'){
-			%off=();
-			if_cfg($_)||next;
 		}elsif($c ne '=' || !defined($config{$_})){
-			cfg($_,$y);
+			if(!$eq){
+				cfg($_,$y);
+			}elsif(($ne xor ($config{$_} eq $y || ($y eq 'n' && $config{$_} eq '')))){
+				last;
+			};
 		}
 	}
 	last if($#l>=0);
@@ -561,9 +522,8 @@ if($ARGV[0]=~/^-(?:help|-help|h|--h)$/){
 	exit;
 }elsif($ARGV[0] eq '-relax'){
 	*dep=sub{ ();};
-	*if_cfg=*if_cfg_;
 	shift(@ARGV);
 }
 $ENV{S}||=$ARGV[0]||'.';
 Kconfig();
-print 'Kconfig.pl times='.join("/",times);
+print 'Kconfig.pl times='.join("/",times)."\n";
