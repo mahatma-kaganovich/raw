@@ -738,7 +738,7 @@ ucode(){
 		use external-firmware && f="$ROOT/lib/firmware/$1" && [ -e "$f" ] || return 1
 	}
 	mkdir -p "$d"
-	cp "$f" "$d/$vendor_id.bin" && CF1 MICROCODE_EARLY
+	cp "$f" "$d/$vendor_id.bin" && CF1 MICROCODE{,_EARLY}
 }
 
 # Kernel-config CPU from CFLAGS and|or /proc/cpuinfo (native)
