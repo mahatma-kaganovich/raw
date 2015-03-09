@@ -836,7 +836,6 @@ native)
 	case "${vendor_id}" in
 	*Intel*)
 		V=INTEL
-		CF1 -MICROCODE_AMD
 		ucode "intel-ucode/$(printf '%02x-%02x-%02x' ${cpu_family} ${model} ${stepping})"
 		case "${cpu_family}:${model}:${flags}:${model_name}" in
 		*Atom*)CF1 MATOM;;
@@ -861,7 +860,6 @@ native)
 	;;
 	*AMD*)
 		V=AMD
-		CF1 -MICROCODE_INTEL
 		local amf=
 		[ "$cpu_family" -ge 21 ] && amf="{,_fam$(printf '%02x' ${cpu_family}})h"
 		ucode "amd-ucode/microcode_amd${amf}.bin"
@@ -916,6 +914,7 @@ native)
 		esac
 	;;
 	esac
+	CF1 -MICROCODE_AMD -MICROCODE_INTEL MICROCODE_$V
 	pre_embed
 	use xen && CF1 XEN
 ;;
