@@ -251,6 +251,7 @@ kernel-2_src_compile() {
 		fi
 		( [[ -n "$KERNEL_CLEANUP" ]] || use monolythe ) && use sources && kmake clean
 		$i || break
+		use external-firmware && use embed-hardware && cp -na "$ROOT"/lib/firmware "${S}"
 	done
 
 	KV="${KV0}"
@@ -281,9 +282,8 @@ kernel-2_src_compile() {
 
 	cd "${S}"
 	if use external-firmware; then
-		mkdir -p "${BDIR}"/lib 2>/dev/null
+		mkdir -p "${BDIR}"/lib
 		cp -na "$ROOT"/lib/firmware "${BDIR}"/lib
-		use embed-hardware && cp -na "$ROOT"/lib/firmware "${S}"
 	fi
 
 	if use sources || use klibc; then
