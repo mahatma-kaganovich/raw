@@ -203,6 +203,29 @@ use__(){
 	use $1 && echo "--${2:-$1}"
 }
 
+ext_firmware(){
+	local m f e d
+	local s="$1"
+	shift
+	einfo "Checking firmware $s -> $*"
+	cd "$S"
+	find . -name "*.ko" | while read m; do
+		modinfo "$m"|grep "^firmware:"|sed -e 's:^.* ::'|while read f; do
+			f="firmware/$f"
+			m="${m##*/}"
+			[ -e "$1/$f" ] && continue
+			[ -e "$s/$f" ] && e=true || e=false
+			$e && echo -n "Copying external firmware ($m)"  || echo "Module $m want unknown"
+			echo " firmware: ${f#firmware/}"
+			use external-firmware || continue
+			$e && for d in "${@}"; do
+				mkdir -p "$d/${f%/*}"
+				cp -aT "$s/$f" "$d/$f" || die 
+			done
+		done
+	done
+}
+
 kernel-2_src_compile() {
 	if [[ "${EAPI}" == 1 ]]; then
 		kernel-2_src_prepare
@@ -220,6 +243,7 @@ kernel-2_src_compile() {
 	for i in true false; do
 		if [[ -n "${KERNEL_MODULES_MAKEOPT}" ]]; then
 			einfo "Compiling kernel (bzImage)"
+			cp -aTn "$WORKDIR/external-firmware/firmware" "$S/firmware"
 			kmake bzImage
 		fi
 		einfo "Compiling kernel (all)"
@@ -230,7 +254,10 @@ kernel-2_src_compile() {
 		if use embed-hardware; then
 			einfo "Reconfiguring kernel with hardware detect"
 			cfg_ "###detect: $(detects)"
-			use external-firmware && cfg_ "EXTRA_FIRMWARE_DIR=\"$ROOT/lib/firmware\""
+			if use external-firmware; then
+				cfg_ "EXTRA_FIRMWARE_DIR=\"$ROOT/lib/firmware\""
+				ext_firmware "$ROOT/lib" . "$WORKDIR/external-firmware"
+			fi
 			kconfig
 			i="${KERNEL_CLEANUP:-arch/$(arch) drivers/dma}"
 			einfo "Applying KERNEL_CLEANUP='$i'"
@@ -251,7 +278,6 @@ kernel-2_src_compile() {
 		fi
 		( [[ -n "$KERNEL_CLEANUP" ]] || use monolythe ) && use sources && kmake clean
 		$i || break
-		use external-firmware && use embed-hardware && cp -na "$ROOT"/lib/firmware "${S}"
 	done
 
 	KV="${KV0}"
@@ -281,10 +307,7 @@ kernel-2_src_compile() {
     fi
 
 	cd "${S}"
-	if use external-firmware; then
-		mkdir -p "${BDIR}"/lib
-		cp -na "$ROOT"/lib/firmware "${BDIR}"/lib
-	fi
+	use external-firmware && ext_firmware "$ROOT/lib" "$BDIR/lib"
 
 	if use sources || use klibc; then
 		einfo "Preparing kernel headers"
@@ -709,6 +732,15 @@ pre_embed(){
 	CF1 $cc
 }
 
+ucode(){
+	local d="${TMPDIR}/overlay-rd/kernel/x86/microcode" f="$S/lib/firmware/$1"
+	[ -e "$f" ] || {
+		use external-firmware && f="$ROOT/lib/firmware/$1" && [ -e "$f" ] || return 1
+	}
+	mkdir -p "$d"
+	cp "$f" "$d/$vendor_id.bin" && CF1 MICROCODE_EARLY
+}
+
 # Kernel-config CPU from CFLAGS and|or /proc/cpuinfo (native)
 # use smp: when 'native' = single/multi cpu, ht/mc will be forced ON
 cpu2K(){
@@ -804,6 +836,8 @@ native)
 	case "${vendor_id}" in
 	*Intel*)
 		V=INTEL
+		CF1 -MICROCODE_AMD
+		ucode "intel-ucode/$(printf '%02x-%02x-%02x' ${cpu_family} ${model} ${stepping})"
 		case "${cpu_family}:${model}:${flags}:${model_name}" in
 		*Atom*)CF1 MATOM;;
 		5:*\ mmx\ *)CF1 M586MMX;;
@@ -827,6 +861,10 @@ native)
 	;;
 	*AMD*)
 		V=AMD
+		CF1 -MICROCODE_INTEL
+		local amf=
+		[ "$cpu_family" -ge 21 ] && amf="{,_fam$(printf '%02x' ${cpu_family}})h"
+		ucode "amd-ucode/microcode_amd${amf}.bin"
 		case "${cpu_family}:${model}:${flags}:${model_name}" in
 		4:[3789]:*)CF1 M486;;
 		4:*\ mmx\ *)CF1 M586MMX;;
@@ -1238,6 +1276,17 @@ detects(){
 		(cd "${TMPDIR}"/overlay-rd/etc/modflags && cat $(grep "${PNP_VENDOR}^flags" /proc/cpuinfo) $(cat /sys/bus/acpi/devices/*/path|sed -e 's:^\\::') </dev/null 2>/dev/null)
 	}|modalias_reconf m2y 1
 	(cd "${TMPDIR}"/overlay-rd/etc/modflags && cat $(cat "${TMPDIR}/unmodule.m2y") </dev/null 2>/dev/null)|modalias_reconf m2y
+
+	use external-firmware || return
+	# enabling firmware fallback only on demand by security reason
+	d="$TMPDIR/absent-firmware.lst"
+	find . -name '*.ko'|sed -e 's:^.*/::g' -e 's:\.ko$::'|grep -Fxf "$TMPDIR/unmodule.m2y"|while read i; do
+		modinfo "$i"
+	done|grep "^firmware:"|sed -e 's:^.* ::'|while read i; do
+		[ -e "firmware/$i" ] || echo "$i"
+	done >$d
+	[ -s "$d" ] && KERNEL_CONFIG+=" CONFIG_FW_LOADER_USER_HELPER_FALLBACK" && einfo "Enabling CONFIG_FW_LOADER_USER_HELPER_FALLBACK for firmware(s):
+$(cat "$d")"
 }
 
 detects_cleanup(){
