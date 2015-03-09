@@ -1,2 +1,0 @@
-# deprecated, but can make some drivers happy now (b43)
-KERNEL_CONFIG+="FW_LOADER_USER_HELPER_FALLBACK"
