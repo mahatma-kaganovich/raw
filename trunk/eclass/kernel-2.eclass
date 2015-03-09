@@ -283,6 +283,7 @@ kernel-2_src_compile() {
 	if use external-firmware; then
 		mkdir -p "${BDIR}"/lib 2>/dev/null
 		cp -na "$ROOT"/lib/firmware "${BDIR}"/lib
+		use embed-hardware && cp -na "$ROOT"/lib/firmware "${S}"
 	fi
 
 	if use sources || use klibc; then
