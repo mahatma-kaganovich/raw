@@ -204,7 +204,7 @@ use__(){
 }
 
 ext_firmware(){
-	local m f e d
+	local m f e d x=
 	local s="$1"
 	shift
 	einfo "Checking firmware $s -> $*"
@@ -219,11 +219,16 @@ ext_firmware(){
 			echo " firmware: ${f#firmware/}"
 			use external-firmware || continue
 			$e && for d in "${@}"; do
-				mkdir -p "$d/${f%/*}"
-				cp -aT "$s/$f" "$d/$f" || die 
+				if [ -n "$d" ]; then
+					mkdir -p "$d/${f%/*}"
+					cp -aT "$s/$f" "$d/$f" || die
+				else
+					x+=" $f"
+				fi
 			done
 		done
 	done
+	[ -n "$x" ] && KERNEL_CONFIG+=" EXTRA_FIRMWARE=\"${x# }\" EXTRA_FIRMWARE_DIR=\"$s\""
 }
 
 kernel-2_src_compile() {
@@ -243,7 +248,6 @@ kernel-2_src_compile() {
 	for i in true false; do
 		if [[ -n "${KERNEL_MODULES_MAKEOPT}" ]]; then
 			einfo "Compiling kernel (bzImage)"
-			cp -aTn "$WORKDIR/external-firmware/firmware" "$S/firmware"
 			kmake bzImage
 		fi
 		einfo "Compiling kernel (all)"
@@ -254,10 +258,7 @@ kernel-2_src_compile() {
 		if use embed-hardware; then
 			einfo "Reconfiguring kernel with hardware detect"
 			cfg_ "###detect: $(detects)"
-			if use external-firmware; then
-				cfg_ "EXTRA_FIRMWARE_DIR=\"$ROOT/lib/firmware\""
-				ext_firmware "$ROOT/lib" . "$WORKDIR/external-firmware"
-			fi
+#			use external-firmware && ext_firmware "$ROOT/lib" . "$WORKDIR/external-firmware"
 			kconfig
 			i="${KERNEL_CLEANUP:-arch/$(arch) drivers/dma}"
 			einfo "Applying KERNEL_CLEANUP='$i'"
@@ -1279,15 +1280,25 @@ detects(){
 	(cd "${TMPDIR}"/overlay-rd/etc/modflags && cat $(cat "${TMPDIR}/unmodule.m2y") </dev/null 2>/dev/null)|modalias_reconf m2y
 
 	use external-firmware || return
-	# enabling firmware fallback only on demand by security reason
+	# enabling firmware fallback only ondemand by security reason
 	d="$TMPDIR/absent-firmware.lst"
-	find . -name '*.ko'|sed -e 's:^.*/::g' -e 's:\.ko$::'|grep -Fxf "$TMPDIR/unmodule.m2y"|while read i; do
-		modinfo "$i"
+	find . -name '*.ko'|while read i; do
+		a="${i##*/}"
+		grep -qFx "${a%.ko}" "$TMPDIR/unmodule.m2y" && modinfo "$i"
 	done|grep "^firmware:"|sed -e 's:^.* ::'|while read i; do
-		[ -e "firmware/$i" ] || echo "$i"
-	done >$d
-	[ -s "$d" ] && KERNEL_CONFIG+=" CONFIG_FW_LOADER_USER_HELPER_FALLBACK" && einfo "Enabling CONFIG_FW_LOADER_USER_HELPER_FALLBACK for firmware(s):
-$(cat "$d")"
+		[ -e "$S/firmware/$i" ] || echo "$i"
+	done >"$d"
+	[ -s "$d" ] || return
+	a=
+	b=
+	grep -qFx 'CONFIG_FIRMWARE_IN_KERNEL=y' "$S/.config" && c=true || c=false
+	while read i; do
+		$c && [ -e "$ROOT/lib/firmware/$i" ] && b+=" $i" || a+=" $i"
+	done <"$d"
+	# 2test
+	[ -n "$b" ] && KERNEL_CONFIG+=" EXTRA_FIRMWARE=\"${b# }\" EXTRA_FIRMWARE_DIR=\"$ROOT/lib\"" && einfo "Embedding external firmware(s):$b"
+#	[ -n $a ] &&
+	KERNEL_CONFIG+=" FW_LOADER_USER_HELPER_FALLBACK" && einfo "Enabling CONFIG_FW_LOADER_USER_HELPER_FALLBACK for firmware(s):$a"
 }
 
 detects_cleanup(){
