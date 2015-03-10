@@ -1291,14 +1291,14 @@ detects(){
 	[ -s "$d" ] || return
 	a=
 	b=
-	grep -qFx 'CONFIG_FIRMWARE_IN_KERNEL=y' "$S/.config" && c=true || c=false
+	c=false
+	# 2test, but IMHO too many embedding: for b43 usually need only 1 of *
+#	grep -qFx 'CONFIG_FIRMWARE_IN_KERNEL=y' "$S/.config" && c=true
 	while read i; do
 		$c && [ -e "$ROOT/lib/firmware/$i" ] && b+=" $i" || a+=" $i"
 	done <"$d"
-	# 2test
 	[ -n "$b" ] && KERNEL_CONFIG+=" EXTRA_FIRMWARE=\"${b# }\" EXTRA_FIRMWARE_DIR=\"$ROOT/lib\"" && einfo "Embedding external firmware(s):$b"
-#	[ -n $a ] &&
-	KERNEL_CONFIG+=" FW_LOADER_USER_HELPER_FALLBACK" && einfo "Enabling CONFIG_FW_LOADER_USER_HELPER_FALLBACK for firmware(s):$a"
+	[ -n "$a" ] && KERNEL_CONFIG+=" FW_LOADER_USER_HELPER_FALLBACK" && einfo "Enabling CONFIG_FW_LOADER_USER_HELPER_FALLBACK for firmware(s):$a"
 }
 
 detects_cleanup(){
