@@ -39,7 +39,7 @@ Must work with "layman -a raw" (as soon Gentoo Overlay directory
 follow my email about migration).
 
 Howto install around layman:
-add to /etc/portage/repos.conf:
+Add to /etc/portage/repos.conf:
 
 [raw]
 sync-type = git
@@ -57,3 +57,7 @@ location = /var/lib/layman/raw
 # emerge --sync
 
 ("svn" way will be incompatible with layman way)
+
+Add to make.conf:
+PORTDIR_OVERLAY="$PORTDIR_OVERLAY /var/lib/layman/raw"
+
