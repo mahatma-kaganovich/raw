@@ -1293,7 +1293,7 @@ detects(){
 	b=
 	c=false
 	# 2test, but IMHO too many embedding: for b43 usually need only 1 of *
-#	grep -qFx 'CONFIG_FIRMWARE_IN_KERNEL=y' "$S/.config" && c=true
+	use monolythe && grep -qFx 'CONFIG_FIRMWARE_IN_KERNEL=y' "$S/.config" && c=true
 	while read i; do
 		$c && [ -e "$ROOT/lib/firmware/$i" ] && b+=" $i" || a+=" $i"
 	done <"$d"
