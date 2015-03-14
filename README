@@ -54,7 +54,7 @@ sync-uri = https://github.com/mahatma-kaganovich/raw.git/trunk
 location = /var/lib/layman/raw
 
 # rm -Rf /var/lib/layman/raw || mkdir -p /var/lib/layman/raw
-# emerge --sync
+# emerge --sync raw
 
 ("svn" way will be incompatible with layman way)
 
