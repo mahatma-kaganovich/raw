@@ -28,3 +28,32 @@ Money are welcome.
 
 (c) mahatma, 29.09.2006
 ===========================================================================
+===========================================================================
+
+This is Gentoo Overlay, named "raw", moved from googlecode.
+
+Contains my raw stuff, helping me (and 2 anyone who take a risq)
+to unify, sync and build my servers & workstations.
+
+Must work with "layman -a raw" (as soon Gentoo Overlay directory
+follow my email about migration).
+
+Howto install around layman:
+add to /etc/portage/repos.conf:
+
+[raw]
+sync-type = git
+sync-uri = https://github.com/mahatma-kaganovich/raw.git
+location = /var/lib/layman/raw
+
+OR
+
+[raw]
+sync-type = svn
+sync-uri = https://github.com/mahatma-kaganovich/raw.git/trunk
+location = /var/lib/layman/raw
+
+# rm -Rf /var/lib/layman/raw || mkdir -p /var/lib/layman/raw
+# emerge --sync
+
+("svn" way will be incompatible with layman way)
