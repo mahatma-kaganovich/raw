@@ -208,6 +208,7 @@ ext_firmware(){
 	local s="$1"
 	shift
 	einfo "Checking firmware $s -> $*"
+	use external-firmware && echo "Copying external firmware:"
 	cd "$S"
 	find . -name "*.ko" | while read m; do
 		modinfo "$m"|grep "^firmware:"|sed -e 's:^.* ::'|while read f; do
@@ -215,8 +216,7 @@ ext_firmware(){
 			m="${m##*/}"
 			[ -e "$1/$f" ] && continue
 			[ -e "$s/$f" ] && e=true || e=false
-			$e && echo -n "Copying external firmware ($m)"  || echo "Module $m want unknown"
-			echo " firmware: ${f#firmware/}"
+			echo " $m: ${f#firmware/}$($e || echo ' - not found')"
 			use external-firmware || continue
 			$e && for d in "${@}"; do
 				if [ -n "$d" ]; then
@@ -354,7 +354,7 @@ kernel-2_src_compile() {
 	run_genkernel ramdisk "--kerneldir=\"${S}\" --bootdir=\"${S}\" --module-prefix=\"${BDIR}\" --no-mountboot ${p}"
 	r=`ls initramfs*-${REAL_KV}||ls "$TMPDIR"/genkernel/initramfs*` && mv "$r" "initrd-${REAL_KV}.img" || die "initramfs rename failed"
 	einfo "Preparing boot image"
-	bash "${SHARE}/genpnprd" "${S}/initrd-${REAL_KV}.img" "$( (use !pnp && echo nopnp)||(use pnponly && echo pnponly) )" "${TMPDIR}"/overlay-rd "${S}" ${comp:+--COMPRESS $comp} $(use thin||echo --THIN -)|| die
+	bash "${SHARE}/genpnprd" "${S}/initrd-${REAL_KV}.img" "$( (use !pnp && echo nopnp)||(use pnponly && echo pnponly)||echo pnp )" "${TMPDIR}"/overlay-rd "${S}" ${comp:+--COMPRESS $comp} $(use thin||echo --THIN -)|| die
 	local i="initrd-${REAL_KV}.cpio" i1="initrd-${REAL_KV}.img"
 	( use pnp || use compressed || (use integrated && use !thin) ) &&
 		gzip -dc "$i1"  >"$i" && rm "$i1"

@@ -177,6 +177,7 @@ if [[ -f "$rcfile" ]]; then
 		if $LIBLOOP; then
 			mkdir lib/root || die
 			cp "$OVERLAY" lib/root -aT
+			mv lib/root/kernel "$rcdir" 2>/dev/null
 			for i in lib lib32 lib64; do
 				[[ -d lib/root/$i ]] && mv lib/root/$i/* $i/
 			done
@@ -348,7 +349,7 @@ find .|sort|while read i ; do
 	[[ -L "$i" ]] && continue
 	[[ -f "$i" ]] || continue
 	case "$i" in
-	*/busybox|*/init|*/etc/*|./lib*|*/mount|*/mdev) continue ;;
+	*/busybox|*/init|*/etc/*|./lib*|*/mount|*/mdev|./kernel/*) continue ;;
 	*/*/*) ;;
 	*) continue ;;
 	esac
