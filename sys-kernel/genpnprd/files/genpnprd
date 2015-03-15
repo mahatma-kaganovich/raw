@@ -349,7 +349,7 @@ find .|sort|while read i ; do
 	[[ -L "$i" ]] && continue
 	[[ -f "$i" ]] || continue
 	case "$i" in
-	*/busybox|*/init|*/etc/*|./lib*|*/mount|*/mdev|./kernel/*) continue ;;
+	*/busybox|*/init|*/etc/*|./lib*|*/mount|*/mdev|./kernel*) continue ;;
 	*/*/*) ;;
 	*) continue ;;
 	esac
