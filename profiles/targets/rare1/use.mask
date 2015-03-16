@@ -1,0 +1,14 @@
+# vulnerable, but for localhost
+-video_cards_intel
+-video_cards_i965
+
+# heavy
+video_cards_virtualbox
+
+# too new
+video_cards_nouveau
+video_cards_radeon
+video_cards_radeonsi
+video_cards_vmware
+video_cards_qxl
+video_cards_modesetting

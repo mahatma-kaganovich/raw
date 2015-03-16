@@ -1,0 +1,3 @@
+media-video/mplayer2 lcms
+media-video/mpv lcms
+media-gfx/asymptote offcreen
