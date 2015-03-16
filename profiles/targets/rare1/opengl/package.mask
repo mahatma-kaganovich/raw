@@ -1,3 +1,0 @@
->=app-emulation/emul-linux-x86-qtlibs-20140508-r1
->=app-emulation/wine-1.6.2
->=dev-qt/qtopengl-4.8.6-r1:4
