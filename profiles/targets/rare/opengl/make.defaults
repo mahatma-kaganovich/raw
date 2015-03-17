@@ -1,1 +1,1 @@
-USE="gltf"
+USE="gltf opengl egl osmesa evdev"
