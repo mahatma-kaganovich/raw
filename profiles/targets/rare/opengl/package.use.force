@@ -39,15 +39,12 @@ dev-qt/qtquick1 opengl
 dev-qt/qtwayland egl
 dev-qt/qtwebkit opengl
 dev-qt/qtwidgets opengl
-dev-scheme/gauche-gtk opengl
-dev-util/apitrace egl
 games-action/d1x-rebirth opengl
 games-action/d2x-rebirth opengl
 games-arcade/commandergenius opengl
 games-arcade/kobodeluxe opengl
 games-arcade/supertux opengl
 games-arcade/tuxanci opengl
-games-board/gnubg opengl
 games-emulation/atari800 opengl
 games-emulation/dgen-sdl opengl
 games-emulation/dolphin opengl
@@ -59,7 +56,6 @@ games-emulation/higan opengl
 games-emulation/sdlmame opengl
 games-emulation/sdlmess opengl
 games-emulation/snes9x opengl
-games-emulation/yabause opengl
 games-emulation/zsnes opengl
 games-engines/scummvm opengl
 games-fps/darkplaces opengl
@@ -119,7 +115,6 @@ games-rpg/freedroidrpg opengl
 games-rpg/mana opengl
 games-rpg/manaplus opengl
 games-simulation/corsix-th opengl
-games-strategy/gwp opengl
 games-strategy/uqm opengl
 gnustep-base/gnustep-back-art opengl
 gnustep-base/gnustep-back-cairo opengl
@@ -132,14 +127,12 @@ kde-base/kdelibs opengl
 kde-base/kinfocenter opengl
 kde-base/krunner opengl
 kde-base/ksudoku opengl
-kde-base/kwin opengl
 kde-base/perlqt opengl
 kde-base/smokeqt opengl
 kde-base/systemsettings opengl
 kde-frameworks/plasma opengl egl
 kde-misc/kio-slp opengl
 mate-extra/mate-screensaver opengl
-media-gfx/asymptote opengl
 media-gfx/brlcad opengl
 media-gfx/dawn opengl
 media-gfx/fotowall opengl
@@ -152,27 +145,21 @@ media-libs/cogl opengl
 media-libs/devil opengl
 media-libs/evas opengl
 media-libs/glfw egl
-media-libs/jasper opengl
 media-libs/libcaca opengl
 media-libs/libquicktime opengl
 media-libs/libsdl opengl
-media-libs/libsdl2 opengl
 media-libs/libwebp opengl
 media-libs/mediastreamer opengl
 media-libs/opencolorio opengl
-media-libs/opencv opengl
 media-libs/openimageio opengl
 media-libs/smpeg opengl
-media-libs/waffle egl
 media-libs/xine-lib opengl
-media-plugins/gst-plugins-vaapi opengl
 media-plugins/kipi-plugins opengl
 media-plugins/libvisual-plugins opengl
 media-plugins/vdr-xineliboutput opengl
 media-sound/alsaplayer opengl
 media-sound/amarok opengl
 media-sound/galan opengl
-media-sound/snd opengl
 media-tv/mythtv egl
 media-tv/xawtv opengl
 media-video/avidemux opengl
@@ -191,7 +178,6 @@ sci-chemistry/ccpn opengl
 sci-chemistry/gsim opengl
 sci-chemistry/molden opengl
 sci-electronics/magic opengl
-sci-electronics/pcb opengl
 sci-geosciences/mapserver opengl
 sci-geosciences/opencpn opengl
 sci-libs/avogadrolibs opengl
@@ -201,13 +187,10 @@ sci-mathematics/dataplot opengl
 sci-mathematics/octave opengl
 sci-physics/geant opengl
 sci-physics/root opengl
-sci-visualization/gwyddion opengl
 sys-apps/hwdata-gentoo opengl
-www-plugins/gnash opengl egl
 x11-apps/mesa-progs egl
 x11-libs/fltk opengl
 x11-libs/fox opengl
-x11-libs/libva opengl egl
 x11-libs/libva-vdpau-driver opengl
 x11-libs/wxGTK opengl
 x11-libs/xforms opengl

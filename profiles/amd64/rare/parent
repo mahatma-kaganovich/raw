@@ -1,5 +1,4 @@
 ..
 ../../common/minimal
 ../../targets/desktop
-../../targets/rare
 ../../targets/rare/opengl
