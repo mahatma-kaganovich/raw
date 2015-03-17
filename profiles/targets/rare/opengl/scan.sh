@@ -1,11 +1,15 @@
 #!/bin/sh
 # run as active profile with config "-mesa -opengl -osmesa -evdev"
-# 2do: ebuild version sort
 
 rm -f err* package.* partial*
+
 echo "# rare mesa/opengl profile" >>package.mask
 
 FL_MASK="opengl egl osmesa evdev"
+V0='virtual/opengl|media-libs/mesa|app-admin/eselect-opengl|virtual/glu'
+V1='[>=]virtual/opengl-7.0-r[0-9]|[^<]=?media-libs/mesa-[89]|[^<]=?app-admin/eselect-opengl-1\.([3-9]|[0-9]{2})|[^<]=virtual/glu-9.0-r1'
+FIND='opengl|mesa|glu'
+NOMASK='media-libs/gst-plugins-bad|media-video/ffmpeg'
 
 PORTDIR=/usr/portage
 
@@ -46,10 +50,21 @@ unmask(){
 	pkg="$1"
 }
 
+msk(){
+	([ "$2" == mask ] && (echo " $1"|grep -Pq "$NOMASK")) ||
+		echo "$1" >>package.$2
+	[ -n "$fl_mask" ] && echo "$1$fl_mask" >>package.use.$2
+}
+
 masks(){
-	cnt1=`grep -l virtual/opengl-7.0-r1 $l|wc -l`
-	cnt0=`grep -l virtual/opengl $l|wc -l`
-	cnt=`grep -L virtual/opengl $l|wc -l`
+	cnt=0
+	cnt0=0
+	cnt1=0
+	for j in $l; do
+		grep -Pql "$V1" $l && cnt1=$[cnt1+1] && continue
+		grep -Pql "$V0" $l && cnt0=$[cnt0+1] && continue
+		cnt=$[cnt+1] && continue
+	done
 	echo -n " $cnt0:$cnt1:$cnt"
 	[ $cnt0 = $cnt1 -a $cnt = 0 ] && {
 		echo "$i" >>partial
@@ -57,7 +72,6 @@ masks(){
 		[ -n "$fl_mask" ] && echo "$i$fl_mask" >>package.use.mask
 		return 1
 	}
-	slots=' '
 	ok1=true
 	slot1=
 	ok0=true
@@ -70,21 +84,20 @@ masks(){
 		pkg=
 		ok=
 		echo -n ' '
-		grep -q virtual/opengl-7.0-r1 "$j" && ok=false || {
-			grep -q virtual/opengl "$j" && ok=true
+		grep -Pq "$V1" "$j" && ok=false || {
+			grep -Pq "$V0" "$j" && ok=true
 		}
 		j="${j#$PORTDIR/}"
 		j="${j%.ebuild}"
-		pn="${j%/*}"
 		j="${j//\/*\//\/}"
 		# ??? may be on second pass?
-		[ -z "$ok" -a "$cnt0" = 0 ] && (USE="$fl_mask" emerge -pv =$j 2>&1 | grep -q virtual/opengl-7.0-r1) && {
+		[ -z "$ok" -a "$cnt0" = 0 ] && (USE="$fl_mask" emerge -pv =$j 2>&1 | grep -Pq "$V1") && {
 			echo -n "~"
 			echo "$j" >>partial.dep
 			ok=false
 		}
 		${ok:=true} || echo -n '!'
-		echo -n "${j#$pn-}"
+		echo -n "${j#$i-}"
 		slot="$(meta "$j" SLOT)" || {
 #			e=`emerge -pv =$j --nodeps 2>&1`
 #			_slot || continue
@@ -92,14 +105,14 @@ masks(){
 			exit 1
 		}
 		slot="${slot// }"
-		[ -n "${slots##* ${slot:-0} *}" ] && slots+="$slot "
+		[ "$slot" = 0 -a -z "$slots" ] && slot=
 		sl=${slot:+:$slot}
 		echo -n "$sl"
 		if [ "$ok" = "$ok1" -a "$slot1" = "$slot" ]; then
 			continue
 		elif [ "$slot1" != "$slot" ]; then
-			! $ok0 && $ok && unmask "$pn$sl"
-			$ok0 && ! $ok && mask "$pn$sl"
+			! $ok0 && $ok && unmask "$i$sl"
+			$ok0 && ! $ok && mask "$i$sl"
 		else
 			$ok && unmask "=$j" || mask ">=$j$sl"
 		fi
@@ -110,13 +123,11 @@ masks(){
 				act0="$act"
 			else
 				if [ -n "$act0" ]; then
-					echo "$pkg0" >>package.$act0
-					[ -n "$fl_mask" ] && echo "$pkg0$fl_mask" >>package.use.$act0
+					msk "$pkg0" $act0
 					pkg0=
 					act0=
 				fi
-				echo "$pkg" >>package.$act
-				[ -n "$fl_mask" ] && echo "$pkg$fl_mask" >>package.use.$act
+				msk "$pkg" $act
 			fi
 		fi
 		[ -z "${slot}" ] && ok0=$ok
@@ -128,25 +139,31 @@ masks(){
 }
 
 for i in $(cd $PORTDIR && echo */*); do
+#for i in $(cd $PORTDIR && echo */glew); do
 #for i in $(cd $PORTDIR && echo dev-qt/qtopengl); do
-	[ -d "$PORTDIR/$i" ] || continue
-	[ "$i" = virtual/opengl ] && continue
-	l=$(echo $PORTDIR/$i/*.ebuild)
+	[ -d "$PORTDIR/$i" -a "$i" != virtual/opengl -a -n "${i##distfiles/*}" ] || continue
+	pn="${i##*/}"
+	j="$PORTDIR/$i/$pn-*.ebuild"
+	l=$(find "$PORTDIR/$i" -path "$j" -type f|sort -V)
+	[ "$l" = "$j" -o -z "$l" ] && continue
 	fl_mask=
 	x="$(meta "$i-*" IUSE)"
 	for j in $FL_MASK; do
 		[ -z "${x##* $j *}" ] && fl_mask+=" $j"
 	done
-	[ -z "${fl_mask# }" ] && continue
-	slots=
 	slot=
 	use0=
-#	grep -sqF virtual/opengl $l || continue
-	grep -sqFw opengl $l || continue
-	echo -n $i
-	grep -sqF virtual/opengl-7.0-r1 $l && ! masks && continue
-	[ -z "$slots" ] && slots=$(meta "$i-*" SLOT)
+	grep -Psqv "$FIND" $l || continue
+	slots=$(meta "$i-*" SLOT)
 	[ "${slots// }" = 0 ] && slots=
+	if grep -Psq "$V1" $l; then
+		echo -n $i
+		(! masks || [ -z "${fl_mask# }" ]) && echo '' && continue
+	elif [ -z "${fl_mask# }" ]; then
+		continue
+	else
+		echo -n $i
+	fi
 	for slot in '' $slots; do
 		echo -n " :$slot"
 		i="${i%%:*}${slot:+:$slot}"

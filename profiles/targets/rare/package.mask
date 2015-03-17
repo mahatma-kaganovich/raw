@@ -1,5 +1,6 @@
 >virtual/glu-9.0
 >virtual/opengl-7.0
+>media-libs/glew-1.10.0-r1
 >media-libs/freeglut-2.8.1
 >=x11-drivers/xf86-input-synaptics-1.8.1
 >=x11-base/xorg-server-1.13
