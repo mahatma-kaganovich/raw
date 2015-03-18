@@ -2,3 +2,6 @@
 # So, just use all (universal) keywords.
 ACCEPT_KEYWORDS="~amd64 ~x86 amd64 x86"
 #FETCHCOMMAND="bash -c \"mv \${DISTDIR}/OLD/\\\"\${FILE}\\\" \${DISTDIR}/ || ${FETCHCOMMAND}\""
+USE="-modules"
+LIRC_DEVICES="userspace"
+
