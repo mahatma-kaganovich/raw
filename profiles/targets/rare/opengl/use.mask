@@ -1,0 +1,4 @@
+-video_cards_nvidia
+-video_cards_fglrx
+-cuda
+-opencl

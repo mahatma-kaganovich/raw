@@ -1,1 +1,2 @@
-USE="gltf opengl egl osmesa evdev"
+USE="gltf opengl egl osmesa evdev cuda opencl -modules"
+VIDEO_CARD="nvidia fglrx"
