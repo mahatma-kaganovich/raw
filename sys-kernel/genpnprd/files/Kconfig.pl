@@ -367,6 +367,7 @@ if(!defined($_[1])){
 		my $i=$_;
 		$i=~s/.*://;
 		my $r=$config{$i};
+		cfg($i) || return 0;
 		$msg.=" -$i" if($r);
 	}
 }
