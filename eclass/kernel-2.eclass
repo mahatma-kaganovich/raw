@@ -752,7 +752,7 @@ ${KERNEL_CONFIG//	/ }
 "
 local vendor_id="" model_name="" flags="" cpu_family="" model="" cache_alignment="" fpu="" siblings="" cpu_cores="" processor=""
 export PNP_VENDOR="^vendor_id\|"
-CF1 -SMP -X86{BIGSMP,GENERIC} X86_{X2APIC,UP_APIC,UP_IOAPIC} -SPARSE_IRQ -CPUSETS X86_INTEL_PSTATE
+CF1 -SMP -X86{BIGSMP,GENERIC} X86_{X2APIC,UP_APIC,UP_IOAPIC} -SPARSE_IRQ -CPUSETS X86_INTEL_PSTATE INTEL_TXT
 use xen && CF1 -HIGHMEM64G -HIGHMEM4G NOHIGHMEM X86_PAE
 use smp && CF1 SMP X86_BIGSMP SCHED_{SMT,MC} SPARSE_IRQ CPUSETS NUMA
 [[ "$(cflg mtune=)" == generic ]] && CF1 X86_GENERIC
@@ -765,7 +765,7 @@ case "${march}" in
 native)
 	einfo 'Found "-march=native" in CFLAGS, detecting CPU & arch hardware constants'
 	export PNP_VENDOR=""
-	CF1 -SCHED_{SMT,MC} -X86_{UP_APIC,TSC,PAT,MSR,MCE,CMOV,X2APIC} -MTRR -INTEL_IDLE -KVM_INTEL -KVM_AMD -SPARSE_IRQ -CPUSETS
+	CF1 -SCHED_{SMT,MC} -X86_{UP_APIC,TSC,PAT,MSR,MCE,CMOV,X2APIC} -MTRR -INTEL_IDLE -KVM_INTEL -KVM_AMD -SPARSE_IRQ -CPUSETS -INTEL_TXT
 	case "${CTARGET:-${CHOST}}" in
 	x86*|i?86*)
 		use multitarget && CF1 -64BIT
@@ -803,6 +803,7 @@ native)
 		longrun)freq+=" X86_LONGRUN";;
 		vmx)CF1 XEN +KVM{,_INTEL} VIRTUALIZATION;;
 		svm)CF1 XEN +KVM{,_AMD} VIRTUALIZATION;;
+		smx)CF1 INTEL_TXT;;
 		hypervisor)
 			CF1 PARAVIRT{,_GUEST,_SPINLOCKS,_TIME_ACCOUNTING} XEN KVM_GUEST
 			case "`lscpu|grep "^Hypervisor vendor:"`" in
