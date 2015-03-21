@@ -1,3 +1,8 @@
 media-video/mplayer2 lcms
 media-video/mpv lcms
 media-gfx/asymptote offcreen
+media-video/vlc svg
+media-gfx/openexr_viewers video_cards_nvidia
+media-libs/libprojectm video_cards_nvidia
+
+
