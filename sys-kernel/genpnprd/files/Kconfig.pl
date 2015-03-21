@@ -501,8 +501,10 @@ sub Kconfig{
 	print "Applying config: $ENV{KERNEL_CONFIG}\n";
 	conf($_) for(split(/\s+/,$ENV{KERNEL_CONFIG}));
 	for(grep(/^KERNEL_CONFIG_/,keys %ENV)){
-		cfg(substr($_,14),$ENV{$_});
-		msg("$_=$ENV{$_}");
+		my $x=$ENV{$_};
+		$x="\"$x\"" if($x=~/^[^\"].*\s.*[^\"]$/s);
+		cfg(substr($_,14),$x);
+		msg("$_=$x");
 	}
 #	dep();
 	set_config("$ENV{S}/.config");
