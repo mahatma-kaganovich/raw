@@ -5,5 +5,4 @@ media-video/vlc svg
 media-gfx/openexr_viewers video_cards_nvidia
 media-libs/libprojectm video_cards_nvidia
 media-libs/libsdl2 gles
-
-
+media-video/mpv egl
