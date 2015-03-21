@@ -295,7 +295,11 @@ kernel-2_src_compile() {
 
 	mkdir -p "${BDIR}" lib/modules/"${REAL_KV}"
 	kmake INSTALL_MOD_PATH="${BDIR}" -j1 modules_install
-	ln -s ../firmware lib/firmware
+	if [ "$VIRT" = 2 ]; then
+		rm -rf "${BDIR}/lib/firmware"
+	else
+		ln -s ../firmware lib/firmware
+	fi
 	ln -s ../../.. "lib/modules/${REAL_KV}/kernel"
 	cp "${BDIR}/lib/modules/${REAL_KV}"/* "lib/modules/${REAL_KV}/"
 	local r="${BDIR}/lib/modules/${REAL_KV}"
@@ -685,12 +689,12 @@ pre_embed(){
 		virtio:d00000002v*)CF1 VIRTIO_BLK;vblk=true;;
 		pci:v00008086d00007010sv*sd*bc*sc*i*)CF1 ${e}ATA_PIIX;ata=true;;
 		pci:v00008086d000025ABsv*sd*bc*sc*i*)CF1 _/drivers/watchdog/.+ I6300ESB_WDT;;
-		pci:*bc02sc00i*)echo "any ethernet $s";cc+=' ETHERNET +PHYLIB';;
-		pci:*bc02sc02i*)echo "any FDDI $s";cc+=' +FDDI';;
-		pci:*bc02sc03i*)echo "any ATM $s";cc+=' +ATM';;
+		pci:*bc02sc00i*)echo "ethernet $s";cc+=' ETHERNET +PHYLIB';;
+		pci:*bc02sc02i*)echo "FDDI $s";cc+=' +FDDI';;
+		pci:*bc02sc03i*)echo "ATM $s";cc+=' +ATM';;
 #		pci:*bc04sc01i*)echo "sound $s";cc+=' +SND';;
 		pci:*bc01sc06i01)cc+=" ${e}SATA_AHCI";ata=true;;
-		pci:*bc01*)echo "unknown PCI storage $s";vblk=false;vscsi=false;;
+		pci:*bc01*)echo "PCI storage $s";vblk=false;vscsi=false;;
 		pci:v00008086d00007020sv*)CF1 USB_UHCI_HCD;;
 		pci:v00001B36d00000100sv*);; # qxl
 		virtio:d00000008v*)CF1 SCSI_VIRTIO;vscsi=true;;
@@ -708,6 +712,7 @@ pre_embed(){
 		esac
 	done
 	if ${qemu:-false}; then
+		export VIRT=$[VIRT+1]
 		use xen && [[ " $CF " != *' -XEN '* ]] && continue # xen have virtio too + unknown 2me others
 		einfo "QEMU virtio environment + USE=custom-arch"
 		CF1 VIRTIO -HYPERV -XEN
@@ -752,6 +757,7 @@ ${KERNEL_CONFIG//	/ }
 "
 local vendor_id="" model_name="" flags="" cpu_family="" model="" cache_alignment="" fpu="" siblings="" cpu_cores="" processor=""
 export PNP_VENDOR="^vendor_id\|"
+export VIRT=0
 CF1 -SMP -X86{BIGSMP,GENERIC} X86_{X2APIC,UP_APIC,UP_IOAPIC} -SPARSE_IRQ -CPUSETS X86_INTEL_PSTATE INTEL_TXT
 use xen && CF1 -HIGHMEM64G -HIGHMEM4G NOHIGHMEM X86_PAE
 use smp && CF1 SMP X86_BIGSMP SCHED_{SMT,MC} SPARSE_IRQ CPUSETS NUMA
@@ -805,6 +811,7 @@ native)
 		svm)CF1 XEN +KVM{,_AMD} VIRTUALIZATION;;
 		smx)CF1 INTEL_TXT;;
 		hypervisor)
+			export VIRT=$[VIRT+1]
 			CF1 PARAVIRT{,_GUEST,_SPINLOCKS,_TIME_ACCOUNTING} XEN KVM_GUEST
 			case "`lscpu|grep "^Hypervisor vendor:"`" in
 			*XEN)CF1 -KVM_GUEST -HYPERV;;
@@ -917,6 +924,10 @@ native)
 	;;
 	esac
 	pre_embed
+	if [ "$VIRT" = 2 ]; then
+		rm -rf "${TMPDIR}/overlay-rd/kernel/x86/"
+		CF1 -MICROCODE -CPU_FREQ
+	fi
 	use xen && CF1 XEN
 ;;
 i386)CF1 M386 MATH_EMULATION;;
