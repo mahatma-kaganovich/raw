@@ -1309,8 +1309,8 @@ detects(){
 	while read i; do
 		$c && [ -e "$ROOT/lib/firmware/$i" ] && b+=" $i" || a+=" $i"
 	done <"$d"
-	[ -n "$b" ] && KERNEL_CONFIG+=" EXTRA_FIRMWARE=\"${b# }\" EXTRA_FIRMWARE_DIR=\"$ROOT/lib\"" && einfo "Embedding external firmware(s):$b"
-	[ -n "$a" ] && KERNEL_CONFIG+=" FW_LOADER_USER_HELPER_FALLBACK" && einfo "Enabling CONFIG_FW_LOADER_USER_HELPER_FALLBACK for firmware(s):$a"
+	[ -n "$b" ] && echo " EXTRA_FIRMWARE=\"${b# }\" EXTRA_FIRMWARE_DIR=\"$ROOT/lib\" "
+	[ -n "$a" ] && echo " ##${a// /,}: FW_LOADER_USER_HELPER_FALLBACK "
 }
 
 detects_cleanup(){
