@@ -17,6 +17,25 @@ done
 $r
 }
 
+appendflag(){
+	local v
+	for v in CFLAGS CPPFLAGS CXXFLAGS FFLAGS FCFLAGS; do
+		export $v="${!v} $*"
+	done
+}
+
+_isflag(){
+	local i f v
+	for v in LDFLAGS CFLAGS CPPFLAGS CXXFLAGS FFLAGS FCFLAGS; do
+		for f in ${!v}; do
+			for i in "${@}"; do
+				[ "$i" = "$f" ] && return 1
+			done
+		done
+	done
+	return 0
+}
+
 case "$PN" in
 glibc)filterflag -Ofast -ffast-math -ftracer;;
 sqlite|postgresql*|goffice|db|protobuf)filterflag -Ofast -ffast-math;;
@@ -25,9 +44,9 @@ mit-krb5|ceph)export CFLAGS="${CFLAGS//-Os/-O2}";export CXXFLAGS="${CXXFLAGS//-O
 dirac|mpv)filterflag -fgraphite-identity;;
 wine)filterflag -ftree-loop-distribution -ftree-loop-distribute-patterns;;
 ncurses)use profile && filterflag -fomit-frame-pointer;;
-xf86-video-siliconmotion|vlc)append-flags -w;;
-libX11|wget)is-flag -Os && (is-flag -Ofast || is-flag -ffast-math || is-flag -funsafe-math-optimizations) && ! is-flag -fno-unsafe-math-optimizations && append-flags -fno-unsafe-math-optimizations -fno-signed-zeros -fno-trapping-math -fassociative-math -freciprocal-math;;
-cairo)[[ "$PV" == 1.12.16* ]] && export CFLAGS="$CFLAGS -fno-lto"
+xf86-video-siliconmotion|vlc)appendflag -w;;
+libX11|wget)_isflag -Os && _isflag -Ofast -ffast-math -funsafe-math-optimizations && ! _isflag -fno-unsafe-math-optimizations && appendflag -fno-unsafe-math-optimizations -fno-signed-zeros -fno-trapping-math -fassociative-math -freciprocal-math;;
+cairo)[[ "$PV" == 1.12.16* ]] && appendflag -fno-lto
 esac
 
 [ "${CFLAGS//-flto}" != "$CFLAGS" ] &&
