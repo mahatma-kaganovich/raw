@@ -38,7 +38,7 @@ _isflag(){
 
 case "$PN" in
 glibc)filterflag -Ofast -ffast-math -ftracer;;
-sqlite|postgresql*|goffice|db|protobuf)filterflag -Ofast -ffast-math;;
+sqlite|postgresql*|goffice|db|protobuf|*webkit)filterflag -Ofast -ffast-math;;
 fontforge)filterflag -Ofast;;
 mit-krb5|ceph)export CFLAGS="${CFLAGS//-Os/-O2}";export CXXFLAGS="${CXXFLAGS//-Os/-O2}";;
 dirac|mpv)filterflag -fgraphite-identity;;
@@ -46,7 +46,7 @@ wine)filterflag -ftree-loop-distribution -ftree-loop-distribute-patterns;;
 ncurses)use profile && filterflag -fomit-frame-pointer;;
 xf86-video-siliconmotion|vlc)appendflag -w;;
 libX11|wget)_isflag -Os && _isflag -Ofast -ffast-math -funsafe-math-optimizations && ! _isflag -fno-unsafe-math-optimizations && appendflag -fno-unsafe-math-optimizations -fno-signed-zeros -fno-trapping-math -fassociative-math -freciprocal-math;;
-cairo)[[ "$PV" == 1.12.16* ]] && appendflag -fno-lto
+cairo)[[ "$PV" == 1.12.16* ]] && appendflag -fno-lto;;
 esac
 
 [ "${CFLAGS//-flto}" != "$CFLAGS" ] &&

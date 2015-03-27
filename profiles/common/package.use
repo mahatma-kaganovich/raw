@@ -30,3 +30,4 @@ dev-lang/php ssl curl tokenizer xmlrpc fastbuild mysqli postgres gd apache2 berk
 app-admin/testdisk ntfs reiserfs
 sci-libs/hdf5 -threads
 sci-libs/vtk rendering all-modules python xdmf2
+net-misc/tightvnc server
