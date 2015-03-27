@@ -38,7 +38,7 @@ _isflag(){
 
 case "$PN" in
 glibc)filterflag -Ofast -ffast-math -ftracer;;
-sqlite|postgresql*|goffice|db|protobuf|*webkit)filterflag -Ofast -ffast-math;;
+sqlite|postgresql*|goffice|db|protobuf|qtwebkit|webkit-gtk)filterflag -Ofast -ffast-math;;
 fontforge)filterflag -Ofast;;
 mit-krb5|ceph)export CFLAGS="${CFLAGS//-Os/-O2}";export CXXFLAGS="${CXXFLAGS//-Os/-O2}";;
 dirac|mpv)filterflag -fgraphite-identity;;
