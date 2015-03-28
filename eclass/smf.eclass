@@ -16,8 +16,8 @@ DEPEND="mail-filter/smf-common
 S="${WORKDIR}/${MY_P}"
 
 src_compile(){
-	sed -i -e 's%-O2%'"${CFLAGS}"'%' Makefile
-	emake || die
+#	sed -i -e 's%-O2%'"${CFLAGS}"'%' Makefile
+	emake CFLAGS="-fwhole-program $CFLAGS -D_REENTRANT" LDFLAGS="$LDFLAGS -lmilter -lpthread" || die
 }
 
 src_install(){

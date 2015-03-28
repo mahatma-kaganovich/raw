@@ -1,9 +1,5 @@
-Trying to support clustering (multiple access to cache file):
-1) flock();
-2) track & reload foreign cache changes (in cache write state).
-
---- a/smf-grey.c	2007-10-09 01:59:57.000000000 +0300
-+++ b/smf-grey.c	2015-03-26 17:42:43.368960023 +0300
+--- smf-grey.c1	2013-05-20 08:12:46.000000000 +0300
++++ smf-grey.c	2015-03-28 16:27:15.000000000 +0300
 @@ -1,5 +1,6 @@
  /*  Copyright (C) 2005, 2006 by Eugene Kurmanin <me@kurmanin.info>
   *  Additional changes by Tim Kleingeld <thm-smf@takm.com>
@@ -11,17 +7,18 @@ Trying to support clustering (multiple access to cache file):
   *
   *  This program is free software; you can redistribute it and/or modify
   *  it under the terms of the GNU General Public License as published by
-@@ -242,6 +243,9 @@
+@@ -242,6 +243,10 @@
  static sfsistat smf_data(SMFICTX *);
  #endif
  
-+struct stat cache_stat;
++struct stat cache_stat = { .st_size = 0, .st_ino = 0 };
 +static void cache_load(char *file);
++int lines = 0;
 +
  static void strscpy(register char *dst, register const char *src, size_t size) {
      register size_t i;
  
-@@ -410,7 +414,7 @@
+@@ -410,7 +415,7 @@
      static int last_write_successful;
      static time_t last_rewrite;
      struct stat orig_stat;
@@ -30,20 +27,19 @@ Trying to support clustering (multiple access to cache file):
      unsigned long i, size = hash_size(HASH_POWER);
      cache_item *it, **parent;
      time_t curtime = time(NULL);
-@@ -433,24 +437,33 @@
+@@ -433,30 +438,37 @@
      }
      if (conf.always_rewrite) rewrite = 1;
  
 +    if (dump0 = fopen(file, "a")) {
-+	    flock(fileno(dump0), 1);
++	    flock(fileno(dump0), LOCK_SH);
 +	    if (fstat(fileno(dump0), &orig_stat)) {
 +		rewrite = 1;
 +	    } else {
-+	        /* Rewritten by other node? Load */
-+		if (orig_stat.st_size != cache_stat.st_size || orig_stat.st_mtime != cache_stat.st_mtime)
++	        /* Changed by other node? Load */
++		if (orig_stat.st_size != cache_stat.st_size || orig_stat.st_ino != cache_stat.st_ino)
 +			cache_load(file);
 +	    }
-+	    flock(fileno(dump0), 2);
 +    } else {
 +	rewrite = 1;
 +    }
@@ -59,56 +55,99 @@ Trying to support clustering (multiple access to cache file):
 -		syslog(LOG_ERR, "[ERROR] failed to start append to %s: %m", file);
 -		return;
 -	    }
-+	if (!(dump = dump0)) {
-+	    syslog(LOG_ERR, "[ERROR] failed to start append to %s: %m", file);
- 	}
+-	}
 -    }
 -    if (rewrite) {
++	if (!(dump = dump0))
++	    syslog(LOG_ERR, "[ERROR] failed to start append to %s: %m", file);
++	dump0 = 0;
 +    } else {
  	sprintf(newfile, "%s.new", file);
+-	if (!(dump = fopen(newfile, "w"))) {
 +	syslog(LOG_INFO, "[INFO] cache %s[.new] rewrite\n", newfile);
- 	if (!(dump = fopen(newfile, "w"))) {
++	if (!(dump = fopen(newfile, "w")))
  	    syslog(LOG_ERR, "[ERROR] failed to create %s: %m", newfile);
 -	    return;
-+	    if (dump0) fclose(dump0);
- 	}
+-	}
      }
  
-@@ -513,6 +526,7 @@
- 		syslog(LOG_ERR, "[ERROR] failed to finish write to %s: %m", newfile);
- 	    }
- 	    unlink(newfile);
-+	    if (dump0) fclose(dump0);
- 	} else {
+     if (!dump)
+-	return;
++	goto ex;
+ 
++    flock(fileno(dump), LOCK_EX);
+     if (rewrite) {
+ 	fprintf(dump, "smf-grey 2 4\n");
+     }
+@@ -507,6 +519,7 @@
+ 	    it = *parent;
+ 	}
+     }
++    fstat(fileno(dump), &cache_stat);
+     if (fclose(dump) || error) {
+ 	if (rewrite) {
  	    if (!error) {
- 		syslog(LOG_ERR, "[ERROR] failed to finish append to %s: %m", file);
-@@ -525,11 +539,13 @@
+@@ -520,13 +533,14 @@
+ 	    truncate(file, orig_stat.st_size);
+ 	}
+ 	last_write_successful = 0;
+-	return;
++	goto ex;
+     }
      if (rewrite && rename(newfile, file)) {
++	cache_stat.st_size = 0;
  	syslog(LOG_ERR, "[ERROR] failed to rename %s: %m", newfile);
  	unlink(newfile);
-+	if (dump0) fclose(dump0);
  	last_write_successful = 0;
- 	return;
+-	return;
++	goto ex;
      }
      last_write_successful = 1;
      if (rewrite) {
-+	if (dump0) fclose(dump0);
- 	last_rewrite = curtime;
+@@ -534,27 +548,34 @@
  	syslog(LOG_INFO, 
  	    "[INFO] cache rewrite of %d records completed in %d seconds\n",
-@@ -548,8 +564,11 @@
+ 	    records, time(NULL)-curtime);
+-	
+     }
++ex:
++    if (dump0) fclose(dump0);
+ }
+ 
+ static void cache_load(char *file) {
+     FILE *f;
+-    int lines;
+     char line[1024];
+     int count = 0;
+-    unsigned long i, size = hash_size(HASH_POWER);
++    unsigned long i, size = hash_size(HASH_POWER),
++	ino = cache_stat.st_ino, pos = cache_stat.st_size;
+     cache_item *it;
      time_t curtime = time(0L);
  
      if (!(f = fopen(file, "r"))) {
 +	syslog(LOG_INFO, "[INFO] cache %s open error: %m", file);
  	return;
      }
-+    flock(fileno(f), 1);
-+    fstat(fileno(f), &cache_stat);
-     fgets(line, 1024, f);
-     sscanf(line, "%*s %*s %d", &lines);
-     if (lines < 4) {
-@@ -588,6 +607,11 @@
+-    fgets(line, 1024, f);
+-    sscanf(line, "%*s %*s %d", &lines);
+-    if (lines < 4) {
+-	syslog(LOG_ERR, "[ERROR] cache %s has invalid format", file);
+-	return;
++    if (!flock(fileno(f), LOCK_SH) && !fstat(fileno(f), &cache_stat)
++	&& ino == cache_stat.st_ino && pos && lines > 3)
++	    fseek(f, pos, SEEK_SET);
++    else {
++	fgets(line, 1024, f);
++	sscanf(line, "%*s %*s %d", &lines);
++	if (lines < 4) {
++		syslog(LOG_ERR, "[ERROR] cache %s has invalid format", file);
++		return;
++	}
+     }
+     while (!feof(f)) {
+ 	int i;
+@@ -588,6 +609,11 @@
  	it = cache[new.hash & hash_mask(HASH_POWER)];
  	while (it) {
  	    if (it->hash == new.hash && !strcmp(it->item, new.item)) {
