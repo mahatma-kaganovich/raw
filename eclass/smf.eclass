@@ -41,14 +41,14 @@ depend() {
 
 start() {
 	ebegin 'Starting $d'
-	$dst/$d
-	eend $? 'Failed to start $d'
+	checkpath -q -d -o smfs:mail -m 0740 /var/run/smfs && $dst/$d
+	eend \$? 'Failed to start $d'
 }
 
 stop() {
 	ebegin 'Stopping $d'
 	killall -w $dst/$d
-	eend $? 'Failed to stop $d'
+	eend \$? 'Failed to stop $d'
 	true
 }
 " >$d.initd
