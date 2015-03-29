@@ -5,13 +5,12 @@ Trying to support clustering (multiple access to cache file):
 
 "CacheWriteInterval 0" is experimental and if used "IN MX ..."
 clustering - possible not required.
-
 --- a/smf-grey.c	2013-05-20 08:12:46.000000000 +0300
-+++ b/smf-grey.c	2015-03-29 21:45:36.000000000 +0300
++++ b/smf-grey.c	2015-03-29 22:43:27.000000000 +0300
 @@ -1,5 +1,6 @@
  /*  Copyright (C) 2005, 2006 by Eugene Kurmanin <me@kurmanin.info>
   *  Additional changes by Tim Kleingeld <thm-smf@takm.com>
-+ *  Additional changes by Denis kaganovich (Dzianis Kahanovich) <mahatma@eu.by>
++ *  Additional changes by Denis Kaganovich (Dzianis Kahanovich) <mahatma@eu.by>
   *
   *  This program is free software; you can redistribute it and/or modify
   *  it under the terms of the GNU General Public License as published by
@@ -161,7 +160,7 @@ clustering - possible not required.
  	while (it) {
  	    if (it->hash == new.hash && !strcmp(it->item, new.item)) {
 +		/* Cluster concurrence */
-+	        if (it->write_status != ST_WRITTEN && new.exptime < it->exptime) {
++	        if (it->write_status != ST_WRITTEN && (new.status < it->status || (new.status == it->status && new.exptime < it->exptime))) {
 +		    SAFE_FREE(new.item);
 +		    break;
 +		}

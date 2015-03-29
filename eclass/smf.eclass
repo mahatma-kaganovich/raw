@@ -20,13 +20,40 @@ src_compile(){
 }
 
 src_install(){
-	exeinto /usr/sbin
+	local dst=/usr/sbin
+	exeinto $dst
 	doexe ${MY_PN}
 	local d
 	for d in ${DIRS}; do
 		keepdir ${d}
 		fowners smfs:mail ${d}
 		fperms 740 ${d}
+	done
+	for d in "${D}${dst}"/*; do
+		d="${d##*/}"
+		echo "#!/sbin/runscript
+
+depend() {
+	need localmount
+	use netmount
+	before mta
+}
+
+start() {
+	ebegin 'Starting $d'
+	$dst/$d
+	eend $? 'Failed to start $d'
+}
+
+stop() {
+	ebegin 'Stopping $d'
+	killall -w $d
+	eend $? 'Failed to stop $d'
+	true
+}
+" >$d.initd
+		doinitd $d.initd $d
+	done
 	done
 	insinto /etc/mail/smfs
 	doins ${MY_PN}.conf
