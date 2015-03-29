@@ -16,7 +16,6 @@ DEPEND="mail-filter/smf-common
 S="${WORKDIR}/${MY_P}"
 
 src_compile(){
-#	sed -i -e 's%-O2%'"${CFLAGS}"'%' Makefile
 	emake CFLAGS="-fwhole-program $CFLAGS -D_REENTRANT" LDFLAGS="$LDFLAGS -lmilter -lpthread" || die
 }
 
@@ -26,8 +25,8 @@ src_install(){
 	local d
 	for d in ${DIRS}; do
 		keepdir ${d}
-		fowners smfs:smfs ${d}
-		fperms 700 ${d}
+		fowners smfs:mail ${d}
+		fperms 770 ${d}
 	done
 	insinto /etc/mail/smfs
 	doins ${MY_PN}.conf
@@ -37,7 +36,7 @@ src_install(){
 
 pkg_setup(){
 	enewgroup smfs
-	enewuser smfs -1 -1 /dev/null smfs
+	enewuser smfs -1 -1 /dev/null mail
 }
 
 pkg_postinst(){
