@@ -52,7 +52,7 @@ stop() {
 	true
 }
 " >$d.initd
-		doinitd $d.initd $d
+		newinitd $d.initd $d
 	done
 	insinto /etc/mail/smfs
 	doins ${MY_PN}.conf
