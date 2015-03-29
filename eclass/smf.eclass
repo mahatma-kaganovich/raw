@@ -26,7 +26,7 @@ src_install(){
 	for d in ${DIRS}; do
 		keepdir ${d}
 		fowners smfs:mail ${d}
-		fperms 770 ${d}
+		fperms 740 ${d}
 	done
 	insinto /etc/mail/smfs
 	doins ${MY_PN}.conf
