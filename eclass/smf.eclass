@@ -47,7 +47,7 @@ start() {
 
 stop() {
 	ebegin 'Stopping $d'
-	killall -w $d
+	killall -w $dst/$d
 	eend $? 'Failed to stop $d'
 	true
 }
