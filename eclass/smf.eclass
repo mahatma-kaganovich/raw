@@ -54,7 +54,6 @@ stop() {
 " >$d.initd
 		doinitd $d.initd $d
 	done
-	done
 	insinto /etc/mail/smfs
 	doins ${MY_PN}.conf
 	fperms 755 /etc/mail/smfs
