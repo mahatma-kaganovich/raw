@@ -2,11 +2,11 @@ Trying to support clustering (multiple access to cache file):
 1) flock();
 2) track & reload foreign cache changes (in cache write state);
 3) "CacheWriteInterval 0" set "realtime" cache sync mode.
-                                                                                              
+
 "CacheWriteInterval 0" is experimental and if used "IN MX ..."
 clustering - possible not required.
 --- a/smf-grey.c	2013-05-20 08:12:46.000000000 +0300
-+++ b/smf-grey.c	2015-03-30 17:25:37.000000000 +0300
++++ b/smf-grey.c	2015-03-30 17:35:43.000000000 +0300
 @@ -1,5 +1,6 @@
  /*  Copyright (C) 2005, 2006 by Eugene Kurmanin <me@kurmanin.info>
   *  Additional changes by Tim Kleingeld <thm-smf@takm.com>
@@ -86,7 +86,7 @@ clustering - possible not required.
      if (rewrite) {
  	fprintf(dump, "smf-grey 2 4\n");
      }
-@@ -507,54 +519,64 @@ static void cache_dump(char *file) {
+@@ -507,54 +519,63 @@ static void cache_dump(char *file) {
  	    it = *parent;
  	}
      }
@@ -106,10 +106,9 @@ clustering - possible not required.
 -	return;
 -    }
 -    if (rewrite && rename(newfile, file)) {
-+    if (!error && fflush(dump)) {
-+	error = 1;
-+	syslog(LOG_ERR, "[ERROR] failed to flush %s: %m", rewrite ? newfile : file);
-+    }
++    if (!error)
++	if (error=fflush(dump))
++	    syslog(LOG_ERR, "[ERROR] failed to flush %s: %m", rewrite ? newfile : file);
 +    dirty = 0;
 +    if (!error && rewrite && rename(newfile, file)) {
 +	cache_stat.st_size = 0;
@@ -183,7 +182,7 @@ clustering - possible not required.
      }
      while (!feof(f)) {
  	int i;
-@@ -588,6 +610,11 @@ static void cache_load(char *file) {
+@@ -588,6 +609,11 @@ static void cache_load(char *file) {
  	it = cache[new.hash & hash_mask(HASH_POWER)];
  	while (it) {
  	    if (it->hash == new.hash && !strcmp(it->item, new.item)) {
@@ -195,7 +194,7 @@ clustering - possible not required.
  		new.next = it->next;
  		SAFE_FREE(it->item);
  		*it = new;
-@@ -665,6 +692,7 @@ static void cache_put(const char *key, l
+@@ -665,6 +691,7 @@ static void cache_put(const char *key, l
  	if (it->hash == hash && it->exptime > curtime && it->item && !strcmp(key, it->item)) {
  	    if (mode == CACHE_OVER) {
  		if (it->status != status || it->delay != delay) {
@@ -203,7 +202,7 @@ clustering - possible not required.
  		    it->write_status = ST_NOT_WRITTEN;
  		}
  		it->status = status;
-@@ -692,6 +720,7 @@ static void cache_put(const char *key, l
+@@ -692,6 +719,7 @@ static void cache_put(const char *key, l
  	    it->exptime = curtime + ttl;
  	    it->delay = delay;
  	    it->outstanding = outstanding_delta;
@@ -211,7 +210,7 @@ clustering - possible not required.
  	    return;
  	}
  	parent = it;
-@@ -709,6 +738,7 @@ static void cache_put(const char *key, l
+@@ -709,6 +737,7 @@ static void cache_put(const char *key, l
  	    parent->next = it;
  	else
  	    cache[hash & hash_mask(HASH_POWER)] = it;
@@ -219,7 +218,7 @@ clustering - possible not required.
      }
  }
  
-@@ -1146,7 +1176,10 @@ static int greylist(struct context *cont
+@@ -1146,7 +1175,10 @@ static int greylist(struct context *cont
  	    memset(&new_config, 0, sizeof new_config);
  	}
      }
@@ -231,7 +230,7 @@ clustering - possible not required.
  	last_cache_write = curtime;
  	cache_dump(conf.cache_path);
      }
-@@ -1361,6 +1394,12 @@ static sfsistat smf_envrcpt(SMFICTX *ctx
+@@ -1361,6 +1393,12 @@ static sfsistat smf_envrcpt(SMFICTX *ctx
      strtolower(context->recipient);
      if (conf.tos && to_check(context->recipient)) return SMFIS_CONTINUE;
      stat = greylist(context);
@@ -244,7 +243,7 @@ clustering - possible not required.
      if (stat == 2) {
  	do_sleep(1);
  	smfi_setreply(ctx, "550", "5.1.3", "Too many block lists - check http://www.robtex.com/rbls.html");
-@@ -1535,8 +1574,10 @@ int main(int argc, char **argv) {
+@@ -1535,8 +1573,10 @@ int main(int argc, char **argv) {
      ret = smfi_main();
      if (ret != MI_SUCCESS) syslog(LOG_ERR, "[ERROR] terminated due to a fatal error");
      if (cache) {
