@@ -2,11 +2,11 @@ Trying to support clustering (multiple access to cache file):
 1) flock();
 2) track & reload foreign cache changes (in cache write state);
 3) "CacheWriteInterval 0" set "realtime" cache sync mode.
- 
+                                                                                              
 "CacheWriteInterval 0" is experimental and if used "IN MX ..."
 clustering - possible not required.
---- smf-grey.c1	2013-05-20 08:12:46.000000000 +0300
-+++ smf-grey.c	2015-03-30 15:32:02.000000000 +0300
+--- a/smf-grey.c	2013-05-20 08:12:46.000000000 +0300
++++ b/smf-grey.c	2015-03-30 17:25:37.000000000 +0300
 @@ -1,5 +1,6 @@
  /*  Copyright (C) 2005, 2006 by Eugene Kurmanin <me@kurmanin.info>
   *  Additional changes by Tim Kleingeld <thm-smf@takm.com>
@@ -54,7 +54,7 @@ clustering - possible not required.
      /* If we're not rewriting, get the current length of the file so
       * we can truncate to that length if the write fails.
       */
-     if (!rewrite) {
+-    if (!rewrite) {
 -	if (stat(file, &orig_stat)) {
 -	    rewrite = 1;
 -	} else {
@@ -64,11 +64,7 @@ clustering - possible not required.
 -	    }
 -	}
 -    }
--    if (rewrite) {
-+	if (!(dump = dump0))
-+	    syslog(LOG_ERR, "[ERROR] failed to start append to %s: %m", file);
-+	dump0 = 0;
-+    } else {
+     if (rewrite) {
  	sprintf(newfile, "%s.new", file);
 -	if (!(dump = fopen(newfile, "w"))) {
 +	syslog(LOG_INFO, "[INFO] cache %s[.new] rewrite\n", newfile);
@@ -76,6 +72,10 @@ clustering - possible not required.
  	    syslog(LOG_ERR, "[ERROR] failed to create %s: %m", newfile);
 -	    return;
 -	}
++    } else {
++	if (!(dump = dump0))
++	    syslog(LOG_ERR, "[ERROR] failed to start append to %s: %m", file);
++	dump0 = 0;
      }
  
      if (!dump)
@@ -86,39 +86,67 @@ clustering - possible not required.
      if (rewrite) {
  	fprintf(dump, "smf-grey 2 4\n");
      }
-@@ -507,6 +519,7 @@ static void cache_dump(char *file) {
+@@ -507,54 +519,64 @@ static void cache_dump(char *file) {
  	    it = *parent;
  	}
      }
-+    fstat(fileno(dump), &cache_stat);
-     if (fclose(dump) || error) {
- 	if (rewrite) {
- 	    if (!error) {
-@@ -520,41 +533,50 @@ static void cache_dump(char *file) {
- 	    truncate(file, orig_stat.st_size);
- 	}
- 	last_write_successful = 0;
+-    if (fclose(dump) || error) {
+-	if (rewrite) {
+-	    if (!error) {
+-		syslog(LOG_ERR, "[ERROR] failed to finish write to %s: %m", newfile);
+-	    }
+-	    unlink(newfile);
+-	} else {
+-	    if (!error) {
+-		syslog(LOG_ERR, "[ERROR] failed to finish append to %s: %m", file);
+-	    }
+-	    truncate(file, orig_stat.st_size);
+-	}
+-	last_write_successful = 0;
 -	return;
-+	goto ex;
-     }
-     if (rewrite && rename(newfile, file)) {
+-    }
+-    if (rewrite && rename(newfile, file)) {
++    if (!error && fflush(dump)) {
++	error = 1;
++	syslog(LOG_ERR, "[ERROR] failed to flush %s: %m", rewrite ? newfile : file);
++    }
++    dirty = 0;
++    if (!error && rewrite && rename(newfile, file)) {
 +	cache_stat.st_size = 0;
  	syslog(LOG_ERR, "[ERROR] failed to rename %s: %m", newfile);
- 	unlink(newfile);
+-	unlink(newfile);
  	last_write_successful = 0;
 -	return;
-+	goto ex;
++	error = 1;
      }
-     last_write_successful = 1;
-+    dirty = 0;
-     if (rewrite) {
- 	last_rewrite = curtime;
- 	syslog(LOG_INFO, 
- 	    "[INFO] cache rewrite of %d records completed in %d seconds\n",
- 	    records, time(NULL)-curtime);
+-    last_write_successful = 1;
+-    if (rewrite) {
+-	last_rewrite = curtime;
+-	syslog(LOG_INFO, 
+-	    "[INFO] cache rewrite of %d records completed in %d seconds\n",
+-	    records, time(NULL)-curtime);
 -	
-     }
++    cache_stat.st_size = 0;
++    /* broken fs driver? */
++//    if (dump) flock(fileno(dump), LOCK_UN);
++//    if (dump0) flock(fileno(dump0), LOCK_UN);
++    if (!error) {
++	last_write_successful = 1;
++	fstat(fileno(dump), &cache_stat);
++	if (fclose(dump))
++	    syslog(LOG_ERR, "[ERROR] failed to finish (close) write to %s: %m", rewrite ? newfile : file);
++	else if (rewrite) {
++	    last_rewrite = curtime;
++	    syslog(LOG_INFO, 
++		"[INFO] cache rewrite of %d records completed in %d seconds\n",
++		records, time(NULL)-curtime);
++	}
++    }
 +ex:
++    if (error && rewrite && dump) {
++	unlink(newfile);
++	close(dump);
+     }
 +    if (dump0) fclose(dump0);
  }
  
