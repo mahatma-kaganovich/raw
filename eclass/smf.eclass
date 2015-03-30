@@ -41,13 +41,13 @@ depend() {
 
 start() {
 	ebegin 'Starting $d'
-	checkpath -q -d -o smfs:mail -m 0740 /var/run/smfs && $dst/$d
+	checkpath -q -d -o smfs:mail -m 0740 /var/run/smfs && start-stop-daemon --start --exec $dst/$d
 	eend \$? 'Failed to start $d'
 }
 
 stop() {
 	ebegin 'Stopping $d'
-	killall -w $dst/$d
+	start-stop-daemon --stop --exec $dst/$d
 	eend \$? 'Failed to stop $d'
 	true
 }
