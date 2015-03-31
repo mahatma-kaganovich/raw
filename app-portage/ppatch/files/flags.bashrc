@@ -36,6 +36,17 @@ _isflag(){
 	return 0
 }
 
+_iuse(){
+	local i
+	for i in $IUSE; do
+		if [ "$i" = "$1" ]; then
+			use $1
+			return $?
+		fi
+	done
+	return 0
+}
+
 case "$PN" in
 glibc)filterflag -Ofast -ffast-math -ftracer;;
 sqlite|postgresql*|goffice|db|protobuf|qtwebkit|webkit-gtk)filterflag -Ofast -ffast-math;;
@@ -47,6 +58,7 @@ ncurses)use profile && filterflag -fomit-frame-pointer;;
 xf86-video-siliconmotion|vlc)appendflag -w;;
 libX11|wget)_isflag -Os && _isflag -Ofast -ffast-math -funsafe-math-optimizations && ! _isflag -fno-unsafe-math-optimizations && appendflag -fno-unsafe-math-optimizations -fno-signed-zeros -fno-trapping-math -fassociative-math -freciprocal-math;;
 cairo)[[ "$PV" == 1.12.16* ]] && appendflag -fno-lto;;
+udev)filterflag -Wl,--sort-section=alignment;; # gold
 esac
 
 [ "${CFLAGS//-flto}" != "$CFLAGS" ] &&
@@ -57,6 +69,7 @@ sys-kernel/*-sources|sys-devel/gcc|dev-lang/swig|dev-lang/orc|media-plugins/live
 dev-libs/icu)export CFLAGS="-w -pipe -O3 -march=native -fomit-frame-pointer";export CXXFLAGS="$CFLAGS";;
 esac
 
-[ "${USE//system-sqlite}" = "$USE" -a "${IUSE//system-sqlite}" != "$IUSE" ] && filterflag -Ofast -ffast-math
+_iuse system-sqlite && filterflag -Ofast -ffast-math
+_iuse gold && filterflag -Wl,--sort-section=alignment
 
 }
