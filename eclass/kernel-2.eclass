@@ -25,7 +25,7 @@ if [[ ${ETYPE} == sources ]]; then
 
 IUSE="${IUSE} +build-kernel custom-cflags +pnp +compressed integrated
 	netboot custom-arch embed-hardware
-	kernel-firmware +sources pnponly lzma xz lzo
+	kernel-firmware +sources pnponly lzma xz lzo lz4
 	external-firmware xen +smp kernel-tools multitarget +multislot thin
 	lvm evms device-mapper unionfs luks gpg iscsi e2fsprogs mdadm
 	lguest acpi klibc +genkernel monolythe update-boot"
@@ -35,6 +35,7 @@ DEPEND="${DEPEND}
 	lzma? ( app-arch/xz-utils )
 	xz? ( app-arch/xz-utils )
 	lzo? ( app-arch/lzop )
+	lz4? ( app-arch/lz4 )
 	build-kernel? (
 		compressed? ( sys-kernel/genpnprd )
 		kernel-firmware? ( !sys-kernel/linux-firmware )
@@ -592,6 +593,7 @@ useconfig(){
 	local cfg_exclude=" HAVE_DMA_API_DEBUG "
 	local cfg_exclude=
 	use lzo && COMP+=' LZO'
+	use lz4 && COMP+=' LZ4'
 	use lzma && COMP+=' LZMA XZ'
 	use xz && COMP+=' XZ'
 	for i in $COMP; do
@@ -1337,12 +1339,16 @@ m2n(){
 }
 
 mksquash(){
-	local p=1 i
+	local p=1 i c="${comp:+-comp $comp }"
 	for i in ${MAKEOPTS}; do
 		[[ "$i" == -j* ]] && p=$((${i#-j}-1))
 	done
 	[[ "${p:-0}" == 0 ]] && p=1
-	mksquashfs "${@}" ${comp:+-comp $comp }-b 1048576 -no-recovery -no-progress -processors $p || die "mksquashfs failed"
+	case "$comp" in
+	lzo)c+='-Xcompression-level 9 ';;
+	lz4)c+='-Xhc ';;
+	esac
+	mksquashfs "${@}" $c-b 1048576 -no-recovery -no-progress -processors $p || die "mksquashfs failed"
 }
 
 LICENSE(){
