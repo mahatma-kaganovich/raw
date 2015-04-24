@@ -1004,16 +1004,26 @@ syspnp(){
 #	cd /
 }
 
+vkb(){
+#	if [[ -n "$cmd_vkb_touchscreen" ]] || grep "^B: ABS=........" /proc/bus/input/devices ; then
+	if [[ -n "$cmd_vkb_touchscreen" ]]; then
+		# to debug
+		/sbin/vkb
+	elif [ "$1" = 1 -o -z "$SHELL" ]; then
+		local i
+		read i
+		echo "$i"
+	else
+		$SHELL
+	fi
+}
+
 run_shell(){
 	[[ -z "$SHELL" ]] && for SHELL in /bin/ash /bin/bash /bin/sh; do
 		[[ -e "$SHELL" ]] && break
 	done
 	export SHELL
-	if [[ -n "$cmd_vkb_touchscreen" ]] || grep "^B: ABS=........" /proc/bus/input/devices ; then
-		vkb
-	else
-		$SHELL
-	fi
+	vkb
 }
 
 # minimalistic. debug
