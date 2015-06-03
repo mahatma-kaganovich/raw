@@ -1,4 +1,4 @@
-2014-17-06 Dzianis Kahanovich <mahatma@eu.by>
+2015-06-03 Dzianis Kahanovich <mahatma@eu.by>
 
 PR target/40171
 * config/i386/driver-i386.c (host_detect_local_cpu): Add "astune" mode (assembler mtune).
@@ -75,14 +75,14 @@ PR target/40171
  	case 0x3e:
  	  /* Ivy Bridge.  */
 -	  cpu = "ivybridge";
-+	  cpu = astune ? "core" : "ivybridge";
++	  cpu = astune ? "corei7" : "ivybridge";
  	  break;
  	case 0x3c:
  	case 0x45:
  	case 0x46:
  	  /* Haswell.  */
 -	  cpu = "haswell";
-+	  cpu = astune ? "core" : "haswell";
++	  cpu = astune ? "corei7" : "haswell";
  	  break;
  	default:
  	  if (arch)

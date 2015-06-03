@@ -1,0 +1,66 @@
+--- a/mpm_itk.c	2015-06-03 17:23:53.000000000 +0300
++++ b/mpm_itk.c	2015-06-03 17:37:19.798599924 +0300
+@@ -83,6 +83,20 @@
+ #include <signal.h>
+ #include <sys/times.h>
+ 
++#ifdef __linux__
++#include <syscall.h>
++#include <linux/version.h>
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,5,49) && defined(CLONE_FS)
++#define ITK_USE_CLONE 1
++#define CLONE_FLAGS_DEFAULT (SIGCHLD)
++static int clone_flags = CLONE_FLAGS_DEFAULT;
++#else
++#define ITK_USE_CLONE 0
++#endif
++#else
++#define ITK_USE_CLONE 0
++#endif
++
+ /* config globals */
+ 
+ static uid_t ap_itk_min_uid=1;
+@@ -193,7 +207,12 @@ int itk_fork_process(conn_rec *c)
+          return DECLINED;
+     }
+ 
++#if ITK_USE_CLONE
++    pid_t pid = syscall(SYS_clone, clone_flags, 0, NULL, NULL), child_pid;
++#else
+     pid_t pid = fork(), child_pid;
++#endif
++ 
+     int status;
+     switch (pid) {
+     case -1:
+@@ -595,6 +614,18 @@ static const char *set_nice_value (cmd_p
+     return NULL;
+ }
+ 
++#if ITK_USE_CLONE
++static const char *set_clone_flags(cmd_parms *cmd, void *dummy, const char *flags)
++{
++    const char *err = ap_check_cmd_context(cmd, GLOBAL_ONLY);
++    if (err != NULL)
++        return err;
++
++    clone_flags = CLONE_FLAGS_DEFAULT ^ atoi(flags);
++    return NULL;
++}
++#endif
++
+ static const command_rec itk_cmds[] = {
+ AP_INIT_TAKE2("AssignUserID", assign_user_id, NULL, RSRC_CONF|ACCESS_CONF,
+               "Tie a virtual host to a specific child process."),
+@@ -613,6 +644,10 @@ AP_INIT_TAKE1("MaxClientsVHost", set_max
+               "Maximum number of children alive at the same time for this virtual host."),
+ AP_INIT_TAKE1("NiceValue", set_nice_value, NULL, RSRC_CONF|ACCESS_CONF,
+               "Set nice value for the given vhost, from -20 (highest priority) to 19 (lowest priority)."),
++#if ITK_USE_CLONE
++AP_INIT_TAKE1("CloneFlags", set_clone_flags, NULL, RSRC_CONF,
++              "XOR to default (SIGCHLD) clone flags. See /usr/include/{linux,bits}/sched.h or 'man 2 clone'"),
++#endif
+ { NULL }
+ };
+ 
