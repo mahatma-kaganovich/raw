@@ -451,12 +451,13 @@ sub conf{
 			if(!$eq){
 				cfg($_,$y);
 			}elsif(($ne xor ($config{$_} eq $y || ($y eq 'n' && $config{$_} eq '')))){
-				last;
+				goto ex;
 			};
 		}
 	}
-	last if($#l>=0);
+	last if(@l && !$eq);
     }
+ex:
     msg($_[0]);
 }
 
