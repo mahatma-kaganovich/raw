@@ -14,10 +14,16 @@ CFLAGS="$CFLAGS -fdevirtualize-speculatively"
 
 #CFLAGS="$CFLAGS -fno-stack-protector"
 
+# possible no ff
+CFLAGS="$CFLAGS -mtls-dialect=gnu2"
 
 LDFLAGS="$LDFLAGS -Wl,--no-keep-memory -Wl,--reduce-memory-overheads"
-CXXFLAGS="${CFLAGS}"
-CXXFLAGS="${CXXFLAGS} -fvisibility-inlines-hidden"
 CPPFLAGS="-pipe"
-FFLAGS="${CFLAGS}"
-FCFLAGS="${CFLAGS}"
+FFLAGS="$CFLAGS"
+#FFLAGS="$FFLAGS -mtls-dialect=gnu"
+FCFLAGS="$CFLAGS"
+CXXFLAGS="$CFLAGS"
+CXXFLAGS="$CXXFLAGS -fvisibility-inlines-hidden"
+
+# pre-5.1 default
+CFLAGS="$CFLAGS -std=gnu89"

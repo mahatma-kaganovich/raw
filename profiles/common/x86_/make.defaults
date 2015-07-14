@@ -19,10 +19,15 @@ CFLAGS="$CFLAGS -fmodulo-sched -fmodulo-sched-allow-regmoves -freschedule-modulo
 # procmail
 #CFLAGS="$CFLAGS -fno-ipa-cp-clone"
 
+CFLAGS="$CFLAGS -mtls-dialect=gnu2"
 
 LDFLAGS="-Wl,-O1 -Wl,--as-needed -Wl,--hash-style=gnu -Wl,--sort-common -Wl,--sort-section=alignment"
-CXXFLAGS="${CFLAGS}"
-CXXFLAGS="${CXXFLAGS} -fvisibility-inlines-hidden"
 CPPFLAGS="-pipe"
-FFLAGS="${CFLAGS}"
-FCFLAGS="${CFLAGS}"
+FFLAGS="$CFLAGS"
+#FFLAGS="$FFLAGS -mtls-dialect=gnu"
+FCFLAGS="$CFLAGS"
+CXXFLAGS="$CFLAGS"
+CXXFLAGS="$CXXFLAGS -fvisibility-inlines-hidden"
+
+# pre-5.1 default
+CFLAGS="$CFLAGS -std=gnu89"
