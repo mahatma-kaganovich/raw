@@ -59,6 +59,7 @@ xf86-video-siliconmotion|vlc)appendflag -w;;
 libX11|wget)_isflag -Os && _isflag -Ofast -ffast-math -funsafe-math-optimizations && ! _isflag -fno-unsafe-math-optimizations && appendflag -fno-unsafe-math-optimizations -fno-signed-zeros -fno-trapping-math -fassociative-math -freciprocal-math;;
 cairo)[[ "$PV" == 1.12.16* ]] && appendflag -fno-lto;;
 udev)filterflag -Wl,--sort-section=alignment;; # gold
+gccxml)appendflag -std=gnu89;; # 5.1
 esac
 
 [ "${CFLAGS//-flto}" != "$CFLAGS" ] &&
