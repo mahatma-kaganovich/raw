@@ -3,7 +3,7 @@ dev-lang/perl berkdb
 mail-filter/spamassassin berkdb
 dev-libs/cyrus-sasl berkdb
 mail-filter/opendkim berkdb
-app-crypt/heimdal -ssl
+app-crypt/heimdal -ssl -threads
 dev-db/mariadb -tcmalloc jemalloc tokudb extraengine
 dev-db/mariadb-galera -tcmalloc jemalloc tokudb extraengine sst-xtrabackup
 sys-cluster/ceph xfs
