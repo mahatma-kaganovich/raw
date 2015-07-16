@@ -1,0 +1,2 @@
+# gcc 4
+>=dev-libs/isl-0.15
