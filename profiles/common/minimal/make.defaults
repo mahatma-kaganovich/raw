@@ -24,6 +24,3 @@ FFLAGS="$CFLAGS"
 FCFLAGS="$CFLAGS"
 CXXFLAGS="$CFLAGS"
 CXXFLAGS="$CXXFLAGS -fvisibility-inlines-hidden"
-
-# pre-5.1 default
-#CFLAGS="$CFLAGS -std=gnu89"

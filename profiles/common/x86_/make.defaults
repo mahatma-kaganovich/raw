@@ -19,6 +19,10 @@ CFLAGS="$CFLAGS -fmodulo-sched -fmodulo-sched-allow-regmoves -freschedule-modulo
 # procmail
 #CFLAGS="$CFLAGS -fno-ipa-cp-clone"
 
+### 5.1 regressions
+# libvpx mupdf grub etc
+CFLAGS="$CFLAGS -fno-tree-loop-linear"
+
 CFLAGS="$CFLAGS -mtls-dialect=gnu2"
 
 LDFLAGS="-Wl,-O1 -Wl,--as-needed -Wl,--hash-style=gnu -Wl,--sort-common -Wl,--sort-section=alignment"
@@ -28,6 +32,3 @@ FFLAGS="$CFLAGS"
 FCFLAGS="$CFLAGS"
 CXXFLAGS="$CFLAGS"
 CXXFLAGS="$CXXFLAGS -fvisibility-inlines-hidden"
-
-# pre-5.1 default
-#CFLAGS="$CFLAGS -std=gnu89"
