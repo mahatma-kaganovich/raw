@@ -1,0 +1,15 @@
+https://gcc.gnu.org/bugzilla/show_bug.cgi?id=66422
+
+--- a/gcc/tree-ssa-loop-ivcanon.c	2015/06/22 14:07:09	224731
++++ b/gcc/tree-ssa-loop-ivcanon.c	2015/06/22 14:12:24	224732
+@@ -523,9 +523,9 @@
+ 	  gimple_stmt_iterator gsi = gsi_for_stmt (elt->stmt);
+ 	  gcall *stmt = gimple_build_call
+ 	      (builtin_decl_implicit (BUILT_IN_UNREACHABLE), 0);
+-
+ 	  gimple_set_location (stmt, gimple_location (elt->stmt));
+ 	  gsi_insert_before (&gsi, stmt, GSI_NEW_STMT);
++	  split_block (gimple_bb (stmt), stmt);
+ 	  changed = true;
+ 	  if (dump_file && (dump_flags & TDF_DETAILS))
+ 	    {
