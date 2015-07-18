@@ -47,12 +47,15 @@ _iuse(){
 	return 0
 }
 
+gccve(){
+	[[ "`LANG=C gcc -v 2>&1`" == *" version $1"* ]]
+}
+
 case "$PN" in
 glibc)filterflag -Ofast -ffast-math -ftracer;;
 sqlite|postgresql*|goffice|db|protobuf|qtwebkit|webkit-gtk)filterflag -Ofast -ffast-math;;
 fontforge)filterflag -Ofast;;
 mit-krb5|ceph)export CFLAGS="${CFLAGS//-Os/-O2}";export CXXFLAGS="${CXXFLAGS//-Os/-O2}";;
-dirac|mpv)filterflag -fgraphite-identity;;
 wine)filterflag -ftree-loop-distribution -ftree-loop-distribute-patterns;;
 ncurses)use profile && filterflag -fomit-frame-pointer;;
 xf86-video-siliconmotion|vlc)appendflag -w;;
@@ -61,8 +64,7 @@ cairo)[[ "$PV" == 1.12.16* ]] && appendflag -fno-lto;;
 udev)filterflag -Wl,--sort-section=alignment;; # gold
 # 5.1
 gccxml)appendflag -std=gnu89;;
-mpg123)_iuse abi_x86_32 && export CFLAGS="${CFLAGS//-O3/-O2}" && filterflag -Ofast -fpeel-loops -funroll-loops;;
-freeglut)filterflag -fgraphite-identity;;
+mpg123)_iuse abi_x86_32 && gccve 5.1. && export CFLAGS="${CFLAGS//-O3/-O2}" && filterflag -Ofast -fpeel-loops -funroll-loops;;
 xorg-server)appendflag -w;;
 esac
 
