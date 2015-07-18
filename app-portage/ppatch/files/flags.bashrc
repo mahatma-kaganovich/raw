@@ -64,7 +64,7 @@ cairo)[[ "$PV" == 1.12.16* ]] && appendflag -fno-lto;;
 udev)filterflag -Wl,--sort-section=alignment;; # gold
 # 5.1
 gccxml)appendflag -std=gnu89;;
-mpg123)_iuse abi_x86_32 && gccve 5.1. && export CFLAGS="${CFLAGS//-O3/-O2}" && filterflag -Ofast -fpeel-loops -funroll-loops;;
+mpg123)_iuse abi_x86_32 && gccve 5. && export CFLAGS="${CFLAGS//-O3/-O2}" && filterflag -Ofast -fpeel-loops -funroll-loops;;
 xorg-server)appendflag -w;;
 esac
 
