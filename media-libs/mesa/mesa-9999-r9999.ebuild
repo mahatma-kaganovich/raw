@@ -83,7 +83,7 @@ REQUIRED_USE="
 	openvg? ( egl gallium )
 	"
 
-RDEPEND="app-admin/eselect-opengl
+RDEPEND="app-eselect/eselect-opengl
 	dev-libs/expat
 	|| ( <x11-libs/libX11-1.3.99.901[xcb?] >=x11-libs/libX11-1.3.99.901 )
 	x11-libs/libXext

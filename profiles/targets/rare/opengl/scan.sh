@@ -7,8 +7,8 @@ echo "# rare mesa/opengl profile" >>package.mask
 
 FL_MASK_GOOD="evdev"
 FL_MASK_BAD="opengl egl osmesa"
-V0='virtual/opengl|media-libs/mesa|app-admin/eselect-opengl|virtual/glu'
-V1='[>=]virtual/opengl-7.0-r[0-9]|[^<]=?media-libs/mesa-[89]|[^<]=?app-admin/eselect-opengl-1\.([3-9]|[0-9]{2})|[^<]=virtual/glu-9.0-r1|x11-libs/gtkglext'
+V0='virtual/opengl|media-libs/mesa|app-eselect/eselect-opengl|virtual/glu'
+V1='[>=]virtual/opengl-7.0-r[0-9]|[^<]=?media-libs/mesa-[89]|[^<]=?app-eselect/eselect-opengl-1\.([3-9]|[0-9]{2})|[^<]=virtual/glu-9.0-r1|x11-libs/gtkglext'
 FIND='opengl|mesa|glu'
 NOMASK='media-libs/gst-plugins-bad|media-video/ffmpeg'
 
