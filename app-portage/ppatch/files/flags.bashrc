@@ -39,7 +39,7 @@ _isflag(){
 _iuse(){
 	local i
 	for i in $IUSE; do
-		if [ "$i" = "$1" ]; then
+		if [ "$i" = "${1#!}" ]; then
 			use $1
 			return $?
 		fi
@@ -77,7 +77,7 @@ sys-kernel/*-sources|sys-devel/gcc|dev-lang/swig|dev-lang/orc|media-plugins/live
 dev-libs/icu)export CFLAGS="-w -pipe -O3 -march=native -fomit-frame-pointer";export CXXFLAGS="$CFLAGS";;
 esac
 
-_iuse system-sqlite && filterflag -Ofast -ffast-math
+_iuse !system-sqlite && filterflag -Ofast -ffast-math
 _iuse gold && filterflag -Wl,--sort-section=alignment
 
 }
