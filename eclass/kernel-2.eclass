@@ -1089,31 +1089,45 @@ kernel-2_src_prepare(){
 	use custom-arch && sed -i -e 's/-march=[a-z0-9\-]*//g' -e 's/-mtune=[a-z0-9\-]*//g' arch/*/Makefile*
 	# prevent to build twice
 #	sed -i -e 's%-I$(srctree)/arch/$(hdr-arch)/include%%' Makefile
-    if use custom-cflags; then
-	# gcc 4.5+ -O3 -ftracer
-	if is-flagq -ftracer; then
-		sed -i -e 's:^static unsigned long vmcs_readl:static noinline unsigned long vmcs_readl:' arch/x86/kvm/vmx.c
-		sed -i -e 's:^static void sleep_delay:static noinline void sleep_delay:' drivers/media/radio/radio-aimslab.c
+	case "$(gcc-version)" in
+	5.*)
+		[ -e include/linux/compiler-gcc4.h -a ! -e include/linux/compiler-gcc5.h ] && {
+			ln -s compiler-gcc4.h include/linux/compiler-gcc5.h
+			append-flags -std=gnu89 # untested here, but must be good
+		}
+	;;
+	4.9.*);;
+	4.8.*)if use custom-cflags; then
+		echo "CFLAGS_phy.o += -fno-ipa-cp-clone" >>drivers/net/ethernet/intel/e1000e/Makefile
+		# amdfam10 (???)
+		if ( [[ "$a" == i?86-* ]] || [[ "$a" == x86_* ]] ) && is-flagq -fselective-scheduling2; then
+			echo "CFLAGS_events.o += -fno-selective-scheduling2" >>drivers/xen/Makefile
+			echo "CFLAGS_mballoc.o += -fno-selective-scheduling2" >>fs/ext4/Makefile
+			echo "CFLAGS_virtio_balloon.o += -fno-selective-scheduling2" >>drivers/virtio/Makefile
+			echo "CFLAGS_ba_action.o += -fno-selective-scheduling2" >>drivers/staging/rt2860/Makefile
+			echo "CFLAGS_ba_action.o += -fno-selective-scheduling2" >>drivers/staging/rt2870/Makefile
+			echo "CFLAGS_tail_conversion.o += -fno-selective-scheduling2" >>fs/reiser4/Makefile
+		fi
+		# core2+
+		is-flagq -ftree-loop-distribution && echo "CFLAGS_ti_usb_3410_5052.o += -fno-tree-loop-distribution" >>drivers/usb/serial/Makefile
 	fi
-	# gcc 4.7 -O3 or -finline-functions
-#	echo "CFLAGS_phy.o += -fno-inline-functions" >>drivers/net/ethernet/intel/e1000e/Makefile
-#	echo "CFLAGS_e1000_phy.o += -fno-inline-functions" >>drivers/net/ethernet/intel/igb/Makefile
-	sed -i -e 's:^s32 e1000e_phy_has_link_generic:s32 noinline e1000e_phy_has_link_generic:' drivers/net/ethernet/intel/e1000e/phy.c
-	sed -i -e 's:^s32 igb_phy_has_link:s32 noinline igb_phy_has_link:' drivers/net/ethernet/intel/igb/e1000_phy.c
-	# gcc 4.8 -O3
-	echo "CFLAGS_phy.o += -fno-ipa-cp-clone" >>drivers/net/ethernet/intel/e1000e/Makefile
-	# amdfam10 (???)
-	if ( [[ "$a" == i?86-* ]] || [[ "$a" == x86_* ]] ) && is-flagq -fselective-scheduling2; then
-	echo "CFLAGS_events.o += -fno-selective-scheduling2" >>drivers/xen/Makefile
-	echo "CFLAGS_mballoc.o += -fno-selective-scheduling2" >>fs/ext4/Makefile
-	echo "CFLAGS_virtio_balloon.o += -fno-selective-scheduling2" >>drivers/virtio/Makefile
-	echo "CFLAGS_ba_action.o += -fno-selective-scheduling2" >>drivers/staging/rt2860/Makefile
-	echo "CFLAGS_ba_action.o += -fno-selective-scheduling2" >>drivers/staging/rt2870/Makefile
-	echo "CFLAGS_tail_conversion.o += -fno-selective-scheduling2" >>fs/reiser4/Makefile
-	fi
-	# core2+
-	is-flagq -ftree-loop-distribution && echo "CFLAGS_ti_usb_3410_5052.o += -fno-tree-loop-distribution" >>drivers/usb/serial/Makefile
-    fi
+	;;&
+	# no time & reason to test all rare bugs with all kernels, so keep whole
+	# jist build old kernel with old gcc or fix this "case"
+	*)if use custom-cflags; then
+		# gcc 4.5+ -O3 -ftracer
+		if is-flagq -ftracer; then
+			sed -i -e 's:^static unsigned long vmcs_readl:static noinline unsigned long vmcs_readl:' arch/x86/kvm/vmx.c
+		fi
+		# gcc 4.7 -O3 or -finline-functions
+#		echo "CFLAGS_phy.o += -fno-inline-functions" >>drivers/net/ethernet/intel/e1000e/Makefile
+#		echo "CFLAGS_e1000_phy.o += -fno-inline-functions" >>drivers/net/ethernet/intel/igb/Makefile
+		sed -i -e 's:^s32 e1000e_phy_has_link_generic:s32 noinline e1000e_phy_has_link_generic:' drivers/net/ethernet/intel/e1000e/phy.c
+		sed -i -e 's:^s32 igb_phy_has_link:s32 noinline igb_phy_has_link:' drivers/net/ethernet/intel/igb/e1000_phy.c
+	fi;;
+	esac
+	# 2test more
+	use custom-cflags && is-flagq -ftracer && sed -i -e 's:^static void sleep_delay:static noinline void sleep_delay:' drivers/media/radio/radio-aimslab.c
 	# ;)
 	sed -i -e 's:^#if 0$:#if 1:' drivers/net/tokenring/tms380tr.c
 	# deprecated
