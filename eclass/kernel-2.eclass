@@ -774,15 +774,13 @@ native)
 	einfo 'Found "-march=native" in CFLAGS, detecting CPU & arch hardware constants'
 	export PNP_VENDOR=""
 	CF1 -SCHED_{SMT,MC} -X86_{UP_APIC,TSC,PAT,MSR,MCE,CMOV,X2APIC} -MTRR -INTEL_IDLE -KVM_INTEL -KVM_AMD -SPARSE_IRQ -CPUSETS -INTEL_TXT
-	# unless I don't know howto detect vSMP - there are EM64T: HYPERVISOR_GUEST
 	case "${CTARGET:-${CHOST}}" in
 	x86*|i?86*)
-		use lguest || CF1 -{PARAVIRT,LGUEST}{,_GUEST} -VIRTUALIZATION -HYPERVISOR_GUEST
 		use multitarget && CF1 -64BIT
-		use multitarget && [ "$KERNEL_ARCH" = x86_64 ] && CF1 64BIT HYPERVISOR_GUEST
+		use multitarget && [ "$KERNEL_ARCH" = x86_64 ] && CF1 64BIT
 		CF1 -XEN # -KVM
-	;;&
-	x86*64)CF1 HYPERVISOR_GUEST;;
+		use lguest || CF1 -{PARAVIRT,LGUEST}{,_GUEST} -VIRTUALIZATION -HYPERVISOR_GUEST
+	;;
 	esac
 
 	while read i ; do
@@ -806,7 +804,7 @@ native)
 		mtrr)CF1 ${i^^};;
 		pae)CF1 X86_PAE $m64g;;
 		mp)CF1 SMP;; # ?
-		lm)use multitarget && CF1 64BIT HYPERVISOR_GUEST;;
+		lm)use multitarget && CF1 64BIT;;
 		cmp_legacy)CF1 SMP SCHED_MC -SCHED_SMT;;
 		up)ewarn "Running SMP on UP. Recommended useflag '-smp' and '-SMP' in ${KERNEL_CONF}";;
 		est)freq+=" X86_ACPI_CPUFREQ";;
