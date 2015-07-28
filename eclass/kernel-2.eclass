@@ -761,7 +761,7 @@ local vendor_id="" model_name="" flags="" cpu_family="" model="" cache_alignment
 export PNP_VENDOR="^vendor_id\|"
 export VIRT=0
 CF1 -SMP -X86{BIGSMP,GENERIC} X86_{X2APIC,UP_APIC,UP_IOAPIC} -SPARSE_IRQ -CPUSETS X86_INTEL_PSTATE INTEL_TXT
-use xen && CF1 -HIGHMEM64G -HIGHMEM4G NOHIGHMEM X86_PAE
+use xen && CF1 -HIGHMEM64G -HIGHMEM4G NOHIGHMEM X86_PAE -X86_VSMP
 use smp && CF1 SMP X86_BIGSMP SCHED_{SMT,MC} SPARSE_IRQ CPUSETS NUMA
 [[ "$(cflg mtune=)" == generic ]] && CF1 X86_GENERIC
 if [[ -z "${march}" ]]; then
@@ -774,13 +774,15 @@ native)
 	einfo 'Found "-march=native" in CFLAGS, detecting CPU & arch hardware constants'
 	export PNP_VENDOR=""
 	CF1 -SCHED_{SMT,MC} -X86_{UP_APIC,TSC,PAT,MSR,MCE,CMOV,X2APIC} -MTRR -INTEL_IDLE -KVM_INTEL -KVM_AMD -SPARSE_IRQ -CPUSETS -INTEL_TXT
+	# unless I don't know howto detect vSMP - there are EM64T: HYPERVISOR_GUEST
 	case "${CTARGET:-${CHOST}}" in
 	x86*|i?86*)
+		use lguest || CF1 -{PARAVIRT,LGUEST}{,_GUEST} -VIRTUALIZATION -HYPERVISOR_GUEST
 		use multitarget && CF1 -64BIT
-		use multitarget && [ "$KERNEL_ARCH" = x86_64 ] && CF1 64BIT
+		use multitarget && [ "$KERNEL_ARCH" = x86_64 ] && CF1 64BIT HYPERVISOR_GUEST
 		CF1 -XEN # -KVM
-		use lguest || CF1 -{PARAVIRT,LGUEST}{,_GUEST} -VIRTUALIZATION
-	;;
+	;;&
+	x86*64)CF1 HYPERVISOR_GUEST;;
 	esac
 
 	while read i ; do
@@ -804,7 +806,7 @@ native)
 		mtrr)CF1 ${i^^};;
 		pae)CF1 X86_PAE $m64g;;
 		mp)CF1 SMP;; # ?
-		lm)use multitarget && CF1 64BIT;;
+		lm)use multitarget && CF1 64BIT HYPERVISOR_GUEST;;
 		cmp_legacy)CF1 SMP SCHED_MC -SCHED_SMT;;
 		up)ewarn "Running SMP on UP. Recommended useflag '-smp' and '-SMP' in ${KERNEL_CONF}";;
 		est)freq+=" X86_ACPI_CPUFREQ";;
@@ -814,9 +816,9 @@ native)
 		smx)CF1 INTEL_TXT;;
 		hypervisor)
 			export VIRT=$[VIRT+1]
-			CF1 PARAVIRT{,_GUEST,_SPINLOCKS,_TIME_ACCOUNTING} XEN KVM_GUEST
+			CF1 PARAVIRT{,_GUEST,_SPINLOCKS,_TIME_ACCOUNTING} XEN KVM_GUEST HYPERVISOR_GUEST
 			case "`lscpu|grep "^Hypervisor vendor:"`" in
-			*XEN)CF1 -KVM_GUEST -HYPERV;;
+			*XEN)CF1 -KVM_GUEST -HYPERV -X86_EXTENDED_PLATFORM;;
 			?*)CF1 -XEN;; # my KVM = "Microsoft"
 			esac;
 			# at least KVM migration & other asymmetry
@@ -830,7 +832,7 @@ native)
 		hwpstate)grep -qsF X86_FEATURE_HW_PSTATE "${S}/drivers/cpufreq/powernow-k8.c" && freq+=" X86_ACPI_CPUFREQ -X86_POWERNOW_K8";;
 		esac
 	done
-	use xen && CF1 PARAVIRT{,_GUEST}
+	use xen && CF1 PARAVIRT{,_GUEST} HYPERVISOR_GUEST
 
 	[[ "${processor:=0}" -gt 0 ]] && CF1 SMP
 	[[ $((processor+1)) == "${cpu_cores:-1}" ]] && [[ "${siblings:-1}" == "${cpu_cores:-1}" ]] && CF1 -NUMA
