@@ -717,7 +717,7 @@ pre_embed(){
 		export VIRT=$[VIRT+1]
 		use xen && [[ " $CF " != *' -XEN '* ]] && continue # xen have virtio too + unknown 2me others
 		einfo "QEMU virtio environment + USE=custom-arch"
-		CF1 VIRTIO -HYPERV -XEN
+		CF1 VIRTIO -HYPERV -XEN -X86_EXTENDED_PLATFORM
 		use iscsi && scsi=true && CF1 ISCSI_TARGET
 		use !embed-hardware && vscsi=true && CF1 VIRTIO_.+ .+_VIRTIO
 		if ${vblk:-${vscsi:-false}} ; then
