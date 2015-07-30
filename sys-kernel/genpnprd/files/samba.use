@@ -1,8 +1,13 @@
 
-# main goal: experimental in older kernel & even can not build in various configurations
-use samba && KERNEL_CONFIG+="CIFS_SMB2"
+# SMB2 experimental in older kernel & even can not build in various configurations
+# latest changes: enable by default in Kconfig.pl, so non-gentoo build will be modern
 
-# by the way
-use force-modules || KERNEL_CONFIG+=" CIFS"
-
-# in doubt: todo|! - unswitch whole CIFS on "-"?
+if use samba; then
+	KERNEL_CONFIG+='CIFS_SMB\d'
+	# by the way
+	use force-modules || KERNEL_CONFIG+=" CIFS"
+else
+	KERNEL_CONFIG+='-CIFS_SMB\d'
+	#in doubt: todo|! - unswitch whole CIFS on "-"?
+#	KERNEL_CONFIG+=" -CIFS"
+fi
