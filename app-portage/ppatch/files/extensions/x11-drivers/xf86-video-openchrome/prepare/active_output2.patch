@@ -1,0 +1,12 @@
+--- a/src/via_id.c	2015-07-30 11:45:22.000000000 +0300
++++ b/src/via_id.c	2015-07-30 11:45:58.000000000 +0300
+@@ -300,7 +300,8 @@
+             (Id->Vendor == SUBVENDOR_ID(pVia->PciInfo)) &&
+             (Id->Device == SUBSYS_ID(pVia->PciInfo))) {
+             xf86DrvMsg(pScrn->scrnIndex, X_PROBED, "Detected %s. Card-Ids (%4X|%4X)\n", Id->String, SUBVENDOR_ID(pVia->PciInfo), SUBSYS_ID(pVia->PciInfo));
+-            pVia->ActiveDevice = Id->Outputs;
++            if (!(pVia->ActiveDevice &= Id->Outputs))
++               pVia->ActiveDevice = Id->Outputs;
+             pVia->Id = Id;
+             return;
+         }

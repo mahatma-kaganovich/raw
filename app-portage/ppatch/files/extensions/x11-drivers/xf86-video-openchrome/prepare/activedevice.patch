@@ -1,0 +1,11 @@
+--- a/src/via_driver.c	2014-10-12 19:20:55.000000000 +0300
++++ b/src/via_driver.c	2014-10-12 19:21:12.000000000 +0300
+@@ -1422,7 +1422,7 @@ VIAPreInit(ScrnInfoPtr pScrn, int flags)
+                "Will try to allocate %d kB of AGP memory.\n", pVia->agpMem);
+ 
+     /* ActiveDevice Option for device selection */
+-    //pVia->ActiveDevice = 0x00;
++    pVia->ActiveDevice = 0x00;
+     if ((s = xf86GetOptValString(VIAOptions, OPTION_ACTIVEDEVICE))) {
+         if (strstr(s, "CRT"))
+             pVia->ActiveDevice |= VIA_DEVICE_CRT;

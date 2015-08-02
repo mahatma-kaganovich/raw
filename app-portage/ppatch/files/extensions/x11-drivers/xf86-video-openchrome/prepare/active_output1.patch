@@ -1,0 +1,12 @@
+--- a/src/via_id.c	2015-03-06 03:05:13.000000000 +0300
++++ b/src/via_id.c	2015-03-06 03:08:30.329252216 +0300
+@@ -311,7 +311,8 @@ ViaCheckCardId(ScrnInfoPtr pScrn)
+             xf86DrvMsg(pScrn->scrnIndex, X_PROBED,
+                        "Detected %s. Card-Ids (%4X|%4X)\n", Id->String,
+                        SUBVENDOR_ID(pVia->PciInfo), SUBSYS_ID(pVia->PciInfo));
+-            pVia->ActiveDevice = Id->Outputs;
++            if (!(pVia->ActiveDevice &= Id->Outputs))
++               pVia->ActiveDevice = Id->Outputs;
+             pVia->Id = Id;
+             return;
+         }

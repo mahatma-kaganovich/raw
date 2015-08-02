@@ -1,0 +1,13 @@
+--- a/src/via_lvds.c	2014-10-15 10:55:46.000000000 +0300
++++ b/src/via_lvds.c	2014-10-15 11:53:44.000000000 +0300
+@@ -1561,6 +1562,10 @@ via_lvds_init(ScrnInfoPtr pScrn)
+         xf86DrvMsg(pScrn->scrnIndex, X_INFO,
+                     "Enabling panel from PCI-subsystem ID information.\n");
+         output = xf86OutputCreate(pScrn, &via_lvds_funcs, "LVDS-1");
++        if (!(pVia->ActiveDevice & VIA_DEVICE_LCD)) {
++            ViaLVDSPower(pScrn, FALSE);
++            ViaLCDPower(output, FALSE);
++        }
+     }
+ 
+     if (output)  {
