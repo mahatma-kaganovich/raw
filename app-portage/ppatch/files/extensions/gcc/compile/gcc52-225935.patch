@@ -1,5 +1,5 @@
---- branches/gcc-5-branch/gcc/postreload.c	2015/07/17 13:45:56	225934
-+++ branches/gcc-5-branch/gcc/postreload.c	2015/07/17 13:50:38	225935
+--- a/gcc/postreload.c	2015/07/17 13:45:56	225934
++++ b/gcc/postreload.c	2015/07/17 13:50:38	225935
 @@ -2164,12 +2164,29 @@
  	 unknown values.  */
        if (CALL_P (insn))
