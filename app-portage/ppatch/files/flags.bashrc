@@ -63,7 +63,7 @@ libX11|wget)_isflag -Os && _isflag -Ofast -ffast-math -funsafe-math-optimization
 cairo)[[ "$PV" == 1.12.16* ]] && appendflag -fno-lto;;
 udev)filterflag -Wl,--sort-section=alignment;; # gold
 # 5.1
-gccxml|xemacs|devil|vtun|irda-utils|wmmon|bbrun|diffball|ldns)appendflag -std=gnu89;;
+gccxml|xemacs|devil|vtun|irda-utils|wmmon|bbrun|diffball|ldns|rp-l2tp)appendflag -std=gnu89;;
 sessreg|ldns)export CPPFLAGS="$CPPFLAGS -P";;
 mpg123)_iuse abi_x86_32 && gccve 5. && export CFLAGS="${CFLAGS//-O3/-O2}" && filterflag -Ofast -fpeel-loops -funroll-loops;;
 xorg-server)appendflag -w;;
