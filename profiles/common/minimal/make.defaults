@@ -12,6 +12,9 @@ CFLAGS="$CFLAGS -fvect-cost-model -ftree-partial-pre"
 #CFLAGS="$CFLAGS -fno-var-tracking-assignments"
 CFLAGS="$CFLAGS -fdevirtualize-speculatively"
 
+# modulo
+CFLAGS="$CFLAGS -fmodulo-sched -fmodulo-sched-allow-regmoves -freschedule-modulo-scheduled-loops"
+
 #CFLAGS="$CFLAGS -fno-stack-protector"
 
 # possible no ff
