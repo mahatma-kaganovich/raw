@@ -1,9 +1,6 @@
 # Used some exclusive/inclusive flags mixed, to avoid filtering, etc
 
 CFLAGS="$CFLAGS -O3 -Ofast -pipe"
-
-CFLAGS="$CFLAGS -mtune=native -march=native"
-
 CFLAGS="$CFLAGS -mfpmath=both -fpeel-loops -funroll-loops"
 
 # graphite
