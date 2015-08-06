@@ -1,4 +1,4 @@
-CFLAGS="$CFLAGS -fno-ident -fexcess-precision=fast -fomit-frame-pointer -momit-leaf-frame-pointer -minline-stringops-dynamically -maccumulate-outgoing-args -fivopts -ftracer -fbranch-target-load-optimize2"
+CFLAGS="$CFLAGS -fno-ident -fexcess-precision=fast -fomit-frame-pointer -minline-stringops-dynamically -maccumulate-outgoing-args -fivopts -ftracer -fbranch-target-load-optimize2"
 CFLAGS="$CFLAGS -finline-small-functions -findirect-inlining"
 CFLAGS="$CFLAGS -ffast-math"
 # ?
@@ -16,9 +16,6 @@ CFLAGS="$CFLAGS -fdevirtualize-speculatively"
 CFLAGS="$CFLAGS -fmodulo-sched -fmodulo-sched-allow-regmoves -freschedule-modulo-scheduled-loops"
 
 #CFLAGS="$CFLAGS -fno-stack-protector"
-
-# possible no ff
-CFLAGS="$CFLAGS -mtls-dialect=gnu2"
 
 # 5 "improve code quality"? to grok
 #CFLAGS="$CFLAGS -fno-semantic-interposition"
