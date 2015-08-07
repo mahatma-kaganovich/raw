@@ -1,4 +1,5 @@
 CFLAGS="$CFLAGS -Ofast"
+LDFLAGS="-Wl,-O1 -Wl,--as-needed -Wl,--hash-style=gnu -Wl,--sort-common -Wl,--sort-section=alignment"
 
 FFLAGS="$CFLAGS"
 FCFLAGS="$CFLAGS"
