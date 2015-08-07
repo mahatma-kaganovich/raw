@@ -1,0 +1,2 @@
+CFLAGS="$CFLAGS -Ofast"
+source ../minimal/make.defaults
