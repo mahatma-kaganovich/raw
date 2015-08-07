@@ -2,4 +2,8 @@
 # +respect old stage3 gcc
 
 CFLAGS="$CFLAGS -O3 -mcpu=native -mtune=native -pipe -fomit-frame-pointer -findirect-inlining"
-source ../broken/make.defaults
+
+FFLAGS="$CFLAGS"
+FCFLAGS="$CFLAGS"
+CXXFLAGS="$CFLAGS"
+CXXFLAGS="$CXXFLAGS -fvisibility-inlines-hidden"

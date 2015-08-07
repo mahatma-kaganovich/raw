@@ -1,2 +1,6 @@
 CFLAGS="$CFLAGS -Ofast"
-source ../minimal/make.defaults
+
+FFLAGS="$CFLAGS"
+FCFLAGS="$CFLAGS"
+CXXFLAGS="$CFLAGS"
+CXXFLAGS="$CXXFLAGS -fvisibility-inlines-hidden"
