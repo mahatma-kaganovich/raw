@@ -62,7 +62,7 @@ src_install(){
 		fi
 	done
     done
-    insinto /usr/ppatch/portage/profile
+    insinto /usr/ppatch/profile
     doins "${WORKDIR}/make.defaults"
 }
 
