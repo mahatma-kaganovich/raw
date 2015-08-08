@@ -103,6 +103,7 @@ src_prepare(){
 	has_version app-crypt/heimdal && sed -i -e 's:USING_SYSTEM_KDC:USING_SYSTEM_KDC_:' source4/kdc/wscript_build
 	use sasl || sed -i -e 's:HAVE_SASL:HAVE_SASL_:' source4/auth/wscript_configure
 	sed -i -e 's:/tmp/ctdb.socket:/var/run/ctdb/ctdb.socket:g' {ctdb/doc,docs-xml/smbdotconf/misc}/*ml
+	epatch "${FILESDIR}"/samba-4.2.3-ctdb.patch
 }
 
 automagic(){
@@ -186,6 +187,8 @@ src_install() {
 	if use cluster; then
 		newinitd "${CONFDIR}/ctdb.initd" ctdb
 		newconfd "${CONFDIR}/ctdb.confd" ctdb
+		exeinto /etc/ctdb/notify.d
+		doexe "${CONFDIR}/10.samba"
 	fi
 
 	systemd_dotmpfilesd "${FILESDIR}"/samba.conf
