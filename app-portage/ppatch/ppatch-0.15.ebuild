@@ -39,14 +39,14 @@ src_compile(){
 }
 
 src_install(){
-    local d s t r="${D}/usr/ppatch"
+    local d s t r='/usr/ppatch'
     cd "${FILESDIR}"||die
     exeinto /usr/sbin
     doexe p-patch
-    insinto /usr/ppatch
+    insinto $r
     doins *.{p-patch,bashrc,sh}
-    dodir /usr/ppatch/virtual
-    dosym linux-sources /usr/ppatch/virtual/linux-kernel
+    dodir $r/virtual
+    dosym linux-sources $r/virtual/linux-kernel
     for d in $IUSE ; do
 	use "$d" || d="!$d"
 	d="${FILESDIR}/$d"
@@ -55,14 +55,14 @@ src_install(){
 		t="${s#$d/}"
 		[[ "$t" == "$s" ]] && continue
 		use strict || t="`echo "$t"|sed -e 's:^\([^/]*/[^/]*/[^/]*/\)[^/]*/\([^/]*\):\1\2:'`"
-		t="$r/$t"
+		t="$D$r/$t"
 		if ! [[ -d "$s" ]] || [[ -L "$s" ]]; then
 			mkdir -p "${t%/*}"
 			cp -a "$s" "$t" || die
 		fi
 	done
     done
-    insinto /usr/ppatch/profile
+    insinto $r/profiles
     doins "${WORKDIR}/make.defaults"
 }
 
