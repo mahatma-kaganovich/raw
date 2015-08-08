@@ -30,30 +30,40 @@ ppinit(){
 
 ppinit
 
+src_compile(){
+	CC="$(tc-getCC)"
+	[ "$CC" = gcc ] || gcc(){
+		$CC "${@}"
+	}
+	. "${FILESDIR}/cpu2conf.sh" >"${WORKDIR}/make.defaults"
+}
+
 src_install(){
-    local d s t
+    local d s t r="${D}/usr/ppatch"
     cd "${FILESDIR}"||die
     exeinto /usr/sbin
     doexe p-patch
     insinto /usr/ppatch
-    doins *.p-patch *.bashrc
+    doins *.p-patch *.bashrc *.sh
     dodir /usr/ppatch/virtual
     dosym linux-sources /usr/ppatch/virtual/linux-kernel
     for d in $IUSE ; do
-	use "${d}" || d="!${d}"
-	d="${FILESDIR}/${d}"
-	[[ -d "${d}" ]] || continue
-	find "${d}"|egrep -v "/\."|while read s; do
-		t="${s#${d}/}"
-		[[ "${t}" == "${s}" ]] && continue
+	use "$d" || d="!$d"
+	d="${FILESDIR}/$d"
+	[[ -d "$d" ]] || continue
+	find "$d"|egrep -v "/\."|while read s; do
+		t="${s#$d/}"
+		[[ "$t" == "$s" ]] && continue
 		use strict || t="`echo "$t"|sed -e 's:^\([^/]*/[^/]*/[^/]*/\)[^/]*/\([^/]*\):\1\2:'`"
-		t="${D}/usr/ppatch/${t}"
-		if ! [[ -d "${s}" ]] || [[ -L "${s}" ]]; then
+		t="$r/$t"
+		if ! [[ -d "$s" ]] || [[ -L "$s" ]]; then
 			mkdir -p "${t%/*}"
-			cp -a "${s}" "${t}" || die
+			cp -a "$s" "$t" || die
 		fi
 	done
     done
+    dodir /profile
+    doins "${WORKDIR}/make.defaults"
 }
 
 pkg_postinst(){
