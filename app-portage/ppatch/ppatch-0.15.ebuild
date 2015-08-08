@@ -44,7 +44,7 @@ src_install(){
     exeinto /usr/sbin
     doexe p-patch
     insinto /usr/ppatch
-    doins *.p-patch *.bashrc *.sh
+    doins *.{p-patch,bashrc,sh}
     dodir /usr/ppatch/virtual
     dosym linux-sources /usr/ppatch/virtual/linux-kernel
     for d in $IUSE ; do
@@ -62,7 +62,7 @@ src_install(){
 		fi
 	done
     done
-    dodir /profile
+    insinto /usr/ppatch/portage/profile
     doins "${WORKDIR}/make.defaults"
 }
 
