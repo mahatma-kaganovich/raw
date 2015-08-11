@@ -28,7 +28,7 @@ _cmp(){
 }
 
 _flags(){
-	grep -s "^$1	" /proc/cpuinfo|sort -u|sed -e "s/^$1	: //" -e 's:,: :g'
+	grep -s "^$1	*:" /proc/cpuinfo|sort -u|sed -e "s/^$1	*: //" -e 's:,: :g'
 }
 
 conf_cpu(){
@@ -36,13 +36,13 @@ local flags cpucaps f0= f1= f2= f3= i j i1 c
 flags=$(_flags flags)
 cpucaps=$(_flags cpucaps)
 f0=`_f -m{tune,cpu,arch}=native`
-f3=`_f -malign-data=cacheline -momit-leaf-frame-pointer -mtls-dialect=gnu2`
-echo "CFLAGS_NATIVE=\"$f0\""
+f3='-malign-data=cacheline -momit-leaf-frame-pointer -mtls-dialect=gnu2'
 for i in $flags; do
 	i1="$i"
 	case "$i" in
-	sse|3dnowext)f1+=" $i mmxext";;
-	pni)f1+=" sse3";;
+	sse|3dnowext)f1+=" $i mmxext";;&
+	sse)[ "`_flags fpu`" = yes ] && f3+=' -mfpmath=both' || f3+=' -mfpmath=sse';;
+	pni)f1+=' sse3';;
 	*)
 		if (grep "^$i1 " /usr/portage/profiles/use.desc ; grep "^[^ 	]*:$i " /usr/portage/profiles/use.local.desc)|grep -q 'CPU\|processor\|chip\|instruction'; then
 			f1+=" $i"
@@ -52,6 +52,7 @@ for i in $flags; do
 	;;
 	esac
 done
+f3=`_f $f3`
 f1="${f1# }"
 f2="${f2# }"
 [ -n "${f1// }" ] && echo "USE=\"\$USE $f1\""
