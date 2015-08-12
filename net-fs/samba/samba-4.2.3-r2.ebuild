@@ -168,7 +168,7 @@ src_configure() {
 	einfo "Removing automagic definitions"
 	# KDC wrong here
 	use pam || automagic _PAM_ '_LIBPAM '
-#	use sasl || automagic SASL
+	use sasl || automagic SASL
 
 }
 
