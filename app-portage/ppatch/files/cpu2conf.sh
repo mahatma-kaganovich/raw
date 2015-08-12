@@ -1,14 +1,20 @@
 #!/bin/bash
 
+export LANG=C
+
 _c(){
-	LANG=C gcc "${@}" --help=target -v 2>&1
+	gcc "${@}" --help=target -v 2>&1
+}
+
+_c1(){
+	echo 'void main(){}'|gcc -x c - "${@}" -o /dev/null 2>&1
 }
 
 _f(){
 	local i
 	for i in "${@}"; do
-		c=`_c $i` || continue
-		(echo "$c" | grep -sq " warning: .* is deprecated") && continue
+		c=`_c1 $i` || continue
+		(echo "$c" | grep -q " warning: .* is deprecated\|warning: this target does not support" ) && continue
 		echo -n " $i"
 	done
 }
@@ -36,7 +42,7 @@ local flags cpucaps f0= f1= f2= f3= i j i1 c
 flags=$(_flags flags)
 cpucaps=$(_flags cpucaps)
 f0=`_f -m{tune,cpu,arch}=native`
-f3='-malign-data=cacheline -momit-leaf-frame-pointer -mtls-dialect=gnu2'
+f3='-malign-data=cacheline -momit-leaf-frame-pointer -mtls-dialect=gnu2 -fsection-anchors'
 for i in $flags; do
 	i1="$i"
 	case "$i" in

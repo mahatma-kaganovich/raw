@@ -1,6 +1,5 @@
 # if most of gcc optimization broken
 
-ACCEPT_KEYWORDS="$ACCEPT_KEYWORDS ~$ACCEPT_KEYWORDS"
 USE="-modules"
 LIRC_DEVICES="userspace"
 
