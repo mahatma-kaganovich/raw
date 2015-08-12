@@ -1,7 +1,6 @@
-# agnostic, testing on UltraSparc in progress
 # +respect old stage3 gcc
 
-CFLAGS="$CFLAGS -O3 -mcpu=native -mtune=native -pipe -fomit-frame-pointer -findirect-inlining"
+CFLAGS="$CFLAGS -O3 -pipe -fomit-frame-pointer -findirect-inlining"
 
 FFLAGS="$CFLAGS"
 FCFLAGS="$CFLAGS"
