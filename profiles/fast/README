@@ -1,2 +1,0 @@
-rename old (stage3) /etc/portage/make.profile to *.gentoo,
-symlink /etc/portage/make.profile to "other"

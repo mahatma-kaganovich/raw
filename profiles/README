@@ -5,3 +5,9 @@ WARNING!! Some developers hate this multiple CFLAGS and will
 say you multiple bad words. Some software hate it too and you
 can copy it into own make.conf, removing "-Ofast -ffast-math"
 first (need to be filtered or -fno-fast-math for some packages).
+
+Althernate profile way (2do - main):
+/etc/portage/make.profile -> /usr/ppatch/profiles/{native,cpu}
+/etc/portage/make.profile.common -> /var/lib/layman/raw/profiles/common/{broken,other,fast}
+/etc/portage/make.profile.target -> /var/lib/layman/raw/profiles/targets/*
+/etc/portage/make.profile.gentoo -> /usr/portage/profiles/* (/usr/portage/profiles/default/linux/*/13.0)
