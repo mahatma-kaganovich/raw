@@ -1,0 +1,5 @@
+CFLAGS="$CFLAGS -funroll-loops"
+FFLAGS="$CFLAGS"
+FCFLAGS="$CFLAGS"
+CXXFLAGS="$CFLAGS"
+CXXFLAGS="$CXXFLAGS -fvisibility-inlines-hidden"
