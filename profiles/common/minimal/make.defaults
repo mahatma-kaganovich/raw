@@ -1,4 +1,4 @@
-CFLAGS="$CFLAGS -fno-ident -fexcess-precision=fast -fomit-frame-pointer -minline-stringops-dynamically -maccumulate-outgoing-args -fivopts -ftracer -fbranch-target-load-optimize -fbranch-target-load-optimize2"
+CFLAGS="$CFLAGS -fno-ident -fexcess-precision=fast -fomit-frame-pointer -minline-stringops-dynamically -maccumulate-outgoing-args -fivopts -ftracer -fbranch-target-load-optimize"
 CFLAGS="$CFLAGS -finline-small-functions -findirect-inlining"
 CFLAGS="$CFLAGS -ffast-math"
 # ?
