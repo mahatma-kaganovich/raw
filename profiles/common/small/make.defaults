@@ -1,0 +1,17 @@
+# fast, but small (-Os + some from O2/O3)
+
+CFLAGS="$CFLAGS -O3 -pipe -fno-ident -fomit-frame-pointer"
+# O3
+CFLAGS="$CFLAGS -fgcse-after-reload -fipa-cp-clone -fpredictive-commoning -ftree-loop-distribute-patterns -funswitch-loops -ftree-vectorize"
+# O3 4.8
+CFLAGS="$CFLAGS -fvect-cost-model -ftree-partial-pre"
+# 4.9
+#CFLAGS="$CFLAGS -fno-var-tracking-assignments"
+CFLAGS="$CFLAGS -fdevirtualize-speculatively"
+
+LDFLAGS="$LDFLAGS -Wl,--no-keep-memory -Wl,--reduce-memory-overheads"
+
+FFLAGS="$CFLAGS"
+FCFLAGS="$CFLAGS"
+CXXFLAGS="$CFLAGS"
+CXXFLAGS="$CXXFLAGS -fvisibility-inlines-hidden"

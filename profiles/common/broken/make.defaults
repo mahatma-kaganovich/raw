@@ -1,4 +1,4 @@
-# if most of gcc optimization broken
+# if most of gcc optimization broken, low memory
 
 USE="-modules"
 LIRC_DEVICES="userspace"
@@ -7,7 +7,8 @@ LIRC_DEVICES="userspace"
 MAKEOPTS="-j2 -s"
 PYTHON_TARGETS="python2_7"
 
-CFLAGS="$CFLAGS -finline-small-functions"
+# some -O2
+CFLAGS="$CFLAGS -finline-small-functions -findirect-inlining"
 LDFLAGS="-Wl,-O1 -Wl,--as-needed -Wl,--hash-style=gnu -Wl,--sort-common -Wl,--no-keep-memory -Wl,--reduce-memory-overheads"
 CPPFLAGS=""
 FFLAGS="$CFLAGS"

@@ -1,7 +1,6 @@
-# +respect old stage3 gcc
+# normal -O3 + respect old stage3 gcc
 
-CFLAGS="$CFLAGS -O3 -pipe -fomit-frame-pointer -findirect-inlining"
-
+CFLAGS="$CFLAGS -O3 -pipe -fno-ident -fomit-frame-pointer"
 FFLAGS="$CFLAGS"
 FCFLAGS="$CFLAGS"
 CXXFLAGS="$CFLAGS"
