@@ -1,6 +1,6 @@
 # fast, but small (-Os + some from O2/O3)
 
-CFLAGS="$CFLAGS -O3 -pipe -fno-ident -fomit-frame-pointer"
+CFLAGS="$CFLAGS -O2 -Os"
 # O3
 CFLAGS="$CFLAGS -fgcse-after-reload -fipa-cp-clone -fpredictive-commoning -ftree-loop-distribute-patterns -funswitch-loops -ftree-vectorize"
 # O3 4.8
