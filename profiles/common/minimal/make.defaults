@@ -1,4 +1,4 @@
-CFLAGS="$CFLAGS -fno-ident -fexcess-precision=fast -fomit-frame-pointer -fivopts -ftracer -fbranch-target-load-optimize"
+CFLAGS="$CFLAGS -fno-ident -fexcess-precision=fast -fomit-frame-pointer -fivopts -fbranch-target-load-optimize"
 CFLAGS="$CFLAGS -finline-small-functions -findirect-inlining"
 CFLAGS="$CFLAGS -ffast-math"
 # ?
@@ -11,6 +11,9 @@ CFLAGS="$CFLAGS -fvect-cost-model -ftree-partial-pre"
 # 4.9
 #CFLAGS="$CFLAGS -fno-var-tracking-assignments"
 CFLAGS="$CFLAGS -fdevirtualize-speculatively"
+
+# looks like help other optimizers, but too increase code size
+#CFLAGS="$CFLAGS -ftracer"
 
 # modulo
 CFLAGS="$CFLAGS -fmodulo-sched -fmodulo-sched-allow-regmoves -freschedule-modulo-scheduled-loops"
