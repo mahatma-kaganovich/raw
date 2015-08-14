@@ -172,7 +172,7 @@ kernel-2_src_configure() {
 	local cflags="${KERNEL_CFLAGS}" aflags="${KERNEL_ASFLAGS}" ldflags="${KERNEL_LDFLAGS}"
 	if use custom-cflags; then
 		use custom-arch || filter-flags "-march=*"
-		filter-flags "-msse*" -mmmx -m3dnow -mavx "-mfpmath=*"
+		filter-flags "-msse*" -mmmx -m3dnow -mavx "-mfpmath=*" '-flto*' '-*-lto-*' -fuse-linker-plugin
 		[[ "$(gcc-version)" == 4.8 ]] && append-flags -fno-inline-functions
 		cflags="$(flags_nosp "${CFLAGS} ${cflags}")"
 		aflags="$cflags" # at least now
