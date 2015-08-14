@@ -70,7 +70,7 @@ if c0=`_c` && c=`_c $f0`; then
 	j="$(_cmp '/cc1 -quiet -v ' '')$(_cmp '/as ' '-Wa,')"
 	i1=" $j "
 	for i in $flags $cpucaps; do
-		(echo "$c"|grep -q "^ *-m$i ") && [ -n "${i1##* -m$i *}" ] && j+=" -m$i" && i1+=" -m$i" && $f0+=" -m$i"
+		(echo "$c"|grep -q "^ *-m$i ") && [ -n "${i1##* -m$i *}" ] && j+=" -m$i" && i1+=" -m$i" && f0+=" -m$i"
 	done
 fi
 echo "CFLAGS_NATIVE=\"$f0\""
