@@ -1,6 +1,6 @@
 # if most of gcc optimization broken, low memory
 
-USE="-modules"
+USE="-modules -pgo -lto"
 LIRC_DEVICES="userspace"
 
 # reasonable fast by default
