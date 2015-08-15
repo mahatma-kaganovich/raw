@@ -19,7 +19,7 @@ $r
 
 appendflag(){
 	local v
-	for v in CFLAGS CPPFLAGS CXXFLAGS FFLAGS FCFLAGS; do
+	for v in CFLAGS CPPFLAGS CXXFLAGS FFLAGS FCFLAGS LDFLAGS; do
 		export $v="${!v} $*"
 	done
 }
@@ -54,7 +54,8 @@ gccve(){
 
 case "$PN" in
 # libaio breaks others
-clamav|heimdal|glibc|lxc|libaio|qemu|elfutils|cvs|lksctp-tools|libreoffice|samba|pciutils|xfsprogs|numactl|ncurses)filterflag '-flto*' '-*-lto-*' -fuse-linker-plugin;;&
+mysql|mariadb|clamav|heimdal|glibc|lxc|qemu|elfutils|cvs|lksctp-tools|libreoffice|samba|pciutils|xfsprogs|numactl|ncurses)filterflag '-flto*' '-*-lto-*' -fuse-linker-plugin;;&
+libaio)_isflag -flto && export LDFLAGS="$LDFLAGS -fno-lto";;&
 perl)_isflag -flto && export LDFLAGS="$LDFLAGS -fPIC";;&
 glibc)filterflag -Ofast -ffast-math -ftracer;;
 sqlite|postgresql*|goffice|db|protobuf|qtwebkit|webkit-gtk)filterflag -Ofast -ffast-math;;
