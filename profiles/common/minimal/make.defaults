@@ -3,7 +3,6 @@ CFLAGS="$CFLAGS -finline-small-functions -findirect-inlining"
 CFLAGS="$CFLAGS -ffast-math"
 # ?
 #CFLAGS="$CFLAGS -fgcse-sm -fgcse-las"
-#CFLAGS="$CFLAGS$PROFILE_CFLAGS"
 # O3
 CFLAGS="$CFLAGS -fgcse-after-reload -fipa-cp-clone -fpredictive-commoning -ftree-loop-distribute-patterns -funswitch-loops -ftree-vectorize"
 # O3 4.8
