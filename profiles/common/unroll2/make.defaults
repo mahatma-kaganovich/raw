@@ -1,0 +1,6 @@
+# looks like help other optimizers, but unsure & too increase code size & compile time
+CFLAGS="$CFLAGS -ftracer"
+FFLAGS="$CFLAGS"
+FCFLAGS="$CFLAGS"
+CXXFLAGS="$CFLAGS"
+CXXFLAGS="$CXXFLAGS -fvisibility-inlines-hidden"
