@@ -3,8 +3,10 @@ CFLAGS="$CFLAGS -finline-small-functions -findirect-inlining"
 CFLAGS="$CFLAGS -ffast-math"
 # ?
 #CFLAGS="$CFLAGS -fgcse-sm -fgcse-las"
-# O2, but sometimes no
-CFLAGS="$CFLAGS -fsched-pressure --param=sched-pressure-algorithm=2 -fschedule-insns -fschedule-insns2 -fsched-spec-load"
+# O2
+CFLAGS="$CFLAGS -fsched-pressure --param=sched-pressure-algorithm=2 -fschedule-insns2 -fsched-spec-load"
+# broken on x86 (https://gcc.gnu.org/bugzilla/show_bug.cgi?id=38768). I get worked exlude elfutils -ftracer
+#CFLAGS="$CFLAGS -fschedule-insns"
 # O3
 CFLAGS="$CFLAGS -fgcse-after-reload -fipa-cp-clone -fpredictive-commoning -ftree-loop-distribute-patterns -funswitch-loops -ftree-vectorize"
 # O3 4.8

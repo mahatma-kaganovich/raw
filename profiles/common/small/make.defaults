@@ -1,6 +1,8 @@
 # fast, but small (-Os + some from O2/O3)
 
 CFLAGS="$CFLAGS -O2 -Os"
+# O2
+# CFLAGS="$CFLAGS -fschedule-insns2"
 # O3
 CFLAGS="$CFLAGS -fgcse-after-reload -fipa-cp-clone -fpredictive-commoning -ftree-loop-distribute-patterns -funswitch-loops -ftree-vectorize"
 # O3 4.8
