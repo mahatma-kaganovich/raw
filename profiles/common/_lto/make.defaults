@@ -1,0 +1,7 @@
+CFLAGS="$CFLAGS -flto -fuse-linker-plugin -ffat-lto-objects -flto-compression-level=9"
+LDFLAGS="$LDFLAGS $CFLAGS"
+
+FFLAGS="$CFLAGS"
+FCFLAGS="$CFLAGS"
+CXXFLAGS="$CFLAGS"
+CXXFLAGS="$CXXFLAGS -fvisibility-inlines-hidden"
