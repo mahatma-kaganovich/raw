@@ -74,7 +74,7 @@ if c0=`_c` && c=`_c $f0`; then
 	done
 fi
 echo "CFLAGS_NATIVE=\"$f0\""
-echo "CFLAGS_CPU=\"$j\""
+echo "CFLAGS_CPU=\"${j//--param /--param=}\""
 echo "CFLAGS_M=\"$f3\""
 if i=`grep "^processor[ 	]*: " /proc/cpuinfo`; then
 	i="${i##*: }"
