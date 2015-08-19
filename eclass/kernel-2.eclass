@@ -180,7 +180,8 @@ kernel-2_src_configure() {
 	cd "${S}"
 	cpu2K
 	## ldflags unsure
-	: ${KERNEL_UTILS_CFLAGS:="${CFLAGS}"} # "
+	: ${KERNEL_UTILS_CFLAGS:="${CFLAGS}"}
+#	: ${KERNEL_GENKERNEL_LDFLAGS:="${LDFLAGS}"}
 	local cflags="${KERNEL_CFLAGS}" aflags="${KERNEL_ASFLAGS}" ldflags="${KERNEL_LDFLAGS}"
 	if use custom-cflags; then
 		use custom-arch || filter-flags "-march=*" "-mcpu=*"
