@@ -163,6 +163,18 @@ mknod(){
 	true
 }
 
+_filter_f() {
+	local f x v=$1
+	shift
+	for f in ${!v} ; do
+		for x in "$@" ; do
+			[[ "$f" == $x ]] && continue 2
+		done
+		echo -n " $f"
+	done
+}
+
+
 kernel-2_src_configure() {
 	[[ ${ETYPE} == sources ]] || return
 	cd "${S}"
@@ -171,10 +183,9 @@ kernel-2_src_configure() {
 	: ${KERNEL_UTILS_CFLAGS:="${CFLAGS}"} # "
 	local cflags="${KERNEL_CFLAGS}" aflags="${KERNEL_ASFLAGS}" ldflags="${KERNEL_LDFLAGS}"
 	if use custom-cflags; then
-		use custom-arch || filter-flags "-march=*"
-		filter-flags "-msse*" -mmmx -m3dnow -mavx "-mfpmath=*" '-flto*' '-*-lto-*' -fuse-linker-plugin
+		use custom-arch || filter-flags "-march=*" "-mcpu=*"
 		[[ "$(gcc-version)" == 4.8 ]] && append-flags -fno-inline-functions
-		cflags="$(flags_nosp "${CFLAGS} ${cflags}")"
+		cflags="$(flags_nosp "$(_filter_f CFLAGS "-msse*" -mmmx -m3dnow -mavx "-mfpmath=*" '-flto*' '-*-lto-*' -fuse-linker-plugin) ${cflags}")" #"
 		aflags="$cflags" # at least now
 		ldflags="$(flags_nosp "$(extract_flags -Wl, ${LDFLAGS}) ${ldflags}")" #"
 	fi
@@ -1086,7 +1097,7 @@ kernel-2_src_prepare(){
 	sed -i -e 's/_proxy_pda = 0/_proxy_pda = 1/g' "${S}"/arch/*/kernel/vmlinux.lds.S
 	[[ -e "${S}"arch/x86_64/kernel/x8664_ksyms.c ]] && ( grep -q "_proxy_pda" "${S}"arch/x86_64/kernel/x8664_ksyms.c || echo "EXPORT_SYMBOL(_proxy_pda);" >>arch/x86_64/kernel/x8664_ksyms.c )
 	# custom-arch
-	use custom-arch && sed -i -e 's/-march=[a-z0-9\-]*//g' -e 's/-mtune=[a-z0-9\-]*//g' arch/*/Makefile*
+	use custom-arch && sed -i -e 's/-m\(arch\|tune\|cpu\)=[a-z0-9\-]*//g' arch/*/Makefile*
 	# prevent to build twice
 #	sed -i -e 's%-I$(srctree)/arch/$(hdr-arch)/include%%' Makefile
 	case "$(gcc-version)" in
@@ -1135,7 +1146,7 @@ kernel-2_src_prepare(){
 	if use multitarget && test_cc -S -m64 -march=nocona && ! test_cc -S -m64 2>/dev/null; then
 		einfo "-m64 arch fix"
 		i=" -march=nocona -mno-mmx -mno-sse -mno-sse2 -mno-sse3"
-		sed -i -e "s/ -mcmodel=small/ -mcmodel=small$i/" arch/x86/boot/compressed/Makefile
+		sed -i -e "s/ -mcmodel=small/ -mcmodel=small -m64 $i/" arch/x86/boot/compressed/Makefile
 		sed -i -e "s/\(KBUILD_AFLAGS += -m64\)$/\1$i/" arch/x86/Makefile*
 	fi
 	# pnp
