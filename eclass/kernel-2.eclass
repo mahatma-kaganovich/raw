@@ -179,9 +179,16 @@ kernel-2_src_configure() {
 	[[ ${ETYPE} == sources ]] || return
 	cd "${S}"
 	cpu2K
-	## ldflags unsure
 	: ${KERNEL_UTILS_CFLAGS:="${CFLAGS}"}
+
+	# ???
 #	: ${KERNEL_GENKERNEL_LDFLAGS:="${LDFLAGS}"}
+	local i
+	[[ -z "$KERNEL_GENKERNEL_LDFLAGS" ]] && for i in $LDFLAGS; do
+		[[ "$i" == -Wl,* ]] && KERNEL_GENKERNEL_LDFLAGS+=" $i"
+	done
+	KERNEL_GENKERNEL_LDFLAGS="$(flags_nosp "$KERNEL_GENKERNEL_LDFLAGS")"
+
 	local cflags="${KERNEL_CFLAGS}" aflags="${KERNEL_ASFLAGS}" ldflags="${KERNEL_LDFLAGS}"
 	if use custom-cflags; then
 		use custom-arch || filter-flags "-march=*" "-mcpu=*"
