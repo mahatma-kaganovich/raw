@@ -761,12 +761,11 @@ pre_embed(){
 }
 
 ucode(){
-	local d="${TMPDIR}/overlay-rd/kernel/x86/microcode" f="$S/lib/firmware/$1"
-	[ -e "$f" ] || {
-		use external-firmware && f="$ROOT/lib/firmware/$1" && [ -e "$f" ] || return 1
-	}
+	local d="${TMPDIR}/overlay-rd/kernel/x86/microcode" f="$TMPDIR/ucode.tmp"
+	[ -s "$d/$2.bin" ] && return 1
+	cat "$S"/lib/firmware/$1 >"$f" || ( use external-firmware && cat "$ROOT"/lib/firmware/$1 >"$f" ) || return 1
 	mkdir -p "$d"
-	cp "$f" "$d/$vendor_id.bin" && CF1 MICROCODE{,_EARLY}
+	cp "$f" "$d/$2.bin" && CF1 MICROCODE{,_EARLY}
 }
 
 # Kernel-config CPU from CFLAGS and|or /proc/cpuinfo (native)
@@ -867,7 +866,7 @@ native)
 	case "${vendor_id}" in
 	*Intel*)
 		V=INTEL
-		ucode "intel-ucode/$(printf '%02x-%02x-%02x' ${cpu_family} ${model} ${stepping})"
+		ucode "intel-ucode/$(printf '%02x-%02x-%02x' ${cpu_family} ${model} ${stepping})" $vendor_id
 		case "${cpu_family}:${model}:${flags}:${model_name}" in
 		*Atom*)CF1 MATOM;;
 		5:*\ mmx\ *)CF1 M586MMX;;
@@ -893,7 +892,7 @@ native)
 		V=AMD
 		local amf=
 		[ "$cpu_family" -ge 21 ] && amf="{,_fam$(printf '%02x' ${cpu_family}})h"
-		ucode "amd-ucode/microcode_amd${amf}.bin"
+		ucode "amd-ucode/microcode_amd${amf}.bin" $vendor_id
 		case "${cpu_family}:${model}:${flags}:${model_name}" in
 		4:[3789]:*)CF1 M486;;
 		4:*\ mmx\ *)CF1 M586MMX;;
@@ -995,6 +994,8 @@ CF1 -CPU_SUP_.+ "CPU_SUP_${V:-.+}"
 	CF1 -MICROCODE_AMD -MICROCODE_INTEL MICROCODE_$V
 	[ "$V" != INTEL ] && CF1 -X86_INTEL_PSTATE
 }
+[ -z "$V" -o "$V" = AMD ] && ucode "amd-ucode/*.bin" AuthenticAMD
+[ -z "$V" -o "$V" = INTEL ] && ucode "intel-ucode/*.bin" GenuineIntel
 _is_CF1 NUMA || _is_CF1 PARAVIRT && CF1 RCU_NOCB_CPU RCU_NOCB_CPU_ALL
 _is_CF1 -PARAVIRT && CF1 JUMP_LABEL
 KERNEL_CONFIG="${CF//  / }"
