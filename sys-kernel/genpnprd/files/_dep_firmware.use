@@ -4,7 +4,27 @@ firmware? (
 	bluetooth? ( sys-firmware/bluez-firmware )
 	v4l? ( sys-firmware/ivtv-firmware )
 	wifi? ( sys-firmware/zd1201-firmware sys-firmware/atmel-firmware sys-firmware/zd1211-firmware sys-firmware/ipw2200-firmware sys-firmware/ipw2100-firmware sys-firmware/b43-firmware sys-firmware/b43legacy-firmware )
-	sys-kernel/linux-firmware
+	kernel-firmware? (
+		!sys-kernel/linux-firmware
+		sys-block/qla-fc-firmware
+		X? ( x11-drivers/radeon-ucode )
+		drm? ( x11-drivers/radeon-ucode )
+		dvb? ( media-tv/linuxtv-dvb-firmware )
+		atm? (
+			net-dialup/ueagle-atm
+			net-dialup/ueagle4-atm
+		)
+		wifi? (
+			sys-firmware/iwl1000-ucode
+			sys-firmware/iwl3160-ucode
+			sys-firmware/iwl6000-ucode
+			sys-firmware/iwl6005-ucode
+			sys-firmware/iwl6030-ucode
+			sys-firmware/iwl6050-ucode
+			sys-firmware/iwl7260-ucode
+		)
+		bluetooth? ( sys-firmware/iwl3160-7260-bt-ucode )
+	)
 	sys-apps/microcode-data[split-ucode]
 )
 "
