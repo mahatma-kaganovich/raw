@@ -8,7 +8,7 @@ firmware? (
 		!sys-kernel/linux-firmware
 		sys-block/qla-fc-firmware
 		X? ( x11-drivers/radeon-ucode )
-		drm? ( x11-drivers/radeon-ucode )
+		dri? ( x11-drivers/radeon-ucode )
 		dvb? ( media-tv/linuxtv-dvb-firmware )
 		atm? (
 			net-dialup/ueagle-atm
