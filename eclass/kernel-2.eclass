@@ -997,7 +997,7 @@ CF1 -CPU_SUP_.+ "CPU_SUP_${V:-.+}"
 	[ "$V" != INTEL ] && CF1 -X86_INTEL_PSTATE
 }
 [ -z "$V" -o "$V" = AMD ] && ucode "amd-ucode/*.bin" AuthenticAMD
-[ -z "$V" -o "$V" = INTEL ] && ucode "intel-ucode/*.bin" GenuineIntel
+[ -z "$V" -o "$V" = INTEL ] && ucode "intel-ucode/??-??-??" GenuineIntel
 _is_CF1 NUMA || _is_CF1 PARAVIRT && CF1 RCU_NOCB_CPU RCU_NOCB_CPU_ALL
 _is_CF1 -PARAVIRT && CF1 JUMP_LABEL
 KERNEL_CONFIG="${CF//  / }"
