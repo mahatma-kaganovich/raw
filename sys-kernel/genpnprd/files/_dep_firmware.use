@@ -1,4 +1,4 @@
-DEPEND+="
+_dep="
 firmware? (
 	alsa? ( sys-firmware/alsa-firmware )
 	bluetooth? ( sys-firmware/bluez-firmware )
@@ -28,3 +28,6 @@ firmware? (
 	sys-apps/microcode-data[split-ucode]
 )
 "
+
+DEPEND+="${_dep}"
+RDEPEND+="${_dep}"
