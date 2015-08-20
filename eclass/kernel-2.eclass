@@ -627,6 +627,7 @@ useconfig(){
 "
 	ewarn "If failed here after update ('not in IUSE') - touch kernel-2.eclass"
 	for i in "${SHARE}"/*use; do
+		[[ "${i##*/}" == *_dep_* ]] && continue
 		o="${i##*[/:_]}"
 		o="${o%.*}"
 		o="${o#[0-9]}"
