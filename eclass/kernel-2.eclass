@@ -1181,6 +1181,7 @@ kernel-2_src_prepare(){
 		sed -i -e "s/ -mcmodel=small/ -mcmodel=small -m64 $i/" arch/x86/boot/compressed/Makefile
 		sed -i -e "s/\(KBUILD_AFLAGS += -m64\)$/\1$i/" arch/x86/Makefile*
 	fi
+#	echo "CFLAGS_mdesc.o += -Wno-error=maybe-uninitialized" >>arch/sparc/kernel/Makefile
 	# pnp
 	use pnp || return
 	einfo "Fixing modules hardware info exports (forced mode, waiting for bugs!)"

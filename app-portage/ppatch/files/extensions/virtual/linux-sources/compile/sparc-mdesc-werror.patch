@@ -1,0 +1,29 @@
+--- a/arch/sparc/kernel/mdesc.c	2015-06-22 05:05:43.000000000 +0000
++++ b/arch/sparc/kernel/mdesc.c	2015-08-21 08:18:05.000000000 +0000
+@@ -577,7 +577,7 @@
+ 	const u64 *size = mdesc_get_property(hp, mp, "size", NULL);
+ 	const u64 *line_size = mdesc_get_property(hp, mp, "line-size", NULL);
+ 	const char *type;
+-	int type_len;
++	int type_len = 0;
+ 
+ 	type = mdesc_get_property(hp, mp, "type", &type_len);
+ 
+@@ -679,7 +679,7 @@
+ 	mdesc_for_each_node_by_name(hp, mp, "cache") {
+ 		const u64 *level;
+ 		const char *type;
+-		int len;
++		int len = 0;
+ 
+ 		level = mdesc_get_property(hp, mp, "level", NULL);
+ 		if (*level != 1)
+@@ -783,7 +783,7 @@
+ 	idx = 0;
+ 	mdesc_for_each_node_by_name(hp, mp, exec_unit_name) {
+ 		const char *type;
+-		int len;
++		int len = 0;
+ 
+ 		type = mdesc_get_property(hp, mp, "type", &len);
+ 		if (!of_find_in_proplist(type, "int", len) &&
