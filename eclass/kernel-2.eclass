@@ -815,7 +815,8 @@ native|:native|native:native)
 	esac
 	[ "$ncpus_probed:$ncpus_active" = 1:1 ] && CF1 -SMP
     ;;
-    x86|i386)
+    *)
+#    x86|i386)
 	export PNP_VENDOR=""
 	CF1 -SCHED_{SMT,MC} -X86_{UP_APIC,TSC,PAT,MSR,MCE,CMOV,X2APIC} -MTRR -INTEL_IDLE -KVM_INTEL -KVM_AMD -SPARSE_IRQ -CPUSETS -INTEL_TXT
 	case "$srcarch" in
