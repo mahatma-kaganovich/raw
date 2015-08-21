@@ -781,7 +781,7 @@ ${KERNEL_CONFIG//	/ }
 -march=${march}# ${CF//  / }
 "
 for i in $cpuinfo; do
-	local ${v}=''
+	local ${i}=''
 done
 export PNP_VENDOR="^vendor_id\|"
 export VIRT=0
