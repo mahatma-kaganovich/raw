@@ -773,15 +773,20 @@ ucode(){
 # Kernel-config CPU from CFLAGS and|or /proc/cpuinfo (native)
 # use smp: when 'native' = single/multi cpu, ht/mc will be forced ON
 cpu2K(){
-local i v V="" march=$(cflg) m64g="HIGHMEM64G -HIGHMEM4G -NOHIGHMEM" freq='' gov='ONDEMAND' fakeHT=false
+local i v V="" march=$(cflg) mcpu=$(cflg mcpu=) srcarch=$(arch) m64g="HIGHMEM64G -HIGHMEM4G -NOHIGHMEM" freq='' gov='ONDEMAND' fakeHT=false
+local cpuinfo=' vendor_id model_name flags cpu_family model cache_alignment fpu siblings cpu_cores processor cpu ncpus_probed ncpus_active cpucaps '
+march="$march${mcpu:+:$mcpu}"
 local CF="#
 ${KERNEL_CONFIG//	/ }
 -march=${march}# ${CF//  / }
 "
-local vendor_id="" model_name="" flags="" cpu_family="" model="" cache_alignment="" fpu="" siblings="" cpu_cores="" processor=""
+for i in $cpuinfo; do
+	local ${v}=''
+done
 export PNP_VENDOR="^vendor_id\|"
 export VIRT=0
 CF1 -SMP -X86{BIGSMP,GENERIC} X86_{X2APIC,UP_APIC,UP_IOAPIC} -SPARSE_IRQ -CPUSETS X86_INTEL_PSTATE INTEL_TXT
+CF1 SPARC_.+_CPUFREQ US3_MC
 use xen && CF1 -HIGHMEM64G -HIGHMEM4G NOHIGHMEM X86_PAE -X86_VSMP
 use smp && CF1 SMP X86_BIGSMP SCHED_{SMT,MC} SPARSE_IRQ CPUSETS NUMA
 [[ "$(cflg mtune=)" == generic ]] && CF1 X86_GENERIC
@@ -791,26 +796,36 @@ if [[ -z "${march}" ]]; then
 	march="${march%%-*}"
 fi
 case "${march}" in
-native)
-	einfo 'Found "-march=native" in CFLAGS, detecting CPU & arch hardware constants'
+native|:native|native:native)
+	einfo 'Found "-m{arch|cpu}=native" in CFLAGS, detecting CPU & arch hardware constants'
+	while read i ; do
+		v="${i%%:*}"
+		v="${v//	}"
+		v="${v// /_}"
+		[[ -z "${cpuinfo##* $v *}" ]] && local ${v}="${i#*: }"
+	done </proc/cpuinfo
+	flags=" ${flags:-.} "
+
+    case "$srcarch" in
+    sparc)
+	case "$cpu" in
+	*UltraSparc\ III*);;
+	*UltraSparc\ IIe*)CF1 -.+_US3_.+ -US3_.+;;
+	*UltraSparc\ II*)CF1 '-.+_US(?:3|2E)_.+' -US3_.+;;
+	esac
+	[ "$ncpus_probed:$ncpus_active" = 1:1 ] && CF1 -SMP
+    ;;
+    x86|i386)
 	export PNP_VENDOR=""
 	CF1 -SCHED_{SMT,MC} -X86_{UP_APIC,TSC,PAT,MSR,MCE,CMOV,X2APIC} -MTRR -INTEL_IDLE -KVM_INTEL -KVM_AMD -SPARSE_IRQ -CPUSETS -INTEL_TXT
-	case "${CTARGET:-${CHOST}}" in
-	x86*|i?86*)
+	case "$srcarch" in
+	x86|i386)
 		use multitarget && CF1 -64BIT
 		use multitarget && [ "$KERNEL_ARCH" = x86_64 ] && CF1 64BIT
 		CF1 -XEN # -KVM
 		use lguest || CF1 -{PARAVIRT,LGUEST}{,_GUEST} -VIRTUALIZATION -HYPERVISOR_GUEST
 	;;
 	esac
-
-	while read i ; do
-		v="${i%%:*}"
-		v="${v//	}"
-		v="${v// /_}"
-		[[ -n "${v}" ]] && local ${v}="${i#*: }"
-	done </proc/cpuinfo
-	flags=" ${flags:-.} "
 
 	fakeHT=true
 	for i in ${flags}; do
@@ -951,6 +966,8 @@ native)
 		rm -rf "${TMPDIR}/overlay-rd/kernel/x86/"
 		CF1 -MICROCODE -CPU_FREQ
 	fi
+    ;;
+    esac
 	use xen && CF1 XEN
 ;;
 i386)CF1 M386 MATH_EMULATION;;
@@ -982,7 +999,9 @@ core2|atom)CF1 M${march^^} $m64g;freq=X86_ACPI_CPUFREQ;;
 k6-3)CF1 MK6 $m64g -SCHED_SMT;freq=X86_POWERNOW_K6;V=AMD;;
 athlon|athlon-tbird|athlon-4|athlon-xp|athlon-mp)CF1 MK7 $m64g -SCHED_SMT;freq=X86_POWERNOW_K7;V=AMD;;
 bdver1|k8|opteron|athlon64|athlon-fx|k8-sse3|opteron-sse3|athlon64-sse3|amdfam10|barcelona)CF1 MK8 $m64g -SCHED_SMT;freq="X86_POWERNOW_K8 X86_ACPI_CPUFREQ";gov=CONSERVATIVE;V=AMD;;
-*)CF1 GENERIC_CPU X86_GENERIC;;
+*)	case "$srcarch" in
+	*)CF1 GENERIC_CPU X86_GENERIC;;
+	esac
 esac
 case "${CTARGET:-${CHOST}}:$CF" in
 	x86_64*|*\ 64BIT\ *)CF1 -MPENTIUM4 -MPENTIUMM -X86_GENERIC;;
