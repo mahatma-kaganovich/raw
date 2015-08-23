@@ -1,10 +1,11 @@
 CFLAGS="$CFLAGS -fno-ident -fexcess-precision=fast -fivopts -fbranch-target-load-optimize"
 CFLAGS="$CFLAGS -finline-small-functions -findirect-inlining"
 CFLAGS="$CFLAGS -ffast-math"
+CFLAGS="$CFLAGS -fsched-pressure --param=sched-pressure-algorithm=2"
 # ?
 #CFLAGS="$CFLAGS -fgcse-sm -fgcse-las"
 # O2
-CFLAGS="$CFLAGS -fsched-pressure --param=sched-pressure-algorithm=2 -fschedule-insns2 -fsched-spec-load"
+CFLAGS="$CFLAGS -fschedule-insns2 -fsched-spec-load"
 # broken on x86 (https://gcc.gnu.org/bugzilla/show_bug.cgi?id=38768). I get worked exlude elfutils -ftracer
 #CFLAGS="$CFLAGS -fschedule-insns"
 # O3
@@ -13,7 +14,6 @@ CFLAGS="$CFLAGS -fgcse-after-reload -fipa-cp-clone -fpredictive-commoning -ftree
 CFLAGS="$CFLAGS -fvect-cost-model -ftree-partial-pre"
 # 4.9
 #CFLAGS="$CFLAGS -fno-var-tracking-assignments"
-CFLAGS="$CFLAGS -fdevirtualize-speculatively"
 
 # looks like help other optimizers, but too increase code size
 #CFLAGS="$CFLAGS -ftracer"
