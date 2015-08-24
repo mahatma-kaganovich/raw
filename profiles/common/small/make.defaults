@@ -1,6 +1,6 @@
 # fast, but small (-Os + some from O2/O3)
 
-CFLAGS="$CFLAGS -O2 -Os"
+CFLAGS="$CFLAGS -O2 -Os -fno-omit-frame-pointer"
 # O2
 # CFLAGS="$CFLAGS -fschedule-insns2 -finline-small-functions -findirect-inlining"
 # O3
