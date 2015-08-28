@@ -730,7 +730,7 @@ NEWSH:
 			chmod(0700,$F);
 			close($F);
 			if($img){
-				system($bin.'feh','--no-fehbg','--bg-center',$img);
+				system($bin.'feh','--no-fehbg','--bg-tile',$img);
 			}else{
 				system($bin.'xsetroot','-bg','black');
 			}
