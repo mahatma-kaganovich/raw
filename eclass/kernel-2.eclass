@@ -279,6 +279,7 @@ kernel-2_src_compile() {
 		i=false
 		if use embed-hardware; then
 			einfo "Reconfiguring kernel with hardware detect"
+			cp .config .config.stage1
 			cfg_ "###detect: $(detects)"
 #			use external-firmware && ext_firmware "$ROOT/lib" . "$WORKDIR/external-firmware"
 			kconfig
