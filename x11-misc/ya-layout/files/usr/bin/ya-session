@@ -387,7 +387,7 @@ preferred(){
 }
 
 sess(){
-	export XDG_MENU_PREFIX="${YA_PROFILE,,}-" DESKTOP_SESSION="ya"
+	export XDG_MENU_PREFIX="${YA_PROFILE,,}-" DESKTOP_SESSION="ya" DISPLAY
 	# SESSION_MANAGER=
 }
 
