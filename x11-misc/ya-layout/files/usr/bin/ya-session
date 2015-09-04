@@ -14,8 +14,8 @@ sm='--sm-disable'
 sm2='--sm-client-disable'
 prefapps="$obconfdir/preferred-apps"
 DSP="${DISPLAY//[\\\/*.]/_}"
-[ "$DISPLAY" = "$DSP" ] && DSP+='_0'
-DSP1="${DISPLAY%.*}"
+[[ "$DSP" == *:* && "$DSP" != *:*.* ]] && DSP+='.0'
+DSP1="${DSP%.*}"
 ENV="$cache/environment.$DSP"
 
 : ${YA_APP_WebBrowser:="'exo-open --launch WebBrowser' @WebBrowser"}
@@ -612,7 +612,7 @@ Launcher:
 	cat {/etc/X11,/etc/xdg/ya,"$HOME"/.config/ya}/Xresources "$HOME/.Xresources" 2>/dev/null  | xrdb -merge
 	xrandr >"$cache/menu.xml.$DSP1.key1" &
 	xssaver
-	[ -n "$desk" ] && i=`_1cfg "ya/wallpaper{$DSP,$DISPLAY,}.*"` && case "$desk" in
+	[ -n "$desk" ] && i=`_1cfg "ya/wallpaper{$DSP,$DISPLAY,${DISPLAY%%:*},${DISPLAY%%.*},}.*"` && case "$desk" in
 	*pcmanfm*)desk+=" -w $i";;
 	esac
 	for i in "$cache/desk.kEy.$DSP".*; do

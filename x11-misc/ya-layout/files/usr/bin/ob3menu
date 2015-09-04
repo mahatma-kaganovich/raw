@@ -564,7 +564,11 @@ if(@apps){
 	if(exists($P{launcher})){
 		@crc=map{for(my $i=8;$i>0;$i--){$_=($_&1)?($_>>1)^0xedb88320:($_>>1)};$_}(0..255);
 		$DSP=$ENV{'DISPLAY'};
-		$DSP.='_0' if(!($DSP=~s/[\\\/\*\.]/_/gs));
+		$DSP=~s/[\\\/\*]/_/gs;
+		if(($DSP=~/:/) && !(($DSP1)=$DSP=~/:.*\.(.*)$/)){
+			$DSP1=$DSP;
+			$DSP.='.0';
+		}
 		if(!exists($P{dock}) && !exists($P{tint2}) && (my $pid=$prop{_OPENBOX_PID})){
 			if(my $c=_read("/proc/$pid/cmdline")){
 				my @c=split(/\x0/,$c);
@@ -638,9 +642,9 @@ if(@apps){
 NOGEO:
 		$spliceX=($vert xor $left)?$X-$sx:0 if($spliceX eq '');
 		$spliceY=($vert xor $bottom)?$Y-$sy:0 if($spliceY eq '');
-		$a.=q([ "${DISPLAY%.0}" = ':0' ] || ( . "$0.${DISPLAY//[\/\\\\_.*]/_}";exit 1)
+		$a.=q([ "${DISPLAY%.0}" = ':0' ] || ( . "$0.${DISPLAY//[\/\\\\_*]/_}";exit 1)
 );
-		if($DSP ne ':0_0'){
+		if($DSP ne ':0.0'){
 			if((!-x $sh) && open(my $F,'>',$sh)){
 				print $F,$a;
 				chmod(0700,$F);
@@ -658,7 +662,7 @@ NOGEO:
 			$a.="	[ $p -lt $xy ] && exec $_->[1]\n";
 		}
 		$a.=(@m?'':"false\n")."}\n";
-		@wp=() if(!@wp && ! -r ($wp[0]=(glob("$fconf/wallpaper{$DSP,$ENV{'DISPLAY'},}.*"))[0]));
+		@wp=() if(!@wp && ! -r ($wp[0]=(glob("$fconf/wallpaper{$DSP,$ENV{'DISPLAY'},$DSP1,}.*"))[0]));
 		# for top-left & !composite & !svg cmd use feh, else - ImageMagick
 		# todo: since openbox support svg, think about un-feh. bud feh still thin
 		if(!@m){

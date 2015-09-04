@@ -763,7 +763,7 @@ sub setxkbmap{
 			exit;
 		}
 		_write($cfg.'xkbmap',$s);
-		`${bin}setxkbmap $s -print|${bin}xkbcomp - $ENV{DISPLAY}` if($ENV{DISPLAY} ne ':0.0');
+		`${bin}setxkbmap $s -print|${bin}xkbcomp - $ENV{DISPLAY}` if($ENV{DISPLAY} ne ':0.0' || $ENV{DISPLAY} ne ':0');
 		exec($bin.'setxkbmap',@_);
 		die;
 	}
