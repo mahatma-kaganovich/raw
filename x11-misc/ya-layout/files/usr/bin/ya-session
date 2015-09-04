@@ -13,7 +13,7 @@ cache="$HOME/.cache/ya"
 sm='--sm-disable'
 sm2='--sm-client-disable'
 prefapps="$obconfdir/preferred-apps"
-DSP="${DISPLAY//[\\\/*.]/_}"
+DSP="${DISPLAY//[\\\/*]/_}"
 [[ "$DSP" == *:* && "$DSP" != *:*.* ]] && DSP+='.0'
 DSP1="${DSP%.*}"
 ENV="$cache/environment.$DSP"
