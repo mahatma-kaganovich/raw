@@ -658,7 +658,7 @@ NOGEO:
 			$a.="	[ $p -lt $xy ] && exec $_->[1]\n";
 		}
 		$a.=(@m?'':"false\n")."}\n";
-		@wp=() if(!@wp && ! -r ($wp[0]=(glob("$fconf/wallpaper{$DSP,$DISPLAY,}.*"))[0]));
+		@wp=() if(!@wp && ! -r ($wp[0]=(glob("$fconf/wallpaper{$DSP,$ENV{'DISPLAY'},}.*"))[0]));
 		# for top-left & !composite & !svg cmd use feh, else - ImageMagick
 		# todo: since openbox support svg, think about un-feh. bud feh still thin
 		if(!@m){
