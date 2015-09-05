@@ -709,6 +709,7 @@ pre_embed(){
 		virtio:*d*v*)echo "virtio non-qemu device $s";qemu=false;;
 		esac
 		case "$s" in
+		pci:v00001AF4d*)CF1 VIRTIO_PCI;: ${qemu:=true};;& # required for embedding
 		pci:v00001AF4d*sv00001AF4*);; # just ignore all PCI aliases for qemu virtio
 		virtio:d00000001v*)CF1 VIRTIO_NET -ETHERNET -PHYLIB -FDDI -ATM;;
 		virtio:d00000002v*)CF1 VIRTIO_BLK;vblk=true;;
@@ -724,7 +725,6 @@ pre_embed(){
 		pci:v00001B36d00000100sv*);; # qxl
 		virtio:d00000008v*)CF1 SCSI_VIRTIO;vscsi=true;;
 		virtio:d00000004v*)CF1 -HW_RANDOM_.+ HW_RANDOM_VIRTIO HW_RANDOM;;
-		pci:v00001AF4d*)CF1 VIRTIO_PCI;: ${qemu:=true};; # required for embedding
 		# ...
 		virtio:d00000003v*)CF1 VIRTIO_CONSOLE;;
 		virtio:d00000005v*)CF1 VIRTIO_BALLOON;;
