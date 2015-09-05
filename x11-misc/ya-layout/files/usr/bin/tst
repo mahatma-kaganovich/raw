@@ -1,0 +1,5 @@
+$DSP=$DSP1=':0.1';
+
+
+$DSP1=join(',',$DSP,(map{$DSP1=~s/$_.*?$//;$DSP1}'\.','\:'),'');
+print $DSP1
