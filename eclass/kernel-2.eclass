@@ -719,7 +719,7 @@ pre_embed(){
 		pci:*bc02sc03i*)echo "ATM $s";cc+=' +ATM';;
 #		pci:*bc04sc01i*)echo "sound $s";cc+=' +SND';;
 		pci:*bc01sc06i01)cc+=" ${e}SATA_AHCI";ata=true;;
-		pci:*bc01*)echo "PCI storage $s";vblk=false;vscsi=false;;
+		pci:*bc01*)echo "storage $s";vblk=false;vscsi=false;;
 		pci:v00008086d00007020sv*)CF1 USB_UHCI_HCD;;
 		pci:v00001B36d00000100sv*);; # qxl
 		virtio:d00000008v*)CF1 SCSI_VIRTIO;vscsi=true;;
@@ -730,6 +730,8 @@ pre_embed(){
 		virtio:d00000005v*)CF1 VIRTIO_BALLOON;;
 		virtio:d00000009v*)CF1 NET_9P_VIRTIO;;
 		virtio:d0000000Cv*)CF1 CAIF_VIRTIO;;
+		virtio:d00000010v*)CF1 DRM_VIRTIO_GPU;;
+		virtio:d00000012v*)CF1 VIRTIO_INPUT;;
 		*virtio,mmio*)CF1 VIRTIO_MMIO;;
 #		pci:*v00001AF4*)echo "unknown possible qemu PCI device $s";unknown=true;;
 #		*v00001AF4*)echo "unknown possible qemu device $s";;
