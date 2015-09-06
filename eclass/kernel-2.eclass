@@ -777,7 +777,7 @@ ucode(){
 # use smp: when 'native' = single/multi cpu, ht/mc will be forced ON
 cpu2K(){
 local i v V="" march=$(cflg) mcpu=$(cflg mcpu=) srcarch=$(arch) m64g="HIGHMEM64G -HIGHMEM4G -NOHIGHMEM" freq='' gov='ONDEMAND' fakeHT=false
-local cpuinfo=' vendor_id model_name flags cpu_family model cache_alignment fpu siblings cpu_cores processor cpu ncpus_probed ncpus_active cpucaps '
+local cpuinfo=' vendor_id model_name flags cpu_family model stepping cache_alignment fpu siblings cpu_cores processor cpu ncpus_probed ncpus_active cpucaps '
 march="$march${mcpu:+:$mcpu}"
 local CF="#
 ${KERNEL_CONFIG//	/ }
