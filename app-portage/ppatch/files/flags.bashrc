@@ -45,7 +45,7 @@ _iuse(){
 			return $?
 		fi
 	done
-	return 0
+	return 1
 }
 
 gccve(){
