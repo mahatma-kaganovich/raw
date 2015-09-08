@@ -1,4 +1,6 @@
 =sys-devel/gcc-4.9* **
 =sys-devel/gcc-5* **
+# until icedtea-1.8
 virtual/jre -~amd64 -~x86
 virtual/jdk -~amd64 -~x86
+>=dev-java/maven-bin-3.3.3 -~amd64 -~x86
