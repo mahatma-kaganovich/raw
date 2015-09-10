@@ -700,7 +700,7 @@ acpi_detect(){
 pre_embed(){
 	use custom-arch || return
 	# virtio: speedup build & smart embedding
-	local ata='' vblk='' scsi='' vscsi='' e='+' qemu='' cc=''
+	local ata='' vblk='' scsi='' vscsi='' e='+' qemu='' cc='' usb=false iuse=" $IUSE "
 	use embed-hardware && e='&'
 	for i in `find /sys -mount -name modalias`; do
 		read s <"$i" || continue
@@ -721,7 +721,7 @@ pre_embed(){
 #		pci:*bc04sc01i*)echo "sound $s";cc+=' +SND';;
 		pci:*bc01sc06i01)cc+=" ${e}SATA_AHCI";ata=true;;
 		pci:*bc01*)echo "storage $s";vblk=false;vscsi=false;;
-		pci:v00008086d00007020sv*)CF1 USB_UHCI_HCD;;
+		pci:v00008086d00007020sv*)CF1 USB_UHCI_HCD;usb=true;;
 		pci:v00001B36d00000100sv*);; # qxl
 		virtio:d00000008v*)CF1 SCSI_VIRTIO;vscsi=true;;
 		virtio:d00000004v*)CF1 -HW_RANDOM_.+ HW_RANDOM_VIRTIO HW_RANDOM;;
@@ -745,6 +745,8 @@ pre_embed(){
 		CF1 VIRTIO -HYPERV -XEN -X86_EXTENDED_PLATFORM
 		use iscsi && scsi=true && CF1 ISCSI_TARGET
 		use !embed-hardware && vscsi=true && CF1 VIRTIO_.+ .+_VIRTIO
+		# -machine ..,usb=off, but respect USE=usb while
+		[ -z "${IUSE## usb }" ] && ! $usb && CF1 -USB
 		if ${vblk:-${vscsi:-false}} ; then
 			einfo " - skip hardware ATA & SCSI drivers"
 			CF="_/drivers/(?:scsi|ata)/.+  $CF"
