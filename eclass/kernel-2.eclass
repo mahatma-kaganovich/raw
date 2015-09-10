@@ -746,7 +746,7 @@ pre_embed(){
 		use iscsi && scsi=true && CF1 ISCSI_TARGET
 		use !embed-hardware && vscsi=true && CF1 VIRTIO_.+ .+_VIRTIO
 		# -machine ..,usb=off, but respect USE=usb while
-		[ -z "${IUSE## usb }" ] && ! $usb && CF1 -USB
+		[ -z "${IUSE## usb }" ] || $usb || CF1 -USB
 		if ${vblk:-${vscsi:-false}} ; then
 			einfo " - skip hardware ATA & SCSI drivers"
 			CF="_/drivers/(?:scsi|ata)/.+  $CF"
