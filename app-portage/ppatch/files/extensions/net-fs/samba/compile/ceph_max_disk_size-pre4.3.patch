@@ -1,0 +1,10 @@
+--- a/source3/modules/vfs_ceph.c	2015-02-24 21:59:51.000000000 +0300
++++ b/source3/modules/vfs_ceph.c	2015-09-10 18:14:53.421082459 +0300
+@@ -169,6 +169,7 @@
+ 		*bsize = statvfs_buf.f_bsize;
+ 		*dfree = statvfs_buf.f_bsize * statvfs_buf.f_bavail;
+ 		*dsize = statvfs_buf.f_bsize * statvfs_buf.f_blocks;
++		disk_norm(small_query, bsize, dfree, dsize);
+ 		DEBUG(10, ("[CEPH] bsize: %llu, dfree: %llu, dsize: %llu\n",
+ 			llu(*bsize), llu(*dfree), llu(*dsize)));
+ 		return *dfree;
