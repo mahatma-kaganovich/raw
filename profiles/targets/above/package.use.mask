@@ -1,2 +1,2 @@
-dev-libs/openssl kerberos
+#dev-libs/openssl kerberos
 x11-libs/wxGTK odbc
