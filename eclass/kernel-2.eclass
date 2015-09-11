@@ -713,7 +713,7 @@ pre_embed(){
 		# even if standard input devices still in system - enlight VM kernel or remove PV hw
 		pci:v00001AF4d*sv00001AF4*bc09sc00*)CF1 -INPUT_KEYBOARD;;
 		pci:v00001AF4d*sv00001AF4*bc09sc02*)CF1 -INPUT_MOUSE;;
-		pci:v00001AF4d*sv00001AF4*bc09sc08*)CF1 -INPUT_TABLET;;
+		pci:v00001AF4d*sv00001AF4*bc09sc80*)CF1 -INPUT_TABLET;;
 		pci:v00001AF4d*sv00001AF4*);; # just ignore all PCI aliases for qemu virtio
 		virtio:d00000001v*)CF1 VIRTIO_NET -ETHERNET -PHYLIB -FDDI -ATM;;
 		virtio:d00000002v*)CF1 VIRTIO_BLK;vblk=true;;
