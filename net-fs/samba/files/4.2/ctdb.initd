@@ -73,23 +73,9 @@ start() {
     }
   done
 
-  start-stop-daemon --start --background --exec /usr/sbin/ctdbd -- $CTDB_OPTIONS
-
-  einfo "Waiting ctdb health, ignore error messages..."
-  # samba can not start else
-  ctdb sync
-  ctdb recover
-  ctdb sync
-
-  # samba started by notify:healthy. dont wait
-#  for i in 0 1 2 3 4 5 6 7 8 9 10; do
-#	(ctdb status|grep -qF "OK (THIS NODE)") && break
-#	pgrep -x ctdbd &>/dev/null || {
-#		eend 1
-#		return 1
-#	}
-#	sleep 1
-#  done
+  #start-stop-daemon --start --background --exec /usr/sbin/ctdbd -- $CTDB_OPTIONS
+  # 4.3?
+  /usr/sbin/ctdbd $CTDB_OPTIONS
 
   # error codes too random, just OK
   eend 0
