@@ -710,6 +710,10 @@ pre_embed(){
 		esac
 		case "$s" in
 		pci:v00001AF4d*)CF1 VIRTIO_PCI;: ${qemu:=true};;& # required for embedding
+		# even if standard input devices still in system - enlight VM kernel or remove PV hw
+		pci:v00001AF4d*sv00001AF4*bc09sc00*)CF1 -INPUT_KEYBOARD;;
+		pci:v00001AF4d*sv00001AF4*bc09sc02*)CF1 -INPUT_MOUSE;;
+		pci:v00001AF4d*sv00001AF4*bc09sc08*)CF1 -INPUT_TABLET;;
 		pci:v00001AF4d*sv00001AF4*);; # just ignore all PCI aliases for qemu virtio
 		virtio:d00000001v*)CF1 VIRTIO_NET -ETHERNET -PHYLIB -FDDI -ATM;;
 		virtio:d00000002v*)CF1 VIRTIO_BLK;vblk=true;;
@@ -731,7 +735,7 @@ pre_embed(){
 		virtio:d00000009v*)CF1 NET_9P_VIRTIO;;
 		virtio:d0000000Cv*)CF1 CAIF_VIRTIO;;
 		virtio:d00000010v*)CF1 DRM_VIRTIO_GPU;;
-		virtio:d00000012v*)CF1 VIRTIO_INPUT;;
+		virtio:d00000012v*)CF1 VIRTIO_INPUT -INPUT_MISC;;
 		*virtio,mmio*)CF1 VIRTIO_MMIO;;
 #		pci:*v00001AF4*)echo "unknown possible qemu PCI device $s";unknown=true;;
 #		*v00001AF4*)echo "unknown possible qemu device $s";;
@@ -743,6 +747,7 @@ pre_embed(){
 		use xen && [[ " $CF " != *' -XEN '* ]] && continue # xen have virtio too + unknown 2me others
 		einfo "QEMU virtio environment + USE=custom-arch"
 		CF1 VIRTIO -HYPERV -XEN -X86_EXTENDED_PLATFORM
+		CF1 _SENSORS_.+ -SERIAL_NONSTANDARD _SERIAL_.+ -SERIAL_8250_EXTENDED SERIAL_8250 -BACKLIGHT_LCD_SUPPORT -NEW_LEDS
 		use iscsi && scsi=true && CF1 ISCSI_TARGET
 		use !embed-hardware && vscsi=true && CF1 VIRTIO_.+ .+_VIRTIO
 		# -machine ..,usb=off, but respect USE=usb while
