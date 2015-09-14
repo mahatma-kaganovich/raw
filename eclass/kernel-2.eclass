@@ -866,7 +866,7 @@ native|:native|native:native)
 			*XEN)CF1 -KVM_GUEST -HYPERV -X86_EXTENDED_PLATFORM;;
 			?*)CF1 -XEN;; # my KVM = "Microsoft"
 			esac;
-			CF1 -IRQ_TIME_ACCOUNTING # -NO_HZ -NO_HZ_.+ HZ_PERIODIC
+			CF1 -IRQ_TIME_ACCOUNTING
 			# at least KVM migration & other asymmetry
 			#CF1 -NO_HZ -SCHED_HRTICK -IRQ_TIME_ACCOUNTING
 #			ewarn "*************************************************************"

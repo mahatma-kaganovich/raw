@@ -5,3 +5,7 @@ NETFILTER_NETLINK_QUEUE_CT NETLINK_MMAP
 -HZ_1000 =HZ_250 =HZ_100
 &IOSCHED_DEADLINE DEFAULT_(?:NOOP|CFQ)= DEFAULT_DEADLINE
 -OPTIMIZE_INLINING HUGETLBFS TRANSPARENT_HUGEPAGE =PCIEASPM_PERFORMANCE"
+
+# VM server: keep "cores" threads alive to force real cores distribution
+# equal to "nohz=off", but hardcode optimized
+[ "${VIRT:-0}" = 0 ] || KERNEL_CONFIG+=" -NO_HZ -NO_HZ_.+ HZ_PERIODIC"
