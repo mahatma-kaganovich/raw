@@ -371,7 +371,7 @@ sub sel{
 }
 
 sub cfg{
-$set{$_[0]}=1;
+#$set{$_[0]}=1;
 if(!defined($_[1])){
 	return 1 if(exists($off{$_[0]}));
 	$off{$_[0]}=1;
@@ -384,7 +384,9 @@ if(!defined($_[1])){
 	}
 }
 if(exists($choice{$_[0]}) && $_[1] eq 'y'){
-	$config{$_}='' for(@{$choice{$_[0]}});
+	for(@{$choice{$_[0]}}){
+		$config{$_}='' if(defined($config{$_}=''));
+	}
 }
 dep($_[0]) if($config{$_[0]} ne ($config{$_[0]}="$_[1]"));
 1;
@@ -487,7 +489,7 @@ sub conf{
 	last if(@l && !$eq);
     }
 ex:
-    msg($_[0]);
+#    msg($_[0]);
 }
 
 sub arch{
