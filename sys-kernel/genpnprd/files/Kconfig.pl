@@ -385,7 +385,7 @@ if(!defined($_[1])){
 }
 if(exists($choice{$_[0]}) && $_[1] eq 'y'){
 	for(@{$choice{$_[0]}}){
-		$config{$_}='' if(defined($config{$_}=''));
+		$config{$_}='' if(exists($config{$_}) && defined($config{$_}));
 	}
 }
 dep($_[0]) if($config{$_[0]} ne ($config{$_[0]}="$_[1]"));
