@@ -20,4 +20,4 @@ use mdadm || use lvm || use evms || use device-mapper || KERNEL_CONFIG+=" -MD"
 	KERNEL_CONFIG+=" -FW_LOADER -CPU_IDLE"
 	use usb || KERNEL_CONFIG+=" -USB"
 }
-use EFI || KERNEL_CONFIG+=" -RELOCATABLE"
+use efi || KERNEL_CONFIG+=" -RELOCATABLE"
