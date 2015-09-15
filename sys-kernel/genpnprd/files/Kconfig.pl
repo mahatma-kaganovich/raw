@@ -383,12 +383,10 @@ if(!defined($_[1])){
 		$msg.=" -$i" if($r);
 	}
 }
-if($config{$_[0]} ne ($config{$_[0]}="$_[1]")){
-	if(exists($choice{$_[0]})){
-		delete($config{$_}) for(@{$choice{$_[0]}});
-	}
-	dep($_[0]);
+if(exists($choice{$_[0]}) && $_[1] eq 'y'){
+	$config{$_}='' for(@{$choice{$_[0]}});
 }
+dep($_[0]) if($config{$_[0]} ne ($config{$_[0]}="$_[1]"));
 1;
 }
 
