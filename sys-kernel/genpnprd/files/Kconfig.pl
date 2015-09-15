@@ -132,18 +132,25 @@ sub Kcload{
 			$order1{$2}=++$order1;
 			$c=$1;$v1=$2;
 			for(my $i;exists($depends{$v="$d$i:$2"});$i++){};
-			$ch{$v}="!$2";
+			$ch{$v}=$2;
 			push @{$depends{$v}},@if;
 		next/e;
 		$s=~s/^\s*((?:comment|mainmenu|menu)\s|endmenu$)/$c=$1;$v1=$v=undef;next/e;
 		$s=~s/^\s*(choice|endchoice)$/
 			$c=$1;$v1=$v=':_choice';
 			if($1 eq 'endchoice'){
-			for(keys %ch){
-				my %dc=%ch;
-				delete($dc{$_});
-				push @{$depends{$_}},values %dc,@{$depends{$v}};
-			}
+				for(keys %ch){
+					my %dc=%ch;
+					delete($dc{$_});
+					push @{$depends{$_}},(map{'!'.$_}values %dc),@{$depends{$v}};
+					my $x=$ch{$_};
+					if(exists($choice{$x})){
+						print "Multiple choices: $x\n" if(!exists($multichoice{$x}));
+						undef $multichoice{$x};
+					}
+					undef $multichoice{$x} if(!$bool{$_});
+					push @{$choice{$x}},values %dc;
+				}
 			}
 			delete($depends{$v});
 			%ch=();
@@ -376,7 +383,12 @@ if(!defined($_[1])){
 		$msg.=" -$i" if($r);
 	}
 }
-dep($_[0]) if($config{$_[0]} ne ($config{$_[0]}="$_[1]"));
+if($config{$_[0]} ne ($config{$_[0]}="$_[1]")){
+	if(exists($choice{$_[0]})){
+		delete($config{$_}) for(@{$choice{$_[0]}});
+	}
+	dep($_[0]);
+}
 1;
 }
 
@@ -441,6 +453,20 @@ sub conf{
 		@l=($d) if($#l==-1 && !($d=~/[^A-Za-z0-9_]/) && $_[0] eq $_);
 	}
 	for(@l){
+		# ignore "whole choice" wildcards
+		if(exists($choice{$_})){
+			my %ch;
+			$ch{$_}=1 for(@{$choice{$_}});
+			delete($ch{$_}) for(@l);
+			if(!%ch){
+				print "KERNEL_CONFIG: $c$d choice $_ @{$choice{$_}}\n";
+				$ch{$_}=1 for(@l);
+				delete($ch{$_}) for($_,@{$choice{$_}});
+				@l=keys %ch;
+			}
+		}
+	}
+	for(@l){
 		if($c eq '+'){
 			cfg($_,'m');
 		}elsif($c eq '-'){
@@ -490,6 +516,9 @@ sub Kconfig{
 		print "!SRCARCH\n";
 		delete($ENV{SRCARCH});
 		Kclist($ENV{S});
+	}
+	for(keys %multichoice){
+		delete($choice{$_}) for(@{$choice{$_}},$_);
 	}
 	my $c="$ENV{S}/.config";
 	if(load_config("$c.default")){
