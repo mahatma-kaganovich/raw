@@ -1,2 +1,2 @@
 KERNEL_CONFIG+="=.*_NLS &NLS NLS"
-#use embed-hardware && KERNEL_CONFIG+=" &NLS_.*"
+#use embed-hardware && KERNEL_CONFIG+=" &NLS_.+"
