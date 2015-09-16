@@ -136,21 +136,24 @@ sub Kcload{
 			push @{$depends{$v}},@if;
 		next/e;
 		$s=~s/^\s*((?:comment|mainmenu|menu)\s|endmenu$)/$c=$1;$v1=$v=undef;next/e;
-		$s=~s/^\s*(choice|endchoice)$/
+		$s=~s/^\s*choice$/
 			$c=$1;$v1=$v=':_choice';
-			if($1 eq 'endchoice'){
-				for(keys %ch){
-					my %dc=%ch;
-					delete($dc{$_});
-					push @{$depends{$_}},(map{'!'.$_}values %dc),@{$depends{$v}};
-					my $x=$ch{$_};
-					if(exists($choice{$x})){
-						print "Multiple choices: $x\n" if(!exists($multichoice{$x}));
-						undef $multichoice{$x};
-					}
-					undef $multichoice{$x} if(!$bool{$_});
-					push @{$choice{$x}},values %dc;
+			delete($depends{$v});
+			%ch=();
+		next/e;
+		$s=~s/^\s*endchoice$/
+			$c=$1;$v1=$v=':_choice';
+			for(keys %ch){
+				my %dc=%ch;
+				delete($dc{$_});
+				push @{$depends{$_}},(map{'!'.$_}values %dc),@{$depends{$v}};
+				my $x=$ch{$_};
+				if(exists($choice{$x})){
+					print "Multiple choices: $x\n" if(!exists($multichoice{$x}));
+					$multichoice{$x}=undef;
 				}
+				$multichoice{$x}=undef if(!$bool{$_});
+				push @{$choice{$x}},values %dc;
 			}
 			delete($depends{$v});
 			%ch=();
@@ -284,8 +287,8 @@ sub defaults{
 			cfg($i,'y') if($y && ($c eq '+' || !defined($defconfig{$i})));
 		}
 	}
-	for(keys %config){
-		$config{$_}=undef if($config{$_} eq '');
+	for(values %config){
+		$_=undef if($_ eq '');
 	}
 	msg($_[0]);
 }
