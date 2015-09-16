@@ -371,7 +371,6 @@ sub sel{
 }
 
 sub cfg{
-#$set{$_[0]}=1;
 if(!defined($_[1])){
 	return 1 if(exists($off{$_[0]}));
 	$off{$_[0]}=1;
@@ -488,7 +487,7 @@ sub conf{
 	last if(@l && !$eq);
     }
 ex:
-#    msg($_[0]);
+    msg($_[0]);
 }
 
 sub arch{
