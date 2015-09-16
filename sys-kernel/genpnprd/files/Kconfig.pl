@@ -382,10 +382,9 @@ if(!defined($_[1])){
 		cfg($i) || return 0;
 		$msg.=" -$i" if($r);
 	}
-}
-if(exists($choice{$_[0]}) && $_[1] eq 'y'){
+}elsif(exists($choice{$_[0]}) && $_[1] eq 'y'){
 	for(@{$choice{$_[0]}}){
-		$config{$_}='' if(exists($config{$_}) && defined($config{$_}));
+		cfg($_) if(exists($config{$_}) && $config{$_} eq 'y' && $_ ne $_[0]);
 	}
 }
 dep($_[0]) if($config{$_[0]} ne ($config{$_[0]}="$_[1]"));
