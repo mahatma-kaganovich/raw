@@ -10,11 +10,11 @@ my %ord3;
 my %OPT=(
 	'subst'=>1,
 	'barrier'=>3, # separate concurrent from precursors (precursors have too many siblings)
-	'order'=>3,
+	'order'=>4,
 	'sed'=>1,
 );
 
-my @order=(\&order3,\&order1,\&order2,\&order3);
+my @order=(\&order4,\&order1,\&order2,\&order3,\&order4);
 
 # to load second/last
 my @reorder=(
@@ -219,6 +219,24 @@ sub order3{
 		return $ord3{$a}=$n+$dup+1;
 	}
 	$ord3{$a}=$dup+1;
+}
+
+# transform aliases to "constant.*[constant]" and simple grep possible "duplicates"
+# slow, but most safe
+sub order4{
+	my $k=$_[0];
+	$k=~s/^([a-z0-9]*)\*:/${1}_:/;
+	($k=~s/[\[\[\]*?].*[\[\[\]*?]/*/g)||
+	($k=~s/[\[\[\]*?]/*/g);
+	$k=~s/([^a-zA-Z0-9*] )/_/g;
+	$k=~s/\*/.*/g;
+	my $c=substr($k,0,2);
+	my $cnt=0;
+	for my $i (grep(/^$c/,@ord4)){
+		$cnt+=($k=~/^$i$/)||($i=~/^$k$/)
+	}
+	push @ord4,$k;
+	$cnt;
 }
 
 sub lines1_{
