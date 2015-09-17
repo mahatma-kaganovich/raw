@@ -231,12 +231,16 @@ sub order4{
 	$k=~s/([^a-zA-Z0-9*] )/_/g;
 	$k=~s/\*/.*/g;
 	my $c=substr($k,0,2);
-	my $cnt=0;
-	for my $i (grep(/^$c/,@ord4)){
-		$cnt+=($k=~/^$i$/)||($i=~/^$k$/)
+	$k.='$' if(!($k=~s/\.\*$//));
+	my %cnt;
+	for my $i (keys %{$ord4{$c}}){
+		if(($k=~/^$i/)||($i=~/^$k/)){
+			$cnt{$_}=undef for(keys %{$ord4{$c}->{$i}});
+		}
 	}
-	push @ord4,$k;
-	$cnt;
+	my $cnt=1;
+	$cnt++ while(exists($cnt{$cnt}));
+	$ord4{$c}->{$k}->{$cnt}=$cnt;
 }
 
 sub lines1_{
@@ -266,7 +270,7 @@ local i=""
 ';
 
 
-	@k_alias=keys %alias;
+	@k_alias=sort keys %alias;
 	my $n=0;
 	for (@k_alias) {
 		my $re=0;
