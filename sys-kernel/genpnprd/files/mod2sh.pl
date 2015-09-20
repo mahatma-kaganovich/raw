@@ -9,12 +9,11 @@ my %dep;
 my %ord3;
 my %OPT=(
 	'subst'=>1,
-	'barrier'=>3, # separate concurrent from precursors (precursors have too many siblings)
-	'order'=>4,
+	'order'=>3,
 	'sed'=>1,
 );
 
-my @order=(\&order4,\&order1,\&order2,\&order3,\&order4);
+my @order=(\&order5,\&order1,\&order2,\&order3);
 
 # to load second/last
 my @reorder=(
@@ -183,49 +182,13 @@ sub order2{
 	9999-length($a);
 }
 
-#todo: try to resolve "[...]" matches to best result
+# transform aliases to "constant.*[constant]" and compare bi-direct possible "duplicates"
+# + compare unque keyVALUE (reduce cases)
 sub order3{
-	my $a=$_[0];
-	my $dup=0;
-	if(exists($re{$a})){
-		$a=$re{$a};
-	}else{
-		if(my ($i)=$a=~/^(.*?\:.+?\*.*?):/){
-			$dup+=++$dup{$i};
-		}
-		$a=~s/([^a-zA-Z0-9\[\]*?] )/\\$1/g;
-		my $s=$a;
-		$a=~s/\*/.*/g;
-		$a=~s/\[.*?\]|\?/(?:\\\[.*?\\\]|.)/g;
-		$re{$_[0]}=$a;
-		return $ord3{$a}=1 if($a eq $s);
-	}
-	return $ord3{$a} if(exists($ord3{$a}));
-	my @l=grep(/^$a$/,@k_alias);
-	if($#l){
-		die "ERROR $s=$#l" if($#l<0);
-		my %ll;
-		$ll{join(' ',@{$alias{$_}})}=1 for (@l);
-		my @r=keys %ll;
-		return $ord3{$a}=$dup if ($#r>$OPT{'barrier'});
-		$ord3{$a}=$#r+1;
-		my $n=0;
-		for(@r){
-			if($_ ne $_[0]){
-				my $n1=order3($_);
-				$n=$n1 if($n1>$n);
-			}
-		}
-		return $ord3{$a}=$n+$dup+1;
-	}
-	$ord3{$a}=$dup+1;
-}
-
-# transform aliases to "constant.*[constant]" and simple grep possible "duplicates"
-# slow, but most safe
-sub order4{
+	my %v;
 	my $k=$_[0];
-	$k=~s/^([a-z0-9]*)\*:/${1}_:/;
+	$k=~s/([a-z]+)([0-9A-F]+)/$v{$1}.=$2;"$1$2"/ge;
+	$k=~s/^([a-zA-Z0-9]*)\*:/${1}_:/;
 	($k=~s/[\[\[\]*?].*[\[\[\]*?]/*/g)||
 	($k=~s/[\[\[\]*?]/*/g);
 	$k=~s/([^a-zA-Z0-9*] )/_/g;
@@ -235,12 +198,20 @@ sub order4{
 	my %cnt;
 	for my $i (keys %{$ord4{$c}}){
 		if(($k=~/^$i/)||($i=~/^$k/)){
-			$cnt{$_}=undef for(keys %{$ord4{$c}->{$i}});
+#			$cnt{$_}=undef for(values %{$ord4{$c}->{$i}});
+			while (my ($x1,$y1)=each %{$ord4{$c}->{$i}}){
+				while(my ($x,$y)=each %{$vars{$x1}}){
+					goto L1 if(exists($v{$x}) && $v{$x} ne $y);
+				}
+				$cnt{$y1}=undef;
+			L1:
+			}
 		}
 	}
 	my $cnt=1;
 	$cnt++ while(exists($cnt{$cnt}));
-	$ord4{$c}->{$k}->{$cnt}=$cnt;
+	$vars{$_[0]}=\%v;
+	$ord4{$c}->{$k}->{$_[0]}=$cnt;
 }
 
 sub lines1_{
