@@ -198,12 +198,11 @@ sub order3{
 	my %cnt;
 	for my $i (keys %{$ord4{$c}}){
 		if(($k=~/^$i/)||($i=~/^$k/)){
-#			$cnt{$_}=undef for(values %{$ord4{$c}->{$i}});
-			while (my ($x1,$y1)=each %{$ord4{$c}->{$i}}){
-				while(my ($x,$y)=each %{$vars{$x1}}){
-					goto L1 if(exists($v{$x}) && $v{$x} ne $y);
+			while (my ($x,$y)=each %{$ord4{$c}->{$i}}){
+				for(keys %{$vars{$x}}){ # while(each) wrong here
+					goto L1 if(exists($v{$_}) && $v{$_} ne $vars{$x}->{$_});
 				}
-				$cnt{$y1}=undef;
+				$cnt{$y}=undef;
 			L1:
 			}
 		}
