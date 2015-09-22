@@ -287,8 +287,8 @@ sub defaults{
 			cfg($i,'y') if($y && ($c eq '+' || !defined($defconfig{$i})));
 		}
 	}
-	for(values %config){
-		$_=undef if($_ eq '');
+	for(keys %config){
+		$config{$_}=undef if($config{$_} eq '');
 	}
 	msg($_[0]);
 }
