@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <fcntl.h>
 extern long init_module(void *, unsigned long, const char *);
 int main(int argc, char *argv[]){
 	if (argc<2) return 1;

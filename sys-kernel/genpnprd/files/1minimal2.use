@@ -17,7 +17,9 @@ fi
 use mdadm || use lvm || use evms || use device-mapper || KERNEL_CONFIG+=" -MD"
 [ "$VIRT" = 2 ] && {
 	# next remove some USB drivers and ACPI_HOTPLUG, may be useful under QEMU
-	KERNEL_CONFIG+=" -FW_LOADER -CPU_IDLE"
+#	KERNEL_CONFIG+=" -FW_LOADER -CPU_IDLE"
+	# keep ACPI_PROCESSOR (CPU_IDLE)
+	KERNEL_CONFIG+=" -FW_LOADER"
 	use usb || KERNEL_CONFIG+=" -USB"
 }
 use efi || KERNEL_CONFIG+=" -RELOCATABLE"
