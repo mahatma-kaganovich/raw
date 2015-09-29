@@ -1,0 +1,20 @@
+https://bugs.gentoo.org/show_bug.cgi?id=554794
+
+--- a/perl.h	2015-09-29 02:22:32.000000000 +0300
++++ b/perl.h	2015-09-29 02:26:15.695120071 +0300
+@@ -5585,7 +5585,14 @@ EXTCONST runops_proc_t PL_runops_std
+ EXTCONST runops_proc_t PL_runops_dbg
+   INIT(Perl_runops_debug);
+ 
+-#define EXT_MGVTBL EXTCONST MGVTBL
++/* PERL_GLOBAL_STRUCT_PRIVATE wants to keep global data like the
++ * magic vtables const, but this is incompatible with SWIG which
++ * does want to modify the vtables. */
++#ifdef PERL_GLOBAL_STRUCT_PRIVATE
++#  define EXT_MGVTBL EXTCONST MGVTBL
++#else
++#  define EXT_MGVTBL EXT MGVTBL
++#endif
+ 
+ #define PERL_MAGIC_READONLY_ACCEPTABLE 0x40
+ #define PERL_MAGIC_VALUE_MAGIC 0x80

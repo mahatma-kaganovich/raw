@@ -1,0 +1,11 @@
+--- a/Makefile.PL	2015-09-29 02:58:33.000000000 +0300
++++ b/Makefile.PL	2015-09-29 03:01:21.000000000 +0300
+@@ -2,6 +2,8 @@
+ use strict;
+ use warnings FATAL => 'all';
+ 
++push @ARGV,'MP_CCOPTS=-fgnu89-inline';
++
+ # useful for sub-Makefile.PL's to know whether they are invoked
+ # directly or via the top level Makefile.PL
+ $ENV{MOD_PERL_2_BUILD} = 1;
