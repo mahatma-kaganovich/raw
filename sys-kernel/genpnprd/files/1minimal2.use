@@ -14,7 +14,7 @@ elif [ "${VIRT:-0}" = 0 ]; then
 else
 	KERNEL_CONFIG+=" -TASKSTATS"
 fi
-use server && KERNEL_CONFIG+=" -IRQ_TIME_ACCOUNTING"
+#use server && KERNEL_CONFIG+=" -IRQ_TIME_ACCOUNTING"
 use mdadm || use lvm || use evms || use device-mapper || KERNEL_CONFIG+=" -MD"
 [ "$VIRT" = 2 ] && {
 	# next remove some USB drivers and ACPI_HOTPLUG, may be useful under QEMU
