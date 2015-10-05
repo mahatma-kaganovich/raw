@@ -8,3 +8,6 @@ HZ_100 &IOSCHED_DEADLINE DEFAULT_(?:NOOP|CFQ)= DEFAULT_DEADLINE
 # VM server: keep "cores" threads alive to force real cores distribution
 # equal to "nohz=off", but hardcode optimized
 [ "${VIRT:-0}" = 0 ] || KERNEL_CONFIG+=" -NO_HZ -NO_HZ_.+ HZ_PERIODIC"
+
+# 4.2 select
+KERNEL_CONFIG+=" -TASKS_RCU"
