@@ -11,10 +11,8 @@ First I remove vfork by default die to segfaults. But then I back to vfork
 on my servers, keepend defaults. So, to use vfork add "CloneFlags 16384" in
 mpm_itk config section.
 
-PS Removed CLONE_FS as freezed some shared FS.
-
 --- a/server/mpm/experimental/itk/itk.c	2014-02-28 11:04:38.000000000 +0300
-+++ b/server/mpm/experimental/itk/itk.c	2015-10-07 11:37:45.292890651 +0300
++++ b/server/mpm/experimental/itk/itk.c	2014-02-28 11:37:45.292890651 +0300
 @@ -104,6 +104,19 @@
  #define HARD_THREAD_LIMIT 1
  #endif
@@ -22,7 +20,7 @@ PS Removed CLONE_FS as freezed some shared FS.
 +#ifdef __linux__
 +#include <syscall.h>
 +#include <linux/version.h>
-+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,5,49) && defined(CLONE_VFORK)
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,5,49) && defined(CLONE_FS)
 +#define ITK_USE_CLONE 1
 +static int clone_flags1 = 0, clone_flags2 = 0;
 +#else
@@ -62,7 +60,7 @@ PS Removed CLONE_FS as freezed some shared FS.
  #endif
 +#if ITK_USE_CLONE
 +    clone_flags1 = SIGCHLD;
-+    clone_flags2 = SIGCHLD;
++    clone_flags2 = SIGCHLD | CLONE_FS;
 +#endif
  
      apr_cpystrn(ap_coredump_dir, ap_server_root, sizeof(ap_coredump_dir));
@@ -79,7 +77,7 @@ PS Removed CLONE_FS as freezed some shared FS.
 +        return err;
 +
 +    clone_flags1 = (SIGCHLD) ^ atoi(flags1);
-+    clone_flags2 = (SIGCHLD) ^ (flags2 ? atoi(flags2) : 0);
++    clone_flags2 = (SIGCHLD | CLONE_FS) ^ (flags2 ? atoi(flags2) : 0);
 +    return NULL;
 +}
 +#endif
@@ -93,7 +91,7 @@ PS Removed CLONE_FS as freezed some shared FS.
                "Set nice value for the given vhost, from -20 (highest priority) to 19 (lowest priority)."),
 +#if ITK_USE_CLONE
 +AP_INIT_TAKE12("CloneFlags", set_clone_flags, NULL, RSRC_CONF,
-+              "XOR to default (SIGCHLD, SIGCHLD) clone flags. See /usr/include/{linux,bits}/sched.h or 'man 2 clone'"),
++              "XOR to default (SIGCHLD, SIGCHLD|CLONE_FS) clone flags. See /usr/include/{linux,bits}/sched.h or 'man 2 clone'"),
 +#endif
  AP_GRACEFUL_SHUTDOWN_TIMEOUT_COMMAND,
  { NULL }
