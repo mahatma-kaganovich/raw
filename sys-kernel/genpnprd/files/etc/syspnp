@@ -12,6 +12,16 @@ SYS_FIND=/sys/devices
 export blkid_cache="/etc/blkid.sh.cache"
 
 pids=""
+onbatt=false
+
+_tee(){
+	local s="$1" i r=1
+	shift
+	for i in "${@}"; do
+		[[ -e "$i" ]] && echo "$s" >"$i" && r=0
+	done 2>/dev/null
+	return $r
+}
 
 single(){
 	grep -qF ">$1<" "${PNP_TMP}.$2" && return 1
@@ -606,9 +616,7 @@ detect_fs(){
 		pid=""
 		pids=""
 		rmmod scsi_wait_scan 2>/dev/null
-		[[ -n "$cmd_elevator" ]] && for i in /sys/class/block/*/queue/scheduler; do # embed
-			echo "$cmd_elevator" >$i
-		done
+		[[ -n "$cmd_elevator" ]] && _tee "$cmd_elevator" /sys/class/block/*/queue/scheduler # embed
 		/sbin/mdev -s block
 	fi
 	resume "$cmd_resume"
@@ -784,16 +792,18 @@ load_hand_made0(){
 	cpufreq cpufreq "drivers/cpufreq/\|powernow\|nforce2"
 	[[ -z "$freq" ]] && return
 	${cmd_nopowersave:-false} && return
-	[[ -z "$gov" ]] && if (grep -sq 1 /sys/class/power_supply/*/present && grep -sq 0 /sys/class/power_supply/*/online && ! grep -sq 1 /sys/class/power_supply/*/online) || grep -sq "state:.*off-line" /proc/acpi/ac_adapter/*/state || grep -sq "AC Power.*: 0" /proc/pmu/info; then
-		gov="conservative ondemand"
-	else
-		gov="ondemand conservative"
+	if grep -vsq "powersave\|userspace\|conservative\|ondemand\|performance" /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor; then
+		gov=
+	elif [[ -z "$gov" ]]; then
+		$onbatt && gov="conservative ondemand powersave" || gov="ondemand conservative performance"
 	fi
 	cpufreq_gov
 	rmmod freq_table >/dev/null 2>&1
-	for i in /sys/devices/system/cpu/sched_*_power_savings ; do
-		[[ -e "$i" ]] && echo 2 >$i 2>/dev/null
-	done
+	if $onbatt; then
+		_tee min_power /sys/class/scsi_host/*/link_power_management_policy
+		_tee 1 /sys/devices/system/cpu/cpufreq/*/ignore_nice_load /sys/module/*/parameters/power_save
+		_tee 2 /sys/devices/system/cpu/sched_*_power_savings
+	fi
 }
 
 load_misc(){
@@ -909,6 +919,11 @@ syspnp(){
 	done
 	[[ ${cmd_passwd:-false} != false ]] && [[ -n /etc/passwd ]] &&
 		echo "$cmd_passwd" >/etc/passwd
+
+	onbatt=false
+	if (grep -sq 1 /sys/class/power_supply/*/present && grep -sq 0 /sys/class/power_supply/*/online && ! grep -sq 1 /sys/class/power_supply/*/online) || grep -sq "state:.*off-line" /proc/acpi/ac_adapter/*/state || grep -sq "AC Power.*: 0" /proc/pmu/info; then
+		onbatt=true
+	fi
 
 	good_msg "Searching pnp"
 	override_modprobe
