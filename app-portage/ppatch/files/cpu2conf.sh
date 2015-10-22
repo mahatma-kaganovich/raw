@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# openmp: experimental for system-wide
+omp=false
+
 export LANG=C
 
 _c(){
@@ -37,12 +40,32 @@ _flags(){
 	grep -s "^$1	*:" /proc/cpuinfo|sort -u|sed -e "s/^$1	*: //" -e 's:,: :g'
 }
 
+_smp(){
+	local i
+	i=`grep "^$1[ 	]*: " /proc/cpuinfo` && i="${i##*: }" && echo $[i+$2]
+}
+
 conf_cpu(){
 local flags cpucaps f0= f1= f2= f3= i j i1 c
 flags=$(_flags flags)
 cpucaps=$(_flags cpucaps)
 f0=`_f -m{tune,cpu,arch}=native`
 f3='-malign-data=cacheline -momit-leaf-frame-pointer -mtls-dialect=gnu2 -fsection-anchors -minline-stringops-dynamically -maccumulate-outgoing-args'
+if i=`_smp processor 1 || _smp 'ncpus active' 0`; then
+	if [ "$i" = 1 ]; then
+		f1+=' -smp'
+		$omp && f3+=' -fopenmp-simd'
+	else
+		f1+=' smp'
+		$omp && f3+=' -fopenmp'
+	fi
+	echo "ncpu=$i"
+	i=$[i+1]
+	echo "ncpu1=$i"
+	echo "MAKEOPTS=\"-j$i -s\""
+else
+	$omp && f3+=' -fopenmp-simd'
+fi
 for i in $flags; do
 	i1="$i"
 	case "$i" in
@@ -76,14 +99,6 @@ fi
 echo "CFLAGS_NATIVE=\"$f0\""
 echo "CFLAGS_CPU=\"${j//--param /--param=}\""
 echo "CFLAGS_M=\"$f3\""
-if i=`grep "^processor[ 	]*: " /proc/cpuinfo`; then
-	i="${i##*: }"
-	i=$[i+1]
-	echo "ncpu=$i"
-	i=$[i+1]
-	echo "ncpu1=$i"
-	echo "MAKEOPTS=\"-j$i -s\""
-fi
 }
 
 conf_cpu
