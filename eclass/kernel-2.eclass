@@ -1453,6 +1453,7 @@ userspace(){
 		klcc="${S}/usr/bin/klcc"
 		sed -i -e 's:^\(\$prefix = "\):\1$ENV{S}:' "$klcc"
 	else
+		[ -e "$ROOT/usr/$libdir/klibc" ] || libdir=$(echo "$ROOT"/usr/lib*/klibc|sed -e 's:^.*/usr/::g' -e 's:/.*::g')
 		k="$ROOT/usr/$libdir/klibc"
 		klcc=klcc
 	fi
