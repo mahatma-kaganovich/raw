@@ -83,4 +83,10 @@ esac
 _iuse !system-sqlite && filterflag -Ofast -ffast-math
 _iuse gold && filterflag -Wl,--sort-section=alignment
 
+[ -n "$CFLAGS_x86" ] && _iuse abi_x86_32 && filterflag -fschedule-insns && {
+	[ -n "$CFLAGS_amd64" ] && export CFLAGS_amd64+=" -fschedule-insns"
+	[ -n "$CFLAGS_x32" ] && export CFLAGS_x32+=" -fschedule-insns"
+}
+
+
 }
