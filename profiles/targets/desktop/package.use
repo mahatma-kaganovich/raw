@@ -10,3 +10,4 @@ media-gfx/imagemagick opencl
 # global: use -gcdmaster -gnome-keyring
 app-cdr/cdrdao gcdmaster
 app-crypt/pinentry gnome-keyring
+dev-db/sqlite tools tcl

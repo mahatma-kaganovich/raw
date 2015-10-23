@@ -33,4 +33,4 @@ sci-libs/hdf5 -threads
 sci-libs/vtk rendering all-modules python xdmf2
 net-misc/tightvnc server
 net-misc/tigervnc server
-
+dev-db/sqlite -tools
