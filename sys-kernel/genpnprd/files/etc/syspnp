@@ -788,6 +788,8 @@ load_hand_made0(){
 		cpufreq cpufreq-nforce2
 		cpufreq powernow
 	;;
+#	UltraSPARC-IIe)return;; # ondemand & conservative kill him
+	UltraSPARC*)return;;
 	esac
 	cpufreq cpufreq "drivers/cpufreq/\|powernow\|nforce2"
 	[[ -z "$freq" ]] && return
