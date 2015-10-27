@@ -1,2 +1,6 @@
 USE="mmxext"
 CPU_FLAGS_X86="mmxext"
+CFLAGS="$CFLAGS -fsched-pressure -fsched-spec-load -fschedule-insns"
+CXXFLAGS="$CXXFLAGS -fsched-pressure -fsched-spec-load -fschedule-insns"
+FFLAGS="$CFLAGS"
+FCFLAGS="$CFLAGS"
