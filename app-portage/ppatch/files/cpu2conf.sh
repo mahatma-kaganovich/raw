@@ -50,7 +50,7 @@ local flags cpucaps f0= f1= f2= f3= i j i1 c
 flags=$(_flags flags)
 cpucaps=$(_flags cpucaps)
 f0=`_f -m{tune,cpu,arch}=native`
-f3='-malign-data=cacheline -momit-leaf-frame-pointer -mtls-dialect=gnu2 -fsection-anchors -minline-stringops-dynamically -maccumulate-outgoing-args -fsched-pressure -fsched-spec-load'
+f3='-malign-data=cacheline -momit-leaf-frame-pointer -mtls-dialect=gnu2 -fsection-anchors -minline-stringops-dynamically -maccumulate-outgoing-args'
 if i=`_smp processor 1 || _smp 'ncpus active' 0`; then
 	if [ "$i" = 1 ]; then
 		f1+=' -smp'
@@ -69,7 +69,6 @@ fi
 for i in $flags; do
 	i1="$i"
 	case "$i" in
-#	lm)f3+=' -fschedule-insns --param=sched-pressure-algorithm=2';;
 	sse|3dnowext)f1+=" $i mmxext";;&
 	sse)[ "`_flags fpu`" = yes ] && f3+=' -mfpmath=both' || f3+=' -mfpmath=sse';;
 	pni)f1+=' sse3';;

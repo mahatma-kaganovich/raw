@@ -1,9 +1,8 @@
 # some unsafe optimizations, not too affects code size & compilation time
 
 CFLAGS="$CFLAGS -fexcess-precision=fast -Ofast -ffast-math -ftree-vectorize -fivopts -fbranch-target-load-optimize"
-#CFLAGS="$CFLAGS -fsched-pressure -fsched-spec-load"
 # broken on x86 (https://gcc.gnu.org/bugzilla/show_bug.cgi?id=38768). I get worked exlude elfutils -ftracer
-#CFLAGS="$CFLAGS -fschedule-insns"
+#CFLAGS="$CFLAGS -fschedule-insns -fsched-pressure"
 # modulo. not too...
 CFLAGS="$CFLAGS -fmodulo-sched -fmodulo-sched-allow-regmoves -freschedule-modulo-scheduled-loops"
 # ?

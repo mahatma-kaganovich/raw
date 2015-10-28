@@ -1,6 +1,7 @@
 USE="mmxext"
 CPU_FLAGS_X86="mmxext"
-#CFLAGS="$CFLAGS -fsched-pressure -fschedule-insns --param=sched-pressure-algorithm=2"
-#CXXFLAGS="$CXXFLAGS -fsched-pressure -fschedule-insns --param=sched-pressure-algorithm=2"
+# conflicts with -ftracer, make code larger
+#CFLAGS="$CFLAGS -fsched-pressure -fschedule-insns --param=sched-pressure-algorithm=1"
+#CXXFLAGS="$CXXFLAGS -fsched-pressure -fschedule-insns --param=sched-pressure-algorithm=1"
 FFLAGS="$CFLAGS"
 FCFLAGS="$CFLAGS"
