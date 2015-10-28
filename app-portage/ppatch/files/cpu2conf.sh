@@ -69,7 +69,7 @@ fi
 for i in $flags; do
 	i1="$i"
 	case "$i" in
-	lm)f3+=' -fschedule-insns --param=sched-pressure-algorithm=2';;
+#	lm)f3+=' -fschedule-insns --param=sched-pressure-algorithm=2';;
 	sse|3dnowext)f1+=" $i mmxext";;&
 	sse)[ "`_flags fpu`" = yes ] && f3+=' -mfpmath=both' || f3+=' -mfpmath=sse';;
 	pni)f1+=' sse3';;
