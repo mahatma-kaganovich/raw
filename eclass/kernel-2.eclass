@@ -193,6 +193,7 @@ kernel-2_src_configure() {
 	local cflags="${KERNEL_CFLAGS}" aflags="${KERNEL_ASFLAGS}" ldflags="${KERNEL_LDFLAGS}"
 	if use custom-cflags; then
 		use custom-arch || filter-flags "-march=*" "-mcpu=*"
+		is-flagq -fsched-pressure && append-flags --param=sched-pressure-algorithm=2
 		[[ "$(gcc-version)" == 4.8 ]] && append-flags -fno-inline-functions
 		cflags="$(flags_nosp "$(_filter_f CFLAGS "-msse*" -mmmx -m3dnow -mavx "-mfpmath=*" '-flto*' '-*-lto-*' -fuse-linker-plugin) ${cflags}")" #"
 		aflags="$cflags" # at least now
