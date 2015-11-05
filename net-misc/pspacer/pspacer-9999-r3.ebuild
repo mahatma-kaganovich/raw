@@ -1,10 +1,13 @@
 
-ESVN_REPO_URI="http://pspacer.googlecode.com/svn/branches/devel/"
-inherit eutils subversion raw
+#ESVN_REPO_URI="http://pspacer.googlecode.com/svn/branches/devel/"
+EGIT_REPO_URI="https://github.com/mahatma-kaganovich/pspacer.git"
+EGIT_BRANCH="devel"
+inherit eutils git-2 raw
 
 DESCRIPTION="PSPacer is a precise software pacer of IP traffic for Linux"
 #HOMEPAGE="http://www.gridmpi.org/gridtcp.en.jsp"
-HOMEPAGE="http://code.google.com/p/pspacer/"
+#HOMEPAGE="http://code.google.com/p/pspacer/"
+HOMEPAGE="https://github.com/mahatma-kaganovich/pspacer/tree/devel"
 SRC_URI=""
 LICENSE="GPL-2"
 SLOT="0"
