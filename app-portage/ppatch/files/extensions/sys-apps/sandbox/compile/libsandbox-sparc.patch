@@ -1,0 +1,26 @@
+--- a/libsandbox/libsandbox.c	2015-09-20 10:54:55.000000000 +0300
++++ b/libsandbox/libsandbox.c	2015-11-12 21:17:25.000000000 +0300
+@@ -260,6 +260,14 @@ static char *resolve_path(const char *pa
+ 		 * can come up in cases like:
+ 		 * /dev/stderr -> fd/2 -> /proc/self/fd/2 -> /removed/file (deleted)
+ 		 */
++#if defined(__sparc__)
++		/* canonicalize_filename_mode() do "Bus error", keep pre-540828 here */
++		if (!ret && !strncmp(filtered_path, "/proc/", 6)) {
++			char *base = strrchr(filtered_path, '/');
++			if (base && strchr(base, ':'))
++				ret = filtered_path;
++		}
++#else
+ 		if (!ret && errno == ENOENT) {
+ 			ret = canonicalize_filename_mode(path, CAN_ALL_BUT_LAST);
+ 			if (ret) {
+@@ -267,7 +275,7 @@ static char *resolve_path(const char *pa
+ 				filtered_path = ret;
+ 			}
+ 		}
+-
++#endif
+ 		if (!ret) {
+ 			char tmp_str1[SB_PATH_MAX];
+ 			snprintf(tmp_str1, SB_PATH_MAX, "%s", path);
