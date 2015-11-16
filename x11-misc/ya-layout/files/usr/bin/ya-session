@@ -63,7 +63,7 @@ ENV="$cache/environment.$DSP"
 # 2run
 : ${YA_SESSION:="XF86SettingsManager XF86Panel XF86Desktop"}
 
-: ${YA_PROFILE:=ya$suff}
+: ${YA_PROFILE:=ya}
 # preferred: append to $YA_APP
 : ${YA_PROFILE_LXDE:="pcmanfm lxpanel lxterminal"}
 : ${YA_PROFILE_xfce:="xfdesktop xfce4-panel exo-open"}
@@ -452,7 +452,7 @@ tint2chk(){
 	[ -e "$prefapps" ] || {
 		grep -sh '^Exec=' "$HOME/.config/xfce4/panel/launcher"{*.rc,*/*.desktop}|sed -e 's:^Exec=::' -e 's:%[^ ]*$::' -e 's: *::g'|sort -u >>"$prefapps"
 	}
-	[ -e "$cache/desk-sh" ] || {
+	$minimal || [ -e "$cache/desk-sh" ] || {
 		i=`cat /etc/xdg/ya$suff/menu.xml "$obconfdir/menu.xml"`
 		i="${i##*execute=\"}"
 		i="${i%%\"*}"
