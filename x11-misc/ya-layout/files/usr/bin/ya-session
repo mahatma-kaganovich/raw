@@ -547,7 +547,7 @@ case "$1" in
 	tint2chk
 	continue
 ;;
---minimal);;
+--minimal)shift;continue;;
 --fixrc)
 	shift
 	fixml "${@}" <"$obconf" >"$obconf"'.$$$' && rename '.$$$' '' "$obconf"'.$$$'
