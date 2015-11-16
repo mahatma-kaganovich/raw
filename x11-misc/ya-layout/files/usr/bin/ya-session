@@ -457,7 +457,7 @@ tint2chk(){
 		i="${i##*execute=\"}"
 		i="${i%%\"*}"
 		desk="${i// \~/ $HOME}"
-		[ -n "${desk##* --tint2*}" ] && desk+=" --init --tint2"
+		[ -n "${desk##* --tint2*}" ] && desk+=" --init --tint2 $b --init"
 	}
 }
 

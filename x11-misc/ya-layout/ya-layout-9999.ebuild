@@ -53,6 +53,7 @@ src_install(){
 		cp /etc/xdg/tint2/tint2rc "${D}"/etc/xdg/ya/tint2rc &&
 		for i in 'task_font sans 12' 'panel_position top right horizontal' 'rounded 3' 'wm_menu 1' 'font_shadow 0' 'border_width 0' 'panel_padding 0 0 0' 'taskbar_padding 2 0 2' 'task_padding 0 0' 'panel_size 0 20'; do
 			sed -i -e "s:^${i%% *} = .*\$:${i%% *} = ${i#* }:" "${D}"/etc/xdg/ya/tint2rc
+			cp "${D}"/etc/xdg/ya{,minimal}/tint2rc
 		done
 		sed -i -e 's%YA_STARTUP:=XF86Desktop%YA_STARTUP:=TINT2%' "${D}"/usr/bin/ya-session
 	else
@@ -63,4 +64,6 @@ src_install(){
 	ewarn "Edit /etc/conf.d/autofs: MASTER_MAP_NAME=\"/usr/share/${PN}/auto.master\"
 Then do: \"ya-session --layout [user]\" - to copy minimal Desktop/*
 and, possible, restart [udev]"
+	dodir /usr/share/applications
+	keepdir /var/lib/ya
 }

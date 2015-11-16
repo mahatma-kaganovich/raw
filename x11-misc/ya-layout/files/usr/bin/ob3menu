@@ -861,6 +861,8 @@ echo "</openbox_pipe_menu>"';
 	close($F);
 }
 
+`${bin}tint2 -c $P{tint2}->[0] >&2 &` if(exists($P{'init'}) && exists($P{'tint2'}));
+
 print '<separator/>';
 for(sort keys %configs){
 	$i=substr($_,length($0)+1);

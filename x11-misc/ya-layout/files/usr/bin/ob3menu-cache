@@ -22,7 +22,7 @@ case "$cmd" in
 *ob3menu*\ --mime\ *)c+=" /usr/share/mime/globs /etc/fstab";;
 *mmaker\ *)mm=echo;;
 esac
-local k="${cmd%% --init *}:$LANG:`stat --printf=%Z $c $c1 ${c1//\/usr\/share/$HOME/.local/share}`" k1 mk="$m.${DISPLAY%.*}.key"
+local k="${cmd/ --init *--init}:$LANG:`stat --printf=%Z $c $c1 ${c1//\/usr\/share/$HOME/.local/share}`" k1 mk="$m.${DISPLAY%.*}.key"
 local mk1="${mk}1"
 if [ -e "$mk1" ]; then
 	k1="`xrandr`"
