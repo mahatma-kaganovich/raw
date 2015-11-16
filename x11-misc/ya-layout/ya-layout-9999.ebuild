@@ -66,5 +66,4 @@ Then do: \"ya-session --layout [user]\" - to copy minimal Desktop/*
 and, possible, restart [udev]"
 	dodir /usr/share/applications /var/lib/ya
 	perl "$D"/usr/bin/ob3menu >"$D"/var/lib/ya/menu.xml
-	dosym ../../../var/lib/ya/menu.xml /etc/xdg/ya-minimal/menu.xml
 }
