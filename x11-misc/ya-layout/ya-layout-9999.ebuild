@@ -65,9 +65,10 @@ src_install(){
 Then do: \"ya-session --layout [user]\" - to copy minimal Desktop/*
 and, possible, restart [udev]"
 	dodir /var/lib/ya
-	{
-		echo '<openbox_menu><menu id="root-menu" label="Openbox 3">'
-		perl "$D"/usr/bin/ob3menu
-		echo '</menu></openbox_menu>'
-	} >"$D"/var/lib/ya/menu.xml
+	touch "$D"/var/lib/ya/menu.xml
+	ob3config_preinst=yes
+}
+
+pkg_postinst(){
+	true
 }
