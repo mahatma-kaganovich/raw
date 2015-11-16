@@ -5,11 +5,15 @@
 
 shopt -s expand_aliases
 
+minimal=false
+suff=
+[[ "$XSESSION" == *minimal || "$1" == --minimal ]] && suff=-minimal && minimal=true
+
 wm=/usr/bin/openbox
 Desk=/usr/share/ya-layout/Desktop
-obconfdir="$HOME/.config/ya"
+obconfdir="$HOME/.config/ya$suff"
 obconf="$obconfdir/rc.xml"
-cache="$HOME/.cache/ya"
+cache="$HOME/.cache/ya$suff"
 sm='--sm-disable'
 sm2='--sm-client-disable'
 prefapps="$obconfdir/preferred-apps"
@@ -181,7 +185,7 @@ obconfig(){
 	done
 	ob3menuconfig --config - --fix <"$2" | \
 	sed -e 's:<animateIconify>yes</animateIconify>:<animateIconify>no</animateIconify>:' \
-		-e 's:<file>menu\.xml</file>:<file>../ya/menu.xml</file>:' \
+		-e 's:<file>menu\.xml</file>:<file>../ya'"$suff"'/menu.xml</file>:' \
 		-e 's:<!-- Menus -->:<!-- Menus -->\n    <mousebind button="Left" action="Press">\n      <action name="execute"><execute>~/.cache/ya/desk-sh $pointer</execute></action>\n    </mousebind>:' \
 		-e 's:</keyboard>:<!-- ya.keybind -->\
 <keybind key="C-Escape"><action name="ShowMenu"><menu>client-list-combined-menu</menu></action></keybind>\
@@ -543,6 +547,7 @@ case "$1" in
 	tint2chk
 	continue
 ;;
+--minimal);;
 --fixrc)
 	shift
 	fixml "${@}" <"$obconf" >"$obconf"'.$$$' && rename '.$$$' '' "$obconf"'.$$$'
