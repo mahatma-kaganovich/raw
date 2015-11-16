@@ -64,6 +64,10 @@ src_install(){
 	ewarn "Edit /etc/conf.d/autofs: MASTER_MAP_NAME=\"/usr/share/${PN}/auto.master\"
 Then do: \"ya-session --layout [user]\" - to copy minimal Desktop/*
 and, possible, restart [udev]"
-	dodir /usr/share/applications /var/lib/ya
-	perl "$D"/usr/bin/ob3menu >"$D"/var/lib/ya/menu.xml
+	dodir /var/lib/ya
+	{
+		echo '<openbox_pipe_menu>'
+		perl "$D"/usr/bin/ob3menu
+		echo '</openbox_pipe_menu>'
+	} >"$D"/var/lib/ya/menu.xml
 }
