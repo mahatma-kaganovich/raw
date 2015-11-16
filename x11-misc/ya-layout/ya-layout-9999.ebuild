@@ -66,4 +66,5 @@ Then do: \"ya-session --layout [user]\" - to copy minimal Desktop/*
 and, possible, restart [udev]"
 	dodir /usr/share/applications
 	keepdir /var/lib/ya
+	dosym ../../../var/lib/ya/menu.xml /etc/xdg/ya-minimal/menu.xml
 }
