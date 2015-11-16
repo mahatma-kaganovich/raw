@@ -63,7 +63,7 @@ ENV="$cache/environment.$DSP"
 # 2run
 : ${YA_SESSION:="XF86SettingsManager XF86Panel XF86Desktop"}
 
-: ${YA_PROFILE:=ya}
+: ${YA_PROFILE:=ya$suff}
 # preferred: append to $YA_APP
 : ${YA_PROFILE_LXDE:="pcmanfm lxpanel lxterminal"}
 : ${YA_PROFILE_xfce:="xfdesktop xfce4-panel exo-open"}
@@ -186,7 +186,7 @@ obconfig(){
 	ob3menuconfig --config - --fix <"$2" | \
 	sed -e 's:<animateIconify>yes</animateIconify>:<animateIconify>no</animateIconify>:' \
 		-e 's:<file>menu\.xml</file>:<file>../ya'"$suff"'/menu.xml</file>:' \
-		-e 's:<!-- Menus -->:<!-- Menus -->\n    <mousebind button="Left" action="Press">\n      <action name="execute"><execute>~/.cache/ya/desk-sh $pointer</execute></action>\n    </mousebind>:' \
+		-e 's:<!-- Menus -->:<!-- Menus -->\n    <mousebind button="Left" action="Press">\n      <action name="execute"><execute>~/.cache/ya'"$suff"'/desk-sh $pointer</execute></action>\n    </mousebind>:' \
 		-e 's:</keyboard>:<!-- ya.keybind -->\
 <keybind key="C-Escape"><action name="ShowMenu"><menu>client-list-combined-menu</menu></action></keybind>\
 <keybind key="Menu"><action name="ShowMenu"><menu>root-menu</menu></action></keybind>\
@@ -391,7 +391,7 @@ preferred(){
 }
 
 sess(){
-	export XDG_MENU_PREFIX="${YA_PROFILE,,}-" DESKTOP_SESSION="ya" DISPLAY
+	export XDG_MENU_PREFIX="${YA_PROFILE,,}-" DESKTOP_SESSION="ya$suff" DISPLAY
 	# SESSION_MANAGER=
 }
 
@@ -446,14 +446,14 @@ xssaver(){
 }
 
 tint2chk(){
-	local a='/etc/xdg/ya/tint2rc' b="$obconfdir/tint2rc"
+	local a="/etc/xdg/ya$suff/tint2rc" b="$obconfdir/tint2rc"
 	[ -s "$b" ] && return
 	[ -s $a ] && cp $a "$b"
 	[ -e "$prefapps" ] || {
 		grep -sh '^Exec=' "$HOME/.config/xfce4/panel/launcher"{*.rc,*/*.desktop}|sed -e 's:^Exec=::' -e 's:%[^ ]*$::' -e 's: *::g'|sort -u >>"$prefapps"
 	}
 	[ -e "$cache/desk-sh" ] || {
-		i=`cat /etc/xdg/ya/menu.xml "$obconfdir/menu.xml"`
+		i=`cat /etc/xdg/ya$suff/menu.xml "$obconfdir/menu.xml"`
 		i="${i##*execute=\"}"
 		i="${i%%\"*}"
 		desk="${i// \~/ $HOME}"
@@ -611,13 +611,13 @@ Launcher:
 		[ "$DSP1" != :0 ] && setxkbmap $i -print|xkbcomp - $DISPLAY
 	}
 	xprop -root -remove _NET_NUMBER_OF_DESKTOPS -remove _NET_DESKTOP_NAMES -remove _NET_CURRENT_DESKTOP
-	envir ya
+	envir ya$suff
 	[ -s "$obconf" ] || obconfig "$obconf" $(_1cfg openbox/rc.xml)
 	[ "$YA_STARTUP" = TINT2 ] && tint2chk
-	cat {/etc/X11,/etc/xdg/ya,"$HOME"/.config/ya}/Xresources "$HOME/.Xresources" 2>/dev/null  | xrdb -merge
+	cat {/etc/X11,/etc/xdg/ya$suff,"$HOME"/.config/ya$suff}/Xresources "$HOME/.Xresources" 2>/dev/null  | xrdb -merge
 	xrandr >"$cache/menu.xml.$DSP1.key1" &
 	xssaver
-	[ -n "$desk" ] && i=`_1cfg "ya/wallpaper{$DSP,${DSP%:*},${DSP%.*},}.*"` && case "$desk" in
+	[ -n "$desk" ] && i=`_1cfg "ya$suff/wallpaper{$DSP,${DSP%:*},${DSP%.*},}.*"` && case "$desk" in
 	*pcmanfm*)desk+=" -w $i";;
 	esac
 	for i in "$cache/desk.kEy.$DSP".*; do
