@@ -66,8 +66,8 @@ Then do: \"ya-session --layout [user]\" - to copy minimal Desktop/*
 and, possible, restart [udev]"
 	dodir /var/lib/ya
 	{
-		echo '<openbox_pipe_menu>'
+		echo '<openbox_menu><menu id="root-menu" label="Openbox 3">'
 		perl "$D"/usr/bin/ob3menu
-		echo '</openbox_pipe_menu>'
+		echo '</menu></openbox_menu>'
 	} >"$D"/var/lib/ya/menu.xml
 }
