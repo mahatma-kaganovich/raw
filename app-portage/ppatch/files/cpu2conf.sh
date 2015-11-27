@@ -5,8 +5,10 @@ omp=false
 
 export LANG=C
 
+ct='--help=target -v -Q'
+
 _c(){
-	gcc "${@}" --help=target -v 2>&1
+	gcc "${@}" $ct 2>&1
 }
 
 _c1(){
@@ -24,7 +26,7 @@ _f(){
 
 _cmp(){
 	local i i0 i1 ok
-	if i0=`echo "$c0"|grep -F "$1"` &&  i=`echo "$c"|grep -F "$1"`; then
+	if i0=`echo "$c0"|grep "$1"` &&  i=`echo "$c"|grep "$1"`; then
 		for i in $i; do
 			[ -z "${i##/*}" ] && continue
 			ok=true
@@ -46,14 +48,14 @@ _smp(){
 }
 
 conf_cpu(){
-local flags cpucaps f0= f1= f2= f3= i j i1 c
+local flags cpucaps f0= f1= f2= f3= i j i1 j1 c c0 c1
 flags=$(_flags flags)
 cpucaps=$(_flags cpucaps)
 f0=`_f -m{tune,cpu,arch}=native`
 f3='-malign-data=cacheline -momit-leaf-frame-pointer -mtls-dialect=gnu2 -fsection-anchors -minline-stringops-dynamically -maccumulate-outgoing-args'
 if i=`_smp processor 1 || _smp 'ncpus active' 0`; then
 	if [ "$i" = 1 ]; then
-		f1+=' -smp'
+		f1+=' -smp -numa'
 		$omp && f3+=' -fopenmp-simd'
 	else
 		f1+=' smp'
@@ -66,6 +68,9 @@ if i=`_smp processor 1 || _smp 'ncpus active' 0`; then
 else
 	$omp && f3+=' -fopenmp-simd'
 fi
+case "`cat /proc/cpuinfo`" in
+*GenuineTMx86*)f3="${f3/cacheline/abi} -falign-functions=0 -falign-jumps=0 -falign-loops=0 -falign-labels=0 -mno-align-stringops";;&
+esac
 for i in $flags; do
 	i1="$i"
 	case "$i" in
@@ -90,7 +95,15 @@ i="${i//  / }"
 [ -n "${i// }" ] && echo "CPU_FLAGS_X86=\"\$CPU_FLAGS_X86 $i\""
 j=
 if c0=`_c` && c=`_c $f0`; then
-	j="$(_cmp '/cc1 -quiet -v ' '')$(_cmp '/as ' '-Wa,')"
+	j="$(_cmp '/cc1 -v \|/cc1 -quiet -v ' '')$(_cmp '/as ' '-Wa,')"
+	[[ "$ct" == *-Q* ]] && {
+		# remove all -mno-... if no matter
+		j1=`echo " $j"|sed -e 's: -mno-[^ 	]*::g'`
+		c1=`_c $j1`
+		i=`echo " $c"|grep '^[ 	]*-'`
+		i1=`echo " $c1"|grep '^[ 	]*-'`
+		[ "$i" = "$i1" ] && c="$c1" && j="$j1"
+	}
 	i1=" $j "
 	for i in $flags $cpucaps; do
 		(echo "$c"|grep -q "^ *-m$i ") && [ -n "${i1##* -m$i *}" ] && j+=" -m$i" && i1+=" -m$i" && f0+=" -m$i"
