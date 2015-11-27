@@ -26,7 +26,7 @@ if [[ ${ETYPE} == sources ]]; then
 IUSE="${IUSE} +build-kernel custom-cflags +pnp +compressed integrated
 	netboot custom-arch embed-hardware
 	kernel-firmware +sources pnponly lzma xz lzo lz4
-	external-firmware xen +smp kernel-tools +multitarget +multislot thin
+	external-firmware xen +smp kernel-tools +multitarget 64-bit-bfd +multislot thin
 	lvm evms device-mapper unionfs luks gpg iscsi e2fsprogs mdadm
 	lguest acpi klibc +genkernel monolythe update-boot"
 DEPEND="${DEPEND}
@@ -832,8 +832,10 @@ native|:native|native:native)
 	CF1 -SCHED_{SMT,MC} -X86_{UP_APIC,TSC,PAT,MSR,MCE,CMOV,X2APIC} -MTRR -INTEL_IDLE -KVM_INTEL -KVM_AMD -SPARSE_IRQ -CPUSETS -INTEL_TXT
 	case "$srcarch" in
 	x86|i386)
-		use multitarget && CF1 -64BIT
-		use multitarget && [ "$KERNEL_ARCH" = x86_64 ] && CF1 64BIT
+		if use multitarget || use 64-bit-bfd; then
+			CF1 -64BIT
+			[ "$KERNEL_ARCH" = x86_64 ] && CF1 64BIT
+		fi
 		CF1 -XEN # -KVM
 		use lguest || CF1 -{PARAVIRT,LGUEST}{,_GUEST} -VIRTUALIZATION -HYPERVISOR_GUEST
 	;;
@@ -852,7 +854,7 @@ native|:native|native:native)
 		mtrr)CF1 ${i^^};;
 		pae)CF1 X86_PAE $m64g;;
 		mp)CF1 SMP;; # ?
-		lm)use multitarget && CF1 64BIT;;
+		lm)(use multitarget || use 64-bit-bfd) && CF1 64BIT;;
 		cmp_legacy)CF1 SMP SCHED_MC -SCHED_SMT;;
 		up)ewarn "Running SMP on UP. Recommended useflag '-smp' and '-SMP' in ${KERNEL_CONF}";;
 		est)freq+=" X86_ACPI_CPUFREQ";;
@@ -1077,7 +1079,7 @@ arch(){
 	local h="${1:-${CTARGET:-${CHOST}}}"
 	case ${h} in
 		# x86 profile sometimes buggy. to kernel when not 32/64 - do old
-		i?86*) ( [[ -n "$2" ]] || ( use multitarget && [[ "$(cflg)" == native ]] ) ) &&
+		i?86*) ( [[ -n "$2" ]] || ( (use multitarget || use 64-bit-bfd) && [[ "$(cflg)" == native ]] ) ) &&
 			echo "x86" || echo "i386"
 		;;
 		x86_64*) [[ -z "$2" ]] && use multitarget && [[ "$(cflg)" == native ]] &&
@@ -1186,7 +1188,7 @@ kernel-2_src_prepare(){
 	sed -i -e 's:^#if 0$:#if 1:' drivers/net/tokenring/tms380tr.c
 	# deprecated
 	sed -i -e 's:defined(@:(@:' kernel/timeconst.pl
-	if use multitarget && test_cc -S -m64 -march=nocona && ! test_cc -S -m64 2>/dev/null; then
+	if (use multitarget || use 64-bit-bfd) && test_cc -S -m64 -march=nocona && ! test_cc -S -m64 2>/dev/null; then
 		einfo "-m64 arch fix"
 		i=" -march=nocona -mno-mmx -mno-sse -mno-sse2 -mno-sse3"
 		sed -i -e "s/ -mcmodel=small/ -mcmodel=small -m64 $i/" arch/x86/boot/compressed/Makefile

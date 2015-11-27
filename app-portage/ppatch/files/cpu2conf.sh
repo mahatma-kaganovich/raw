@@ -48,7 +48,7 @@ _smp(){
 }
 
 conf_cpu(){
-local flags cpucaps f0= f1= f2= f3= i j i1 j1 c c0 c1
+local flags cpucaps f0= f1= f2= f3= i j i1 j1 c c0 c1 lm=false
 flags=$(_flags flags)
 cpucaps=$(_flags cpucaps)
 f0=`_f -m{tune,cpu,arch}=native`
@@ -77,6 +77,7 @@ for i in $flags; do
 	sse|3dnowext)f1+=" $i mmxext";;&
 	sse)[ "`_flags fpu`" = yes ] && f3+=' -mfpmath=both' || f3+=' -mfpmath=sse';;
 	pni)f1+=' sse3';;
+	lm)lm=true;;
 	*)
 		if (grep "^$i1 " /usr/portage/profiles/use.desc ; grep "^[^ 	]*:$i " /usr/portage/profiles/use.local.desc)|grep -q 'CPU\|processor\|chip\|instruction'; then
 			f1+=" $i"
@@ -86,6 +87,7 @@ for i in $flags; do
 	;;
 	esac
 done
+$lm && f1+=" 64-bit-bfd" || f1+=" -64-bit-bfd"
 f3=`_f $f3`
 f1="${f1# }"
 f2="${f2# }"
