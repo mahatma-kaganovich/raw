@@ -4,9 +4,11 @@ Trying to support clustering (multiple access to cache file):
 3) "CacheWriteInterval 0" set "realtime" cache sync mode.
 
 "CacheWriteInterval 0" is experimental and if used "IN MX ..."
-clustering - possible not required.
+
+fixed
+
 --- a/smf-grey.c	2013-05-20 08:12:46.000000000 +0300
-+++ b/smf-grey.c	2015-03-30 17:35:43.000000000 +0300
++++ b/smf-grey.c	2015-12-02 16:57:26.000000000 +0300
 @@ -1,5 +1,6 @@
  /*  Copyright (C) 2005, 2006 by Eugene Kurmanin <me@kurmanin.info>
   *  Additional changes by Tim Kleingeld <thm-smf@takm.com>
@@ -14,7 +16,15 @@ clustering - possible not required.
   *
   *  This program is free software; you can redistribute it and/or modify
   *  it under the terms of the GNU General Public License as published by
-@@ -242,6 +243,10 @@ static sfsistat smf_close(SMFICTX *);
+@@ -43,6 +44,7 @@
+ #include <syslog.h>
+ #include <time.h>
+ #include <unistd.h>
++#include <sys/file.h>
+ 
+ /* How long between cache writes */
+ #define CACHE_WRITE_INTERVAL	120
+@@ -242,6 +244,10 @@ static sfsistat smf_close(SMFICTX *);
  static sfsistat smf_data(SMFICTX *);
  #endif
  
@@ -25,7 +35,16 @@ clustering - possible not required.
  static void strscpy(register char *dst, register const char *src, size_t size) {
      register size_t i;
  
-@@ -410,7 +415,7 @@ static void cache_dump(char *file) {
+@@ -386,7 +392,7 @@ static int compute_delay(struct context
+ 		    !dnsbl->fail_reported) {
+ 		dnsbl->fail_reported = 1;
+ 		syslog(LOG_INFO, 
+-		    "[INFO] Temporarily disabling DNSBL %s due to %d failures in %ds.\n",
++		    "[INFO] Temporarily disabling DNSBL %s due to %d failures in %lds.\n",
+ 		    dnsbl->name, dnsbl->fail_count, t - dnsbl->first_fail);
+ 	    }
+ 	}
+@@ -410,7 +416,7 @@ static void cache_dump(char *file) {
      static int last_write_successful;
      static time_t last_rewrite;
      struct stat orig_stat;
@@ -34,7 +53,7 @@ clustering - possible not required.
      unsigned long i, size = hash_size(HASH_POWER);
      cache_item *it, **parent;
      time_t curtime = time(NULL);
-@@ -433,30 +438,37 @@ static void cache_dump(char *file) {
+@@ -433,30 +439,37 @@ static void cache_dump(char *file) {
      }
      if (conf.always_rewrite) rewrite = 1;
  
@@ -86,7 +105,7 @@ clustering - possible not required.
      if (rewrite) {
  	fprintf(dump, "smf-grey 2 4\n");
      }
-@@ -507,54 +519,63 @@ static void cache_dump(char *file) {
+@@ -507,54 +520,63 @@ static void cache_dump(char *file) {
  	    it = *parent;
  	}
      }
@@ -126,9 +145,9 @@ clustering - possible not required.
 -	    records, time(NULL)-curtime);
 -	
 +    cache_stat.st_size = 0;
-+    /* broken fs driver? */
-+//    if (dump) flock(fileno(dump), LOCK_UN);
-+//    if (dump0) flock(fileno(dump0), LOCK_UN);
++    /* broken fs driver? bad distributed unlock? usually close() is enought */
++    if (dump) flock(fileno(dump), LOCK_UN);
++    if (dump0) flock(fileno(dump0), LOCK_UN);
 +    if (!error) {
 +	last_write_successful = 1;
 +	fstat(fileno(dump), &cache_stat);
@@ -137,14 +156,14 @@ clustering - possible not required.
 +	else if (rewrite) {
 +	    last_rewrite = curtime;
 +	    syslog(LOG_INFO, 
-+		"[INFO] cache rewrite of %d records completed in %d seconds\n",
++		"[INFO] cache rewrite of %d records completed in %ld seconds\n",
 +		records, time(NULL)-curtime);
 +	}
 +    }
 +ex:
 +    if (error && rewrite && dump) {
 +	unlink(newfile);
-+	close(dump);
++	fclose(dump);
      }
 +    if (dump0) fclose(dump0);
  }
@@ -182,7 +201,7 @@ clustering - possible not required.
      }
      while (!feof(f)) {
  	int i;
-@@ -588,6 +609,11 @@ static void cache_load(char *file) {
+@@ -588,6 +610,11 @@ static void cache_load(char *file) {
  	it = cache[new.hash & hash_mask(HASH_POWER)];
  	while (it) {
  	    if (it->hash == new.hash && !strcmp(it->item, new.item)) {
@@ -194,7 +213,7 @@ clustering - possible not required.
  		new.next = it->next;
  		SAFE_FREE(it->item);
  		*it = new;
-@@ -665,6 +691,7 @@ static void cache_put(const char *key, l
+@@ -665,6 +692,7 @@ static void cache_put(const char *key, l
  	if (it->hash == hash && it->exptime > curtime && it->item && !strcmp(key, it->item)) {
  	    if (mode == CACHE_OVER) {
  		if (it->status != status || it->delay != delay) {
@@ -202,7 +221,7 @@ clustering - possible not required.
  		    it->write_status = ST_NOT_WRITTEN;
  		}
  		it->status = status;
-@@ -692,6 +719,7 @@ static void cache_put(const char *key, l
+@@ -692,6 +720,7 @@ static void cache_put(const char *key, l
  	    it->exptime = curtime + ttl;
  	    it->delay = delay;
  	    it->outstanding = outstanding_delta;
@@ -210,7 +229,7 @@ clustering - possible not required.
  	    return;
  	}
  	parent = it;
-@@ -709,6 +737,7 @@ static void cache_put(const char *key, l
+@@ -709,6 +738,7 @@ static void cache_put(const char *key, l
  	    parent->next = it;
  	else
  	    cache[hash & hash_mask(HASH_POWER)] = it;
@@ -218,7 +237,7 @@ clustering - possible not required.
      }
  }
  
-@@ -1146,7 +1175,10 @@ static int greylist(struct context *cont
+@@ -1146,7 +1176,10 @@ static int greylist(struct context *cont
  	    memset(&new_config, 0, sizeof new_config);
  	}
      }
@@ -230,7 +249,7 @@ clustering - possible not required.
  	last_cache_write = curtime;
  	cache_dump(conf.cache_path);
      }
-@@ -1361,6 +1393,12 @@ static sfsistat smf_envrcpt(SMFICTX *ctx
+@@ -1361,6 +1394,12 @@ static sfsistat smf_envrcpt(SMFICTX *ctx
      strtolower(context->recipient);
      if (conf.tos && to_check(context->recipient)) return SMFIS_CONTINUE;
      stat = greylist(context);
@@ -243,7 +262,7 @@ clustering - possible not required.
      if (stat == 2) {
  	do_sleep(1);
  	smfi_setreply(ctx, "550", "5.1.3", "Too many block lists - check http://www.robtex.com/rbls.html");
-@@ -1535,8 +1573,10 @@ int main(int argc, char **argv) {
+@@ -1535,8 +1574,10 @@ int main(int argc, char **argv) {
      ret = smfi_main();
      if (ret != MI_SUCCESS) syslog(LOG_ERR, "[ERROR] terminated due to a fatal error");
      if (cache) {
