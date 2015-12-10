@@ -67,6 +67,10 @@ xf86-video-siliconmotion|vlc)appendflag -w;;
 libX11|wget)_isflag -Os && _isflag -Ofast -ffast-math -funsafe-math-optimizations && ! _isflag -fno-unsafe-math-optimizations && appendflag -fno-unsafe-math-optimizations -fno-signed-zeros -fno-trapping-math -fassociative-math -freciprocal-math;;
 cairo)[[ "$PV" == 1.12.16* ]] && appendflag -fno-lto;;
 udev)filterflag -Wl,--sort-section=alignment;; # gold
+opus)
+	filterflag -Ofast -ffast-math
+#	export enable_float_approx=yes
+;;
 # 5.1
 gccxml|xemacs|devil|vtun|irda-utils|wmmon|bbrun|diffball|ldns|rp-l2tp)appendflag -std=gnu89;;
 sessreg|ldns)export CPPFLAGS="$CPPFLAGS -P";;
