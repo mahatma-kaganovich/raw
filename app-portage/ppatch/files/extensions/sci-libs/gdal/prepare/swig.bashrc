@@ -1,0 +1,1 @@
+sed -i -e 's:# wrapped :// wrapped :' "$S"/swig/include/perl/ogr_perl.i
