@@ -983,6 +983,7 @@ native|:native|native:native)
     ;;
     esac
 	use xen && CF1 XEN
+	CF1 MNATIVE
 ;;
 i386)CF1 M386 MATH_EMULATION;;
 i486)CF1 M486 MATH_EMULATION;;
