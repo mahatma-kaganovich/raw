@@ -14,7 +14,8 @@ MY_P="${PN}-${MY_PV}"
 SRC_PATH="stable"
 [[ ${PV} = *_rc* ]] && SRC_PATH="rc"
 
-SRC_URI="mirror://samba/${SRC_PATH}/${MY_P}.tar.gz"
+SRC_URI="mirror://samba/${SRC_PATH}/${MY_P}.tar.gz
+	https://dev.gentoo.org/~axs/distfiles/samba-disable-python-patches-4.3.3.tar.xz"
 KEYWORDS="~amd64 ~hppa ~x86"
 [[ ${PV} = *_rc* ]] && KEYWORDS="~hppa"
 
@@ -115,6 +116,8 @@ src_prepare() {
 	use sasl || sed -i -e 's:HAVE_SASL:HAVE_SASL_:' source4/auth/wscript_configure
 	sed -i -e 's:/tmp/ctdb.socket:/var/run/ctdb/ctdb.socket:g' {ctdb/doc,docs-xml/smbdotconf/misc}/*ml
 	epatch ${PATCHES[@]}
+	epatch "${WORKDIR}/patches"
+	epatch_user
 	# samba-4.2.3-heimdal_compilefix.patch
 	sed -i -e 's:tgs_use_strongest_session_key:svc_use_strongest_session_key:' -e 's:as_use_strongest_session_key:tgt_use_strongest_session_key:' source4/kdc/kdc.c
 	has_version '<app-crypt/heimdal-1.6.99' && sed -i -e 's:HDB_ERR_WRONG_REALM:HDB_ERR_NOENTRY:' source4/kdc/db-glue.c
