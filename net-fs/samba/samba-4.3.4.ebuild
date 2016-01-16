@@ -188,7 +188,7 @@ multilib_src_configure() {
 			--without-ads
 			--without-aio-support
 			--disable-avahi
-			--without-cluster-support
+			$(use_with cluster cluster-support)
 			--disable-cups
 			--without-dmapi
 			--without-fam
