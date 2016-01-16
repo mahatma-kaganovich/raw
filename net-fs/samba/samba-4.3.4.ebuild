@@ -46,7 +46,7 @@ CDEPEND="${PYTHON_DEPS}
 	sys-apps/attr[${MULTILIB_USEDEP}]
 	sys-libs/libcap
 	>=sys-libs/ldb-1.1.24[${MULTILIB_USEDEP}]
-	sys-libs/ncurses:0=
+	sys-libs/ncurses:0=[${MULTILIB_USEDEP}]
 	>=sys-libs/nss_wrapper-1.0.3[${MULTILIB_USEDEP}]
 	>=sys-libs/talloc-2.1.3[python,${PYTHON_USEDEP},${MULTILIB_USEDEP}]
 	>=sys-libs/tdb-1.3.7[python,${PYTHON_USEDEP},${MULTILIB_USEDEP}]
@@ -63,7 +63,7 @@ CDEPEND="${PYTHON_DEPS}
 	fam? ( virtual/fam )
 	gnutls? ( dev-libs/libgcrypt:0
 		>=net-libs/gnutls-1.4.0 )
-	ldap? ( net-nds/openldap )
+	ldap? ( net-nds/openldap[${MULTILIB_USEDEP}] )
 	afs? ( net-fs/openafs )
 	sasl? ( dev-libs/cyrus-sasl )
 	|| (
@@ -194,7 +194,7 @@ multilib_src_configure() {
 			--without-fam
 			--disable-gnutls
 			--disable-iprint
-			--without-ldap
+			$(use_with ldap)
 			--without-pam
 			--without-pam_smbpass
 			--without-quotas
