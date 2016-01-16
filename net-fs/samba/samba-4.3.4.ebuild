@@ -14,8 +14,7 @@ MY_P="${PN}-${MY_PV}"
 SRC_PATH="stable"
 [[ ${PV} = *_rc* ]] && SRC_PATH="rc"
 
-SRC_URI="mirror://samba/${SRC_PATH}/${MY_P}.tar.gz
-	https://dev.gentoo.org/~axs/distfiles/samba-disable-python-patches-4.3.3.tar.xz"
+SRC_URI="mirror://samba/${SRC_PATH}/${MY_P}.tar.gz"
 KEYWORDS="~amd64 ~hppa ~x86"
 [[ ${PV} = *_rc* ]] && KEYWORDS="~hppa"
 
@@ -118,9 +117,9 @@ src_prepare() {
 	epatch ${PATCHES[@]}
 
 	# install the patches from tarball(s)
-	EPATCH_SUFFIX="patch" \
-	EPATCH_FORCE="yes" \
-	epatch "${WORKDIR}/patches"
+#	EPATCH_SUFFIX="patch" \
+#	EPATCH_FORCE="yes" \
+#	epatch "${WORKDIR}/patches"
 
 	# Allow user patches
 	epatch_user
