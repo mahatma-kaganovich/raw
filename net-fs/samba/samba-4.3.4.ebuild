@@ -116,7 +116,13 @@ src_prepare() {
 	use sasl || sed -i -e 's:HAVE_SASL:HAVE_SASL_:' source4/auth/wscript_configure
 	sed -i -e 's:/tmp/ctdb.socket:/var/run/ctdb/ctdb.socket:g' {ctdb/doc,docs-xml/smbdotconf/misc}/*ml
 	epatch ${PATCHES[@]}
+
+	# install the patches from tarball(s)
+	EPATCH_SUFFIX="patch" \
+	EPATCH_FORCE="yes" \
 	epatch "${WORKDIR}/patches"
+
+	# Allow user patches
 	epatch_user
 	# samba-4.2.3-heimdal_compilefix.patch
 	sed -i -e 's:tgs_use_strongest_session_key:svc_use_strongest_session_key:' -e 's:as_use_strongest_session_key:tgt_use_strongest_session_key:' source4/kdc/kdc.c
