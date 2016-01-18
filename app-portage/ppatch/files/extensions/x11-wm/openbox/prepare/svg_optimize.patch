@@ -1,0 +1,27 @@
+--- a/obrender/image.c	2013-09-23 11:25:27.000000000 +0300
++++ b/obrender/image.c	2013-09-23 11:38:23.000000000 +0300
+@@ -589,17 +589,15 @@ RsvgLoader* LoadWithRsvg(gchar *path,
+     for (y = 0; y < *height; ++y) {
+         gint x;
+         for (x = 0; x < *width; ++x) {
+-            guchar a = in_row[x] >> 24;
+-            guchar r = (in_row[x] >> 16) & 0xff;
+-            guchar g = (in_row[x] >> 8) & 0xff;
+-            guchar b = in_row[x] & 0xff;
++            guint32 p = in_row[x];
++            guint32 a = p >> 24;
+             out_row[x] =
+-                ((r * 256 / (a + 1)) << RrDefaultRedOffset) +
+-                ((g * 256 / (a + 1)) << RrDefaultGreenOffset) +
+-                ((b * 256 / (a + 1)) << RrDefaultBlueOffset) +
+-                (a << RrDefaultAlphaOffset);
++                (a << RrDefaultAlphaOffset) +
++                ((((p >> 8) & 0xff00) / ++a) << RrDefaultRedOffset) +
++                (((p & 0xff00) / a) << RrDefaultGreenOffset) +
++                ((((p & 0xff) << 8) / a) << RrDefaultBlueOffset);
+         }
+-        in_row += in_stride / 4;
++        in_row += in_stride >> 2;
+         out_row += *width;
+     }
+ 
