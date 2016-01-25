@@ -69,7 +69,7 @@ else
 	$omp && f3+=' -fopenmp-simd'
 fi
 case "`cat /proc/cpuinfo`" in
-*GenuineTMx86*)f3="${f3/cacheline/abi} -falign-functions=0 -falign-jumps=0 -falign-loops=0 -falign-labels=0 -mno-align-stringops";;&
+*GenuineTMx86*)f3="${f3/cacheline/abi} -fno-align-functions -fno-align-jumps -fno-align-loops -fno-align-labels -mno-align-stringops";;&
 esac
 for i in $flags; do
 	i1="$i"
