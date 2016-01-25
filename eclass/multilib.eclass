@@ -33,7 +33,8 @@ multilib_toolchain_setup() {
 		export CHOST=$(get_abi_CHOST ${DEFAULT_ABI})
 		export CC="$(tc-getCC) $(get_abi_CFLAGS)"
 		export CXX="$(tc-getCXX) $(get_abi_CFLAGS)"
-		export CPP="$(tc-getCPP)"
+#		export CPP="$(tc-getCPP)"
+		unset -v CPP
 		export F77="$(tc-getF77) $(get_abi_CFLAGS)"
 		export FC="$(tc-getFC) $(get_abi_CFLAGS)"
 		export LD="$(tc-getLD) $(get_abi_LDFLAGS)"
