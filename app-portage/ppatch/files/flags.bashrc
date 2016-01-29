@@ -37,7 +37,7 @@ _isflag(){
 		for f in ${!v}; do
 			f1="${f%%=*}"
 			for i in "${@}"; do
-				[ "$i" = "$f" -o "$i" = "$f1" ] && return 0
+				[[ "$f" == $i || "$f1" == $i ]] && return 0
 			done
 		done
 	done
@@ -74,7 +74,8 @@ xf86-video-siliconmotion|vlc)appendflag -w;;
 libX11|wget)_isflag -Os && _isflag -Ofast -ffast-math -funsafe-math-optimizations && ! _isflag -fno-unsafe-math-optimizations && appendflag -fno-unsafe-math-optimizations -fno-signed-zeros -fno-trapping-math -fassociative-math -freciprocal-math;;
 cairo)[[ "$PV" == 1.12.16* ]] && appendflag1 -fno-lto;;
 udev)filterflag -Wl,--sort-section=alignment;; # gold
-fltk)filterflag -ftree-loop-distribution;; # broken with graphite & -O2+
+fltk)_isflag '-floop-*' && filterflag -ftree-loop-distribution;; # -O2+
+freeglut)_isflag '-floop-*' && appendflag -fno-ipa-cp-clone;;
 opus)
 	filterflag -Ofast -ffast-math
 #	export enable_float_approx=yes
