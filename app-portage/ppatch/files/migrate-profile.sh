@@ -24,8 +24,7 @@ migrate_profile(){
 		mv=true
 		[ -z "$pn" ] && pn=server
 		raw="${FILESDIR%/*/*/*}"
-		#[ -z raw ] && 
-		raw=/var/lib/layman/raw
+		[ -z "$raw" ] && raw=/var/lib/layman/raw
 		pg="$raw"
 		break
 	done
