@@ -50,7 +50,7 @@ src_install(){
     exeinto /usr/sbin
     doexe p-patch
     insinto $r
-    doins *.{p-patch,bashrc,sh}
+    doins *.sh
     dodir $r/virtual
     dosym linux-sources $r/virtual/linux-kernel
     for d in $IUSE ; do
@@ -72,10 +72,15 @@ src_install(){
     doins "${WORKDIR}/make.defaults"
 }
 
+migrate(){
+	. "${ROOT}"/usr/ppatch/migrate-profile.sh
+#	. "${FILESDIR}/migrate-profile.sh
+}
+
 pkg_postinst(){
     SS="${PORTAGE_CONFIGROOT}" "${ROOT}"/usr/sbin/p-patch "${ROOT}"/usr/ppatch/bashrc.p-patch
     local f=
     use global-profile && f=force
-    "${ROOT}"/usr/ppatch/migrate-profile.sh $f
+    migrate $f
     raw_pkg_postinst
 }
