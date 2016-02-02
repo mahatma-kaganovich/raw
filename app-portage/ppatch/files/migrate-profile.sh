@@ -33,7 +33,7 @@ migrate_profile(){
 		done
 		pn="${l##*/profiles/}"
 		raw="${l%%/profiles/*}"
-		[ -n "$pn" -a "$pn" != "$l" ] && break
+		[ -z "$pn" -o "$pn" == "$l" ] && return 1
 	fi
 #	echo raw=$raw pn=$pn
 	raw="$raw/profiles"
