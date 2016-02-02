@@ -4,7 +4,7 @@ profset(){
 	[ "`readlink "$1$2"`" = "$3" ] && return 0
 	[ -e "$1$2" -o -L "$1$2" ] && return 1
 	$4 && return 0
-	ln -s "$3" "$1$2" && echo "$2=$3"
+	ln -s "$3" "$1$2" && echo "profile$2->$3"
 }
 
 migrate_profile(){
@@ -24,7 +24,9 @@ migrate_profile(){
 		mv=true
 		[ -z "$pn" ] && pn=server
 		raw="${FILESDIR%/*/*/*}"
-		pg="$raw/$pn"
+		#[ -z raw ] && 
+		raw=/var/lib/layman/raw
+		pg="$raw"
 		break
 	done
 	if [ -z "$pn" ]; then
@@ -39,7 +41,7 @@ migrate_profile(){
 	raw="$raw/profiles"
 	[ -z "$pn" ] && return 1
 	pt="$raw/targets/${pn#*/}"
-	[ -z "$pg" ] && read pg <"$raw/${pn%%/*}/parent" || return 1
+	[ -n "$pg" ] || read pg <"$raw/${pn%%/*}/parent" || return 1
 	pp="$R/usr/ppatch/profiles/native"
 	pc="$raw/common/unroll2"
 	[ -z "$raw" -o -z "$pn" -o -z "$pg" ] && return 1
@@ -48,9 +50,11 @@ migrate_profile(){
 	for i in true false; do
 		profset "$p" .common "$pc" "$i" &&
 		profset "$p" .target "$pt" "$i" || return 1
+		fixed=true
 		if $mv; then
-			rename profile profile.gentoo "$p" || return 1
-			fixed=true
+			if $i; then
+				rename profile profile.gentoo "$p" || return 1
+			fi
 		else
 			profset "$p" .gentoo "$pg" "$i" || return 1
 			$i && continue
