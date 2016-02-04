@@ -77,7 +77,8 @@ for i in $flags; do
 	sse|3dnowext)f1+=" $i mmxext";;&
 	sse)[ "`_flags fpu`" = yes ] && f3+=' -mfpmath=both' || f3+=' -mfpmath=sse';;
 	pni)f1+=' sse3';;
-	avx)f3+=" -msse2avx";; # probably -> asm (or -Wa,-msse2avx)
+	# avx -> -msse2avx -> -Wa,-msse2avx (skipped by gcc with -march=native), filtering-friendly
+	avx)f3+=" -m$i";;
 	lm)lm=true;;
 	*)
 		if (grep "^$i1 " /usr/portage/profiles/use.desc ; grep "^[^ 	]*:$i " /usr/portage/profiles/use.local.desc)|grep -q 'CPU\|processor\|chip\|instruction'; then
