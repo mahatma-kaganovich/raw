@@ -114,7 +114,7 @@ fi
 echo "CFLAGS_NATIVE=\"$f0\""
 echo "CFLAGS_CPU=\"${j//--param /--param=}\""
 echo "CFLAGS_M=\"$f3\""
-echo "CFLAGS_SIZE=\" `_f -Wa,-n`\""
+#echo "CFLAGS_SIZE=\" `_f -Wa,-n`\""
 }
 
 conf_cpu

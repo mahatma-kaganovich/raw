@@ -1,10 +1,12 @@
 # fast, but small (-Os + some from O2/O3)
 
-CFLAGS="$CFLAGS -O2 -Os -fno-omit-frame-pointer -Wa,--reduce-memory-overheads$CFLAGS_SIZE"
+CFLAGS="$CFLAGS -O2 -Os -fno-omit-frame-pointer -Wa,--reduce-memory-overheads"
+# todo: arch-dependend
+#CFLAGS="$CFLAGS -Wa,-n"
 # O2
 # CFLAGS="$CFLAGS -fschedule-insns2 -finline-small-functions -findirect-inlining"
 # O3
-CFLAGS="$CFLAGS -fgcse-after-reload -fipa-cp-clone -fpredictive-commoning -ftree-loop-distribute-patterns -funswitch-loops -ftree-vectorize"
+CFLAGS="$CFLAGS -fgcse-after-reload -fpredictive-commoning -ftree-loop-distribute-patterns -funswitch-loops -ftree-vectorize"
 # O3 4.8
 CFLAGS="$CFLAGS -fvect-cost-model -ftree-partial-pre"
 # 4.9
