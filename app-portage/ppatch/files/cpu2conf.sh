@@ -69,7 +69,7 @@ else
 	$omp && f3+=' -fopenmp-simd'
 fi
 case "`cat /proc/cpuinfo`" in
-*GenuineTMx86*)f3="${f3/cacheline/abi} -fno-align-functions -fno-align-jumps -fno-align-loops -fno-align-labels -mno-align-stringops";;&
+*GenuineTMx86*)f3="${f3/cacheline/abi} -fno-align-functions -fno-align-jumps -fno-align-loops -fno-align-labels -mno-align-stringops -Wa,-n";;&
 esac
 for i in $flags; do
 	i1="$i"
@@ -114,6 +114,7 @@ fi
 echo "CFLAGS_NATIVE=\"$f0\""
 echo "CFLAGS_CPU=\"${j//--param /--param=}\""
 echo "CFLAGS_M=\"$f3\""
+echo "CFLAGS_SIZE=\" `_f -Wa,-n`\""
 }
 
 conf_cpu
