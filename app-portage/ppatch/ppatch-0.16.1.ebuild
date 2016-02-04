@@ -50,7 +50,7 @@ src_install(){
     exeinto /usr/sbin
     doexe p-patch
     insinto $r
-    doins *.sh
+    doins *.{p-patch,bashrc,sh}
     dodir $r/virtual
     dosym linux-sources $r/virtual/linux-kernel
     for d in $IUSE ; do
