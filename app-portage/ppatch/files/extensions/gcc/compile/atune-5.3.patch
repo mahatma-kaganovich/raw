@@ -1,5 +1,5 @@
-2015-06-03 Dzianis Kahanovich <mahatma@eu.by>
-
+2016-01-05 Dzianis Kahanovich <mahatma@eu.by>
+ 
 PR target/40171
 * config/i386/driver-i386.c (host_detect_local_cpu): Add "astune" mode (assembler mtune).
 * config/i386/i386.h (ASM_SPEC_MTUNE): Detect & pass -mtune=native to the GNU assembler.
@@ -10,11 +10,11 @@ PR target/40171
 * config/i386/vxworks.h (ASM_SPEC): Likewise.
 * config/i386/x86-64.h (ASM_SPEC): Likewise.
 
---- a/gcc/config/i386/driver-i386.c	2015-01-25 07:42:50.000000000 +0300
-+++ b/gcc/config/i386/driver-i386.c	2015-06-03 18:15:09.536093226 +0300
+--- a/gcc/config/i386/driver-i386.c	2015-06-18 13:56:43.000000000 +0300
++++ b/gcc/config/i386/driver-i386.c	2016-02-05 10:33:40.000000000 +0300
 @@ -415,7 +415,7 @@ const char *host_detect_local_cpu (int a
    unsigned int has_avx512vbmi = 0, has_avx512ifma = 0, has_clwb = 0;
-   unsigned int has_pcommit = 0;
+   unsigned int has_pcommit = 0, has_mwaitx = 0;
  
 -  bool arch;
 +  bool arch, tune, astune;
@@ -33,7 +33,7 @@ PR target/40171
      return NULL;
  
    max_level = __get_cpuid_max (0, &vendor);
-@@ -577,7 +579,7 @@ const char *host_detect_local_cpu (int a
+@@ -578,7 +580,7 @@ const char *host_detect_local_cpu (int a
        has_avx512vl = 0;
      }
  
@@ -42,7 +42,7 @@ PR target/40171
      {
        if (vendor == signature_AMD_ebx
  	  || vendor == signature_CENTAUR_ebx
-@@ -700,7 +702,7 @@ const char *host_detect_local_cpu (int a
+@@ -701,7 +703,7 @@ const char *host_detect_local_cpu (int a
  	case 0x1c:
  	case 0x26:
  	  /* Bonnell.  */
@@ -51,7 +51,7 @@ PR target/40171
  	  break;
  	case 0x37:
  	case 0x4a:
-@@ -708,7 +710,7 @@ const char *host_detect_local_cpu (int a
+@@ -709,7 +711,7 @@ const char *host_detect_local_cpu (int a
  	case 0x5a:
  	case 0x5d:
  	  /* Silvermont.  */
@@ -60,7 +60,7 @@ PR target/40171
  	  break;
  	case 0x0f:
  	  /* Merom.  */
-@@ -722,40 +724,40 @@ const char *host_detect_local_cpu (int a
+@@ -723,40 +725,40 @@ const char *host_detect_local_cpu (int a
  	case 0x1f:
  	case 0x2e:
  	  /* Nehalem.  */
@@ -108,7 +108,7 @@ PR target/40171
  	  break;
  	default:
  	  if (arch)
-@@ -814,7 +816,7 @@ const char *host_detect_local_cpu (int a
+@@ -815,7 +817,7 @@ const char *host_detect_local_cpu (int a
  	    }
  	  else
  	    /* For -mtune, we default to -mtune=generic.  */
@@ -117,7 +117,35 @@ PR target/40171
  	  break;
  	}
        break;
-@@ -895,7 +897,7 @@ const char *host_detect_local_cpu (int a
+@@ -831,23 +833,23 @@ const char *host_detect_local_cpu (int a
+ 	cpu = "pentium4";
+       break;
+     case PROCESSOR_GEODE:
+-      cpu = "geode";
++      cpu = astune ? NULL : "geode";
+       break;
+     case PROCESSOR_K6:
+       if (arch && has_3dnow)
+-	cpu = "k6-3";
++	cpu = astune ? "k6-2" : "k6-3";
+       else
+ 	cpu = "k6";
+       break;
+     case PROCESSOR_ATHLON:
+       if (arch && has_sse)
+-	cpu = "athlon-4";
++	cpu = astune ? "athlon" : "athlon-4";
+       else
+ 	cpu = "athlon";
+       break;
+     case PROCESSOR_K8:
+       if (arch && has_sse3)
+-	cpu = "k8-sse3";
++	cpu = astune ? "k8" : "k8-sse3";
+       else
+ 	cpu = "k8";
+       break;
+@@ -896,7 +898,7 @@ const char *host_detect_local_cpu (int a
  	    cpu = "pentium";
  	}
        else
@@ -126,7 +154,7 @@ PR target/40171
      }
  
    if (arch)
-@@ -966,7 +968,10 @@ const char *host_detect_local_cpu (int a
+@@ -968,7 +970,10 @@ const char *host_detect_local_cpu (int a
      }
  
  done:
@@ -139,7 +167,7 @@ PR target/40171
  #else
  
 --- a/gcc/config/i386/gnu-user64.h	2015-01-05 15:33:28.000000000 +0300
-+++ b/gcc/config/i386/gnu-user64.h	2015-06-03 17:56:51.746841745 +0300
++++ b/gcc/config/i386/gnu-user64.h	2016-02-04 19:53:28.000000000 +0300
 @@ -47,7 +47,7 @@ see the files COPYING3 and COPYING.RUNTI
  #endif
  
@@ -150,7 +178,7 @@ PR target/40171
   %{" SPEC_X32 ":--x32} \
   %{!mno-sse2avx:%{mavx:-msse2avx}} %{msse2avx:%{!mavx:-msse2avx}}"
 --- a/gcc/config/i386/gnu-user.h	2015-01-23 22:46:43.000000000 +0300
-+++ b/gcc/config/i386/gnu-user.h	2015-06-03 17:56:51.746841745 +0300
++++ b/gcc/config/i386/gnu-user.h	2016-02-04 19:53:28.000000000 +0300
 @@ -67,6 +67,7 @@ along with GCC; see the file COPYING3.
  
  #undef  ASM_SPEC
@@ -159,9 +187,9 @@ PR target/40171
    "--32 %{!mno-sse2avx:%{mavx:-msse2avx}} %{msse2avx:%{!mavx:-msse2avx}}"
  
  #undef  SUBTARGET_EXTRA_SPECS
---- a/gcc/config/i386/i386.h	2015-02-21 03:06:53.000000000 +0300
-+++ b/gcc/config/i386/i386.h	2015-06-03 17:56:51.746841745 +0300
-@@ -641,6 +641,13 @@ extern const char *host_detect_local_cpu
+--- a/gcc/config/i386/i386.h	2015-11-26 15:28:57.000000000 +0300
++++ b/gcc/config/i386/i386.h	2016-02-04 19:53:28.000000000 +0300
+@@ -643,6 +643,13 @@ extern const char *host_detect_local_cpu
  %{mtune=native:%>mtune=native %:local_cpu_detect(tune)}"
  #endif
  #endif
@@ -176,7 +204,7 @@ PR target/40171
  /* Target CPU builtins.  */
  #define TARGET_CPU_CPP_BUILTINS() ix86_target_macros ()
 --- a/gcc/config/i386/mingw-w64.h	2015-01-29 11:03:56.000000000 +0300
-+++ b/gcc/config/i386/mingw-w64.h	2015-06-03 17:56:51.746841745 +0300
++++ b/gcc/config/i386/mingw-w64.h	2016-02-04 19:53:28.000000000 +0300
 @@ -40,7 +40,7 @@ along with GCC; see the file COPYING3.
  /* Enable multilib.  */
  
@@ -187,7 +215,7 @@ PR target/40171
  #undef LIB_SPEC
  #define LIB_SPEC "%{pg:-lgmon} %{" SPEC_PTHREAD1 ":-lpthread} " \
 --- a/gcc/config/i386/vxworks.h	2015-01-05 15:33:28.000000000 +0300
-+++ b/gcc/config/i386/vxworks.h	2015-06-03 17:56:51.750841851 +0300
++++ b/gcc/config/i386/vxworks.h	2016-02-04 19:53:28.000000000 +0300
 @@ -19,7 +19,7 @@ along with GCC; see the file COPYING3.
  <http://www.gnu.org/licenses/>.  */
  
@@ -198,7 +226,7 @@ PR target/40171
  #define ASM_OUTPUT_ALIGNED_BSS(FILE, DECL, NAME, SIZE, ALIGN) \
    asm_output_aligned_bss (FILE, DECL, NAME, SIZE, ALIGN)
 --- a/gcc/config/i386/x86-64.h	2015-01-05 15:33:28.000000000 +0300
-+++ b/gcc/config/i386/x86-64.h	2015-06-03 17:56:51.750841851 +0300
++++ b/gcc/config/i386/x86-64.h	2016-02-04 19:53:28.000000000 +0300
 @@ -49,7 +49,7 @@ see the files COPYING3 and COPYING.RUNTI
  #define WCHAR_TYPE_SIZE 32
  
