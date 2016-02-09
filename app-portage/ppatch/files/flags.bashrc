@@ -64,6 +64,7 @@ case "$PN" in
 mysql|mariadb|clamav|heimdal|glibc|lxc|qemu|elfutils|cvs|lksctp-tools|libreoffice|samba|pciutils|xfsprogs|numactl|ncurses|alsa-lib)filterflag '-flto*' '-*-lto-*' -fuse-linker-plugin;;&
 libaio)_isflag -flto && export LDFLAGS="$LDFLAGS -fno-lto";;&
 perl)_isflag -flto && export LDFLAGS="$LDFLAGS -fPIC";;&
+cmake)_isflag -flto && _isflag '-floop-*' && filterflag -fipa-pta;;&
 glibc)filterflag -Ofast -ffast-math -ftracer -fopenmp -fopenmp-simd;;
 sqlite|postgresql*|goffice|db|protobuf|qtwebkit|webkit-gtk)filterflag -Ofast -ffast-math;;
 fontforge)filterflag -Ofast;;
