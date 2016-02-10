@@ -65,7 +65,7 @@ mysql|mariadb|clamav|heimdal|glibc|lxc|qemu|elfutils|cvs|lksctp-tools|libreoffic
 libaio)_isflag -flto && export LDFLAGS="$LDFLAGS -fno-lto";;&
 perl)_isflag -flto && export LDFLAGS="$LDFLAGS -fPIC";;&
 cmake)_isflag -flto && _isflag '-floop-*' '-fgraphite*' && filterflag -fipa-pta;;&
-ceph)_isflag '-floop-*' '-fgraphite*' && filterflag '-flto*' '-*-lto-*' -fuse-linker-plugin;; # prefer graphite
+ceph)_isflag '-floop-*' '-fgraphite*' && filterflag '-flto*' '-*-lto-*' -fuse-linker-plugin;;& # prefer graphite
 glibc)filterflag -Ofast -ffast-math -ftracer -fopenmp -fopenmp-simd;;
 sqlite|postgresql*|goffice|db|protobuf|qtwebkit|webkit-gtk)filterflag -Ofast -ffast-math;;
 fontforge)filterflag -Ofast;;
