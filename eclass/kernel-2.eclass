@@ -1421,7 +1421,7 @@ mksquash(){
 	lzo)c+='-Xcompression-level 9 ';;
 	lz4)c+='-Xhc ';;
 	esac
-	mksquashfs "${@}" $c-b 1048576 -no-recovery -no-progress -processors $p || die "mksquashfs failed"
+	mksquashfs "${@}" $c-b 1048576 -no-recovery -no-progress ${p:+-processors $p} || die "mksquashfs failed"
 }
 
 LICENSE(){
