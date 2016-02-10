@@ -64,7 +64,8 @@ case "$PN" in
 mysql|mariadb|clamav|heimdal|glibc|lxc|qemu|elfutils|cvs|lksctp-tools|libreoffice|samba|pciutils|xfsprogs|numactl|ncurses|alsa-lib)filterflag '-flto*' '-*-lto-*' -fuse-linker-plugin;;&
 libaio)_isflag -flto && export LDFLAGS="$LDFLAGS -fno-lto";;&
 perl)_isflag -flto && export LDFLAGS="$LDFLAGS -fPIC";;&
-cmake)_isflag -flto && _isflag '-floop-*' && filterflag -fipa-pta;;&
+cmake)_isflag -flto && _isflag '-floop-*' '-fgraphite*' && filterflag -fipa-pta;;&
+ceph)_isflag '-floop-*' '-fgraphite*' && filterflag '-flto*' '-*-lto-*' -fuse-linker-plugin;; # prefer graphite
 glibc)filterflag -Ofast -ffast-math -ftracer -fopenmp -fopenmp-simd;;
 sqlite|postgresql*|goffice|db|protobuf|qtwebkit|webkit-gtk)filterflag -Ofast -ffast-math;;
 fontforge)filterflag -Ofast;;
@@ -75,8 +76,8 @@ xf86-video-siliconmotion|vlc)appendflag -w;;
 libX11|wget)_isflag -Os && _isflag -Ofast -ffast-math -funsafe-math-optimizations && ! _isflag -fno-unsafe-math-optimizations && appendflag -fno-unsafe-math-optimizations -fno-signed-zeros -fno-trapping-math -fassociative-math -freciprocal-math;;
 cairo)[[ "$PV" == 1.12.16* ]] && appendflag1 -fno-lto;;
 udev)filterflag -Wl,--sort-section=alignment;; # gold
-fltk)_isflag '-floop-*' && filterflag -ftree-loop-distribution;; # -O2+
-freeglut)_isflag '-floop-*' && appendflag -fno-ipa-cp-clone;;
+fltk)_isflag '-floop-*' '-fgraphite*' && filterflag -ftree-loop-distribution;; # -O2+
+freeglut)_isflag '-floop-*' '-fgraphite*' && appendflag -fno-ipa-cp-clone;;
 opus)
 	filterflag -Ofast -ffast-math
 #	export enable_float_approx=yes
