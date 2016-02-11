@@ -12,7 +12,7 @@ _c(){
 }
 
 _c1(){
-	echo 'void main(){}'|gcc -x c - "${@}" -o /dev/null 2>&1
+	echo 'void main(){}'|gcc -x c - -pipe "${@}" -o /dev/null 2>&1
 }
 
 _f(){
@@ -26,7 +26,7 @@ _f(){
 
 _cmp(){
 	local i i0 i1 ok
-	if i0=`echo "$c0"|grep "$1"` &&  i=`echo "$c"|grep "$1"`; then
+	if i0=`echo "$c0"|grep "$1"` && i=`echo "$c"|grep "$1"`; then
 		for i in $i; do
 			[ -z "${i##/*}" ] && continue
 			ok=true
@@ -77,8 +77,6 @@ for i in $flags; do
 	sse|3dnowext)f1+=" $i mmxext";;&
 	sse)[ "`_flags fpu`" = yes ] && f3+=' -mfpmath=both' || f3+=' -mfpmath=sse';;
 	pni)f1+=' sse3';;
-	# avx -> -msse2avx -> -Wa,-msse2avx (skipped by gcc with -march=native), filtering-friendly
-	avx)f3+=" -m$i";;
 	lm)lm=true;;
 	*)
 		if (grep "^$i1 " /usr/portage/profiles/use.desc ; grep "^[^ 	]*:$i " /usr/portage/profiles/use.local.desc)|grep -q 'CPU\|processor\|chip\|instruction'; then
@@ -113,8 +111,21 @@ if c0=`_c` && c=`_c $f0`; then
 		(echo "$c"|grep -q "^ *-m$i ") && [ -n "${i1##* -m$i *}" ] && j+=" -m$i" && i1+=" -m$i" && f0+=" -m$i"
 	done
 fi
+f4="${j//--param /--param=}"
+if c0=`_c $f0` && c=`_c $f4`; then
+	j="$(_cmp '/as ' '-Wa,')"
+	[ -n "$j" ] &&
+	for i in $f4; do
+		c=`_c $f0 $i` || continue
+		j1="$(_cmp '/as ' '-Wa,')"
+		[ -z "$j1" ] && continue
+		f0+=" $i"
+		[ "$j" = "$j1" ] && break
+		c0="$c"
+	done
+fi
 echo "CFLAGS_NATIVE=\"$f0\""
-echo "CFLAGS_CPU=\"${j//--param /--param=}\""
+echo "CFLAGS_CPU=\"$f4\""
 echo "CFLAGS_M=\"$f3\""
 }
 
