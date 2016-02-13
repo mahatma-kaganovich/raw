@@ -62,6 +62,7 @@ gccve(){
 case "$PN" in
 # libaio breaks others
 mysql|mariadb|clamav|heimdal|glibc|lxc|qemu|elfutils|cvs|lksctp-tools|libreoffice|samba|pciutils|xfsprogs|numactl|ncurses|alsa-lib)filterflag '-flto*' '-*-lto-*' -fuse-linker-plugin;;&
+ilmbase)_isflag -flto && export LDFLAGS="$LDFLAGS -lpthread";;& # openexr
 libaio)_isflag -flto && export LDFLAGS="$LDFLAGS -fno-lto";;&
 perl)_isflag -flto && export LDFLAGS="$LDFLAGS -fPIC";;&
 cmake)_isflag -flto && _isflag '-floop-*' '-fgraphite*' && filterflag -fipa-pta;;&
