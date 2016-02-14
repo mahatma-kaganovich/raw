@@ -44,6 +44,32 @@ _isflag(){
 	return 1
 }
 
+filterflag2(){
+	local i f v f1 f2="$1" v1 ff r=false
+	shift
+	for v in CFLAGS CPPFLAGS CXXFLAGS FFLAGS FCFLAGS; do
+		v1=
+		ff=
+		for f in ${!v}; do
+			f1="${f%%=*}"
+			for i in "${@}"; do
+				[[ "$f" == $i || "$f1" == $i ]] && ff+=" $f" && continue 2
+			done
+			v1+=" $f"
+		done
+		[ -z "$ff" ] && {
+			[ $v = CFLAGS ] && break
+			continue
+		}
+		export $v="${v1# }"
+		for i in $f2; do
+				[ -n "${!i}" ] && export $i="${!i}$ff"
+		done
+		r=true
+	done
+	$r
+}
+
 _iuse(){
 	local i
 	for i in $IUSE; do
@@ -59,11 +85,19 @@ gccve(){
 	[[ "`LANG=C gcc -v 2>&1`" == *" version $1"* ]]
 }
 
+filter86_32(){
+	[ -n "$CFLAGS_x86" ] || return # keep for main abi for testing
+	_iuse abi_x86_32 || return
+	filterflag2 'CFLAGS_amd64 CFLAGS_x32' "${@}"
+}
+
 case "$PN" in
 # libaio breaks others
 mysql|mariadb|clamav|heimdal|glibc|lxc|qemu|elfutils|cvs|lksctp-tools|libreoffice|samba|pciutils|xfsprogs|numactl|ncurses|alsa-lib)filterflag '-flto*' '-*-lto-*' -fuse-linker-plugin;;&
 ilmbase)_isflag -flto && export LDFLAGS="$LDFLAGS -lpthread";;& # openexr
 libaio)_isflag -flto && export LDFLAGS="$LDFLAGS -fno-lto";;&
+flac)filterflag2 '' -flto;;
+boost)filter86_32 '-flto*' '-*-lto-*' -fuse-linker-plugin;;&
 perl)_isflag -flto && export LDFLAGS="$LDFLAGS -fPIC";;&
 cmake)_isflag -flto && _isflag '-floop-*' '-fgraphite*' && filterflag -fipa-pta;;&
 ceph)_isflag '-floop-*' '-fgraphite*' && filterflag '-flto*' '-*-lto-*' -fuse-linker-plugin;;& # prefer graphite
@@ -88,6 +122,8 @@ gccxml|xemacs|devil|vtun|irda-utils|wmmon|bbrun|diffball|ldns|rp-l2tp)appendflag
 sessreg|ldns)export CPPFLAGS="$CPPFLAGS -P";;
 mpg123)_iuse abi_x86_32 && gccve 5. && export CFLAGS="${CFLAGS//-O3/-O2}" && filterflag -Ofast -fpeel-loops -funroll-loops;;
 xorg-server)appendflag -w;;
+klibc)[[ "$MAKEOPTS" == *'-j '* || "$MAKEOPTS" == *-j ]] && export MAKEOPTS="$MAKEOPTS -j8";;
+gmp)filterflag -floop-nest-optimize;;
 esac
 
 #[ "${CFLAGS//-flto}" != "$CFLAGS" ] &&
@@ -99,10 +135,6 @@ esac
 _iuse !system-sqlite && filterflag -Ofast -ffast-math
 _iuse gold && filterflag -Wl,--sort-section=alignment
 
-[ -n "$CFLAGS_x86" ] && _iuse abi_x86_32 && filterflag -fschedule-insns && {
-	[ -n "$CFLAGS_amd64" ] && export CFLAGS_amd64+=" -fschedule-insns"
-	[ -n "$CFLAGS_x32" ] && export CFLAGS_x32+=" -fschedule-insns"
-}
-
+filter86_32 -fschedule-insns -fira-loop-pressure
 
 }

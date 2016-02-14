@@ -1,0 +1,17 @@
+# very bad things, buggy or memory consuming, mostly for amd64
+# don't use it. you are warned!
+
+CFLAGS="$CFLAGS -fsched-pressure -fschedule-insns --param=sched-pressure-algorithm=2"
+CFLAGS="$CFLAGS -fdelete-dead-exceptions -fira-loop-pressure"
+#CFLAGS="$CFLAGS -floop-nest-optimize"
+CFLAGS="$CFLAGS -floop-interchange"
+CFLAGS="$CFLAGS -w"
+
+CXXFLAGS="$CFLAGS"
+
+CFLAGS="$CFLAGS -fipa-pta -Wa,--reduce-memory-overheads"
+
+FFLAGS="$CFLAGS"
+FCFLAGS="$CFLAGS"
+CXXFLAGS="$CXXFLAGS -fvisibility-inlines-hidden"
+
