@@ -47,7 +47,7 @@ _isflag(){
 filterflag2(){
 	local i f v f1 f2="$1" v1 ff r=false
 	shift
-	for v in CFLAGS CPPFLAGS CXXFLAGS FFLAGS FCFLAGS; do
+	for v in LDFLAGS CFLAGS CPPFLAGS CXXFLAGS FFLAGS FCFLAGS; do
 		v1=
 		ff=
 		for f in ${!v}; do
@@ -92,11 +92,16 @@ filter86_32(){
 }
 
 case "$PN" in
+xemacs)_isflag -flto && {
+	ldf=' '
+	filterflag2 ldf '-Wl,*'
+	export LDFLAGS="${ldf# }"
+};;&
 # libaio breaks others
 mysql|mariadb|clamav|heimdal|glibc|lxc|qemu|elfutils|cvs|lksctp-tools|libreoffice|samba|pciutils|xfsprogs|numactl|ncurses|alsa-lib)filterflag '-flto*' '-*-lto-*' -fuse-linker-plugin;;&
 ilmbase)_isflag -flto && export LDFLAGS="$LDFLAGS -lpthread";;& # openexr
-libaio)_isflag -flto && export LDFLAGS="$LDFLAGS -fno-lto";;&
-flac)filterflag2 '' -flto;;
+libaio|qtscript)_isflag -flto && export LDFLAGS="$LDFLAGS -fno-lto";;&
+xemacs|soxr|flac)filterflag2 '' -flto;;
 boost)filter86_32 '-flto*' '-*-lto-*' -fuse-linker-plugin;;&
 perl)_isflag -flto && export LDFLAGS="$LDFLAGS -fPIC";;&
 cmake)_isflag -flto && _isflag '-floop-*' '-fgraphite*' && filterflag -fipa-pta;;&
