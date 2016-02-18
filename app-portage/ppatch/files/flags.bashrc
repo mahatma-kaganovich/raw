@@ -98,10 +98,11 @@ xemacs)_isflag -flto && {
 	export LDFLAGS="${ldf# }"
 };;&
 # libaio breaks others
-mysql|mariadb|clamav|heimdal|glibc|lxc|qemu|elfutils|cvs|lksctp-tools|libreoffice|samba|pciutils|xfsprogs|numactl|ncurses|alsa-lib)filterflag '-flto*' '-*-lto-*' -fuse-linker-plugin;;&
+# gtkmm too (cdrdao)
+mplayer|gtkmm|mysql|mariadb|clamav|heimdal|glibc|lxc|qemu|elfutils|cvs|lksctp-tools|libreoffice|samba|pciutils|xfsprogs|numactl|ncurses|alsa-lib)filterflag '-flto*' '-*-lto-*' -fuse-linker-plugin;;&
 ilmbase)_isflag -flto && export LDFLAGS="$LDFLAGS -lpthread";;& # openexr
 libaio|qtscript)_isflag -flto && export LDFLAGS="$LDFLAGS -fno-lto";;&
-xemacs|soxr|flac)filterflag2 '' -flto;;
+cdrdao|gcr|ufraw|gdal|dosemu|xemacs|soxr|flac)filterflag2 '' -flto;;&
 boost)filter86_32 '-flto*' '-*-lto-*' -fuse-linker-plugin;;&
 perl)_isflag -flto && export LDFLAGS="$LDFLAGS -fPIC";;&
 cmake)_isflag -flto && _isflag '-floop-*' '-fgraphite*' && filterflag -fipa-pta;;&
