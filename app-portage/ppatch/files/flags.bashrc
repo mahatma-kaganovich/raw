@@ -130,6 +130,7 @@ mpg123)_iuse abi_x86_32 && gccve 5. && export CFLAGS="${CFLAGS//-O3/-O2}" && fil
 xorg-server)appendflag -w;;
 klibc)[[ "$MAKEOPTS" == *'-j '* || "$MAKEOPTS" == *-j ]] && export MAKEOPTS="$MAKEOPTS -j8";;
 gmp)filterflag -floop-nest-optimize;;
+sarg)filterflag -w;;
 esac
 
 #[ "${CFLAGS//-flto}" != "$CFLAGS" ] &&
