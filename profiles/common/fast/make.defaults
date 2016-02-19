@@ -9,7 +9,7 @@ CFLAGS="$CFLAGS -fmodulo-sched -fmodulo-sched-allow-regmoves -freschedule-modulo
 #CFLAGS="$CFLAGS -fgcse-sm -fgcse-las"
 # graphite. random problems, see flags.bashrc
 #CFLAGS="$CFLAGS -floop-interchange"
-CFLAGS="$CFLAGS -fdelete-dead-exceptions
+CFLAGS="$CFLAGS -fdelete-dead-exceptions"
 # people say, performance on x86/amd64 near same, but size on amd64 sure less
 CFLAGS="$CFLAGS -fira-loop-pressure"
 
