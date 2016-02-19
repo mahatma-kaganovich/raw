@@ -1,4 +1,4 @@
-CFLAGS="$CFLAGS -flto -fuse-linker-plugin -ffat-lto-objects -flto-compression-level=9"
+CFLAGS="$CFLAGS -flto -fuse-linker-plugin -ffat-lto-objects -flto-compression-level=9 -fdevirtualize-at-ltrans"
 LDFLAGS="$LDFLAGS $CFLAGS"
 
 FFLAGS="$CFLAGS"
