@@ -1,4 +1,5 @@
-CFLAGS="$CFLAGS -flto -fuse-linker-plugin -ffat-lto-objects -flto-compression-level=9 -fdevirtualize-at-ltrans"
+# we need extra accuracy and a lot of RAM
+CFLAGS="$CFLAGS -flto -fuse-linker-plugin -ffat-lto-objects -flto-compression-level=9 -fdevirtualize-at-ltrans -flto-odr-type-merging"
 LDFLAGS="$LDFLAGS $CFLAGS"
 
 FFLAGS="$CFLAGS"
