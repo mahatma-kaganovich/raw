@@ -86,7 +86,7 @@ gccve(){
 }
 
 filter86_32(){
-	[ -n "$CFLAGS_x86" ] || return # keep for main abi for testing
+#	[ -n "$CFLAGS_x86" ] || return # keep for main abi for testing
 	_iuse abi_x86_32 || return
 	filterflag2 'CFLAGS_amd64 CFLAGS_x32' "${@}"
 }
