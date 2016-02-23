@@ -131,6 +131,7 @@ xorg-server)appendflag -w;;
 klibc)[[ "$MAKEOPTS" == *'-j '* || "$MAKEOPTS" == *-j ]] && export MAKEOPTS="$MAKEOPTS -j8";;
 gmp)filterflag -floop-nest-optimize;;
 sarg)filterflag -w;;
+ffmpeg|libav)_iuse abi_x86_32 && filterflag -fno-omit-frame-pointer;; # x86 mmx -Os
 esac
 
 #[ "${CFLAGS//-flto}" != "$CFLAGS" ] &&
