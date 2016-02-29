@@ -35,7 +35,7 @@ net-misc/tightvnc server
 net-misc/tigervnc server
 dev-db/sqlite -tools
 # prefer jemalloc (faster), but if no choice:
-# dev-libs/leveldb -tcmalloc - no sence
+dev-libs/leveldb -tcmalloc
 sci-visualization/visit tcmalloc
 dev-db/haildb tcmalloc
 dev-libs/libmemcached tcmalloc
