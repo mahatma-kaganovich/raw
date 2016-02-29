@@ -11,3 +11,4 @@ media-gfx/imagemagick opencl
 app-cdr/cdrdao gcdmaster
 app-crypt/pinentry gnome-keyring
 dev-db/sqlite tools tcl
+>app-office/libreoffice-5.1 python_single_target_python3_4 python_targets_python3_4

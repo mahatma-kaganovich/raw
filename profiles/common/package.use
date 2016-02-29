@@ -5,8 +5,8 @@ dev-libs/cyrus-sasl berkdb
 mail-filter/opendkim berkdb
 sys-apps/iproute2 berkdb
 app-crypt/heimdal -ssl -threads
-dev-db/mariadb -tcmalloc jemalloc tokudb extraengine
-dev-db/mariadb-galera -tcmalloc jemalloc tokudb extraengine sst-xtrabackup
+dev-db/mariadb tokudb extraengine
+dev-db/mariadb-galera tokudb extraengine sst-xtrabackup
 sys-cluster/ceph xfs
 net-dns/bind threads caps
 app-emulation/qemu doc tls usbredir spice sasl
@@ -34,3 +34,10 @@ sci-libs/vtk rendering all-modules python xdmf2
 net-misc/tightvnc server
 net-misc/tigervnc server
 dev-db/sqlite -tools
+# prefer jemalloc (faster), but if no choice:
+# dev-libs/leveldb -tcmalloc - no sence
+sci-visualization/visit tcmalloc
+dev-db/haildb tcmalloc
+dev-libs/libmemcached tcmalloc
+sys-cluster/gearmand tcmalloc
+sys-cluster/hpx -perftools
