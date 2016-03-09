@@ -14,7 +14,8 @@ MY_P="${PN}-${MY_PV}"
 SRC_PATH="stable"
 [[ ${PV} = *_rc* ]] && SRC_PATH="rc"
 
-SRC_URI="mirror://samba/${SRC_PATH}/${MY_P}.tar.gz"
+SRC_URI="mirror://samba/${SRC_PATH}/${MY_P}.tar.gz
+	https://dev.gentoo.org/~polynomial-c/samba-disable-python-patches-4.3.6.tar.xz"
 KEYWORDS="~amd64 ~hppa ~x86"
 [[ ${PV} = *_rc* ]] && KEYWORDS="~hppa"
 
@@ -84,7 +85,6 @@ S="${WORKDIR}/${MY_P}"
 
 PATCHES=(
 	"${FILESDIR}/${PN}-4.2.3-ctdb.patch"
-	"${FILESDIR}/${PN}-4.3.3-disable-python-for-altabi.patch"
 	)
 
 CONFDIR="${FILESDIR}/$(get_version_component_range 1-2)"
@@ -118,9 +118,7 @@ src_prepare() {
 	epatch ${PATCHES[@]}
 
 	# install the patches from tarball(s)
-#	EPATCH_SUFFIX="patch" \
-#	EPATCH_FORCE="yes" \
-#	epatch "${WORKDIR}/patches"
+	eapply "${WORKDIR}/patches/"
 
 	# Allow user patches
 	epatch_user
