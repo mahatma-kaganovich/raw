@@ -77,6 +77,7 @@ start() {
 	local i
 	(	fmod /sys/fs/ocfs2 ocfs2 &&
 		fmod /sys/fs/ocfs2/cluster_stack ocfs2_stackglue &&
+		fmod /sys/kernel/dlm dlm &&
 		pseudofs configfs /sys/kernel/config &&
 		pseudofs ocfs2_dlmfs /sys/kernel/dlm
 	) || return 1
@@ -142,6 +143,8 @@ start() {
 		ebegin "Mounting OCFS2 filesystems"
 		mount -at ocfs2
 		eend $?
+	else
+		true
 	fi
 }
 
