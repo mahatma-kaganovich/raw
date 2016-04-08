@@ -115,7 +115,7 @@ start() {
 		echo $OCFS2_RECONNECT_DELAY_MS > /sys/kernel/config/cluster/${cluster}/reconnect_delay_ms
 		# How many interations before a node is considered dead from lack of IO activity.
 		# (dead_threshold - 1) * 2s
-		echo $OCFS2_DEAD_THRESHOLD > /sys/kernel/config/cluster/${cluster}/heartbeat/dead_threshold
+		echo $OCFS2_DEAD_THRESHOLD|tee /sys/kernel/config/cluster/${cluster}/heartbeat/*threshold >/dev/null
 	done
 
 	for i in 9 8 7 6 5 4 3 2 1 0; do
