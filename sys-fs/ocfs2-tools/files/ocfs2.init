@@ -138,9 +138,11 @@ start() {
 		/sbin/fsck.ocfs2 $OCFS2_FSCK "$d" 2>&1 |tee /var/log/ocfs2-fsck.log
 	done
 	[[ "$OCFS2_FSCK_SWAPOFF" == "yes" ]] && swapon -a
-	ebegin "Mounting OCFS2 filesystems"
-	mount -at ocfs2
-	eend $?
+	if [[ "$OCFS2_NOMOUNT" != "yes" ]]; then
+		ebegin "Mounting OCFS2 filesystems"
+		mount -at ocfs2
+		eend $?
+	fi
 }
 
 _fuser(){
