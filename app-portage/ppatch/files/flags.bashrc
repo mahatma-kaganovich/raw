@@ -103,7 +103,7 @@ php|qtwebkit|xf86-video-intel|mplayer|gtkmm|mysql|mariadb|clamav|heimdal|glibc|l
 glibc)_isflag -fno-omit-frame-pointer && filterflag -f{,no-}omit-frame-pointer;;& # 2.23
 ilmbase)_isflag -flto && export LDFLAGS="$LDFLAGS -lpthread";;& # openexr
 libaio|qtscript)_isflag -flto && export LDFLAGS="$LDFLAGS -fno-lto";;&
-cdrdao|gcr|ufraw|gdal|dosemu|xemacs|soxr|flac)filterflag2 '' -flto;;&
+cdrdao|gcr|ufraw|gdal|dosemu|xemacs|soxr|flac|libgcrypt)filterflag2 '' -flto;;&
 boost)filter86_32 '-flto*' '-*-lto-*' -fuse-linker-plugin;;&
 perl)_isflag -flto && export LDFLAGS="$LDFLAGS -fPIC";;&
 cmake)_isflag -flto && _isflag '-floop-*' '-fgraphite*' && filterflag -fipa-pta;;&
