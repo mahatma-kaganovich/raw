@@ -2,7 +2,7 @@
 # Distributed under the terms of the GNU General Public License v2
 # $Header: /var/cvsroot/gentoo-x86/net-fs/samba/samba-4.2.0.ebuild,v 1.1 2015/03/08 13:21:55 polynomial-c Exp $
 
-EAPI=5
+EAPI=6
 PYTHON_COMPAT=( python2_7 )
 PYTHON_REQ_USE='threads(+),xml(+)'
 
@@ -98,20 +98,19 @@ pkg_setup() {
 }
 
 src_prepare() {
-	cd "${S}" || die
+	default
+
 #	has_version app-crypt/heimdal && sed -i -e 's:USING_SYSTEM_KDC:USING_SYSTEM_KDC_:' source4/kdc/wscript_build
 	use sasl || sed -i -e 's:HAVE_SASL:HAVE_SASL_:' source4/auth/wscript_configure
 	sed -i -e 's:/tmp/ctdb.socket:/var/run/ctdb/ctdb.socket:g' {ctdb/doc,docs-xml/smbdotconf/misc}/*ml
-	epatch ${PATCHES[@]}
 
 	# install the patches from tarball(s)
-	EPATCH_SUFFIX="patch" EPATCH_FORCE="yes" epatch "${WORKDIR}/patches/"
+	eapply "${WORKDIR}/patches/"
 
-	# Allow user patches
-	epatch_user
 	# samba-4.2.3-heimdal_compilefix.patch
 	sed -i -e 's:tgs_use_strongest_session_key:svc_use_strongest_session_key:' -e 's:as_use_strongest_session_key:tgt_use_strongest_session_key:' source4/kdc/kdc.c
 	has_version '<app-crypt/heimdal-1.6.99' && sed -i -e 's:HDB_ERR_WRONG_REALM:HDB_ERR_NOENTRY:' source4/kdc/db-glue.c
+
 	multilib_copy_sources
 }
 
