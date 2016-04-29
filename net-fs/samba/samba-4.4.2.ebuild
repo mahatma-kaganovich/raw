@@ -105,7 +105,7 @@ src_prepare() {
 	epatch ${PATCHES[@]}
 
 	# install the patches from tarball(s)
-	eapply "${WORKDIR}/patches/"
+	EPATCH_SUFFIX="patch" EPATCH_FORCE="yes" epatch "${WORKDIR}/patches/"
 
 	# Allow user patches
 	epatch_user
