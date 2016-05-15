@@ -1,5 +1,7 @@
 # fast, but small (-Os + some from O2/O3)
 
+USE="-vtv"
+
 CFLAGS="$CFLAGS -O2 -Os -fno-omit-frame-pointer -Wa,--reduce-memory-overheads"
 # O2
 # CFLAGS="$CFLAGS -fschedule-insns2 -finline-small-functions -findirect-inlining"
