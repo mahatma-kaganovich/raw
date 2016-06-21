@@ -490,6 +490,7 @@ kernel-2_src_install() {
 			cd "${WORKDIR}"
 			rm "${S}" -Rf
 		fi
+		mkdir -p "${S}" # inherited
 		[[ -n "$sym" ]] && dosym "$sym" /usr/src/linux-${SLOT}
 	fi
 	_saved_src_install
