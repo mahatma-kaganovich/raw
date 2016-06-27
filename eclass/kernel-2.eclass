@@ -26,7 +26,7 @@ if [[ ${ETYPE} == sources ]]; then
 IUSE="${IUSE} +build-kernel custom-cflags +pnp +compressed integrated
 	netboot custom-arch embed-hardware
 	kernel-firmware +sources pnponly lzma xz lzo lz4
-	external-firmware xen +smp kernel-tools +multitarget 64-bit-bfd +multislot thin
+	external-firmware xen +smp kernel-tools +multitarget 64-bit-bfd thin
 	lvm evms device-mapper unionfs luks gpg iscsi e2fsprogs mdadm
 	lguest acpi klibc +genkernel monolythe update-boot"
 DEPEND="${DEPEND}
@@ -59,13 +59,10 @@ DEPEND="${DEPEND}
 		) )
 	) "
 
-if use multislot ; then
-	SLOT="${CTARGET}-${PF}"
-elif [[ ${CTARGET} != ${CHOST} ]]; then
-	SLOT="${CTARGET}-${PN%-sources}"
-else
-	SLOT="${PN%-sources}"
-fi
+
+SLOT="${PN%-sources}"
+# 2do:
+#SLOT=0
 
 eval "`/usr/bin/perl ${SHARE}/Kconfig.pl -config`"
 
@@ -423,6 +420,8 @@ CONFIG_INITRAMFS_COMPRESSION_$c=y" >>.config
 
 kernel-2_src_install() {
 	check_kv
+	local slot0=false
+	[ "$SLOT" = "${PN%-sources}" -o "$SLOT" = 0 ] && slot0=true
 	cd "${S}" || die
 	rm -f .config.old *.loopfs
 	if [[ ${ETYPE} == sources ]] && use build-kernel; then
@@ -449,12 +448,12 @@ kernel-2_src_install() {
 				mv "$(readlink -f ${f1})" "${f1}-${REAL_KV}"
 				rm "${f1}" -f &>/dev/null
 			fi
-			use !multislot && dosym "${f}-${REAL_KV}" /boot/"${f}-${SLOT}"
+			$slot0 && dosym "${f}-${REAL_KV}" /boot/"${f}-${SLOT}"
 		done
 		f="${D}/boot/config-${REAL_KV}"
 		[[ -e "$f" ]] || cp "${S}/.config" "$f"
 		local sym=''
-		if use !multislot; then
+		if $slot0; then
 			use sources && sym="linux-${KV_FULL}"
 			for i in "${D}/boot/initrd-${REAL_KV}.img"{,.*}; do
 				local x
