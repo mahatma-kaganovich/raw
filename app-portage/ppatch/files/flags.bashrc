@@ -107,7 +107,7 @@ cdrdao|gcr|ufraw|gdal|dosemu|xemacs|soxr|flac|libgcrypt)filterflag2 '' -flto;;&
 boost)filter86_32 '-flto*' '-*-lto-*' -fuse-linker-plugin;;&
 perl)_isflag -flto && export LDFLAGS="$LDFLAGS -fPIC";;&
 cmake)_isflag -flto && _isflag '-floop-*' '-fgraphite*' && filterflag -fipa-pta;;&
-ceph)_isflag '-floop-*' '-fgraphite*' && filterflag '-flto*' '-*-lto-*' -fuse-linker-plugin;;& # prefer graphite
+ceph)_isflag '-floop-*' '-fgraphite*' && filterflag '-flto*' '-*-lto-*' -fuse-linker-plugin && appendflag1 -fPIC;;& # prefer graphite
 glibc)filterflag -Ofast -ffast-math -ftracer -fopenmp -fopenmp-simd;;
 sqlite|postgresql*|goffice|db|protobuf|qtwebkit|webkit-gtk)filterflag -Ofast -ffast-math;;
 fontforge)filterflag -Ofast;;
