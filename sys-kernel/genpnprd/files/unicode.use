@@ -1,2 +1,2 @@
-KERNEL_CONFIG+="NLS_UTF8"
-sed -i -e 's/(sbi->options\.utf8)\|(utf8)/(1)/g' fs/fat/{dir,namei_vfat}.c
+KERNEL_CONFIG+=".+_UTF8"
+grep -sq FAT_DEFAULT_UTF8 fs/fat/Kconfig || sed -i -e 's/(sbi->options\.utf8)\|(utf8)/(1)/g' fs/fat/{dir,namei_vfat}.c
