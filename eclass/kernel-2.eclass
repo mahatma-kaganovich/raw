@@ -27,7 +27,7 @@ IUSE="${IUSE} +build-kernel custom-cflags +pnp +compressed integrated
 	netboot custom-arch embed-hardware
 	kernel-firmware +sources pnponly lzma xz lzo lz4
 	external-firmware xen +smp kernel-tools +multitarget 64-bit-bfd thin
-	lvm evms device-mapper unionfs luks gpg iscsi e2fsprogs mdadm
+	lvm evms device-mapper unionfs luks gpg iscsi e2fsprogs mdadm btrfs
 	lguest acpi klibc +genkernel monolythe update-boot"
 DEPEND="${DEPEND}
 	!<app-portage/ppatch-0.08-r16
@@ -44,6 +44,7 @@ DEPEND="${DEPEND}
 			>=sys-kernel/genkernel-3.4.10.903
 			luks? ( sys-fs/cryptsetup )
 			evms? ( sys-fs/evms )
+			btrfs? ( sys-fs/btrfs-progs )
 		)
 		!klibc? ( !genkernel? (
 			sys-apps/busybox
@@ -370,7 +371,7 @@ kernel-2_src_compile() {
 	use klibc && mv initrd-${REAL_KV}.img initrd-${REAL_KV}.img.klibc
 
 	einfo "Generating initrd image"
-	local p="$(use__ lvm lvm2) $(use__ evms) $(use__ luks) $(use__ gpg) $(use__ iscsi) $(use__ device-mapper dmraid) $(use__ unionfs) $(use__ e2fsprogs disklabel) $(use__ mdadm)"
+	local p="$(use__ lvm lvm2) $(use__ evms) $(use__ luks) $(use__ gpg) $(use__ iscsi) $(use__ device-mapper dmraid) $(use__ unionfs) $(use__ e2fsprogs disklabel) $(use__ mdadm) $(use__ btrfs)"
 	use netboot && p+=" --netboot"
 	use monolythe && p+=" --static"
 	if use pnp || use compressed; then
