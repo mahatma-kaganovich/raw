@@ -52,7 +52,7 @@ Signed-off-by: Dzianis Kahanovich <mahatma@eu.by>
 -	 * arch specific code has not populated shared_cpu_map
 -	 */
 -	return !(this_leaf->level == 1);
-+	return cache_leaves_are_shared(this_leaf, sib_leaf);
++	return cache_leaves_are_shared_non_dt(this_leaf, sib_leaf);
  }
  #endif
  

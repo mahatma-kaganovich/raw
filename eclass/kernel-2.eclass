@@ -92,6 +92,10 @@ CF2(){
 	done
 }
 
+external_kconfig(){
+	false
+}
+
 load_conf(){
 	[[ -e "${CONFIG_ROOT}${KERNEL_CONF:=/etc/kernels/kernel.conf}" ]] && {
 		einfo "Loading ${CONFIG_ROOT}${KERNEL_CONF}"
@@ -1061,6 +1065,10 @@ kconfig(){
 	local KERNEL_CONFIG="${KERNEL_CONFIG}"
 	load_conf
 
+	external_kconfig && {
+		yes '' 2>/dev/null | kmake oldconfig
+		return
+	}
 	[[ -e .config ]] || kmake defconfig >/dev/null
 	export ${!KERNEL_@}
 	local i=1
