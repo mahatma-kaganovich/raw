@@ -936,6 +936,7 @@ native|:native|native:native)
 		local amf=
 		[ "$cpu_family" -ge 21 ] && amf="{,_fam$(printf '%02x' ${cpu_family}})h"
 		ucode "amd-ucode/microcode_amd${amf}.bin" $vendor_id
+		CF1 -X86_AMD_PLATFORM_DEVICE
 		case "${cpu_family}:${model}:${flags}:${model_name}" in
 		4:[3789]:*)CF1 M486;;
 		4:*\ mmx\ *)CF1 M586MMX;;
@@ -945,6 +946,7 @@ native|:native|native:native)
 		6:*)CF1 MK7;freq="X86_POWERNOW_K7 X86_CPUFREQ_NFORCE2";;
 		7:*|*\ k8\ *|*\ lm\ *)CF1 MK8;freq="X86_POWERNOW_K8 X86_ACPI_CPUFREQ $freq";gov=CONSERVATIVE;;
 		*Geode*)CF1 GEODE_LX;;
+		*)CF1 X86_AMD_PLATFORM_DEVICE;;& # latest models
 		*)CF1 GENERIC_CPU X86_GENERIC;;
 		esac
 	;;
@@ -1044,6 +1046,8 @@ CF1 -CPU_SUP_.+ "CPU_SUP_${V:-.+}"
 }
 [ -z "$V" -o "$V" = AMD ] && ucode "amd-ucode/*.bin" AuthenticAMD
 [ -z "$V" -o "$V" = INTEL ] && ucode "intel-ucode/??-??-??" GenuineIntel
+[ -n "$V" -a "$V" = AMD ] || CF1 -IOSF_MBI '-X86_INTEL_(?:LPSS|MID|CE|QUARK)'
+[ -n "$V" -a "$V" = INTEL ] || CF1 -X86_AMD_PLATFORM_DEVICE
 _is_CF1 NUMA || _is_CF1 PARAVIRT && CF1 RCU_NOCB_CPU RCU_NOCB_CPU_ALL
 _is_CF1 -PARAVIRT && CF1 JUMP_LABEL
 KERNEL_CONFIG="${CF//  / }"
