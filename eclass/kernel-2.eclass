@@ -928,7 +928,7 @@ native|:native|native:native)
 			# 42 or 45, but+
 			[[ "$model" -lt 42 ]] && CF1 -X86_INTEL_PSTATE
 		else
-			CF1 -IOSF_MBI -X86_INTEL_LPSS -X86_INTEL_(?:MID|CE|QUARK)
+			CF1 -IOSF_MBI -X86_INTEL_(?:LPSS|MID|CE|QUARK)
 		fi
 	;;
 	*AMD*)
