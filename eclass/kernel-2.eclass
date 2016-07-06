@@ -926,6 +926,8 @@ native|:native|native:native)
 			[[ "$model" -gt 25 ]] && CF1 INTEL_IDLE
 			# 42 or 45, but+
 			[[ "$model" -lt 42 ]] && CF1 -X86_INTEL_PSTATE
+		else
+			CF1 -IOSF_MBI -X86_INTEL_LPSS
 		fi
 	;;
 	*AMD*)
