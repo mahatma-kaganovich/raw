@@ -909,6 +909,7 @@ native|:native|native:native)
 		ucode "intel-ucode/$(printf '%02x-%02x-%02x' ${cpu_family} ${model} ${stepping})" $vendor_id
 		case "${cpu_family}:${model}:${flags}:${model_name}" in
 		*Atom*)CF1 MATOM;;
+#		*)CF1 -IOSF_MBI -X86_INTEL_LPSS -X86_INTEL_MID;;&
 		5:*\ mmx\ *)CF1 M586MMX;;
 		5:*\ tsc\ *)CF1 M586TSC;;
 		15:*\ M\ *)CF1 MPENTIUM4 MPSC;: ${freq:=X86_SPEEDSTEP_ICH};;
@@ -927,7 +928,7 @@ native|:native|native:native)
 			# 42 or 45, but+
 			[[ "$model" -lt 42 ]] && CF1 -X86_INTEL_PSTATE
 		else
-			CF1 -IOSF_MBI -X86_INTEL_LPSS
+			CF1 -IOSF_MBI -X86_INTEL_LPSS -X86_INTEL_(?:MID|CE|QUARK)
 		fi
 	;;
 	*AMD*)
