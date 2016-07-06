@@ -93,8 +93,10 @@ CF2(){
 }
 
 load_conf(){
-	[[ -e "${CONFIG_ROOT}${KERNEL_CONF:=/etc/kernels/kernel.conf}" ]] && source "${CONFIG_ROOT}${KERNEL_CONF}"
-	einfo "loaded ${CONFIG_ROOT}${KERNEL_CONF}"
+	[[ -e "${CONFIG_ROOT}${KERNEL_CONF:=/etc/kernels/kernel.conf}" ]] && {
+		einfo "Loading ${CONFIG_ROOT}${KERNEL_CONF}"
+		source "${CONFIG_ROOT}${KERNEL_CONF}"
+	}
 }
 
 load_conf
