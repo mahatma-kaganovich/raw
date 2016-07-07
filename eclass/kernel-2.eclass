@@ -374,7 +374,7 @@ kernel-2_src_compile() {
 		" || die "genpnprd failed"
 	fi
 	use genkernel || return
-	use klibc && mv initrd-${REAL_KV}.img initrd-${REAL_KV}.img.klibc
+	use klibc && mv initrd-${REAL_KV}.img initrd-${REAL_KV}.klibc.img
 
 	einfo "Generating initrd image"
 	local p="$(use__ lvm lvm2) $(use__ evms) $(use__ luks) $(use__ gpg) $(use__ iscsi) $(use__ device-mapper dmraid) $(use__ unionfs) $(use__ e2fsprogs disklabel) $(use__ mdadm) $(use__ btrfs)"
@@ -393,7 +393,7 @@ kernel-2_src_compile() {
 		gzip -dc "$i1"  >"$i" && rm "$i1"
 	if use integrated && use thin; then
 		i="initrd-${REAL_KV}.thin.cpio"
-		i1="$i1.thin"
+		i1="${i1%.img}.thin.img"
 		gzip -dc "$i1" >"$i" && rm "$i1"
 	fi
 	initramfs "$i" NONE
@@ -426,6 +426,10 @@ CONFIG_INITRAMFS_COMPRESSION_$c=y" >>.config
 	fi
 }
 
+_dosym(){
+	[[ -e "${D}/boot/$2" ]] && ! [[ -e "${D}/boot/$1" ]] && dosym "$1" "/boot/$2"
+}
+
 kernel-2_src_install() {
 	check_kv
 	local slot0=false
@@ -438,7 +442,7 @@ kernel-2_src_install() {
 		local f f1
 		if ! use integrated; then
 			insinto "/boot"
-			for f in initrd-"${REAL_KV}".img{,.thin,.klibc}; do
+			for f in initrd-"${REAL_KV}"{,.thin,.klibc}.img; do
 				[[ -e "$f" ]] && doins "$f"
 			done
 		fi
@@ -456,20 +460,20 @@ kernel-2_src_install() {
 				mv "$(readlink -f ${f1})" "${f1}-${REAL_KV}"
 				rm "${f1}" -f &>/dev/null
 			fi
-			$slot0 && dosym "${f}-${REAL_KV}" /boot/"${f}-${SLOT}"
+			$slot0 && _dosym "${f}-${REAL_KV}" "${f}-${SLOT}"
+			for i in '' .thin .klibc .noinitrd; do
+				[ "$i" = .noinitrd -o -e "${D}/boot/initrd-${REAL_KV}$i.img" ] || continue
+				[ "$i" = .noinitrd ] && use !embed-hardware && continue
+				_dosym "${f}-${REAL_KV}" "${f}-${REAL_KV}$i"
+				$slot0 || continue
+				_dosym "${f}-${REAL_KV}" "${f}-${SLOT}$i"
+				_dosym "initrd-${REAL_KV}$i.img" "initrd-${SLOT}$i.img"
+			done
 		done
 		f="${D}/boot/config-${REAL_KV}"
 		[[ -e "$f" ]] || cp "${S}/.config" "$f"
 		local sym=''
-		if $slot0; then
-			use sources && sym="linux-${KV_FULL}"
-			for i in "${D}/boot/initrd-${REAL_KV}.img"{,.*}; do
-				local x
-				for x in "/boot/initrd-${SLOT}.img"{,"${i##*.img}"}; do
-					[[ -e "$i" ]] && ! [[ -e "${D}$x" ]] && dosym "${i##*/}" "$x"
-				done
-			done
-		fi
+		$slot0 && use sources && sym="linux-${KV_FULL}"
 		if use sources ; then
 			dodir /usr/src
 			find "${S}" -name "*.cmd" | while read f ; do
