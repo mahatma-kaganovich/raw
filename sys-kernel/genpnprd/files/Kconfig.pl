@@ -491,6 +491,9 @@ sub conf{
 			_and($_,$y,$_);
 		}elsif($c eq '_'){
 			cfg($_) if($config{$_} eq 'm');
+		}elsif($c eq '?'){
+			%off=();
+			$msg='' if(!depcfg($_));
 		}elsif($c ne '=' || !defined($config{$_})){
 			if(!$eq){
 				cfg($_,$y);
