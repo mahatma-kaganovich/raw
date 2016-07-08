@@ -799,6 +799,7 @@ ucode(){
 cpu2K(){
 local i v V="" march=$(cflg) mcpu=$(cflg mcpu=) srcarch=$(arch) m64g="HIGHMEM64G -HIGHMEM4G -NOHIGHMEM" freq='' gov='ONDEMAND' fakeHT=false
 local cpuinfo=' vendor_id model_name flags cpu_family model stepping cache_alignment fpu siblings cpu_cores processor cpu ncpus_probed ncpus_active cpucaps '
+local knl='(?:INTEL_MIC|VOP|SKIF)_BUS'
 march="$march${mcpu:+:$mcpu}"
 local CF="#
 ${KERNEL_CONFIG//	/ }
@@ -809,10 +810,12 @@ for i in $cpuinfo; do
 done
 export PNP_VENDOR="^vendor_id\|"
 export VIRT=0
-CF1 -SMP -X86{BIGSMP,GENERIC} X86_{X2APIC,UP_APIC,UP_IOAPIC} -SPARSE_IRQ -CPUSETS X86_INTEL_PSTATE INTEL_TXT
+CF1 -SMP -X86{BIGSMP,GENERIC} X86_{X2APIC,UP_APIC,UP_IOAPIC} -SPARSE_IRQ -CPUSETS X86_INTEL_PSTATE INTEL_TXT -$knl
 CF1 SPARC_.+_CPUFREQ US3_MC
 use xen && CF1 -HIGHMEM64G -HIGHMEM4G NOHIGHMEM X86_PAE -X86_VSMP
 use smp && CF1 SMP X86_BIGSMP SCHED_{SMT,MC} SPARSE_IRQ CPUSETS NUMA
+# while disable knl features by default
+#use smp && $knl
 [[ "$(cflg mtune=)" == generic ]] && CF1 X86_GENERIC
 if [[ -z "${march}" ]]; then
 	CF1 GENERIC_CPU X86_GENERIC
@@ -842,7 +845,7 @@ native|:native|native:native)
     *)
 #    x86|i386)
 	export PNP_VENDOR=""
-	CF1 -SCHED_{SMT,MC} -X86_{UP_APIC,TSC,PAT,MSR,MCE,CMOV,X2APIC} -MTRR -INTEL_IDLE -KVM_INTEL -KVM_AMD -SPARSE_IRQ -CPUSETS -INTEL_TXT
+	CF1 -SCHED_{SMT,MC} -X86_{UP_APIC,TSC,PAT,MSR,MCE,CMOV,X2APIC} -MTRR -INTEL_IDLE -KVM_INTEL -KVM_AMD -SPARSE_IRQ -CPUSETS -INTEL_TXT -$knl
 	case "$srcarch" in
 	x86|i386)
 		if use multitarget || use 64-bit-bfd; then
@@ -931,6 +934,7 @@ native|:native|native:native)
 			[[ "$model" -gt 25 ]] && CF1 INTEL_IDLE
 			# 42 or 45, but+
 			[[ "$model" -lt 42 ]] && CF1 -X86_INTEL_PSTATE
+			[[ "$model" -gt 87 ]] && CF $knl
 		else
 			CF1 -IOSF_MBI '-X86_INTEL_(?:LPSS|MID|CE|QUARK)'
 		fi
@@ -1028,10 +1032,12 @@ pentium4|pentium4m|prescott|nocona)
 	esac
 	freq="X86_ACPI_CPUFREQ X86_P4_CLOCKMOD"
 ;;
-core2|atom)CF1 M${march^^} $m64g;freq=X86_ACPI_CPUFREQ;;
+core2)CF1 MCORE2 $m64g X86_INTEL_PSTATE;freq=X86_ACPI_CPUFREQ;;
+atom|nehalem|westmere|sandybridge|ivybridge|haswell|broadwell|bonnell|silvermont)CF1 MCORE2 M${march^^} $m64g;freq=X86_ACPI_CPUFREQ;V=INTEL;;
+knl)CF1 MCORE2 $m64g $knl;V=INTEL;;
 k6-3)CF1 MK6 $m64g -SCHED_SMT;freq=X86_POWERNOW_K6;V=AMD;;
-athlon|athlon-tbird|athlon-4|athlon-xp|athlon-mp)CF1 MK7 $m64g -SCHED_SMT;freq=X86_POWERNOW_K7;V=AMD;;
-bdver1|k8|opteron|athlon64|athlon-fx|k8-sse3|opteron-sse3|athlon64-sse3|amdfam10|barcelona)CF1 MK8 $m64g -SCHED_SMT;freq="X86_POWERNOW_K8 X86_ACPI_CPUFREQ";gov=CONSERVATIVE;V=AMD;;
+btver1|athlon|athlon-tbird|athlon-4|athlon-xp|athlon-mp)CF1 MK7 $m64g -SCHED_SMT;freq=X86_POWERNOW_K7;V=AMD;;
+btver*|bdver*|k8*|opteron*|athlon64*|athlon-fx|amdfam10|barcelona)CF1 MK8 $m64g -SCHED_SMT;freq="X86_POWERNOW_K8 X86_ACPI_CPUFREQ";gov=CONSERVATIVE;V=AMD;;
 *)	case "$srcarch" in
 	*)CF1 GENERIC_CPU X86_GENERIC;;
 	esac
@@ -1046,12 +1052,11 @@ use embed-hardware && [[ -n "$freq" ]] && CF1 -X86_POWERNOW_K8 -X86_ACPI_CPUFREQ
 CF1 -CPU_SUP_.+ "CPU_SUP_${V:-.+}"
 [ -n "$V" ] && {
 	CF1 -MICROCODE_AMD -MICROCODE_INTEL MICROCODE_$V
-	[ "$V" != INTEL ] && CF1 -X86_INTEL_PSTATE
+	[ "$V" = INTEL ] || CF1 -X86_INTEL_PSTATE -IOSF_MBI '-X86_INTEL_(?:LPSS|MID|CE|QUARK)' -$knl
+	[ "$V" = AMD ] || -X86_AMD_PLATFORM_DEVICE -AMD_NUMA
 }
 [ -z "$V" -o "$V" = AMD ] && ucode "amd-ucode/*.bin" AuthenticAMD
 [ -z "$V" -o "$V" = INTEL ] && ucode "intel-ucode/??-??-??" GenuineIntel
-[ -n "$V" -a "$V" = AMD ] || CF1 -X86_AMD_PLATFORM_DEVICE
-[ -n "$V" -a "$V" = INTEL ] || CF1 -IOSF_MBI '-X86_INTEL_(?:LPSS|MID|CE|QUARK)'
 _is_CF1 NUMA || _is_CF1 PARAVIRT && CF1 RCU_NOCB_CPU RCU_NOCB_CPU_ALL
 _is_CF1 -PARAVIRT && CF1 JUMP_LABEL
 KERNEL_CONFIG="${CF//  / }"

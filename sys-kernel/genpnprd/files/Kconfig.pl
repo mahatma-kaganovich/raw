@@ -104,6 +104,7 @@ $ENV{KERNEL_CONFIG}||='
 	IOSF_MBI X86_INTEL_LPSS X86_AMD_PLATFORM_DEVICE =DRM_MEDFIELD =.+_(?:SOC|SCU)(?:_.+)?
 	64BIT==!y;KALLSYMS_BASE_RELATIVE
 	FB_SIMPLE
+	ARM==y;ARM64==y;-QCOM_.+
 	#usb_mouse_fix HID
 	###beleave_last_binutils: X86_X32
 	###bugs: -TR -ECONET
