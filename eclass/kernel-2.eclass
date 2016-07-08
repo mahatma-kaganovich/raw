@@ -427,7 +427,7 @@ CONFIG_INITRAMFS_COMPRESSION_$c=y" >>.config
 }
 
 _dosym(){
-	[[ -e "${D}/boot/$2" ]] && ! [[ -e "${D}/boot/$1" ]] && dosym "$1" "/boot/$2"
+	[[ -e "${D}/boot/$1" ]] && ! [[ -e "${D}/boot/$2" ]] && dosym "$1" "/boot/$2"
 }
 
 kernel-2_src_install() {
