@@ -373,11 +373,10 @@ sub depcfg{
 		}elsif($c{$i} ne 'y' || $config{$i} || !exists($tristate_{$i})){ 
 			next;
 		}
-		$msg.=" $i=$c{$i}->$config{$i}";
-		$e=1;
+		$e.=" $i=$c{$i}->$config{$i}";
 	}
 	if($e){
-		$msg=" ! $msg";
+		$msg=" ! $e";
 		%config=%c;
 		return 0;
 	}
