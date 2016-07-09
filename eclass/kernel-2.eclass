@@ -1053,7 +1053,7 @@ CF1 -CPU_SUP_.+ "CPU_SUP_${V:-.+}"
 [ -n "$V" ] && {
 	CF1 -MICROCODE_AMD -MICROCODE_INTEL MICROCODE_$V
 	[ "$V" = INTEL ] || CF1 -X86_INTEL_PSTATE -IOSF_MBI '-X86_INTEL_(?:LPSS|MID|CE|QUARK)' -$knl
-	[ "$V" = AMD ] || -X86_AMD_PLATFORM_DEVICE -AMD_NUMA
+	[ "$V" = AMD ] || CF1 -X86_AMD_PLATFORM_DEVICE -AMD_NUMA
 }
 [ -z "$V" -o "$V" = AMD ] && ucode "amd-ucode/*.bin" AuthenticAMD
 [ -z "$V" -o "$V" = INTEL ] && ucode "intel-ucode/??-??-??" GenuineIntel

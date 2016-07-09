@@ -51,7 +51,7 @@ $ENV{KERNEL_CONFIG}||='
 	    SERIAL_8250_EXTENDED
 	TIPC_ADVANCED NET_IPGRE_BROADCAST
 	IP_VS_PROTO_.+
-	ISA MCA MCA_LEGACY EISA NET_ISA PCI PCI_LEGACY =RAPIDIO
+	ISA MCA MCA_LEGACY EISA NET_ISA PCI PCI_LEGACY RAPIDIO
 	PCIEASPM CRYPTO_DEV_HIFN_795X_RNG PERF_COUNTERS
 	X86_SPEEDSTEP_RELAXED_CAP_CHECK
 	SLIP_COMPRESSED SLIP_SMART NET_FC -LOGO_LINUX_[\w\d]*
@@ -82,8 +82,7 @@ $ENV{KERNEL_CONFIG}||='
 	-USB_OTG_(?:WHITELIST|BLACKLIST_HUB)
 	=/drivers/(?:mfd|regulator)/.+
 	~HISAX_NO_.+
-	=.+_(?:PARTITION|FF|X_COMPATIBILITY|PTP|IOMMU|THERMAL|API|THERMAL)
-	.+_DUAL_ROLE .+_BY_BOTH
+	=.+_(?:PARTITION|FF|X_COMPATIBILITY|PTP|IOMMU|THERMAL|DUAL_ROLE|BY_BOTH|API|THERMAL)
 	=NET_SWITCHDEV =NET_FOU_IP_TUNNELS =PCC
 	=IRQ_REMAP
 	DM_UEVENT =.+_SDIO B43_PHY_N
@@ -113,7 +112,7 @@ $ENV{KERNEL_CONFIG}||='
 	###3.14.0_nosound SND_HDA_CODEC_.+ SND_HDA_GENERIC
 	#######
 	';
-$ENV{KERNEL_CONFIG2}||='?RAPIDIO RAPIDIO_DMA_ENGINE==y;?DMA_ENGINE (?:.+_)?PTP_.*CLOCK.*==y;-NETWORK_PHY_TIMESTAMPING';
+$ENV{KERNEL_CONFIG2}||='?DMA_ENGINE (?:.+_)?PTP_.*CLOCK.*==y;-NETWORK_PHY_TIMESTAMPING';
 
 
 %cc=(
@@ -358,8 +357,7 @@ keys %n;
 }
 
 sub depcfg{
-	$config{$_[0]} || return 1;
-	my (%c,%x,$e);
+	my (%c,%x);
 	%c=%config;
 	cfg(@_);
 	for(keys %config){
@@ -367,17 +365,7 @@ sub depcfg{
 	}
 	dep(keys %x);
 	for my $i ($_[0],keys %config){
-		if($i eq $_[0]){
-			$config{$i} || next;
-		# no y->n tristate
-		}elsif($c{$i} ne 'y' || $config{$i} || !exists($tristate_{$i})){ 
-			next;
-		}
-		$msg.=" $i=$c{$i}->$config{$i}";
-		$e=1;
-	}
-	if($e){
-		$msg=" ! $msg";
+		next if($c{$i} ne 'y' || $config{$i} || !exists($tristate_{$i}));
 		%config=%c;
 		return 0;
 	}
@@ -505,7 +493,7 @@ sub conf{
 			cfg($_) if($config{$_} eq 'm');
 		}elsif($c eq '?'){
 			%off=();
-			depcfg($_);
+			$msg='' if(!depcfg($_));
 		}elsif($c ne '=' || !defined($config{$_})){
 			if(!$eq){
 				cfg($_,$y);
