@@ -1,0 +1,77 @@
+--- a/net/bridge.sh	2016-07-11 12:49:36.000000000 +0300
++++ b/net/bridge.sh	2016-07-14 14:02:48.000000000 +0300
+@@ -4,7 +4,7 @@
+ bridge_depend()
+ {
+ 	before interface macnet
+-	program brctl
++	program brctl ip
+ }
+ 
+ _config_vars="$_config_vars bridge bridge_add brctl"
+@@ -29,6 +29,11 @@ _bridge_ports()
+ 	done
+ }
+ 
++_do_ip()
++{
++	! type brctl >/dev/null 2>&1
++}
++
+ bridge_pre_start()
+ {
+ 	local brif= oiface="${IFACE}" e= x=
+@@ -70,7 +75,16 @@ bridge_pre_start()
+ 
+ 	if ! _is_bridge ; then
+ 		ebegin "Creating bridge ${IFACE}"
+-		if ! brctl addbr "${IFACE}"; then
++		# "ip" is alternative way to manage bridges
++		# and even single way to set MTU for it (for now).
++		local mtu=
++		eval mtu=\$mtu_${IFVAR}
++		if [ -n "$mtu" ] || _do_ip; then
++			if ! ip link add name "${IFACE}" ${mtu:+mtu "$mtu"} type bridge; then
++				eend 1
++				return 1
++			fi
++		elif ! brctl addbr "${IFACE}"; then
+ 			eend 1
+ 			return 1
+ 		fi
+@@ -120,7 +134,13 @@ bridge_pre_start()
+ 			fi
+ 			# The interface is known to exist now
+ 			_up
+-			if ! brctl addif "${BR_IFACE}" "${x}"; then
++			if _do_ip; then
++				ip link set eth0 up
++				if ! ip link set "${x}" master "${BR_IFACE}"; then
++					eend 1
++					return 1
++				fi
++			elif ! brctl addif "${BR_IFACE}" "${x}"; then
+ 				eend 1
+ 				return 1
+ 			fi
+@@ -176,12 +196,20 @@ bridge_post_stop()
+ 		ebegin "Removing port ${port}${extra}"
+ 		local IFACE="${port}"
+ 		_set_flag -promisc
++		if _do_ip; then
++			ip link set "${port}" nomaster
++			eend $?
++		fi
+ 		brctl delif "${iface}" "${port}"
+ 		eend $?
+ 	done
+ 
+ 	if ${delete}; then
+ 		eoutdent
++		if _do_ip; then
++			ip link delete "${iface}" type bridge
++			eend $?
++		fi
+ 		brctl delbr "${iface}"
+ 		eend $?
+ 	fi
