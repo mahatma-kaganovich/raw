@@ -24,6 +24,9 @@ CTDB_PUBLIC_INTERFACE=eth0
 #
 CTDB_PUBLIC_ADDRESSES=/etc/ctdb/public_addresses
 
+# or
+#LVS_PUBLIC_IP=10.1.1.2
+
 # Should CTDB present the cluster using a single public ip address to clients
 # and multiplex clients across all CONNECTED nodes ?
 # This is based on LVS 
@@ -33,9 +36,10 @@ CTDB_PUBLIC_ADDRESSES=/etc/ctdb/public_addresses
 
 # where to log messages
 # the default is /var/log/log.ctdb
-CTDB_LOGFILE=/var/log/log.ctdb
+CTDB_LOGGING=file:/var/log/log.ctdb
 
 # what debug level to run at. Higher means more verbose
 # the default is ERR
 CTDB_DEBUGLEVEL=ERR
 
+CTDB_NOTIFY_SCRIPT=/etc/ctdb/notify.sh
