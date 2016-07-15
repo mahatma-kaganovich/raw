@@ -1,0 +1,41 @@
+--- bridge.sh4	2016-07-15 14:14:43.000000000 +0300
++++ bridge.sh5	2016-07-15 15:25:46.000000000 +0300
+@@ -7,7 +7,7 @@ bridge_depend()
+ 	program brctl ip
+ }
+ 
+-_config_vars="$_config_vars bridge bridge_add brctl"
++_config_vars="$_config_vars bridge bridge_add brctl mtu"
+ 
+ _is_bridge()
+ {
+@@ -31,17 +31,19 @@ _bridge_ports()
+ 
+ bridge_pre_start()
+ {
+-	local brif= oiface="${IFACE}" e= x=
++	local brif= oiface="${IFACE}" e= x= mtu=
+ 	# ports is for static add
+ 	local ports="$(_get_array "bridge_${IFVAR}")"
+ 	# old config options
+ 	local brctl_opts="$(_get_array "brctl_${IFVAR}")"
+ 	# brif is used for dynamic add
+ 	eval brif=\$bridge_add_${IFVAR}
++	eval mtu=\$mtu_${IFVAR}
+ 
+ 	local do_iproute2=false do_brctl=false
+ 	if [ -n "${brctl_opts}" ] && type brctl >/dev/null 2>&1; then
+ 		do_brctl=true
++		[ -n "$mtu" ] && type ip >/dev/null 2>&1 && do_iproute2=true
+ 	elif type ip >/dev/null 2>&1; then
+ 		do_iproute2=true
+ 	elif type brctl >/dev/null 2>&1; then
+@@ -81,7 +83,7 @@ bridge_pre_start()
+ 	if ! _is_bridge ; then
+ 		ebegin "Creating bridge ${IFACE}"
+ 		if ${do_iproute2}; then
+-			ip link add "${IFACE}" type bridge
++			ip link add "${IFACE}" ${mtu:+mtu "${mtu}"} type bridge
+ 			rc=$?
+ 		elif ${do_brctl}; then
+ 			brctl addbr "${IFACE}"
