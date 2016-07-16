@@ -65,9 +65,13 @@ SLOT="${PN%-sources}"
 # 2do:
 #SLOT=0
 
-eval "`/usr/bin/perl ${SHARE}/Kconfig.pl -config`"
-
-KERNEL_CONFIG+=" +TR"
+kconfig_init=0
+kconfig_init(){
+	[ "$kconfig_init" = 1 ] && return
+	eval "`/usr/bin/perl ${SHARE}/Kconfig.pl -config`"
+	KERNEL_CONFIG+=" +TR"
+	kconfig_init=1
+}
 
 PROVIDE="sources? ( virtual/linux-sources )
 	!sources? ( virtual/linux-kernel )"
@@ -183,6 +187,7 @@ _filter_f() {
 
 kernel-2_src_configure() {
 	[[ ${ETYPE} == sources ]] || return
+	kconfig_init
 	cd "${S}"
 	cpu2K
 	: ${KERNEL_UTILS_CFLAGS:="${CFLAGS}"}
@@ -260,6 +265,8 @@ ext_firmware(){
 }
 
 kernel-2_src_compile() {
+	kconfig_init
+
 	if [[ "${EAPI}" == 1 ]]; then
 		kernel-2_src_prepare
 		kernel-2_src_configure
@@ -431,6 +438,7 @@ _dosym(){
 }
 
 kernel-2_src_install() {
+	kconfig_init
 	check_kv
 	local slot0=false
 	[ "$SLOT" = "${PN%-sources}" -o "$SLOT" = 0 ] && slot0=true
@@ -1157,6 +1165,7 @@ _lsmod(){
 
 kernel-2_src_prepare(){
 	[[ ${ETYPE} == sources ]] || return
+	kconfig_init
 
 	local i
 	to_overlay
