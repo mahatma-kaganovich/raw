@@ -65,14 +65,6 @@ SLOT="${PN%-sources}"
 # 2do:
 #SLOT=0
 
-kconfig_init=0
-kconfig_init(){
-	[ "$kconfig_init" = 1 ] && return
-	eval "`/usr/bin/perl ${SHARE}/Kconfig.pl -config`"
-	KERNEL_CONFIG+=" +TR"
-	kconfig_init=1
-}
-
 PROVIDE="sources? ( virtual/linux-sources )
 	!sources? ( virtual/linux-kernel )"
 
@@ -100,14 +92,6 @@ external_kconfig(){
 	false
 }
 
-load_conf(){
-	[[ -e "${CONFIG_ROOT}${KERNEL_CONF:=/etc/kernels/kernel.conf}" ]] && {
-		einfo "Loading ${CONFIG_ROOT}${KERNEL_CONF}"
-		source "${CONFIG_ROOT}${KERNEL_CONF}"
-	}
-}
-
-load_conf
 
 #USEKEY="$(for i in ${!KERNEL_@} ; do
 #	echo "${!i} , "
@@ -125,6 +109,20 @@ done
 fi
 
 BDIR="${WORKDIR}/build"
+
+load_conf(){
+	[[ -e "${CONFIG_ROOT}${KERNEL_CONF:=/etc/kernels/kernel.conf}" ]] && {
+		einfo "Loading ${CONFIG_ROOT}${KERNEL_CONF}"
+		source "${CONFIG_ROOT}${KERNEL_CONF}"
+	}
+}
+
+kconfig_init(){
+	[ -n "$KERNEL_CONFIG" -o "${ETYPE}" != sources ] && return
+	eval "`/usr/bin/perl ${SHARE}/Kconfig.pl -config`"
+	KERNEL_CONFIG+=" +TR"
+	load_conf
+}
 
 set_kv(){
 	local v="$1"
