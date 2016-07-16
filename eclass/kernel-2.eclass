@@ -69,6 +69,23 @@ SLOT="${PN%-sources}"
 PROVIDE="sources? ( virtual/linux-sources )
 	!sources? ( virtual/linux-kernel )"
 
+#USEKEY="$(for i in ${!KERNEL_@} ; do
+#	echo "${!i} , "
+#done | md5sum)"
+#IUSE="${IUSE} md5cfg:${USEKEY%% *}"
+
+for i in "${SHARE}"/*.{-use,use}; do
+	[[ "${i##*/}" == *_dep_* ]] && . "$i"
+	i="${i##*[/:_]}"
+	i="${i%.use}"
+	i="${i%.-use}"
+	IUSE+=" ${i#[0-9]}"
+done
+
+fi
+
+BDIR="${WORKDIR}/build"
+
 CF1(){
 	local i s='[ 	
 ]'
@@ -92,24 +109,6 @@ CF2(){
 external_kconfig(){
 	false
 }
-
-
-#USEKEY="$(for i in ${!KERNEL_@} ; do
-#	echo "${!i} , "
-#done | md5sum)"
-#IUSE="${IUSE} md5cfg:${USEKEY%% *}"
-
-for i in "${SHARE}"/*.{-use,use}; do
-	[[ "${i##*/}" == *_dep_* ]] && . "$i"
-	i="${i##*[/:_]}"
-	i="${i%.use}"
-	i="${i%.-use}"
-	IUSE+=" ${i#[0-9]}"
-done
-
-fi
-
-BDIR="${WORKDIR}/build"
 
 load_conf(){
 	[[ -e "${CONFIG_ROOT}${KERNEL_CONF:=/etc/kernels/kernel.conf}" ]] && {
