@@ -1,7 +1,8 @@
 : ${EAPI:=1} # 3 or neutral
 inherit flag-o-matic global-compat
 [[ "${PV}" == 9999* ]] && KV_FULL="${PV}"
-source "${PORTDIR}/eclass/kernel-2.eclass"
+# really newer work without, but check-robots want it
+[ -e "${PORTDIR}/eclass/kernel-2.eclass" ] && source "${PORTDIR}/eclass/kernel-2.eclass"
 EXPORT_FUNCTIONS src_configure src_prepare pkg_prerm
 
 reexport(){

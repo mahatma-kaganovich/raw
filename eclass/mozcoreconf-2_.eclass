@@ -1,4 +1,4 @@
-source "${PORTDIR}/eclass/mozcoreconf-2.eclass"
+[ -e "${PORTDIR}/eclass/mozcoreconf-2.eclass" ] && source "${PORTDIR}/eclass/mozcoreconf-2.eclass"
 
 mozconfig_init() {
 	declare enable_optimize pango_version myext x
