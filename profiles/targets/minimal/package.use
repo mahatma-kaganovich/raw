@@ -1,4 +1,4 @@
 x11-libs/cairo svg
 gnome-base/librsvg -tools
 #media-libs/mesa -* bindist osmesa nptl
-media-libs/mesa osmesa nptl -classic -gallium -dri3
+media-libs/mesa osmesa nptl -classic -gallium
