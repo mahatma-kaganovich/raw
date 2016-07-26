@@ -37,7 +37,7 @@ start() {
 
 	# check
 	i=
-	[[ "$CTDB_OPTIONS" == *--public-adresses* || "$CTDB_OPTIONS" == *--single-public-ip* ]] || i+=" the location of the CTDB_PUBLIC_ADDRESSES or CTDB_SINGLE_PUBLIC_IP in /etc/conf.d/ctdb;"
+	[[ "$CTDB_OPTIONS" == *--public-addresses* || "$CTDB_OPTIONS" == *--single-public-ip* ]] || i+=" the location of the CTDB_PUBLIC_ADDRESSES or CTDB_LVS_PUBLIC_IP in /etc/conf.d/ctdb;"
 	[[ "$CTDB_OPTIONS" == *--public-interface* ]] || i+" the location of the CTDB_PUBLIC_INTERFACE in /etc/conf.d/ctdb;"
 	[[ "$CTDB_OPTIONS" == *--reclock* ]] || eerror "To avoid split-brain - configure the location of the CTDB_RECOVERY_LOCK in /etc/conf.d/ctdb
 You are warned!"
