@@ -1,4 +1,4 @@
-[ -e "${PORTDIR}/eclass/multilib.eclass" ] source "${PORTDIR}/eclass/multilib.eclass"
+[ -e "${PORTDIR}/eclass/multilib.eclass" ] && source "${PORTDIR}/eclass/multilib.eclass"
 
 # CPP= for samba-4.3.4
 # https://bugs.gentoo.org/show_bug.cgi?id=572104
