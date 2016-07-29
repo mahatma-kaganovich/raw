@@ -117,7 +117,7 @@ ceph)_isflag '-floop-*' '-fgraphite*' && { # prefer graphite vs. lto
 }
 ;;&
 glibc)filterflag -Ofast -ffast-math -ftracer -fopenmp -fopenmp-simd;;
-sqlite|postgresql*|goffice|db|protobuf|qtwebkit|webkit-gtk)filterflag -Ofast -ffast-math;;
+sqlite|postgresql*|goffice|db|protobuf|qtwebkit|webkit-gtk|python)filterflag -Ofast -ffast-math;;
 fontforge)filterflag -Ofast;;
 mit-krb5|ceph)export CFLAGS="${CFLAGS//-Os/-O2}";export CXXFLAGS="${CXXFLAGS//-Os/-O2}";;
 wine)filterflag -ftree-loop-distribution -ftree-loop-distribute-patterns;;
