@@ -466,10 +466,15 @@ kernel-2_src_install() {
 				mv "$(readlink -f ${f1})" "${f1}-${REAL_KV}"
 				rm "${f1}" -f &>/dev/null
 			fi
+		done
+		for f in vmlinuz config; do
 			$slot0 && _dosym "${f}-${REAL_KV}" "${f}-${SLOT}"
+		done
+		for f in vmlinuz; do
 			for i in '' .thin .klibc .noinitrd; do
 				[ "$i" = .noinitrd -o -e "${D}/boot/initrd-${REAL_KV}$i.img" ] || continue
 				[ "$i" = .noinitrd ] && use !embed-hardware && continue
+				[ "$i" != '' -a "$f" != vmlinuz ] 
 				_dosym "${f}-${REAL_KV}" "${f}-${REAL_KV}$i"
 				$slot0 || continue
 				_dosym "${f}-${REAL_KV}" "${f}-${SLOT}$i"
