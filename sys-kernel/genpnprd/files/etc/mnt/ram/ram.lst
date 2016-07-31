@@ -1,6 +1,5 @@
 /tmp 777
 /var/tmp 777
-/var/run
 /var/log
 /var/lock
 /var/lib/xkb
