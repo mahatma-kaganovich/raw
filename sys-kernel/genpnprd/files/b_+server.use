@@ -1,6 +1,7 @@
 # compensate "minimal", etc
 cfg_use_ server "TCP_CONG_ADVANCED =IP_ADVANCED_ROUTER"
-use server && KERNEL_CONFIG+="
+use server && {
+KERNEL_CONFIG+="
 NETFILTER_NETLINK_QUEUE_CT NETLINK_MMAP
 HZ_250 &IOSCHED_DEADLINE DEFAULT_(?:NOOP|CFQ)= DEFAULT_DEADLINE
 -OPTIMIZE_INLINING HUGETLBFS TRANSPARENT_HUGEPAGE =PCIEASPM_PERFORMANCE"
@@ -8,3 +9,4 @@ HZ_250 &IOSCHED_DEADLINE DEFAULT_(?:NOOP|CFQ)= DEFAULT_DEADLINE
 # VM server: keep "cores" threads alive to force real cores distribution
 # equal to "nohz=off", but hardcode optimized
 [ "${VIRT:-0}" = 0 ] || KERNEL_CONFIG+=" -NO_HZ -NO_HZ_.+ HZ_PERIODIC"
+}
