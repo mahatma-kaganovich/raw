@@ -105,6 +105,7 @@ $ENV{KERNEL_CONFIG}||='
 	64BIT==!y;KALLSYMS_BASE_RELATIVE
 	FB_SIMPLE
 	ARM==y;ARM64==y;-QCOM_.+
+	#ubuntu,suse TASKS_RCU
 	#usb_mouse_fix HID
 	###beleave_last_binutils: X86_X32
 	###bugs: -TR -ECONET
