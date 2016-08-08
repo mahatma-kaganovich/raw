@@ -436,13 +436,13 @@ _dosym(){
 }
 
 kernel-2_src_install() {
-	kconfig_init
-	check_kv
-	local slot0=false
-	[ "$SLOT" = "${PN%-sources}" -o "$SLOT" = 0 ] && slot0=true
-	cd "${S}" || die
-	rm -f .config.old *.loopfs
 	if [[ ${ETYPE} == sources ]] && use build-kernel; then
+		kconfig_init
+		check_kv
+		local slot0=false
+		[ "$SLOT" = "${PN%-sources}" -o "$SLOT" = 0 ] && slot0=true
+		cd "${S}" || die
+		rm -f .config.old *.loopfs
 		rm -f lib/firmware "lib/modules/${REAL_KV}/kernel"
 		dodir /boot
 		local f f1
