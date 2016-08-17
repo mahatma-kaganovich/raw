@@ -1,2 +1,5 @@
 net-dns/bind -threads
 dev-lang/php phar posix
+# gtk3
+media-sound/audacious -gtk
+media-plugins/audacious-plugins -gtk
