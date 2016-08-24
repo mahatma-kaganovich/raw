@@ -32,7 +32,7 @@ ppinit(){
 
 ppinit
 
-src_prepare(){
+src_unpack(){
 	mkdir -p "${S}"
 }
 
