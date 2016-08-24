@@ -32,6 +32,10 @@ ppinit(){
 
 ppinit
 
+src_prepare(){
+	mkdir -p "${S}"
+}
+
 src_compile(){
 	CC="$(tc-getCC)"
 	[ "$CC" = gcc ] || gcc(){
