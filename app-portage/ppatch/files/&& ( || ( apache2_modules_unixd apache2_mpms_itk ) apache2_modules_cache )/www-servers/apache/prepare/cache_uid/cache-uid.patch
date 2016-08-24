@@ -1,0 +1,111 @@
+Fastfix to solve mod_cache over mpm-itk.
+Must also be good for unixd, etc
+(c) mahatma
+--- a/modules/cache/cache_util.c	2016-06-14 02:13:53.000000000 +0300
++++ b/modules/cache/cache_util.c	2016-08-24 13:14:42.000000000 +0300
+@@ -27,6 +27,38 @@ extern APR_OPTIONAL_FN_TYPE(ap_cache_gen
+ 
+ extern module AP_MODULE_DECLARE_DATA cache_module;
+ 
++/* used for forked environment only, uid global to reduce syscalls */
++static uid_t uid = 0;
++#define uid_len ((sizeof(uid_t) * 8 + 64 - 1) % 64 + 1)
++
++static inline int uid_level(char *val)
++{
++    int i = 0;
++    static const char enc_table[64] =
++    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_@";
++
++    /* set once */
++    uid = uid?:getuid();
++    do {
++       val[i++] = enc_table[uid & 0x3f];
++       uid = uid >> 6;
++    } while (uid);
++    val[i++] = '/';
++    return i;
++}
++
++static inline int uid_level_lock(char *val, char *lockname)
++{
++    int i = 0;
++
++    val[i++] = '/';
++    i += uid_level(val + 1);
++    val[i++] = lockname[0];
++    val[i++] = '/';
++    val[i++] = lockname[1];
++    val[i] = 0;
++}
++
+ /* Determine if "url" matches the hostname, scheme and port and path
+  * in "filter". All but the path comparisons are case-insensitive.
+  */
+@@ -263,7 +295,7 @@ apr_status_t cache_try_lock(cache_server
+     apr_status_t status;
+     const char *lockname;
+     const char *path;
+-    char dir[5];
++    char dir[5 + uid_len];
+     apr_time_t now = apr_time_now();
+     apr_finfo_t finfo;
+     apr_file_t *lockfile;
+@@ -293,11 +325,8 @@ apr_status_t cache_try_lock(cache_server
+     /* lock files represent discrete just-went-stale URLs "in flight", so
+      * we support a simple two level directory structure, more is overkill.
+      */
+-    dir[0] = '/';
+-    dir[1] = lockname[0];
+-    dir[2] = '/';
+-    dir[3] = lockname[1];
+-    dir[4] = 0;
++    uid_level_lock(dir, lockname);
++    lockname += 2;
+ 
+     /* make the directories */
+     path = apr_pstrcat(r->pool, conf->lockpath, dir, NULL);
+@@ -386,7 +415,7 @@ apr_status_t cache_remove_lock(cache_ser
+     apr_pool_userdata_get(&dummy, CACHE_LOCKNAME_KEY, r->pool);
+     lockname = (const char *)dummy;
+     if (!lockname) {
+-        char dir[5];
++        char dir[5 + uid_len];
+ 
+         /* create the key if it doesn't exist */
+         if (!cache->key) {
+@@ -399,11 +428,8 @@ apr_status_t cache_remove_lock(cache_ser
+         /* lock files represent discrete just-went-stale URLs "in flight", so
+          * we support a simple two level directory structure, more is overkill.
+          */
+-        dir[0] = '/';
+-        dir[1] = lockname[0];
+-        dir[2] = '/';
+-        dir[3] = lockname[1];
+-        dir[4] = 0;
++        uid_level_lock(dir, lockname);
++        lockname += 2;
+ 
+         lockname = apr_pstrcat(r->pool, conf->lockpath, dir, "/", lockname, NULL);
+     }
+@@ -866,8 +892,10 @@ static void cache_hash(const char *it, c
+     tmp[k++] = enc_table[x >> 2];    /* use up 6 bits */
+     tmp[k++] = enc_table[(x << 4) & 0x3f];
+ 
++    /* for non-zero (mod_cache_disk) add dir level per-user */
++    i = (ndepth & nlength) ? uid_level(val) : 0;
+     /* now split into directory levels */
+-    for (i = k = d = 0; d < ndepth; ++d) {
++    for (k = d = 0; d < ndepth; ++d) {
+         memcpy(&val[i], &tmp[k], nlength);
+         k += nlength;
+         val[i + nlength] = '/';
+@@ -880,7 +908,7 @@ static void cache_hash(const char *it, c
+ CACHE_DECLARE(char *)ap_cache_generate_name(apr_pool_t *p, int dirlevels,
+                                             int dirlength, const char *name)
+ {
+-    char hashfile[66];
++    char hashfile[66 + uid_len];
+     cache_hash(name, hashfile, dirlevels, dirlength);
+     return apr_pstrdup(p, hashfile);
+ }
