@@ -19,7 +19,9 @@ ppinit(){
 	for p in "${FILESDIR}"/* ; do
 		[[ -d "$p" ]] || continue
 		f="${p##*/}"
-		IUSE="$IUSE ${f#!}"
+		f1="${f//[()|&^]}"
+		IUSE+=" ${f1#!}"
+#		[[ "$f" != "$f1" ]] && REQUIRED_USE+=" $f"
 #		for p1 in "$p"/*/* ; do
 #			[[ -d "${p1}" ]] || continue
 #			pac="${p1#$p/}"
