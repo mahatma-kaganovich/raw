@@ -84,7 +84,7 @@ Must also be good for unixd, etc
 -        dir[4] = 0;
 +        uid_level_lock(dir, lockname);
  
-         lockname = apr_pstrcat(r->pool, conf->lockpath, dir, "/", lockname, NULL);
+         lockname = apr_pstrcat(r->pool, conf->lockpath, dir, "/", &lockname[2], NULL);
      }
 @@ -866,8 +892,10 @@ static void cache_hash(const char *it, c
      tmp[k++] = enc_table[x >> 2];    /* use up 6 bits */

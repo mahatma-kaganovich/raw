@@ -1,0 +1,22 @@
+First 2 chars of lockname used in dir, so must be removed.
+Trying to be reasonable portable.
+--- a/modules/cache/cache_util.c	2016-06-14 02:13:53.000000000 +0300
++++ b/modules/cache/cache_util.c	2016-08-25 14:44:54.000000000 +0300
+@@ -308,7 +308,7 @@ apr_status_t cache_try_lock(cache_server
+                 path);
+         return status;
+     }
+-    lockname = apr_pstrcat(r->pool, path, "/", lockname, NULL);
++    lockname = apr_pstrcat(r->pool, path, "/", &lockname[2], NULL);
+     apr_pool_userdata_set(lockname, CACHE_LOCKNAME_KEY, NULL, r->pool);
+ 
+     /* is an existing lock file too old? */
+@@ -405,7 +405,7 @@ apr_status_t cache_remove_lock(cache_ser
+         dir[3] = lockname[1];
+         dir[4] = 0;
+ 
+-        lockname = apr_pstrcat(r->pool, conf->lockpath, dir, "/", lockname, NULL);
++        lockname = apr_pstrcat(r->pool, conf->lockpath, dir, "/", &lockname[2], NULL);
+     }
+     return apr_file_remove(lockname, r->pool);
+ }
