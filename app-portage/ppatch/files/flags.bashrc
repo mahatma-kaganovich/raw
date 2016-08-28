@@ -117,6 +117,7 @@ ceph)_isflag '-floop-*' '-fgraphite*' && { # prefer graphite vs. lto
 	fi
 }
 ;;&
+glibc)gccve 6. && filterflag filterflag '-floop-*';;&
 glibc)filterflag -Ofast -ffast-math -ftracer -fopenmp -fopenmp-simd;;
 sqlite|postgresql*|goffice|db|protobuf|qtwebkit|webkit-gtk|python|guile)filterflag -Ofast -ffast-math;;
 fontforge)filterflag -Ofast;;
