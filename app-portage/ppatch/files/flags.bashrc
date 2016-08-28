@@ -142,7 +142,7 @@ klibc)[[ "$MAKEOPTS" == *'-j '* || "$MAKEOPTS" == *-j ]] && export MAKEOPTS="$MA
 gmp)filterflag -floop-nest-optimize;;
 sarg)filterflag -w;;
 ffmpeg|libav)_iuse abi_x86_32 && filterflag -fno-omit-frame-pointer;; # x86 mmx -Os
-faad2)filterflag -floop-nest-optimize;;
+faad2|openssl)gccve 5. && filterflag -floop-nest-optimize;;
 esac
 
 #[ "${CFLAGS//-flto}" != "$CFLAGS" ] &&
