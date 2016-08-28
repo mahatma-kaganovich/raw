@@ -2,15 +2,14 @@
 # don't use it. you are warned!
 
 CFLAGS="$CFLAGS -fsched-pressure -fschedule-insns --param=sched-pressure-algorithm=2"
-#CFLAGS="$CFLAGS -floop-nest-optimize"
 CFLAGS="$CFLAGS -floop-interchange"
 CFLAGS="$CFLAGS -w"
 
-CXXFLAGS="$CFLAGS"
-
+# floop-nest-optimize required fipa-pta, required too many RAM
+CFLAGS="$CFLAGS -floop-nest-optimize"
 CFLAGS="$CFLAGS -fipa-pta -Wa,--reduce-memory-overheads"
 
 FFLAGS="$CFLAGS"
 FCFLAGS="$CFLAGS"
-CXXFLAGS="$CXXFLAGS -fvisibility-inlines-hidden"
+CXXFLAGS="$CFLAGS -fvisibility-inlines-hidden"
 
