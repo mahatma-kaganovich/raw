@@ -2,7 +2,7 @@
 # don't use it. you are warned!
 
 CFLAGS="$CFLAGS -fsched-pressure -fschedule-insns --param=sched-pressure-algorithm=2"
-CFLAGS="$CFLAGS -floop-interchange"
+#CFLAGS="$CFLAGS -floop-interchange"
 CFLAGS="$CFLAGS -w"
 
 # floop-nest-optimize required fipa-pta, required too many RAM
@@ -13,3 +13,5 @@ FFLAGS="$CFLAGS"
 FCFLAGS="$CFLAGS"
 CXXFLAGS="$CFLAGS -fvisibility-inlines-hidden"
 
+# gcc 6 compat (else - -std=gnu++98)
+CXXFLAGS="$CXXFLAGS -fpermissive -fno-strict-aliasing"

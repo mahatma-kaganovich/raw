@@ -117,8 +117,9 @@ ceph)_isflag '-floop-*' '-fgraphite*' && { # prefer graphite vs. lto
 	fi
 }
 ;;&
-glibc)gccve 6. && filterflag filterflag '-floop-*';;&
-glibc)filterflag -Ofast -ffast-math -ftracer -fopenmp -fopenmp-simd;;
+glibc)gccve 6. && appendflag -fno-tree-slp-vectorize;;&
+glibc)gccve 6. || filterflag -ftracer;;&
+glibc)filterflag -Ofast -ffast-math -fopenmp -fopenmp-simd;;&
 sqlite|postgresql*|goffice|db|protobuf|qtwebkit|webkit-gtk|python|guile)filterflag -Ofast -ffast-math;;
 fontforge)filterflag -Ofast;;
 mit-krb5|ceph)export CFLAGS="${CFLAGS//-Os/-O2}";export CXXFLAGS="${CXXFLAGS//-Os/-O2}";;
@@ -144,7 +145,7 @@ gmp)filterflag -floop-nest-optimize;;
 sarg)filterflag -w;;
 ffmpeg|libav)_iuse abi_x86_32 && filterflag -fno-omit-frame-pointer;; # x86 mmx -Os
 faad2|openssl|patch)gccve 5. && filterflag -floop-nest-optimize;;
-libfpx)gccve 6. && appendflag -std=gnu++98;;
+geos|readahead-list|thin-provisioning-tools)gccve 6. && export CXXFLAGS="$CXXFLAGS -std=gnu++98";;
 esac
 
 #[ "${CFLAGS//-flto}" != "$CFLAGS" ] &&
