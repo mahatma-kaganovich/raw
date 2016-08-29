@@ -182,6 +182,9 @@ _filter_f() {
 	done
 }
 
+test_cc(){
+	echo "int main(){}"|$(tc-getBUILD_CC) "${@}" -x c - -o /dev/null
+}
 
 kernel-2_src_configure() {
 	[[ ${ETYPE} == sources ]] || return
@@ -202,6 +205,9 @@ kernel-2_src_configure() {
 	if use custom-cflags; then
 		use custom-arch || filter-flags "-march=*" "-mcpu=*"
 		is-flagq -fsched-pressure && append-flags --param=sched-pressure-algorithm=2
+#		for i in -fno-PIE; do
+#			test_cc $i && cflags+=" $i"
+#		done
 		[[ "$(gcc-version)" == 4.8 ]] && append-flags -fno-inline-functions
 		cflags="$(flags_nosp "$(_filter_f CFLAGS "-msse*" -mmmx -m3dnow -mavx "-mfpmath=*" '-flto*' '-*-lto-*' -fuse-linker-plugin) ${cflags}")" #"
 		aflags="$cflags" # at least now
@@ -209,7 +215,8 @@ kernel-2_src_configure() {
 	fi
 	use unionfs && KERNEL_UTILS_CFLAGS+=" -std=gnu89"
 	cfg_ '###CFLAGS:'
-	is-flagq -fstack-protector && cfg_ CC_STACKPROTECTOR
+	is-flagq -fstack-protector && cfg_ CC_STACKPROTECTOR{,_REGULAR}
+	is-flagq -fstack-protector-strong && cfg_ CC_STACKPROTECTOR_STRONG
 	[[ "$(cflg O)" == s ]] && cfg_ CC_OPTIMIZE_FOR_SIZE
 	cfg_ "
 "
@@ -1319,10 +1326,6 @@ for i in "${@}"; do
 	[[ "$a" == "$i" ]] && continue
 	echo -n " ${a//,/ }"
 done
-}
-
-test_cc(){
-	echo "int main(){}"|$(tc-getBUILD_CC) "${@}" -x c - -o /dev/null
 }
 
 extract_aflags(){

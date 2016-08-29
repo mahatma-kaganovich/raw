@@ -144,6 +144,7 @@ gmp)filterflag -floop-nest-optimize;;
 sarg)filterflag -w;;
 ffmpeg|libav)_iuse abi_x86_32 && filterflag -fno-omit-frame-pointer;; # x86 mmx -Os
 faad2|openssl|patch)gccve 5. && filterflag -floop-nest-optimize;;
+libfpx)gccve 6. && appendflag -std=gnu++98;;
 esac
 
 #[ "${CFLAGS//-flto}" != "$CFLAGS" ] &&
