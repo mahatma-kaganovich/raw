@@ -1,6 +1,6 @@
 # fast, but small (-Os + some from O2/O3)
 
-USE="-vtv"
+USE="-vtv nopie nossp -pie -ssp"
 
 CFLAGS="$CFLAGS -O2 -Os -fno-omit-frame-pointer -Wa,--reduce-memory-overheads"
 # O2
