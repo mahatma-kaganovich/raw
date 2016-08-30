@@ -39,12 +39,13 @@ Must work with "layman -a raw" (as soon Gentoo Overlay directory
 follow my email about migration).
 
 Howto install around layman:
-Add to /etc/portage/repos.conf:
+Add to /etc/portage/repos.conf (/etc/portage/repos.conf/raw.conf):
 
 [raw]
 sync-type = git
 sync-uri = https://github.com/mahatma-kaganovich/raw.git
 location = /var/lib/layman/raw
+auto-sync = Yes
 
 OR
 
@@ -52,6 +53,7 @@ OR
 sync-type = svn
 sync-uri = https://github.com/mahatma-kaganovich/raw.git/trunk
 location = /var/lib/layman/raw
+auto-sync = Yes
 
 # rm -Rf /var/lib/layman/raw || mkdir -p /var/lib/layman/raw
 # emerge --sync raw

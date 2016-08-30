@@ -3,8 +3,8 @@ This overlay installing overlayed kernel-2.eclass with useflag
 with any "sys-kernel/*-sources" package, using kernel-2.eclass.
 
 To use this "kernel-2.eclass" for Gentoo mainstream kernels and latest
-portage (2.2_rc30+) you need /etc/portage/repos.conf file with something like
-this:
+portage (2.2_rc30+) you need /etc/portage/repos.conf
+(better - /etc/portage/repos.conf/*.conf) file with something like this:
 
 [gentoo]
 eclass-overrides = raw
