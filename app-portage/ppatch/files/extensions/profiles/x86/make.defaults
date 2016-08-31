@@ -7,3 +7,5 @@ FFLAGS="$CFLAGS"
 FCFLAGS="$CFLAGS"
 CXXFLAGS="$CFLAGS"
 CXXFLAGS="$CXXFLAGS -fvisibility-inlines-hidden"
+# gcc 6. must not affect legacy build, but will test
+CXXFLAGS="$CXXFLAGS -fpermissive -fno-strict-aliasing -w"

@@ -2,7 +2,3 @@
 
 USE="pgo lto"
 CFLAGS="-O2 -O3 -pipe -fno-ident -fomit-frame-pointer"
-FFLAGS="$CFLAGS"
-FCFLAGS="$CFLAGS"
-CXXFLAGS="$CFLAGS"
-CXXFLAGS="$CXXFLAGS -fvisibility-inlines-hidden"

@@ -4,8 +4,3 @@ CFLAGS="$CFLAGS -floop-block -floop-strip-mine -floop-interchange"
 #CFLAGS="$CFLAGS -floop-nest-optimize"
 # broken: libvpx, grub, mupdf
 #-floop-unroll-and-jam"
-
-FFLAGS="$CFLAGS"
-FCFLAGS="$CFLAGS"
-CXXFLAGS="$CFLAGS"
-CXXFLAGS="$CXXFLAGS -fvisibility-inlines-hidden"

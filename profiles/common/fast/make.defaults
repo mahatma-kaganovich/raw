@@ -10,7 +10,3 @@ CFLAGS="$CFLAGS -fmodulo-sched -fmodulo-sched-allow-regmoves -freschedule-modulo
 CFLAGS="$CFLAGS -fdelete-dead-exceptions"
 
 LDFLAGS="-Wl,-O1 -Wl,--as-needed -Wl,--hash-style=gnu -Wl,--sort-common -Wl,--sort-section=alignment"
-FFLAGS="$CFLAGS"
-FCFLAGS="$CFLAGS"
-CXXFLAGS="$CFLAGS"
-CXXFLAGS="$CXXFLAGS -fvisibility-inlines-hidden"
