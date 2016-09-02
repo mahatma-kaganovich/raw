@@ -92,7 +92,7 @@ _xrandr(){
 	X="${X%% *}"
 	Y="${Y%%[, ]*}"
 	echo "${X}x$Y" >"$f"
-	DSPS+=" $1"
+	DSPS+="$1 "
 }
 
 displays(){
@@ -105,8 +105,7 @@ displays(){
 	else
 		_xrandr "$DSP"
 	fi
-	DSPS="${DSPS# }"
-	[ -z "$DSPS" ] && DSPS="$DSP"
+	[ -z "$DSPS" ] && DSPS="$DSP "
 	dsp0="${DSPS%% *}"
 	dsps1="${DSPS#* }"
 }

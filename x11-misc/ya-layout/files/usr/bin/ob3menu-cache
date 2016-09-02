@@ -21,14 +21,13 @@ if [ "$mk1" -ot /var/log/Xorg.0.log ] && k1=`xrandr --current`; then
 		Y="${X#* x }"
 		X="${X%% *}"
 		Y="${Y%%[, ]*}"
-		k1="${X}x$Y"
-		if [ "$k1" = "`cat "$mk1"`" ]; then
+		DSP2="${X}x$Y"
+		if [ "$DSP2" = "`cat "$mk1"`" ]; then
 			touch "$mk1"
 		else
 			rm "$mk"
-			echo "$k1" >"$mk1"
+			echo "$DSP2" >"$mk1"
 		fi
-		DSP2="$k1"
 	}
 fi
 : ${DSP2:="$DSP"}
