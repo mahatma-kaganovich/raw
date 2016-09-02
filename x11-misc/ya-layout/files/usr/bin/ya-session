@@ -61,7 +61,7 @@ DSPS=
 : ${YA_APP_XF86Panel:="\"xfce4-panel \$sm2\" \"lxpanel -p \$YA_PROFILE\"" \"gnome-panel \$sm2\"}
 : ${YA_APP_XF86Desktop:="\"spacefm --desktop --profile=\$YA_PROFILE\" \"pcmanfm --desktop -p \$YA_PROFILE\" \"xfdesktop \$sm2\" \"nautilus -n \$sm2\""}
 
-YA_APP_TINT2="'/usr/bin/tint2 -c $obconfdir/tint2rc.$DSP1'"
+YA_APP_TINT2="'/usr/bin/tint2'"
 
 # 2run
 : ${YA_SESSION:="XF86SettingsManager XF86Panel XF86Desktop"}

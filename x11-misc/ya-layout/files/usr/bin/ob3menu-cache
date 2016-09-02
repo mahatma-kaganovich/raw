@@ -32,7 +32,7 @@ fi
 : ${DSP2:="$DSP"}
 case "$cmd" in
 *ob3menu*\ --autostart*)a="$HOME/.cache/ya/autostart";;&
-*ob3menu*\ --launcher*)c+=" $HOME/.cache/ya/tint2rc.$DSP2" ;;&
+*ob3menu*\ --launcher*)c+=" $HOME/.config/ya/tint2rc,$HOME/.cache/ya/tint2rc.$DSP2" ;;&
 *ob3menu*\ --slow*)
 	c+=" $HOME/.config/ya/rc.xml $HOME/.config/ya/preferred-apps /etc/fstab"
 	c1+=" /usr/share/mime/globs" # /usr/share/icons/*/*/*

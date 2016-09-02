@@ -585,10 +585,11 @@ if(@apps){
 			}
 		}
 		if(exists($P{tint2})){
-#			$tint2=$P{tint2}->[0]||($vanilla?(glob("$ENV{HOME}/.cache/ya/tint2rc.$DSP2"),"$ENV{HOME}/.config/tint2/tint2rc")[0]:"$fconf/tint2rc");
 			$tint2=$P{tint2}->[0]||($vanilla?"$ENV{HOME}/.config/tint2/tint2rc":"$fconf/tint2rc");
-			$tint2_=_read("<$tint2");
-			tint2set('panel_size',1,$conf{'.font.size'}*2) if($tint2_ && $tint2 ne "$ENV{HOME}/.config/tint2/tint2rc");
+			@tint2=split(/,/,$tint2,2);
+			$tint2[1]=$tint2[-1];
+			$tint2_=_read("<$tint2[0]");
+			tint2set('panel_size',1,$conf{'.font.size'}*2) if($tint2_ && $tint2[0] ne "$ENV{HOME}/.config/tint2/tint2rc");
 		}
 		my ($a,@m,$m);
 		my ($img,$sh,$geo,@wp)=@{$P{launcher}};
@@ -717,7 +718,7 @@ NOGEO:
 				tint2set('bat1_font',-1,$f.($s-2));
 				tint2set('bat2_font',-1,$f.($s-3));
 			}
-			_write($tint2,$tint2_) if($t2 ne $tint2_);
+			_write($tint2[1],$tint2_) if($t2 ne $tint2_);
 		}
 		$?=0;
 		goto (nolauncher,NEWIMG,NEWSH)[newname($img,($m||"@m").$img.$tint2_)];
@@ -744,7 +745,7 @@ NEWSH:
 				system($bin.'xsetroot','-bg','black');
 			}
 		}
-		$tint2_ && _restart($bin.'tint2','-c',$tint2);
+		$tint2_ && _restart($bin.'tint2','-c',$tint2[1]);
 	}else{
 		print((map{
 			if($#$_==1){
