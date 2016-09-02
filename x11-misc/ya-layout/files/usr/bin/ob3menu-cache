@@ -50,7 +50,6 @@ if ! (read k1 <"$mk" && [ "$k1" = "$k" ]); then
 	mkdir -p "${m%/*}"
 	{
 	$mm '<openbox_pipe_menu>'
-	echo "$cmd" >&2
 	$cmd || rm "$m"
 	$mm '</openbox_pipe_menu>'
 	} >"$m"
