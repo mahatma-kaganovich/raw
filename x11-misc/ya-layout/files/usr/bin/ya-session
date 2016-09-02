@@ -83,20 +83,18 @@ _exit(){
 
 _xrandr(){
 	local r f="$cache/menu.xml.$1.key1"
-	rm -f "$f"
 	r=`xrandr $2 --current` || return 1
-	X="${r#* current }"
-	Y="${X#* x }"
-	[ "$X" = "$r" ] && return 1
-	Y="${X#* x }"
-	X="${X%% *}"
-	Y="${Y%%[, ]*}"
-	echo "${X}x$Y" >"$f"
+	echo "$r"|grep -o " connected [0-9x]*"|grep -o '[0-9]*x[0-9]*' >"$f"
+	[ -s "$f" ] || {
+		unlink "$f"
+		return 1
+	}
 	DSPS+="$1 "
 }
 
 displays(){
 	[ -n "$DSPS" ] && return
+	rm -f "$cache/menu.xml."$DSP1".*.key1"
 	if [ "$DSP0" != "$DSP" ]; then
 		local i
 		for i in $(seq 0 9); do
@@ -480,9 +478,13 @@ xssaver(){
 }
 
 resolution(){
+	xi=
 	displays
 	[ -n "$DSP2" -a "$DSP" = "$DSP0" ] && return
-	read DSP2 <"$cache/menu.xml.$DSP.key1"
+	local i=`cat "$cache/menu.xml.$DSP.key1"`
+	DSP2="${i%%
+*}"
+	[ "$i" = "$DSP2" ] || xi='--xinerama-index 0'
 	: ${DSP2:="$DSP"}
 }
 
@@ -674,7 +676,9 @@ _run_dsp(){
 	esac
 	for i in "$cache"/desk.kEy.{"$DSP2","$DSP"}.*; do
 		[ -e "$i" ] && {
-			feh --no-fehbg --bg-tile $i &
+			# on nouveau only last xinerama window drawed, so don't owercode here
+			# --bg-tile vs. xinerama
+			feh $xi --no-fehbg --bg-center $i &
 			break
 		}
 	done

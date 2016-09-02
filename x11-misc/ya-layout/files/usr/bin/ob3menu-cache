@@ -10,27 +10,28 @@ DSP="${DISPLAY//[\\\/*]/_}"
 [[ "$DSP" == *:* && "$DSP" != *:*.* ]] && DSP+='.0'
 #DSP1="${DSP%.*}"
 . "$HOME/.cache/ya/environment.$DSP" && cmd=${cmd/ob3menu --slow/ob3menu --autostart $YA_XDG_AUTOSTART --profile $YA_PROFILE --slow}
-local m="$HOME/.cache/ya/menu.xml" c1="/usr/share/applications /usr/share/applications/inputmethods /usr/share/desktop-directories" c="$0 ${cmd%% *} /etc/xdg/autostart" mm=true i m1=return mk mk1 X=0 Y=0
+local m="$HOME/.cache/ya/menu.xml" c1="/usr/share/applications /usr/share/applications/inputmethods /usr/share/desktop-directories" c="$0 ${cmd%% *} /etc/xdg/autostart" mm=true i m1=return mk mk1 XY= k1=
 mk="$m.$DSP.key"
 mk1="${mk}1"
-DSP2=
 if [ "$mk1" -ot /var/log/Xorg.0.log ] && k1=`xrandr --current`; then
-	X="${k1#* current }"
-	Y="${X#* x }"
-	[ "$X" = "$xr" ] || {
-		Y="${X#* x }"
-		X="${X%% *}"
-		Y="${Y%%[, ]*}"
-		DSP2="${X}x$Y"
-		if [ "$DSP2" = "`cat "$mk1"`" ]; then
-			touch "$mk1"
-		else
-			rm "$mk"
-			echo "$DSP2" >"$mk1"
-		fi
-	}
+	k1=`echo "$k1"|grep -o " connected [0-9x]*"|grep -o '[0-9]*x[0-9]*'`
+	if [ "$k1" = "`cat "$mk1"`" ]; then
+		touch "$mk1"
+	else
+		rm "$mk"
+		echo "$k1" >"$mk1"
+	fi
+else
+	k1=`cat "$mk1"`
 fi
-: ${DSP2:="$DSP"}
+if [ -n "$k1" ]; then
+DSP2="${k1%%
+*}"
+XY="${k1//[x
+]/ }"
+else
+	DSP2="$DSP"
+fi
 case "$cmd" in
 *ob3menu*\ --autostart*)a="$HOME/.cache/ya/autostart";;&
 *ob3menu*\ --launcher*)c+=" $HOME/.config/ya/tint2rc,$HOME/.cache/ya/tint2rc.$DSP2" ;;&
@@ -38,18 +39,18 @@ case "$cmd" in
 	c+=" $HOME/.config/ya/rc.xml $HOME/.config/ya/preferred-apps /etc/fstab"
 	c1+=" /usr/share/mime/globs" # /usr/share/icons/*/*/*
 	cmd+=" --mime $m.sh $HOME"
-	# comment to detect in ob3menu
-#	cmd=${cmd/--slow --/--slow $HOME/.config/ya/rc.xml $X $Y --}
+	cmd=${cmd/--slow --/--slow $HOME/.config/ya/rc.xml $XY --}
 	m1=
 ;;
 *ob3menu*\ --mime\ *)c+=" /usr/share/mime/globs /etc/fstab";;
 *mmaker\ *)mm=echo;;
 esac
-local k="${cmd/ --init *--init}:$LANG:`stat --printf=%Z $c $c1 ${c1//\/usr\/share/$HOME/.local/share}`" k1
+local k="${cmd/ --init *--init}:$LANG:`stat --printf=%Z $c $c1 ${c1//\/usr\/share/$HOME/.local/share} 2>/dev/null`" k1
 if ! (read k1 <"$mk" && [ "$k1" = "$k" ]); then
 	mkdir -p "${m%/*}"
 	{
 	$mm '<openbox_pipe_menu>'
+	echo "$cmd" >&2
 	$cmd || rm "$m"
 	$mm '</openbox_pipe_menu>'
 	} >"$m"

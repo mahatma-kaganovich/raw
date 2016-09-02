@@ -276,10 +276,14 @@ sub _tag{
 }
 
 sub prop{
-# obxprop deadloop on window
-my $s=defined($_[1])?"xprop -id $_[1]":'obxprop --root';
-$s=`$bin$s`;
-$s=~s/^([A-Z0-9_]*)\([A-Z0-9_]*\) = (\"[^\"]*\"(?:, \"[^\"]*\")*|[^\n]*)$/$_[0]->{$1}=$2;''/gme;
+	if(!defined($prop)){
+		$prop={};
+		# obxprop deadloop on window
+		my $s=defined($_[1])?"xprop -id $_[1]":'obxprop --root';
+		$s=`$bin$s`;
+		$s=~s/^([A-Z0-9_]*)\([A-Z0-9_]*\) = (\"[^\"]*\"(?:, \"[^\"]*\")*|[^\n]*)$/$prop->{$1}=$2;''/gme;
+	}
+	$prop->{$_[0]};
 }
 
 sub _xdg_mime{
@@ -336,11 +340,12 @@ if(exists($P{slow})){
 	if(!exists($P{$ma})){
 		$configs{$_}=1 for(glob("${0}_*"));
 	}
-	($fconf,$X,$Y)=@{$P{slow}};
+	($fconf,@XY)=@{$P{slow}};
+	($X,$Y)=@XY;
+	@xi=('--xinerama-index','0') if($#XY>1);
 	if(!($fconf && $X && $Y)) {
-		prop(\%prop);
-		($X,$Y)=$prop{'_NET_DESKTOP_GEOMETRY'}=~/(\d+), (\d+)/;
-		($fconf)=$prop{'_OB_CONFIG_FILE'}=~/\"(.*)\"/;
+		($X,$Y)=prop('_NET_DESKTOP_GEOMETRY')=~/(\d+), (\d+)/;
+		($fconf)=prop('_OB_CONFIG_FILE')=~/\"(.*)\"/;
 	}
 	$DSP2=$X.'x'.$Y;
 	$subcmd.=" &quot;$fconf&quot;";
@@ -573,7 +578,7 @@ if(@apps){
 		$DSP2||=$DSP;
 		$DSP1=$DSP;
 		$DSP1=join(',',$DSP,(map{$DSP1=~s/$_.*?$//;$DSP1}'\.','\:'),'');
-		if(!exists($P{dock}) && !exists($P{tint2}) && (my $pid=$prop{_OPENBOX_PID})){
+		if(!exists($P{dock}) && !exists($P{tint2}) && (my $pid=prop('_OPENBOX_PID'))){
 			if(my $c=_read("/proc/$pid/cmdline")){
 				my @c=split(/\x0/,$c);
 				for(@c){
@@ -616,7 +621,7 @@ if(@apps){
 				($sx,$sy)=$vert?($sz,0):(0,$sz);
 			}
 			if(!$sx && !$sy){
-				my @splice=$prop{'_NET_WORKAREA'}=~/(\d+), (\d+), (\d+), (\d+)/;
+				my @splice=prop('_NET_WORKAREA')=~/(\d+), (\d+), (\d+), (\d+)/;
 				if($vert ne 1 && ($sy=$splice[1])){
 				}elsif($vert ne 0 && ($sx=$splice[0])){
 				}elsif($vert ne 1 && ($sy=$Y-$splice[3])){
@@ -668,10 +673,11 @@ NOGEO:
 		}
 		$a.=(@m?'':"false\n")."}\n";
 		@wp=() if(!@wp && ! -r ($wp[0]=(glob("$fconf/wallpaper{$DSP1}.*"))[0]));
+		$wp0=$wp[0];
 		# for top-left & !composite & !svg cmd use feh, else - ImageMagick
 		# todo: since openbox support svg, think about un-feh. bud feh still thin
 		if(!@m){
-			@m=($bin.'feh','-m','-W',$X,'-H',$Y,'-y',0,'-E',0,$wp[0],'-b',$wp[0],'-O') if($wp[0]);
+			@m=($bin.'feh','-m','-W',$X,'-H',$Y,'-y',0,'-E',0,$wp0,'-b',$wp0,'-O') if($wp0);
 		}elsif(!$spliceX && !$spliceY && $yy==1 && ($#wp<1||$wp[1] eq '-a') && ! grep(/\.svg$/,@m)){
 #			$wp[0]||='trans'; # artefacts
 			@wp && unshift(@wp,'-b');
@@ -738,10 +744,11 @@ NEWSH:
 			print $F $a;
 			chmod(0700,$F);
 			close($F);
+			# on my nouveau only last --xinerama-index still drawed, but try...
+			system($bin.'xsetroot','-bg','black') if(!$img || (@xi && !$wp0));
 			if($img){
-				system($bin.'feh','--no-fehbg','--bg-tile',$img);
-			}else{
-				system($bin.'xsetroot','-bg','black');
+				system($bin.'feh','--no-fehbg','--bg-scale',$wp0) if(@xi && $wp0);
+				system($bin.'feh',@xi,'--no-fehbg','--bg-center',$img);
 			}
 		}
 		$tint2_ && _restart($bin.'tint2','-c',$tint2[-1]);
