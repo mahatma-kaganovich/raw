@@ -18,9 +18,12 @@ sm='--sm-disable'
 sm2='--sm-client-disable'
 prefapps="$obconfdir/preferred-apps"
 DSP="${DISPLAY//[\\\/*]/_}"
+DSP0="$DSP"
 [[ "$DSP" == *:* && "$DSP" != *:*.* ]] && DSP+='.0'
 DSP1="${DSP%.*}"
+DSP2=
 ENV="$cache/environment.$DSP"
+DSPS=
 
 : ${YA_APP_WebBrowser:="'exo-open --launch WebBrowser' @WebBrowser"}
 # exo-open going mad with params, but we want terminal with params NOW!
@@ -58,7 +61,7 @@ ENV="$cache/environment.$DSP"
 : ${YA_APP_XF86Panel:="\"xfce4-panel \$sm2\" \"lxpanel -p \$YA_PROFILE\"" \"gnome-panel \$sm2\"}
 : ${YA_APP_XF86Desktop:="\"spacefm --desktop --profile=\$YA_PROFILE\" \"pcmanfm --desktop -p \$YA_PROFILE\" \"xfdesktop \$sm2\" \"nautilus -n \$sm2\""}
 
-: ${YA_APP_TINT2:="'/usr/bin/tint2 -c $obconfdir/tint2rc'"}
+YA_APP_TINT2="'/usr/bin/tint2 -c $obconfdir/tint2rc.$DSP1'"
 
 # 2run
 : ${YA_SESSION:="XF86SettingsManager XF86Panel XF86Desktop"}
@@ -72,14 +75,43 @@ ENV="$cache/environment.$DSP"
 : ${YA_XDG_AUTOSTART:="$YA_PROFILE"}
 
 # startup: minimal
-: ${YA_STARTUP:=XF86Desktop}
+: ${YA_STARTUP:=TINT2}
 
 _exit(){
 	return
 }
 
+displays(){
+	[ -n "$DSPS" ] && return
+	ndsp=1
+	if [ "$DSP0" != "$DSP" ]; then
+		local i r
+		ndsp=0
+		DSPS=
+		for i in $(seq 0 9); do
+			r=`xrandr --screen $i --current` || break
+			# todo? check monitor?
+			X="${xr#* current }"
+			Y="${X#* x }"
+			[ "$X" = "$xr" ] && continue
+			Y="${X#* x }"
+			X="${X%% *}"
+			Y="${Y%%[, ]*}"
+			echo "${X}x$Y" >"$cache/menu.xml.$DSP1.$i.key1"
+			DSPS+=" $DSP0.$i"
+			ndsp=$[ndsp+1]
+		done
+		DSPS="${DSPS# }"
+	else
+		xrandr >"$cache/menu.xml.$DSP.key1"
+	fi
+	[ -z "$DSPS" ] && DSPS="$DSP" && ndsp=1
+	dsp0="${DSPS%% *}"
+	dsps1="${DSPS#* }"
+}
+
 pid_ok(){
-	my $f="$cache/$DSP1-$1"
+	local f="$cache/$DSP1-$1"
 	grep -sqxf "$f" /proc/$1/cmdline && return
 	rm "$f"
 	return 1
@@ -447,19 +479,35 @@ xssaver(){
 #	$lock && ...
 }
 
+resolution(){
+	displays
+	[ -n "$DSP2" -a "$DSP" = "$DSP0" ] && return
+	read DSP2 <"$cache/menu.xml.$DSP.key1"
+	: ${DSP2:="$DSP"}
+}
+
 tint2chk(){
-	local a="/etc/xdg/ya$suff/tint2rc" b="$obconfdir/tint2rc"
-	[ -s "$b" ] && return
-	[ -s $a ] && cp $a "$b"
-	[ -e "$prefapps" ] || {
-		grep -sh '^Exec=' "$HOME/.config/xfce4/panel/launcher"{*.rc,*/*.desktop}|sed -e 's:^Exec=::' -e 's:%[^ ]*$::' -e 's: *::g'|sort -u >>"$prefapps"
+	resolution
+	local a="/etc/xdg/ya$suff/tint2rc" b="$obconfdir/tint2rc" c="$cache/tint2rc.$DSP2" t
+	t="/usr/bin/tint2 -c $c"
+	YA_APP_TINT2="'$t'"
+	[[ "${YA_DESKTOP,,}" == *tint2* ]] && YA_DESKTOP="$t" && desk="$t"
+	[ -s "$c" ] && return
+	[ -s $b ] && {
+		cp $b "$c"
+		return
 	}
+	[ -s $a ] && cp $a "$b" && cp $b "$c"
 	$minimal || [ -e "$cache/desk-sh" ] || {
 		i=`cat /etc/xdg/ya$suff/menu.xml "$obconfdir/menu.xml"`
 		i="${i##*execute=\"}"
 		i="${i%%\"*}"
 		desk="${i// \~/ $HOME}"
-		[ -n "${desk##* --tint2*}" ] && desk+=" --init --tint2 $b --init"
+		[ -n "${desk##* --tint2*}" ] && desk+=" --init --tint2 $c --init"
+	}
+	[ "$DSP" = "$DSP0" ] && return
+	[ -e "$prefapps" ] || {
+		grep -sh '^Exec=' "$HOME/.config/xfce4/panel/launcher"{*.rc,*/*.desktop}|sed -e 's:^Exec=::' -e 's:%[^ ]*$::' -e 's: *::g'|sort -u >>"$prefapps"
 	}
 }
 
@@ -597,6 +645,7 @@ Launcher:
 	i="${i##*layout: }"
 	i="${i%%
 *}"
+
 	i="${i// }"
 	i1=
 	for l in "$LANG" "${!LC_@}"; do
@@ -615,22 +664,37 @@ Launcher:
 	xprop -root -remove _NET_NUMBER_OF_DESKTOPS -remove _NET_DESKTOP_NAMES -remove _NET_CURRENT_DESKTOP
 	envir ya$suff
 	[ -s "$obconf" ] || obconfig "$obconf" $(_1cfg openbox/rc.xml)
+_run_dsp(){
+	resolution
 	[ "$YA_STARTUP" = TINT2 ] && tint2chk
 	cat {/etc/X11,/etc/xdg/ya$suff,"$HOME"/.config/ya$suff}/Xresources "$HOME/.Xresources" 2>/dev/null  | xrdb -merge
-	xrandr >"$cache/menu.xml.$DSP1.key1" &
 	xssaver
-	[ -n "$desk" ] && i=`_1cfg "ya$suff/wallpaper{$DSP,${DSP%:*},${DSP%.*},}.*"` && case "$desk" in
+	[ -n "$desk" ] && i=`_1cfg "ya$suff/wallpaper{$DSP2,$DSP,${DSP%:*},${DSP%.*},}.*"` && case "$desk" in
 	*pcmanfm*)desk+=" -w $i";;
 	esac
-	for i in "$cache/desk.kEy.$DSP".*; do
-		[ -e "$i" ] && feh --no-fehbg --bg-tile $i &
-		break
+	for i in "$cache"/desk.kEy.{"$DSP2","$DSP"}.*; do
+		[ -e "$i" ] && {
+			feh --no-fehbg --bg-tile $i &
+			break
+		}
 	done
 	export YA_DESKTOP
 	[ -e /var/run/autofs.pid ] && (. /usr/share/ya-layout/autofs-all)
 	wm ${desk:+--startup "$desk"}
+}
+	displays
+	for DSP in $dsps1; do
+		DISPLAY="$DSP" _run_dsp &
+	done
+	DSP="$dsp0"
+	_run_dsp
 ;;
 esac
+displays
+for DSP in $dsps1; do
+		DISPLAY="$DSP" wm --restart &
+done
+DSP="$dsp0"
 wm --restart
 done
 _exit

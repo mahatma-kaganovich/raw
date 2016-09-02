@@ -21,6 +21,8 @@
 #
 # Launcher: starting to do fullscreen trendy "desktop", I see I don't need it, but need
 # small launcher near tint2... So, fast partial...
+open(FFLOG,">>/home/mahatma/.cache/log.log");
+print FFLOG "ob3menu: @ARGV\n";
 
 $bin='/usr/bin/';
 
@@ -242,17 +244,21 @@ $c ^ 0xffffffff;
 sub newname{
 	my ($name,$key)=@_;
 #	utf8::encode($key);
-	$_[0]=~s/\+/"kEy.$DSP.".($key=crc32($key))/gse or return 1;
+	$key=crc32($key);
+	$_[0]=~s/\+/kEy.$DSP2.$key/gs or return 1;
 	return 0 if(-e $_[0]); # exists
-	my $d=$name;
-	$d=~s/\+/kEy.*.$key/gs;
-	if(my @d=glob($d)){
-		link($d[0],$_[0])||
-		($_[0]=$d[0]);
-		return 2; # same file for other head
+	if($DSP2 eq $DSP){
+		# by display
+		my $d=$name;
+		$d=~s/\+/kEy.*.$key/gs;
+		if(my @d=glob($d)){
+			link($d[0],$_[0])||
+			($_[0]=$d[0]);
+			return 2; # same file for other head
+		}
 	}
 	$name=~s/\.[a-z0-9]*$//i;
-	$name=~s/\+/kEy.$DSP.*/gs;
+	$name=~s/\+/kEy.$DSP2.*/gs;
 	my @l=glob($name);
 	die "Deleting '$name': $!\n" if(@l && !unlink(@l));
 	1;
@@ -332,13 +338,13 @@ if(exists($P{slow})){
 	if(!exists($P{$ma})){
 		$configs{$_}=1 for(glob("${0}_*"));
 	}
-	if(@{$P{slow}}){
-		($fconf,$X,$Y)=@{$P{slow}};
-	}else{
+	($fconf,$X,$Y)=@{$P{slow}};
+	if(!($fconf && $X && $Y)) {
 		prop(\%prop);
 		($X,$Y)=$prop{'_NET_DESKTOP_GEOMETRY'}=~/(\d+), (\d+)/;
 		($fconf)=$prop{'_OB_CONFIG_FILE'}=~/\"(.*)\"/;
 	}
+	$DSP2=$X.'x'.$Y;
 	$subcmd.=" &quot;$fconf&quot;";
 	if(my $s=_read("<$fconf")){
 		_tag($s,'',@$_) for(@conf);
@@ -566,6 +572,7 @@ if(@apps){
 		$DSP=$ENV{'DISPLAY'};
 		$DSP=~s/[\\\/\*]/_/gs;
 		$DSP.='.0' if(($DSP=~/:/) && !($DSP=~/:.*\./));
+		$DSP2||=$DSP;
 		$DSP1=$DSP;
 		$DSP1=join(',',$DSP,(map{$DSP1=~s/$_.*?$//;$DSP1}'\.','\:'),'');
 		if(!exists($P{dock}) && !exists($P{tint2}) && (my $pid=$prop{_OPENBOX_PID})){
@@ -579,7 +586,9 @@ if(@apps){
 				}
 			}
 		}
+		print FFLOG "tint2=$tint2 p=@{$P{tint2}}\n";
 		if(exists($P{tint2})){
+#			$tint2=$P{tint2}->[0]||($vanilla?(glob("$ENV{HOME}/.cache/ya/tint2rc.$DSP2"),"$ENV{HOME}/.config/tint2/tint2rc")[0]:"$fconf/tint2rc");
 			$tint2=$P{tint2}->[0]||($vanilla?"$ENV{HOME}/.config/tint2/tint2rc":"$fconf/tint2rc");
 			$tint2_=_read("<$tint2");
 			tint2set('panel_size',1,$conf{'.font.size'}*2) if($tint2_ && $tint2 ne "$ENV{HOME}/.config/tint2/tint2rc");
@@ -876,6 +885,7 @@ print qq(
 <item label="Fullscreen"><action name="ToggleFullscreen"/></item>
 <item label="Reconfigure"><action name="Reconfigure"/></item>
 <item label="Restart"><action name="Restart"/></item>
+<item label="KeyMap >>"><action name="execute"/><execute>/usr/bin/dbus-send --system --dest=ru.gentoo.KbddService /ru/gentoo/KbddService ru.gentoo.kbdd.next_layout</execute></item>
 <separator/>
 <menu id=").($id++).qq(" label='$set execute="${0}config"/>
 <menu id=").($id++).qq(" label='Default Applications' execute='$0$subcmd --$ma'/>
