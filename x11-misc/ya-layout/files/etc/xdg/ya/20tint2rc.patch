@@ -1,11 +1,13 @@
 --- a/etc/xdg/ya/tint2rc	2016-09-02 16:17:26.995276298 +0300
 +++ b/etc/xdg/ya/tint2rc	2016-09-02 16:18:36.980272780 +0300
-@@ -17,7 +17,7 @@ border_color = #ffffff 30
+@@ -16,8 +16,8 @@ border_color = #ffffff 30
+ 
  # Background 3: active tasks
  rounded = 3
- border_width = 0
--background_color = #ffffff 20
+-border_width = 0
+-background_color = #ffffff 30
++border_width = 1
 +background_color = #ffffff 40
  border_color = #ffffff 40
  
- # Background 4: urgent tasks
+# Background 4: urgent tasks
