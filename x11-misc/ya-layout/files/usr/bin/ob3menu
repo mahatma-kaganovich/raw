@@ -21,8 +21,6 @@
 #
 # Launcher: starting to do fullscreen trendy "desktop", I see I don't need it, but need
 # small launcher near tint2... So, fast partial...
-open(FFLOG,">>/home/mahatma/.cache/log.log");
-print FFLOG "ob3menu: @ARGV\n";
 
 $bin='/usr/bin/';
 
@@ -586,7 +584,6 @@ if(@apps){
 				}
 			}
 		}
-		print FFLOG "tint2=$tint2 p=@{$P{tint2}}\n";
 		if(exists($P{tint2})){
 #			$tint2=$P{tint2}->[0]||($vanilla?(glob("$ENV{HOME}/.cache/ya/tint2rc.$DSP2"),"$ENV{HOME}/.config/tint2/tint2rc")[0]:"$fconf/tint2rc");
 			$tint2=$P{tint2}->[0]||($vanilla?"$ENV{HOME}/.config/tint2/tint2rc":"$fconf/tint2rc");
