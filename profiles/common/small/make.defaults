@@ -2,7 +2,7 @@
 
 USE="-vtv nopie nossp -pie -ssp"
 
-CFLAGS="$CFLAGS -O2 -Os -fno-omit-frame-pointer -Wa,--reduce-memory-overheads"
+CFLAGS="$CFLAGS -O2 -Os -fno-omit-frame-pointer -Wa,--reduce-memory-overheads -fconserve-stack"
 # O2
 # CFLAGS="$CFLAGS -fschedule-insns2 -finline-small-functions -findirect-inlining"
 # O3

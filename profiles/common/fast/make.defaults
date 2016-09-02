@@ -7,6 +7,6 @@ CFLAGS="$CFLAGS -fexcess-precision=fast -Ofast -ffast-math -ftree-vectorize -fiv
 CFLAGS="$CFLAGS -fmodulo-sched -fmodulo-sched-allow-regmoves -freschedule-modulo-scheduled-loops"
 # ?
 #CFLAGS="$CFLAGS -fgcse-sm -fgcse-las"
-CFLAGS="$CFLAGS -fdelete-dead-exceptions"
+CFLAGS="$CFLAGS -fdelete-dead-exceptions -fstdarg-opt"
 
 LDFLAGS="-Wl,-O1 -Wl,--as-needed -Wl,--hash-style=gnu -Wl,--sort-common -Wl,--sort-section=alignment"
