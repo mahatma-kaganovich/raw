@@ -8,12 +8,13 @@ local cmd="${*:-/usr/bin/ob3menu --slow}"
 #local cmd="${*:-/usr/bin/mmaker -ci OpenBox3}"
 DSP="${DISPLAY//[\\\/*]/_}"
 [[ "$DSP" == *:* && "$DSP" != *:*.* ]] && DSP+='.0'
+#DSP1="${DSP%.*}"
 . "$HOME/.cache/ya/environment.$DSP" && cmd=${cmd/ob3menu --slow/ob3menu --autostart $YA_XDG_AUTOSTART --profile $YA_PROFILE --slow}
 local m="$HOME/.cache/ya/menu.xml" c1="/usr/share/applications /usr/share/applications/inputmethods /usr/share/desktop-directories" c="$0 ${cmd%% *} /etc/xdg/autostart" mm=true i m1=return mk mk1 X=0 Y=0
-mk="$m.${DISPLAY%.*}.key"
+mk="$m.$DSP.key"
 mk1="${mk}1"
 DSP2=
-if [ -s "$mk1" ] && k1=`xrandr --current`; then
+if [ -e "$mk1" ] && k1=`xrandr --current`; then
 	X="${k1#* current }"
 	Y="${X#* x }"
 	[ "$X" = "$xr" ] || {
