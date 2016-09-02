@@ -14,7 +14,7 @@ local m="$HOME/.cache/ya/menu.xml" c1="/usr/share/applications /usr/share/applic
 mk="$m.$DSP.key"
 mk1="${mk}1"
 DSP2=
-if [ -e "$mk1" -a "$mk1" -ot /var/log/Xorg.0.log ] && k1=`xrandr --current`; then
+if [ "$mk1" -ot /var/log/Xorg.0.log ] && k1=`xrandr --current`; then
 	X="${k1#* current }"
 	Y="${X#* x }"
 	[ "$X" = "$xr" ] || {
