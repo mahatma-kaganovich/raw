@@ -68,10 +68,9 @@ and, possible, restart [udev]"
 	dodir /var/lib/ya
 	touch "$D"/var/lib/ya/menu.xml
 	for i in "${D}"/etc/xdg/ya/*.patch; do
-		[ -e "$i" ] || continue
 		patch -Ntp1 -i "$i"  -d "$D"
-		unlink "$i"
 	done
+	rm "${D}"/etc/xdg/ya/*.{orig,rej,patch}
 	ob3config_preinst=yes
 }
 
