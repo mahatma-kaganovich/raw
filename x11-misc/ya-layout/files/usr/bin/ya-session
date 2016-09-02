@@ -81,31 +81,32 @@ _exit(){
 	return
 }
 
+_xrandr(){
+	local r f="$cache/menu.xml.$1.key1"
+	rm -f "$f"
+	r=`xrandr $2 --current` || return 1
+	X="${r#* current }"
+	Y="${X#* x }"
+	[ "$X" = "$r" ] && return 1
+	Y="${X#* x }"
+	X="${X%% *}"
+	Y="${Y%%[, ]*}"
+	echo "${X}x$Y" >"$f"
+	DSPS+=" $1"
+}
+
 displays(){
 	[ -n "$DSPS" ] && return
-	ndsp=1
 	if [ "$DSP0" != "$DSP" ]; then
-		local i r
-		ndsp=0
-		DSPS=
+		local i
 		for i in $(seq 0 9); do
-			r=`xrandr --screen $i --current` || break
-			# todo? check monitor?
-			X="${xr#* current }"
-			Y="${X#* x }"
-			[ "$X" = "$xr" ] && continue
-			Y="${X#* x }"
-			X="${X%% *}"
-			Y="${Y%%[, ]*}"
-			echo "${X}x$Y" >"$cache/menu.xml.$DSP1.$i.key1"
-			DSPS+=" $DSP0.$i"
-			ndsp=$[ndsp+1]
+			_xrandr "$DSP1.$i" "--screen $i"
 		done
-		DSPS="${DSPS# }"
 	else
-		xrandr >"$cache/menu.xml.$DSP.key1"
+		_xrandr "$DSP"
 	fi
-	[ -z "$DSPS" ] && DSPS="$DSP" && ndsp=1
+	DSPS="${DSPS# }"
+	[ -z "$DSPS" ] && DSPS="$DSP"
 	dsp0="${DSPS%% *}"
 	dsps1="${DSPS#* }"
 }
