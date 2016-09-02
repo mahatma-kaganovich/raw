@@ -1,5 +1,5 @@
 #!/bin/bash
-# pipe menu cache for OpenBox3 v0.8
+# pipe menu cache for OpenBox3 v0.9
 # icons changes not tracked
 # param: generator command:
 
@@ -37,7 +37,7 @@ case "$cmd" in
 	c1+=" /usr/share/mime/globs" # /usr/share/icons/*/*/*
 	cmd+=" --mime $m.sh $HOME"
 	# comment to detect in ob3menu
-	cmd=${cmd/--slow --/--slow $HOME/.config/ya/rc.xml $X $Y --}
+#	cmd=${cmd/--slow --/--slow $HOME/.config/ya/rc.xml $X $Y --}
 	m1=
 ;;
 *ob3menu*\ --mime\ *)c+=" /usr/share/mime/globs /etc/fstab";;

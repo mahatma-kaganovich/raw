@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # (c) Denis Kaganovich, Anarchy or GPLv2
-# OpenBox3 pipe menu v0.11
+# OpenBox3 pipe menu v0.12
 # ob3menu {--<command> {params}}
 # 	--slow [<path/to/rc.xml> [X Y]]
 #	--autostart {profile}
