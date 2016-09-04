@@ -571,7 +571,7 @@ if(@apps){
 	my $ico=$ico{'image-missing'}||$ico{'application-other'}||$ico{'application-x-executable'};
 	@apps=map{$apps{$_->[2]}||$apps{$_->[0]}||$apps{$_->[1]}||[$ico{$_->[0]}||$ico,$_->[2]]}@apps;
 	if(exists($P{launcher})){
-		umask(0700);
+		umask(077);
 		@crc=map{for(my $i=8;$i>0;$i--){$_=($_&1)?($_>>1)^0xedb88320:($_>>1)};$_}(0..255);
 		$DSP=$ENV{'DISPLAY'};
 		$DSP=~s/[\\\/\*]/_/gs;
@@ -623,6 +623,8 @@ if(@apps){
 			}
 			if(!$sx && !$sy){
 				my @splice=prop('_NET_WORKAREA')=~/(\d+), (\d+), (\d+), (\d+)/;
+				$splice[2]=$X if($splice[2]>$X);
+				$splice[3]=$Y if($splice[3]>$Y);
 				if($vert ne 1 && ($sy=$splice[1])){
 				}elsif($vert ne 0 && ($sx=$splice[0])){
 				}elsif($vert ne 1 && ($sy=$Y-$splice[3])){
