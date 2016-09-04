@@ -571,6 +571,7 @@ if(@apps){
 	my $ico=$ico{'image-missing'}||$ico{'application-other'}||$ico{'application-x-executable'};
 	@apps=map{$apps{$_->[2]}||$apps{$_->[0]}||$apps{$_->[1]}||[$ico{$_->[0]}||$ico,$_->[2]]}@apps;
 	if(exists($P{launcher})){
+		umask(0700);
 		@crc=map{for(my $i=8;$i>0;$i--){$_=($_&1)?($_>>1)^0xedb88320:($_>>1)};$_}(0..255);
 		$DSP=$ENV{'DISPLAY'};
 		$DSP=~s/[\\\/\*]/_/gs;
@@ -657,7 +658,6 @@ NOGEO:
 		if($DSP ne ':0.0'){
 			if((!-x $sh) && open(my $F,'>',$sh)){
 				print $F,$a;
-				chmod(0700,$F);
 				close($F);
 			}
 			$a='';
@@ -742,10 +742,9 @@ NEWSH:
 			print STDERR $out,"\n";
 		}elsif(open(my $F,'>',$sh)){
 			print $F $a;
-			chmod(0700,$F);
 			close($F);
 			# on my nouveau only last --xinerama-index still drawed, but try...
-			system($bin.'xsetroot','-bg','black') if(!$img || (@xi && !$wp0));
+			system($bin.'xsetroot','-solid','black') if(!$img || (@xi && !$wp0));
 			if($img){
 				system($bin.'feh','--no-fehbg','--bg-scale',$wp0) if(@xi && $wp0);
 				system($bin.'feh',@xi,'--no-fehbg','--bg-center',$img);

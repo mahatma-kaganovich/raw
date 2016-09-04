@@ -19,6 +19,7 @@ if [ "$mk1" -ot /var/log/Xorg.0.log ] && k1=`xrandr --current`; then
 		touch "$mk1"
 	else
 		rm "$mk"
+		umask 0700
 		echo "$k1" >"$mk1"
 	fi
 else
@@ -47,6 +48,7 @@ case "$cmd" in
 esac
 local k="${cmd/ --init *--init}:$LANG:`stat --printf=%Z $c $c1 ${c1//\/usr\/share/$HOME/.local/share} 2>/dev/null`" k1
 if ! (read k1 <"$mk" && [ "$k1" = "$k" ]); then
+	umask 0700
 	mkdir -p "${m%/*}"
 	{
 	$mm '<openbox_pipe_menu>'
