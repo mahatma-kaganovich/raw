@@ -21,7 +21,10 @@ DSP="${DISPLAY//[\\\/*]/_}"
 DSP0="$DSP"
 [[ "$DSP" == *:* && "$DSP" != *:*.* ]] && DSP+='.0'
 DSP1="${DSP%.*}"
+# wallpaper ID (vsize)
 DSP2=
+# panel ID (monitor1)
+DSP3=
 ENV="$cache/environment.$DSP"
 DSPS=
 
@@ -82,14 +85,22 @@ _exit(){
 }
 
 _xrandr(){
-	local r f="$cache/menu.xml.$1.key1"
-	r=`xrandr $2 --current` || return 1
-	echo "$r"|grep -o " connected [0-9x]*"|grep -o '[0-9]*x[0-9]*' >"$f"
-	[ -s "$f" ] || {
-		unlink "$f"
-		return 1
-	}
-	DSPS+="$1 "
+local r r1 vX vY xy=
+r=`xrandr $2 --current 2>/dev/null` || return 1
+vX="${r##* current }"
+vY="${vX#* x }"
+[ "$r" = "$vX" -o "$vX" = "$vR" ] && return 1
+vX="${vX%% *}"
+vY="${vY%%[ ,]*}"
+while r1="${r#* connected }" && [ "$r" != "$r1" ]; do
+	r="$r1"
+	r1="${r1%%[ +]*}"
+	[ "$r" = "$r1" ] && return 1
+	xy+="$r1 "
+done
+[ -z "$xy" ] && return 1
+DSPS+="$1 "
+echo "${vX}x${vY} ${xy% }" >"$cache/menu.xml.$1.key1"
 }
 
 displays(){
@@ -98,7 +109,7 @@ displays(){
 	if [ "$DSP0" != "$DSP" ]; then
 		local i
 		for i in $(seq 0 9); do
-			_xrandr "$DSP1.$i" "--screen $i"
+			_xrandr "$DSP1.$i" "--screen $i" || break
 		done
 	else
 		_xrandr "$DSP"
@@ -482,15 +493,21 @@ resolution(){
 	displays
 	[ -n "$DSP2" -a "$DSP" = "$DSP0" ] && return
 	local i=`cat "$cache/menu.xml.$DSP.key1"`
-	DSP2="${i%%
-*}"
-	[ "$i" = "$DSP2" ] || xi='--xinerama-index 0'
+	set -- $i
+	DSP2="$1"
+	shift
+	[ -n "$2" ] && xi='--xinerama-index 0'
+	DSP3="$1"
+	for i in $*; do
+		[ "$i" = "$DSP2" ] && DSP3="$i" && xi='' && break
+	done
 	: ${DSP2:="$DSP"}
+	: ${DSP3:="$DSP"}
 }
 
 tint2chk(){
 	resolution
-	local a="/etc/xdg/ya$suff/tint2rc" b="$obconfdir/tint2rc" c="$cache/tint2rc.$DSP2" t
+	local a="/etc/xdg/ya$suff/tint2rc" b="$obconfdir/tint2rc" c="$cache/tint2rc.$DSP3" t
 	t="/usr/bin/tint2 -c $c"
 	YA_APP_TINT2="'$t'"
 	[[ "${YA_DESKTOP,,}" == *tint2* ]] && YA_DESKTOP="$t" && desk="$t"

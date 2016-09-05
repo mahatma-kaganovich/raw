@@ -231,6 +231,14 @@ sub tint2get{
 	$_[1]==-1?$x:(split(/\s+/,$x))[$_[1]];
 }
 
+sub wrsh{
+	open(my $F,'>',$_[0]) || return 0;
+	select($F);$|=1;select(STDOUT);
+	print($F $_[1]) &&
+	chmod(0700,$F) &&
+	close($F) || die $!;
+}
+
 # CRC32 code derived from work by Gary S. Brown.
 sub crc32{
 my $c=$_[1] ^ 0xffffffff;
@@ -340,13 +348,25 @@ if(exists($P{slow})){
 	if(!exists($P{$ma})){
 		$configs{$_}=1 for(glob("${0}_*"));
 	}
-	($fconf,@XY)=@{$P{slow}};
-	($X,$Y)=@XY;
-	@xi=('--xinerama-index','0') if($#XY>1);
+	($fconf,$X,$Y,@XY)=@{$P{slow}};
 	if(!($fconf && $X && $Y)) {
 		($X,$Y)=prop('_NET_DESKTOP_GEOMETRY')=~/(\d+), (\d+)/;
 		($fconf)=prop('_OB_CONFIG_FILE')=~/\"(.*)\"/;
 	}
+	# first or growing
+	($XX,$YY)=@XY;
+	if($#XY>1){
+		@xi=('--xinerama-index','0');
+		for(0..$#XY>>1){
+			if($X==$XY[$_<<1] && $Y==$XY[($_<<1)+1]){
+				($XX,$YY,@xi)=();
+				last;
+			}
+		}
+	}
+	$XX||=$X;
+	$YY||=$Y;
+	# wallpaper id
 	$DSP2=$X.'x'.$Y;
 	$subcmd.=" &quot;$fconf&quot;";
 	if(my $s=_read("<$fconf")){
@@ -658,10 +678,7 @@ NOGEO:
 		$a.=q([ "${DISPLAY%.0}" = ':0' ] || ( . "$0.${DISPLAY//[\/\\\\_*]/_}";exit 1)
 );
 		if($DSP ne ':0.0'){
-			if((!-x $sh) && open(my $F,'>',$sh)){
-				print $F,$a;
-				close($F);
-			}
+			wrsh($sh,$a) if(!-x $sh);
 			$a='';
 			$sh.='.'.$DSP
 		}
@@ -700,15 +717,15 @@ NOGEO:
 			my $pad=0;
 			if(tint2get('autohide',0) && !tint2get('panel_background_id',0)){
 				if($vert){
-					$sz=$Y+$sy;
+					$sz=$YY+$sy;
 					$margin[1]=-($pad=$sy);
 				}else{
-					$sz=$X+$sx;
+					$sz=$XX+$sx;
 					$margin[0]=-($pad=$sx);
 				}
 				tint2set('wm_menu',0,1);
 			}else{
-				$sz=$vert?$Y-$sy:$X-$sx;
+				$sz=$vert?$YY-$sy:$XX-$sx;
 			}
 			if($pad || tint2get('panel_size',0)>($vert?$Y:$X)){
 				tint2set('panel_margin',$_,$margin[$_]) for(0,1);
@@ -742,14 +759,11 @@ NEWSH:
 		if($?){
 			system($bin.'notify-send',$out='Picture montage failed: '.($m||"@m")." $img \n$out");
 			print STDERR $out,"\n";
-		}elsif(open(my $F,'>',$sh)){
-			print $F $a;
-			close($F);
-			# on my nouveau only last --xinerama-index still drawed, but try...
-			system($bin.'xsetroot','-solid','black') if(!$img || (@xi && !$wp0));
+		}elsif(wrsh($sh,$a)){
 			if($img){
-				system($bin.'feh','--no-fehbg','--bg-scale',$wp0) if(@xi && $wp0);
-				system($bin.'feh',@xi,'--no-fehbg','--bg-center',$img);
+				system($bin.'feh',@xi,'--no-fehbg',@xi?'--bg-center':'--bg-tile',$img);
+			}else{
+				system($bin.'xsetroot','-solid','black') if(!$img);
 			}
 		}
 		$tint2_ && _restart($bin.'tint2','-c',$tint2[-1]);

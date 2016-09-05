@@ -10,37 +10,45 @@ DSP="${DISPLAY//[\\\/*]/_}"
 [[ "$DSP" == *:* && "$DSP" != *:*.* ]] && DSP+='.0'
 #DSP1="${DSP%.*}"
 . "$HOME/.cache/ya/environment.$DSP" && cmd=${cmd/ob3menu --slow/ob3menu --autostart $YA_XDG_AUTOSTART --profile $YA_PROFILE --slow}
-local m="$HOME/.cache/ya/menu.xml" c1="/usr/share/applications /usr/share/applications/inputmethods /usr/share/desktop-directories" c="$0 ${cmd%% *} /etc/xdg/autostart" mm=true i m1=return mk mk1 XY= k1=
+local m="$HOME/.cache/ya/menu.xml" c1="/usr/share/applications /usr/share/applications/inputmethods /usr/share/desktop-directories" c="$0 ${cmd%% *} /etc/xdg/autostart" mm=true i m1=return mk mk1 XY x y k1=
 mk="$m.$DSP.key"
 mk1="${mk}1"
-if [ "$mk1" -ot /var/log/Xorg.0.log ] && k1=`xrandr --current`; then
-	k1=`echo "$k1"|grep -o " connected [0-9x]*"|grep -o '[0-9]*x[0-9]*'`
-	if [ "$k1" = "`cat "$mk1"`" ]; then
+if [ "$mk1" -ot /var/log/Xorg.0.log ] && k1=`xrandr --current` && x="${r##* current }" && y="${x#* x }" && ! [ "$r" = "$x" -o "$x" = "$vR" ]; then
+	XY="${x%% *}x${y%%[ ,]*} "
+	while i="${k1#* connected }" && [ "$k1" != "$i" ]; do
+		k1="$i"
+		i="${i%%[ +]*}"
+		[ "$k1" = "$i" ] && break
+		XY+="$i "
+	done
+	if [ "$XY" = "`cat "$mk1"`" ]; then
 		touch "$mk1"
 	else
-		rm "$mk"
+		unlink "$mk"
 		umask 077
-		echo "$k1" >"$mk1"
+		echo "$XY" >"$mk1"
 	fi
 else
-	k1=`cat "$mk1"`
+	XY=`cat "$mk1"`
 fi
-if [ -n "$k1" ]; then
-DSP2="${k1%%
-*}"
-XY="${k1//[x
-]/ }"
-else
-	DSP2="$DSP"
-fi
+DSP2="${XY%% *}"
+i="${XY#$DSP2}"
+i="${i# }"
+DSP3="${i%% *}"
+for i in $i; do
+	[ "$i" = "$DSP2" ] && DSP3="$i" && break
+done
+: ${DSP2:="$DSP"}
+: ${DSP3:="$DSP"}
+DSP3="$DSP"
 case "$cmd" in
 *ob3menu*\ --autostart*)a="$HOME/.cache/ya/autostart";;&
-*ob3menu*\ --launcher*)c+=" $HOME/.config/ya/tint2rc,$HOME/.cache/ya/tint2rc.$DSP2" ;;&
+*ob3menu*\ --launcher*)c+=" $HOME/.config/ya/tint2rc,$HOME/.cache/ya/tint2rc.$DSP3" ;;&
 *ob3menu*\ --slow*)
 	c+=" $HOME/.config/ya/rc.xml $HOME/.config/ya/preferred-apps /etc/fstab"
 	c1+=" /usr/share/mime/globs" # /usr/share/icons/*/*/*
 	cmd+=" --mime $m.sh $HOME"
-	cmd=${cmd/--slow --/--slow $HOME/.config/ya/rc.xml $XY --}
+	cmd=${cmd/--slow --/--slow $HOME/.config/ya/rc.xml "${XY//x/ }" --}
 	m1=
 ;;
 *ob3menu*\ --mime\ *)c+=" /usr/share/mime/globs /etc/fstab";;
@@ -52,13 +60,13 @@ if ! (read k1 <"$mk" && [ "$k1" = "$k" ]); then
 	mkdir -p "${m%/*}"
 	{
 	$mm '<openbox_pipe_menu>'
-	$cmd || rm "$m"
+	$cmd || unlink "$m"
 	$mm '</openbox_pipe_menu>'
 	} >"$m"
 	echo "$k" >"$mk"
 fi
 cat "$m" && return
-rm "$mk"
+unlink "$mk"
 $m1
 notify-send 'Advanced menu error. Trying simple.'
 ${cmd%% *}
