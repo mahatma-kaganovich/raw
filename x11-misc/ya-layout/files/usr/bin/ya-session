@@ -28,6 +28,9 @@ DSP3=
 ENV="$cache/environment.$DSP"
 DSPS=
 
+#xinerama='--xinerama-index 0'
+xinerama='--no-xinerama' # pan
+
 : ${YA_APP_WebBrowser:="'exo-open --launch WebBrowser' @WebBrowser"}
 # exo-open going mad with params, but we want terminal with params NOW!
 #: ${YA_APP_TerminalEmulator:="'exo-open --launch TerminalEmulator' @TerminalEmulator"}
@@ -503,7 +506,7 @@ resolution(){
 	for i in $*; do
 		[ "$i" = "$DSP2" ] && DSP3="$i" && xi='' && break
 	done
-	[ -n "$xi" ] && DSP2="$1"
+	[[ "$xi" == *index* ]] && DSP2="$1"
 	: ${DSP2:="$DSP"}
 	: ${DSP3:="$DSP"}
 }
