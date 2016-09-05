@@ -695,7 +695,11 @@ _run_dsp(){
 		[ -e "$i" ] && {
 			# on nouveau only last xinerama window drawed, so don't owercode here
 			# --bg-tile vs. xinerama
-			feh $xi --no-fehbg --bg-center $i &
+			if [ -n "$xi" ]; then
+				feh $xi --no-fehbg --bg-center $i &
+			else
+				feh $xi --no-fehbg --bg-tile $i &
+			fi
 			break
 		}
 	done
