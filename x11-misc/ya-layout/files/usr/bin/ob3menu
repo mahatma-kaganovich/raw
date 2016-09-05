@@ -356,7 +356,9 @@ if(exists($P{slow})){
 	# first or growing
 	($XX,$YY)=@XY;
 	if($#XY>1){
-		@xi=('--xinerama-index','0');
+		# there are 2 ideas how to work on xinerama: pan wallpaper on vsize or make seconds black
+		# comment out to pan while
+#		@xi=('--xinerama-index','0');
 		for(0..$#XY>>1){
 			if($X==$XY[$_<<1] && $Y==$XY[($_<<1)+1]){
 				($XX,$YY,@xi)=();
@@ -366,6 +368,7 @@ if(exists($P{slow})){
 	}
 	$XX||=$X;
 	$YY||=$Y;
+	($X,$Y)=@XY if(@xi);
 	# wallpaper id
 	$DSP2=$X.'x'.$Y;
 	$subcmd.=" &quot;$fconf&quot;";
@@ -760,11 +763,8 @@ NEWSH:
 			system($bin.'notify-send',$out='Picture montage failed: '.($m||"@m")." $img \n$out");
 			print STDERR $out,"\n";
 		}elsif(wrsh($sh,$a)){
-			if($img){
-				system($bin.'feh',@xi,'--no-fehbg',@xi?'--bg-center':'--bg-tile',$img);
-			}else{
-				system($bin.'xsetroot','-solid','black') if(!$img);
-			}
+			system($bin.'xsetroot','-solid','black') if(!$img || @xi);
+			$img && system($bin.'feh',@xi,'--no-fehbg',@xi?'--bg-center':'--bg-tile',$img);
 		}
 		$tint2_ && _restart($bin.'tint2','-c',$tint2[-1]);
 	}else{

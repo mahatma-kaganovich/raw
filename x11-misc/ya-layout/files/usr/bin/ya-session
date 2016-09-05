@@ -496,11 +496,14 @@ resolution(){
 	set -- $i
 	DSP2="$1"
 	shift
-	[ -n "$2" ] && xi='--xinerama-index 0'
+	# there are 2 ideas how to work on xinerama: pan wallpaper on vsize or make seconds black
+	# comment out to pan while
+#	[ -n "$2" ] && xi='--xinerama-index 0'
 	DSP3="$1"
 	for i in $*; do
 		[ "$i" = "$DSP2" ] && DSP3="$i" && xi='' && break
 	done
+	[ -n "$xi" ] && DSP2="$1"
 	: ${DSP2:="$DSP"}
 	: ${DSP3:="$DSP"}
 }
