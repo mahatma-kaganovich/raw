@@ -619,7 +619,7 @@ if(@apps){
 				for(@c){
 					if($_=~s/(?:^|\S*\/)tint2\s+-c\s+//){
 						$P{tint2}->[0]=$_;
-						unshift @{$P{tint2}},'' if(index($_,"$ENV{HOME}/.cache/"));
+						unshift @{$P{tint2}},'' if(!index($_,"$ENV{HOME}/.cache/"));
 						last;
 					}
 				}
@@ -630,7 +630,7 @@ if(@apps){
 			$t2v="$ENV{HOME}/.config/tint2/tint2rc";
 			$tint2[0]||=$vanilla?$t2v:"$fconf/tint2rc";
 			$tint2_=_read("<$tint2[0]");
-			$t2d="@stat_[1,7,9] ";
+			$t2d=crc32($tint2_);
 			if($tint2_ && $tint2[0] ne $t2v){
 				tint2set('panel_size',1,$conf{'.font.size'}*2);
 				tint2set('panel_monitor',0,$monitor,1);
