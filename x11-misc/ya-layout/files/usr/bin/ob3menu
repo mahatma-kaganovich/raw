@@ -33,6 +33,7 @@ exec($bin.'notify-send','-t',6000,$e);
 };
 
 $tint2font=1; # = ob MenuItem
+$monitor='all';
 
 my (%ico,%key,%cat,%cat1,%dir,@prof,$prof);
 #$misc='Other';
@@ -175,8 +176,9 @@ sub ico{
 sub _read{
 	open(my $F,$_[0])||return;
 	my $s;
-	if(my $l=$_[1]||-s $F){
-		read($F,$s,$l);
+	@stat_=stat($F);
+	if($stat_[7]){
+		read($F,$s,$stat_[7]);
 	}else{
 		while(defined(my $x=<$F>)){$s.=$x};
 	}
@@ -231,12 +233,14 @@ sub tint2set{
 		$x[$_[1]]=$_[2];
 		"$v = @x"
 	/emg;
+	$t2d.="@_ " if(!$_[3]);
 }
 
 sub tint2get{
 	my $x=$_[0];
 	($x)=$tint2_=~/^[ 	]*$x[ 	]*=[ 	]*([^\n]*?)[ 	]*$/m;
-	$_[1]==-1?$x:(split(/\s+/,$x))[$_[1]];
+	$x=$_[1]==-1?$x:(split(/\s+/,$x))[$_[1]];
+	$x;
 }
 
 sub wrsh{
@@ -365,9 +369,10 @@ if(exists($P{slow})){
 	($XX,$YY)=@XY;
 	if($#XY>1){
 		@xi=@xinerama;
+		$monitor=1;
 		for(0..$#XY>>1){
-			if($X==$XY[$_<<1] && $Y==$XY[($_<<1)+1]){
-				($XX,$YY,@xi)=();
+			if($X==$XY[$i=$_<<1] && $Y==$XY[$i+1]){
+				($monitor,$XX,$YY,@xi)=($i);
 				last;
 			}
 		}
@@ -623,7 +628,11 @@ if(@apps){
 			$tint2=$P{tint2}->[0]||($vanilla?"$ENV{HOME}/.config/tint2/tint2rc":"$fconf/tint2rc");
 			@tint2=split(/,/,$tint2,2);
 			$tint2_=_read("<$tint2[0]");
-			tint2set('panel_size',1,$conf{'.font.size'}*2) if($tint2_ && $tint2[0] ne "$ENV{HOME}/.config/tint2/tint2rc");
+			$t2d="@stat_[1,7,9] ";
+			if($tint2_ && $tint2[0] ne "$ENV{HOME}/.config/tint2/tint2rc"){
+				tint2set('panel_size',1,$conf{'.font.size'}*2);
+				tint2set('panel_monitor',0,$monitor,1);
+			}
 		}
 		my ($a,@m,$m);
 		my ($img,$sh,$geo,@wp)=@{$P{launcher}};
@@ -724,6 +733,7 @@ NOGEO:
 			my $sz;
 			my @margin=(0,0);;
 			my $pad=0;
+			
 			if(tint2get('autohide',0) && !tint2get('panel_background_id',0)){
 				if($vert){
 					$sz=$YY+$sy;
@@ -754,7 +764,7 @@ NOGEO:
 			_write($tint2[-1],$tint2_) if($t2 ne $tint2_);
 		}
 		$?=0;
-		goto (nolauncher,NEWIMG,NEWSH)[newname($img,($m||"@m").$img.$tint2_)];
+		goto (nolauncher,NEWIMG,NEWSH)[newname($img,($m||"@m").$img.$t3d)];
 NEWIMG:
 		_fork() && goto NOFORK;
 		unlink($sh);
