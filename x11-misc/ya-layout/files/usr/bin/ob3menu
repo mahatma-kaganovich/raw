@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # (c) Denis Kaganovich, Anarchy or GPLv2
-# OpenBox3 pipe menu v0.12
+# OpenBox3 pipe menu v0.13
 # ob3menu {--<command> {params}}
 # 	--slow [<path/to/rc.xml> [X Y]]
 #	--autostart {profile}
@@ -190,11 +190,17 @@ sub _write{
 	print($F $_[1]) && close($F) && rename($f,$_[0]);
 }
 
-sub _restart{
+sub _fork{
+	$forked && return;
 	my $pid=fork();
 	$pid && return $pid;
 	close(STDOUT);
 	open STDOUT,">&2";
+	$forked=1;
+	0;
+}
+
+sub _restart{
 	# xkill don't properly close tray [on some X], so tray icons not restarting
 	# try to kill by pid first
 	my $d=quotemeta($ENV{'DISPLAY'});
@@ -750,6 +756,7 @@ NOGEO:
 		$?=0;
 		goto (nolauncher,NEWIMG,NEWSH)[newname($img,($m||"@m").$img.$tint2_)];
 NEWIMG:
+		_fork() && goto NOFORK;
 		unlink($sh);
 		if($m){
 			$out=`( $m $img ) 2>&1`;
@@ -759,6 +766,7 @@ NEWIMG:
 			$img=undef;
 		}
 NEWSH:
+		_fork() && goto NOFORK;
 		if($?){
 			system($bin.'notify-send',$out='Picture montage failed: '.($m||"@m")." $img \n$out");
 			print STDERR $out,"\n";
@@ -770,6 +778,8 @@ NEWSH:
 				);
 		}
 		$tint2_ && _restart($bin.'tint2','-c',$tint2[-1]);
+		exit;
+NOFORK:
 	}else{
 		print((map{
 			if($#$_==1){
