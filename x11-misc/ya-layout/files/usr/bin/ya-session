@@ -497,8 +497,13 @@ resolution(){
 	[ -n "$DSP2" -a "$DSP" = "$DSP0" ] && return
 	local i
 	read i <"$cache/menu.xml.$DSP.key1"
-	DSP2="${i%% *}"
 	DSP3="${i// /x}"
+	set -- $i
+	DSP2="$1"
+	shift
+	[ -n "$2" ] && xi="$xinerama" && for i in $*; do
+		[ "$DSP2" = "$i" ] && xi='' && break
+	done
 	[[ "$xi" == *index* ]] && DSP2="$1"
 	: ${DSP2:="$DSP"}
 	: ${DSP3:="$DSP"}
