@@ -643,8 +643,8 @@ if(@apps){
 			}
 			if(!$sx && !$sy){
 				my @splice=prop('_NET_WORKAREA')=~/(\d+), (\d+), (\d+), (\d+)/;
-				$splice[2]=$X if($splice[2]>$X);
-				$splice[3]=$Y if($splice[3]>$Y);
+				$splice[2]=$X-$splice[0] if($splice[2]>$X);
+				$splice[3]=$Y-$splice[1] if($splice[3]>$Y);
 				if($vert ne 1 && ($sy=$splice[1])){
 				}elsif($vert ne 0 && ($sx=$splice[0])){
 				}elsif($vert ne 1 && ($sy=$Y-$splice[3])){
