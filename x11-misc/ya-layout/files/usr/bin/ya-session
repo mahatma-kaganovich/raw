@@ -700,12 +700,11 @@ _run_dsp(){
 	for i in "$cache"/desk.kEy.{"$DSP2","$DSP"}.*; do
 		[ -e "$i" ] && {
 			# on nouveau only last xinerama window drawed, so don't owercode here
-			# --bg-tile vs. xinerama
-			if [ -n "$xi" ]; then
-				feh $xi --no-fehbg --bg-center $i &
-			else
-				feh $xi --no-fehbg --bg-tile $i &
-			fi
+			{
+			[ -n "$xi" ] &&
+				feh --no-fehbg $xi --bg-center "$i" ||
+				feh --no-fehbg --bg-tile "$i" &
+			} &
 			break
 		}
 	done

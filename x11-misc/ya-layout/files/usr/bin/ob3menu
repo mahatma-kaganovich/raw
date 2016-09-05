@@ -764,7 +764,10 @@ NEWSH:
 			print STDERR $out,"\n";
 		}elsif(wrsh($sh,$a)){
 			system($bin.'xsetroot','-solid','black') if(!$img || $#xi==1);
-			$img && system($bin.'feh','--no-fehbg',@xi,@xi?'--bg-center':'--bg-tile',$img);
+			$img && (
+				(@xi && !system($bin.'feh','--no-fehbg',@xi,'--bg-center',$img)) ||
+				system($bin.'feh','--no-fehbg','--bg-tile',$img)
+				);
 		}
 		$tint2_ && _restart($bin.'tint2','-c',$tint2[-1]);
 	}else{
