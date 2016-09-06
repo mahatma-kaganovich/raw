@@ -628,7 +628,12 @@ if(@apps){
 		if(exists($P{tint2})){
 			@tint2=@{$P{tint2}};
 			$t2v="$ENV{HOME}/.config/tint2/tint2rc";
-			$tint2[0]||=$vanilla?$t2v:"$fconf/tint2rc";
+			for($tint2[0],$vanilla?($t2v):("$fconf/tint2rc"),"/etc/xdg/$prof/tint2rc",'/etc/xdg/tint2/tint2rc',@tint2){
+				if($_ && -r $_){
+					$tint2[0]=$_;
+					break;
+				}
+			}
 			$tint2_=_read("<$tint2[0]");
 			$t2d=crc32($tint2_);
 			if($tint2_ && $tint2[0] ne $t2v){
