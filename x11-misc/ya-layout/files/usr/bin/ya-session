@@ -88,22 +88,11 @@ _exit(){
 }
 
 _xrandr(){
-local r r1 vX vY xy=
-r=`xrandr $2 --current 2>/dev/null` || return 1
-vX="${r##* current }"
-vY="${vX#* x }"
-[ "$r" = "$vX" -o "$vX" = "$vR" ] && return 1
-vX="${vX%% *}"
-vY="${vY%%[ ,]*}"
-while r1="${r#* connected }" && [ "$r" != "$r1" ]; do
-	r="$r1"
-	r1="${r1%%[ +]*}"
-	[ "$r" = "$r1" ] && return 1
-	xy+="$r1 "
-done
-[ -z "$xy" ] && return 1
+local xy
+xy=`echo $(xrandr $2 --current 2>/dev/null|grep -o ' current [0-9]* x [0-9]*\| connected [0-9]*x[0-9]*'|sed -e 's: \|current\|connected::g')`
+[[ "$xy" == *' '* ]] || return 1
 DSPS+="$1 "
-echo "${vX}x${vY} ${xy% }" >"$cache/menu.xml.$1.key1"
+echo "$xy" >"$cache/menu.xml.$1.key1"
 }
 
 displays(){
@@ -498,13 +487,10 @@ resolution(){
 	local i
 	read i <"$cache/menu.xml.$DSP.key1"
 	DSP3="${i// /x}"
-	set -- $i
-	DSP2="$1"
-	shift
-	[ -n "$2" ] && xi="$xinerama" && for i in $*; do
-		[ "$DSP2" = "$i" ] && xi='' && break
-	done
-	[[ "$xi" == *index* ]] && DSP2="$1"
+	DSP2="${i%% *}"
+	i="${i#* }"
+	[ -n "$i" -a -z "${i##* *}" ] && xi="$xinerama" && i+=' ' && [ -z "${i##* $DSP2 *}"] && xi=
+	[[ "$xi" == *index* ]] && DSP2="${i%% *}"
 	: ${DSP2:="$DSP"}
 	: ${DSP3:="$DSP"}
 }
