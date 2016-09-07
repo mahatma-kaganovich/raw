@@ -489,7 +489,7 @@ resolution(){
 	DSP3="${i// /x}"
 	DSP2="${i%% *}"
 	i="${i#* }"
-	[ -n "$i" -a -z "${i##* *}" ] && xi="$xinerama" && i+=' ' && [ -z "${i##* $DSP2 *}"] && xi=
+	[ -n "$i" -a -z "${i##* *}" ] && xi="$xinerama" && i+=' ' && [ -z "${i##* $DSP2 *}" ] && xi=
 	[[ "$xi" == *index* ]] && DSP2="${i%% *}"
 	: ${DSP2:="$DSP"}
 	: ${DSP3:="$DSP"}
