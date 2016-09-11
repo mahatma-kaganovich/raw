@@ -701,7 +701,7 @@ NOGEO:
 		$spliceX=($vert xor $left)?$X-$sx:0 if($spliceX eq '');
 		$spliceY=($vert xor $bottom)?$Y-$sy:0 if($spliceY eq '');
 #		$a.=q([ "${DISPLAY%.0}" = ':0' ] || ( . "$0.${DISPLAY//[\/\\\\_*]/_}";exit 1)
-);
+#);
 		if($DSP ne ':0.0'){
 			wrsh($sh,$a) if(!-x $sh);
 			$a='';
