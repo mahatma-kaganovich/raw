@@ -700,12 +700,17 @@ if(@apps){
 NOGEO:
 		$spliceX=($vert xor $left)?$X-$sx:0 if($spliceX eq '');
 		$spliceY=($vert xor $bottom)?$Y-$sy:0 if($spliceY eq '');
-#		$a.=q([ "${DISPLAY%.0}" = ':0' ] || ( . "$0.${DISPLAY//[\/\\\\_*]/_}";exit 1)
-#);
-		if($DSP ne ':0.0'){
-			wrsh($sh,$a) if(!-x $sh);
-			$a='';
-			$sh.='.'.$DSP
+		if(substr($sh,-2) eq 'sh'){
+			$a.=q([ "${DISPLAY%.0}" = ':0' ] || {
+	. "$0.${DISPLAY//[\/\\\\_*]/_}"
+	exit 1
+}
+);
+			if($DSP ne ':0.0'){
+				wrsh($sh,$a) if(!-x $sh);
+				$a='';
+				$sh.='.'.$DSP
+			}
 		}
 		my ($a,$c,$p,$xy)=$vert?($a.'[ $1 -lt '.($spliceX+$sx),$y,'$2',$spliceY):($a.'[ $2 -lt '.($spliceY+$sy),$x,'$1',$spliceX);
 		$a.=($spliceX?" -a \$1 -gt $spliceX":'').($spliceY?" -a \$2 -gt $spliceY":'')." ] && {\n";

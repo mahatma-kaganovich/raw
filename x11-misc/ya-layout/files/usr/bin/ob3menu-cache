@@ -33,8 +33,9 @@ case "$cmd" in
 	c+=" $HOME/.config/ya/tint2rc $HOME/.cache/ya/tint2rc.$DSP3"
 	x="$HOME/.cache/ya/desk-sh"
 	y="$x.$DSP3"
-	r="$cmd"
+	cmd+=' '
 	cmd=${cmd// $x / $y }
+	cmd=${cmd% }
 	local dsh='DSP=${DISPLAY//[\\\/*]/_}
 [[ "$DSP" == *:* && "$DSP" != *:*.* ]] && DSP+=.0
 read DSP3 <~/.cache/ya/menu.xml.$DSP.key1 || DSP3="$DSP"
@@ -62,6 +63,7 @@ if ! (read k1 <"$mk" && [ "$k1" = "$k" ]); then
 	mkdir -p "${m%/*}"
 	{
 	$mm '<openbox_pipe_menu>'
+	echo "$cmd" >/home/mahatma/.cache/log
 	$cmd || unlink "$m"
 	$mm '</openbox_pipe_menu>'
 	} >"$m"
