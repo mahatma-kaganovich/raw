@@ -771,7 +771,7 @@ NOGEO:
 			_write($tint2[-1],$tint2_) if($t2 ne $tint2_);
 		}
 		$?=0;
-		goto (nolauncher,NEWIMG,NEWSH)[newname($img,($m||"@m").$img.$t2d)];
+		goto (nolauncher,NEWIMG,NEWSH)[newname($img,($m||"@m").$img.$t2d)||(-e $sh ?0:2)];
 NEWIMG:
 		_fork() && goto NOFORK;
 		unlink($sh);
