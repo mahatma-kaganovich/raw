@@ -13,7 +13,7 @@ DSP="${DISPLAY//[\\\/*]/_}"
 local m="$HOME/.cache/ya/menu.xml" c1="/usr/share/applications /usr/share/applications/inputmethods /usr/share/desktop-directories" c="$0 ${cmd%% *} /etc/xdg/autostart" mm=true i m1=return mk mk1 XY x y k1=
 mk="$m.$DSP.key"
 mk1="${mk}1"
-if [ "$mk1" -ot /var/log/Xorg.0.log ] && k1=`xrandr --current` && x="${r##* current }" && y="${x#* x }" && ! [ "$r" = "$x" -o "$x" = "$vR" ]; then
+if [ "$mk1" -ot /var/log/Xorg.0.log ] && k1=`xrandr --current`; then
 	XY=`echo $(echo "$k1"|grep -o ' current [0-9]* x [0-9]*\| connected [0-9]*x[0-9]*'|sed -e 's: \|current\|connected::g')`
 	if [ "$XY" = "`cat "$mk1"`" ]; then
 		touch "$mk1"
