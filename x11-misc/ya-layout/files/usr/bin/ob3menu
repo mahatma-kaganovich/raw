@@ -201,16 +201,6 @@ sub _write{
 	(syswrite($F,$_[1],$l) eq $l && close($F) && rename($f,$_[0])) && 1;
 }
 
-sub _fork{
-	$forked && return;
-	my $pid=fork();
-	$pid && return $pid;
-	close(STDOUT);
-	open STDOUT,">&2";
-	$forked=1;
-	0;
-}
-
 sub _restart{
 	# xkill don't properly close tray [on some X], so tray icons not restarting
 	# try to kill by pid first
@@ -777,12 +767,19 @@ NOGEO:
 				tint2set('bat1_font',-1,$f.($s-2));
 				tint2set('bat2_font',-1,$f.($s-3));
 			}
-			$tint2=undef if(_write($tint2[-1],$tint2_)!=1);;
+			$tint2_=undef if(_write($tint2[-1],$tint2_)!=1);;
 		}
 		$?=0;
-		goto (nolauncher,NEWIMG,NEWSH)[newname($img,($m||"@m").$img.$t2d)||(-e $sh ?0:2)];
+		$i=newname($img,($m||"@m").$img.$t2d)||(-e $sh ?0:2);
+		if($i){
+			fork() && goto NOFORK;
+			close(STDOUT);
+			open STDOUT,">&2";
+			$tint2_ && !fork() && _restart($bin.'tint2','-c',$tint2[-1]);
+			$tint2_=undef;
+		}
+		goto (nolauncher,NEWIMG,NEWSH)[$i];
 NEWIMG:
-		_fork() && goto NOFORK;
 		unlink($sh);
 		if($m){
 			$out=`( $m $img ) 2>&1`;
@@ -792,7 +789,6 @@ NEWIMG:
 			$img=undef;
 		}
 NEWSH:
-		_fork() && goto NOFORK;
 		if($?){
 			system($bin.'notify-send',$out='Picture montage failed: '.($m||"@m")." $img \n$out");
 			print STDERR $out,"\n";
@@ -803,9 +799,9 @@ NEWSH:
 				system($bin.'feh','--no-fehbg','--bg-tile',$img)
 				);
 		}
-		$tint2_ && _restart($bin.'tint2','-c',$tint2[-1]);
 		exit;
 NOFORK:
+	$tint2_=undef;
 	}else{
 		print((map{
 			if($#$_==1){
