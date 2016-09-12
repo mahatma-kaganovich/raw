@@ -14,7 +14,7 @@ local m="$HOME/.cache/ya/menu.xml" c1="/usr/share/applications /usr/share/applic
 mk="$m.$DSP.key"
 mk1="${mk}1"
 if [ "$mk1" -ot "/var/log/Xorg.${DSP1#:}.log" ] && k1=`xrandr --current`; then
-	XY=`echo $(echo "$k1"|grep -o ' current [0-9]* x [0-9]*\| connected [0-9]*x[0-9]*'|sed -e 's: \|current\|connected::g')`
+	XY=`echo $(echo "$k1"|grep -o ' current [0-9]* x [0-9]*\| connected [0-9x+]*'|sed -e 's: \|current\|connected::g')`
 	if [ "$XY" = "`cat "$mk1"`" ]; then
 		touch "$mk1"
 	else
@@ -25,7 +25,7 @@ if [ "$mk1" -ot "/var/log/Xorg.${DSP1#:}.log" ] && k1=`xrandr --current`; then
 else
 	read XY <"$mk1"
 fi
-DSP3=${XY// /x}
+DSP3=${XY// /X}
 : ${DSP3:="$DSP"}
 case "$cmd" in
 *ob3menu*\ --autostart*)a="$HOME/.cache/ya/autostart";;&
@@ -51,7 +51,7 @@ read DSP3 <~/.cache/ya/menu.xml.$DSP.key1 || DSP3="$DSP"
 	c+=" $HOME/.config/ya/rc.xml $HOME/.config/ya/preferred-apps /etc/fstab"
 	c1+=" /usr/share/mime/globs" # /usr/share/icons/*/*/*
 	cmd+=" --mime $m.sh $HOME"
-	cmd=${cmd/--slow --/--slow $HOME/.config/ya/rc.xml "${XY//x/ }" --}
+	cmd=${cmd/--slow --/--slow $HOME/.config/ya/rc.xml "$XY" --}
 	m1=
 ;;
 *ob3menu*\ --mime\ *)c+=" /usr/share/mime/globs /etc/fstab";;

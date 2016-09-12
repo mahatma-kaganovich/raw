@@ -2,7 +2,7 @@
 # (c) Denis Kaganovich, Anarchy or GPLv2
 # OpenBox3 pipe menu v0.13
 # ob3menu {--<command> {params}}
-# 	--slow [<path/to/rc.xml> [X Y]]
+# 	--slow [<path/to/rc.xml> [XxY]]
 #	--autostart {profile}
 #	--include {menu to include}
 #	--profile {profile}
@@ -361,18 +361,23 @@ if(exists($P{slow})){
 	if(!exists($P{$ma})){
 		$configs{$_}=1 for(glob("${0}_*"));
 	}
-	($fconf,$X,$Y,@XY)=@{$P{slow}};
+	($fconf,@XY)=@{$P{slow}};
+	($X[$_],$Y[$_],$X1[$_],$Y1[$_])=split(/[x\+]/,$XY[$_]) for(0..$#XY);
+	$X=shift @X;
+	$Y=shift @Y;
+	shift @X1;
+	shift @Y1;
 	if(!($fconf && $X && $Y)) {
 		($X,$Y)=prop('_NET_DESKTOP_GEOMETRY')=~/(\d+), (\d+)/;
 		($fconf)=prop('_OB_CONFIG_FILE')=~/\"(.*)\"/;
 	}
 	# first or growing
-	($XX,$YY)=@XY;
-	if($#XY>1){
+	($XX,$YY)=($X[0],$Y[0]);
+	if($#Y>0){
 		@xi=@xinerama;
 		$monitor=1;
-		for(0..$#XY>>1){
-			if($X==$XY[$i=$_<<1] && $Y==$XY[$i+1]){
+		for(0..$#Y){
+			if($X==$XY[$_] && $Y==$XY[$_]){
 				($monitor,$XX,$YY,@xi)=($i);
 				last;
 			}
@@ -380,7 +385,7 @@ if(exists($P{slow})){
 	}
 	$XX||=$X;
 	$YY||=$Y;
-	($X,$Y)=@XY if($#xi==1);
+	($X,$Y)=($X[0],$Y[0]) if($#xi==1);
 	# wallpaper id
 	$DSP2=$X.'x'.$Y;
 	$subcmd.=" &quot;$fconf&quot;";
