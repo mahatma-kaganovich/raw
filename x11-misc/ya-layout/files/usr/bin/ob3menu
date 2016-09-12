@@ -23,6 +23,7 @@
 # small launcher near tint2... So, fast partial...
 
 $bin='/usr/bin/';
+$HOME=$ENV{HOME};
 #@xinerama=('--xinerama-index','0');
 @xinerama=('--no-xinerama'); # pan
 
@@ -175,10 +176,14 @@ sub ico{
 
 sub _read{
 	open(my $F,$_[0])||return;
+	my $l=$_[1];
+	if(!defined($l)){
+		flock($F,1);
+		$l=-s $F;
+	}
 	my $s;
-	@stat_=stat($F);
-	if($stat_[7]){
-		read($F,$s,$stat_[7]);
+	if($l){
+		sysread($F,$s,$l);
 	}else{
 		while(defined(my $x=<$F>)){$s.=$x};
 	}
@@ -187,9 +192,13 @@ sub _read{
 }
 
 sub _write{
-	open(my $F,'>',my $f=$_[0].'$$$')||return;
+	my $f=$_[0];
+	my $l=length($_[1]);
+	return 2 if($l eq (-s $f) && _read($f,$l) eq $_[1]);
+	open(my $F,'>',$f.='$$$')||return;
 	flock($F,2);
-	print($F $_[1]) && close($F) && rename($f,$_[0]);
+	$_[2] && chmod($_[2],$F);
+	(syswrite($F,$_[1],$l) eq $l && close($F) && rename($f,$_[0])) && 1;
 }
 
 sub _fork{
@@ -210,7 +219,7 @@ sub _restart{
 	my $n=$_[0];
 	$n=~s/^.*\///g;
 	for(split(/\n/,`${bin}pgrep $n -u "$ENV{'USER'}"`)){
-		push @p,$_ if(_read("</proc/$_/environ")=~/(?:^|\x0)DISPLAY=$d(?:\x0|\$)/s);
+		push @p,$_ if(_read("</proc/$_/environ",0)=~/(?:^|\x0)DISPLAY=$d(?:\x0|\$)/s);
 	}
 	if(@p){
 		system('kill',@p);
@@ -241,14 +250,6 @@ sub tint2get{
 	($x)=$tint2_=~/^[ 	]*$x[ 	]*=[ 	]*([^\n]*?)[ 	]*$/m;
 	$x=$_[1]==-1?$x:(split(/\s+/,$x))[$_[1]];
 	$x;
-}
-
-sub wrsh{
-	open(my $F,'>',$_[0]) || return 0;
-	select($F);$|=1;select(STDOUT);
-	print($F $_[1]) &&
-	chmod(0700,$F) &&
-	close($F) || die $!;
 }
 
 # CRC32 code derived from work by Gary S. Brown.
@@ -308,13 +309,13 @@ sub prop{
 
 sub _xdg_mime{
 	my ($a,$d,@t)=@_;
-	my $f="$ENV{HOME}/.local/share/applications/mimeapps.list";
+	my $f="$HOME/.local/share/applications/mimeapps.list";
 	my $s=_read($f);
 	my $p0='Default Applications';
 	my $p=$p0;
 	my $i;
 	if(!defined($s)){
-		mkdir($i.=$_) for("$ENV{HOME}/.local",'/share','/applications');
+		mkdir($i.=$_) for("$HOME/.local",'/share','/applications');
 	}
 	while(@t){
 		$s=~s/^(\[$p\]\n[^\[]*)$/
@@ -394,8 +395,8 @@ if(exists($P{slow})){
 	*icons=*icons_svg if(exists($P{'svg'}));
 	icons('/usr/share/icons/');
 	icons('/usr/share/pixmaps/');
-	icons($ENV{HOME}.'/.local/share/icons/');
-	icons($ENV{HOME}.'/.local/share/pixmaps/');
+	icons($HOME.'/.local/share/icons/');
+	icons($HOME.'/.local/share/pixmaps/');
 	if(exists($P{'svg'})){
 		$ico{substr($_,0,-4)}=$ico{$_} for(grep(/\.svg$/,keys %ico));
 		$ico1{substr($_,0,-4)}=$ico1{$_} for(grep(/\.svg$/,keys %ico1));
@@ -415,7 +416,7 @@ if(($X && $Y) || $mapps){
 					$apps{$x}=$apps{$_}=undef;
 				}
 			}
-			for(map{("$_/mimeapps.list","$_/defaults.list")}("$ENV{HOME}/.local/share/applications",'/usr/share/applications')){
+			for(map{("$_/mimeapps.list","$_/defaults.list")}("$HOME/.local/share/applications",'/usr/share/applications')){
 				my ($x,$i);
 				open(my $F,'<',$_) or next;
 				while(defined($s=<$F>)){
@@ -614,12 +615,12 @@ if(@apps){
 		$DSP1=$DSP;
 		$DSP1=join(',',$DSP,(map{$DSP1=~s/$_.*?$//;$DSP1}'\.','\:'),'');
 		if(!exists($P{dock}) && !exists($P{tint2}) && (my $pid=prop('_OPENBOX_PID'))){
-			if(my $c=_read("/proc/$pid/cmdline")){
+			if(my $c=_read("/proc/$pid/cmdline",0)){
 				my @c=split(/\x0/,$c);
 				for(@c){
 					if($_=~s/(?:^|\S*\/)tint2\s+-c\s+//){
 						$P{tint2}->[0]=$_;
-						unshift @{$P{tint2}},'' if(!index($_,"$ENV{HOME}/.cache/"));
+						unshift @{$P{tint2}},'' if(!index($_,"$HOME/.cache/"));
 						last;
 					}
 				}
@@ -627,18 +628,17 @@ if(@apps){
 		}
 		if(exists($P{tint2})){
 			@tint2=@{$P{tint2}};
-			$t2v="$ENV{HOME}/.config/tint2/tint2rc";
-			for($tint2[0],$vanilla?($t2v):("$fconf/tint2rc"),"/etc/xdg/$prof/tint2rc",'/etc/xdg/tint2/tint2rc',@tint2){
-				if($_ && -r $_){
-					$tint2[0]=$_;
-					break;
+			$t2v="$HOME/.config/tint2/tint2rc";
+			unshift @tint2,$vanilla?($t2v):("$fconf/tint2rc"),"/etc/xdg/$prof/tint2rc",'/etc/xdg/ya/tint2rc','/etc/xdg/tint2/tint2rc' if(!$tint2[0]);
+			for(@tint2){
+				if($_ && ($tint2_=_read($_))){
+					$t2d=crc32($tint2_);
+					if($_ ne $t2v){
+						tint2set('panel_size',1,$conf{'.font.size'}*2);
+						tint2set('panel_monitor',0,$monitor,1);
+					}
+					last;
 				}
-			}
-			$tint2_=_read("<$tint2[0]");
-			$t2d=crc32($tint2_);
-			if($tint2_ && $tint2[0] ne $t2v){
-				tint2set('panel_size',1,$conf{'.font.size'}*2);
-				tint2set('panel_monitor',0,$monitor,1);
 			}
 		}
 		my ($a,@m,$m);
@@ -707,7 +707,7 @@ NOGEO:
 }
 );
 			if($DSP ne ':0.0'){
-				wrsh($sh,$a) if(!-x $sh);
+				_write($sh,$a,0700) if(!-x $sh);
 				$a='';
 				$sh.='.'.$DSP
 			}
@@ -741,7 +741,6 @@ NOGEO:
 			$m="${bin}montage -background none -geometry ${x}x$y -tile ${xx}x$yy @m $f |${bin}convert -background none -splice ${spliceX}x$spliceY $f -extent ${X}x$Y$m";
 		}
 		if($tint2_){
-			my $t2=$tint2_;
 			my $sz;
 			my @margin=(0,0);;
 			my $pad=0;
@@ -773,7 +772,7 @@ NOGEO:
 				tint2set('bat1_font',-1,$f.($s-2));
 				tint2set('bat2_font',-1,$f.($s-3));
 			}
-			_write($tint2[-1],$tint2_) if($t2 ne $tint2_);
+			$tint2=undef if(_write($tint2[-1],$tint2_)!=1);;
 		}
 		$?=0;
 		goto (nolauncher,NEWIMG,NEWSH)[newname($img,($m||"@m").$img.$t2d)||(-e $sh ?0:2)];
@@ -792,7 +791,7 @@ NEWSH:
 		if($?){
 			system($bin.'notify-send',$out='Picture montage failed: '.($m||"@m")." $img \n$out");
 			print STDERR $out,"\n";
-		}elsif(wrsh($sh,$a)){
+		}elsif(_write($sh,$a,0700)){
 			system($bin.'xsetroot','-solid','black') if(!$img || $#xi==1);
 			$img && (
 				(@xi && !system($bin.'feh','--no-fehbg',@xi,'--bg-center',$img)) ||
@@ -945,7 +944,7 @@ print qq(
 <menu id=").($id++).qq(" label='Default Applications' execute='$0$subcmd --$ma'/>
 <separator label=""/>);
 print "<item label='$_->[0]'><action name='execute'><prompt>$_->[0]</prompt><execute>$_->[1]</execute></action></item>\n" for(['PowerOFF','/sbin/poweroff -i -h'],['Reboot','/sbin/reboot'],
-	#-w '/sys/power/state'?(map{["Suspend to $_","/bin/bash -c &quot;echo $_ &gt;/sys/power/state&quot;"]}split(/\s+/,_read('</sys/power/state'))):()
+	#-w '/sys/power/state'?(map{["Suspend to $_","/bin/bash -c &quot;echo $_ &gt;/sys/power/state&quot;"]}split(/\s+/,_read('</sys/power/state',0))):()
 );
 print qq(<item label="Exit"><action name="Exit"/></item>
 </menu>
