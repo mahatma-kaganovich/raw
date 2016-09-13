@@ -40,7 +40,7 @@ case "$cmd" in
 	local dsh='DSP=${DISPLAY//[\\\/*]/_}
 [[ "$DSP" == *:* && "$DSP" != *:*.* ]] && DSP+=.0
 read DSP3 <~/.cache/ya/menu.xml.$DSP.key1 || DSP3="$DSP"
-. "$0.${DSP3// /x}"'
+. "$0.${DSP3// /X}"'
 	[ -e "$y" -o "$dsh" = "`cat "$x"`" ] || {
 		unlink "$mk"
 		echo "$dsh" >$x
