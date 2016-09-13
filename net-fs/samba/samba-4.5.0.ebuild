@@ -82,9 +82,9 @@ REQUIRED_USE="addc? ( gnutls )
 
 S="${WORKDIR}/${MY_P}"
 
-PATCHES=(
-	"${FILESDIR}/${PN}-4.2.3-ctdb.patch"
-	)
+#PATCHES=(
+#	"${FILESDIR}/${PN}-4.2.3-ctdb.patch"
+#	)
 
 #CONFDIR="${FILESDIR}/$(get_version_component_range 1-2)"
 CONFDIR="${FILESDIR}/4.4"
