@@ -109,7 +109,7 @@ src_prepare() {
 
 	# samba-4.2.3-heimdal_compilefix.patch
 	grep -sq svc_use_strongest_session_key /usr/include/kdc.h && sed -i -e 's:tgs_use_strongest_session_key:svc_use_strongest_session_key:' -e 's:as_use_strongest_session_key:tgt_use_strongest_session_key:' source4/kdc/kdc.c
-	grep -sq HDB_ERR_NOENTRY /usr/include/hdb_err.h && ! grep -sq HDB_ERR_WRONG_REALM /usr/include/hdb_err.h && has_version '<app-crypt/heimdal-1.6.99' && sed -i -e 's:HDB_ERR_WRONG_REALM:HDB_ERR_NOENTRY:' source4/kdc/db-glue.c
+	grep -sq HDB_ERR_NOENTRY /usr/include/hdb_err.h && ! grep -sq HDB_ERR_WRONG_REALM /usr/include/hdb_err.h && sed -i -e 's:HDB_ERR_WRONG_REALM:HDB_ERR_NOENTRY:' source4/kdc/db-glue.c
 
 	multilib_copy_sources
 }
