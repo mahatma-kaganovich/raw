@@ -710,6 +710,9 @@ acpi_detect(){
 		_PR_.*|_SB_*.CP[0-9]*|_SB_*.SCK[0-9]*|_SB_.CPUS.C[0-9A-Z][0-9A-Z][0-9A-Z])let n=n+1;;
 		esac
 	done
+	[ "$n" = 0 ] && for i in /sys/bus/acpi/devices/LNXCPU:*/; do
+		[ -e "$i" ] && n=n+1
+	done
 	# On some of bare metal + ht flag without true HT, acpi reports double CPUs number.
 	# Dividing to 2 can reduce SMP tables or even make code UP, but many of modern CPUs|MBs
 	# use other logic, so try to /2 only if it can do UP (n=2) and USE=-smp
