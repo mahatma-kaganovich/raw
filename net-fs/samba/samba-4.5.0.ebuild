@@ -109,8 +109,9 @@ src_prepare() {
 	eapply "${WORKDIR}/patches/"
 
 	if has_version app-crypt/mit-krb5; then
-		sed -i -e 's:^ *kdc$: mit-kdb-samba:' source4/kdc/wscript_build
-		sed -i -e 's: db-glue : :' source4/libnet/wscript_build
+#		sed -i -e 's:^ *kdc$: mit-kdb-samba:' source4/kdc/wscript_build
+#		sed -i -e 's: db-glue : :' source4/libnet/wscript_build
+		true
 	else
 		# samba-4.2.3-heimdal_compilefix.patch
 		grep -sq svc_use_strongest_session_key /usr/include/kdc.h && sed -i -e 's:tgs_use_strongest_session_key:svc_use_strongest_session_key:' -e 's:as_use_strongest_session_key:tgt_use_strongest_session_key:' source4/kdc/kdc-heimdal.c
@@ -147,7 +148,7 @@ multilib_src_configure() {
 
 		myconf+=(
 			$(use_with acl acl-support)
-			$(usex addc '' '--without-ad-dc')
+			$(usex addc '' '--without-ad-dc --without-ntvfs-fileserver')
 			$(use_with addns dnsupdate)
 			$(use_with ads)
 			$(usex ads '--with-shared-modules=idmap_ad' '')
@@ -165,7 +166,7 @@ multilib_src_configure() {
 			$(use_with syslog)
 			$(use_with systemd)
 			$(use_with afs fake-kaserver)
-			$(has_version app-crypt/mit-krb5 && echo --with-system-mitkrb5)
+			$(has_version app-crypt/mit-krb5 && echo --with-system-mitkrb5 --without-ntvfs-fileserver)
 			$(use_with winbind)
 			$(usex test '--enable-selftest' '')
 			--with-shared-modules=${SHAREDMODS}
@@ -191,6 +192,7 @@ multilib_src_configure() {
 			$(has_version app-crypt/mit-krb5 && echo --with-system-mitkrb5)
 			--without-winbind
 			--disable-python
+			--without-ntvfs-fileserver
 		)
 	fi
 	CPPFLAGS="-I${SYSROOT}/usr/include/et ${CPPFLAGS}" \
