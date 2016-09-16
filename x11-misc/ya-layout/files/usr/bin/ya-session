@@ -191,6 +191,15 @@ for(@ARGV){
 print $s;' "${@}"
 }
 
+
+_mix1(){
+	echo "/usr/bin/amixer -q set Master $* || /usr/bin/amixer -q set Headphone $*"
+}
+
+_mix(){
+	echo "$(_mix1 $* -c 0) || $(mix1 $*)"
+}
+
 obconfig(){
 	mkdir -p "${1%/*}"
 	local a= i
@@ -204,10 +213,9 @@ obconfig(){
 	for i in 'C-Menu +/usr/bin/sudo /usr/bin/mc' 'Super_R TerminalEmulator' 'C-Super_R +/usr/bin/sudo -s'; do
 		a+="<keybind key='${i%% *}'><action name='Execute'><command>ya-session --run ${i#* }</command></action></keybind>\n"
 	done
-	i='/usr/bin/amixer -q set Master'
-	for i in 'C-A-KP_Delete /usr/bin/slock' {XF86AudioLowerVolume,C-A-KP_Divide}" $i 1- -c 0" {XF86AudioRaiseVolume,C-A-KP_Multiply}" $i 1+ -c 0;$i on" "XF86AudioMute $i 0 -c 0;$i off"; do
+	for i in 'C-A-KP_Delete /usr/bin/slock' {XF86AudioLowerVolume,C-A-KP_Divide}" $(_mix 1-)" {XF86AudioRaiseVolume,C-A-KP_Multiply}" $(_mix 1+);$(_mix1 on)" "XF86AudioMute $(_mix 0);$(_mix1 off)"; do
 	# left != right with pulseaudio (async?)
-#	for i in 'C-A-KP_Delete /usr/bin/slock' {XF86AudioLowerVolume,C-A-KP_Divide}" $i 1%-" {XF86AudioRaiseVolume,C-A-KP_Multiply}" $i 1%+ on" "XF86AudioMute $i 0 off"; do
+#	for i in 'C-A-KP_Delete /usr/bin/slock' {XF86AudioLowerVolume,C-A-KP_Divide}" $(_mix1 1%-)" {XF86AudioRaiseVolume,C-A-KP_Multiply}" $(_mix1 1%+ on)" "XF86AudioMute $(_mix1 i 0 off)"; do
 		a+="<keybind key='${i%% *}'>\n"
 		i="${i#* };"
 		while [ -n "$i" ]; do
