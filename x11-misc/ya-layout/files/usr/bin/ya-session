@@ -196,7 +196,7 @@ _mix1(){
 	local i='/usr/bin/amixer -q set'
 	# standard channel is "Master", I have simple USB card with "Headphone", try to detect some other exotic
 	if [ -n "$mixer" -a "$mixer" != Master -a "$mixer" != Headphone]; then
-		echo "$i Master $* || $i $mixer $* || $i Headphone $*"
+		echo "$i Master $* || $i '$mixer' $* || $i Headphone $*"
 	else
 		echo "$i Master $* || $i Headphone $*"
 	fi
