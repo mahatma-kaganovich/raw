@@ -193,7 +193,13 @@ print $s;' "${@}"
 
 
 _mix1(){
-	echo "/usr/bin/amixer -q set Master $* || /usr/bin/amixer -q set Headphone $*"
+	local i='/usr/bin/amixer -q set'
+	# standard channel is "Master", I have simple USB card with "Headphone", try to detect some other exotic
+	if [ -n "$mixer" -a "$mixer" != Master -a "$mixer" != Headphone]; then
+		echo "$i Master $* || $i $mixer $* || $i Headphone $*"
+	else
+		echo "$i Master $* || $i Headphone $*"
+	fi
 }
 
 _mix(){
@@ -213,6 +219,9 @@ obconfig(){
 	for i in 'C-Menu +/usr/bin/sudo /usr/bin/mc' 'Super_R TerminalEmulator' 'C-Super_R +/usr/bin/sudo -s'; do
 		a+="<keybind key='${i%% *}'><action name='Execute'><command>ya-session --run ${i#* }</command></action></keybind>\n"
 	done
+	mixer=`echo $(/usr/bin/amixer -c 0|grep -o "control '[^']*'\|Playback channels: Front .*")|grep -o "'[^']*' Playback"`
+	mixer="${mixer#\'}"
+	mixer="${mixer%%\'*}"
 	for i in 'C-A-KP_Delete /usr/bin/slock' {XF86AudioLowerVolume,C-A-KP_Divide}" $(_mix 1-)" {XF86AudioRaiseVolume,C-A-KP_Multiply}" $(_mix 1+);$(_mix1 on)" "XF86AudioMute $(_mix 0);$(_mix1 off)"; do
 	# left != right with pulseaudio (async?)
 #	for i in 'C-A-KP_Delete /usr/bin/slock' {XF86AudioLowerVolume,C-A-KP_Divide}" $(_mix1 1%-)" {XF86AudioRaiseVolume,C-A-KP_Multiply}" $(_mix1 1%+ on)" "XF86AudioMute $(_mix1 i 0 off)"; do
