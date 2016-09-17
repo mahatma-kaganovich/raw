@@ -68,7 +68,7 @@ CDEPEND="${PYTHON_DEPS}
 		app-crypt/mit-krb5[${MULTILIB_USEDEP}]
 		>=app-crypt/heimdal-1.5[-ssl,${MULTILIB_USEDEP}]
 	) )
-	addc? ( !app-crypt/mit-krb5 !app-crypt/heimdal )
+	addc? ( !app-crypt/mit-krb5 )
 	systemd? ( sys-apps/systemd:0= )"
 DEPEND="${CDEPEND}
 	virtual/pkgconfig"
