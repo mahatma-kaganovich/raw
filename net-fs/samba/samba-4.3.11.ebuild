@@ -2,7 +2,7 @@
 # Distributed under the terms of the GNU General Public License v2
 # $Header: /var/cvsroot/gentoo-x86/net-fs/samba/samba-4.2.0.ebuild,v 1.1 2015/03/08 13:21:55 polynomial-c Exp $
 
-EAPI=5
+EAPI=6
 PYTHON_COMPAT=( python2_7 )
 PYTHON_REQ_USE='threads(+),xml(+)'
 
@@ -15,9 +15,8 @@ SRC_PATH="stable"
 [[ ${PV} = *_rc* ]] && SRC_PATH="rc"
 
 SRC_URI="mirror://samba/${SRC_PATH}/${MY_P}.tar.gz
-	https://dev.gentoo.org/~polynomial-c/samba-disable-python-patches-4.3.6.tar.xz"
+	https://dev.gentoo.org/~polynomial-c/samba-disable-python-patches-4.3.9.tar.xz"
 KEYWORDS="~amd64 ~hppa ~x86"
-[[ ${PV} = *_rc* ]] && KEYWORDS="~hppa"
 
 DESCRIPTION="Samba Suite Version 4"
 HOMEPAGE="http://www.samba.org/"
@@ -25,7 +24,7 @@ LICENSE="GPL-3"
 
 SLOT="0"
 
-IUSE="acl addc addns ads aio avahi client cluster cups dmapi fam gnutls iprint
+IUSE="acl +addc addns ads aio avahi client cluster cups dmapi fam +gnutls iprint
 ldap quota selinux syslog systemd test winbind afs pam sasl"
 
 MULTILIB_WRAPPED_HEADERS=(
@@ -38,6 +37,7 @@ MULTILIB_WRAPPED_HEADERS=(
 # sys-apps/attr is an automagic dependency (see bug #489748)
 CDEPEND="${PYTHON_DEPS}
 	>=app-arch/libarchive-3.1.2[${MULTILIB_USEDEP}]
+	dev-lang/perl:=
 	dev-libs/libbsd[${MULTILIB_USEDEP}]
 	dev-libs/iniparser:0
 	dev-libs/popt[${MULTILIB_USEDEP}]
@@ -46,7 +46,7 @@ CDEPEND="${PYTHON_DEPS}
 	dev-python/subunit[${PYTHON_USEDEP},${MULTILIB_USEDEP}]
 	sys-apps/attr[${MULTILIB_USEDEP}]
 	sys-libs/libcap
-	>=sys-libs/ldb-1.1.24[${MULTILIB_USEDEP}]
+	>=sys-libs/ldb-1.1.24[ldap(+)?,${MULTILIB_USEDEP}]
 	sys-libs/ncurses:0=[${MULTILIB_USEDEP}]
 	>=sys-libs/talloc-2.1.3[python,${PYTHON_USEDEP},${MULTILIB_USEDEP}]
 	>=sys-libs/tdb-1.3.7[python,${PYTHON_USEDEP},${MULTILIB_USEDEP}]
@@ -91,6 +91,8 @@ CONFDIR="${FILESDIR}/$(get_version_component_range 1-2)"
 
 WAF_BINARY="${S}/buildtools/bin/waf"
 
+SHAREDMODS=""
+
 pkg_setup() {
 	python-single-r1_pkg_setup
 	if use aio ; then
@@ -123,8 +125,8 @@ src_prepare() {
 	# Allow user patches
 	epatch_user
 	# samba-4.2.3-heimdal_compilefix.patch
-	sed -i -e 's:tgs_use_strongest_session_key:svc_use_strongest_session_key:' -e 's:as_use_strongest_session_key:tgt_use_strongest_session_key:' source4/kdc/kdc.c
-	has_version '<app-crypt/heimdal-1.6.99' && sed -i -e 's:HDB_ERR_WRONG_REALM:HDB_ERR_NOENTRY:' source4/kdc/db-glue.c
+	grep -sq svc_use_strongest_session_key /usr/include/kdc.h && sed -i -e 's:tgs_use_strongest_session_key:svc_use_strongest_session_key:' -e 's:as_use_strongest_session_key:tgt_use_strongest_session_key:' source4/kdc/kdc.c
+	grep -sq HDB_ERR_NOENTRY /usr/include/hdb_err.h && ! grep -sq HDB_ERR_WRONG_REALM /usr/include/hdb_err.h && sed -i -e 's:HDB_ERR_WRONG_REALM:HDB_ERR_NOENTRY:' source4/kdc/*.c
 	multilib_copy_sources
 }
 
@@ -226,6 +228,11 @@ multilib_src_install() {
 		if use ldap ; then
 			insinto /etc/openldap/schema
 			doins examples/LDAP/samba.schema
+		fi
+
+		# create symlink for cups (bug #552310)
+		if use cups ; then
+			dosym /usr/bin/smbspool /usr/libexec/cups/backend/smb
 		fi
 
 		# install example config file

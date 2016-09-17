@@ -46,7 +46,7 @@ CDEPEND="${PYTHON_DEPS}
 	dev-python/subunit[${PYTHON_USEDEP},${MULTILIB_USEDEP}]
 	sys-apps/attr[${MULTILIB_USEDEP}]
 	sys-libs/libcap
-	>=sys-libs/ldb-1.1.27[${MULTILIB_USEDEP}]
+	>=sys-libs/ldb-1.1.27[ldap(+)?,${MULTILIB_USEDEP}]
 	sys-libs/ncurses:0=[${MULTILIB_USEDEP}]
 	>=sys-libs/talloc-2.1.8[python,${PYTHON_USEDEP},${MULTILIB_USEDEP}]
 	>=sys-libs/tdb-1.3.10[python,${PYTHON_USEDEP},${MULTILIB_USEDEP}]
@@ -68,6 +68,7 @@ CDEPEND="${PYTHON_DEPS}
 		app-crypt/mit-krb5[${MULTILIB_USEDEP}]
 		>=app-crypt/heimdal-1.5[-ssl,${MULTILIB_USEDEP}]
 	)
+	addc? ( !app-crypt/mit-krb5 )
 	systemd? ( sys-apps/systemd:0= )"
 DEPEND="${CDEPEND}
 	virtual/pkgconfig"
@@ -91,6 +92,8 @@ CONFDIR="${FILESDIR}/4.4"
 
 WAF_BINARY="${S}/buildtools/bin/waf"
 
+SHAREDMODS=""
+
 pkg_setup() {
 	python-single-r1_pkg_setup
 	if use cluster ; then
@@ -108,15 +111,9 @@ src_prepare() {
 	# install the patches from tarball(s)
 	eapply "${WORKDIR}/patches/"
 
-	if has_version app-crypt/mit-krb5; then
-#		sed -i -e 's:^ *kdc$: mit-kdb-samba:' source4/kdc/wscript_build
-#		sed -i -e 's: db-glue : :' source4/libnet/wscript_build
-		true
-	else
-		# samba-4.2.3-heimdal_compilefix.patch
-		grep -sq svc_use_strongest_session_key /usr/include/kdc.h && sed -i -e 's:tgs_use_strongest_session_key:svc_use_strongest_session_key:' -e 's:as_use_strongest_session_key:tgt_use_strongest_session_key:' source4/kdc/kdc-heimdal.c
-		grep -sq HDB_ERR_NOENTRY /usr/include/hdb_err.h && ! grep -sq HDB_ERR_WRONG_REALM /usr/include/hdb_err.h && sed -i -e 's:HDB_ERR_WRONG_REALM:HDB_ERR_NOENTRY:' source4/kdc/*.c
-	fi
+	# samba-4.2.3-heimdal_compilefix.patch
+#	grep -sq svc_use_strongest_session_key /usr/include/kdc.h && sed -i -e 's:tgs_use_strongest_session_key:svc_use_strongest_session_key:' -e 's:as_use_strongest_session_key:tgt_use_strongest_session_key:' source4/kdc/kdc-heimdal.c
+#	grep -sq HDB_ERR_NOENTRY /usr/include/hdb_err.h && ! grep -sq HDB_ERR_WRONG_REALM /usr/include/hdb_err.h && sed -i -e 's:HDB_ERR_WRONG_REALM:HDB_ERR_NOENTRY:' source4/kdc/*.c
 
 	multilib_copy_sources
 }
