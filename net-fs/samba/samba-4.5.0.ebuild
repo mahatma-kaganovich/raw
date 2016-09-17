@@ -64,11 +64,11 @@ CDEPEND="${PYTHON_DEPS}
 	ldap? ( net-nds/openldap[${MULTILIB_USEDEP}] )
 	afs? ( net-fs/openafs )
 	sasl? ( dev-libs/cyrus-sasl )
-	|| (
+	!addc? ( || (
 		app-crypt/mit-krb5[${MULTILIB_USEDEP}]
 		>=app-crypt/heimdal-1.5[-ssl,${MULTILIB_USEDEP}]
-	)
-	addc? ( !app-crypt/mit-krb5 )
+	) )
+	addc? ( !app-crypt/mit-krb5 !app-crypt/heimdal )
 	systemd? ( sys-apps/systemd:0= )"
 DEPEND="${CDEPEND}
 	virtual/pkgconfig"
@@ -112,8 +112,8 @@ src_prepare() {
 	eapply "${WORKDIR}/patches/"
 
 	# samba-4.2.3-heimdal_compilefix.patch
-	grep -sq svc_use_strongest_session_key /usr/include/kdc.h && sed -i -e 's:tgs_use_strongest_session_key:svc_use_strongest_session_key:' -e 's:as_use_strongest_session_key:tgt_use_strongest_session_key:' source4/kdc/kdc-heimdal.c
-	grep -sq HDB_ERR_NOENTRY /usr/include/hdb_err.h && ! grep -sq HDB_ERR_WRONG_REALM /usr/include/hdb_err.h && sed -i -e 's:HDB_ERR_WRONG_REALM:HDB_ERR_NOENTRY:' source4/kdc/*.c
+#	grep -sq svc_use_strongest_session_key /usr/include/kdc.h && sed -i -e 's:tgs_use_strongest_session_key:svc_use_strongest_session_key:' -e 's:as_use_strongest_session_key:tgt_use_strongest_session_key:' source4/kdc/kdc-heimdal.c
+#	grep -sq HDB_ERR_NOENTRY /usr/include/hdb_err.h && ! grep -sq HDB_ERR_WRONG_REALM /usr/include/hdb_err.h && sed -i -e 's:HDB_ERR_WRONG_REALM:HDB_ERR_NOENTRY:' source4/kdc/*.c
 
 	multilib_copy_sources
 }
@@ -134,7 +134,7 @@ multilib_src_configure() {
 		--localstatedir=/var
 		--with-modulesdir=/usr/$(get_libdir)/samba
 		--with-piddir=/run/${PN}
-		--bundled-libraries=NONE
+		--bundled-libraries=$(use addc && echo heimdal || echo NONE)
 		--builtin-libraries=NONE
 		--disable-rpath
 		--disable-rpath-install
