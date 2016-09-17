@@ -20,5 +20,5 @@ RDEPEND="
 	|| (
 		>=app-crypt/mit-krb5-1.12.1-r1[${MULTILIB_USEDEP}]
 		>=app-crypt/heimdal-1.5.3-r2[${MULTILIB_USEDEP}]
-		>=net-fs/samba[addc,${MULTILIB_USEDEP}]
+		net-fs/samba[addc,${MULTILIB_USEDEP}]
 	)"
