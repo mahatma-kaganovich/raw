@@ -26,7 +26,7 @@ LICENSE="GPL-3"
 SLOT="0"
 
 IUSE="acl addc addns ads avahi client cluster cups dmapi fam gnutls iprint
-ldap pam quota selinux syslog systemd test winbind afs sasl"
+ldap pam quota selinux syslog systemd test winbind afs sasl gpg"
 
 MULTILIB_WRAPPED_HEADERS=(
 	/usr/include/samba-4.0/policy.h
@@ -68,6 +68,7 @@ CDEPEND="${PYTHON_DEPS}
 		app-crypt/mit-krb5[${MULTILIB_USEDEP}]
 		>=app-crypt/heimdal-1.5[-ssl,${MULTILIB_USEDEP}]
 	) )
+	gpg? ( app-crypt/gpgme )
 	systemd? ( sys-apps/systemd:0= )"
 DEPEND="${CDEPEND}
 	virtual/pkgconfig"
@@ -78,6 +79,7 @@ RDEPEND="${CDEPEND}
 
 REQUIRED_USE="addc? ( gnutls )
 	ads? ( acl gnutls ldap )
+	gpg? ( addc )
 	${PYTHON_REQUIRED_USE}"
 
 S="${WORKDIR}/${MY_P}"
@@ -113,6 +115,8 @@ src_prepare() {
 	# samba-4.2.3-heimdal_compilefix.patch
 #	grep -sq svc_use_strongest_session_key /usr/include/kdc.h && sed -i -e 's:tgs_use_strongest_session_key:svc_use_strongest_session_key:' -e 's:as_use_strongest_session_key:tgt_use_strongest_session_key:' source4/kdc/kdc-heimdal.c
 #	grep -sq HDB_ERR_NOENTRY /usr/include/hdb_err.h && ! grep -sq HDB_ERR_WRONG_REALM /usr/include/hdb_err.h && sed -i -e 's:HDB_ERR_WRONG_REALM:HDB_ERR_NOENTRY:' source4/kdc/*.c
+
+	sed -i -e 's:<gpgme.h>:<gpgme/gpgme.h>:' source4/dsdb/samdb/ldb_modules/password_hash.c
 
 	multilib_copy_sources
 }
@@ -165,6 +169,7 @@ multilib_src_configure() {
 			$(use_with afs fake-kaserver)
 			$(use !addc && has_version app-crypt/mit-krb5 && echo --with-system-mitkrb5)
 			$(use_with winbind)
+			$(use_with gpg gpgme)
 			$(usex test '--enable-selftest' '')
 			--with-shared-modules=${SHAREDMODS}
 		)  #'"
