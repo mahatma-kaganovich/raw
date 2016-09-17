@@ -68,7 +68,6 @@ CDEPEND="${PYTHON_DEPS}
 		app-crypt/mit-krb5[${MULTILIB_USEDEP}]
 		>=app-crypt/heimdal-1.5[-ssl,${MULTILIB_USEDEP}]
 	) )
-	addc? ( !app-crypt/mit-krb5 )
 	systemd? ( sys-apps/systemd:0= )"
 DEPEND="${CDEPEND}
 	virtual/pkgconfig"
@@ -140,12 +139,13 @@ multilib_src_configure() {
 		--disable-rpath-install
 		--nopyc
 		--nopyo
+		 --without-ntvfs-fileserver
 	)
 	if multilib_is_native_abi ; then
 
 		myconf+=(
 			$(use_with acl acl-support)
-			$(usex addc '' '--without-ad-dc --without-ntvfs-fileserver')
+			$(usex addc '' '--without-ad-dc')
 			$(use_with addns dnsupdate)
 			$(use_with ads)
 			$(usex ads '--with-shared-modules=idmap_ad' '')
@@ -163,7 +163,7 @@ multilib_src_configure() {
 			$(use_with syslog)
 			$(use_with systemd)
 			$(use_with afs fake-kaserver)
-			$(has_version app-crypt/mit-krb5 && echo --with-system-mitkrb5 --without-ntvfs-fileserver)
+			$(use !addc && has_version app-crypt/mit-krb5 && echo --with-system-mitkrb5)
 			$(use_with winbind)
 			$(usex test '--enable-selftest' '')
 			--with-shared-modules=${SHAREDMODS}
@@ -186,10 +186,9 @@ multilib_src_configure() {
 			--without-quotas
 			--without-syslog
 			--without-systemd
-			$(has_version app-crypt/mit-krb5 && echo --with-system-mitkrb5)
+			$(use !addc && has_version app-crypt/mit-krb5 && echo --with-system-mitkrb5)
 			--without-winbind
 			--disable-python
-			--without-ntvfs-fileserver
 		)
 	fi
 	CPPFLAGS="-I${SYSROOT}/usr/include/et ${CPPFLAGS}" \
