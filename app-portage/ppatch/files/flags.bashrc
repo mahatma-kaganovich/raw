@@ -155,6 +155,8 @@ esac
 
 _iuse !system-sqlite && filterflag -Ofast -ffast-math
 _iuse gold && filterflag -Wl,--sort-section=alignment
+# 2do: find bad -O3 flags for seamonkey
+_iuse custom-optimization && filterflag -Ofast -O3
 
 filter86_32 -fschedule-insns -fira-loop-pressure
 
