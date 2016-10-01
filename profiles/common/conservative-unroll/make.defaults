@@ -1,0 +1,1 @@
+CFLAGS="$CFLAGS -funroll-loops -fvariable-expansion-in-unroller"
