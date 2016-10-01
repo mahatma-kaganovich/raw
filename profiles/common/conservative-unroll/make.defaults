@@ -1,1 +1,3 @@
 CFLAGS="$CFLAGS -funroll-loops -fvariable-expansion-in-unroller"
+# giant RAM usage, but safer code
+CFLAGS="$CFLAGS -fipa-pta"
