@@ -370,11 +370,14 @@ _app(){
 		;;
 		esac
 		v="YA_APP_${x//-/_}"
-		if [ -n "${!v}" ]; then
-			# do not too cache
-			al=
-			eval "_app '$p1' ${!v}"
-			continue
+		if [ -n "${v##*/*}" ] && [ -n "${!v+set}" ]; then
+			if [ -n "${!v}" ]; then
+				# do not too cache
+				al=
+				eval "_app '$p1' ${!v}"
+				continue
+			fi
+			unset "${v}"
 		fi
 		x=`which "$x" 2>/dev/null` || continue
 	    fi
