@@ -41,3 +41,5 @@ dev-db/haildb tcmalloc
 dev-libs/libmemcached tcmalloc
 sys-cluster/gearmand tcmalloc
 sys-cluster/hpx -perftools
+# remove surprises
+net-misc/openssh -hpn
