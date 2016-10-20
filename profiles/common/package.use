@@ -43,3 +43,7 @@ sys-cluster/gearmand tcmalloc
 sys-cluster/hpx -perftools
 # remove surprises
 net-misc/openssh -hpn
+
+virtual/ffmpeg mp3 x264 x265 vorbis theora gsm speex
+media-video/libav mp3 x264 x265 vorbis theora gsm speex amr
+media-video/ffmpeg mp3 x264 x265 vorbis theora gsm speex amr amrenc librtmp
