@@ -11,7 +11,7 @@ media-gfx/imagemagick opencl
 app-cdr/cdrdao gcdmaster
 app-crypt/pinentry gnome-keyring
 dev-db/sqlite tools tcl
->app-office/libreoffice-5.1 python_single_target_python3_4 python_targets_python3_4
+#>app-office/libreoffice-5.1 python_single_target_python3_4 python_targets_python3_4
 kde-plasma/plasma-desktop legacy-systray
 # until figure-out test-programs
 net-wireless/bluez test-programs extra-tools experimental python_single_target_python3_5 python_targets_python3_5
