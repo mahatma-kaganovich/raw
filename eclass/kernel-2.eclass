@@ -1400,11 +1400,13 @@ modalias_reconf(){
 }
 
 modprobe_opt(){
-	for i in `sort -u "${TMPDIR}/unmodule.m2y"`; do
-		grep -h "^[	]*options[	]*$i[	]*" "$ROOT"/etc/modprobe.d/*.conf|{
+#	for i in `sort -u "${TMPDIR}/unmodule.m2y"`; do
+	# just cmdline all options
+	for i in '[^ 	]*' ;do
+		grep -h "^[ 	]*options[ 	]*$i[ 	]*" "$ROOT"/etc/modprobe.d/*.conf|{
 			read a b c
 			for d in $c; do
-				echo -n " $i.$d"
+				echo -n " $b.$d"
 			done
 		}
 	done
