@@ -615,11 +615,18 @@ _cfg_use_(){
 
 _cmdline(){
 	local i="$KERNEL_CONFIG_CMDLINE"
-	einfo "cmdline $*"
+	echo "cmdline $*" >&2
 	for i in "'" '"'; do
-		[ "${KERNEL_CONFIG_CMDLINE%$i}" != "$KERNEL_CONFIG_CMDLINE" ] && KERNEL_CONFIG_CMDLINE="${KERNEL_CONFIG_CMDLINE%$i} $* $i" && return
+		[ "${KERNEL_CONFIG_CMDLINE%$i}" != "$KERNEL_CONFIG_CMDLINE" ] && {
+			KERNEL_CONFIG_CMDLINE="${KERNEL_CONFIG_CMDLINE%$i} $* $i"
+			export KERNEL_CONFIG_CMDLINE
+			i="KERNEL_CONFIG_CMDLINE=$KERNEL_CONFIG_CMDLINE"
+			cfg_ "$i"
+			echo "$i"
+			return
+		}
 	done
-	ewarn "error while appending '$*' to KERNEL_CONFIG_CMDLINE"
+	echo "error while appending '$*' to KERNEL_CONFIG_CMDLINE" >&2
 }
 
 cfg_loop(){
