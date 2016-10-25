@@ -613,6 +613,15 @@ _cfg_use_(){
 	done
 }
 
+_cmdline(){
+	local i="$KERNEL_CONFIG_CMDLINE"
+	einfo "cmdline $*"
+	for i in "'" '"'; do
+		[ "${KERNEL_CONFIG_CMDLINE%$i}" != "$KERNEL_CONFIG_CMDLINE" ] && KERNEL_CONFIG_CMDLINE="${KERNEL_CONFIG_CMDLINE%$i} $* $i" && return
+	done
+	ewarn "error while appending '$*' to KERNEL_CONFIG_CMDLINE"
+}
+
 cfg_loop(){
 	local k=".config.loop.$1" i=0 k1 ne=true rm= l=false
 	grep "CONFIG" .config >$k
@@ -1390,6 +1399,17 @@ modalias_reconf(){
 	done|module_reconf "${@}"
 }
 
+modprobe_opt(){
+	for i in `sort -u "${TMPDIR}/unmodule.m2y"`; do
+		grep -h "^[	]*options[	]*$i[	]*" "$ROOT"/etc/modprobe.d/*.conf|{
+			read a b c
+			for d in $c; do
+				echo -n " $i.$d"
+			done
+		}
+	done
+}
+
 detects(){
 	local i a b c d
 	_unmodule .
@@ -1411,6 +1431,8 @@ detects(){
 		(cd "${TMPDIR}"/overlay-rd/etc/modflags && cat $(grep "${PNP_VENDOR}^flags" /proc/cpuinfo) $(cat /sys/bus/acpi/devices/*/path|sed -e 's:^\\::') </dev/null 2>/dev/null)
 	}|modalias_reconf m2y 1
 	(cd "${TMPDIR}"/overlay-rd/etc/modflags && cat $(cat "${TMPDIR}/unmodule.m2y") </dev/null 2>/dev/null)|modalias_reconf m2y
+
+	_cmdline "`modprobe_opt`"
 
 	use external-firmware || return
 	# enabling firmware fallback only ondemand by security reason
