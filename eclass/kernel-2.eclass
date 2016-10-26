@@ -617,18 +617,11 @@ _cfg_use_(){
 _cmdline(){
 	: ${KERNEL_CONFIG_CMDLINE:='""'}
 	local i="$KERNEL_CONFIG_CMDLINE"
-	echo "cmdline $*" >&2
-	for i in "'" '"'; do
-		[ "${KERNEL_CONFIG_CMDLINE%$i}" != "$KERNEL_CONFIG_CMDLINE" ] && {
-			KERNEL_CONFIG_CMDLINE="${KERNEL_CONFIG_CMDLINE%$i} $*$i"
-			export KERNEL_CONFIG_CMDLINE
-			i="KERNEL_CONFIG_CMDLINE=$KERNEL_CONFIG_CMDLINE"
-			cfg_ "$i"
-			echo "$i"
-			return
-		}
+	einfo "cmdline $*"
+	for i in '"' "'"; do
+		[ "${KERNEL_CONFIG_CMDLINE%$i}" != "$KERNEL_CONFIG_CMDLINE" ] && KERNEL_CONFIG_CMDLINE="${KERNEL_CONFIG_CMDLINE%$i} $*$i" && return
 	done
-	echo "error while appending '$*' to KERNEL_CONFIG_CMDLINE" >&2
+	eerror "error while appending '$*' to KERNEL_CONFIG_CMDLINE"
 }
 
 cfg_loop(){
