@@ -618,7 +618,7 @@ _cmdline(){
 	echo "cmdline $*" >&2
 	for i in "'" '"'; do
 		[ "${KERNEL_CONFIG_CMDLINE%$i}" != "$KERNEL_CONFIG_CMDLINE" ] && {
-			KERNEL_CONFIG_CMDLINE="${KERNEL_CONFIG_CMDLINE%$i} $* $i"
+			KERNEL_CONFIG_CMDLINE="${KERNEL_CONFIG_CMDLINE%$i} $*$i"
 			export KERNEL_CONFIG_CMDLINE
 			i="KERNEL_CONFIG_CMDLINE=$KERNEL_CONFIG_CMDLINE"
 			cfg_ "$i"
@@ -1407,15 +1407,13 @@ modalias_reconf(){
 }
 
 modprobe_opt(){
-#	for i in `sort -u "${TMPDIR}/unmodule.m2y"`; do
-	# just cmdline all options
-	for i in '[^ 	]*' ;do
-		grep -h "^[ 	]*options[ 	]*$i[ 	]*" "$ROOT"/etc/modprobe.d/*.conf|{
+	for i in "${@}" ;do
+		grep -h "^[ 	]*options[ 	]*$i[ 	]*" "$ROOT"/etc/modprobe.d/*.conf| while read a b c; do
 			read a b c
 			for d in $c; do
 				echo -n " $b.$d"
 			done
-		}
+		done
 	done
 }
 
@@ -1441,7 +1439,9 @@ detects(){
 	}|modalias_reconf m2y 1
 	(cd "${TMPDIR}"/overlay-rd/etc/modflags && cat $(cat "${TMPDIR}/unmodule.m2y") </dev/null 2>/dev/null)|modalias_reconf m2y
 
-	_cmdline "`modprobe_opt`"
+#	_cmdline "$(modprobe_opt `sort -u "${TMPDIR}/unmodule.m2y"`)"
+	# just cmdline all options
+	_cmdline "`modprobe_opt '[^ 	]*'`"
 
 	use external-firmware || return
 	# enabling firmware fallback only ondemand by security reason
