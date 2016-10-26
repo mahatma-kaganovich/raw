@@ -1409,7 +1409,6 @@ modalias_reconf(){
 modprobe_opt(){
 	for i in "${@}" ;do
 		grep -h "^[ 	]*options[ 	]*$i[ 	]*" "$ROOT"/etc/modprobe.d/*.conf| while read a b c; do
-			read a b c
 			for d in $c; do
 				echo -n " $b.$d"
 			done
