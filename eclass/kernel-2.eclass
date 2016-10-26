@@ -300,6 +300,7 @@ kernel-2_src_compile() {
 			cp .config .config.stage1
 			cfg_ "###detect: $(detects)"
 #			use external-firmware && ext_firmware "$ROOT/lib" . "$WORKDIR/external-firmware"
+			_cmdline "`modprobe_opt ''`"
 			kconfig
 			i="${KERNEL_CLEANUP:-arch/$(arch) drivers/dma}"
 			einfo "Applying KERNEL_CLEANUP='$i'"
@@ -1438,10 +1439,6 @@ detects(){
 		(cd "${TMPDIR}"/overlay-rd/etc/modflags && cat $(grep "${PNP_VENDOR}^flags" /proc/cpuinfo) $(cat /sys/bus/acpi/devices/*/path|sed -e 's:^\\::') </dev/null 2>/dev/null)
 	}|modalias_reconf m2y 1
 	(cd "${TMPDIR}"/overlay-rd/etc/modflags && cat $(cat "${TMPDIR}/unmodule.m2y") </dev/null 2>/dev/null)|modalias_reconf m2y
-
-#	_cmdline "$(modprobe_opt `sort -u "${TMPDIR}/unmodule.m2y"`)"
-	# just cmdline all options
-	_cmdline "`modprobe_opt '[^ 	]*'`"
 
 	use external-firmware || return
 	# enabling firmware fallback only ondemand by security reason
