@@ -614,6 +614,7 @@ _cfg_use_(){
 }
 
 _cmdline(){
+	: ${KERNEL_CONFIG_CMDLINE:='""'}
 	local i="$KERNEL_CONFIG_CMDLINE"
 	echo "cmdline $*" >&2
 	for i in "'" '"'; do
