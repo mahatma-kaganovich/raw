@@ -19,4 +19,4 @@ net-wireless/bluez test-programs extra-tools experimental python_single_target_p
 dev-python/pycairo python_targets_python3_5
 dev-python/pygobject python_targets_python3_5
 dev-python/dbus-python python_targets_python3_5
-
+net-fs/samba -addc
