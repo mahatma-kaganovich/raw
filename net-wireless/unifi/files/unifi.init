@@ -1,6 +1,6 @@
 #!/sbin/openrc-run
 
-PID="/var/unifi.pid"
+PID="/run/unifi.pid"
 UNIFI_PATH="/opt/UniFi"
 PARAM='-server -jar lib/ace.jar'
 java=java
