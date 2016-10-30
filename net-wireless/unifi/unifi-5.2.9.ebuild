@@ -15,7 +15,7 @@ RDEPEND="dev-db/mongodb virtual/jdk:1.8"
 src_unpack() {
 	default_src_unpack
 	cd "${WORKDIR}" || die
-	if [[ "$SRC_URI" == *deb ]]; then
+	if [[ "${SRC_URI}" == *deb ]]; then
 		unpack ./data.tar.gz && mv usr/lib/unifi "${S}" || die
 	else
 		mv UniFi "${S}" || die
@@ -24,7 +24,10 @@ src_unpack() {
 
 src_install(){
 	dodir /opt
-	mv "${S}" "${D}/opt/UniFi" || die
-	[ -e "${D}/opt/${PN}"/bin/mongo ] || dosym /usr/bin/mongo /opt/"${PN}"/bin/mongo
-	newinitd "${FILESDIR}/${PN}.init" "${PN}"
+	mv "${S}" "${D}"/opt/UniFi || die
+	rm "${D}"/opt/UniFi/bin/mongo
+	dodir /etc/unifi/bin
+	ins "${FILESDIR}"/mongo.sh /etc/unifi/bin/mongo.sh
+	dosym /etc/unifi/bin/mongod.sh /opt/UniFi/bin/mongo
+	newinitd "${FILESDIR}/${PN}".init "${PN}"
 }

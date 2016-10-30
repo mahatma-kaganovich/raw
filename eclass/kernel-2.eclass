@@ -615,13 +615,12 @@ _cfg_use_(){
 }
 
 _cmdline(){
-	: ${KERNEL_CONFIG_CMDLINE:='""'}
 	local i="$KERNEL_CONFIG_CMDLINE"
 	einfo "cmdline $*"
-	for i in '"' "'"; do
+	for i in '"' "'"; do # 2be removed, old def.config compat
 		[ "${KERNEL_CONFIG_CMDLINE%$i}" != "$KERNEL_CONFIG_CMDLINE" ] && KERNEL_CONFIG_CMDLINE="${KERNEL_CONFIG_CMDLINE%$i} $*$i" && return
 	done
-	eerror "error while appending '$*' to KERNEL_CONFIG_CMDLINE"
+	KERNEL_CONFIG_CMDLINE+="${KERNEL_CONFIG_CMDLINE:+ } $*"
 }
 
 cfg_loop(){
