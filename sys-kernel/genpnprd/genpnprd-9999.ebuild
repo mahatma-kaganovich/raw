@@ -22,7 +22,7 @@ src_install(){
 	dosym _SB_.PCCH "/usr/share/$PN/etc/modflags/"'\_SB_.PCCH'
 }
 
-pkg_postinst(){
-	local c="${FILESDIR}"/../../../eclass/kernel-2.eclass
-	[[ -e "$c" ]] && touch "$c"
-}
+#pkg_postinst(){
+#	local c="${FILESDIR}"/../../../eclass/kernel-2.eclass
+#	[[ -e "$c" ]] && touch "$c"
+#}
