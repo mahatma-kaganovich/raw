@@ -544,6 +544,12 @@ to_overlay(){
 	bash "${SHARE}/genpkgrd" "${i}" "${KERNEL_IMAGE_FILES}" "${KERNEL_IMAGE_FILES2}" "${KERNEL_IMAGE_PACKAGES}"
 }
 
+unmcode(){
+	# temporary workaround against cosher appended early microcode. until I cannot split concatenated cpios
+	# single-cpio works too [on intel], but probably unsafe on too broken cpus
+	sed -i -e "s:^CONFIG_MICROCODE=$1:CONFIG_MICROCODE=$2:" "$S"/.config
+}
+
 run_genkernel(){
 	[[ ! -e "${TMPDIR}/genkernel-cache" ]] && cp "${UROOT}/var/cache/genkernel" "${TMPDIR}/genkernel-cache" -r
 	if use netboot; then
@@ -564,6 +570,7 @@ run_genkernel(){
 	ls "$UROOT/usr/share/genkernel/arch/$a/*busy*" >/dev/null 2>&1 || opt+=" --busybox-config=${TMPDIR}/busy-config"
 	# e2fsprogs & mdraid need more crosscompile info
 	ac_cv_target="${CTARGET:-${CHOST}}" ac_cv_build="${CBUILD}" ac_cv_host="${CHOST:-${CTARGET}}" CC="$(tc-getCC)" LD="$(tc-getLD)" CXX="$(tc-getCXX)" CPP="$(tc-getCPP)" AS="$(tc-getAS)" \
+	unmcode y n
 	CFLAGS="${KERNEL_UTILS_CFLAGS}" LDFLAGS="${KERNEL_GENKERNEL_LDFLAGS}" "${S}/genkernel" $opt\
 		--config=/etc/kernels/genkernel.conf \
 		--cachedir="${TMPDIR}/genkernel-cache" \
@@ -572,7 +579,11 @@ run_genkernel(){
 		--arch-override=${a} \
 		--compress-initramfs-type=bzip2 \
 		--utils-arch=${a} --utils-cross-compile=${CTARGET:-${CHOST}}- \
-		$* ${KERNEL_GENKERNEL} || die "genkernel failed"
+		$* ${KERNEL_GENKERNEL} || {
+			unmcode n y
+			die "genkernel failed"
+	}
+	unmcode n y
 	rm "${S}/genkernel"
 }
 
