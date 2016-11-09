@@ -172,7 +172,8 @@ cd "$rcdir" || die
 
 rcfile="$(readlink -f $IMAGE)"
 if [[ -f "$rcfile" ]]; then
-	( (bzip2 -dc $rcfile || gzip -dc $rcfile || xz -dc $rcfile || lzop -dc $rcfile || cat $rcfile) | cpio -iv 2>&1 | grep '^bin/busybox$' >/dev/null ) || die "must be [gzipped] cpio file"
+	( (bzip2 -dc $rcfile || gzip -dc $rcfile || xz -dc $rcfile || lzop -dc $rcfile || cat $rcfile) | cpio -iv 2>&1 | grep '^bin/busybox$' >tmp.lst ) || die "must be [gzipped] cpio file"
+	rm tmp.lst
 	ln -s busybox "$rcdir/bin/zcat" &>/dev/null
 	if [[ -n "$OVERLAY" ]]; then
 		if $LIBLOOP; then
