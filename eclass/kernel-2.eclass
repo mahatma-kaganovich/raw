@@ -650,10 +650,14 @@ cfg_loop(){
 			fi
 		fi
 	done
-	$l && {
-		ewarn "Config deadloop! Details in: $(echo .config.loop.*.diff)."
-		ewarn "Dub options: $(grep -o "CONFIG_[^ =]*" .config.loop.*.diff|sort -u)"
-	}
+	$l &&	if [ -z "$cfgloop" ]; then
+			cfgloop=" `echo $(grep -o "CONFIG_[^ =]*" .config.loop.*.diff|sort -u|sed -e 's:^CONFIG_::' -e 's:$:=m:')`"
+			export KERNEL_CONFIG="$KERNEL_CONFIG #loop:$cfgloop"
+			ne=true
+		else
+			ewarn "Config deadloop! Details in: $(echo .config.loop.*.diff)."
+			ewarn "Dub options: $(grep -o "CONFIG_[^ =]*" .config.loop.*.diff|sort -u)"
+		fi
 	$ne || rm -f $rm $k
 	$ne
 }
@@ -1129,7 +1133,7 @@ kconfig(){
 	}
 	[[ -e .config ]] || kmake defconfig >/dev/null
 	export ${!KERNEL_@}
-	local i=1
+	local i=1 cfgloop=''
 	while cfg_loop $[i++]; do
 		local ok=false o a
 		for o in '' '-relax'; do
