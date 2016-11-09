@@ -122,6 +122,7 @@ OVERLAY=""
 S=""
 KV=""
 
+echo "Run: $0 $*"
 i=0
 while [[ -n "$*" ]]; do
 	case "$1" in
