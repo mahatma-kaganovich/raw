@@ -272,6 +272,10 @@ pnp_options(){
 	for i in $(ls -1 "$d"); do
 		m="${i%%.*}"
 		[[ -z "$m" ]] && continue
+		[[ -e "$d/$m.!" ]] && [[ ! -s "$d/$m.!" ]] && {
+			[[ "$i" == "$m.!" ]] && cmd_noload="$cmd_noload $m"
+			continue
+		}
 		i="$(cat "$d/$i")"
 		[[ -z "$i" ]] && MDOLIST="$MDOLIST $m"
 		[[ "$v" == "$m" ]] && {
@@ -285,7 +289,7 @@ pnp_options(){
 	[[ -n "$v" ]] && p="$p';;"
 	rm "$d" -Rf
 	$cmd_nofb && p="*/fb.ko|*/drm_kms_helper.ko)INSMOD=continue;;$p"
-	[[ -n "$cmd_noload" ]] && p="*/$(echo "$cmd_noload"|sed -e 's/,/.ko|*\//g').ko)INSMOD=continue;;$p"
+	[[ -n "$cmd_noload" ]] && p="*/$(echo "${cmd_noload# }"|sed -e 's/,/.ko|*\//g').ko)INSMOD=continue;;$p"
 	echo "modparam(){
 INSMOD=
 case \"\$1\" in

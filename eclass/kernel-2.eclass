@@ -1375,12 +1375,14 @@ echo "${aflags# }"
 
 module_reconf(){
 	local i c
-	sed -e 's:^.*/::g' -e 's:\.ko$::g'|sort -u|while read i; do
+	sed -e 's:^.*/::g' -e 's:\.ko$::g'|sort -u >"${TMPDIR}/unmodule1.tmp"
+	grep -sqFxf "${TMPDIR}/unmodule1.tmp" "${TMPDIR}/unmodule.black" && return
+	while read i; do
 		grep -Rh "^\s*obj\-\$[(]CONFIG_.*\s*\+=.*\s${i//[_-]/[_-]}\.o" "${TMPDIR}"/unmodule.tmp|sed -e 's:).*$::g' -e 's:^.*(CONFIG_::'|sort -u|while read c; do
 			$1 "$c"
 			echo "$i" >>"${TMPDIR}/unmodule.$1"
 		done
-	done
+	done <"${TMPDIR}/unmodule1.tmp"
 	echo ''
 }
 
@@ -1415,13 +1417,26 @@ modalias_reconf(){
 	done|module_reconf "${@}"
 }
 
+modprobe_d(){
+	grep -h "^[ 	]*$1[ 	]*$2\([ 	]\|\$\)" "$ROOT"/etc/modprobe.d/*.conf|sed -e "s:^[ 	]*$1[ 	]*::"
+}
+
 modprobe_opt(){
+	local i m p
 	for i in "${@}" ;do
-		grep -h "^[ 	]*options[ 	]*$i[ 	]*" "$ROOT"/etc/modprobe.d/*.conf| while read a b c; do
-			for d in $c; do
-				echo -n " $b.$d"
+		modprobe_d options "$i"|while read m p; do
+			for p in $p; do
+				echo -n " $m.$p"
 			done
 		done
+		modprobe_d blacklist "$i"|while read m; do
+			echo "$m" >>"${TMPDIR}/unmodule.black"
+			echo -n " $m.!"
+		done
+		modprobe_d alias "$i"|while read i m; do
+			echo "$m" >>"${TMPDIR}/overlay-rd/etc/modflags/$i"
+		done
+#		modprobe_d install "$i" >>"${TMPDIR}/unmodule.install"
 	done
 }
 
