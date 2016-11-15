@@ -672,8 +672,8 @@ useconfig(){
 	local cfg_exclude=" HAVE_DMA_API_DEBUG "
 	local cfg_exclude=
 	use lzo && COMP+=' LZO'
+	use lzma && COMP+=' LZMA'
 	use lz4 && COMP+=' LZ4'
-	use lzma && COMP+=' LZMA XZ'
 	use xz && COMP+=' XZ'
 	for i in $COMP; do
 		o="$i $o"
