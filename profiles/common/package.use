@@ -32,7 +32,8 @@ app-admin/testdisk ntfs reiserfs
 sci-libs/hdf5 -threads
 sci-libs/vtk rendering all-modules python xdmf2
 net-misc/tightvnc server
-net-misc/tigervnc server
+# tightvnc dropped, xorgmodule depends xorg-server version
+net-misc/tigervnc server -xorgmodule
 dev-db/sqlite -tools
 # prefer jemalloc (faster), but if no choice:
 dev-libs/leveldb -tcmalloc
