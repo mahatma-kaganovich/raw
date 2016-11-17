@@ -1,0 +1,1 @@
+sed -i -e 's:^#include <sys/types\.h>:#include <sys/sysmacros\.h>\n#include <sys/types\.h>:' `grep -lR "^#include <sys/types\.h>" "$S"`
