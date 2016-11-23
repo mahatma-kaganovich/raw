@@ -1,3 +1,0 @@
-for i in sys/types libudev; do
-	sed -i -e "s:^#include <$i\\.h>:#include <sys/sysmacros.h>\n#include <$i.h>:" `grep -lR "^#include <$i\\.h>" "$S"`
-done
