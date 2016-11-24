@@ -91,8 +91,7 @@ for i in $flags; do
 	;;
 	esac
 done
-f3+=" -mfpmath=$fp";;
-
+f3+=" -mfpmath=$fp"
 $lm && f1+=" 64-bit-bfd" || f1+=" -64-bit-bfd"
 f3=`_f $f3`
 f1="${f1# }"
