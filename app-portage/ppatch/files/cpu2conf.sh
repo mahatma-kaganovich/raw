@@ -52,7 +52,7 @@ _smp(){
 }
 
 conf_cpu(){
-local flags cpucaps f0= f1= f2= f3= i j i1 j1 c c0 c1 lm=false fp=i387
+local flags cpucaps f0= f1= f2= f3= i j i1 j1 c c0 c1 lm=false fp=387
 flags=$(_flags flags)
 cpucaps=$(_flags cpucaps)
 f0=`_f -m{tune,cpu,arch}=native`
