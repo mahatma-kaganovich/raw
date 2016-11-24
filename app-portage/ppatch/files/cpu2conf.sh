@@ -2,6 +2,9 @@
 
 # openmp: experimental for system-wide
 omp=false
+preferred_fp=sse
+## doubts: called "unstable performance" vs "double registers"
+#preferred_fp=both
 
 export LANG=C
 
@@ -48,7 +51,7 @@ _smp(){
 }
 
 conf_cpu(){
-local flags cpucaps f0= f1= f2= f3= i j i1 j1 c c0 c1 lm=false
+local flags cpucaps f0= f1= f2= f3= i j i1 j1 c c0 c1 lm=false fp=i387
 flags=$(_flags flags)
 cpucaps=$(_flags cpucaps)
 f0=`_f -m{tune,cpu,arch}=native`
@@ -75,7 +78,7 @@ for i in $flags; do
 	i1="$i"
 	case "$i" in
 	sse|3dnowext)f1+=" $i mmxext";;&
-	sse)[ "`_flags fpu`" = yes ] && f3+=' -mfpmath=both' || f3+=' -mfpmath=sse';;
+	sse)[ "`_flags fpu`" = yes ] && fp=$preferred_fp || fp=sse;;
 	pni)f1+=' sse3';;
 	lm)lm=true;f3+=' -fira-loop-pressure';;
 	*)
@@ -87,6 +90,8 @@ for i in $flags; do
 	;;
 	esac
 done
+f3+=" -mfpmath=$fp";;
+
 $lm && f1+=" 64-bit-bfd" || f1+=" -64-bit-bfd"
 f3=`_f $f3`
 f1="${f1# }"
