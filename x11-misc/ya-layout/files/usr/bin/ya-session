@@ -92,7 +92,7 @@ _xrandr(){
 local xy
 xy=`echo $(xrandr $2 --current 2>/dev/null|grep -o ' current [0-9]* x [0-9]*\| connected [0-9x+]*'|sed -e 's: \|current\|connected::g')`
 [[ "$xy" == *[0-9]x[0-9]* ]] || return 1
-$disconnected || [[ "$xy" == *' '* ]] || return 1
+$disconnected || [[ "$xy" == *' '* ]] || ! (xrandr $2 --current 2>/dev/null|grep -q disconnected) || return 1
 DSPS+="$1 "
 echo "$xy" >"$cache/menu.xml.$1.key1"
 }
@@ -100,7 +100,6 @@ echo "$xy" >"$cache/menu.xml.$1.key1"
 displays(){
 	[ -n "$DSPS" ] && return
 	rm -f "$cache/menu.xml."$DSP1".*.key1"
-	local i
 	if [ "$DSP0" != "$DSP" ]; then
 		local i
 		for i in $(seq 0 9); do
