@@ -272,11 +272,8 @@ pnp_options(){
 	for i in $(ls -1 "$d"); do
 		m="${i%%.*}"
 		[[ -z "$m" ]] && continue
-		[[ -e "$d/$m.!" ]] && [[ ! -s "$d/$m.!" ]] && {
-			[[ "$i" == "$m.!" ]] && cmd_noload="$cmd_noload $m"
-			continue
-		}
-		i="$(cat "$d/$i")"
+		i="$(cat "$d/$i")" || continue
+		[[ "$i" == '!' ]] && cmd_noload="$cmd_noload $m" && continue
 		[[ -z "$i" ]] && MDOLIST="$MDOLIST $m"
 		[[ "$v" == "$m" ]] && {
 			p="$p $i"
