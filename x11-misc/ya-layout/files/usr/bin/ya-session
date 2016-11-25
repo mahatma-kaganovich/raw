@@ -27,6 +27,7 @@ DSP2=
 DSP3=
 ENV="$cache/environment.$DSP"
 DSPS=
+disconnected=false
 
 #xinerama='--xinerama-index 0'
 xinerama='--no-xinerama' # pan
@@ -90,7 +91,8 @@ _exit(){
 _xrandr(){
 local xy
 xy=`echo $(xrandr $2 --current 2>/dev/null|grep -o ' current [0-9]* x [0-9]*\| connected [0-9x+]*'|sed -e 's: \|current\|connected::g')`
-[[ "$xy" == *' '* ]] || return 1
+[[ "$xy" == *[0-9]x[0-9]* ]] || return 1
+$disconnected || [[ "$xy" == *' '* ]] || return 1
 DSPS+="$1 "
 echo "$xy" >"$cache/menu.xml.$1.key1"
 }
@@ -98,6 +100,7 @@ echo "$xy" >"$cache/menu.xml.$1.key1"
 displays(){
 	[ -n "$DSPS" ] && return
 	rm -f "$cache/menu.xml."$DSP1".*.key1"
+	local i
 	if [ "$DSP0" != "$DSP" ]; then
 		local i
 		for i in $(seq 0 9); do
@@ -106,7 +109,13 @@ displays(){
 	else
 		_xrandr "$DSP"
 	fi
-	[ -z "$DSPS" ] && DSPS="$DSP "
+	[ -z "$DSPS" ] && if $disconnected; then
+		DSPS="$DSP "
+	else
+		disconnected=true
+		displays
+		return
+	fi
 	dsp0="${DSPS%% *}"
 	dsps1="${DSPS#* }"
 }
@@ -585,6 +594,11 @@ case "$1" in
 	done
 	break
 ;;
+-f|--disconnected)
+	shift
+	disconnected=true
+	continue
+;;
 --obsession)
 	shift
 	envir openbox
@@ -642,7 +656,8 @@ case "$1" in
 	i="${i#,}"
 	echo "Usage: ya-session [command]
 Commands: -noop, --ya, -p|--profile <profile>, --exit, --0, --obsession, --open,
-	--layout [user], --run <cmd>, --runs 'cmd1' ['cmd2'...]
+	--layout [user], --run <cmd>, --runs 'cmd1' ['cmd2'...],
+	-f|--disconnected
 .xinitrc examples:
 	minimal: exec ya-session'
 	openbox-style: exec ya-session --open --obsession
