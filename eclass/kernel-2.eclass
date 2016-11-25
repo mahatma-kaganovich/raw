@@ -651,7 +651,7 @@ cfg_loop(){
 		fi
 	done
 	$l &&	if [ -z "$cfgloop" ]; then
-			cfgloop=" `echo $(grep -o "CONFIG_[^ =]*" .config.loop.*.diff|sort -u|sed -e 's:^CONFIG_::' -e 's:$:=m:')`"
+			cfgloop=" `echo $(grep -oh "CONFIG_[^ =]*" .config.loop.*.diff|sort -u|sed -e 's:^CONFIG_::' -e 's:$:=m:')`"
 			export KERNEL_CONFIG="$KERNEL_CONFIG #loop:$cfgloop"
 			ne=true
 		else
