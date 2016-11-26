@@ -89,12 +89,15 @@ _exit(){
 }
 
 _xrandr(){
-local xy
-xy=`echo $(xrandr $2 --current 2>/dev/null|grep -o ' current [0-9]* x [0-9]*\| connected [0-9x+]*'|sed -e 's: \|current\|connected::g')`
-[[ "$xy" == *[0-9]x[0-9]* ]] || return 1
-$disconnected || [[ "$xy" == *' '* ]] || ! (xrandr $2 --current 2>/dev/null|grep -q disconnected) || return 1
+local x y
+y="`DISPLAY="$1" xrandr $2 --query --current 2>/dev/null`" || return 1
+y=`echo $(echo "$y"|grep -o ' current [0-9]* x [0-9]*\| connected [0-9x+]*\| disconnected'|sed -e 's: \|current\|connected::g')`
+$disconnected || [[ "$xy" == [0-9]*[0-9]x[0-9]* ]] || return 1
+x="${y// dis}"
+# skip "disconnected" and not "connected"
+$disconnected || [ "$x" = "$y" ] || [[ "$x" == *' '* ]] || return 1
 DSPS+="$1 "
-echo "$xy" >"$cache/menu.xml.$1.key1"
+echo "$x" >"$cache/menu.xml.$1.key1"
 }
 
 displays(){
