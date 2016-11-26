@@ -89,15 +89,33 @@ _exit(){
 }
 
 _xrandr(){
-local x y
-y="`DISPLAY="$1" xrandr $2 --query --current 2>/dev/null`" || return 1
-y=`echo $(echo "$y"|grep -o ' current [0-9]* x [0-9]*\| connected [0-9x+]*\| disconnected'|sed -e 's: \|current\|connected::g')`
-$disconnected || [[ "$xy" == [0-9]*[0-9]x[0-9]* ]] || return 1
-x="${y// dis}"
-# skip "disconnected" and not "connected"
-$disconnected || [ "$x" = "$y" ] || [[ "$x" == *' '* ]] || return 1
-DSPS+="$1 "
-echo "$x" >"$cache/menu.xml.$1.key1"
+local x y m
+# first try --current fast, next strange or forced - rescan
+for m in '--query --current' ''; do
+	$disconnected && {
+		[ -z "$m" ] && return 1
+		m=
+	}
+	y="`DISPLAY="$1" xrandr $2 $m 2>/dev/null`" || return 1
+	y=`echo $(echo "$y"|grep -o ' current [0-9]* x [0-9]*\| connected [0-9x+]*\| disconnected'|sed -e 's: \|current\|connected::g')`
+	[[ "$y" == [0-9]*[0-9]x[0-9] ]] || {
+		# no resolution
+		[ -n "$m" ] && continue
+		$disconnected || return 1
+	}
+	x="${y// dis}"
+	if [[ "$y" == *' '* ]]; then
+		# normal diagnostic
+		$disconnected || [[ "$x" == *' '* ]] || return 1
+	else
+		# no connector diagnostic, rescan & force ON
+		[ -n "$m" ] && continue
+	fi
+	DSPS+="$1 "
+	echo "$x" >"$cache/menu.xml.$1.key1"
+	return 0
+done
+return 1
 }
 
 displays(){
