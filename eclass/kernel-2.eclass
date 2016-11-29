@@ -762,8 +762,7 @@ pre_embed(){
 	# virtio: speedup build & smart embedding
 	local ata='' vblk='' scsi='' vscsi='' e='+' qemu='' cc='' usb=false iuse=" $IUSE "
 	use embed-hardware && e='&'
-	for i in `find /sys -mount -name modalias`; do
-		read s <"$i" || continue
+	while read s; do
 		case "$s" in
 		virtio:*d*v00001AF4): ${qemu:=true};;
 		virtio:*d*v*)echo "virtio non-qemu device $s";qemu=false;;
@@ -801,7 +800,7 @@ pre_embed(){
 #		*v00001AF4*)echo "unknown possible qemu device $s";;
 		virtio:*)echo "virtio unknown device $s";;
 		esac
-	done
+	done <"${TMPDIR}/sys-modalias"
 	if ${qemu:-false}; then
 		export VIRT=$[VIRT+1]
 		use xen && [[ " $CF " != *' -XEN '* ]] && continue # xen have virtio too + unknown 2me others
@@ -1310,6 +1309,12 @@ kernel-2_pkg_setup() {
 	# once apon a time portage starts to check RO before pkg_prerm
 	_umount
 	_saved_pkg_setup
+	# hardened protected
+	{
+		cat `find /sys -mount -name modalias`
+		grep -sh "^MODALIAS=" $(find /sys -mount -name uevent)|sed -e 's:^MODALIAS=::'
+	} >"${TMPDIR}/sys-modalias"
+
 }
 
 kernel-2_pkg_preinst() {
@@ -1449,8 +1454,7 @@ detects(){
 	sort -u "${WORKDIR}"/modules.pnp0 "${SHARE}"/etc/modflags/* >>"${WORKDIR}"/modules.pnp0_
 	{
 		# /sys
-		cat `find /sys -mount -name modalias`
-		grep -sh "^MODALIAS=" $(find /sys -mount -name uevent)|sed -e 's:^MODALIAS=::'
+		cat "${TMPDIR}/sys-modalias"
 		# rootfs
 		while read a b c d; do
 			[[ "$b" == / ]] && [[ "$c" != rootfs ]] && echo "$c" && {
