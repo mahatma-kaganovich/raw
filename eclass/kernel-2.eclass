@@ -1332,10 +1332,8 @@ kernel-2_pkg_preinst() {
 		! grep -q "^[^ ]* $i " /proc/mounts && mount $i && mount_boot=true
 		if grep "^CONFIG_EFI=y" "${D}"/boot/config* && grep "^[^ ]* $i vfat " /proc/mounts; then
 			einfo "$i mounted to vfat, renaming without symlinks and EFI-compatible"
-			for i in "${D}"/boot/*; do
-				[ -L "$i" ] && rm -f "$i"
-			done
-			rename -- "-${REAL_KV}" "-${SLOT}.efi" "${D}"/boot/*
+			find "${D}"/boot -type l -delete
+			rename -- "-${REAL_KV}" "-${SLOT}.efi" "${D}"/boot/{vmlinuz,initrd}*
 		fi
 	fi
 }
