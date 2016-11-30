@@ -1318,6 +1318,7 @@ kernel-2_pkg_setup() {
 }
 
 kernel-2_pkg_preinst() {
+	local i p l r r1
 	_saved_pkg_preinst
 	_umount
 	[[ ${ETYPE} == sources ]] &&  use build-kernel || return
@@ -1330,10 +1331,34 @@ kernel-2_pkg_preinst() {
 		i="${ROOT}/boot"
 		i="${i//\/\///}"
 		! grep -q "^[^ ]* $i " /proc/mounts && mount $i && mount_boot=true
-		if grep "^CONFIG_EFI=y" "${D}"/boot/config* && grep "^[^ ]* $i vfat " /proc/mounts; then
-			einfo "$i mounted to vfat, renaming without symlinks and EFI-compatible"
+		if p=`grep "^[^ ]* $i vfat " /proc/mounts`; then
+			p="${p%% *}"
+			einfo "$i mounted to vfat, removing symlinks"
 			find "${D}"/boot -type l -delete
-			rename -- "-${REAL_KV}" "-${SLOT}.efi" "${D}"/boot/{vmlinuz,initrd}*
+			if grep "^CONFIG_EFI_STUB=y" "${D}"/boot/config*; then
+				einfo "Renaming EFI-compatible"
+				rename -- "-${REAL_KV}" "-${SLOT}.efi" "${D}"/boot/{vmlinuz,initrd}*
+				# just help
+				l="vmlinuz-${SLOT}.efi"
+				r="initrd-${SLOT}.efi.img"
+				[ -e "$D/boot/r" ] && r=" initrd=/$r" || {
+					use integrated || return
+					r=
+				}
+				i=`grep "/dev/[^ ]* / " /proc/mounts`
+				i="${i%% *}"
+				r="real_root=$i$r"
+				i="${p#/dev/???}"
+				if [ "$i" != "$p" -a -n "$i" -a -e "$l" -a -n "$r" ]; then
+					einfo "To add this kernel  directly to EFI boot options, run command(s):"
+					einfo " # efibootmgr -c -d "${p%$i}" -p $i -l $l -L vmlinuz-${SLOT} -u '$r'"
+					use embed-hardware && use !integrated && {
+						r="${r#real_}"
+						r="${r%% *}"
+						einfo " # efibootmgr -c -d "${p%$i}" -p $i -l $l -L vmlinuz-${SLOT}-nord -u '$r'"
+					}
+				fi
+			fi
 		fi
 	fi
 }
