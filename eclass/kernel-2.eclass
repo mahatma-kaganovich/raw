@@ -1335,7 +1335,7 @@ kernel-2_pkg_preinst() {
 			for i in "${D}"/boot/*; do
 				[ -L "$i" ] && rm -f "$i"
 			done
-			rename "-${REAL_KV}" "-${SLOT}.efi" "${D}"/boot/*
+			rename -- "-${REAL_KV}" "-${SLOT}.efi" "${D}"/boot/*
 		fi
 	fi
 }
