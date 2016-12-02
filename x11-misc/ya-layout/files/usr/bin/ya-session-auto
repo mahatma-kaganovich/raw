@@ -1,0 +1,7 @@
+#!/bin/bash
+# starting from 1.19.0 default DISPLAY=:0.0 vs DISPLAY=:0,
+# so this will force aggressive Xserver displays occupation
+# and other voluntary things
+set -- -a "${@}"
+kbdd
+. ${0%-auto}

@@ -28,6 +28,7 @@ DSP3=
 ENV="$cache/environment.$DSP"
 DSPS=
 disconnected=false
+auto=false
 
 #xinerama='--xinerama-index 0'
 xinerama='--no-xinerama' # pan
@@ -121,7 +122,7 @@ return 1
 displays(){
 	[ -n "$DSPS" ] && return
 	rm -f "$cache/menu.xml."$DSP1".*.key1"
-	if [ "$DSP0" != "$DSP" ]; then
+	if [ "$DSP0" != "$DSP" ] || $auto || $disconnected; then
 		local i
 		for i in $(seq 0 9); do
 			_xrandr "$DSP1.$i" "--screen $i" || break
@@ -617,6 +618,11 @@ case "$1" in
 -f|--disconnected)
 	shift
 	disconnected=true
+	continue
+;;
+-a|--auto)
+	shift
+	auto=true
 	continue
 ;;
 --obsession)
