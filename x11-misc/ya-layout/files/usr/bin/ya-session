@@ -28,7 +28,6 @@ DSP3=
 ENV="$cache/environment.$DSP"
 DSPS=
 disconnected=false
-auto=false
 
 #xinerama='--xinerama-index 0'
 xinerama='--no-xinerama' # pan
@@ -122,7 +121,7 @@ return 1
 displays(){
 	[ -n "$DSPS" ] && return
 	rm -f "$cache/menu.xml."$DSP1".*.key1"
-	if [ "$DSP0" != "$DSP" ] || $auto || $disconnected; then
+	if [ "$DSP0" != "$DSP" ] || $disconnected; then
 		local i
 		for i in $(seq 0 9); do
 			_xrandr "$DSP1.$i" "--screen $i" || break
@@ -620,11 +619,6 @@ case "$1" in
 	disconnected=true
 	continue
 ;;
--a|--auto)
-	shift
-	auto=true
-	continue
-;;
 --obsession)
 	shift
 	envir openbox
@@ -739,6 +733,7 @@ _run_dsp(){
 	[ "$YA_STARTUP" = TINT2 ] && tint2chk
 	cat {/etc/X11,/etc/xdg/ya$suff,"$HOME"/.config/ya$suff}/Xresources "$HOME/.Xresources" 2>/dev/null  | xrdb -merge
 	xssaver
+	kbdd
 	[ -n "$desk" ] && i=`_1cfg "ya$suff/wallpaper{$DSP2,$DSP,${DSP%:*},${DSP%.*},}.*"` && case "$desk" in
 	*pcmanfm*)desk+=" -w $i";;
 	esac
