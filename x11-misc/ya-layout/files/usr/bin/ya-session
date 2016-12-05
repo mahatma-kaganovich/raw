@@ -98,7 +98,7 @@ for m in '--query --current' ''; do
 	}
 	y="`DISPLAY="$1" xrandr $2 $m 2>/dev/null`" || return 1
 	y=`echo $(echo "$y"|grep -o ' current [0-9]* x [0-9]*\| connected [0-9x+]*\| disconnected'|sed -e 's: \|current\|connected::g')`
-	[[ "$y" == [0-9]*[0-9]x[0-9] ]] || {
+	[[ "$y" == [0-9]*[0-9]x[0-9]* ]] || {
 		# no resolution
 		[ -n "$m" ] && continue
 		$disconnected || return 1
@@ -725,6 +725,7 @@ Launcher:
 		setxkbmap $i
 		[ "$DSP1" != :0 ] && setxkbmap $i -print|xkbcomp - $DISPLAY
 	}
+	setxkbmap -query|grep '^layout: .*,' && kbdd=true || kbdd=false
 	xprop -root -remove _NET_NUMBER_OF_DESKTOPS -remove _NET_DESKTOP_NAMES -remove _NET_CURRENT_DESKTOP
 	envir ya$suff
 	[ -s "$obconf" ] || obconfig "$obconf" $(_1cfg openbox/rc.xml)
@@ -733,7 +734,7 @@ _run_dsp(){
 	[ "$YA_STARTUP" = TINT2 ] && tint2chk
 	cat {/etc/X11,/etc/xdg/ya$suff,"$HOME"/.config/ya$suff}/Xresources "$HOME/.Xresources" 2>/dev/null  | xrdb -merge
 	xssaver
-	kbdd
+	$kbdd && kbdd
 	[ -n "$desk" ] && i=`_1cfg "ya$suff/wallpaper{$DSP2,$DSP,${DSP%:*},${DSP%.*},}.*"` && case "$desk" in
 	*pcmanfm*)desk+=" -w $i";;
 	esac
