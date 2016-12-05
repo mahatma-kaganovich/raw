@@ -1,0 +1,44 @@
+Reverse to https://github.com/qnikst/kbdd/commit/0b92da3dd9b39953c5d275c264f2041da59acfc7
+(eat 100% CPU)
+
+--- a/src/libkbdd.c	2016-11-06 22:42:20.000000000 +0300
++++ b/src/libkbdd.c	2016-12-05 16:39:30.908923533 +0300
+@@ -240,23 +240,21 @@ inline void
+ _kbdd_inner_iter(Display * display)
+ {
+     assert(display != NULL);
+-    while (XPending(display)) {
+-        XkbEvent ev;
+-        XNextEvent( display, &ev.core);
+-        if (ev.type == _kbdd._xkbEventType)
+-            _on_xkbEvent(ev);
+-        else {
+-            //        dbg("%u %u",FocusIn, ev.type);
+-            if ( _kbdd.supportEWMH ) {
+-                if ( handler_ewmh[ev.type] )
+-                    handler_ewmh[ev.type](&ev.core);
+-            } else
+-                if ( handler_generic[ev.type] ) {
+-                    handler_generic[ev.type](&ev.core);
+-                } else {
+-                    dbg("no handler for %u", ev.type);
+-                }
+-        }
++    XkbEvent ev;
++    XNextEvent( display, &ev.core);
++    if (ev.type == _kbdd._xkbEventType)
++        _on_xkbEvent(ev);
++    else {
++//        dbg("%u %u",FocusIn, ev.type);
++        if ( _kbdd.supportEWMH ) {
++            if ( handler_ewmh[ev.type] )
++                handler_ewmh[ev.type](&ev.core);
++        } else
++            if ( handler_generic[ev.type] ) {
++                handler_generic[ev.type](&ev.core);
++            } else {
++                dbg("no handler for %u", ev.type);
++            }
+     }
+ }
+ 
