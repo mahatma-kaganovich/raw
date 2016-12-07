@@ -78,10 +78,11 @@ esac
 for i in $flags; do
 	i1="$i"
 	case "$i" in
-	sse|3dnowext)f1+=" $i mmxext";;&
-	sse)[ "`_flags fpu`" = yes ] && fp=$preferred_fp || fp=sse;;
+	sse)[ "`_flags fpu`" = yes ] && fp=$preferred_fp || fp=sse;;&
 	pni)f1+=' sse3';;
 	lm)lm=true;f3+=' -fira-loop-pressure';;
+	sse|3dnowext)f1+=" $i mmxext";;
+	fma)f2+=" $i fma3";;
 	*)
 		if (grep "^$i1 " /usr/portage/profiles/use.desc ; grep "^[^ 	]*:$i " /usr/portage/profiles/use.local.desc)|grep -q 'CPU\|processor\|chip\|instruction'; then
 			f1+=" $i"
