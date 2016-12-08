@@ -1,5 +1,5 @@
 #!/bin/sh
-## pnp modules bootloader v0.16
+## pnp modules bootloader v0.17
 ## (c) Denis Kaganovich, under Anarchy license
 ## consume preprocessed /lib/modules/$KV/modules.alias
 
@@ -131,7 +131,7 @@ count(){
 
 mnt_loop(){
 	local i
-	if losetup $1 $2; then
+	if [ -b $1 ] && losetup $1 $2; then
 		for i in 0 1 1 1 1 1; do
 			mount -o ro,$cmd_loopflags $1 $3 2>/dev/null && return 0
 			sleep $i
@@ -141,7 +141,6 @@ mnt_loop(){
 		return 1
 	fi
 	mount -o loop,ro,$cmd_loopflags $2 $3
-	return $?
 }
 
 root_fsck_rw(){
@@ -156,7 +155,6 @@ root_fsck_rw(){
 
 upcase(){
 	echo "$*"|tr a-z A-Z
-	return $?
 }
 
 mod_unload(){
@@ -271,15 +269,14 @@ pnp_options(){
 	v=
 	for i in $(ls -1 "$d"); do
 		m="${i%%.*}"
-		[[ -z "$m" ]] && continue
-		i="$(cat "$d/$i")" || continue
-		[[ "$i" == '!' ]] && cmd_noload="$cmd_noload $m" && continue
-		[[ -z "$i" ]] && MDOLIST="$MDOLIST $m"
-		[[ "$v" == "$m" ]] && {
+		[ -n "$m" ] && i="$(cat "$d/$i")" || continue
+		[ "x$i" = 'x!' ] && cmd_noload="$cmd_noload $m" && continue
+		[ -z "$i" ] && MDOLIST="$MDOLIST $m"
+		[ "$v" = "$m" ] && {
 			p="$p $i"
 			continue
 		}
-		[[ -n "$v" ]] && p="$p';;"
+		[ -n "$v" ] && p="$p';;"
 		p="$p*/$m.ko)PARAM='$i"
 		v="$m"
 	done
@@ -864,7 +861,6 @@ etc_modalias(){
 loadsh(){
 	[[ "${SHLOADED##* $1 }" == "${SHLOADED}" ]] &&
 		[[ -e /etc/$1.sh ]] && . /etc/$1.sh && SHLOADED="$SHLOADED $1 "
-	return $?
 }
 
 mntnewroot(){
@@ -990,7 +986,7 @@ syspnp(){
 #	echo -ne "\033[0G\033[0K"
 	j=0
 	for i in /sys/module/*; do
-		let j=j+1
+		j=$((j+1))
 	done
 	echo "$j modules"
 

@@ -53,10 +53,7 @@ shift
 		[ $r -eq 0 ] && touch "$c$m" 2>/dev/null
 	} &
 	p="$p $!"
-	{ read i m i && read i m1 i;} </proc/meminfo && {
-		let i=m/m1
-		[ $i -lt 2 ] && continue
-	}
+	{ read i m i && read i m1 i;} </proc/meminfo && [ $((m/m1)) -lt 2 ] && continue
 	wait $p
 	p=
 	done
