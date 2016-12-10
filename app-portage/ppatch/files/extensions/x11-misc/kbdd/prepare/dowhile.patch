@@ -1,0 +1,20 @@
+--- a/src/libkbdd.c	2016-11-06 22:34:30.000000000 +0300
++++ b/src/libkbdd.c	2016-12-10 15:38:53.051627647 +0300
+@@ -250,7 +250,7 @@ inline void
+ _kbdd_inner_iter(Display * display)
+ {
+     assert(display != NULL);
+-    while (XPending(display)) {
++    do {
+         XkbEvent ev;
+         XNextEvent( display, &ev.core);
+         if (ev.type == _kbdd._xkbEventType)
+@@ -267,7 +267,7 @@ _kbdd_inner_iter(Display * display)
+                     dbg("no handler for %u", ev.type);
+                 }
+         }
+-    }
++    } while (XPending(display));
+ }
+ 
+ /*****************************************************************************
