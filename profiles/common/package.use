@@ -47,8 +47,6 @@ net-misc/openssh -hpn
 app-arch/gzip pic
 # REQUIRED_USE
 net-misc/openvpn -lzo
-app-accessibility/julius alsa
-app-editors/gedit -python
 app-i18n/ibus -python
 dev-libs/xmlsec -gnutls
 mail-mta/exim exiscan-acl -gnutls -pkcs11
