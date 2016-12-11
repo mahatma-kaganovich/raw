@@ -65,4 +65,14 @@ net-mail/popa3d -mbox
 net-misc/rancid -subversion
 net-misc/rancid-git -subversion -cvs
 net-p2p/eiskaltdcpp -cli
-
+media-gfx/nomacs opencv
+media-libs/sdl2-mixer mad
+media-libs/sdl-mixer mad
+net-misc/networkmanager -nss
+sci-geosciences/gpsd python
+sci-libs/cctbx openmp -threads
+sci-libs/mathgl openmp -threads
+sci-libs/silo silex qt4
+sci-libs/ViSP opencv
+sys-cluster/hpx -jemalloc
+x11-wm/xpra dec_av2
