@@ -45,3 +45,24 @@ sys-cluster/hpx -perftools
 # remove surprises
 net-misc/openssh -hpn
 app-arch/gzip pic
+# REQUIRED_USE
+net-misc/openvpn -lzo
+app-accessibility/julius alsa
+app-editors/gedit -python
+app-i18n/ibus -python
+dev-libs/xmlsec -gnutls
+mail-mta/exim exiscan-acl -gnutls -pkcs11
+media-gfx/blender cycles openimageio
+media-libs/ccaudio2 gsm
+media-libs/cogl gles2
+media-libs/libde265 -tools
+media-libs/libmetalink xml
+net-firewall/fwknop -gdbm
+net-fs/s3fs -gnutls
+net-libs/xrootd -http
+net-mail/cyrus-imapd -http
+net-mail/popa3d -mbox
+net-misc/rancid -subversion
+net-misc/rancid-git -subversion -cvs
+net-p2p/eiskaltdcpp -cli
+

@@ -3,3 +3,7 @@ media-gfx/imagemagick -opencl hdri
 net-mail/mailbase pam
 sys-boot/grub -truetype
 gnome-base/librsvg -tools
+dev-db/firebird superserver
+net-firewall/fwknop iptables
+net-dns/avahi -utils
+net-wireless/gnuradio -audio
