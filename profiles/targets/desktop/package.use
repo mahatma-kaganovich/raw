@@ -22,3 +22,6 @@ dev-python/dbus-python python_targets_python3_5
 net-fs/samba -addc
 media-libs/mesa gles1 gles2
 net-wireless/gnuradio audio
+# gtk3
+media-sound/audacious -gtk
+media-plugins/audacious-plugins -gtk
