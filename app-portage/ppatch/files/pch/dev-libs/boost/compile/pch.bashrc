@@ -1,0 +1,3 @@
+OPTIONS+=(
+	pch=on
+)
