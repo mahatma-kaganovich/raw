@@ -42,6 +42,8 @@ dev-db/haildb tcmalloc
 dev-libs/libmemcached tcmalloc
 sys-cluster/gearmand tcmalloc
 sys-cluster/hpx -perftools
+# not used, but need gtk3
+gnome-base/librsvg -tools
 # remove surprises
 net-misc/openssh -hpn
 app-arch/gzip pic
