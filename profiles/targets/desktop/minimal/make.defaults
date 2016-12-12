@@ -1,3 +1,3 @@
 # move uncommon/conservative (gtk2, etc) here
-USE="-introspection -vala -geolocation -cups -wifi -wext -opencl -vulkan"
+USE="-introspection -vala -geolocation -cups -wifi -wext -opencl -vulkan -frei0r -adplug -raw -lirc -openmp"
 USE="$USE gtk gtk2 -gtk3"
