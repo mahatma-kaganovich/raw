@@ -60,6 +60,7 @@ src_install(){
 	else
 		sed -i -e 's%YA_STARTUP:=TINT2%YA_STARTUP:=XF86Desktop%' "${D}"/usr/bin/ya-session
 	fi
+	sed -i -e 's:/lib\*/:/'"$(get_libdir)"'/:g' "${D}"/usr/bin/*
 	use bluetooth || rm "$D/etc/ppp" -Rf
 	use libnotify || sed -i -e 's:^notify=.*$:notify=:' "${D}"/usr/bin/*
 	ewarn "Edit /etc/conf.d/autofs: MASTER_MAP_NAME=\"/usr/share/${PN}/auto.master\"
