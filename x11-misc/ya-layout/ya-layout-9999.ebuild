@@ -1,5 +1,6 @@
-inherit eutils
 EAPI=3
+
+inherit eutils
 SLOT=0
 DESCRIPTION="Simple desktop layout"
 LICENSE="*"
