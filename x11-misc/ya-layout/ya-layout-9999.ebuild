@@ -1,3 +1,4 @@
+inherit eutils
 EAPI=3
 SLOT=0
 DESCRIPTION="Simple desktop layout"
