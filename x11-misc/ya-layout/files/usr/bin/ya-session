@@ -720,9 +720,11 @@ Launcher:
 	done
 	[ -z "$o" ] && o='-option grp:ctrl_shift_toggle' || o=
 	[ -n "$i1" ] && i+="$i1" && setxkbmap -layout "${i#,}" $o
-	[ -z "$QT_STYLE_OVERRIDE" ] && {
-		i=`ls -1 /usr/lib*/qt5/plugins/platformthemes/|grep -o "gtk[23]\|qt5ct"|sort -u|head -n 1`
-		[ -n "$i" ] && export QT_STYLE_OVERRIDE="$i"
+	# override only: qt5ct segfaulting 4me, let "just works" when possible
+	i=`ls -1 /usr/lib*/qt5/plugins/platformthemes/|grep -o "gtk[23]"|sort -u|head -n 1`
+	[ -n "$i" ] && {
+		export QT_QPA_PLATFORMTHEME="$i"
+#		export QT_STYLE_OVERRIDE="$i"
 	}
 	read i 2>/dev/null <"$obconfdir/xkbmap" && {
 		setxkbmap $i
