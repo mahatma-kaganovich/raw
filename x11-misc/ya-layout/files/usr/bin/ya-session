@@ -355,13 +355,22 @@ envcache(){
 
 by_category(){
 local i
-for i in ${*//|/ }; do
-	local y= n=
+for i in "${1//|/ }"; do
+	local g j y= n=
 	for i in ${i//;/ }; do
 		[ -n "${i##!*}" ] && y+="$i\|" || n+="${i#!}\|"
 	done
-	eval "grep -R '^Categories=${y:+\(\|.*;\)\(${y%??}\)\(;\|$\)}' /usr/share/applications --include '*.desktop'${n:+|grep -v '[=;]\(${n%??}\)\(;\|$\)'}"
-done|sort -u|while read i; do
+	i="grep -R '^Categories=${y:+\(\|.*;\)\(${y%??}\)\(;\|$\)}' /usr/share/applications"
+	g="$i --include '*.desktop'"
+	if j=`grep -s "^_app/" "$HOME/.local/share/applications/mimeapps.list"|grep -o "[^=]*\.desktop$"`; then
+		for j in $j; do
+			i+=" --include '$j'"
+			g+=" --exclude '$j'"
+		done
+		g="($i;$g)"
+	fi
+	eval "$g${n:+|grep -v '[=;]\(${n%??}\)\(;\|$\)'}"
+done|while read i; do
 	local Exec= TryExec= Terminal= Type=
 	while read i; do
 		case "$i" in
