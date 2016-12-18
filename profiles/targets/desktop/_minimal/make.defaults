@@ -1,2 +1,2 @@
 # common for minimal
-USE="-introspection -vala -geolocation -cups -wifi -wext -opencl -vulkan -frei0r -adplug -raw -lirc -openmp -samba -opencv"
+USE="-introspection -vala -geolocation -cups -wifi -wext -opencl -vulkan -frei0r -adplug -raw -lirc -openmp -samba -opencv -wxwidgets"
