@@ -1,19 +1,45 @@
 #!/bin/bash
 
+d=`pwd`
 cd /usr/portage/metadata/md5-cache
-for i1 in $(grep -l "^IUSE=.*+qt4" */*); do
-	e=qt5
-#	for e in qt5 gtk gtk2 gtk3; do
-	for e in qt5; do
-		grep -q "^IUSE=.*+$e" "$i1" && continue 2
-		grep -q "^IUSE=.*$e" "$i1" || continue
-		i="$i1"
-		while [[ "$i" == */*-* ]]; do
-			i="${i%-*}"
-			[ -e /usr/portage/$i ] && echo "$i $e" && continue 3
-		done
-		echo "=$i $e"
-		continue 2
+
+pkg(){
+	local p="$1" x
+	while [[ "$p" == */*-* ]]; do
+		p="${p%-*}"
+		x="/usr/portage/$p/${1#*/}*.ebuild"
+		[ "$(echo $x)" != "$x" ] && echo "$p"
 	done
-	echo "# $i1 `grep "^IUSE=" "$i1"`" >&2
-done|sort -u
+}
+
+l=$(grep -lF ' qt5 ' */*) || exit 1
+
+for i in $(grep -l '^IUSE=.*+qt4' $l); do
+	grep -q '^IUSE=.*qt5' "$i" &&
+	for p in $(pkg "$i"); do
+		echo "$p qt5"
+	done
+done | uniq >$d/package.use.tmp
+
+for i in `grep -l '\^\^ ([^()]* qt5 [^()]*)' $l`; do
+	grep -oh '\^\^ ([^()]* qt5 [^()]*)' "$i"|sed -e 's:^....::' -e 's:.$::' -e 's: qt5 : :' -e 's: $::'|while read q; do
+		[ -n "$q" ] &&
+		for p in $(pkg "$i"); do
+			[ "$q" != qt4 ] && {
+				echo "# $p $q"
+				[[ "$q" != *qt4* ]] && continue
+				q=qt4
+			}
+			
+			echo "$p $q"
+		done
+	done
+done | uniq >$d/package.use.mask.tmp
+
+cd $d || exit 1
+
+cmp package.use{,.tmp} && unlink package.use.tmp
+cmp package.use.mask{,.tmp} && unlink package.use.mask.tmp
+rename .tmp '' package.*.tmp
+
+

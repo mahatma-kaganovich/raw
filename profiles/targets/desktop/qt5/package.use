@@ -8,8 +8,8 @@ dev-qt/qtsingleapplication qt5
 kde-misc/kdiff3 qt5
 media-libs/libechonest qt5
 media-libs/liblastfm qt5
-media-libs/phonon-gstreamer qt5
 media-libs/phonon qt5
+media-libs/phonon-gstreamer qt5
 media-libs/phonon-vlc qt5
 media-libs/qt-gstreamer qt5
 media-video/smplayer qt5

@@ -1,0 +1,18 @@
+app-misc/qlcplus qt4
+app-office/texmaker qt4
+app-office/texstudio qt4
+dev-libs/quazip qt4
+kde-misc/kdiff3 qt4
+# media-plugins/audacious-plugins gtk gtk3
+# media-sound/audacious gtk gtk3
+media-sound/flacon qt4
+media-video/smplayer qt4
+net-libs/qxmpp qt4
+net-misc/nextcloud-client qt4
+net-misc/owncloud-client qt4
+net-p2p/bitcoin-qt qt4
+net-p2p/bitcoinxt-qt qt4
+net-p2p/retroshare qt4
+sci-electronics/pulseview qt4
+sci-geosciences/merkaartor qt4
+sys-devel/qconf qt4
