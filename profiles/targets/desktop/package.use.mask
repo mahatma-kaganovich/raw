@@ -1,4 +1,0 @@
-# must be in package.use, but something wrong
-# gtk3
-media-sound/audacious gtk
-media-plugins/audacious-plugins gtk
