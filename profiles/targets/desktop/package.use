@@ -24,3 +24,4 @@ app-emulation/qemu vte gtk
 dev-qt/qtgui gtk
 #app-crypt/pinentry gnome-keyring
 app-crypt/pinentry gtk
+media-libs/opencv gtk
