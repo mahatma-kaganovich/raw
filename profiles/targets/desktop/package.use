@@ -9,7 +9,7 @@ net-p2p/mldonkey bittorrent fasttrack gd gnutella magic
 media-gfx/imagemagick opencl
 # global: use -gcdmaster -gnome-keyring
 app-cdr/cdrdao gcdmaster
-app-crypt/pinentry gnome-keyring
+#app-crypt/pinentry gnome-keyring
 dev-db/sqlite tools tcl
 #>app-office/libreoffice-5.1 python_single_target_python3_4 python_targets_python3_4
 app-office/libreoffice collada pdfimport
