@@ -2,3 +2,4 @@ media-sound/audacious -gtk
 media-plugins/audacious-plugins -gtk
 media-sound/alsa-tools gtk
 media-libs/gst-plugins-bad gtk
+dev-qt/qtgui:5 gtk

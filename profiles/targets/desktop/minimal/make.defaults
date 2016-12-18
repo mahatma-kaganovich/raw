@@ -1,2 +1,1 @@
-USE="-introspection -vala -geolocation -cups -wifi -wext -opencl -vulkan -frei0r -adplug -raw -lirc -openmp -samba -opencv"
 USE="$USE -gtkstyle"
