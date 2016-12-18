@@ -1,2 +1,3 @@
+# gtk2/qt4
 USE="-introspection -vala -geolocation -cups -wifi -wext -opencl -vulkan -frei0r -adplug -raw -lirc -openmp -samba -opencv"
-USE="$USE -gtkstyle"
+USE="$USE gtk gtk2 -gtk3"
