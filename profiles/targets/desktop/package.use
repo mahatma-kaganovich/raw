@@ -1,7 +1,6 @@
 app-text/djvu xml
 media-video/vlc vlm
 dev-db/sqlite secure-delete
-media-sound/audacious -gtk
 dev-lang/python sqlite
 net-libs/webkit-gtk -gles2
 app-office/abiword math latex

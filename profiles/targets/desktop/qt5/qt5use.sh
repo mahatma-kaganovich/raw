@@ -21,16 +21,17 @@ for i in $(grep -l '^IUSE=.*+qt4' $l); do
 	done
 done | uniq >$d/package.use.tmp
 
-for i in `grep -l '\^\^ ([^()]* qt5 [^()]*)' $l`; do
-	grep -oh '\^\^ ([^()]* qt5 [^()]*)' "$i"|sed -e 's:^....::' -e 's:.$::' -e 's: qt5 : :' -e 's: $::'|while read q; do
+for i in `grep -l '\(\^\^\|??\) ([^()]* qt5 [^()]*)' $l`; do
+	grep -oh '\(\^\^\|??\) ([^()]* qt5 [^()]*)' "$i"|sed -e 's:^....::' -e 's:.$::' -e 's: qt5 : :' -e 's: $::'|while read q; do
 		[ -n "$q" ] &&
 		for p in $(pkg "$i"); do
+			false &&
 			[ "$q" != qt4 ] && {
 				echo "# $p $q"
 				[[ "$q" != *qt4* ]] && continue
-				q=qt4
+				q=" $q "
+				q="${q// gtk3 / }"
 			}
-			
 			echo "$p $q"
 		done
 	done
