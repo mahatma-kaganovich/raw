@@ -1,1 +1,1 @@
-dev-qt/qtgui:5 gtk
+dev-qt/qtgui gtk

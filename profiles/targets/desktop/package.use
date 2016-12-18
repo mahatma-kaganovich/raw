@@ -7,9 +7,7 @@ net-libs/webkit-gtk -gles2
 app-office/abiword math latex
 net-p2p/mldonkey bittorrent fasttrack gd gnutella magic
 media-gfx/imagemagick opencl
-# global: use -gcdmaster -gnome-keyring
 app-cdr/cdrdao gcdmaster
-#app-crypt/pinentry gnome-keyring
 dev-db/sqlite tools tcl
 #>app-office/libreoffice-5.1 python_single_target_python3_4 python_targets_python3_4
 app-office/libreoffice collada pdfimport
@@ -23,4 +21,6 @@ net-fs/samba -addc
 media-libs/mesa gles1 gles2
 net-wireless/gnuradio audio
 app-emulation/qemu vte gtk
-dev-qt/qtgui:5 gtk
+dev-qt/qtgui gtk
+#app-crypt/pinentry gnome-keyring
+app-crypt/pinentry gtk

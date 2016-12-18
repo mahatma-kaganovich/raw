@@ -1,1 +1,2 @@
 app-emulation/qemu -vte -gtk
+app-crypt/pinentry -gtk
