@@ -118,10 +118,9 @@ return 0
 
 {
 generate common 'opengl' 'gles gles1 gles2 egl' 'gles gles1 gles2 egl'
-x1='ssl openssl gnutls' # USE
-x2='kernel nss gcrypt mhash cryptopp nettle' # enabled
-x3='libressl yassl mbedtls embedded' # drop
-generate +common "$x1 $x2" "$x1 $x2 $x3" "$x3"
+x1='kernel ssl openssl gnutls nss gcrypt mhash cryptopp nettle' # enabled
+x2='libressl yassl mbedtls embedded' # drop
+generate +common "$x1" "$x1" "$x2"
 } &
 generate qt5 'qt5' 'qt4' 'gtk3 gtk2 gtk sdl' &
 generate gtk3 'gtk3' 'gtk gtk2' 'qt5 qt4 gtk sdl' 'x11-libs/gtk+:3\|x11-libs/gtk+-3' 'x11-libs/gtk+:2\|x11-libs/gtk+-2' 'gtk' &

@@ -13,5 +13,4 @@ net-misc/aria2 ssl -gnutls -nettle
 net-misc/iputils ssl -openssl
 net-misc/networkmanager gnutls -nss
 sys-apps/systemd ssl -gcrypt
-sys-fs/cryptsetup openssl -gcrypt
-www-servers/uwsgi  -embedded
+sys-fs/cryptsetup kernel -gcrypt
