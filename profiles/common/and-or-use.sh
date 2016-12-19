@@ -83,9 +83,11 @@ for i in $(grep -l "^IUSE=.*+\($or_\)" $l); do
 	x=" ${x#IUSE=} "
 	for p in $(pkg "$i"); do
 		r=
+		r1=
 		e=true
 		for j in $1; do
-			[ -z "${x##* $j *}" -o -z "${x##* +$j *}" ] && r=" $j" && e=false && break
+			[ -z "${x##* +$j *}" ] && r=" " && r1="$j" && e=false && break
+			[ -z "${x##* $j *}" ] && r=" $j" && e=false && break
 			[ -z "${x##* [~-]$j *}" ] && e=false
 		done
 		if $e && [ -n "$6" -a -z "${x##* $6 *}" ]; then
@@ -97,13 +99,14 @@ for i in $(grep -l "^IUSE=.*+\($or_\)" $l); do
 			fi
 		fi
 		[ -z "$r" ] && continue
+		r1+="$r"
 		for j in $2; do
-			for i1 in $r; do
+			for i1 in $r1; do
 				[ "$i1" = "$j" ] && continue 2
 			done
 			[ -z "${x##* +$j *}" ] && r+=" -$j"
 		done
-		ap "$p$r" "$d/package.use"
+		[ "$r" = ' ' ] || ap "$p$r" "$d/package.use"
 	done
 done
 
@@ -116,9 +119,9 @@ return 0
 {
 generate common 'opengl' 'gles gles1 gles2 egl' 'gles gles1 gles2 egl'
 x1='ssl openssl gnutls' # USE
-x2='kernel nss gcrypt mhash cryptopp' # enabled
-x3='libressl nettle yassl mbedtls embedded' # drop
-generate +common "$x1 $x2" "$x2 $x3" "$x3"
+x2='kernel nss gcrypt mhash cryptopp nettle' # enabled
+x3='libressl yassl mbedtls embedded' # drop
+generate +common "$x1 $x2" "$x1 $x2 $x3" "$x3"
 } &
 generate qt5 'qt5' 'qt4' 'gtk3 gtk2 gtk sdl' &
 generate gtk3 'gtk3' 'gtk gtk2' 'qt5 qt4 gtk sdl' 'x11-libs/gtk+:3\|x11-libs/gtk+-3' 'x11-libs/gtk+:2\|x11-libs/gtk+-2' 'gtk' &

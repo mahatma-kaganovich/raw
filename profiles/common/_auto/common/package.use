@@ -1,17 +1,17 @@
-media-video/mpv opengl -egl
-net-libs/webkit-gtk opengl -egl
+media-video/mpv  -egl
+net-libs/webkit-gtk  -egl
 app-i18n/yaskkserv gnutls
 mail-mta/courier gnutls
 net-nds/openldap gnutls
 www-misc/litmus gnutls
 app-admin/rsyslog ssl -gcrypt
-media-libs/mesa openssl
+gnustep-base/gnustep-base  -gnutls
 media-libs/mesa openssl -nettle
 media-video/vlc gnutls -gcrypt
-net-libs/liboauth nss
-net-misc/aria2 ssl -nettle
+net-ftp/lftp  -gnutls
+net-misc/aria2 ssl -gnutls -nettle
+net-misc/iputils ssl -openssl
 net-misc/networkmanager gnutls -nss
 sys-apps/systemd ssl -gcrypt
-sys-cluster/ceph nss
 sys-fs/cryptsetup openssl -gcrypt
-www-servers/uwsgi ssl -embedded
+www-servers/uwsgi  -embedded
