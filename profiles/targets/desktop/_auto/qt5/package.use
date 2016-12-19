@@ -34,6 +34,3 @@ sys-auth/polkit-qt qt5 -qt4
 sys-devel/qconf qt5 -qt4
 x11-misc/lightdm qt5
 x11-themes/qtcurve qt5 -qt4
-app-office/libreoffice gtk3 -gtk
-media-plugins/audacious-plugins gtk3 -gtk
-media-sound/audacious gtk3 -gtk
