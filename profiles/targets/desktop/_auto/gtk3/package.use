@@ -1,0 +1,7 @@
+app-office/libreoffice gtk3 -gtk
+kde-plasma/plasma-desktop gtk3
+media-plugins/audacious-plugins gtk3 -gtk
+media-sound/audacious gtk3 -gtk
+net-misc/electrum gtk3
+www-plugins/gnash -gtk
+x11-themes/qtcurve -gtk
