@@ -12,7 +12,6 @@ pkg(){
 	done
 }
 
-# 1- list of concurrent useflags (or '+' if exclude next)
 generate(){
 local x=0 or1= or2= or= d="$d/_auto/${1#+}"
 [[ "$1" == +* ]] || rm -f "$d/package.use.mask" "$d/package.use"
@@ -37,7 +36,6 @@ l1=" $2${3:+ $3}"
 l1=" $1 ${l1// / -} "
 
 l=$(grep -l " \($or\) " */*) || return 1
-#l=$(grep -l " \($or\) "*/mesagcrypt*) || return 1
 
 ap(){
 	grep -sqxF "$1" "$2" || echo "$1" >>"$2"
@@ -87,8 +85,8 @@ for i in $(grep -l "^IUSE=.*+\($or_\)" $l); do
 		r=
 		e=true
 		for j in $1; do
-			[ -z "${x##* $j *}" ] && r=" $j" && e=false && continue
-			[ -z "${x##* [+~-]$j *}" ] && e=false
+			[ -z "${x##* $j *}" -o -z "${x##* +$j *}" ] && r=" $j" && e=false && break
+			[ -z "${x##* [~-]$j *}" ] && e=false
 		done
 		if $e && [ -n "$6" -a -z "${x##* $6 *}" ]; then
 			if grep -q "$4" "$i"; then
@@ -117,9 +115,10 @@ return 0
 
 {
 generate common 'opengl' 'gles gles1 gles2 egl' 'gles gles1 gles2 egl'
-x1='kernel openssl ssl gnutls nss gcrypt mhash cryptopp'
-x2='libressl nettle yassl mbedtls embedded'
-generate +common "$x1" "$x2" "$x2"
+x1='ssl openssl gnutls' # USE
+x2='kernel nss gcrypt mhash cryptopp' # enabled
+x3='libressl nettle yassl mbedtls embedded' # drop
+generate +common "$x1 $x2" "$x1 $x2 $x3" "$x3"
 } &
 generate qt5 'qt5' 'qt4' 'gtk3 gtk2 gtk sdl' &
 generate gtk3 'gtk3' 'gtk gtk2' 'qt5 qt4 gtk sdl' 'x11-libs/gtk+:3\|x11-libs/gtk+-3' 'x11-libs/gtk+:2\|x11-libs/gtk+-2' 'gtk' &

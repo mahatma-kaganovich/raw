@@ -16,5 +16,5 @@ net-misc/networkmanager -gnutls nss
 net-nds/openldap -gnutls libressl
 net-proxy/shadowsocks-libev -openssl mbedtls
 sys-cluster/ceph -nss cryptopp
-sys-fs/cryptsetup -kernel openssl gcrypt nettle
+sys-fs/cryptsetup -openssl kernel gcrypt nettle
 www-misc/litmus -ssl gnutls
