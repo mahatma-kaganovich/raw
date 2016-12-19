@@ -118,7 +118,7 @@ return 0
 
 {
 generate common 'opengl' 'gles gles1 gles2 egl' 'gles gles1 gles2 egl'
-x1='kernel ssl openssl gnutls nss gcrypt mhash cryptopp nettle' # enabled
+x1='kernel ssl openssl gnutls nss mhash cryptopp nettle' # enabled
 x2='libressl yassl mbedtls embedded' # drop
 generate +common "$x1" "$x1" "$x2"
 } &
