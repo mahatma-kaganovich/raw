@@ -1,1 +1,1 @@
-USE="qt4 qt5 gtk fltk gnome-keyring"
+USE="qt4 qt5 gtk fltk gstreamer"

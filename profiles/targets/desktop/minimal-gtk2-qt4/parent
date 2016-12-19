@@ -1,4 +1,4 @@
 ..
 ../_minimal
-../_auto/qt4
-../_auto/gtk2
+../common/_auto/qt4
+../common/_auto/gtk2

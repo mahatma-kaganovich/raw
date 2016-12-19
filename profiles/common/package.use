@@ -58,7 +58,6 @@ media-libs/cogl gles2
 media-libs/libde265 -tools
 media-libs/libmetalink xml
 net-firewall/fwknop -gdbm
-net-fs/s3fs -gnutls
 net-libs/xrootd -http
 net-mail/cyrus-imapd -http
 net-mail/popa3d -mbox

@@ -1,0 +1,20 @@
+media-gfx/tachyon -opengl # mpi
+net-libs/webkit-gtk -opengl gles2
+app-i18n/yaskkserv -gnutls libressl
+dev-db/mariadb -openssl yassl libressl
+dev-db/mariadb-galera -openssl yassl libressl
+dev-db/mysql -openssl yassl libressl
+dev-db/mysql-cluster -openssl yassl libressl
+dev-db/percona-server -openssl yassl libressl
+dev-perl/DBD-mysql -ssl embedded
+dev-vcs/cvsync -gcrypt mhash
+mail-mta/courier -gnutls libressl
+net-fs/s3fs -openssl gnutls nss
+net-ftp/lftp -openssl gnutls
+net-misc/iputils -openssl gcrypt nettle
+net-misc/networkmanager -gnutls nss
+net-nds/openldap -gnutls libressl
+net-proxy/shadowsocks-libev -openssl mbedtls
+sys-cluster/ceph -nss cryptopp
+sys-fs/cryptsetup -kernel openssl gcrypt nettle
+www-misc/litmus -ssl gnutls

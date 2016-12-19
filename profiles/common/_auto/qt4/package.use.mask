@@ -5,13 +5,13 @@ app-office/texstudio -qt4 qt5
 dev-libs/quazip -qt4 qt5
 games-emulation/ppsspp -qt4 qt5 sdl
 kde-misc/kdiff3 -qt4 qt5
-media-libs/libmediaart gtk -qt4 qt5
+media-libs/libmediaart -qt4 gtk qt5
 media-libs/opencv -qt4 qt5
 media-sound/flacon -qt4 qt5
 media-video/smplayer -qt4 qt5
 net-analyzer/wireshark -qt4 qt5
 net-libs/qxmpp -qt4 qt5
-net-misc/dhcpcd-ui gtk gtk3 -qt4
+net-misc/dhcpcd-ui -qt4 gtk gtk3
 net-misc/nextcloud-client -qt4 qt5
 net-misc/owncloud-client -qt4 qt5
 net-p2p/bitcoin-qt -qt4 qt5

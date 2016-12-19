@@ -2,7 +2,6 @@ app-crypt/pinentry qt4
 games-emulation/ppsspp qt4
 media-libs/libmediaart qt4
 media-libs/opencv qt4
-net-analyzer/wireshark qt4
 net-misc/dhcpcd-ui qt4
 net-p2p/transmission qt4
 net-wireless/wpa_supplicant qt4

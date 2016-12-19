@@ -2,7 +2,6 @@ app-text/djvu xml
 media-video/vlc vlm
 dev-db/sqlite secure-delete
 dev-lang/python sqlite
-net-libs/webkit-gtk -gles2
 app-office/abiword math latex
 net-p2p/mldonkey bittorrent fasttrack gd gnutella magic
 media-gfx/imagemagick opencl
@@ -24,3 +23,4 @@ dev-qt/qtgui gtk
 #app-crypt/pinentry gnome-keyring
 app-crypt/pinentry gtk
 media-libs/opencv gtk
+app-misc/tracker -ffmpeg gstreamer
