@@ -124,7 +124,6 @@ generate +common "$x1" "$x1" "$x2"
 } &
 generate qt5 'qt5' 'qt4' 'gtk3 gtk2 gtk sdl' &
 generate gtk3 'gtk3' 'gtk gtk2' 'qt5 qt4 gtk sdl' 'x11-libs/gtk+:3\|x11-libs/gtk+-3' 'x11-libs/gtk+:2\|x11-libs/gtk+-2' 'gtk' &
-generate gtk2 'gtk2' 'gtk3' 'qt5 qt4 gtk sdl' 'x11-libs/gtk+:2\|x11-libs/gtk+-2' 'x11-libs/gtk+:3\|x11-libs/gtk+-3' 'gtk' &
+generate gtk2 'gtk2 gtk' 'gtk3' 'qt5 qt4 gtk sdl' 'x11-libs/gtk+:2\|x11-libs/gtk+-2' 'x11-libs/gtk+:3\|x11-libs/gtk+-3' 'gtk' &
 generate qt4 'qt4' 'qt5' 'gtk3 gtk2 gtk sdl' &
 wait
-

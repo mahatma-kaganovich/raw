@@ -1,4 +1,13 @@
+media-libs/libmediaart gtk
+media-plugins/audacious-plugins gtk
+media-sound/audacious gtk
 net-analyzer/pinger gtk2
+net-misc/dhcpcd-ui gtk
+app-editors/emacs gtk -gtk3
+app-editors/emacs-vcs gtk -gtk3
+app-i18n/fcitx-configtool gtk -gtk3
+app-i18n/ibus gtk -gtk3
+games-emulation/vbam gtk
 kde-plasma/plasma-desktop gtk2
 www-plugins/gnash gtk
 x11-themes/qtcurve gtk
