@@ -1,3 +1,4 @@
+net-analyzer/pinger gtk2
 kde-plasma/plasma-desktop gtk2
 www-plugins/gnash gtk
 x11-themes/qtcurve gtk

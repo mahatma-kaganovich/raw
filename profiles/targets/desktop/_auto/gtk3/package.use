@@ -1,3 +1,7 @@
+media-plugins/audacious-plugins gtk3
+media-sound/audacious gtk3
+net-analyzer/pinger gtk3
+net-misc/dhcpcd-ui gtk3
 app-office/libreoffice gtk3 -gtk
 kde-plasma/plasma-desktop gtk3
 media-plugins/audacious-plugins gtk3 -gtk

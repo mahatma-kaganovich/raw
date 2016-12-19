@@ -42,6 +42,7 @@ l=$(grep -l " \($or\) " */*) || exit 1
 rm -f "$d/package.use.mask" "$d/package.use"
 for i in `grep -l '\(\^\^\|??\) ([^()]* \('"$or1"'\) [^()]*)' $l`; do
 	grep -oh '\(\^\^\|??\) ([^()]* \('"$or1"'\) [^()]*)' "$i"|while read q; do
+		[ -z "${q##\?\?*}" ] && f=true || f=false
 		q="${q#?? \(}"
 		q="${q%\)}"
 		[ -z "$q" ] && continue
@@ -51,6 +52,7 @@ for i in `grep -l '\(\^\^\|??\) ([^()]* \('"$or1"'\) [^()]*)' $l`; do
 			for q in $q; do
 				if [ -z "${l1##* $q *}" ]; then
 					r+=" -$q"
+					$f && ! grep -sqxF "$p $q" "$d/package.use" && echo "$p $q" >>"$d/package.use"
 				elif [ -z "${l1##* -$q *}" ]; then
 					r+=" $q"
 				else
@@ -82,9 +84,9 @@ for i in $(grep -l "^IUSE=.*+\($or_\)" $l); do
 		for j in $2; do
 			[ -z "${x##* +$j *}" ] && r+=" -$j"
 		done
-		[ -n "$r" ] && echo "$p$r"
+		[ -n "$r" ] && ! grep -sqxF "$p$r" "$d/package.use" && echo "$p$r" >>"$d/package.use"
 	done
-done | uniq >>$d/package.use
+done
 
 cd $d || return 1
 
