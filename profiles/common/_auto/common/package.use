@@ -4,13 +4,9 @@ app-i18n/yaskkserv gnutls
 mail-mta/courier gnutls
 net-nds/openldap gnutls
 www-misc/litmus gnutls
-app-admin/rsyslog ssl -gcrypt
 gnustep-base/gnustep-base  -gnutls
 media-libs/mesa openssl -nettle
-media-video/vlc gnutls -gcrypt
 net-ftp/lftp  -gnutls
 net-misc/aria2 ssl -gnutls -nettle
 net-misc/iputils ssl -openssl
 net-misc/networkmanager gnutls -nss
-sys-apps/systemd ssl -gcrypt
-sys-fs/cryptsetup kernel -gcrypt

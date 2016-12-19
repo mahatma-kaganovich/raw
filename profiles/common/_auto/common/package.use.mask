@@ -7,14 +7,14 @@ dev-db/mysql -openssl yassl libressl
 dev-db/mysql-cluster -openssl yassl libressl
 dev-db/percona-server -openssl yassl libressl
 dev-perl/DBD-mysql -ssl embedded
-dev-vcs/cvsync -gcrypt mhash
+dev-vcs/cvsync -mhash # gcrypt
 mail-mta/courier -gnutls libressl
 net-fs/s3fs -openssl gnutls nss
 net-ftp/lftp -openssl gnutls
-net-misc/iputils -openssl gcrypt nettle
+net-misc/iputils -openssl nettle # gcrypt
 net-misc/networkmanager -gnutls nss
 net-nds/openldap -gnutls libressl
 net-proxy/shadowsocks-libev -openssl mbedtls
 sys-cluster/ceph -nss cryptopp
-sys-fs/cryptsetup -kernel openssl gcrypt nettle
+sys-fs/cryptsetup -kernel openssl nettle # gcrypt
 www-misc/litmus -ssl gnutls
