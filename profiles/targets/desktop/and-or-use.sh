@@ -70,21 +70,27 @@ for i in $(grep -l "^IUSE=.*+\($or_\)" $l); do
 	x=" ${x#IUSE=} "
 	for p in $(pkg "$i"); do
 		r=
+		e=true
 		for j in $1; do
-			[ -z "${x##* $j *}" ] && r+=" $j" && continue
-			[ -n "$6" -a -z "${x##* $6 *}" ] || continue
+			[ -z "${x##* $j *}" ] && r+=" $j" && e=false  && continue
+			[ -z "${x##* [+~-]$j *}" ] && e=false
+		done
+		if $e && [ -n "$6" -a -z "${x##* $6 *}" ]; then
 			if grep -q "$4" "$i"; then
 				grep -q "$5" "$i" && continue
 				r+=" $6"
 			elif grep -q "$5" "$i"; then
 				r+=" -$6"
 			fi
-		done
-		[ -n "$r" ] &&
+		fi
+		[ -z "$r" ] && continue
 		for j in $2; do
+			for i1 in $r; do
+				[ "$i1" = "$j" ] && continue 2
+			done
 			[ -z "${x##* +$j *}" ] && r+=" -$j"
 		done
-		[ -n "$r" ] && ! grep -sqxF "$p$r" "$d/package.use" && echo "$p$r" >>"$d/package.use"
+		! grep -sqxF "$p$r" "$d/package.use" && echo "$p$r" >>"$d/package.use"
 	done
 done
 
