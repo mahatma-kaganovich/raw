@@ -1,3 +1,6 @@
+app-emulation/vice -gtk sdl
+media-libs/libmediaart -gtk qt4 qt5
+media-libs/libmediaart -gtk qt5
 media-plugins/audacious-plugins -gtk3 gtk
 media-plugins/audacious-plugins -gtk3 gtk qt5
 media-sound/audacious -gtk3 gtk

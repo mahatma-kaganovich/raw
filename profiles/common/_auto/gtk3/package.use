@@ -1,11 +1,15 @@
+media-libs/libmediaart gtk
 media-plugins/audacious-plugins gtk3
+media-plugins/audacious-plugins gtk
 media-sound/audacious gtk3
+media-sound/audacious gtk
 net-analyzer/pinger gtk3
 net-misc/dhcpcd-ui gtk3
+net-misc/dhcpcd-ui gtk
 app-office/libreoffice gtk3 -gtk
+games-emulation/vbam gtk
 kde-plasma/plasma-desktop gtk3
 media-plugins/audacious-plugins gtk3 -gtk
 media-sound/audacious gtk3 -gtk
 net-misc/electrum gtk3
-www-plugins/gnash -gtk
-x11-themes/qtcurve -gtk
+net-p2p/eiskaltdcpp gtk

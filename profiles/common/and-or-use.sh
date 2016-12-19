@@ -12,16 +12,27 @@ pkg(){
 	done
 }
 
+ap(){
+	grep -sqxF "$1" "$2" || echo "$1" >>"$2"
+}
+
+chk6(){
+	local x1=false x2=false
+	grep -q "$1" "$i" && x1=true
+	grep -q "$2" "$i" && x2=true
+	[ "$x1" = "$x2" ] || $x1
+}
+
 generate(){
 local x=0 or1= or2= or= d="$d/_auto/${1#+}"
 [[ "$1" == +* ]] || rm -f "$d/package.use.mask" "$d/package.use"
 shift
 mkdir -p "$d"
 cd "$d" && cd /usr/portage/metadata/md5-cache || return 1
-for i in $1; do
+for i in $1 $6; do
 	or1+="\|$i"
 done
-for i in $2; do
+for i in $2 $6; do
 	or2+="\|$i"
 done
 for i in $3; do
@@ -33,15 +44,9 @@ or2="${or2#??}"
 or_="$or2$or3"
 or3="${or3#??}"
 l1=" $2${3:+ $3}"
-l1=" $1 ${l1// / -} "
+l1=" $1 $6 ${l1// / -} "
 
-l=$(grep -l " \($or\) " */*) || return 1
-
-ap(){
-	grep -sqxF "$1" "$2" || echo "$1" >>"$2"
-}
-
-
+l=$(grep -l " \($or\) " */*) || return 1 #"
 
 [ -n "$3" ] && {
 for i in `grep -l '\(\^\^\|??\) ([^()]* \('"$or1"'\) [^()]*)' $l`; do
@@ -56,6 +61,7 @@ for i in `grep -l '\(\^\^\|??\) ([^()]* \('"$or1"'\) [^()]*)' $l`; do
 		for j in $1; do
 			x="$j $x"
 		done
+		[ -n "$6" ] && chk6 "$4" "$5" "$6" && x="$6 $x"
 		for j in $x; do
 			[ -z "${q##* $j *}" ] && q="$j ${q// $j / }"
 		done
@@ -81,23 +87,15 @@ done
 for i in $(grep -l "^IUSE=.*+\($or_\)" $l); do
 	x=`grep "^IUSE=" "$i"` || continue
 	x=" ${x#IUSE=} "
+	x1="${x// [+~-]/ }"
 	for p in $(pkg "$i"); do
 		r=
 		r1=
-		e=true
-		for j in $1; do
+		for j in $1 $6; do
+			[ "$j" = "$6" ] && ! chk6 "$4" "$5" "$6" && continue
 			[ -z "${x##* +$j *}" ] && r=" " && r1="$j" && e=false && break
-			[ -z "${x##* $j *}" ] && r=" $j" && e=false && break
-			[ -z "${x##* [~-]$j *}" ] && e=false
+			[ -z "${x1##* $j *}" ] && r=" $j" && e=false && break
 		done
-		if $e && [ -n "$6" -a -z "${x##* $6 *}" ]; then
-			if grep -q "$4" "$i"; then
-				grep -q "$5" "$i" && continue
-				r+=" $6"
-			elif grep -q "$5" "$i"; then
-				r+=" -$6"
-			fi
-		fi
 		[ -z "$r" ] && continue
 		r1+="$r"
 		for j in $2; do
@@ -124,6 +122,6 @@ generate +common "$x1" "$x1" "$x2"
 } &
 generate qt5 'qt5' 'qt4' 'gtk3 gtk2 gtk sdl' &
 generate gtk3 'gtk3' 'gtk gtk2' 'qt5 qt4 gtk sdl' 'x11-libs/gtk+:3\|x11-libs/gtk+-3' 'x11-libs/gtk+:2\|x11-libs/gtk+-2' 'gtk' &
-generate gtk2 'gtk2 gtk' 'gtk3' 'qt5 qt4 gtk sdl' 'x11-libs/gtk+:2\|x11-libs/gtk+-2' 'x11-libs/gtk+:3\|x11-libs/gtk+-3' 'gtk' &
+generate gtk2 'gtk2' 'gtk3' 'qt5 qt4 gtk sdl' 'x11-libs/gtk+:2\|x11-libs/gtk+-2' 'x11-libs/gtk+:3\|x11-libs/gtk+-3' 'gtk' &
 generate qt4 'qt4' 'qt5' 'gtk3 gtk2 gtk sdl' &
 wait
