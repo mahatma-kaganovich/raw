@@ -15,6 +15,7 @@ dev-libs/qtkeychain qt5 -qt4
 dev-qt/qtlockedfile qt5 -qt4
 dev-qt/qtsingleapplication qt5 -qt4
 games-emulation/mgba qt5
+games-emulation/ppsspp qt5 -qt4
 games-strategy/freeciv qt5
 kde-misc/kdiff3 qt5 -qt4
 media-libs/libechonest qt5 -qt4
@@ -32,5 +33,5 @@ net-libs/telepathy-qt qt5 -qt4
 net-print/hplip qt5 -qt4
 sys-auth/polkit-qt qt5 -qt4
 sys-devel/qconf qt5 -qt4
-x11-misc/lightdm qt5
+x11-misc/lightdm qt5 -qt4
 x11-themes/qtcurve qt5 -qt4

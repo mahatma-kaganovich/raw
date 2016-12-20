@@ -11,11 +11,13 @@ dev-libs/quazip qt4 -qt5
 games-emulation/gambatte qt4
 games-emulation/higan qt4
 games-emulation/mupen64plus qt4
+games-emulation/ppsspp qt4 -qt5
 media-gfx/librecad qt4 -qt5
+net-analyzer/wireshark qt4 -qt5
 net-misc/nextcloud-client qt4 -qt5
 net-misc/owncloud-client qt4 -qt5
 net-p2p/retroshare qt4 -qt5
 x11-apps/copyq qt4 -qt5
 x11-apps/fusion-icon qt4
-x11-misc/lightdm qt4
+x11-misc/lightdm qt4 -qt5
 x11-themes/qtcurve qt4 -qt5

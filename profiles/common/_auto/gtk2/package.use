@@ -5,9 +5,17 @@ net-analyzer/pinger gtk2
 net-misc/dhcpcd-ui gtk
 app-editors/emacs gtk -gtk3
 app-editors/emacs-vcs gtk -gtk3
+app-emulation/vice gtk
 app-i18n/fcitx-configtool gtk -gtk3
 app-i18n/ibus gtk -gtk3
+app-office/libreoffice gtk -gtk3
+games-emulation/mupen64plus gtk
 games-emulation/vbam gtk
-kde-plasma/plasma-desktop gtk2
+games-strategy/freeciv gtk
+kde-plasma/plasma-desktop gtk2 -gtk3
+media-plugins/audacious-plugins gtk -gtk3
+media-sound/audacious gtk -gtk3
+net-p2p/eiskaltdcpp gtk
 www-plugins/gnash gtk
+x11-apps/fusion-icon gtk
 x11-themes/qtcurve gtk
