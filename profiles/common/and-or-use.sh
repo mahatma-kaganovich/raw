@@ -1,9 +1,9 @@
 #!/bin/bash
 # make per-toolkit _auto/*
 
-[ "$1" = -force ] && force=true || force=false
-
+force=.force
 d=`pwd`
+export LANG=C
 
 pkg(){
 	local p="$1" x
@@ -66,7 +66,7 @@ chk6(){
 		r2=`cat $i $x|grep -c "$2"` && x2=true
 		rr='+'
 	}
-	$x1 && $x2 && [ "$7" = 1 -a "$r1" != "$r2" ] && [ $r1 != $r2 ] && {
+	$x1 && $x2 && [ "$7" = 1 -a "$r1" != "$r2" ] && {
 		[ $r1 -lt $r2 ] && x1=false || x2=false
 		rr+='?'
 	}
@@ -126,17 +126,25 @@ for i in `grep -l '\(\^\^\|??\) ([^()]* \('"$or1"'\) [^()]*)' $l`; do
 		for p in $(pkg "$i"); do
 			r=
 			r1=
+			u=
 			for q in $q; do
+				q1=
 				if [ -z "${x##* $q *}" ]; then
-					[[ "$r" == *' -'* ]] && r+=" $q" || r+=" -$q"
-					$f && [ "$q" != "$6" -a -n "${iuse##* +$q *}" ] && ap "$p $q" "$d/package.use"
+					[[ "$r" == *' -'* ]] && q1="$q" || q1="-$q"
 				elif [ -z "${l1##* -$q *}" ]; then
-					r+=" $q"
+					# use.mask work for use.force, but try both vs collisions
+					#r+=" $q"; continue
+					q1="$q"
 				else
 					r1+=" $q"
+					continue
 				fi
+				r+=" $q1"
+				q1="-$q1"
+				$f && [ "$q" != "$6" -a -n "${iuse##* +$q *}" ] && u+=" ${q1#--}"
 			done
 			[[ "$r" == *' -'* ]] && ap "$p$r${r1:+ #$r1}" "$d/package.use.mask"
+			[ -n "$u" ] && ap "$p$u" "$d/package.use$force"
 		done
 	done
 done
@@ -192,4 +200,5 @@ generate qt5 'qt5' 'qt4' 'gtk3 gtk2 gtk sdl' "$qt5" "$qt4" kde &
 generate qt4 'qt4' 'qt5' 'gtk3 gtk2 gtk sdl' "$qt4" "$qt5" kde &
 generate gtk3 'gtk3' 'gtk2' 'qt5 qt4 gtk sdl' "$gtk3" "$gtk2" +gtk &
 generate gtk2 'gtk2' 'gtk3' 'qt5 qt4 gtk sdl' "$gtk2" "$gtk3" +gtk &
+generate sdl 'sdl sdl2' '__NOsdl__' 'qt5 qt4 gtk gtk2 gtk3' &
 wait

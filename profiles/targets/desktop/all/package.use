@@ -1,1 +1,3 @@
 app-misc/tracker -ffmpeg
+# wayland
+media-libs/libsdl2 gles

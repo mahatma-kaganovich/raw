@@ -1,10 +1,6 @@
 media-libs/mesa egl -gles1 -gles2
 media-video/mpv opengl egl
 net-libs/webkit-gtk opengl egl -gles2
-app-i18n/yaskkserv gnutls
-mail-mta/courier gnutls
-net-nds/openldap gnutls
-www-misc/litmus gnutls
 app-crypt/qca ssl nss
 app-text/mupdf openssl
 dev-db/mariadb openssl
@@ -47,8 +43,8 @@ net-misc/openssh ssl
 net-misc/openvpn ssl
 net-misc/tinc ssl
 net-misc/wget ssl gnutls
-net-p2p/bitcoinxtd ssl
 net-p2p/bitcoinxt-qt ssl
+net-p2p/bitcoinxtd ssl
 net-proxy/shadowsocks-libev openssl
 sys-cluster/ceph nss cryptopp
 www-misc/litmus ssl gnutls

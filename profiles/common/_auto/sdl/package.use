@@ -1,0 +1,5 @@
+app-emulation/vice sdl
+games-strategy/freeciv sdl
+media-plugins/audacious-plugins sdl
+media-video/vlc sdl
+net-wireless/gnuradio sdl

@@ -1,0 +1,7 @@
+app-emulation/vice -sdl
+media-libs/libmediaart -gtk -qt4 -qt5
+media-libs/libmediaart -gtk -qt5
+media-plugins/audacious-plugins gtk3 -gtk -qt5
+media-sound/audacious gtk3 -gtk -qt5
+net-analyzer/pinger gtk3 -gtk2
+net-misc/dhcpcd-ui gtk3 -gtk -qt4

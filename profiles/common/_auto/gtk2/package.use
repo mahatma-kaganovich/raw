@@ -1,8 +1,3 @@
-media-libs/libmediaart gtk
-media-plugins/audacious-plugins gtk
-media-sound/audacious gtk
-net-analyzer/pinger gtk2
-net-misc/dhcpcd-ui gtk
 app-crypt/eid-mw gtk
 app-editors/emacs gtk -gtk3
 app-editors/emacs-vcs gtk -gtk3

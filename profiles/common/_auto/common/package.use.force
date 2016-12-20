@@ -1,0 +1,6 @@
+net-libs/webkit-gtk -gles2
+app-i18n/yaskkserv gnutls -libressl
+dev-perl/DBD-mysql -embedded
+mail-mta/courier gnutls -libressl
+net-nds/openldap gnutls -libressl
+www-misc/litmus -gnutls

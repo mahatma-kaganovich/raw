@@ -1,1 +1,2 @@
-USE="qt4 qt5 gtk fltk gstreamer"
+USE="sdl sdl2 gtk fltk qt4 qt5 gstreamer"
+USE="$USE wayland xwayland"

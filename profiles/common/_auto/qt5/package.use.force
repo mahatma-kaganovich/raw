@@ -1,0 +1,10 @@
+app-crypt/pinentry qt5 -qt4
+games-emulation/ppsspp qt5 -qt4
+media-libs/libmediaart qt5 -gtk -qt4
+media-libs/libmediaart qt5 -gtk
+media-libs/opencv qt5 -qt4
+media-plugins/audacious-plugins qt5 -gtk -gtk3
+media-sound/audacious qt5 -gtk -gtk3
+net-analyzer/wireshark qt5
+net-p2p/transmission qt5 -qt4
+net-wireless/wpa_supplicant qt5 -qt4

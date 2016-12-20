@@ -1,0 +1,2 @@
+app-emulation/vice sdl
+games-emulation/ppsspp -qt4 -qt5

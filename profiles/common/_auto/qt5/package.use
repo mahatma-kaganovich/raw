@@ -1,12 +1,3 @@
-app-crypt/pinentry qt5
-games-emulation/ppsspp qt5
-media-libs/libmediaart qt5
-media-libs/opencv qt5
-media-plugins/audacious-plugins qt5
-media-sound/audacious qt5
-net-analyzer/wireshark qt5
-net-p2p/transmission qt5
-net-wireless/wpa_supplicant qt5
 app-crypt/qca qt5 -qt4
 app-office/lyx qt5 -qt4
 app-office/texmaker qt5 -qt4
