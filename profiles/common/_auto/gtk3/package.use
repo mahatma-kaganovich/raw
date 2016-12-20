@@ -2,14 +2,17 @@ media-plugins/audacious-plugins gtk3
 media-sound/audacious gtk3
 net-analyzer/pinger gtk3
 net-misc/dhcpcd-ui gtk3
+app-crypt/eid-mw gtk
 app-editors/emacs gtk3
 app-editors/emacs-vcs gtk3
 app-i18n/fcitx-configtool gtk3
 app-i18n/ibus gtk3
 app-office/libreoffice gtk3
+games-emulation/vbam gtk
 kde-plasma/plasma-desktop gtk3 -gtk2
 net-analyzer/wireshark gtk3
 net-analyzer/wireshark gtk
 net-libs/gtk-vnc gtk3
 net-misc/electrum gtk3
 net-p2p/eiskaltdcpp gtk
+x11-misc/lightdm gtk

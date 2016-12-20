@@ -3,6 +3,7 @@ media-plugins/audacious-plugins gtk
 media-sound/audacious gtk
 net-analyzer/pinger gtk2
 net-misc/dhcpcd-ui gtk
+app-crypt/eid-mw gtk
 app-editors/emacs gtk -gtk3
 app-editors/emacs-vcs gtk -gtk3
 app-emulation/vice gtk
@@ -15,7 +16,7 @@ games-strategy/freeciv gtk
 kde-plasma/plasma-desktop gtk2 -gtk3
 media-plugins/audacious-plugins gtk -gtk3
 media-sound/audacious gtk -gtk3
-net-p2p/eiskaltdcpp gtk
 www-plugins/gnash gtk
 x11-apps/fusion-icon gtk
+x11-misc/lightdm gtk
 x11-themes/qtcurve gtk
