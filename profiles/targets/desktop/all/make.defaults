@@ -1,2 +1,3 @@
 USE="sdl sdl2 gtk fltk qt4 qt5 gstreamer"
 USE="$USE wayland xwayland"
+USE="$USE openmp opencl vulkan"

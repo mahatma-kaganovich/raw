@@ -1,1 +1,1 @@
-USE="$USE -gtkstyle -qt4"
+USE="-gtkstyle -qt4"
