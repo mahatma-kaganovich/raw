@@ -1,7 +1,8 @@
 #!/bin/bash
 # make per-toolkit _auto/*
 
-precise=true
+# cannot relax/unforce per version (ignored), so keep precise versioning off
+precise=false
 
 force=.force
 d=`pwd`
@@ -135,7 +136,8 @@ re1='\(\^\^\|??\) '"($ww $or1 $ww)"
 re2='^IUSE=.*+'"$or_"
 re31="$or1? ($ww $or_ $ww)"
 re32="$or_? ($ww $or1 $ww)"
-re3='\(E=\| \)\('"$re1$x$re31$x$re32"'\)'
+#re3='\(E=\| \)\('"$re1$x$re31$x$re32"'\)'
+re3='\(E=\| \)\('"$re1$x$re31"'\)'
 
 l=$(grep -l " \($or\) " $list) || return 1 #"
 
@@ -175,6 +177,8 @@ for i in $(grep -l "^REQUIRED_US.*$re3" $l|sort -u); do #'
 				q0="$q0"
 				if1=true
 			else
+				echo "Must not be reached! bad way" >&2
+				continue
 				if1=true
 				if2=true
 				j="$q"
@@ -294,10 +298,10 @@ qt5="$(sl "dev-qt/qt[a-zA-Z-]*" 5)"
 
 generate gles 'gles2 gles gles1' 'opengl' 'gles gles1 opengl egl vaapi' &
 {
-generate common 'opengl egl' 'gles gles1 gles2' 'gles gles1 gles2 egl'
-x1='kernel ssl openssl gnutls nss mhash cryptopp nettle' # enabled
+force='' generate common 'opengl egl' 'gles gles1 gles2' 'gles gles1 gles2 egl'
+x1='kernel ssl openssl gnutls nss mhash cryptopp nettle gcrypt' # enabled
 x2='libressl yassl mbedtls embedded' # drop
-generate +common "$x1" "$x1" "$x2"
+force='' generate +common "$x1" "$x1" "$x2"
 } &
 generate qt5 'qt5' 'qt4' 'gtk3 gtk2 gtk sdl' "$qt5" "$qt4" kde &
 generate qt4 'qt4' 'qt5' 'gtk3 gtk2 gtk sdl' "$qt4" "$qt5" kde &

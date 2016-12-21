@@ -5,38 +5,3 @@ media-libs/cogl gles2 -opengl
 media-libs/mesa gles2 gles1
 media-tv/kodi gles -opengl
 net-libs/webkit-gtk gles2 -opengl
-### precise
-
-=dev-games/ogre-1.9.0-r1 gles2 -opengl
-=dev-libs/weston-1.11.0 gles2
-=dev-libs/weston-1.9.0 gles2
-=dev-libs/weston-9999 gles2
-=kde-plasma/kinfocenter-5.8.3 gles2 -opengl
-=kde-plasma/kinfocenter-5.8.4 gles2 -opengl
-=media-libs/cogl-1.20.0 gles2 -opengl
-=media-libs/cogl-1.22.0 gles2 -opengl
-=media-libs/cogl-1.22.0-r1 gles2 -opengl
-=media-libs/cogl-1.22.0-r2 gles2 -opengl
-=media-libs/cogl-1.22.2 gles2 -opengl
-=media-libs/mesa-11.0.6 gles2 gles1
-=media-libs/mesa-11.0.9 gles2 gles1
-=media-libs/mesa-11.1.4 gles2 gles1
-=media-libs/mesa-11.2.2 gles2 gles1
-=media-libs/mesa-12.0.1 gles2 gles1
-=media-libs/mesa-12.0.3 gles2 gles1
-=media-libs/mesa-12.0.5 gles2 gles1
-=media-libs/mesa-13.0.0 gles2 gles1
-=media-libs/mesa-13.0.1 gles2 gles1
-=media-libs/mesa-13.0.2 gles2 gles1
-=media-libs/mesa-9999 gles2 gles1
-=media-tv/kodi-14.1 gles -opengl
-=media-tv/kodi-15.2 gles -opengl
-=media-tv/kodi-16.0 gles -opengl
-=media-tv/kodi-16.1 gles -opengl
-=media-tv/kodi-17.0_beta6 gles -opengl
-=media-tv/kodi-9999 gles -opengl
-=net-libs/webkit-gtk-2.12.5 gles2 -opengl
-=net-libs/webkit-gtk-2.14.1 gles2 -opengl
-=net-libs/webkit-gtk-2.14.2 gles2 -opengl
-=net-libs/webkit-gtk-2.4.11-r1 gles2 -opengl
-=net-libs/webkit-gtk-2.4.11-r200 gles2 -opengl

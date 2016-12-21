@@ -1,9 +1,0 @@
-### precise
-
-=app-emulation/vice-2.4.22 -sdl
-=app-emulation/vice-2.4.27 -sdl
-=app-emulation/vice-2.4.27-r2 -sdl
-=games-emulation/pcsxr-1.9.94 
-=games-emulation/pcsxr-1.9.94-r1 
-=games-emulation/ppsspp-1.2.2 -qt4 -qt5
-=games-emulation/ppsspp-9999 -qt4 -qt5

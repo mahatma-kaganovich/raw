@@ -2,7 +2,6 @@ dev-libs/DirectFB gles2 opengl
 dev-libs/efl gles egl
 dev-qt/qtgui gles2 egl
 kde-plasma/kwin gles -opengl
-media-libs/gst-plugins-bad gles2 -egl
 media-libs/gst-plugins-bad gles2 -egl -opengl
 media-libs/gst-plugins-bad gles2 -opengl
 media-libs/mesa gles1
@@ -10,13 +9,3 @@ media-libs/mesa gles2
 media-tv/kodi gles -vaapi
 net-libs/webkit-gtk gles2
 x11-libs/cairo gles2 -opengl
-### precise
-
-=media-tv/kodi-16.1 -gles -vaapi
-=media-tv/kodi-17.0_beta6 -gles -vaapi
-=media-tv/kodi-9999 -gles -vaapi
-=net-libs/webkit-gtk-2.12.5 -gles2
-=net-libs/webkit-gtk-2.14.1 -gles2
-=net-libs/webkit-gtk-2.14.2 -gles2
-=net-libs/webkit-gtk-2.4.11-r1 -gles2
-=net-libs/webkit-gtk-2.4.11-r200 -gles2

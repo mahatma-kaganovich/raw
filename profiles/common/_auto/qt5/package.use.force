@@ -16,31 +16,6 @@ net-misc/owncloud-client qt5 -qt4
 net-p2p/bitcoin-qt qt5 -qt4
 net-p2p/bitcoinxt-qt qt5 -qt4
 net-p2p/retroshare qt5 -qt4
-net-print/hplip qt5
 sci-electronics/pulseview qt5 -qt4
 sci-geosciences/merkaartor qt5 -qt4
 sys-devel/qconf qt5
-### precise
-
-=app-crypt/pinentry-0.9.6-r6 -qt5 -qt4
-=app-crypt/pinentry-0.9.7 -qt5 -qt4
-=app-crypt/pinentry-0.9.7-r1 -qt5 -qt4
-=app-crypt/pinentry-1.0.0 -qt5 -qt4
-=games-emulation/ppsspp-1.2.2 -qt5 -qt4
-=games-emulation/ppsspp-9999 -qt5 -qt4
-=media-libs/libmediaart-0.7.0 -qt5 -gtk -qt4
-=media-libs/libmediaart-1.9.0 -qt5 -gtk -qt4
-=media-libs/libmediaart-1.9.0-r1 -qt5 -gtk
-=media-libs/opencv-2.4.12-r1 -qt5 -qt4
-=media-libs/opencv-2.4.13 -qt5 -qt4
-=media-plugins/audacious-plugins-3.7.1 -qt5 -gtk -gtk3
-=media-sound/audacious-3.7.1 -qt5 -gtk -gtk3
-=net-analyzer/wireshark-2.0.6 -qt5
-=net-analyzer/wireshark-2.2.2 -qt5
-=net-analyzer/wireshark-2.2.3 -qt5
-=net-analyzer/wireshark-99999999 -qt5
-=net-p2p/transmission-2.84-r4 -qt5 -qt4
-=net-p2p/transmission-2.92 -qt5 -qt4
-=net-wireless/wpa_supplicant-2.5-r1 -qt5 -qt4
-=net-wireless/wpa_supplicant-2.5-r2 -qt5 -qt4
-=net-wireless/wpa_supplicant-2.6 -qt5 -qt4

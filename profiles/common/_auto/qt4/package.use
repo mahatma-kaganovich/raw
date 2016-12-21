@@ -14,39 +14,3 @@ x11-apps/copyq qt4 -qt5
 x11-apps/fusion-icon qt4
 x11-misc/lightdm qt4 -qt5
 x11-themes/qtcurve qt4 -qt5
-### precise
-
-=app-office/texmaker-4.5 qt4 -qt5
-=app-office/texstudio-2.10.8 qt4 -qt5
-=app-office/texstudio-2.11.0 qt4 -qt5
-=app-office/texstudio-2.11.2 qt4 -qt5
-=dev-libs/quazip-0.7.2 qt4 -qt5
-=games-emulation/gambatte-0.5.0_p20131102 qt4
-=games-emulation/higan-094 qt4
-=games-emulation/higan-099 qt4
-=games-emulation/mupen64plus-1.5-r1 qt4
-=games-emulation/mupen64plus-1.5-r2 qt4
-=games-emulation/ppsspp-1.2.2 qt4 -qt5
-=games-emulation/ppsspp-9999 qt4 -qt5
-=media-gfx/librecad-2.0.9-r1 qt4 -qt5
-=media-gfx/librecad-2.1.1 qt4 -qt5
-=media-gfx/librecad-2.1.3 qt4 -qt5
-=media-gfx/librecad-9999 qt4 -qt5
-=net-analyzer/wireshark-2.0.6 qt4 -qt5
-=net-analyzer/wireshark-2.2.2 qt4 -qt5
-=net-analyzer/wireshark-2.2.3 qt4 -qt5
-=net-analyzer/wireshark-99999999 qt4 -qt5
-=net-misc/nextcloud-client-2.2.3 qt4 -qt5
-=net-misc/nextcloud-client-2.2.4 qt4 -qt5
-=net-misc/owncloud-client-2.2.3 qt4 -qt5
-=net-misc/owncloud-client-2.2.3-r1 qt4 -qt5
-=net-p2p/retroshare-0.6.0 qt4 -qt5
-=net-p2p/retroshare-0.6.1 qt4 -qt5
-=net-p2p/retroshare-0.6.9999 qt4 -qt5
-=x11-apps/copyq-2.5.0 qt4 -qt5
-=x11-apps/fusion-icon-0.1-r4 qt4
-=x11-misc/lightdm-1.16.7 qt4 -qt5
-=x11-misc/lightdm-1.18.3 qt4 -qt5
-=x11-misc/lightdm-1.20.0 qt4 -qt5
-=x11-misc/lightdm-1.21.3 qt4 -qt5
-=x11-themes/qtcurve-9999 qt4 -qt5

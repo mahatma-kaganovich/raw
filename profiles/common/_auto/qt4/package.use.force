@@ -18,27 +18,3 @@ net-print/hplip -qt5
 sci-electronics/pulseview qt4 -qt5
 sci-geosciences/merkaartor qt4 -qt5
 sys-devel/qconf qt4 -qt5
-### precise
-
-=app-crypt/pinentry-0.9.6-r6 -qt4 -qt5
-=app-crypt/pinentry-0.9.7 -qt4 -qt5
-=app-crypt/pinentry-0.9.7-r1 -qt4 -qt5
-=app-crypt/pinentry-1.0.0 -qt4 -qt5
-=games-emulation/ppsspp-1.2.2 -qt4 -qt5
-=games-emulation/ppsspp-9999 -qt4 -qt5
-=media-libs/libmediaart-0.7.0 -qt4 -gtk -qt5
-=media-libs/libmediaart-1.9.0 -qt4 -gtk -qt5
-=media-libs/opencv-2.4.12-r1 -qt4 -qt5
-=media-libs/opencv-2.4.13 -qt4 -qt5
-=net-analyzer/wireshark-2.0.6 -qt5
-=net-analyzer/wireshark-2.2.2 -qt5
-=net-analyzer/wireshark-2.2.3 -qt5
-=net-analyzer/wireshark-99999999 -qt5
-=net-misc/dhcpcd-ui-0.7.4 -qt4 -gtk -gtk3
-=net-misc/dhcpcd-ui-0.7.5 -qt4 -gtk -gtk3
-=net-misc/dhcpcd-ui-0.7.5-r1 -qt4 -gtk -gtk3
-=net-p2p/transmission-2.84-r4 -qt4 -qt5
-=net-p2p/transmission-2.92 -qt4 -qt5
-=net-wireless/wpa_supplicant-2.5-r1 -qt4 -qt5
-=net-wireless/wpa_supplicant-2.5-r2 -qt4 -qt5
-=net-wireless/wpa_supplicant-2.6 -qt4 -qt5
