@@ -1,3 +1,4 @@
+app-emulation/qemu gtk gtk2
 media-plugins/audacious-plugins gtk3
 media-plugins/audacious-plugins gtk3 -gtk -qt5
 media-sound/audacious gtk3
@@ -5,10 +6,15 @@ media-sound/audacious gtk3 -gtk -qt5
 net-misc/dhcpcd-ui gtk3 -gtk
 ### precise
 
-=media-plugins/audacious-plugins-3.2.2-r1 gtk3
-=media-plugins/audacious-plugins-3.7.1-r1 gtk3 -gtk -qt5
-=media-sound/audacious-3.2.2-r1 gtk3
-=media-sound/audacious-3.7.1-r1 gtk3 -gtk -qt5
-=net-misc/dhcpcd-ui-0.7.4 gtk3 -gtk
-=net-misc/dhcpcd-ui-0.7.5 gtk3 -gtk
-=net-misc/dhcpcd-ui-0.7.5-r1 gtk3 -gtk
+=app-emulation/vice-2.4.22 -sdl
+=app-emulation/vice-2.4.27 -sdl
+=app-emulation/vice-2.4.27-r2 -sdl
+=media-libs/libmediaart-0.7.0 -gtk -qt4 -qt5
+=media-libs/libmediaart-1.9.0 -gtk -qt4 -qt5
+=media-libs/libmediaart-1.9.0-r1 -gtk -qt5
+=media-plugins/audacious-plugins-3.7.1 -gtk3 -gtk -qt5
+=media-sound/audacious-3.7.1 -gtk3 -gtk -qt5
+=net-analyzer/pinger-0.33 -gtk3 -gtk2
+=net-misc/dhcpcd-ui-0.7.4 -gtk3 -gtk -qt4
+=net-misc/dhcpcd-ui-0.7.5 -gtk3 -gtk -qt4
+=net-misc/dhcpcd-ui-0.7.5-r1 -gtk3 -gtk -qt4

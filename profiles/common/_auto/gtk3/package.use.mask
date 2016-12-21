@@ -1,3 +1,7 @@
+app-emulation/qemu -gtk -gtk2
+app-emulation/vice -gtk sdl
+media-libs/libmediaart -gtk qt4 qt5
+media-libs/libmediaart -gtk qt5
 media-plugins/audacious-plugins -gtk3 gtk
 media-plugins/audacious-plugins -gtk3 gtk qt5
 media-sound/audacious -gtk3 gtk
@@ -7,6 +11,14 @@ net-misc/dhcpcd-ui -gtk3 gtk qt4
 net-misc/dhcpcd-ui -gtk3 gtk
 ### precise
 
+=app-emulation/qemu-2.7.0-r7 -gtk -gtk2
+=app-emulation/qemu-9999 -gtk -gtk2
+=app-emulation/vice-2.4.22 -gtk sdl
+=app-emulation/vice-2.4.27 -gtk sdl
+=app-emulation/vice-2.4.27-r2 -gtk sdl
+=media-libs/libmediaart-0.7.0 -gtk qt4 qt5
+=media-libs/libmediaart-1.9.0 -gtk qt4 qt5
+=media-libs/libmediaart-1.9.0-r1 -gtk qt5
 =media-plugins/audacious-plugins-3.2.2-r1 -gtk3 gtk
 =media-plugins/audacious-plugins-3.7.1 -gtk3 gtk qt5
 =media-plugins/audacious-plugins-3.7.1-r1 -gtk3 gtk qt5

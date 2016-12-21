@@ -1,6 +1,8 @@
 #!/bin/bash
 # make per-toolkit _auto/*
 
+precise=true
+
 force=.force
 d=`pwd`
 export LANG=C
@@ -48,13 +50,19 @@ done
 }
 
 ap(){
-	local i s="### precise"
-	[ -e "$4" ] || echo "$s
-" >"$4"
-	i="=$1$3"
-	grep -sqxF "$i" "$4" || echo "$i" >>"$4"
-	i="$2$3"
-	grep -sqxF "$i" "$4" || sed -i -e "s:^$s\$:$i\n$s:" "$4"
+	local x="${1//  / }"
+	x="${x% }"
+	x=" ${x# }"
+	if $precise; then
+		[ "$3" = false ]
+		local s="### precise"
+		[ -e "$2" ] || echo "$s
+" >"$2"
+		[ "$3" = false ] || [ -z "$p" ] || grep -sqxF "$p$x" "$2" || sed -i -e "s:^$s\$:$p$x\n$s:" "$2"
+		[ "$3" = true ] || grep -sqxF "=$i$x" "$2" || echo "=$i$x" >>"$2"
+	else
+		grep -sqxF "$p$x" "$2" || echo "$p$x" >>"$2"
+	fi
 }
 
 chk6(){
@@ -81,6 +89,14 @@ chk6(){
 	! $x1 && ! $x2 && return $6
 	$x1 && $x2  && return $7
 	$x1
+}
+
+inv(){
+	local i=" $1 "
+	i="${i//  / }"
+	i="${i// / -}"
+	i="${i%-}"
+	echo "${i// --/ }"
 }
 
 generate(){
@@ -124,9 +140,10 @@ re3='\(E=\| \)\('"$re1$x$re31$x$re32"'\)'
 l=$(grep -l " \($or\) " $list) || return 1 #"
 
 [ -n "$3" ] && {
-for i in $(grep -l "^REQUIRED_US.*$re3" $l); do
+for i in $(grep -l "^REQUIRED_US.*$re3" $l|sort -u); do #'
 	grep -oh "$re3" "$i"|while read q; do
 		q="${q#E=}"
+		q_="$q"
 		q0="${q% \( *}"
 		q="${q#* \( }"
 		q="${q% \)}"
@@ -138,6 +155,10 @@ for i in $(grep -l "^REQUIRED_US.*$re3" $l); do
 		iuse=`grep "^IUSE=" "$i"`
 		iuse=" ${iuse#IUSE=} "
 		iuse1="${iuse// [+~-]/ }"
+		debug=false
+		q="${q// !/ -}"
+		q="${q// - / }"
+		q="${q%!}"
 		if [ "$q0" = '??' ]; then
 			true
 			f=false
@@ -145,31 +166,44 @@ for i in $(grep -l "^REQUIRED_US.*$re3" $l); do
 			true
 		else
 			q0="${q0%\?}"
+			q0="${q0//!/-}"
 			x=" $1 "
-			if [ -z "${x##* ${q0#!} *}" ]; then
+			if [ "${q0#-}" = "$v" ]; then
+				chk6 "$4" "$5" "$v" "$1" "$2" $prob $prob || continue
+				if1=true
+			elif [ -z "${x##* ${q0#-} *}" ]; then
+				q0="$q0"
 				if1=true
 			else
+				if1=true
 				if2=true
 				j="$q"
 				q=" $q0 "
 				q0="$j"
+				q0="${q0# }"
+				q0=" ${q0% } "
+				q0_="$j"
 				for j in $q0; do
-					[ -n "${x##* ${j#!} *}" ] && q0="${q0// $j / }"
+					j="${j#-}"
+					[ -z "${x##* $j *}" ] && continue
+					[ "$j" = "$v" ] && chk6 "$4" "$5" "$v" "$1" "$2" $prob $prob && continue
+					echo "Warning: '$q_' in $i (unused '$j')" >&2
+					q0="${q0// $j / }"
+					q0="${q0// -$j / }"
 				done
-				continue
+				q0="${q0# }"
+				q0="${q0% }"
 			fi
-			
-			[ "$q0" = "$v" ] && ! chk6 "$4" "$5" "$v" "$1" "$2" $prob $prob && continue
-#			continue
 		fi
-
+		q0=" $q0 "
+		q0="${q0//  / }"
+		q=" $q "
 		q="${q//  / }"
-		q="${q// !/ -}"
+
 		# unify both results
 		if $if1; then
 			x=" $1 "
-			q="${q// / -} "
-			q="${q// - / }"
+			q=$(inv "$q")
 		else
 			# sort $q in $1 order, first - unmasked
 			x=
@@ -184,37 +218,35 @@ for i in $(grep -l "^REQUIRED_US.*$re3" $l); do
 			q=" ${q#* }"
 		fi
 
-		q="${q// --/ }" # ???
 		while [[ "$q" == *'  '* ]]; do q="${q//  / }"; done
 
-		[ -z "$q0" ] && continue
-		if [[ "$q0" == '!'* ]]; then
-			q0="${q0#!}"
-			q="${q// / -}"
-			q="${q%-}"
-			q="${q// --/ }"
+		[ -z "${q0//[ -]/}" ] && continue
+		if [[ "$q0" == ' -'* ]]; then
+			q0=$(inv "$q0")
+			[[ "$q0" == ' -'* ]] && echo "Skip: don't know how to resolve: $i '$q_'" >&2 && continue
+			q=$(inv "$q")
 		fi
-		[ -n "${x##* $q0 *}" ] && continue
 
 		r1=
 		for j in $q; do
 			[ -n "${x##* ${j#-} *}" -a -n "${l1##* -${j#-} *}" ] && r1+=" $j" && q="${q// $j / }"
 		done
-		r=" -$q0${q% }"
+		r="$(inv "$q0")$q"
 		u=
-		$f && {
-			u=" $q0${q// / -}"
-			u="${u%-}"
-			u="${u// --/ }"
+		pr=
+		($f || $precise) && {
+			u="$q0"
+			$f && u="$q0" || u=$(inv "$q0")
+			u+=$(inv "$q")
 			for j in $u; do
 				[ "${j#-}" = "$6" -o -z "${iuse##* +${j#-} *}" ] && u="${u// $j / }"
 			done
-			u="${u% }"
+#			$f || u+=" ##precise"
 		}
 
 		for p in $(pkg "$i"); do
-			[[ "$r" == *' -'* ]] && ap "$i" "$p" "$r${r1:+ #$r1}" "$d/package.use.mask"
-			[ -n "$u" ] && ap "$i" "$p" "$u" "$d/package.use$force"
+			[[ "$r" == *' -'* ]] && ap "$r${r1:+#$r1}" "$d/package.use.mask"
+			[ -n "$u" ] && ap "$u" "$d/package.use$force" $f
 		done
 	done
 done
@@ -244,7 +276,7 @@ for i in $(grep -l "$re2" $l); do
 			[ "$j" = "$v" ] && ! chk6 "$4" "$5" "$v" "$1" "$2" 0 0 && continue
 			r+="-$j "
 		done
-		ap "$i" "$p" "${r% }" "$d/package.use"
+		ap "${r% }" "$d/package.use"
 	done
 done
 

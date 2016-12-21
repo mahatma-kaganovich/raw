@@ -1,8 +1,17 @@
+dev-libs/DirectFB -opengl -gles2
+dev-libs/efl -egl -gles
+dev-qt/qtgui -egl -gles2
 kde-plasma/kwin -opengl gles
 media-gfx/tachyon -opengl # mpi
 media-libs/gst-plugins-bad -egl gles2
+media-libs/gst-plugins-bad -egl -opengl gles2
+media-libs/gst-plugins-bad -opengl gles2
+media-libs/mesa -egl -gles1
+media-libs/mesa -egl -gles2
 media-video/mpv -egl -opengl # -X
+net-libs/webkit-gtk -egl -gles2
 net-libs/webkit-gtk -opengl gles2
+x11-libs/cairo -opengl gles2
 app-i18n/yaskkserv -gnutls libressl
 dev-cpp/commoncpp2 -gnutls -ssl
 dev-db/mariadb -openssl yassl libressl
@@ -22,9 +31,11 @@ net-ftp/lftp -openssl gnutls
 net-irc/iroffer-dinoex -gnutls -ssl
 net-irc/scrollz -gnutls -ssl
 net-libs/libgadu -gnutls -ssl
+net-libs/libwebsockets -ssl -libressl
 net-mail/mpop -gnutls -ssl
 net-misc/iputils -openssl nettle # gcrypt
 net-misc/networkmanager -gnutls nss
+net-misc/openvpn -ssl -mbedtls
 net-misc/wget -gnutls -ssl
 net-nds/openldap -gnutls libressl
 net-proxy/shadowsocks-libev -openssl mbedtls
@@ -33,19 +44,64 @@ sys-fs/cryptsetup -kernel openssl nettle # gcrypt
 www-misc/litmus -ssl gnutls
 ### precise
 
+=dev-libs/DirectFB-1.7.6 -opengl -gles2
+=dev-libs/efl-1.12.2 -egl -gles
+=dev-libs/efl-1.15.2 -egl -gles
+=dev-libs/efl-1.16.1 -egl -gles
+=dev-libs/efl-1.17.0 -egl -gles
+=dev-libs/efl-9999 -egl -gles
+=dev-qt/qtgui-5.6.1 -egl -gles2
+=dev-qt/qtgui-5.6.2 -egl -gles2
+=dev-qt/qtgui-5.7.1 -egl -gles2
 =kde-plasma/kwin-4.11.22 -opengl gles
 =media-gfx/tachyon-0.98.9-r2 -opengl # mpi
 =media-gfx/tachyon-0.99_beta6 -opengl # mpi
 =media-libs/gst-plugins-bad-1.4.5 -egl gles2
+=media-libs/gst-plugins-bad-1.4.5 -egl -opengl gles2
 =media-libs/gst-plugins-bad-1.6.3 -egl gles2
+=media-libs/gst-plugins-bad-1.6.3 -opengl gles2
 =media-libs/gst-plugins-bad-1.8.2 -egl gles2
+=media-libs/gst-plugins-bad-1.8.2 -opengl gles2
 =media-libs/gst-plugins-bad-1.8.3 -egl gles2
+=media-libs/gst-plugins-bad-1.8.3 -opengl gles2
+=media-libs/gst-plugins-bad-1.8.3-r1 -opengl gles2
+=media-libs/mesa-11.0.6 -egl -gles1
+=media-libs/mesa-11.0.6 -egl -gles2
+=media-libs/mesa-11.0.9 -egl -gles1
+=media-libs/mesa-11.0.9 -egl -gles2
+=media-libs/mesa-11.1.4 -egl -gles1
+=media-libs/mesa-11.1.4 -egl -gles2
+=media-libs/mesa-11.2.2 -egl -gles1
+=media-libs/mesa-11.2.2 -egl -gles2
+=media-libs/mesa-12.0.1 -egl -gles1
+=media-libs/mesa-12.0.1 -egl -gles2
+=media-libs/mesa-12.0.3 -egl -gles1
+=media-libs/mesa-12.0.3 -egl -gles2
+=media-libs/mesa-12.0.5 -egl -gles1
+=media-libs/mesa-12.0.5 -egl -gles2
+=media-libs/mesa-13.0.0 -egl -gles1
+=media-libs/mesa-13.0.0 -egl -gles2
+=media-libs/mesa-13.0.1 -egl -gles1
+=media-libs/mesa-13.0.1 -egl -gles2
+=media-libs/mesa-13.0.2 -egl -gles1
+=media-libs/mesa-13.0.2 -egl -gles2
+=media-libs/mesa-9999 -egl -gles1
+=media-libs/mesa-9999 -egl -gles2
 =media-video/mpv-0.9.2-r1 -egl -opengl # -X
+=net-libs/webkit-gtk-2.12.5 -egl -gles2
 =net-libs/webkit-gtk-2.12.5 -opengl gles2
+=net-libs/webkit-gtk-2.14.1 -egl -gles2
 =net-libs/webkit-gtk-2.14.1 -opengl gles2
+=net-libs/webkit-gtk-2.14.2 -egl -gles2
 =net-libs/webkit-gtk-2.14.2 -opengl gles2
+=net-libs/webkit-gtk-2.4.11-r1 -egl -gles2
 =net-libs/webkit-gtk-2.4.11-r1 -opengl gles2
+=net-libs/webkit-gtk-2.4.11-r200 -egl -gles2
 =net-libs/webkit-gtk-2.4.11-r200 -opengl gles2
+=x11-libs/cairo-1.14.2 -opengl gles2
+=x11-libs/cairo-1.14.6 -opengl gles2
+=x11-libs/cairo-1.14.8 -opengl gles2
+=x11-libs/cairo-9999 -opengl gles2
 =app-i18n/yaskkserv-1.1.0 -gnutls libressl
 =dev-cpp/commoncpp2-1.8.1-r1 -gnutls -ssl
 =dev-db/mariadb-10.0.28 -openssl yassl libressl
@@ -89,6 +145,9 @@ www-misc/litmus -ssl gnutls
 =net-libs/libgadu-1.11.4 -gnutls -ssl
 =net-libs/libgadu-1.12.0 -gnutls -ssl
 =net-libs/libgadu-1.12.1 -gnutls -ssl
+=net-libs/libwebsockets-1.7.8 -ssl -libressl
+=net-libs/libwebsockets-1.7.9 -ssl -libressl
+=net-libs/libwebsockets-2.0.2 -ssl -libressl
 =net-mail/mpop-1.2.4 -gnutls -ssl
 =net-mail/mpop-1.2.5 -gnutls -ssl
 =net-mail/mpop-1.2.6 -gnutls -ssl
@@ -99,6 +158,8 @@ www-misc/litmus -ssl gnutls
 =net-misc/networkmanager-1.4.0 -gnutls nss
 =net-misc/networkmanager-1.4.0-r1 -gnutls nss
 =net-misc/networkmanager-1.4.2 -gnutls nss
+=net-misc/openvpn-2.4_rc2 -ssl -mbedtls
+=net-misc/openvpn-9999 -ssl -mbedtls
 =net-misc/wget-1.18 -gnutls -ssl
 =net-nds/openldap-2.4.42-r1 -gnutls libressl
 =net-nds/openldap-2.4.43 -gnutls libressl

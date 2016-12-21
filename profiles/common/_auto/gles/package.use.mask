@@ -2,6 +2,7 @@ dev-libs/DirectFB -gles2 -opengl
 dev-libs/efl -gles -egl
 dev-qt/qtgui -gles2 -egl
 kde-plasma/kwin -gles opengl
+media-libs/gst-plugins-bad -gles2 egl
 media-libs/gst-plugins-bad -gles2 egl opengl
 media-libs/gst-plugins-bad -gles2 opengl
 media-libs/mesa -gles1 -egl
@@ -22,9 +23,13 @@ x11-libs/cairo -gles2 opengl
 =dev-qt/qtgui-5.6.2 -gles2 -egl
 =dev-qt/qtgui-5.7.1 -gles2 -egl
 =kde-plasma/kwin-4.11.22 -gles opengl
+=media-libs/gst-plugins-bad-1.4.5 -gles2 egl
 =media-libs/gst-plugins-bad-1.4.5 -gles2 egl opengl
+=media-libs/gst-plugins-bad-1.6.3 -gles2 egl
 =media-libs/gst-plugins-bad-1.6.3 -gles2 opengl
+=media-libs/gst-plugins-bad-1.8.2 -gles2 egl
 =media-libs/gst-plugins-bad-1.8.2 -gles2 opengl
+=media-libs/gst-plugins-bad-1.8.3 -gles2 egl
 =media-libs/gst-plugins-bad-1.8.3 -gles2 opengl
 =media-libs/gst-plugins-bad-1.8.3-r1 -gles2 opengl
 =media-libs/mesa-11.0.6 -gles1 -egl

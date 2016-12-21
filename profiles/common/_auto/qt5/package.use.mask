@@ -22,6 +22,7 @@ net-p2p/bitcoin-qt -qt5 qt4
 net-p2p/bitcoinxt-qt -qt5 qt4
 net-p2p/retroshare -qt5 qt4
 net-p2p/transmission -qt5 qt4
+net-print/hplip -qt5 qt4
 net-wireless/wpa_supplicant -qt5 qt4
 sci-electronics/pulseview -qt5 qt4
 sci-geosciences/merkaartor -qt5 qt4
@@ -82,6 +83,7 @@ sys-devel/qconf -qt5 qt4
 =net-p2p/retroshare-0.6.9999 -qt5 qt4
 =net-p2p/transmission-2.84-r4 -qt5 qt4
 =net-p2p/transmission-2.92 -qt5 qt4
+=net-print/hplip-3.16.11 -qt5 qt4
 =net-wireless/wpa_supplicant-2.5-r1 -qt5 qt4
 =net-wireless/wpa_supplicant-2.5-r2 -qt5 qt4
 =net-wireless/wpa_supplicant-2.6 -qt5 qt4

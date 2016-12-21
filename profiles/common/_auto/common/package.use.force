@@ -1,13 +1,23 @@
+dev-libs/DirectFB opengl gles2
+dev-libs/efl egl gles
+dev-qt/qtgui egl gles2
 kde-plasma/kwin opengl -gles
+media-gfx/tachyon opengl
 media-libs/gst-plugins-bad egl -gles2
+media-libs/gst-plugins-bad egl opengl -gles2
+media-libs/gst-plugins-bad opengl -gles2
+media-libs/mesa gles1
+media-libs/mesa gles2
 media-video/mpv egl
-net-libs/webkit-gtk -gles2
+net-libs/webkit-gtk gles2
+net-libs/webkit-gtk opengl -gles2
+x11-libs/cairo opengl -gles2
 dev-cpp/commoncpp2 gnutls ssl
-dev-db/mariadb -yassl -libressl
-dev-db/mariadb-galera -yassl -libressl
-dev-db/mysql -yassl -libressl
-dev-db/mysql-cluster -yassl -libressl
-dev-db/percona-server -yassl -libressl
+dev-db/mariadb openssl -yassl -libressl
+dev-db/mariadb-galera openssl -yassl -libressl
+dev-db/mysql openssl -yassl -libressl
+dev-db/mysql-cluster openssl -yassl -libressl
+dev-db/percona-server openssl -yassl -libressl
 dev-vcs/cvsync mhash
 mail-mta/msmtp gnutls ssl
 mail-mta/ssmtp gnutls
@@ -18,83 +28,34 @@ net-ftp/lftp openssl
 net-irc/iroffer-dinoex gnutls ssl
 net-irc/scrollz gnutls ssl
 net-libs/libgadu gnutls ssl
+net-libs/libwebsockets libressl
 net-mail/mpop gnutls ssl
-net-misc/iputils -nettle
+net-misc/iputils openssl -nettle
 net-misc/networkmanager gnutls
+net-misc/openvpn mbedtls
 net-misc/wget gnutls
-net-proxy/shadowsocks-libev -mbedtls
-sys-cluster/ceph -cryptopp
+net-proxy/shadowsocks-libev openssl -mbedtls
+sys-cluster/ceph nss -cryptopp
 sys-fs/cryptsetup kernel -openssl -nettle
-www-misc/litmus -gnutls
+www-misc/litmus ssl -gnutls
 ### precise
 
-=kde-plasma/kwin-4.11.22 opengl -gles
-=media-libs/gst-plugins-bad-1.4.5 egl -gles2
-=media-libs/gst-plugins-bad-1.6.3 egl -gles2
-=media-libs/gst-plugins-bad-1.8.2 egl -gles2
-=media-libs/gst-plugins-bad-1.8.3 egl -gles2
-=media-video/mpv-0.9.2-r1 egl
 =net-libs/webkit-gtk-2.12.5 -gles2
 =net-libs/webkit-gtk-2.14.1 -gles2
 =net-libs/webkit-gtk-2.14.2 -gles2
 =net-libs/webkit-gtk-2.4.11-r1 -gles2
 =net-libs/webkit-gtk-2.4.11-r200 -gles2
-=dev-cpp/commoncpp2-1.8.1-r1 gnutls ssl
-=dev-db/mariadb-10.0.28 -yassl -libressl
-=dev-db/mariadb-10.1.19-r1 -yassl -libressl
-=dev-db/mariadb-10.1.20 -yassl -libressl
-=dev-db/mariadb-10.2.1_alpha -yassl -libressl
-=dev-db/mariadb-galera-10.0.28 -yassl -libressl
-=dev-db/mysql-5.6.34 -yassl -libressl
-=dev-db/mysql-5.6.35 -yassl -libressl
-=dev-db/mysql-cluster-7.3.11 -yassl -libressl
-=dev-db/percona-server-5.6.32.78.1 -yassl -libressl
-=dev-db/percona-server-5.6.33.79.0 -yassl -libressl
-=dev-db/percona-server-5.6.34.79.1 -yassl -libressl
-=dev-vcs/cvsync-2014.08.24.014706 mhash
-=dev-vcs/cvsync-9999 mhash
-=mail-mta/msmtp-1.6.1 gnutls ssl
-=mail-mta/msmtp-1.6.2 gnutls ssl
-=mail-mta/msmtp-1.6.3 gnutls ssl
-=mail-mta/msmtp-1.6.4 gnutls ssl
-=mail-mta/msmtp-1.6.5 gnutls ssl
-=mail-mta/msmtp-1.6.6 gnutls ssl
-=mail-mta/ssmtp-2.64-r2 gnutls
-=mail-mta/ssmtp-2.64-r3 gnutls
-=net-analyzer/echoping-6.0.2_p434-r2 gnutls ssl
-=net-analyzer/echoping-6.0.2_p434-r3 gnutls ssl
-=net-fs/s3fs-1.80 openssl -gnutls -nss
-=net-fs/s3fs-1.80 nettle gnutls
-=net-ftp/lftp-4.6.5 openssl
-=net-irc/iroffer-dinoex-3.29 gnutls ssl
-=net-irc/scrollz-2.1 gnutls ssl
-=net-irc/scrollz-2.2 gnutls ssl
-=net-irc/scrollz-2.2.1 gnutls ssl
-=net-libs/libgadu-1.11.4 gnutls ssl
-=net-libs/libgadu-1.12.0 gnutls ssl
-=net-libs/libgadu-1.12.1 gnutls ssl
-=net-mail/mpop-1.2.4 gnutls ssl
-=net-mail/mpop-1.2.5 gnutls ssl
-=net-mail/mpop-1.2.6 gnutls ssl
-=net-misc/iputils-20160308 -nettle
-=net-misc/iputils-99999999 -nettle
-=net-misc/networkmanager-1.0.12-r1 gnutls
-=net-misc/networkmanager-1.2.4 gnutls
-=net-misc/networkmanager-1.4.0 gnutls
-=net-misc/networkmanager-1.4.0-r1 gnutls
-=net-misc/networkmanager-1.4.2 gnutls
-=net-misc/wget-1.18 gnutls
-=net-proxy/shadowsocks-libev-2.5.4 -mbedtls
-=net-proxy/shadowsocks-libev-2.5.5 -mbedtls
-=net-proxy/shadowsocks-libev-2.5.6 -mbedtls
-=sys-cluster/ceph-0.94.9 -cryptopp
-=sys-cluster/ceph-10.2.3-r2 -cryptopp
-=sys-cluster/ceph-10.2.4 -cryptopp
-=sys-cluster/ceph-10.2.5 -cryptopp
-=sys-cluster/ceph-9.2.1-r2 -cryptopp
-=sys-cluster/ceph-9999 -cryptopp
-=sys-fs/cryptsetup-1.6.5 kernel -openssl -nettle
-=sys-fs/cryptsetup-1.6.8-r1 kernel -openssl -nettle
-=sys-fs/cryptsetup-1.7.2 kernel -openssl -nettle
-=sys-fs/cryptsetup-1.7.3 kernel -openssl -nettle
+=app-i18n/yaskkserv-1.1.0 -gnutls -libressl
+=dev-perl/DBD-mysql-4.36.0-r1 -embedded
+=dev-perl/DBD-mysql-4.37.0 -embedded
+=dev-perl/DBD-mysql-4.38.0 -embedded
+=dev-perl/DBD-mysql-4.38.10_rc -embedded
+=dev-perl/DBD-mysql-4.39.0 -embedded
+=dev-perl/DBD-mysql-4.40.0 -embedded
+=dev-perl/DBD-mysql-4.41.0 -embedded
+=mail-mta/courier-0.75.0-r1 -gnutls -libressl
+=net-nds/openldap-2.4.42-r1 -gnutls -libressl
+=net-nds/openldap-2.4.43 -gnutls -libressl
+=net-nds/openldap-2.4.43-r1 -gnutls -libressl
+=net-nds/openldap-2.4.44 -gnutls -libressl
 =www-misc/litmus-0.13 -gnutls
