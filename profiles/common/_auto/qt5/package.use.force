@@ -1,10 +1,62 @@
-app-crypt/pinentry qt5 -qt4
-games-emulation/ppsspp qt5 -qt4
-media-libs/libmediaart qt5 -gtk -qt4
-media-libs/libmediaart qt5 -gtk
-media-libs/opencv qt5 -qt4
+app-misc/qlcplus qt5 -qt4
+app-office/lyx qt5
+app-office/texmaker qt5
+app-office/texmaker -qt4
+app-office/texstudio -qt4
+dev-games/openscenegraph qt5 -qt4
+dev-libs/quazip qt5 -qt4
+kde-misc/kdiff3 qt5
 media-plugins/audacious-plugins qt5 -gtk -gtk3
 media-sound/audacious qt5 -gtk -gtk3
-net-analyzer/wireshark qt5
-net-p2p/transmission qt5 -qt4
-net-wireless/wpa_supplicant qt5 -qt4
+media-sound/flacon qt5 -qt4
+media-video/smplayer qt5
+net-libs/qxmpp qt5
+net-misc/nextcloud-client -qt4
+net-misc/owncloud-client -qt4
+net-p2p/bitcoin-qt qt5 -qt4
+net-p2p/bitcoinxt-qt qt5 -qt4
+net-p2p/retroshare -qt4
+sci-electronics/pulseview qt5 -qt4
+sci-geosciences/merkaartor qt5 -qt4
+sys-devel/qconf qt5
+### precise
+
+=app-misc/qlcplus-4.10.4 qt5 -qt4
+=app-misc/qlcplus-4.10.5 qt5 -qt4
+=app-office/lyx-2.2.1 qt5
+=app-office/lyx-2.2.2 qt5
+=app-office/texmaker-4.4.1-r1 qt5
+=app-office/texmaker-4.5 -qt4
+=app-office/texstudio-2.10.8 -qt4
+=app-office/texstudio-2.11.0 -qt4
+=app-office/texstudio-2.11.2 -qt4
+=dev-games/openscenegraph-3.2.1-r2 qt5 -qt4
+=dev-games/openscenegraph-3.4.0 qt5 -qt4
+=dev-libs/quazip-0.7.1 qt5 -qt4
+=kde-misc/kdiff3-0.9.98-r1 qt5
+=media-plugins/audacious-plugins-3.7.1-r1 qt5 -gtk -gtk3
+=media-sound/audacious-3.7.1-r1 qt5 -gtk -gtk3
+=media-sound/flacon-2.0.1 qt5 -qt4
+=media-video/smplayer-16.1.0 qt5
+=net-libs/qxmpp-0.9.3 qt5
+=net-misc/nextcloud-client-2.2.3 -qt4
+=net-misc/nextcloud-client-2.2.4 -qt4
+=net-misc/owncloud-client-2.2.3 -qt4
+=net-misc/owncloud-client-2.2.3-r1 -qt4
+=net-p2p/bitcoin-qt-0.10.2 qt5 -qt4
+=net-p2p/bitcoin-qt-0.10.2-r1 qt5 -qt4
+=net-p2p/bitcoin-qt-0.11.0 qt5 -qt4
+=net-p2p/bitcoin-qt-0.11.1 qt5 -qt4
+=net-p2p/bitcoin-qt-0.11.2 qt5 -qt4
+=net-p2p/bitcoin-qt-0.12.0 qt5 -qt4
+=net-p2p/bitcoin-qt-0.12.1 qt5 -qt4
+=net-p2p/bitcoin-qt-0.13.0 qt5 -qt4
+=net-p2p/bitcoin-qt-9999 qt5 -qt4
+=net-p2p/bitcoinxt-qt-0.11.0d qt5 -qt4
+=net-p2p/retroshare-0.6.0 -qt4
+=net-p2p/retroshare-0.6.1 -qt4
+=net-p2p/retroshare-0.6.9999 -qt4
+=sci-electronics/pulseview-0.3.0 qt5 -qt4
+=sci-electronics/pulseview-9999 qt5 -qt4
+=sci-geosciences/merkaartor-0.18.2 qt5 -qt4
+=sys-devel/qconf-2.0 qt5

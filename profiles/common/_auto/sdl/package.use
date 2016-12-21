@@ -3,3 +3,24 @@ games-strategy/freeciv sdl
 media-plugins/audacious-plugins sdl
 media-video/vlc sdl
 net-wireless/gnuradio sdl
+### precise
+
+=app-emulation/vice-2.4.22 sdl
+=app-emulation/vice-2.4.27 sdl
+=app-emulation/vice-2.4.27-r2 sdl
+=games-strategy/freeciv-2.5.3 sdl
+=games-strategy/freeciv-2.5.4 sdl
+=games-strategy/freeciv-2.5.5 sdl
+=games-strategy/freeciv-2.5.6 sdl
+=media-plugins/audacious-plugins-3.2.2-r1 sdl
+=media-video/vlc-2.2.1-r1 sdl
+=media-video/vlc-2.2.4 sdl
+=media-video/vlc-2.2.4-r1 sdl
+=media-video/vlc-2.2.9999 sdl
+=media-video/vlc-9999 sdl
+=net-wireless/gnuradio-3.7.10.1 sdl
+=net-wireless/gnuradio-3.7.6.1-r2 sdl
+=net-wireless/gnuradio-3.7.7.1 sdl
+=net-wireless/gnuradio-3.7.8.1 sdl
+=net-wireless/gnuradio-3.7.9.3 sdl
+=net-wireless/gnuradio-9999 sdl

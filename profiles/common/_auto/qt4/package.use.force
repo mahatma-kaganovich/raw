@@ -1,8 +1,60 @@
-app-crypt/pinentry qt4 -qt5
-games-emulation/ppsspp qt4 -qt5
-media-libs/libmediaart qt4 -gtk -qt5
-media-libs/opencv qt4 -qt5
-net-analyzer/wireshark -qt5
-net-misc/dhcpcd-ui qt4 -gtk -gtk3
-net-p2p/transmission qt4 -qt5
-net-wireless/wpa_supplicant qt4 -qt5
+app-misc/qlcplus qt4 -qt5
+app-office/lyx -qt5
+app-office/texmaker -qt5
+app-office/texmaker qt4
+app-office/texstudio qt4
+dev-games/openscenegraph qt4 -qt5
+dev-libs/quazip qt4 -qt5
+kde-misc/kdiff3 -qt5
+media-sound/flacon qt4 -qt5
+media-video/smplayer -qt5
+net-libs/qxmpp -qt5
+net-misc/nextcloud-client qt4
+net-misc/owncloud-client qt4
+net-p2p/bitcoin-qt qt4 -qt5
+net-p2p/bitcoinxt-qt qt4 -qt5
+net-p2p/retroshare qt4
+net-print/hplip -qt5
+sci-electronics/pulseview qt4 -qt5
+sci-geosciences/merkaartor qt4 -qt5
+sys-devel/qconf -qt5
+### precise
+
+=app-misc/qlcplus-4.10.4 qt4 -qt5
+=app-misc/qlcplus-4.10.5 qt4 -qt5
+=app-office/lyx-2.2.1 -qt5
+=app-office/lyx-2.2.2 -qt5
+=app-office/texmaker-4.4.1-r1 -qt5
+=app-office/texmaker-4.5 qt4
+=app-office/texstudio-2.10.8 qt4
+=app-office/texstudio-2.11.0 qt4
+=app-office/texstudio-2.11.2 qt4
+=dev-games/openscenegraph-3.2.1-r2 qt4 -qt5
+=dev-games/openscenegraph-3.4.0 qt4 -qt5
+=dev-libs/quazip-0.7.1 qt4 -qt5
+=kde-misc/kdiff3-0.9.98-r1 -qt5
+=media-sound/flacon-2.0.1 qt4 -qt5
+=media-video/smplayer-16.1.0 -qt5
+=net-libs/qxmpp-0.9.3 -qt5
+=net-misc/nextcloud-client-2.2.3 qt4
+=net-misc/nextcloud-client-2.2.4 qt4
+=net-misc/owncloud-client-2.2.3 qt4
+=net-misc/owncloud-client-2.2.3-r1 qt4
+=net-p2p/bitcoin-qt-0.10.2 qt4 -qt5
+=net-p2p/bitcoin-qt-0.10.2-r1 qt4 -qt5
+=net-p2p/bitcoin-qt-0.11.0 qt4 -qt5
+=net-p2p/bitcoin-qt-0.11.1 qt4 -qt5
+=net-p2p/bitcoin-qt-0.11.2 qt4 -qt5
+=net-p2p/bitcoin-qt-0.12.0 qt4 -qt5
+=net-p2p/bitcoin-qt-0.12.1 qt4 -qt5
+=net-p2p/bitcoin-qt-0.13.0 qt4 -qt5
+=net-p2p/bitcoin-qt-9999 qt4 -qt5
+=net-p2p/bitcoinxt-qt-0.11.0d qt4 -qt5
+=net-p2p/retroshare-0.6.0 qt4
+=net-p2p/retroshare-0.6.1 qt4
+=net-p2p/retroshare-0.6.9999 qt4
+=net-print/hplip-3.16.11 -qt5
+=sci-electronics/pulseview-0.3.0 qt4 -qt5
+=sci-electronics/pulseview-9999 qt4 -qt5
+=sci-geosciences/merkaartor-0.18.2 qt4 -qt5
+=sys-devel/qconf-2.0 -qt5

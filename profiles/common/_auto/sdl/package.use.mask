@@ -1,3 +1,12 @@
 app-emulation/vice -sdl gtk
 games-emulation/pcsxr -sdl # alsa openal oss pulseaudio
 games-emulation/ppsspp -sdl qt4 qt5
+### precise
+
+=app-emulation/vice-2.4.22 -sdl gtk
+=app-emulation/vice-2.4.27 -sdl gtk
+=app-emulation/vice-2.4.27-r2 -sdl gtk
+=games-emulation/pcsxr-1.9.94 -sdl # alsa openal oss pulseaudio
+=games-emulation/pcsxr-1.9.94-r1 -sdl # alsa openal oss pulseaudio
+=games-emulation/ppsspp-1.2.2 -sdl qt4 qt5
+=games-emulation/ppsspp-9999 -sdl qt4 qt5
