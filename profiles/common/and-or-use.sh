@@ -100,50 +100,8 @@ inv(){
 	echo "${i// --/ }"
 }
 
-generate(){
-local x=0 or1= or2= or= d="$d/_auto/${1#+}"
-[[ "$1" == +* ]] || rm -f "$d/package.use"*
-shift
-mkdir -p "$d"
-cd "$d" && cd /usr/portage/metadata/md5-cache || return 1
-v=${6#+}
-[ "$v" = "$6" ] && prob=0 || prob=1
-x='\|'
-for i in $1 $v; do
-	or1+="$x$i"
-done
-for i in $2 $v; do
-	or2+="$x$i"
-done
-for i in $3 $v; do
-	or3+="$x$i"
-done
-or1="${or1#??}"
-or="$or1$or2$or3"
-or2="${or2#??}"
-or_="$or2$or3"
-or3="${or3#??}"
-l1=" $2${3:+ $3}"
-l1=" $1 ${l1// / -} "
-
-or1='!*\('"$or1"'\)'
-or_='!*\('"$or_"'\)'
-#ww='[^()?\*\[\]]*'
-ww='[^()?\*\[]*'
-#ww='[^()]*'
-
-re1='\(\^\^\|??\) '"($ww $or1 $ww)"
-re2='^IUSE=.*+'"$or_"
-re31="$or1? ($ww $or_ $ww)"
-re32="$or_? ($ww $or1 $ww)"
-#re3='\(E=\| \)\('"$re1$x$re31$x$re32"'\)'
-re3='\(E=\| \)\('"$re1$x$re31"'\)'
-
-l=$(grep -l " \($or\) " $list) || return 1 #"
-
-[ -n "$3" ] && {
-for i in $(grep -l "^REQUIRED_US.*$re3" $l|sort -u); do #'
-	grep -oh "$re3" "$i"|while read q; do
+re1(){
+	grep '^REQUIRED_USE=' "$i"|grep -o "$re"|while read q; do
 		q="${q#E=}"
 		q_="$q"
 		q0="${q% \( *}"
@@ -152,52 +110,37 @@ for i in $(grep -l "^REQUIRED_US.*$re3" $l|sort -u); do #'
 		[ -z "${q##*[*?\[\]]*}" -o -z "${q//[ !]/}" ] && echo "Wrong REQUIRED_USE in $i - '$q'" >&2 && continue
 		q=" $q "
 		f=true
-		if1=false
-		if2=false
 		iuse=`grep "^IUSE=" "$i"`
 		iuse=" ${iuse#IUSE=} "
 		iuse1="${iuse// [+~-]/ }"
-		debug=false
 		q="${q// !/ -}"
 		q="${q// - / }"
 		q="${q%!}"
-		if [ "$q0" = '??' ]; then
-			true
+
+		q0="${q0%\?}"
+		q0="${q0//!/-}"
+		x=" $1 "
+		if $if1; then
+			[ "${q0#-}" = "$v" ] && ! chk6 "$4" "$5" "$v" "$1" "$2" $prob $prob && continue
+		elif $if2; then
+			j="$q"
+			q=" $q0 "
+			q0=
+			[[ "$q" == ' -'* ]] || j=$(inv "$j")
+			for j in $j; do
+				if [ "$j" = "$v" ]; then
+					chk6 "$4" "$5" "$v" "$1" "$2" $prob $prob && q0+=" $j" || continue
+				elif [ -n "${x##* $j *}" ]; then
+					continue
+				fi
+				q0+=" $j"
+			done
+			[ -z "${q0// /}" ] && continue
+			[[ "$q" == ' -'* ]] || q=$(inv "$q")
+			q0="${q0# }"
+			q0="${q0% }"
+		elif [ "$q0" != '^^' ]; then
 			f=false
-		elif [ "$q0" = '^^' ]; then
-			true
-		else
-			q0="${q0%\?}"
-			q0="${q0//!/-}"
-			x=" $1 "
-			if [ "${q0#-}" = "$v" ]; then
-				chk6 "$4" "$5" "$v" "$1" "$2" $prob $prob || continue
-				if1=true
-			elif [ -z "${x##* ${q0#-} *}" ]; then
-				q0="$q0"
-				if1=true
-			else
-				echo "Must not be reached! bad way" >&2
-				continue
-				if1=true
-				if2=true
-				j="$q"
-				q=" $q0 "
-				q0="$j"
-				q0="${q0# }"
-				q0=" ${q0% } "
-				q0_="$j"
-				for j in $q0; do
-					j="${j#-}"
-					[ -z "${x##* $j *}" ] && continue
-					[ "$j" = "$v" ] && chk6 "$4" "$5" "$v" "$1" "$2" $prob $prob && continue
-					echo "Warning: '$q_' in $i (unused '$j')" >&2
-					q0="${q0// $j / }"
-					q0="${q0// -$j / }"
-				done
-				q0="${q0# }"
-				q0="${q0% }"
-			fi
 		fi
 		q0=" $q0 "
 		q0="${q0//  / }"
@@ -206,6 +149,9 @@ for i in $(grep -l "^REQUIRED_US.*$re3" $l|sort -u); do #'
 
 		# unify both results
 		if $if1; then
+			x=" $1 "
+			q=$(inv "$q")
+		elif $if2; then
 			x=" $1 "
 			q=$(inv "$q")
 		else
@@ -253,11 +199,10 @@ for i in $(grep -l "^REQUIRED_US.*$re3" $l|sort -u); do #'
 			[ -n "$u" ] && ap "$u" "$d/package.use$force" $f
 		done
 	done
-done
 }
 
-for i in $(grep -l "$re2" $l); do
-	iuse=`grep "^IUSE=" "$i"`
+re2(){
+	iuse=`grep "$re2" "$i"` || return
 	iuse=" ${iuse#IUSE=} "
 	iuse1="${iuse// [+~-]/ }"
 	for p in $(pkg "$i"); do
@@ -282,6 +227,64 @@ for i in $(grep -l "$re2" $l); do
 		done
 		ap "${r% }" "$d/package.use"
 	done
+}
+
+generate(){
+local x=0 or1= or2= or= d="$d/_auto/${1#+}"
+[[ "$1" == +* ]] || rm -f "$d/package.use"*
+shift
+mkdir -p "$d"
+cd "$d" && cd /usr/portage/metadata/md5-cache || return 1
+v=${6#+}
+[ "$v" = "$6" ] && prob=0 || prob=1
+x='\|'
+for i in $1 $v; do
+	or1+="$x$i"
+done
+for i in $2 $v; do
+	or2+="$x$i"
+done
+for i in $3 $v; do
+	or3+="$x$i"
+done
+or1="${or1#??}"
+or="$or1$or2$or3"
+or2="${or2#??}"
+or_="$or2$or3"
+or3="${or3#??}"
+l1=" $2${3:+ $3}"
+l1=" $1 ${l1// / -} "
+
+or1='!*\('"$or1"'\)'
+or_='!*\('"$or_"'\)'
+#ww='[^()?\*\[\]]*'
+ww='[^()?\*\[]*'
+#ww='[^()]*'
+
+re1='\(\^\^\|??\) '"($ww $or1 $ww)"
+re2='^IUSE=.*+'"$or_"
+re31="$or1? ($ww $or_ $ww)"
+re32="$or_? ($ww $or1 $ww)"
+rs1='\(E=\| \)\('
+rs2='\)'
+
+if1=false
+if2=false
+
+grep -l ' \('"$or"'\) ' $list|while read i; do
+	[ -n "$3" ] && {
+		re="$rs1$re1$rs2"
+		re1 "${@}"
+		if1=true
+		re="$rs1$re31$rs2"
+		re1 "${@}"
+		if1=false
+		if2=true
+		re="$rs1$re32$rs2"
+		re1 "${@}"
+		if2=false
+	}
+	re2 "${@}"
 done
 
 cd $d

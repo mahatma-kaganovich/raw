@@ -3,10 +3,11 @@ dev-libs/efl -gles -egl
 dev-qt/qtgui -gles2 -egl
 kde-plasma/kwin -gles opengl
 media-libs/gst-plugins-bad -gles2 egl opengl
+media-libs/gst-plugins-bad -gles2 egl
 media-libs/gst-plugins-bad -gles2 opengl
 media-libs/mesa -gles1 -egl
 media-libs/mesa -gles2 -egl
 media-tv/kodi -gles vaapi
-net-libs/webkit-gtk -gles2 -egl
 net-libs/webkit-gtk -gles2 opengl
+net-libs/webkit-gtk -gles2 -egl
 x11-libs/cairo -gles2 opengl

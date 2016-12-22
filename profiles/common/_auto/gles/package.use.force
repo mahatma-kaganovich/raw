@@ -3,6 +3,7 @@ dev-libs/efl gles egl
 dev-qt/qtgui gles2 egl
 kde-plasma/kwin gles -opengl
 media-libs/gst-plugins-bad gles2 -egl -opengl
+media-libs/gst-plugins-bad gles2 -egl
 media-libs/gst-plugins-bad gles2 -opengl
 media-libs/mesa gles1
 media-libs/mesa gles2

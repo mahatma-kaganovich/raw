@@ -8,7 +8,6 @@ games-emulation/vbam gtk
 kde-plasma/plasma-desktop gtk3 -gtk2
 media-plugins/audacious-plugins gtk3
 media-sound/audacious gtk3
-net-analyzer/wireshark gtk3
 net-analyzer/wireshark gtk
 net-libs/gtk-vnc gtk3
 net-misc/electrum gtk3

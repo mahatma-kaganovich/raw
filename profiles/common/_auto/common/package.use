@@ -1,81 +1,84 @@
 kde-plasma/kwin opengl -gles
 media-gfx/tachyon opengl
 media-libs/gst-plugins-bad egl -gles2
-net-libs/webkit-gtk opengl -gles2
+media-libs/gst-plugins-bad egl opengl -gles2
+media-libs/gst-plugins-bad opengl -gles2
 media-libs/mesa egl -gles1 -gles2
 media-video/mpv opengl egl
+net-libs/webkit-gtk opengl -gles2
 net-libs/webkit-gtk opengl egl -gles2
-dev-cpp/commoncpp2 gnutls ssl
-dev-db/mariadb openssl -yassl -libressl
-dev-db/mariadb-galera openssl -yassl -libressl
-dev-db/mysql openssl -yassl -libressl
-dev-db/mysql-cluster openssl -yassl -libressl
-dev-db/percona-server openssl -yassl -libressl
-dev-vcs/cvsync mhash -gcrypt
-mail-mta/msmtp gnutls ssl
-mail-mta/ssmtp gnutls
-net-analyzer/echoping gnutls ssl
-net-fs/s3fs openssl -gnutls -nss
-net-fs/s3fs nettle gnutls
-net-ftp/lftp openssl
-net-irc/iroffer-dinoex gnutls ssl
-net-irc/scrollz gnutls ssl
-net-libs/libgadu gnutls ssl
-net-mail/mpop gnutls ssl
-net-misc/iputils openssl -nettle -gcrypt
-net-misc/networkmanager gnutls
-net-misc/wget gnutls
-net-proxy/shadowsocks-libev openssl -mbedtls
-sys-cluster/ceph nss -cryptopp
-sys-fs/cryptsetup kernel -openssl -nettle
-www-misc/litmus ssl -gnutls
+x11-libs/cairo opengl -gles2
 app-crypt/qca ssl nss gcrypt
 app-text/mupdf openssl
+dev-cpp/commoncpp2 gnutls ssl
+dev-db/mariadb openssl -yassl -libressl
 dev-db/mariadb openssl
+dev-db/mariadb-galera openssl -yassl -libressl
 dev-db/mariadb-galera openssl
+dev-db/mysql openssl -yassl -libressl
 dev-db/mysql openssl
+dev-db/mysql-cluster openssl -yassl -libressl
 dev-db/mysql-cluster openssl
+dev-db/percona-server openssl -yassl -libressl
 dev-db/percona-server openssl
 dev-lang/python ssl
 dev-libs/libevent ssl
 dev-libs/poco ssl
 dev-libs/xmlsec openssl gnutls nss gcrypt
 dev-perl/DBD-mysql ssl
+dev-vcs/cvsync mhash -gcrypt
 dev-vcs/cvsync openssl mhash gcrypt
 gnustep-apps/sogo ssl gnutls
 gnustep-base/gnustep-base ssl gnutls
 gnustep-libs/sope ssl gnutls
 mail-filter/opendkim ssl gnutls
+mail-mta/msmtp gnutls ssl
+mail-mta/ssmtp gnutls
 mail-mta/ssmtp ssl gnutls
 media-libs/mesa openssl nettle gcrypt
+net-analyzer/echoping gnutls ssl
 net-analyzer/monitoring-plugins ssl gnutls
 net-analyzer/nagios-plugins ssl
+net-fs/s3fs openssl -gnutls -nss
+net-fs/s3fs nettle gnutls
+net-ftp/lftp openssl
 net-ftp/lftp ssl openssl gnutls
 net-ftp/lftp ssl gnutls
 net-im/bitlbee gnutls nss
 net-im/qutim ssl
+net-irc/iroffer-dinoex gnutls ssl
+net-irc/scrollz gnutls ssl
 net-libs/gsoap ssl gnutls
 net-libs/ldns ssl
+net-libs/libgadu gnutls ssl
 net-libs/liboauth nss
 net-libs/libwebsockets ssl
 net-libs/rabbitmq-c ssl
 net-libs/rb_libtorrent ssl
 net-mail/dovecot ssl
+net-mail/mpop gnutls ssl
 net-mail/uw-imap ssl
 net-misc/aria2 ssl gnutls nettle
 net-misc/icecast ssl
+net-misc/iputils openssl -nettle -gcrypt
 net-misc/iputils ssl openssl nettle gcrypt
+net-misc/networkmanager gnutls
 net-misc/networkmanager gnutls nss
 net-misc/openconnect gnutls
 net-misc/openssh ssl
 net-misc/openvpn ssl
 net-misc/strongswan openssl gcrypt
 net-misc/tinc ssl
+net-misc/wget gnutls
 net-misc/wget ssl gnutls
 net-p2p/bitcoinxt-qt ssl
 net-p2p/bitcoinxtd ssl
+net-proxy/shadowsocks-libev openssl -mbedtls
 net-proxy/shadowsocks-libev openssl
+sys-cluster/ceph nss -cryptopp
 sys-cluster/ceph nss cryptopp
+sys-fs/cryptsetup kernel -openssl -nettle
+www-misc/litmus ssl -gnutls
 www-misc/litmus ssl gnutls
 www-misc/zoneminder openssl gnutls gcrypt
 www-misc/zoneminder ssl gnutls gcrypt

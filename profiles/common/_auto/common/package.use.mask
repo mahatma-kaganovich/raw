@@ -1,7 +1,10 @@
 kde-plasma/kwin -opengl gles
 media-gfx/tachyon -opengl # mpi
 media-libs/gst-plugins-bad -egl gles2
+media-libs/gst-plugins-bad -egl -opengl gles2
+media-libs/gst-plugins-bad -opengl gles2
 net-libs/webkit-gtk -opengl gles2
+x11-libs/cairo -opengl gles2
 app-i18n/yaskkserv -gnutls libressl
 dev-cpp/commoncpp2 -gnutls -ssl
 dev-db/mariadb -openssl yassl libressl
