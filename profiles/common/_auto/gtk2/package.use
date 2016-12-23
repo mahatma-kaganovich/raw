@@ -1,9 +1,11 @@
 app-crypt/eid-mw gtk
 app-crypt/gcr -gtk
 app-crypt/pinentry gtk
-app-editors/emacs gtk
-app-editors/emacs gtk -gtk3
-app-editors/emacs-vcs gtk -gtk3
+app-editors/emacs:23 gtk
+app-editors/emacs:24 gtk -gtk3
+app-editors/emacs:25 gtk -gtk3
+app-editors/emacs-vcs:25 gtk -gtk3
+app-editors/emacs-vcs:26 gtk -gtk3
 app-editors/gvim gtk
 app-editors/mp -gtk
 app-emulation/fuse gtk
@@ -15,7 +17,7 @@ app-i18n/ibus gtk -gtk3
 app-i18n/scim-bridge gtk
 app-i18n/uim gtk
 app-misc/ddccontrol gtk
-app-misc/geoclue gtk
+app-misc/geoclue:0 gtk
 app-misc/hachoir-metadata -gtk
 app-misc/tracker -gtk
 app-misc/vifm gtk
@@ -43,7 +45,7 @@ dev-python/pyglet gtk
 dev-python/pynotifier -gtk
 dev-python/sympy gtk
 dev-python/twisted-core gtk
-dev-qt/qtgui -gtk
+dev-qt/qtgui:5 -gtk
 dev-util/perf gtk
 dev-util/sysprof -gtk
 dev-util/trace-cmd gtk
@@ -65,18 +67,20 @@ gnome-extra/libgsf gtk
 gnome-extra/libgsf -gtk
 kde-plasma/plasma-desktop gtk2 -gtk3
 kde-plasma/plasma-meta -gtk
-kde-plasma/systemsettings gtk
+kde-plasma/systemsettings:4 gtk
+kde-plasma/systemsettings:5 gtk
 media-gfx/fontforge gtk
 media-gfx/graphviz gtk
 media-gfx/ufraw gtk
 media-gfx/zbar gtk
-media-libs/allegro gtk
+media-libs/allegro:5 gtk
 media-libs/blib gtk
 media-libs/clutter -gtk
 media-libs/clutter-gtk -gtk
-media-libs/gst-plugins-bad -gtk
+media-libs/gst-plugins-bad:1.0 -gtk
 media-libs/libextractor -gtk
-media-libs/libmediaart gtk
+media-libs/libmediaart:1.0 gtk
+media-libs/libmediaart:2.0 gtk
 media-libs/libquicktime gtk
 media-libs/libsixel -gtk
 media-libs/mlt gtk

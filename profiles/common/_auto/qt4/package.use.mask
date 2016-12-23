@@ -7,7 +7,8 @@ dev-games/openscenegraph -qt4 qt5
 dev-libs/quazip -qt4 qt5
 games-emulation/ppsspp -qt4 qt5 sdl
 kde-misc/kdiff3 -qt4 qt5
-media-libs/libmediaart -qt4 gtk qt5
+media-libs/libmediaart:1.0 -qt4 gtk qt5
+media-libs/libmediaart:2.0 -qt4 gtk qt5
 media-libs/opencv -qt4 qt5
 media-sound/flacon -qt4 qt5
 media-video/smplayer -qt4 qt5
