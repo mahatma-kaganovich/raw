@@ -24,5 +24,6 @@ net-libs/telepathy-qt qt5 -qt4
 net-print/hplip qt5 -qt4
 sys-auth/polkit-qt qt5 -qt4
 sys-devel/qconf qt5 -qt4
+x11-libs/qscintilla qt5 -qt4
 x11-misc/lightdm qt5 -qt4
 x11-themes/qtcurve qt5 -qt4

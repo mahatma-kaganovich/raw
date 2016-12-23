@@ -202,7 +202,17 @@ re1(){
 }
 
 re2(){
-	iuse=`grep "$re2" "$i"` || return
+	iuse=`grep "$re2" "$i"` || {
+		[ -z "$6" -o "$v" = "$6" ] && return
+		iuse=`grep "^IUSE.*[ =]-*$v"'\($\| \)' "$i"` || return
+		chk6 "$4" "$5" "$v" "$1" "$2" 1 1 || return
+		iuse=" ${iuse#IUSE=} "
+		iuse1="${iuse// [+~-]/ }"
+		for p in $(pkg "$i"); do
+			ap "$v" "$d/package.use"
+		done
+		return
+	}
 	iuse=" ${iuse#IUSE=} "
 	iuse1="${iuse// [+~-]/ }"
 	for p in $(pkg "$i"); do
@@ -256,13 +266,13 @@ l1=" $2${3:+ $3}"
 l1=" $1 ${l1// / -} "
 
 or1='!*\('"$or1"'\)'
+re2='^IUSE=.*+\('"$or_"'\)'
 or_='!*\('"$or_"'\)'
 #ww='[^()?\*\[\]]*'
 ww='[^()?\*\[]*'
 #ww='[^()]*'
 
 re1='\(\^\^\|??\) '"($ww $or1 $ww)"
-re2='^IUSE=.*+'"$or_"
 re31="$or1? ($ww $or_ $ww)"
 re32="$or_? ($ww $or1 $ww)"
 rs1='\(E=\| \)\('

@@ -20,3 +20,4 @@ net-print/hplip qt5
 sci-electronics/pulseview qt5 -qt4
 sci-geosciences/merkaartor qt5 -qt4
 sys-devel/qconf qt5
+x11-libs/qscintilla qt5
