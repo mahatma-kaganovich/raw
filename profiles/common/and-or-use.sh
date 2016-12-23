@@ -10,12 +10,11 @@ export LANG=C
 list="${@:-*/*}"
 
 pkg(){
-	local p="$1" x
-	while [[ "$p" == */*-* ]]; do
+	local p="$i" x
+	while [[ "$p" == */*-* ]] && [ ! -e "/usr/portage/$p" ]; do
 		p="${p%-*}"
-		x="/usr/portage/$p/${1#*/}*.ebuild"
-		[ "$(echo $x)" != "$x" ] && echo "$p"
 	done
+	grep -h "^SLOT=" $p-[0-9]* | grep -qvF "SLOT=$slot" && echo "$p:$slot" || echo "$p"
 }
 
 deps(){
@@ -100,6 +99,14 @@ inv(){
 	echo "${i// --/ }"
 }
 
+_vars(){
+	iuse=" ${iuse#IUSE=} "
+	iuse1="${iuse// [+~-]/ }"
+	slot=`grep '^SLOT=' "$i"`
+	slot="${slot#SLOT=}"
+	slot="${slot%%/*}"
+}
+
 re1(){
 	grep '^REQUIRED_USE=' "$i"|grep -o "$re"|while read q; do
 		q="${q#E=}"
@@ -111,8 +118,7 @@ re1(){
 		q=" $q "
 		f=true
 		iuse=`grep "^IUSE=" "$i"`
-		iuse=" ${iuse#IUSE=} "
-		iuse1="${iuse// [+~-]/ }"
+		_vars
 		q="${q// !/ -}"
 		q="${q// - / }"
 		q="${q%!}"
@@ -194,7 +200,7 @@ re1(){
 #			$f || u+=" ##precise"
 		}
 
-		for p in $(pkg "$i"); do
+		for p in $(pkg); do
 			[[ "$r" == *' -'* ]] && ap "$r${r1:+#$r1}" "$d/package.use.mask"
 			[ -n "$u" ] && ap "$u" "$d/package.use$force" $f
 		done
@@ -205,17 +211,15 @@ re2(){
 	iuse=`grep "$re2" "$i"` || {
 		[ -z "$6" -o "$v" = "$6" ] && return
 		iuse=`grep "^IUSE.*[ =]-*$v"'\($\| \)' "$i"` || return
-		iuse=" ${iuse#IUSE=} "
-		iuse1="${iuse// [+~-]/ }"
+		_vars
 		chk6 "$4" "$5" "$v" "$1" "$2" 1 1 && q="$v" || q="-$v"
-		for p in $(pkg "$i"); do
+		for p in $(pkg); do
 			ap "$q" "$d/package.use"
 		done
 		return
 	}
-	iuse=" ${iuse#IUSE=} "
-	iuse1="${iuse// [+~-]/ }"
-	for p in $(pkg "$i"); do
+	_vars
+	for p in $(pkg); do
 		r=
 		r1=
 		# if flag exists "+" and new active flag is other - 
