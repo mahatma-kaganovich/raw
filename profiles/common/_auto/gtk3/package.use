@@ -2,9 +2,11 @@ app-crypt/eid-mw gtk
 app-crypt/gcr gtk
 app-editors/emacs gtk3
 app-editors/emacs-vcs gtk3
+app-emulation/qemu gtk
 app-emulation/virt-manager gtk
 app-i18n/fcitx-configtool gtk3
 app-i18n/ibus gtk3
+app-misc/hachoir-metadata gtk
 app-office/libreoffice gtk3
 dev-libs/gjs gtk
 dev-python/ginga gtk
@@ -16,6 +18,7 @@ gnome-base/gvfs gtk
 gnome-extra/cjs gtk
 gnome-extra/libgda gtk
 kde-plasma/plasma-desktop gtk3 -gtk2
+kde-plasma/plasma-meta gtk
 media-libs/clutter gtk
 media-libs/clutter-gtk gtk
 media-libs/gst-plugins-bad gtk
@@ -23,6 +26,10 @@ media-libs/libextractor gtk
 media-libs/xine-lib gtk
 media-plugins/audacious-plugins gtk3
 media-sound/audacious gtk3
+media-sound/jalv gtk
+media-sound/pulseaudio gtk
+media-sound/snd gtk
+media-video/handbrake gtk
 net-analyzer/wireshark gtk
 net-libs/gssdp gtk
 net-libs/gtk-vnc gtk3

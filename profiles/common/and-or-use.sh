@@ -205,9 +205,9 @@ re2(){
 	iuse=`grep "$re2" "$i"` || {
 		[ -z "$6" -o "$v" = "$6" ] && return
 		iuse=`grep "^IUSE.*[ =]-*$v"'\($\| \)' "$i"` || return
-		chk6 "$4" "$5" "$v" "$1" "$2" 1 1 || return
 		iuse=" ${iuse#IUSE=} "
 		iuse1="${iuse// [+~-]/ }"
+		chk6 "$4" "$5" "$v" "$1" "$2" 1 1 || return
 		for p in $(pkg "$i"); do
 			ap "$v" "$d/package.use"
 		done

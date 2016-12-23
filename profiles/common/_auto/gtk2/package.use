@@ -9,6 +9,7 @@ app-emulation/vice gtk
 app-i18n/fcitx-configtool gtk -gtk3
 app-i18n/ibus gtk -gtk3
 app-i18n/scim-bridge gtk
+app-i18n/uim gtk
 app-misc/ddccontrol gtk
 app-misc/geoclue gtk
 app-misc/vifm gtk
@@ -20,6 +21,7 @@ dev-games/openscenegraph gtk
 dev-java/gnu-classpath gtk
 dev-lang/falcon gtk
 dev-lang/gnu-smalltalk gtk
+dev-libs/libdbusmenu gtk
 dev-lisp/clisp gtk
 dev-ml/cairo-ocaml gtk
 dev-ml/camlimages gtk
@@ -45,6 +47,9 @@ games-strategy/freeciv gtk
 games-strategy/liquidwar6 gtk
 gnome-extra/libgsf gtk
 kde-plasma/plasma-desktop gtk2 -gtk3
+kde-plasma/systemsettings gtk
+media-gfx/fontforge gtk
+media-gfx/graphviz gtk
 media-gfx/ufraw gtk
 media-gfx/zbar gtk
 media-libs/allegro gtk
@@ -73,9 +78,10 @@ net-analyzer/nessus-core gtk
 net-analyzer/pinger gtk
 net-analyzer/w3af gtk
 net-dialup/ppp gtk
+net-dns/avahi gtk
 net-im/ekg2 gtk
 net-libs/aqbanking gtk
-net-misc/hotot gtk
+net-misc/dhcpcd-ui gtk
 net-misc/mico gtk
 net-misc/pavuk gtk
 net-print/gutenprint gtk
