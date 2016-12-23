@@ -1,26 +1,34 @@
 app-crypt/eid-mw gtk
+app-crypt/gcr -gtk
 app-crypt/pinentry gtk
 app-editors/emacs gtk
 app-editors/emacs gtk -gtk3
 app-editors/emacs-vcs gtk -gtk3
 app-editors/gvim gtk
+app-editors/mp -gtk
 app-emulation/fuse gtk
+app-emulation/qemu -gtk
 app-emulation/vice gtk
+app-emulation/virt-manager -gtk
 app-i18n/fcitx-configtool gtk -gtk3
 app-i18n/ibus gtk -gtk3
 app-i18n/scim-bridge gtk
 app-i18n/uim gtk
 app-misc/ddccontrol gtk
 app-misc/geoclue gtk
+app-misc/hachoir-metadata -gtk
+app-misc/tracker -gtk
 app-misc/vifm gtk
 app-office/libreoffice gtk -gtk3
 app-portage/etc-proposals gtk
+app-text/ghostscript-gpl -gtk
 dev-db/postgis gtk
 dev-embedded/gpsim gtk
 dev-games/openscenegraph gtk
 dev-java/gnu-classpath gtk
 dev-lang/falcon gtk
 dev-lang/gnu-smalltalk gtk
+dev-libs/gjs -gtk
 dev-libs/libdbusmenu gtk
 dev-lisp/clisp gtk
 dev-ml/cairo-ocaml gtk
@@ -28,11 +36,16 @@ dev-ml/camlimages gtk
 dev-ml/lwt gtk
 dev-ml/ocamlgraph gtk
 dev-ml/ocamlnet gtk
+dev-python/bpython -gtk
+dev-python/ginga -gtk
 dev-python/matplotlib gtk
 dev-python/pyglet gtk
+dev-python/pynotifier -gtk
 dev-python/sympy gtk
 dev-python/twisted-core gtk
+dev-qt/qtgui -gtk
 dev-util/perf gtk
+dev-util/sysprof -gtk
 dev-util/trace-cmd gtk
 dev-vcs/git gtk
 games-board/gnubg gtk
@@ -45,8 +58,13 @@ games-roguelike/tome gtk
 games-strategy/dopewars gtk
 games-strategy/freeciv gtk
 games-strategy/liquidwar6 gtk
+gnome-base/gvfs -gtk
+gnome-extra/cjs -gtk
+gnome-extra/libgda -gtk
 gnome-extra/libgsf gtk
+gnome-extra/libgsf -gtk
 kde-plasma/plasma-desktop gtk2 -gtk3
+kde-plasma/plasma-meta -gtk
 kde-plasma/systemsettings gtk
 media-gfx/fontforge gtk
 media-gfx/graphviz gtk
@@ -54,22 +72,34 @@ media-gfx/ufraw gtk
 media-gfx/zbar gtk
 media-libs/allegro gtk
 media-libs/blib gtk
+media-libs/clutter -gtk
+media-libs/clutter-gtk -gtk
+media-libs/gst-plugins-bad -gtk
+media-libs/libextractor -gtk
 media-libs/libmediaart gtk
 media-libs/libquicktime gtk
+media-libs/libsixel -gtk
 media-libs/mlt gtk
 media-libs/opencv gtk
 media-libs/suil gtk
+media-libs/xine-lib -gtk
 media-plugins/audacious-plugins gtk -gtk3
 media-plugins/audacious-plugins gtk
 media-plugins/libvisual-plugins gtk
+media-sound/alsa-tools -gtk
 media-sound/alsaplayer gtk
 media-sound/audacious gtk -gtk3
 media-sound/audacious gtk
 media-sound/aumix gtk
+media-sound/jalv -gtk
 media-sound/lash gtk
 media-sound/muse gtk
+media-sound/pulseaudio -gtk
+media-sound/snd -gtk
 media-sound/timidity++ gtk
 media-video/blinkensim gtk
+media-video/ffmpegthumbnailer -gtk
+media-video/handbrake -gtk
 media-video/mjpegtools gtk
 media-video/ogmrip gtk
 net-analyzer/ettercap gtk
@@ -80,17 +110,27 @@ net-analyzer/w3af gtk
 net-dialup/ppp gtk
 net-dns/avahi gtk
 net-im/ekg2 gtk
+net-irc/smuxi -gtk
 net-libs/aqbanking gtk
+net-libs/gssdp -gtk
+net-libs/libinfinity -gtk
 net-misc/dhcpcd-ui gtk
+net-misc/hotot -gtk
 net-misc/mico gtk
 net-misc/pavuk gtk
+net-p2p/deluge -gtk
+net-p2p/mldonkey -gtk
+net-p2p/transmission -gtk
 net-print/gutenprint gtk
 net-voip/linphone gtk
 sci-astronomy/celestia gtk
 sci-astronomy/predict gtk
 sci-electronics/pcb gtk
 sci-libs/scikits_image gtk
+sci-mathematics/gretl -gtk
+sci-mathematics/pspp -gtk
 sci-mathematics/pspp gtk
+sys-auth/polkit -gtk
 sys-block/fio gtk
 sys-cluster/ceph gtk
 sys-devel/distcc gtk
@@ -99,11 +139,14 @@ sys-libs/gwenhywfar gtk
 www-client/netsurf gtk
 www-client/opera gtk
 www-client/w3m gtk
+www-client/w3m -gtk
 www-plugins/gnash gtk
 x11-apps/fusion-icon gtk
 x11-drivers/nvidia-drivers gtk
 x11-libs/libfm gtk
+x11-libs/libyui -gtk
 x11-misc/lightdm gtk
+x11-misc/redshift -gtk
 x11-misc/xlockmore gtk
 x11-plugins/purple-plugin_pack gtk
 x11-terms/mlterm gtk
