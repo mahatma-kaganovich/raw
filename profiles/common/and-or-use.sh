@@ -248,6 +248,7 @@ local x=0 or1= or2= or= d="$d/_auto/${1#+}"
 [[ "$1" == +* ]] || rm -f "$d/package.use"*
 shift
 mkdir -p "$d"
+[ -e "$d/eapi" ] || echo 5 >>"$d/eapi"
 cd "$d" && cd /usr/portage/metadata/md5-cache || return 1
 v=${6#+}
 [ "$v" = "$6" ] && prob=0 || prob=1
