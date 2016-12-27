@@ -25,7 +25,7 @@ app-office/libreoffice gtk -gtk3
 app-portage/etc-proposals gtk
 app-text/ghostscript-gpl -gtk
 dev-db/postgis gtk
-dev-embedded/gpsim gtk
+dev-embedded/gpsim -gtk
 dev-games/openscenegraph gtk
 dev-java/gnu-classpath gtk
 dev-lang/falcon gtk
@@ -153,7 +153,10 @@ x11-misc/lightdm gtk
 x11-misc/redshift -gtk
 x11-misc/xlockmore gtk
 x11-plugins/purple-plugin_pack gtk
-x11-terms/mlterm gtk
+x11-terms/mlterm -gtk
 x11-themes/qtcurve gtk
 x11-wm/afterstep gtk
 x11-wm/compiz gtk
+mail-client/thunderbird gstreamer-0
+www-client/firefox gstreamer-0
+www-client/seamonkey gstreamer-0

@@ -10,10 +10,10 @@ export LANG=C
 list="${@:-*/*}"
 
 pkg(){
-	local p="$i" x
-	while [[ "$p" == */*-* ]] && [ ! -e "/usr/portage/$p" ]; do
-		p="${p%-*}"
-	done
+	local p="$PCN" x
+#	while [[ "$p" == */*-* ]] && [ ! -e "/usr/portage/$p" ]; do
+#		p="${p%-*}"
+#	done
 	grep -h "^SLOT=" $p-[0-9]* | grep -qvF "SLOT=$slot" && echo "$p:$slot" || echo "$p"
 }
 
@@ -63,6 +63,41 @@ ap(){
 	else
 		grep -sqxF "$p$x" "$2" || echo "$p$x" >>"$2"
 	fi
+}
+
+spl(){
+	X="${2%%$1*}"
+	[ "$X" = "$2" ] && Y='' || Y="${2#*$1}"
+}
+
+pkgsort(){
+	while read i; do
+		PCN="$i"
+		while [[ "$PCN" == */*-* ]] && [ ! -e "/usr/portage/$PCN" ]; do
+			PCN="${PCN%-*}"
+		done
+		PVR=${i#$PCN-}
+		spl - $PVR
+		PV="$X"
+		spl _ $PV
+		PV="$X"
+		PV_="$Y"
+		PR="$Y"
+		PJ=
+		Y="$PV"
+		for j in 1 2 3 4 5; do
+			spl . $Y
+			X="000000000000$X"
+			PJ+="${X:-12}"
+		done
+		for j in "$PV_" "$PR" ; do
+			j="0000000000000000$j"
+			PJ+=".${j:-16}"
+		done
+		echo "$PCN $PJ $PVR"
+	done|sort|while read PCN PJ PVR; do
+		echo "$PCN $PVR"
+	done
 }
 
 chk6(){
@@ -286,7 +321,8 @@ rs2='\)'
 if1=false
 if2=false
 
-grep -l ' \('"$or"'\) ' $list|while read i; do
+grep -l ' \('"$or"'\) ' $list|pkgsort|while read PCN PVR; do
+	i="${PCN}-$PVR"
 	[ -n "$3" ] && {
 		re="$rs1$re1$rs2"
 		re1 "${@}"
@@ -306,13 +342,23 @@ cd $d
 }
 
 sl(){
-	echo '\( \|D=\)\(\|=\|[<>=]=\)\('"$1"'\)\(:'"$2"'\|-'"$2"'\|:=\| \|$\)'
+	while true; do
+		echo -n '\( \|D=\)\(\|=\|[<>=]=\)\('"$1"'\)\(:'"$2"'\|-'"$2"'\|:=\| \|$\)'
+		shift
+		shift
+		[ -z "$*" ] && return
+		echo '\|'
+	done
+		
 }
 
-gtk2="$(sl x11-libs/gtk+ 2)"
-gtk3="$(sl x11-libs/gtk+ 3)"
+i='[a-zA-Z0-9-]*'
+gtk2="$(sl "x11-libs/gtk+$i" 2)"
+gtk3="$(sl "x11-libs/gtk+$i" 3)"
 qt4="$(sl "dev-qt/qt[a-zA-Z-]*" 4)"
 qt5="$(sl "dev-qt/qt[a-zA-Z-]*" 5)"
+qst0="$(sl "media-plugins/gst-plugins-$i" 0)"
+qst1="$(sl "media-plugins/gst-plugins-$i" 1)"
 
 generate gles 'gles2 gles gles1' 'opengl' 'gles gles1 opengl egl vaapi' &
 {
@@ -323,7 +369,13 @@ force='' generate +common "$x1" "$x1" "$x2"
 } &
 generate qt5 'qt5' 'qt4' 'gtk3 gtk2 gtk sdl' "$qt5" "$qt4" kde &
 generate qt4 'qt4' 'qt5' 'gtk3 gtk2 gtk sdl' "$qt4" "$qt5" kde &
-generate gtk3 'gtk3' 'gtk2' 'qt5 qt4 gtk sdl' "$gtk3" "$gtk2" +gtk &
-generate gtk2 'gtk2' 'gtk3' 'qt5 qt4 gtk sdl' "$gtk2" "$gtk3" +gtk &
+{
+generate gtk3 'gtk3' 'gtk2' 'qt5 qt4 gtk sdl' "$gtk3" "$gtk2" +gtk
+generate +gtk3 gstreamer1 'gstreamer010 gstreamer-0' 'gstreamer010 gstreamer-0' "$gst1" "$gst0" gstreamer
+} &
+{
+generate gtk2 'gtk2' 'gtk3' 'qt5 qt4 gtk sdl' "$gtk2" "$gtk3" +gtk
+generate +gtk2 'gstreamer010 gstreamer-0' gstreamer gstreamer "$gst0" "$gst1" gstreamer
+} &
 generate sdl 'sdl sdl2' '__NOsdl__' 'qt5 qt4 gtk gtk2 gtk3' &
 wait
