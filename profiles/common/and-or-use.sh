@@ -371,11 +371,11 @@ generate qt5 'qt5' 'qt4' 'gtk3 gtk2 gtk sdl' "$qt5" "$qt4" kde &
 generate qt4 'qt4' 'qt5' 'gtk3 gtk2 gtk sdl' "$qt4" "$qt5" kde &
 {
 generate gtk3 'gtk3' 'gtk2' 'qt5 qt4 gtk sdl' "$gtk3" "$gtk2" +gtk
-generate +gtk3 gstreamer1 'gstreamer010 gstreamer-0' 'gstreamer010 gstreamer-0' "$gst1" "$gst0" gstreamer
+generate +gtk3 gstreamer1 'gstreamer010 gstreamer-0' 'gstreamer010 gstreamer-0 gstreamer' "$gst1" "$gst0" gstreamer
 } &
 {
 generate gtk2 'gtk2' 'gtk3' 'qt5 qt4 gtk sdl' "$gtk2" "$gtk3" +gtk
-generate +gtk2 'gstreamer010 gstreamer-0' gstreamer gstreamer "$gst0" "$gst1" gstreamer
+generate +gtk2 'gstreamer010 gstreamer-0' gstreamer1 'gstreamer1 gstreamer' "$gst0" "$gst1" gstreamer
 } &
 generate sdl 'sdl sdl2' '__NOsdl__' 'qt5 qt4 gtk gtk2 gtk3' &
 wait
