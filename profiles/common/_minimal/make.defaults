@@ -1,29 +1,29 @@
-CFLAGS="$CFLAGS -fno-ident -fomit-frame-pointer -fivopts -fbranch-target-load-optimize"
-CFLAGS="$CFLAGS -finline-small-functions -findirect-inlining"
-CFLAGS="$CFLAGS -ffast-math"
+_FLAGS="$_FLAGS -fno-ident -fomit-frame-pointer -fivopts -fbranch-target-load-optimize"
+_FLAGS="$_FLAGS -finline-small-functions -findirect-inlining"
+_FLAGS="$_FLAGS -ffast-math"
 # ?
-#CFLAGS="$CFLAGS -fgcse-sm -fgcse-las"
+#_FLAGS="$_FLAGS -fgcse-sm -fgcse-las"
 # O2
-CFLAGS="$CFLAGS -fschedule-insns2 -fsched-spec-load -fsched-pressure"
+_FLAGS="$_FLAGS -fschedule-insns2 -fsched-spec-load -fsched-pressure"
 # broken on x86 (https://gcc.gnu.org/bugzilla/show_bug.cgi?id=38768). I get worked exlude elfutils -ftracer
-#CFLAGS="$CFLAGS -fschedule-insns"
+#_FLAGS="$_FLAGS -fschedule-insns"
 # O3
-CFLAGS="$CFLAGS -fgcse-after-reload -fipa-cp-clone -fpredictive-commoning -ftree-loop-distribute-patterns -funswitch-loops -ftree-vectorize"
+_FLAGS="$_FLAGS -fgcse-after-reload -fipa-cp-clone -fpredictive-commoning -ftree-loop-distribute-patterns -funswitch-loops -ftree-vectorize"
 # O3 4.8
-CFLAGS="$CFLAGS -fvect-cost-model -ftree-partial-pre"
+_FLAGS="$_FLAGS -fvect-cost-model -ftree-partial-pre"
 # 4.9
-#CFLAGS="$CFLAGS -fno-var-tracking-assignments"
+#_FLAGS="$_FLAGS -fno-var-tracking-assignments"
 
 # looks like help other optimizers, but too increase code size
-#CFLAGS="$CFLAGS -ftracer"
+#_FLAGS="$_FLAGS -ftracer"
 
 # modulo
-CFLAGS="$CFLAGS -fmodulo-sched -fmodulo-sched-allow-regmoves -freschedule-modulo-scheduled-loops"
+_FLAGS="$_FLAGS -fmodulo-sched -fmodulo-sched-allow-regmoves -freschedule-modulo-scheduled-loops"
 
-#CFLAGS="$CFLAGS -fno-stack-protector"
+#_FLAGS="$_FLAGS -fno-stack-protector"
 
 # 5 "improve code quality"? to grok
-#CFLAGS="$CFLAGS -fno-semantic-interposition"
+#_FLAGS="$_FLAGS -fno-semantic-interposition"
 
 LDFLAGS="$LDFLAGS -Wl,--no-keep-memory -Wl,--reduce-memory-overheads"
 

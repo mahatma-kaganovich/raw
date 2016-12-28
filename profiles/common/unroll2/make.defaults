@@ -1,2 +1,2 @@
 # looks like help other optimizers, but unsure & too increase code size & compile time
-CFLAGS="$CFLAGS -ftracer"
+_FLAGS="$_FLAGS -ftracer"

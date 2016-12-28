@@ -1,3 +1,0 @@
-ACCEPT_KEYWORDS="~amd64 ~x86 amd64 x86"
-CFLAGS="$CFLAGS -march=i486 -mtune=generic"
-CXXFLAGS="$CXXFLAGS -march=i486 -mtune=generic"

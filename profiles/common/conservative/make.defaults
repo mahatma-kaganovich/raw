@@ -1,8 +1,8 @@
 # probably safe (vs. -ffast-math, etc)
 
-CFLAGS="$CFLAGS -fbranch-target-load-optimize -fdelete-dead-exceptions -fstdarg-opt"
-CFLAGS="$CFLAGS -fmodulo-sched -fmodulo-sched-allow-regmoves -freschedule-modulo-scheduled-loops"
+_FLAGS="$_FLAGS -fbranch-target-load-optimize -fdelete-dead-exceptions -fstdarg-opt"
+_FLAGS="$_FLAGS -fmodulo-sched -fmodulo-sched-allow-regmoves -freschedule-modulo-scheduled-loops"
 # ?
-#CFLAGS="$CFLAGS -fgcse-sm -fgcse-las"
+#_FLAGS="$_FLAGS -fgcse-sm -fgcse-las"
 
 LDFLAGS="-Wl,-O1 -Wl,--as-needed -Wl,--hash-style=gnu -Wl,--sort-common -Wl,--sort-section=alignment"

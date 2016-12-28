@@ -5,7 +5,7 @@ ACCEPT_KEYWORDS="~amd64 ~x86 amd64 x86"
 USE="-modules"
 LIRC_DEVICES="userspace"
 
-CFLAGS="$CFLAGS -mtune=native -march=native -malign-data=cacheline -momit-leaf-frame-pointer -minline-stringops-dynamically -maccumulate-outgoing-args"
+_FLAGS="$_FLAGS -mtune=native -march=native -malign-data=cacheline -momit-leaf-frame-pointer -minline-stringops-dynamically -maccumulate-outgoing-args"
 # possible no ff
-CFLAGS="$CFLAGS -mtls-dialect=gnu2"
+_FLAGS="$_FLAGS -mtls-dialect=gnu2"
 

@@ -1,5 +1,5 @@
 # some unsafe optimizations, not too affects code size & compilation time
 
-CFLAGS="$CFLAGS -Ofast -ffast-math -ftree-vectorize -fivopts"
+_FLAGS="$_FLAGS -Ofast -ffast-math -ftree-vectorize -fivopts"
 # broken on x86 (https://gcc.gnu.org/bugzilla/show_bug.cgi?id=38768). I get worked exlude elfutils -ftracer
-#CFLAGS="$CFLAGS -fschedule-insns -fsched-pressure"
+#_FLAGS="$_FLAGS -fschedule-insns -fsched-pressure"

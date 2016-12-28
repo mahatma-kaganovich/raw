@@ -1,2 +1,0 @@
-CFLAGS="$CFLAGS -O3 -Ofast"
-CXXFLAGS="$CXXFLAGS -O3 -Ofast"
