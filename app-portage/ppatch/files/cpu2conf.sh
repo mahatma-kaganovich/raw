@@ -80,8 +80,9 @@ case "`cat /proc/cpuinfo`" in
 *GenuineTMx86*)f3="${f3/cacheline/abi} -fno-align-functions -fno-align-jumps -fno-align-loops -fno-align-labels -mno-align-stringops";;&
 esac
 case "`uname -m`" in
-x86_*|i?86)f3+=' -fira-loop-pressure';;&
-x86_*)f5+=' -flifetime-dse=1';;&
+x86_*|i?86)f3+=' -fira-loop-pressure -flive-range-shrinkage';;&
+# gcc 4.9 - -fno-lifetime-dse, gcc 6.3 - -flifetime-dse=1 - around some of projects
+#x86_*)f5+=' -flifetime-dse=1';;&
 esac
 for i in $flags; do
 	i1="$i"
@@ -104,9 +105,6 @@ f3+=" -mfpmath=$fp"
 $lm && f1+=" 64-bit-bfd" || f1+=" -64-bit-bfd"
 f3=`_f $f3`
 f5=`lang=c++ _f $f5`
-case "$f3 $f5" in
-*-flifetime-dse*)f3+=' -flive-range-shrinkage';;&
-esac
 f1="${f1# }"
 f2="${f2# }"
 [ -n "${f1// }" ] && echo "USE=\"\$USE $f1\""
