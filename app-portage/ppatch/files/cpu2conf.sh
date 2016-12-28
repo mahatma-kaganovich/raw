@@ -58,7 +58,8 @@ flags=$(_flags flags)
 cpucaps=$(_flags cpucaps)
 f0=`_f -m{tune,cpu,arch}=native`
 f3='-malign-data=cacheline -momit-leaf-frame-pointer -mtls-dialect=gnu2 -fsection-anchors -minline-stringops-dynamically -maccumulate-outgoing-args'
-f5='-fvisibility-inlines-hidden'
+# gcc 4.9 - -fno-lifetime-dse, gcc 6.3 - -flifetime-dse=1 - around some of projects(?) - keep 6.3 only safe
+f5='-fvisibility-inlines-hidden -flifetime-dse=1'
 # gcc 6. oneshot clarification. must not affect legacy build
 f5+' -fpermissive -fno-strict-aliasing -w'
 if i=`_smp processor 1 || _smp 'ncpus active' 0`; then
@@ -81,8 +82,6 @@ case "`cat /proc/cpuinfo`" in
 esac
 case "`uname -m`" in
 x86_*|i?86)f3+=' -fira-loop-pressure -flive-range-shrinkage';;&
-# gcc 4.9 - -fno-lifetime-dse, gcc 6.3 - -flifetime-dse=1 - around some of projects
-#x86_*)f5+=' -flifetime-dse=1';;&
 esac
 for i in $flags; do
 	i1="$i"
