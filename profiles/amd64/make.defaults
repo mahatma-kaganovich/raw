@@ -3,5 +3,3 @@ CPU_FLAGS_X86="mmxext"
 # conflicts with -ftracer, make code larger
 #CFLAGS="$CFLAGS -fsched-pressure -fschedule-insns"
 #CXXFLAGS="$CXXFLAGS -fsched-pressure -fschedule-insns"
-FFLAGS="$CFLAGS"
-FCFLAGS="$CFLAGS"
