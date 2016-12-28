@@ -75,12 +75,16 @@ fi
 case "`cat /proc/cpuinfo`" in
 *GenuineTMx86*)f3="${f3/cacheline/abi} -fno-align-functions -fno-align-jumps -fno-align-loops -fno-align-labels -mno-align-stringops";;&
 esac
+case "`uname -m`" in
+x86_*|i?86);f3+=' -fira-loop-pressure';;&
+x86_*);f3+=' -flifetime-dse=1';;&
+esac
 for i in $flags; do
 	i1="$i"
 	case "$i" in
 	sse)[ "`_flags fpu`" = yes ] && fp=$preferred_fp || fp=sse;;&
 	pni)f1+=' sse3';;
-	lm)lm=true;f3+=' -fira-loop-pressure';;
+	lm)lm=true;;
 	sse|3dnowext)f1+=" $i mmxext";;
 	fma)f2+=" $i fma3";;
 	*)
@@ -95,6 +99,9 @@ done
 f3+=" -mfpmath=$fp"
 $lm && f1+=" 64-bit-bfd" || f1+=" -64-bit-bfd"
 f3=`_f $f3`
+case "$f3" in
+*-flifetime-dse*)f3+' -flive-range-shrinkage';;&
+esac
 f1="${f1# }"
 f2="${f2# }"
 [ -n "${f1// }" ] && echo "USE=\"\$USE $f1\""
