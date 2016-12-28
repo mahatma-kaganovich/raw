@@ -157,6 +157,6 @@ x11-terms/mlterm -gtk
 x11-themes/qtcurve gtk
 x11-wm/afterstep gtk
 x11-wm/compiz gtk
-mail-client/thunderbird gstreamer-0
-www-client/firefox gstreamer-0
+mail-client/thunderbird gstreamer-0 ffmpeg
+www-client/firefox gstreamer-0 ffmpeg
 www-client/seamonkey gstreamer-0

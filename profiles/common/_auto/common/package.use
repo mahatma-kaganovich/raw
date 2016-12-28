@@ -12,6 +12,7 @@ net-libs/webkit-gtk:3 opengl egl -gles2
 net-libs/webkit-gtk:2 opengl -gles2
 net-libs/webkit-gtk:2 opengl egl -gles2
 x11-libs/cairo opengl -gles2
+app-admin/rsyslog ssl gcrypt
 app-crypt/qca ssl nss gcrypt
 app-text/mupdf openssl
 dev-cpp/commoncpp2 gnutls ssl
@@ -30,6 +31,7 @@ dev-lang/python:3.4 ssl
 dev-lang/python:3.5 ssl
 dev-libs/libevent ssl
 dev-libs/poco ssl
+dev-libs/xmlsec gnutls gcrypt
 dev-libs/xmlsec openssl gnutls nss gcrypt
 dev-perl/DBD-mysql ssl
 dev-vcs/cvsync mhash -gcrypt
@@ -42,6 +44,8 @@ mail-mta/msmtp gnutls ssl
 mail-mta/ssmtp gnutls
 mail-mta/ssmtp ssl gnutls
 media-libs/mesa openssl nettle gcrypt
+media-video/vlc gnutls
+media-video/vlc gnutls gcrypt
 net-analyzer/echoping gnutls ssl
 net-analyzer/monitoring-plugins ssl gnutls
 net-analyzer/nagios-plugins ssl
@@ -54,6 +58,7 @@ net-im/bitlbee gnutls nss
 net-im/qutim ssl
 net-irc/iroffer-dinoex gnutls ssl
 net-irc/scrollz gnutls ssl
+net-irc/znc ssl
 net-libs/gsoap ssl gnutls
 net-libs/ldns ssl
 net-libs/libgadu gnutls ssl
@@ -81,9 +86,11 @@ net-p2p/bitcoinxt-qt ssl
 net-p2p/bitcoinxtd ssl
 net-proxy/shadowsocks-libev openssl -mbedtls
 net-proxy/shadowsocks-libev openssl
+sys-apps/systemd ssl gcrypt
 sys-cluster/ceph nss -cryptopp
 sys-cluster/ceph nss cryptopp
 sys-fs/cryptsetup kernel -openssl -nettle
+sys-fs/cryptsetup kernel openssl nettle gcrypt
 www-misc/litmus ssl -gnutls
 www-misc/litmus ssl gnutls
 www-misc/zoneminder openssl gnutls gcrypt

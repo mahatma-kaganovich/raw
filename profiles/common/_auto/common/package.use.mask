@@ -14,11 +14,13 @@ dev-db/mariadb-galera -openssl yassl libressl
 dev-db/mysql -openssl yassl libressl
 dev-db/mysql-cluster -openssl yassl libressl
 dev-db/percona-server -openssl yassl libressl
+dev-libs/xmlsec -gnutls -gcrypt
 dev-perl/DBD-mysql -ssl embedded
 dev-vcs/cvsync -mhash gcrypt
 mail-mta/courier -gnutls libressl
 mail-mta/msmtp -gnutls -ssl
 mail-mta/ssmtp -gnutls -ssl
+media-video/vlc -gnutls -gcrypt
 net-analyzer/echoping -gnutls -ssl
 net-fs/s3fs -openssl gnutls nss
 net-fs/s3fs -nettle -gnutls

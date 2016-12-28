@@ -153,3 +153,5 @@ x11-plugins/purple-plugin_pack -gtk
 x11-terms/mlterm -gtk
 x11-wm/afterstep -gtk
 x11-wm/compiz -gtk
+mail-client/thunderbird ffmpeg -gstreamer-0
+www-client/firefox ffmpeg -gstreamer-0
