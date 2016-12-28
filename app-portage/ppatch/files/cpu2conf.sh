@@ -146,7 +146,7 @@ echo "CFLAGS_NATIVE=\"$f0\"
 CFLAGS_CPU=\"$f4\"
 CFLAGS_M=\"$f3\"
 
-CXXFLAGS=\"$CXXFLAGS$f5\""
+CXXFLAGS=\"\${CXXFLAGS}$f5\""
 }
 
 conf_cpu
