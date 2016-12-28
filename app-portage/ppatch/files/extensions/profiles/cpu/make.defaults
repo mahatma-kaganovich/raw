@@ -1,8 +1,4 @@
 CFLAGS="$CFLAGS$CFLAGS_CPU$CFLAGS_M"
-FFLAGS="$CFLAGS"
-FCFLAGS="$CFLAGS"
-CXXFLAGS="$CFLAGS"
-CXXFLAGS="$CXXFLAGS -fvisibility-inlines-hidden"
-# gcc 6. must not affect legacy build, but will test
-CXXFLAGS="$CXXFLAGS -fpermissive -fno-strict-aliasing -w"
-
+FFLAGS="$FFLAGS$CFLAGS_CPU$CFLAGS_M"
+FCFLAGS="$FCFLAGS$CFLAGS_CPU$CFLAGS_M"
+CXXFLAGS="$CXXFLAGS$CFLAGS_CPU$CFLAGS_M"

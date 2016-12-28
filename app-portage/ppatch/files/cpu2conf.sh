@@ -10,13 +10,14 @@ preferred_fp=both
 export LANG=C
 
 ct='--help=target -v -Q'
+lang=c
 
 _c(){
 	gcc "${@}" $ct 2>&1
 }
 
 _c1(){
-	echo 'void main(){}'|gcc -x c - -pipe "${@}" -o /dev/null 2>&1
+	echo 'int main(){}'|gcc -x $lang - -pipe "${@}" -o /dev/null 2>&1
 }
 
 _f(){
@@ -52,11 +53,14 @@ _smp(){
 }
 
 conf_cpu(){
-local flags cpucaps f0= f1= f2= f3= i j i1 j1 c c0 c1 lm=false fp=387
+local flags cpucaps f0= f1= f2= f3= f5= i j i1 j1 c c0 c1 lm=false fp=387
 flags=$(_flags flags)
 cpucaps=$(_flags cpucaps)
 f0=`_f -m{tune,cpu,arch}=native`
 f3='-malign-data=cacheline -momit-leaf-frame-pointer -mtls-dialect=gnu2 -fsection-anchors -minline-stringops-dynamically -maccumulate-outgoing-args'
+f5='-fvisibility-inlines-hidden'
+# gcc 6. oneshot clarification. must not affect legacy build
+f5+' -fpermissive -fno-strict-aliasing -w'
 if i=`_smp processor 1 || _smp 'ncpus active' 0`; then
 	if [ "$i" = 1 ]; then
 		f1+=' -smp -numa'
@@ -77,7 +81,7 @@ case "`cat /proc/cpuinfo`" in
 esac
 case "`uname -m`" in
 x86_*|i?86)f3+=' -fira-loop-pressure';;&
-x86_*)f3+=' -flifetime-dse=1';;&
+x86_*)f5+=' -flifetime-dse=1';;&
 esac
 for i in $flags; do
 	i1="$i"
@@ -99,7 +103,8 @@ done
 f3+=" -mfpmath=$fp"
 $lm && f1+=" 64-bit-bfd" || f1+=" -64-bit-bfd"
 f3=`_f $f3`
-case "$f3" in
+f5=`lang=c++ _f $f5`
+case "$f3 $f5" in
 *-flifetime-dse*)f3+=' -flive-range-shrinkage';;&
 esac
 f1="${f1# }"
@@ -137,9 +142,11 @@ if c0=`_c $f0` && c=`_c $f4`; then
 		c0="$c"
 	done
 fi
-echo "CFLAGS_NATIVE=\"$f0\""
-echo "CFLAGS_CPU=\"$f4\""
-echo "CFLAGS_M=\"$f3\""
+echo "CFLAGS_NATIVE=\"$f0\"
+CFLAGS_CPU=\"$f4\"
+CFLAGS_M=\"$f3\"
+
+CXXFLAGS=\"$CXXFLAGS$f5\""
 }
 
 conf_cpu
