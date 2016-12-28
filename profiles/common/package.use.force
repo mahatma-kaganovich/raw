@@ -3,3 +3,5 @@ sys-libs/tdb python
 sys-libs/ntdb python
 sys-libs/tevent python
 dev-libs/libxml2 python
+net-fs/cifs-utils acl
+net-fs/samba acl
