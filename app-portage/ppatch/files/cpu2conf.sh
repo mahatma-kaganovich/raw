@@ -83,7 +83,7 @@ case "`cat /proc/cpuinfo`" in
 esac
 filter=break
 case "`uname -m`" in
-x86_*|i?86)f3+=$(_f -fira-loop-pressure -flive-range-shrinkage fsched-pressure -fschedule-insns --param=sched-pressure-algorithm=2);;&
+x86_*|i?86)f3+=$(_f -fira-loop-pressure -flive-range-shrinkage -fsched-pressure -fschedule-insns --param=sched-pressure-algorithm=2);;&
 esac
 filter=continue
 for i in $flags; do
