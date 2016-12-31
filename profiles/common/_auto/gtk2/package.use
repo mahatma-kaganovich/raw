@@ -20,7 +20,7 @@ app-misc/ddccontrol gtk
 app-misc/geoclue:0 gtk
 app-misc/hachoir-metadata -gtk
 app-misc/lirc -gtk
-app-misc/tracker gtk
+app-misc/tracker -gtk
 app-misc/vifm gtk
 app-office/libreoffice gtk -gtk3
 app-portage/etc-proposals gtk
@@ -91,7 +91,7 @@ media-libs/xine-lib -gtk
 media-plugins/audacious-plugins gtk -gtk3
 media-plugins/audacious-plugins gtk
 media-plugins/libvisual-plugins gtk
-media-sound/alsa-tools gtk
+media-sound/alsa-tools -gtk
 media-sound/alsaplayer gtk
 media-sound/audacious gtk -gtk3
 media-sound/audacious gtk
@@ -112,7 +112,6 @@ net-analyzer/hydra gtk
 net-analyzer/nessus-core gtk
 net-analyzer/pinger gtk
 net-analyzer/w3af gtk
-net-analyzer/wireshark gtk
 net-dialup/ppp gtk
 net-dns/avahi gtk
 net-im/ekg2 gtk
@@ -125,16 +124,15 @@ net-misc/hotot -gtk
 net-misc/mico gtk
 net-misc/pavuk gtk
 net-p2p/deluge -gtk
-net-p2p/eiskaltdcpp gtk
 net-p2p/mldonkey -gtk
-net-p2p/transmission gtk
+net-p2p/transmission -gtk
 net-print/gutenprint gtk
 net-voip/linphone gtk
 sci-astronomy/celestia gtk
 sci-astronomy/predict gtk
 sci-electronics/pcb gtk
 sci-libs/scikits_image gtk
-sci-mathematics/gretl gtk
+sci-mathematics/gretl -gtk
 sci-mathematics/pspp -gtk
 sci-mathematics/pspp gtk
 sys-auth/polkit -gtk
