@@ -23,6 +23,5 @@ dev-qt/qtgui gtk
 #app-crypt/pinentry gnome-keyring
 app-crypt/pinentry gtk
 media-libs/opencv gtk
-app-misc/lirc -gtk
 # required for [wifi] mozillas -> networkmanager
 net-wireless/wpa_supplicant dbus
