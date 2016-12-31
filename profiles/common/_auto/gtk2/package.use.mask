@@ -16,6 +16,6 @@ dev-qt/qtmultimedia:5 -gstreamer010 gstreamer
 dev-qt/qtwebkit:5 -gstreamer010 gstreamer # multimedia
 mail-client/thunderbird -gstreamer-0 gstreamer
 media-gfx/blender -ffmpeg # libav
-net-misc/spice-gtk -gstreamer # pulseaudio
+net-misc/spice-gtk -pulseaudio gstreamer
 www-client/firefox -gstreamer-0 gstreamer
 www-client/seamonkey -gstreamer-0 gstreamer

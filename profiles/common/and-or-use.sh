@@ -102,20 +102,22 @@ pkgsort(){
 
 chk6(){
 	local x1=false x2=false x r1 r2 rr=
+	r1=`grep -c '\( \|D=\)'"$3? ( [^(]*$1" "$i"` && x1=true
+	r2=`grep -c '\( \|D=\)'"$3? ( [^(]*$2" "$i"` && x2=true
+	if [ $x1 != $x2 ]; then
+		$x1
+		return $?
+	fi
 	for x in $4; do
 		[ -z "${iuse1##* $x *}" ] && return 1
 	done
 	for x in $5; do
 		[ -z "${iuse1##* $x *}" ] && return 0
 	done
-	r1=`grep -c '\( \|D=\)'"$3? ( [^(]*$1" "$i"` && x1=true
-	r2=`grep -c '\( \|D=\)'"$3? ( [^(]*$2" "$i"` && x2=true
-	[ $x1 = $x2 ] || {
-		$x1
-		return $?
+	$x1 || {
+		r1=`grep -c "$1" "$i"` && x1=true
+		r2=`grep -c "$2" "$i"` && x2=true
 	}
-	r1=`grep -c "$1" "$i"` && x1=true
-	r2=`grep -c "$2" "$i"` && x2=true
 	! $x1 && ! $x2 && {
 		x=$(deps $i)
 		r1=`cat $i $x|grep -c "$1"` && x1=true
@@ -353,7 +355,7 @@ sl(){
 		shift
 		shift
 		[ -z "$*" ] && return
-		echo '\|'
+		echo -n '\|'
 	done
 		
 }
@@ -363,8 +365,8 @@ gtk2="$(sl "x11-libs/gtk+$i" 2)"
 gtk3="$(sl "x11-libs/gtk+$i" 3)"
 qt4="$(sl "dev-qt/qt[a-zA-Z-]*" 4)"
 qt5="$(sl "dev-qt/qt[a-zA-Z-]*" 5)"
-qst0="$(sl "media-plugins/gst-plugins-$i" 0)"
-qst1="$(sl "media-plugins/gst-plugins-$i" 1)"
+gst0="$(sl "media-[a-z]*/gst-plugins-$i" 0 "media-plugins/gstreamer$i" 0)"
+gst1="$(sl "media-[a-z]*/gst-plugins-$i" 1 "media-plugins/gstreamer$i" 1)"
 
 generate gles 'gles2 gles gles1' 'opengl' 'gles gles1 opengl egl vaapi' &
 {
