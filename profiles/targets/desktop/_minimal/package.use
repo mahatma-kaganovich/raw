@@ -1,4 +1,3 @@
 # crypt: enigmail need pinentry[gtk|qt4|qt5] and mostly not used, so simple OFF
 media-libs/libsdl2 -gles -wayland
 www-client/seamonkey -crypt minimal -roaming
-app-misc/lirc -gtk
