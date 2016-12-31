@@ -108,6 +108,12 @@ chk6(){
 	for x in $5; do
 		[ -z "${iuse1##* $x *}" ] && return 0
 	done
+	r1=`grep -c '\( \|D=\)'"$3? ( [^(]*$1" "$i"` && x1=true
+	r2=`grep -c '\( \|D=\)'"$3? ( [^(]*$2" "$i"` && x1=true
+	[ $x1 = $x2 ] || {
+		$x1
+		return $?
+	}
 	r1=`grep -c "$1" "$i"` && x1=true
 	r2=`grep -c "$2" "$i"` && x2=true
 	! $x1 && ! $x2 && {
