@@ -1,19 +1,20 @@
-app-emulation/vice -gtk sdl
-media-libs/libmediaart:1.0 -gtk qt4 qt5
-media-libs/libmediaart:2.0 -gtk qt4 qt5
-media-libs/libmediaart:2.0 -gtk qt5
+app-emulation/vice -gtk
+media-libs/libmediaart:1.0 -gtk
+media-libs/libmediaart:2.0 -gtk
 media-plugins/audacious-plugins -gtk3 gtk
+media-plugins/audacious-plugins -gtk3
 media-plugins/audacious-plugins -gtk3 gtk qt5
 media-sound/audacious -gtk3 gtk
+media-sound/audacious -gtk3
 media-sound/audacious -gtk3 gtk qt5
-net-analyzer/pinger -gtk3 gtk2
-net-misc/dhcpcd-ui -gtk3 gtk qt4
+net-analyzer/pinger -gtk3
+net-misc/dhcpcd-ui -gtk3
 net-misc/dhcpcd-ui -gtk3 gtk
-app-misc/tracker -ffmpeg gstreamer
-dev-qt/qtmultimedia:5 -gstreamer gstreamer010
-dev-qt/qtwebkit:5 -gstreamer gstreamer010 # multimedia
-mail-client/thunderbird -gstreamer gstreamer-0
-media-gfx/blender -ffmpeg # libav
-net-misc/spice-gtk -gstreamer # pulseaudio
-www-client/firefox -gstreamer gstreamer-0
-www-client/seamonkey -gstreamer gstreamer-0
+app-misc/tracker -gstreamer
+dev-qt/qtmultimedia:5 -gstreamer
+dev-qt/qtwebkit:5 -gstreamer
+mail-client/thunderbird -gstreamer
+media-gfx/blender -ffmpeg
+net-misc/spice-gtk -gstreamer
+www-client/firefox -gstreamer
+www-client/seamonkey -gstreamer

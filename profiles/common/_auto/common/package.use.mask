@@ -4,10 +4,13 @@ media-libs/gst-plugins-bad:1.0 -egl gles2
 media-libs/gst-plugins-bad:1.0 -egl -opengl gles2
 media-libs/gst-plugins-bad:1.0 -opengl gles2
 net-libs/webkit-gtk:4 -opengl gles2
+net-libs/webkit-gtk:4 -opengl
 net-libs/webkit-gtk:3 -opengl gles2
+net-libs/webkit-gtk:3 -opengl
 net-libs/webkit-gtk:2 -opengl gles2
+net-libs/webkit-gtk:2 -opengl
 x11-libs/cairo -opengl gles2
-app-i18n/yaskkserv -gnutls libressl
+app-i18n/yaskkserv -gnutls
 dev-cpp/commoncpp2 -gnutls -ssl
 dev-db/mariadb -openssl yassl libressl
 dev-db/mariadb-galera -openssl yassl libressl
@@ -15,9 +18,9 @@ dev-db/mysql -openssl yassl libressl
 dev-db/mysql-cluster -openssl yassl libressl
 dev-db/percona-server -openssl yassl libressl
 dev-libs/xmlsec -gnutls -gcrypt
-dev-perl/DBD-mysql -ssl embedded
+dev-perl/DBD-mysql -ssl
 dev-vcs/cvsync -mhash gcrypt
-mail-mta/courier -gnutls libressl
+mail-mta/courier -gnutls
 mail-mta/msmtp -gnutls -ssl
 mail-mta/ssmtp -gnutls -ssl
 media-video/vlc -gnutls -gcrypt
@@ -32,8 +35,9 @@ net-mail/mpop -gnutls -ssl
 net-misc/iputils -openssl nettle gcrypt
 net-misc/networkmanager -gnutls nss
 net-misc/wget -gnutls -ssl
-net-nds/openldap -gnutls libressl
+net-nds/openldap -gnutls
 net-proxy/shadowsocks-libev -openssl mbedtls
 sys-cluster/ceph -nss cryptopp
 sys-fs/cryptsetup -kernel openssl nettle gcrypt
+www-misc/litmus -ssl
 www-misc/litmus -ssl gnutls
