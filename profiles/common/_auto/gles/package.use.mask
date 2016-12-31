@@ -8,14 +8,10 @@ media-libs/gst-plugins-bad:1.0 -gles2 opengl
 media-libs/mesa -gles1 -egl
 media-libs/mesa -gles2 -egl
 media-tv/kodi -gles vaapi
-media-tv/kodi -gles
-net-libs/webkit-gtk:4 -gles2 opengl
-net-libs/webkit-gtk:4 -gles2
-net-libs/webkit-gtk:4 -gles2 -egl
 net-libs/webkit-gtk:3 -gles2 opengl
-net-libs/webkit-gtk:3 -gles2
 net-libs/webkit-gtk:3 -gles2 -egl
 net-libs/webkit-gtk:2 -gles2 opengl
-net-libs/webkit-gtk:2 -gles2
 net-libs/webkit-gtk:2 -gles2 -egl
+net-libs/webkit-gtk:4 -gles2 opengl
+net-libs/webkit-gtk:4 -gles2 -egl
 x11-libs/cairo -gles2 opengl

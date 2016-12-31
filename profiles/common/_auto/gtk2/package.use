@@ -133,8 +133,8 @@ sci-astronomy/predict gtk
 sci-electronics/pcb gtk
 sci-libs/scikits_image gtk
 sci-mathematics/gretl -gtk
-sci-mathematics/pspp -gtk
 sci-mathematics/pspp gtk
+sci-mathematics/pspp -gtk
 sys-auth/polkit -gtk
 sys-block/fio gtk
 sys-cluster/ceph gtk

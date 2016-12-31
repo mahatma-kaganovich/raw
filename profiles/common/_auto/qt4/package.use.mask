@@ -1,28 +1,28 @@
-app-crypt/pinentry -qt4
+app-crypt/pinentry -qt4 qt5
 app-misc/qlcplus -qt4 qt5
 app-office/lyx -qt4 qt5
 app-office/texmaker -qt4 qt5
 app-office/texstudio -qt4 qt5
 dev-games/openscenegraph -qt4 qt5
 dev-libs/quazip -qt4 qt5
-games-emulation/ppsspp -qt4
+games-emulation/ppsspp -qt4 qt5 sdl
 kde-misc/kdiff3 -qt4 qt5
-media-libs/libmediaart:1.0 -qt4
-media-libs/libmediaart:2.0 -qt4
-media-libs/opencv -qt4
+media-libs/libmediaart:1.0 -qt4 gtk qt5
+media-libs/libmediaart:2.0 -qt4 gtk qt5
+media-libs/opencv -qt4 qt5
 media-sound/flacon -qt4 qt5
 media-video/smplayer -qt4 qt5
-net-analyzer/wireshark -qt4
+net-analyzer/wireshark -qt4 qt5
 net-libs/qxmpp -qt4 qt5
-net-misc/dhcpcd-ui -qt4
+net-misc/dhcpcd-ui -qt4 gtk gtk3
 net-misc/nextcloud-client -qt4 qt5
 net-misc/owncloud-client -qt4 qt5
 net-p2p/bitcoin-qt -qt4 qt5
 net-p2p/bitcoinxt-qt -qt4 qt5
 net-p2p/retroshare -qt4 qt5
-net-p2p/transmission -qt4
+net-p2p/transmission -qt4 qt5
 net-print/hplip -qt4 qt5
-net-wireless/wpa_supplicant -qt4
+net-wireless/wpa_supplicant -qt4 qt5
 sci-electronics/pulseview -qt4 qt5
 sci-geosciences/merkaartor -qt4 qt5
 sys-devel/qconf -qt4 qt5

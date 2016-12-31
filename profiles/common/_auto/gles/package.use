@@ -4,6 +4,6 @@ kde-plasma/kinfocenter:5 gles2 -opengl
 media-libs/cogl gles2 -opengl
 media-libs/mesa gles2 gles1
 media-tv/kodi gles -opengl
-net-libs/webkit-gtk:4 gles2 -opengl
 net-libs/webkit-gtk:3 gles2 -opengl
 net-libs/webkit-gtk:2 gles2 -opengl
+net-libs/webkit-gtk:4 gles2 -opengl

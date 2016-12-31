@@ -8,7 +8,7 @@ media-libs/gst-plugins-bad:1.0 gles2 -opengl
 media-libs/mesa gles1
 media-libs/mesa gles2
 media-tv/kodi gles -vaapi
-net-libs/webkit-gtk:4 gles2
 net-libs/webkit-gtk:3 gles2
 net-libs/webkit-gtk:2 gles2
+net-libs/webkit-gtk:4 gles2
 x11-libs/cairo gles2 -opengl

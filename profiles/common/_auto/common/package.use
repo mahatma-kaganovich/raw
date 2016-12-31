@@ -5,12 +5,12 @@ media-libs/gst-plugins-bad:1.0 egl opengl -gles2
 media-libs/gst-plugins-bad:1.0 opengl -gles2
 media-libs/mesa egl -gles1 -gles2
 media-video/mpv opengl egl
-net-libs/webkit-gtk:4 opengl -gles2
-net-libs/webkit-gtk:4 opengl egl -gles2
 net-libs/webkit-gtk:3 opengl -gles2
 net-libs/webkit-gtk:3 opengl egl -gles2
 net-libs/webkit-gtk:2 opengl -gles2
 net-libs/webkit-gtk:2 opengl egl -gles2
+net-libs/webkit-gtk:4 opengl -gles2
+net-libs/webkit-gtk:4 opengl egl -gles2
 x11-libs/cairo opengl -gles2
 app-admin/rsyslog ssl gcrypt
 app-crypt/qca ssl nss gcrypt

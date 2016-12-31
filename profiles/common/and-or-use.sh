@@ -88,11 +88,11 @@ pkgsort(){
 		for j in 1 2 3 4 5; do
 			spl . $Y
 			X="000000000000$X"
-			PJ+="${X:-12}"
+			PJ+=".${X:(-12)}"
 		done
 		for j in "$PV_" "$PR" ; do
 			j="0000000000000000$j"
-			PJ+=".${j:-16}"
+			PJ+=".${j:(-16)}"
 		done
 		echo "$PCN $PJ $PVR"
 	done|sort|while read PCN PJ PVR; do
@@ -215,7 +215,6 @@ re1(){
 			while [[ "$q" == ' '* ]]; do q="${q# }"; done
 			q0="${q%% *}"
 			q=" ${q#* }"
-			$f || q=
 		fi
 
 		while [[ "$q" == *'  '* ]]; do q="${q//  / }"; done
@@ -368,10 +367,6 @@ qt4="$(sl "dev-qt/qt[a-zA-Z-]*" 4)"
 qt5="$(sl "dev-qt/qt[a-zA-Z-]*" 5)"
 gst0="$(sl "media-[a-z]*/gst-plugins-$i" 0 "media-plugins/gstreamer$i" 0)"
 gst1="$(sl "media-[a-z]*/gst-plugins-$i" 1 "media-plugins/gstreamer$i" 1)"
-
-#generate +gtk3 'gstreamer1 ffmpeg' 'gstreamer010 gstreamer-0' 'gstreamer010 gstreamer-0 gstreamer' "$gst1" "$gst0" gstreamer
-#exit
-
 
 generate gles 'gles2 gles gles1' 'opengl' 'gles gles1 opengl egl vaapi' &
 {
