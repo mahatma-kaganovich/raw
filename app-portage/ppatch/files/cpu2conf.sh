@@ -24,7 +24,7 @@ _c1(){
 _f(){
 	local i
 	for i in "${@}"; do
-		c=`_c1 $i` || continue
+		c=`_c1 $i` || $filter
 		(echo "$c" | grep -q " warning: .* is deprecated\|warning: this target does not support" ) && $filter
 		echo -n " $i"
 	done
