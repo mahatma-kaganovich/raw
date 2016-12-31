@@ -1,5 +1,8 @@
-# force safer graphite (no time to test others)
+# force safer graphite, etc (no time to test others)
 =sys-devel/gcc-5.0*
 =sys-devel/gcc-5.1*
 =sys-devel/gcc-5.2*
-<dev-libs/isl-0.16.1
+=sys-devel/gcc-6.0*
+=sys-devel/gcc-6.1*
+=sys-devel/gcc-6.2*
+<dev-libs/isl-0.18

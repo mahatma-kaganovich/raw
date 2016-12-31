@@ -11,6 +11,7 @@ export LANG=C
 
 ct='--help=target -v -Q'
 lang=c
+filter=continue
 
 _c(){
 	gcc "${@}" $ct 2>&1
@@ -24,7 +25,7 @@ _f(){
 	local i
 	for i in "${@}"; do
 		c=`_c1 $i` || continue
-		(echo "$c" | grep -q " warning: .* is deprecated\|warning: this target does not support" ) && continue
+		(echo "$c" | grep -q " warning: .* is deprecated\|warning: this target does not support" ) && $filter
 		echo -n " $i"
 	done
 }
@@ -81,7 +82,7 @@ case "`cat /proc/cpuinfo`" in
 *GenuineTMx86*)f3="${f3/cacheline/abi} -fno-align-functions -fno-align-jumps -fno-align-loops -fno-align-labels -mno-align-stringops";;&
 esac
 case "`uname -m`" in
-x86_*|i?86)f3+=' -fira-loop-pressure -flive-range-shrinkage';;&
+x86_*|i?86)f3+=$(_f -fira-loop-pressure -flive-range-shrinkage fsched-pressure -fschedule-insns --param=sched-pressure-algorithm=2);;&
 esac
 for i in $flags; do
 	i1="$i"

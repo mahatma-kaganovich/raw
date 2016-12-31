@@ -160,6 +160,6 @@ _iuse gold && filterflag -Wl,--sort-section=alignment
 #_iuse custom-optimization && filterflag -Ofast -O3
 _iuse custom-optimization && _isflag -O3 -Ofast && appendflag -fno-ipa-cp-clone -fno-tree-loop-vectorize -fno-tree-slp-vectorize
 
-filter86_32 -fschedule-insns -fira-loop-pressure
+#filter86_32 -fschedule-insns -fira-loop-pressure
 
 }
