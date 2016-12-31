@@ -24,5 +24,6 @@ dev-qt/qtgui gtk
 app-crypt/pinentry gtk
 media-libs/opencv gtk
 app-misc/tracker -ffmpeg gstreamer
+app-misc/lirc/lirc -gtk
 # required for [wifi] mozillas -> networkmanager
 net-wireless/wpa_supplicant dbus
