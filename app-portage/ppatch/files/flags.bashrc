@@ -142,10 +142,13 @@ sessreg|ldns)export CPPFLAGS="$CPPFLAGS -P";;
 mpg123)_iuse abi_x86_32 && gccve 5. && export CFLAGS="${CFLAGS//-O3/-O2}" && filterflag -Ofast -fpeel-loops -funroll-loops;;
 klibc)[[ "$MAKEOPTS" == *'-j '* || "$MAKEOPTS" == *-j ]] && export MAKEOPTS="$MAKEOPTS -j8";;
 gmp)filterflag -floop-nest-optimize;;
+gmp) _isflag '-floop-*' && {
+	filterflag -floop-unroll-and-jam
+	appendflag -fno-loop-unroll-and-jam
+};;
 sarg)filterflag -w;;
 ffmpeg|libav)_iuse abi_x86_32 && filterflag -fno-omit-frame-pointer;; # x86 mmx -Os
 faad2|openssl|patch)gccve 5. && filterflag -floop-nest-optimize;;
-cpio|groff)gccve 6. && filterflag '-floop-*' 'fgraphite*';;
 geos|readahead-list|thin-provisioning-tools|libprojectm|gtkmathview|qtfm|qtgui|qtwebkit)gccve 6. && export CXXFLAGS="$CXXFLAGS -std=gnu++98";;
 esac
 
