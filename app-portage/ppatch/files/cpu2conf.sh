@@ -89,7 +89,7 @@ filter=break
 case "`uname -m`" in
 # -fschedule-insns is working (increasing registers range)
 # i?86 looks mostly working, exclude kernel
-x86_*\|i?86)f3+=$(_f -fira-loop-pressure -flive-range-shrinkage -fsched-pressure -fschedule-insns -fsched-spec-load --param=sched-pressure-algorithm=2);;&
+x86_*|i?86)f3+=$(_f -fira-loop-pressure -flive-range-shrinkage -fsched-pressure -fschedule-insns -fsched-spec-load --param=sched-pressure-algorithm=2);;&
 esac
 filter=continue
 for i in $flags; do
