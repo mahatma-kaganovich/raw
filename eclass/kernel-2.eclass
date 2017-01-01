@@ -204,7 +204,7 @@ kernel-2_src_configure() {
 	local cflags="${KERNEL_CFLAGS}" aflags="${KERNEL_ASFLAGS}" ldflags="${KERNEL_LDFLAGS}"
 	if use custom-cflags; then
 		use custom-arch || filter-flags "-march=*" "-mcpu=*"
-		is-flagq -fsched-pressure && append-flags --param=sched-pressure-algorithm=2
+#		is-flagq -fsched-pressure && && append-flags --param=sched-pressure-algorithm=2
 #		for i in -fno-PIE; do
 #			test_cc $i && cflags+=" $i"
 #		done
