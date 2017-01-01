@@ -1,2 +1,0 @@
-# while graphite mostly broken
->=sys-devel/gcc-6.0

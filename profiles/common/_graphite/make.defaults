@@ -1,6 +1,5 @@
 # mostly not broken in 5.3
 _FLAGS="$_FLAGS -floop-block -floop-strip-mine -floop-interchange"
-# experimental, broken code (fpo) in gmp with -fstrict-overflow (-O2)
 #_FLAGS="$_FLAGS -floop-nest-optimize"
 # broken: libvpx, grub, mupdf
 #-floop-unroll-and-jam"
