@@ -1,5 +1,13 @@
+_FLAGS="$_FLAGS -floop-nest-optimize"
+
+# union of:
 # mostly not broken in 5.3
-_FLAGS="$_FLAGS -floop-block -floop-strip-mine -floop-interchange"
-#_FLAGS="$_FLAGS -floop-nest-optimize"
+#_FLAGS="$_FLAGS -floop-block -floop-strip-mine -floop-interchange"
 # broken: libvpx, grub, mupdf
 #-floop-unroll-and-jam"
+
+# looks like debugging
+#_FLAGS="$_FLAGS -fgraphite-identity"
+
+# accurate variable tracking (memory hungry), can help to graphite
+#_FLAGS="$_FLAGS -fipa-pta"

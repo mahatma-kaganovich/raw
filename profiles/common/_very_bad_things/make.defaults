@@ -1,9 +1,0 @@
-# very bad things, buggy or memory consuming, mostly for amd64
-# don't use it. you are warned!
-
-_FLAGS="$_FLAGS -fsched-pressure -fschedule-insns --param=sched-pressure-algorithm=2"
-_FLAGS="$_FLAGS -w"
-
-# floop-nest-optimize mostly required fipa-pta, required too many RAM
-_FLAGS="$_FLAGS -floop-nest-optimize"
-_FLAGS="$_FLAGS -fipa-pta -Wa,--reduce-memory-overheads"
