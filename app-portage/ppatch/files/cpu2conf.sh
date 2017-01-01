@@ -79,8 +79,9 @@ if i=`_smp processor 1 || _smp 'ncpus active' 0`; then
 else
 	$omp && f3+=' -fopenmp-simd'
 fi
-# 6
-(echo " $cmn"|grep -q 'disable-default-ssp') && f3+=' -fstack-protector-explicit'
+# overriding package (ceph) protector
+# 2do: patch over ssp patch to make default
+#(echo " $cmn"|grep -q 'disable-default-ssp') && f3+=' -fstack-protector-explicit'
 case "`cat /proc/cpuinfo`" in
 *GenuineTMx86*)f3="${f3/cacheline/abi} -fno-align-functions -fno-align-jumps -fno-align-loops -fno-align-labels -mno-align-stringops";;&
 esac
