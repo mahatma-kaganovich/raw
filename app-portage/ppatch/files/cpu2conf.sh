@@ -87,6 +87,7 @@ case "`cat /proc/cpuinfo`" in
 esac
 filter=break
 case "`uname -m`" in
+# -fschedule-insns is working (increasing registers range)
 x86_*|i?86)f3+=$(_f -fira-loop-pressure -flive-range-shrinkage -fsched-pressure -fschedule-insns -fsched-spec-load);;&
 # not required with -flive-range-shrinkage but can break some x86_32 kernel modules build. keep default while
 #x86_64)f3+=' --param=sched-pressure-algorithm=2';;&
