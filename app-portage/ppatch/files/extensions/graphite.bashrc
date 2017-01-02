@@ -1,5 +1,5 @@
 [ "$EBUILD_PHASE" = prepare ] && [[ "$CFLAGS$CFLAGS_BASE" == *-floop-* ]] && {
-	i=`grep -lFRw exchange "$S" --include getopt.c` && sed -i '1i #pragma GCC optimize ("no-loop-nest-optimize")\n#pragma GCC optimize ("no-graphite-identity")' $i
-	sed -i '1i #if defined(__i386__)\n#pragma GCC optimize ("no-loop-nest-optimize")\n#pragma GCC optimize ("no-graphite-identity")\n#endif' "$S"/src/cmspack.c 2>/dev/null
+	sed -i '1i #pragma GCC optimize ("no-loop-nest-optimize")\n#pragma GCC optimize ("no-graphite-identity")' `grep -lFRw exchange "$S" --include getopt.c` "${WORKDIR}"/{Python-*/Objects/obmalloc.c,openjpeg-*/libopenjpeg/tcd.c}
+	sed -i '1i #if defined(__i386__)\n#pragma GCC optimize ("no-loop-nest-optimize")\n#pragma GCC optimize ("no-graphite-identity")\n#endif' "$S"/{src/cmspack.c,libdw/dwarf_frame_register.c,libmp3lame/quantize.c,libtwolame/twolame.c}
 	true	
-}
+} 2>/dev/null
