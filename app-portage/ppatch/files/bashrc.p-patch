@@ -25,7 +25,6 @@ local p i PPATCH PPATCHLIST="" PPATCHDIR="\${PPATCH_ROOT:-\${PORTAGE_CONFIGROOT:
 		export PPATCH PPATCHDIR S
 		`p-patch \$PPATCH || die "ppatch failed: \$PPATCH"`
 	fi
-fi
 done
 }
 _ppatch),0);
