@@ -5,7 +5,6 @@
 precise=false
 
 force=.force
-mask=true
 d=`pwd`
 export LANG=C
 list="${@:-*/*}"
@@ -245,13 +244,26 @@ re1(){
 		}
 
 		for p in $(pkg); do
-			$mask && [[ "$r" == *' -'* ]] && ap "$r${r1:+#$r1}" "$d/package.use.mask"
+			[[ "$r" == *' -'* ]] && ap "$r${r1:+#$r1}" "$d/package.use.mask"
 			[ -n "$u" ] && ap "$u" "$d/package.use$force" $f
 		done
 	done
 }
 
 re2(){
+	[ -z "$2$3" ] && {
+		iuse=`grep "$re3" "$i"` || return
+		_vars
+		q=
+		for j in $1; do
+			[ -z "${iuse1##* $j *}" ] || continue
+			q+=" -$j"
+		done
+		[ -n "$q" ] && for p in $(pkg); do
+			ap "${q# -}" "$d/package.use"
+		done
+		return
+	}
 	iuse=`grep "$re2" "$i"` || {
 		[ -z "$6" -o "$v" = "$6" ] && return
 		iuse=`grep "^IUSE.*[ =]-*$v"'\($\| \)' "$i"` || return
@@ -298,13 +310,13 @@ v=${6#+}
 [ "$v" = "$6" ] && prob=0 || prob=1
 x='\|'
 for i in $1 $v; do
-	or1+="$x$i"
+	or1+="$x${i#[+-]}"
 done
 for i in $2 $v; do
-	or2+="$x$i"
+	or2+="$x${i#[+-]}"
 done
 for i in $3 $v; do
-	or3+="$x$i"
+	or3+="$x${i#[+-]}"
 done
 or1="${or1#??}"
 or="$or1$or2$or3"
@@ -326,6 +338,7 @@ re31="$or1? ($ww $or_ $ww)"
 re32="$or_? ($ww $or1 $ww)"
 rs1='\(E=\| \)\('
 rs2='\)'
+re3='^IUS.*\(E=\| \)\('"$or1"'\)'
 
 if1=false
 if2=false
@@ -379,8 +392,7 @@ x2='libressl yassl mbedtls embedded' # drop
 force='' generate +common "$x1" "$x1" "$x2"
 
 x=python_single_target_python
-x="${x}2_7 ${x}3_4 ${x}3_5"
-force='' mask=false generate +common "$x" "$x" "$x"
+generate +common "${x}2_7 ${x}3_4 ${x}3_5"
 
 } &
 generate qt5 'qt5' 'qt4' 'gtk3 gtk2 gtk sdl' "$qt5" "$qt4" kde &
