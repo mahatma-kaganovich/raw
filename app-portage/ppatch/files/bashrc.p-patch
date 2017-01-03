@@ -3,9 +3,8 @@ $rc="$etc/portage/bashrc";
 wf(">$rc",'') if(!-e $rc);
 addon($rc,'#',"ppatch auto",qq(_ppatch(){
 local p i PPATCH PPATCHLIST="" PPATCHDIR="\${PPATCH_ROOT:-\${PORTAGE_CONFIGROOT:-\$ROOT}}/usr/ppatch" PPATCHRC=' '
-for PPATCH in \$CATEGORY/\$PN \$PN \$PROVIDE ; do\
-PPATCH="\$PPATCHDIR/\$PPATCH/\$EBUILD_PHASE/"
-if [[ -n "\$EBUILD_PHASE" ]] && [[ "\$CATEGORY" != virtual ]]; then
+[ -n "\$CATEGORY" -a -n "\$PN" -a "\$CATEGORY" != virtual ] && for PPATCH in \$CATEGORY/\$PN \$PN \$PROVIDE ; do\
+	PPATCH="\$PPATCHDIR/\$PPATCH/\$EBUILD_PHASE\${EBUILD_PHASE:+/}"
 	i="`readlink -f \$PPATCH`"
 	p=""
 	for p in \$PPATCHLIST; do
@@ -22,7 +21,7 @@ if [[ -n "\$EBUILD_PHASE" ]] && [[ "\$CATEGORY" != virtual ]]; then
 		p="\${p%/*}"
 		[[ "\$p" < "\$PPATCHDIR" || "\$p" == "\$i" ]] && break
 	done
-	if [[ -e "\$PPATCH" ]] && ! ( [[ \${EAPI:-1} -gt 1 ]] && [[ \$EBUILD_PHASE == compile ]] && [[ "`readlink -f "\$PPATCH"`" == "`readlink -f "\$PPATCH/../prepare"`" ]] ) ; then
+	if [ -n "\$EBUILD_PHASE" -a -e "\$PPATCH" ] && ! ( [[ \${EAPI:-1} -gt 1 ]] && [[ \$EBUILD_PHASE == compile ]] && [[ "`readlink -f "\$PPATCH"`" == "`readlink -f "\$PPATCH/../prepare"`" ]] ) ; then
 		export PPATCH PPATCHDIR S
 		`p-patch \$PPATCH || die "ppatch failed: \$PPATCH"`
 	fi
