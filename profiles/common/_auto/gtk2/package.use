@@ -115,7 +115,6 @@ net-analyzer/w3af gtk
 net-dialup/ppp gtk
 net-dns/avahi gtk
 net-im/ekg2 gtk
-net-irc/smuxi -gtk
 net-libs/aqbanking gtk
 net-libs/gssdp -gtk
 net-libs/libinfinity -gtk
@@ -133,7 +132,6 @@ sci-astronomy/predict gtk
 sci-electronics/pcb gtk
 sci-libs/scikits_image gtk
 sci-mathematics/gretl -gtk
-sci-mathematics/pspp gtk
 sci-mathematics/pspp -gtk
 sys-auth/polkit -gtk
 sys-block/fio gtk
@@ -143,7 +141,6 @@ sys-fs/ecryptfs-utils gtk
 sys-libs/gwenhywfar gtk
 www-client/netsurf gtk
 www-client/opera gtk
-www-client/w3m gtk
 www-client/w3m -gtk
 www-plugins/gnash gtk
 x11-apps/fusion-icon gtk

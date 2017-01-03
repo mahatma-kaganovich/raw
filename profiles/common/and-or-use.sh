@@ -5,6 +5,7 @@
 precise=false
 
 force=.force
+mask=true
 d=`pwd`
 export LANG=C
 list="${@:-*/*}"
@@ -244,7 +245,7 @@ re1(){
 		}
 
 		for p in $(pkg); do
-			[[ "$r" == *' -'* ]] && ap "$r${r1:+#$r1}" "$d/package.use.mask"
+			$mask && [[ "$r" == *' -'* ]] && ap "$r${r1:+#$r1}" "$d/package.use.mask"
 			[ -n "$u" ] && ap "$u" "$d/package.use$force" $f
 		done
 	done
@@ -368,12 +369,19 @@ qt5="$(sl "dev-qt/qt[a-zA-Z-]*" 5)"
 gst0="$(sl "media-[a-z]*/gst-plugins-$i" 0 "media-plugins/gstreamer$i" 0)"
 gst1="$(sl "media-[a-z]*/gst-plugins-$i" 1 "media-plugins/gstreamer$i" 1)"
 
+
 generate gles 'gles2 gles gles1' 'opengl' 'gles gles1 opengl egl vaapi' &
 {
 force='' generate common 'opengl egl' 'gles gles1 gles2' 'gles gles1 gles2 egl'
+
 x1='kernel ssl openssl gnutls nss mhash cryptopp nettle gcrypt' # enabled
 x2='libressl yassl mbedtls embedded' # drop
 force='' generate +common "$x1" "$x1" "$x2"
+
+x=python_single_target_python
+x="${x}2_7 ${x}3_4 ${x}3_5"
+force='' mask=false generate +common "$x" "$x" "$x"
+
 } &
 generate qt5 'qt5' 'qt4' 'gtk3 gtk2 gtk sdl' "$qt5" "$qt4" kde &
 generate qt4 'qt4' 'qt5' 'gtk3 gtk2 gtk sdl' "$qt4" "$qt5" kde &
