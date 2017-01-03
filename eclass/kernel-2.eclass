@@ -204,10 +204,9 @@ kernel-2_src_configure() {
 	local cflags="${KERNEL_CFLAGS}" aflags="${KERNEL_ASFLAGS}" ldflags="${KERNEL_LDFLAGS}"
 	if use custom-cflags; then
 		use custom-arch || filter-flags "-march=*" "-mcpu=*"
-#		case "${CTARGET:-${CHOST}}" in
-		# 2do: figure out broken modules
-#		i?86*)filter-flags -fschedule-insns;;
-#		esac
+		case "${CTARGET:-${CHOST}}" in
+		i?86*)filter-flags -fschedule-insns;;
+		esac
 #		for i in -fno-PIE; do
 #			test_cc $i && cflags+=" $i"
 #		done
