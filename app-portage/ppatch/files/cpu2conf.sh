@@ -31,17 +31,21 @@ _f(){
 }
 
 _cmp(){
-	local i i0 i1 ok
+	local i i0 i1
 	if i0=`echo "$c0"|grep "$1"` && i=`echo "$c"|grep "$1"`; then
 		for i in $i; do
 			[ -z "${i##/*}" ] && continue
-			ok=true
 			for i1 in $i0; do
-				[ "$i" = "$i1" ] && ok=false && break
+				[ "$i" = "$i1" ] && continue 2
 			done
-			$ok && echo -n " $2$i"
+			echo -n " $2$i"
 		done
 	fi
+	true
+}
+
+_cmp1(){
+	c0=`_c $1` && c=`_c $2` && j="$(_cmp '/cc1 -v \|/cc1 -quiet -v ' '')$(_cmp '/as ' '-Wa,')" && [ -z "$j" ]
 }
 
 _flags(){
@@ -148,6 +152,15 @@ if c0=`_c $f0` && c=`_c $f4`; then
 		c0="$c"
 	done
 fi
+
+i1=
+for i in $f4; do
+	_cmp1 "$i1" "$i1 $i" && continue
+	i1+=" $i"
+	_cmp1 "$i1" "$f4" && continue
+done
+_cmp1 "$i1" "$f4" && f4="$i1"
+
 echo "CFLAGS_NATIVE=\"$f0\"
 CFLAGS_CPU=\"$f4\"
 CFLAGS_M=\"$f3\"
