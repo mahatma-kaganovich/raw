@@ -59,6 +59,7 @@ net-im/qutim ssl
 net-irc/iroffer-dinoex gnutls ssl
 net-irc/scrollz gnutls ssl
 net-irc/znc ssl
+net-libs/gnutls openssl
 net-libs/gsoap ssl gnutls
 net-libs/ldns ssl
 net-libs/libgadu gnutls ssl
@@ -140,8 +141,7 @@ dev-tcltk/tclpython python_single_target_python2_7 -python_single_target_python3
 dev-util/bcc python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 dev-util/catfish python_single_target_python2_7 -python_single_target_python3_4
 dev-util/devhelp python_single_target_python3_4 -python_single_target_python3_5
-dev-util/eric:5 python_single_target_python2_7 -python_single_target_python3_4
-dev-util/eric:6 python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
+dev-util/eric python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 dev-util/include-what-you-use python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 dev-util/scanmem python_single_target_python2_7 -python_single_target_python3_4
 dev-util/scanmem python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
@@ -180,6 +180,7 @@ net-print/hplip python_single_target_python2_7 -python_single_target_python3_4 -
 net-wireless/blueman python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 net-wireless/bluez python_single_target_python3_4 -python_single_target_python3_5
 sci-chemistry/pdb-tools python_single_target_python2_7
+sci-libs/clblas python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 sci-libs/grib_api python_single_target_python2_7 -python_single_target_python3_4
 sci-libs/grib_api python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 sci-libs/libsigrok python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
@@ -199,4 +200,5 @@ sys-fs/cryptsetup python_single_target_python2_7 -python_single_target_python3_4
 sys-process/systemd-cron python_single_target_python3_4
 www-apache/mod_python python_single_target_python2_7 -python_single_target_python3_4
 www-apache/mod_wsgi python_single_target_python2_7 -python_single_target_python3_4
+x11-misc/libinput-gestures python_single_target_python3_4 -python_single_target_python3_5
 x11-misc/menumaker python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5

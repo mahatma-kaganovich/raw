@@ -6,7 +6,6 @@ app-office/texstudio qt4
 dev-games/openscenegraph qt4 -qt5
 dev-libs/quazip qt4 -qt5
 kde-misc/kdiff3 qt4 -qt5
-media-sound/flacon qt4 -qt5
 media-video/smplayer qt4 -qt5
 net-libs/qxmpp qt4 -qt5
 net-misc/nextcloud-client qt4

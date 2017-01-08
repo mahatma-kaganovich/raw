@@ -10,7 +10,6 @@ kde-misc/kdiff3 -qt4 qt5
 media-libs/libmediaart:1.0 -qt4 gtk qt5
 media-libs/libmediaart:2.0 -qt4 gtk qt5
 media-libs/opencv -qt4 qt5
-media-sound/flacon -qt4 qt5
 media-video/smplayer -qt4 qt5
 net-analyzer/wireshark -qt4 qt5
 net-libs/qxmpp -qt4 qt5

@@ -8,7 +8,6 @@ dev-libs/quazip qt5 -qt4
 kde-misc/kdiff3 qt5
 media-plugins/audacious-plugins qt5 -gtk -gtk3
 media-sound/audacious qt5 -gtk -gtk3
-media-sound/flacon qt5 -qt4
 media-video/smplayer qt5
 net-libs/qxmpp qt5
 net-misc/nextcloud-client qt5 -qt4

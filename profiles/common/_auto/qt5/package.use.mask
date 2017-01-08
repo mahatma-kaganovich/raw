@@ -13,7 +13,6 @@ media-libs/libmediaart:2.0 -qt5 gtk
 media-libs/opencv -qt5 qt4
 media-plugins/audacious-plugins -qt5 gtk gtk3
 media-sound/audacious -qt5 gtk gtk3
-media-sound/flacon -qt5 qt4
 media-video/smplayer -qt5 qt4
 net-analyzer/wireshark -qt5 qt4
 net-libs/qxmpp -qt5 qt4

@@ -147,6 +147,7 @@ x11-apps/fusion-icon gtk
 x11-drivers/nvidia-drivers gtk
 x11-libs/libfm gtk
 x11-libs/libyui -gtk
+x11-misc/libinput-gestures -gtk
 x11-misc/lightdm gtk
 x11-misc/redshift -gtk
 x11-misc/xlockmore gtk
