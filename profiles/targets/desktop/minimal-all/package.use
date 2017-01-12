@@ -1,4 +1,3 @@
 app-misc/lirc -gtk
 kde-apps/print-manager -gtk
-dev-libs/glib dbus
 media-libs/phonon -vlc

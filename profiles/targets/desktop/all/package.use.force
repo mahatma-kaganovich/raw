@@ -1,2 +1,3 @@
 sys-auth/consolekit policykit
 kde-frameworks/kauth policykit
+dev-libs/glib dbus
