@@ -1,7 +1,5 @@
 # wayland
 media-libs/libsdl2 gles
-# udisks
-sys-auth/consolekit policykit
 # kde
 dev-qt/qtmultimedia qml
 dev-qt/qtsql mysql

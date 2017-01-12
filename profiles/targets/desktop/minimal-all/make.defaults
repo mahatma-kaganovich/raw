@@ -1,1 +1,1 @@
-USE="-dbus -consolekit"
+USE="-dbus -consolekit -policykit"
