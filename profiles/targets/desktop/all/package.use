@@ -9,4 +9,3 @@ dev-qt/qtscript scripttools
 media-gfx/exiv2 xmp
 net-libs/telepathy-qt farstream
 media-libs/mlt xml melt kdenlive
-=dev-qt/qtwebkit-4* -gstreamer
