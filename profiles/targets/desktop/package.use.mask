@@ -1,2 +1,3 @@
 www-client/seamonkey wifi
 www-client/firefox wifi
+media-video/vlc rdp
