@@ -1,2 +1,11 @@
 # wayland
 media-libs/libsdl2 gles
+# udisks
+sys-auth/consolekit policykit
+# kde
+dev-qt/qtmultimedia qml
+dev-qt/qtsql mysql
+dev-qt/qtscript scripttools
+media-gfx/exiv2 xmp
+net-libs/telepathy-qt farstream
+media-libs/mlt xml melt kdenlive
