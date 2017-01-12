@@ -15,4 +15,3 @@
 =net-dialup/pptpd-1.3.4
 # use mail-filter/smf-grey++ instead
 mail-filter/smf-grey+tym
-sys-apps/systemd
