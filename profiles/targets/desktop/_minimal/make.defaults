@@ -1,6 +1,6 @@
 # common for minimal
 # remove some fancy shit
-USE="-introspection -vala -geolocation -cups -wifi -wext -frei0r -opencv -adplug -raw -lirc -samba -wxwidgets -dbus -exceptions -handbook"
+USE="-introspection -vala -geolocation -cups -wifi -wext -wireless -frei0r -opencv -adplug -raw -lirc -samba -wxwidgets -dbus -exceptions -handbook"
 USE="$USE -wayland -xwayland"
 # performance vs depends
 USE="$USE -openmp -opencl -vulkan"
