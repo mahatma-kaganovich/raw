@@ -1,6 +1,6 @@
 USE="wifi cups udev gudev gpm slang awt X xcb xft xkb dmx glamor cairo xv dri xrandr xinerama pango glut fontconfig infinality harfbuzz libkms truetype corefonts wxwidgets minizip lzma -gnome gui video sound audio -pulseaudio opengl openvg egl gbm drm xa xvmc vaapi openmax nsplugin webstart kernel-alsa kernel-drm alsa v4l -bluetooth -pcmcia desktop imlib svg aalib exif mng pdf gsm ogg vorbis cdda rtp srtp amr theora x264 aac dv ffmpeg lame schroedinger mp3 pvr vcd vdpau rtmp faad kate libass libsamplerate libtiger mtp projectm speex taglib djvu fftw sndfile wavpack quicktime bs2b flac chardet openal dvdr silc aacplus vpx nut nas pnm tga libmpeg2 openexr libv4l a52 dts dvd mpeg musepack xvid mjpeg dvdnav yuv4mpeg bluray wmf postscript xpm autotrace raw lensfun umfpack dirac matroska twolame wma-fixed live cue cddb rtsp upnp faac mad opus x265 quvi xanim rtc ftp imagemagick emf flash pptx plotutils dga mathml t1lib graphviz fpx devil lasi gts libsoxr frei0r radio lirc fits opencv vcdx omxil opencv rdp shout _vtk client gltf kms evdev d3d9 -headless player"
 USE="$USE -gtk2 gtk3 gtkstyle"
-USE="$USE -gmp-autoupdate custom-optimization system-harfbuzz system-icu system-jpeg"
+USE="$USE -gmp-autoupdate custom-optimization system-harfbuzz system-jpeg"
 ACCEPT_LICENSE="*"
 PYTHON_TARGETS="python2_7"
 RUBY_TARGETS="ruby24"
