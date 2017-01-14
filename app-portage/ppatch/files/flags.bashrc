@@ -73,6 +73,7 @@ filterflag2(){
 _iuse(){
 	local i
 	for i in $IUSE; do
+		[ "~$i" = "$1" ] && return 0
 		if [ "$i" = "${1#!}" ]; then
 			use $1
 			return $?
@@ -157,7 +158,9 @@ esac
 #dev-libs/icu)export CFLAGS="-w -pipe -O3 -march=native -fomit-frame-pointer";export CXXFLAGS="$CFLAGS";;
 #esac
 
+# more test flags-inject.bashrc before remove
 _iuse !system-sqlite && filterflag -Ofast -ffast-math
+
 _iuse gold && filterflag -Wl,--sort-section=alignment
 # 2do: find bad -O3 flags for seamonkey
 #_iuse custom-optimization && filterflag -Ofast -O3
@@ -166,3 +169,4 @@ _iuse custom-optimization && _isflag -O3 -Ofast && appendflag -fno-ipa-cp-clone 
 #filter86_32 -fschedule-insns -fira-loop-pressure
 
 }
+
