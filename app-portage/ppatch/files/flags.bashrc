@@ -157,7 +157,7 @@ esac
 #esac
 
 # more test flags-inject.bashrc before remove
-_iuse !system-sqlite && filterflag -Ofast -ffast-math
+#_iuse !system-sqlite && filterflag -Ofast -ffast-math
 
 _iuse gold && filterflag -Wl,--sort-section=alignment
 # 2do: find bad -O3 flags for seamonkey

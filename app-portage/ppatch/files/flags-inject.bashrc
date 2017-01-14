@@ -1,5 +1,7 @@
 [ "$EBUILD_PHASE" = prepare ] && {
 
+# memo: pragma GCC ignored in C++
+
 _in_ject(){
 	[[ "$CFLAGS$CFLAGS_BASE" == *"$1"* ]] || return 1
 	shift
@@ -20,7 +22,9 @@ _in_ject(){
 	$ok
 }
 
-_in_ject fast no-fast-math celt/arch.h
+# mozilla include header into C++, pragma is ignored, 2 workaround
+_in_ject fast '#pragma GCC optimize ("no-fast-math")\n#ifdef __FAST_MATH__\n#define FLOAT_APPROX\n#endif' celt/arch.h
+
 [[ "$IUSE" == *system-sqlite* ]] && _in_ject fast no-fast-math sqlite3.c
 
 _in_ject -fschedule-insns no-schedule-insns libttf/cmap.c netxen_nic_hw.c qlcnic_hw.c gf100.c
