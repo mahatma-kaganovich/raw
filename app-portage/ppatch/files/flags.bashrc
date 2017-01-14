@@ -1,5 +1,7 @@
 [ "$EBUILD_PHASE" = setup ] && {
 
+# dumb names to avoid collisions
+
 filterflag(){
 local p v x r=false
 for p in $* ; do
@@ -132,10 +134,6 @@ cairo)[[ "$PV" == 1.12.16* ]] && appendflag1 -fno-lto;;
 udev)filterflag -Wl,--sort-section=alignment;; # gold
 fltk)_isflag '-floop-*' '-fgraphite*' && filterflag -ftree-loop-distribution;; # -O2+
 freeglut)_isflag '-floop-*' '-fgraphite*' && appendflag -fno-ipa-cp-clone;;
-opus)
-	filterflag -Ofast -ffast-math
-#	export enable_float_approx=yes
-;;
 # 5.1
 gccxml|xemacs|devil|vtun|irda-utils|wmmon|bbrun|diffball|ldns|rp-l2tp)appendflag -std=gnu89;;
 sessreg|ldns)export CPPFLAGS="$CPPFLAGS -P";;
