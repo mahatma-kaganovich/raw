@@ -1,3 +1,2 @@
 app-emulation/qemu -vte -gtk
-app-crypt/pinentry -gtk
 media-libs/opencv -gtk
