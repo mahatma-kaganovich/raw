@@ -7,7 +7,7 @@ _in_ject(){
 	[[ "$c" == *'#'* ]] || {
 			c=
 			for i in $1; do
-				c+="\n#pragma GCC optimize (\"$i\")"
+				c+='\n#pragma GCC optimize ("'"$i"'")'
 			done
 	}
 	shift
