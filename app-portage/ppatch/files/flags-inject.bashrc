@@ -9,6 +9,7 @@ _in_ject(){
 			for i in $1; do
 				c+='\n#pragma GCC optimize ("'"$i"'")'
 			done
+			c="${c#??}"
 	}
 	shift
 	for n in "${@}"; do
