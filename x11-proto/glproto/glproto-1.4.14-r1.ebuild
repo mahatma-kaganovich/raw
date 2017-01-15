@@ -9,7 +9,7 @@ KEYWORDS="~alpha ~amd64 ~arm ~hppa ~ia64 ~mips ~ppc ~ppc64 ~s390 ~sh ~sparc ~x86
 LICENSE="SGI-B-2.0"
 IUSE=""
 
-RDEPEND=">=app-admin/eselect-opengl-1.2.3"
+RDEPEND=">=app-eselect/eselect-opengl-1.2.3"
 DEPEND=""
 
 src_install() {
