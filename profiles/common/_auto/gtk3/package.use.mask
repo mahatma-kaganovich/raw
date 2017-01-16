@@ -1,3 +1,4 @@
+app-editors/bluefish -gtk3 gtk2
 app-emulation/vice -gtk sdl
 media-libs/libmediaart:1.0 -gtk qt4 qt5
 media-libs/libmediaart:2.0 -gtk qt4 qt5
@@ -9,6 +10,7 @@ media-sound/audacious -gtk3 gtk qt5
 net-analyzer/pinger -gtk3 gtk2
 net-misc/dhcpcd-ui -gtk3 gtk qt4
 net-misc/dhcpcd-ui -gtk3 gtk
+x11-misc/spacefm -gtk3 gtk2
 app-misc/tracker -gstreamer ffmpeg
 dev-qt/qtmultimedia:5 -gstreamer gstreamer010
 dev-qt/qtwebkit:5 -gstreamer gstreamer010 # multimedia
@@ -16,4 +18,3 @@ mail-client/thunderbird -gstreamer gstreamer-0
 media-gfx/blender -ffmpeg # libav
 net-misc/spice-gtk -gstreamer # pulseaudio
 www-client/firefox -gstreamer gstreamer-0
-www-client/seamonkey -gstreamer gstreamer-0

@@ -1,3 +1,4 @@
+app-editors/bluefish gtk2
 app-emulation/qemu gtk2 gtk
 media-plugins/audacious-plugins gtk -gtk3
 media-plugins/audacious-plugins gtk -gtk3 -qt5
@@ -5,3 +6,4 @@ media-sound/audacious gtk -gtk3
 media-sound/audacious gtk -gtk3 -qt5
 net-misc/dhcpcd-ui gtk -gtk3
 net-misc/dhcpcd-ui gtk gtk -gtk3
+x11-misc/spacefm gtk2

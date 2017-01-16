@@ -19,6 +19,7 @@ media-libs/qt-gstreamer qt5 -qt4
 media-video/smplayer qt5 -qt4
 media-video/vlc qt5 -qt4
 net-analyzer/wireshark qt5 -qt4
+net-analyzer/wireshark qt5
 net-libs/jreen qt5 -qt4
 net-libs/qxmpp qt5 -qt4
 net-libs/telepathy-qt qt5 -qt4

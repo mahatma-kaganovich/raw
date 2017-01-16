@@ -343,7 +343,7 @@ re3='^IUS.*\(E=\| \)\('"$or1"'\)'
 if1=false
 if2=false
 
-grep -l ' \('"$or"'\) ' $list|pkgsort|while read PCN PVR; do
+grep -l '^IUSE=.*\('"$or"'\)' $list|pkgsort|while read PCN PVR; do
 	i="${PCN}-$PVR"
 	[ -n "$3" ] && {
 		re="$rs1$re1$rs2"

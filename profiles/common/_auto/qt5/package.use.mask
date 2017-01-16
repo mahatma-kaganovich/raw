@@ -25,6 +25,5 @@ net-p2p/transmission -qt5 qt4
 net-print/hplip -qt5 qt4
 net-wireless/wpa_supplicant -qt5 qt4
 sci-electronics/pulseview -qt5 qt4
-sci-geosciences/merkaartor -qt5 qt4
 sys-devel/qconf -qt5 qt4
 x11-libs/qscintilla -qt5 qt4
