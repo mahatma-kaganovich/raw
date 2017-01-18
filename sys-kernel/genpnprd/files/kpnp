@@ -124,6 +124,15 @@ DRIVER=*}" ] && modp "${x%%
 	done
 }
 
+early_huge(){
+	local d=/sys/kernel/mm/transparent_hugepage
+	[ -d $d -a "$cmd_transparent_hugepage_misc" = true ] || return
+	echo defer >$d/defrag
+	echo always >$d/shmem_enabled
+	mount -o remount,huge=always /
+}
+
+
 init(){
 local i='-o nosuid,nodev,noexec' l
 mount -t proc $i proc /proc && mount -t sysfs $i sys /sys || return
@@ -358,6 +367,7 @@ cd $tmp||exit 1
 echo -n '^'
 conf
 cmdline
+early_huge
 own 2>/dev/null
 while [ "$m1" != "$mm" -o "${_cmd_rootwait}:$MOUNTED" = 'true:false' ]; do
 	echo -n "*"
