@@ -236,11 +236,13 @@ mod_unload(){
 }
 
 early_huge(){
-	local d=/sys/kernel/mm/transparent_hugepage
-	[ -d $d -a "$cmd_transparent_hugepage_misc" = true ] || return
-	echo defer >$d/defrag
-	echo always >$d/shmem_enabled
-	mount -o remount,huge=always /
+local d=/sys/kernel/mm/transparent_hugepage
+[ "$cmd_transparent_hugepage_misc" = true -a -d $d ] || return
+case "`cat $d/enabled`" in
+*\[never\]*);;
+*)echo defer >$d/defrag;;
+esac
+echo force >$d/shmem_enabled
 }
 
 pnp_options(){
@@ -275,7 +277,6 @@ pnp_options(){
 	esac
 	done
 	v=
-	early_huge
 	for i in $(ls -1 "$d"); do
 		m="${i%%.*}"
 		[ -n "$m" ] && i="$(cat "$d/$i")" || continue
@@ -915,6 +916,7 @@ mntnewroot(){
 syspnp(){
 	[[ -e "/lib/modules/${KV}/modules.alias.sh" ]] || return
 	$cmd_nopnp && return
+	early_huge
 	# +some compats
 	local PNP_TMP="${TMPDIR}/pnp.found" NOTLOADED="" CHK=single i i1 i2 gov="" freq="" pid="" LCOUNT="" REORDER=break USE_MDADM_="${USE_MDADM:=$cmd_domdadm}" USE_DMRAID_NORMAL_="${USE_DMRAID_NORMAL:=$cmd_dodmraid}" USE_EVMS_NORMAL_="${USE_EVMS_NORMAL:=$cmd_doevms}" USE_LVM_NORMAL_="${USE_LVM_NORMAL:=$cmd_dolvm}" LOOPS_="" REFRESH_SAME waitscan=true checks=""
 	[[ "${USE_DMRAID_NORMAL:-true}" != true ]] && DMRAID_OPTS="$USE_DMRAID_NORMAL"
@@ -1072,6 +1074,7 @@ fi
 #pids="$pids$! "
 KV=`uname -r`
 pnp_init
+early_huge
 rm /sbin/modprobe 2>/dev/null
 override_modprobe
 syspnp true

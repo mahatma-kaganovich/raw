@@ -125,13 +125,14 @@ DRIVER=*}" ] && modp "${x%%
 }
 
 early_huge(){
-	local d=/sys/kernel/mm/transparent_hugepage
-	[ -d $d -a "$cmd_transparent_hugepage_misc" = true ] || return
-	echo defer >$d/defrag
-	echo always >$d/shmem_enabled
-	mount -o remount,huge=always /
+local d=/sys/kernel/mm/transparent_hugepage
+[ "$cmd_transparent_hugepage_misc" = true -a -d $d ] || return
+case "`cat $d/enabled`" in
+*\[never\]*);;
+*)echo defer >$d/defrag;;
+esac
+echo force >$d/shmem_enabled
 }
-
 
 init(){
 local i='-o nosuid,nodev,noexec' l
