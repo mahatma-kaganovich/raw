@@ -175,7 +175,7 @@ for i in "${@}"; do
 	if [ "$m" = "$x" ]; then
 		case "${x#real_}" in
 		# [^...] broken in klibc
-		quiet|root|init|rw|ro|resume|resume_offset|nfsroot|ip|rootdelay|rootwait|rootflags|rootfstype|loop)export $xx$x="$y";;
+		quiet|root|init|rw|ro|resume|resume_offset|nfsroot|ip|rootdelay|rootwait|rootflags|rootfstype|loop|transparent_hugepage_misc)export $xx$x="$y";;
 		esac
 	elif ! [ -e cmdline ]; then
 		[ -d options ] && echo -n " ${x#*.}$yy" >>"options/$x" || echo -n "options $m ${x#*.}$yy" >>"/etc/modprobe.d/initrd_$x.conf"
