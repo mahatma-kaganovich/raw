@@ -126,7 +126,7 @@ DRIVER=*}" ] && modp "${x%%
 
 early_huge(){
 local d=/sys/kernel/mm/transparent_hugepage
-[ "$cmd_transparent_hugepage_misc" = true -a -d $d ] || return
+[ "${_cmd_transparent_hugepage_misc}" = true -a -d $d ] || return
 case "`cat $d/enabled`" in
 *\[never\]*);;
 *)echo defer >$d/defrag;;
