@@ -22,8 +22,8 @@ $r
 filterldflag(){
 	local i="$LDFLAGS"
 	LDFLAGS=
-	for i in $LDFLAGS; do
-		[[ "$i" == -[WLl]* ]] && LDFLAGS+=" $i"
+	for i in $i; do
+		[[ "$i" == -Wl* ]] && LDFLAGS+=" $i"
 	done
 	export LDFLAGS="${LDFLAGS# }"
 }
