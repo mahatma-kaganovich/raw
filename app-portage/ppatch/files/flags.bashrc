@@ -19,6 +19,15 @@ done
 $r
 }
 
+filterldflag(){
+	local i="$LDFLAGS"
+	LDFLAGS=
+	for i in $LDFLAGS; do
+		[[ "$i" == -[WLl]* ]] && LDFLAGS+=" $i"
+	done
+	export LDFLAGS="${LDFLAGS# }"
+}
+
 appendflag(){
 	local v
 	for v in CFLAGS CPPFLAGS CXXFLAGS FFLAGS FCFLAGS; do
@@ -144,7 +153,8 @@ gmp) _isflag '-floop-*' && {
 	filterflag -floop-unroll-and-jam
 	appendflag -fno-loop-unroll-and-jam
 };;
-sarg|criu)filterflag -w;;
+sarg)filterflag -w;;
+criu)filterldflag;;
 ffmpeg|libav)_iuse abi_x86_32 && filterflag -fno-omit-frame-pointer;; # x86 mmx -Os
 faad2|openssl|patch)gccve 5. && filterflag -floop-nest-optimize;;
 geos|readahead-list|thin-provisioning-tools|libprojectm|gtkmathview|qtfm|qtgui|qtwebkit)gccve 6. && export CXXFLAGS="$CXXFLAGS -std=gnu++98";;
