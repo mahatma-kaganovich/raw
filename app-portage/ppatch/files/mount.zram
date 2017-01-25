@@ -56,7 +56,7 @@ fs="${fs%% *}"
 "mkfs.$fs" $mkfs "$1" || err "mkfs -t $fs $mkfs $1"
 
 for i in discard"${o+,$o}" "$o"; do
-	mount -t "$fs" ${i+-i $i} "$1" "$2" && exit 0
+	mount -t "$fs" ${i+-o $i} "$1" "$2" && exit 0
 	r=$?
 done
 err "mount -t $fs ${o+-o $o} $1 $2" $r
