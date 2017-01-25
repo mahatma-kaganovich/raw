@@ -49,8 +49,8 @@ done
 o="${o#,}"
 
 fs="${fs//:/ }"
-mkfs="${fs%% *}"
-fs="${fs#* }"
+mkfs="${fs#* }"
+fs="${fs%% *}"
 
 mkfs -t "$fs" $mkfs "$1" || err "mkfs -t $fs $mkfs $1"
 
