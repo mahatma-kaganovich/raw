@@ -16,7 +16,8 @@ Mount options:
 	Also ext4 implies 'data=journal' and any fs trying to mount with 'discard'.
 Examples of /etc/fstab:
 	/dev/zram3 /tmp zram disksize=8g 0 0
-	/dev/zram0 /tmp zram comp_algorithm=lz4,disksize=8g,lazytime,sync,nodirsync,noatime 0 0
+	/dev/zram0 /tmp zram comp_algorithm=lz4,disksize=8g,lazytime,noatime 0 0
+	/dev/zram0 /tmp zram comp_algorithm=lz4,disksize=8g,lazytime,sync,noatime 0 0
 todo: check various 'mount' compatibility & more flexible cmdline parsing"
 
 err(){
@@ -58,4 +59,4 @@ for i in discard"${o+,$o}" "$o"; do
 	mount -t "$fs" ${i+-i $i} "$1" "$2" && exit 0
 	r=$?
 done
-err "mount -t $fs" ${o+-o $o} $1 $2" $r
+err "mount -t $fs ${o+-o $o} $1 $2" $r
