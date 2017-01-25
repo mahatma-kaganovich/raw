@@ -55,6 +55,8 @@ src_install(){
     cd "${FILESDIR}"||die
     exeinto /usr/sbin
     doexe p-patch
+    # lazy to make separate package just for 1 script
+    dosbin mount.zram
     insinto $r
     doins *.{p-patch,bashrc,sh}
     dodir $r/virtual

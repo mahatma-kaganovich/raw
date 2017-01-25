@@ -1,0 +1,62 @@
+#!/bin/sh
+
+help='
+
+mount.zram v0.1
+This is mount helper to mount zram devices on fstab over most simple way, stupid.
+Dont use it directly, as command line hard related to standard linux mount.
+Loading zram module with number of devices just from FIRST mount device in fstab.
+(so, first device is highest number)
+Mount options:
+	"fs=<fs>" (default fs=ext4),
+	<zram_param>=<value> where <zram_param> is any file from /sys/block/zram*/
+	other options pass directly to <fs> mount.
+	Also ext4 implies "data=journal" and any fs trying to mount with "discard".
+Example of /etc/fstab:
+	/dev/zram1 /tmp zram comp_algorithm=lz4,disksize=8g 0 0
+todo: check various "mount" compatibility & more flexible cmdline parsing'
+
+err(){
+	echo "ERROR mount.zram $*" >&2
+	exit 1
+}
+
+fs=ext4
+
+[ "$3" = -o ] || err "$*$help"
+[[ "$1" == /dev/zram* ]] || err "$*$help"
+[ -d "$2" ] || err " -d $2$help"
+n="${1##*/}"
+nn=${n#zram}
+modprobe zram num_devices=$((nn+1))
+[ -e "/sys/block/$n/comp_algorithm" ] || err "no /sys/block/$n/comp_algorithm"
+o=
+for i in ${4//,/ }; do
+	v="${i#*=}"
+	x="${i%%=*}"
+	if [ "$x" != "$i" -a -e "/sys/block/$n/$x" ]; then
+		echo "$v" >"/sys/block/$n/$x" || err "echo $v >/sys/block/$n/$x"
+		continue
+	fi
+	case "$i" in
+	fs=*)fs="$v";;
+	*)o+=",$i";;
+	esac
+done
+[ -b "$1" ] || err " -b $1$help"
+o="${o#,}"
+
+case "$fs" in
+ext4)
+	mkfs.$fs -m0 -L "$n" -E discard "$1" || err "mkfs.$fs"
+	mount -t $fs -o discard,data=journal"${o+,$o}" "$1" "$2"
+;;
+*)
+	mkfs -t "$fs" -L "$n" "$1" || err mkfs
+	mount -t "$fs" -o discard"${o+,$o}" "$1" "$2" ||
+	mount -t "$fs" ${o+-o $o} "$1" "$2" ||
+	err "mount"
+;;
+esac
+
+true
