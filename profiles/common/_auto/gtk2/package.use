@@ -226,6 +226,7 @@ sys-libs/gwenhywfar gtk
 sys-power/nvclock gtk
 sys-process/latencytop gtk
 www-client/netsurf gtk
+www-client/netsurf -gtk
 www-client/opera gtk
 www-client/w3m -gtk
 www-plugins/gnash gtk

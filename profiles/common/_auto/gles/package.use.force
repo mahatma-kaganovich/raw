@@ -2,12 +2,10 @@ dev-libs/DirectFB gles2 opengl
 dev-libs/efl gles egl
 dev-qt/qtgui:5 gles2 egl
 kde-plasma/kwin:4 gles -opengl
-media-libs/gst-plugins-bad:1.0 gles2 -egl -opengl
-media-libs/gst-plugins-bad:1.0 gles2 -egl
 media-libs/gst-plugins-bad:1.0 gles2 -opengl
+media-libs/gst-plugins-bad:1.0 gles2 -egl
 media-libs/mesa gles1
 media-libs/mesa gles2
-media-tv/kodi gles -vaapi
 net-libs/webkit-gtk:3 gles2
 net-libs/webkit-gtk:2 gles2
 net-libs/webkit-gtk:4 gles2

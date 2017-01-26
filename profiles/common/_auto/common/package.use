@@ -1,7 +1,6 @@
 kde-plasma/kwin:4 opengl -gles
 media-gfx/tachyon opengl
 media-libs/gst-plugins-bad:1.0 egl -gles2
-media-libs/gst-plugins-bad:1.0 egl opengl -gles2
 media-libs/gst-plugins-bad:1.0 opengl -gles2
 media-libs/mesa egl -gles1 -gles2
 media-video/mpv opengl egl
@@ -22,7 +21,6 @@ app-emulation/wine ssl
 app-forensics/libewf ssl
 app-text/mupdf openssl
 app-text/wgetpaste ssl
-dev-cpp/commoncpp2 gnutls ssl
 dev-db/mariadb openssl -yassl -libressl
 dev-db/mariadb openssl
 dev-db/mariadb-galera openssl -yassl -libressl
@@ -59,6 +57,8 @@ gnustep-apps/sogo ssl gnutls
 gnustep-base/gnustep-base ssl gnutls
 gnustep-libs/sope ssl gnutls
 mail-client/claws-mail gnutls
+mail-client/mutt ssl -gnutls -libressl
+mail-client/mutt ssl -libressl
 mail-filter/anubis gnutls
 mail-filter/mailfilter ssl
 mail-filter/opendkim ssl gnutls
@@ -144,7 +144,6 @@ www-servers/uwsgi ssl
 app-admin/collectd python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 app-backup/backintime python_single_target_python3_4 -python_single_target_python3_5
 app-editors/vim-qt python_single_target_python2_7 -python_single_target_python3_4
-app-emulation/libguestfs python_single_target_python2_7 -python_single_target_python3_4
 app-emulation/libguestfs python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 app-misc/gramps python_single_target_python3_4 -python_single_target_python3_5
 app-misc/hivex python_single_target_python2_7 -python_single_target_python3_4
@@ -203,6 +202,7 @@ media-gfx/fontforge python_single_target_python2_7 -python_single_target_python3
 media-gfx/fontforge python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 media-gfx/hugin python_single_target_python2_7 -python_single_target_python3_4
 media-gfx/hugin python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
+media-gfx/openvdb python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 media-libs/lensfun python_single_target_python3_4 -python_single_target_python3_5
 media-libs/libopenshot python_single_target_python3_4 -python_single_target_python3_5
 media-libs/lv2 python_single_target_python2_7 -python_single_target_python3_4
@@ -229,7 +229,6 @@ sci-libs/clblas python_single_target_python2_7 -python_single_target_python3_4 -
 sci-libs/grib_api python_single_target_python2_7 -python_single_target_python3_4
 sci-libs/grib_api python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 sci-libs/libsigrok python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
-sci-libs/shogun python_single_target_python2_7 -python_single_target_python3_4
 sci-libs/shogun python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 sci-mathematics/relational python_single_target_python3_4 -python_single_target_python3_5
 sci-misc/mendeleydesktop python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
@@ -240,7 +239,6 @@ sys-auth/sssd python_single_target_python2_7 -python_single_target_python3_4
 sys-cluster/hpx python_single_target_python2_7 -python_single_target_python3_4
 sys-devel/gdb python_single_target_python2_7 -python_single_target_python3_4
 sys-devel/gdb python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
-sys-fs/cryptsetup python_single_target_python2_7 -python_single_target_python3_4
 sys-process/systemd-cron python_single_target_python3_4
 www-apache/mod_python python_single_target_python2_7 -python_single_target_python3_4
 www-apache/mod_wsgi python_single_target_python2_7 -python_single_target_python3_4

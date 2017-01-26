@@ -3,6 +3,7 @@ app-office/lyx qt5 -qt4
 app-office/texmaker qt5 -qt4
 dev-libs/libdbusmenu-qt qt5 -qt4
 dev-libs/qtkeychain qt5 -qt4
+dev-python/qscintilla-python qt5 -qt4
 dev-qt/qtlockedfile qt5 -qt4
 dev-qt/qtsingleapplication qt5 -qt4
 games-emulation/mgba qt5

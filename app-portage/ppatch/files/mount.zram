@@ -61,7 +61,7 @@ fs="${fs%% *}"
 
 # move original mountpoint permissions to mount if not fs-assisted
 [ -z "$mode" ] && m=`stat "$2" --format='%a'`
-[ -z "$uid$gid" ] && ug=`stat "$2" --format='%u:%g'`
+[ -z "$uid$gid" ] && ug=`stat "$2" --format='%u:%g'` || ug=
 
 for i in discard"${o+,$o}" "$o"; do
 	mount -t "$fs" ${i+-o $i} "$1" "$2" && {
