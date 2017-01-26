@@ -17,7 +17,7 @@ Mount options:
 Examples of /etc/fstab:
 	/dev/zram3 /tmp zram disksize=8g 0 0
 	/dev/zram0 /tmp zram comp_algorithm=lz4,disksize=8g,lazytime,noatime 0 0
-	/dev/zram0 /tmp zram comp_algorithm=lz4,disksize=8g,lazytime,sync,noatime 0 0
+	/dev/zram0 /var/tmp/portage zram reset=1,comp_algorithm=lz4,disksize=8g,lazytime,sync,noatime 0 0
 todo: check various 'mount' compatibility & more flexible cmdline parsing"
 
 err(){
@@ -36,15 +36,19 @@ modprobe zram num_devices=$((nn+1))
 o=
 for i in ${4//,/ }; do
 	v="${i#*=}"
-	x="${i%%=*}"
-	if [ "$x" != "$i" -a -e "/sys/block/$n/$x" ]; then
-		echo "$v" >"/sys/block/$n/$x" || err "echo $v >/sys/block/$n/$x"
-		continue
-	fi
-	case "$i" in
-	fs=*)fs="$v";;
-	*)o+=",$i";;
-	esac
+	[ "$v" = "$i" ] || {
+		x="${i%%=*}"
+		case "$x" in
+		fs|mode|uid|gid)eval "$x=\"\$v\"";;&
+		fs)continue;;
+		esac
+		f="/sys/block/$n/$x"
+		[ -e "$f" ] && {
+			echo "$v" >"$f" || err "echo $v >$f"
+			continue
+		}
+	}
+	o+=",$i"
 done
 [ -b "$1" ] || err " -b $1$help"
 o="${o#,}"
@@ -55,8 +59,16 @@ fs="${fs%% *}"
 
 "mkfs.$fs" $mkfs "$1" || err "mkfs -t $fs $mkfs $1"
 
+# move original mountpoint permissions to mount if not fs-assisted
+[ -z "$mode" ] && m=`stat "$2" --format='%a'`
+[ -z "$uid$gid" ] && ug=`stat "$2" --format='%u:%g'`
+
 for i in discard"${o+,$o}" "$o"; do
-	mount -t "$fs" ${i+-o $i} "$1" "$2" && exit 0
+	mount -t "$fs" ${i+-o $i} "$1" "$2" && {
+		[ -n "$m" ] && chmod -- "$m" "$2"
+		[ -n "$ug" ] && chown -- "$ug" "$2"
+		exit 0
+	}
 	r=$?
 done
 err "mount -t $fs ${o+-o $o} $1 $2" $r
