@@ -54,7 +54,9 @@ fs="${fs//:/ }"
 mkfs="${fs#* }"
 fs="${fs%% *}"
 
-"mkfs.$fs" $mkfs "$1" || err "mkfs -t $fs $mkfs $1"
+[ "$(cat "/sys/block/$n/compr_data_size")" = 0 ] && {
+	"mkfs.$fs" $mkfs "$1" || err "mkfs -t $fs $mkfs $1"
+}
 
 # move original mountpoint permissions to mount if not fs-assisted
 [ -z "$mode" ] && m=`stat "$2" --format='%a'`
