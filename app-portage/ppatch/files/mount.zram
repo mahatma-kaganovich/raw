@@ -6,7 +6,7 @@ help="
 
 mount.zram v0.3 (c) mahatma, under Anarchy license
 Mount helper to mount zram devices via /etc/fstab over most simple way, stupid.
-Dont use it directly, as command line hard related to standard linux mount.
+Usage: mount -t zram ...
 Loading zram module with number of devices just from FIRST mount device in fstab.
 (so, first device is highest number)
 Mount options:
@@ -25,13 +25,10 @@ err(){
 	exit ${2:-1}
 }
 
-
-[ "$3" = -o ] || err "$*$help"
-[ "$1" = "${1#/dev/zram}" ] && err "$*$help"
-[ -d "$2" ] || err " -d $2$help"
-n="${1##*/}"
-nn=${n#zram}
+nn=${1#/dev/zram}
+[ "$1" = "$nn" ] && err "$*$help"
 modprobe zram num_devices=$((nn+1))
+n="${1##*/}"
 [ -e "/sys/block/$n/comp_algorithm" ] || err "no /sys/block/$n/comp_algorithm"
 o=
 for i in ${4//,/ }; do
