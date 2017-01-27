@@ -3,7 +3,6 @@ dev-libs/efl -gles -egl
 dev-qt/qtgui:5 -gles2 -egl
 kde-plasma/kwin:4 -gles opengl
 media-libs/gst-plugins-bad:1.0 -gles2 opengl
-media-libs/gst-plugins-bad:1.0 -gles2 egl
 media-libs/mesa -gles1 -egl
 media-libs/mesa -gles2 -egl
 media-tv/kodi -gles vaapi

@@ -63,7 +63,7 @@ dev-ml/lwt gtk
 dev-ml/ocaml-cairo gtk
 dev-ml/ocamlgraph gtk
 dev-ml/ocamlnet gtk
-dev-python/bpython -gtk
+dev-python/bpython gtk
 dev-python/ginga -gtk
 dev-python/matplotlib gtk
 dev-python/neovim-python-client gtk

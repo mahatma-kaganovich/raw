@@ -189,7 +189,7 @@ net-misc/unison:2.45 -gtk
 net-misc/unison:2.48 -gtk
 net-misc/wicd gtk
 net-misc/youtube-viewer -gtk
-net-p2p/deluge gtk
+net-p2p/deluge -gtk
 net-p2p/eiskaltdcpp gtk
 net-p2p/mldonkey gtk
 net-p2p/transmission gtk
@@ -222,7 +222,7 @@ sys-process/latencytop -gtk
 www-client/netsurf -gtk
 www-client/opera -gtk
 www-client/w3m -gtk
-x11-apps/xinput_calibrator -gtk
+x11-apps/xinput_calibrator gtk
 x11-drivers/nvidia-drivers -gtk
 x11-libs/c++-gtk-utils:3 gtk
 x11-libs/c++-gtk-utils:0 gtk

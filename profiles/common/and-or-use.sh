@@ -5,6 +5,7 @@
 precise=false
 
 force=.force
+use=true
 d=`pwd`
 export LANG=C
 list="${@:-*/*}"
@@ -233,7 +234,7 @@ re1(){
 		r="$(inv "$q0")$q"
 		u=
 		pr=
-		($f || $precise) && {
+		$use && ($f || $precise) && {
 			u="$q0"
 			$f && u="$q0" || u=$(inv "$q0")
 			u+=$(inv "$q")
@@ -245,7 +246,7 @@ re1(){
 
 		for p in $(pkg); do
 			[[ "$r" == *' -'* ]] && ap "$r${r1:+#$r1}" "$d/package.use.mask"
-			[ -n "$u" ] && ap "$u" "$d/package.use$force" $f
+			[ -n "$u" ] && ap "$u #1" "$d/package.use$force" $f
 		done
 	done
 }
@@ -357,7 +358,7 @@ grep -l '^IUSE=.*\('"$or"'\)' $list|pkgsort|while read PCN PVR; do
 		re1 "${@}"
 		if2=false
 	}
-	re2 "${@}"
+	$use && re2 "${@}"
 done
 
 cd $d
@@ -394,6 +395,7 @@ force='' generate +common "$x1" "$x1" "$x2"
 x=python_single_target_python
 generate +common "${x}2_7 ${x}3_4 ${x}3_5"
 
+use=false generate +common readline '' libedit
 } &
 generate qt5 'qt5' 'qt4' 'gtk3 gtk2 gtk sdl' "$qt5" "$qt4" kde &
 generate qt4 'qt4' 'qt5' 'gtk3 gtk2 gtk sdl' "$qt4" "$qt5" kde &

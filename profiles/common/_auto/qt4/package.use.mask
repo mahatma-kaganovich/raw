@@ -18,7 +18,6 @@ net-misc/dhcpcd-ui -qt4 gtk gtk3
 net-p2p/bitcoin-qt -qt4 qt5
 net-p2p/bitcoinxt-qt -qt4 qt5
 net-p2p/retroshare -qt4 qt5
-net-p2p/transmission -qt4 qt5
 net-print/hplip -qt4 qt5
 net-wireless/wpa_supplicant -qt4 qt5
 sci-electronics/pulseview -qt4 qt5

@@ -20,7 +20,6 @@ net-libs/qxmpp -qt5 qt4
 net-p2p/bitcoin-qt -qt5 qt4
 net-p2p/bitcoinxt-qt -qt5 qt4
 net-p2p/retroshare -qt5 qt4
-net-p2p/transmission -qt5 qt4
 net-print/hplip -qt5 qt4
 net-wireless/wpa_supplicant -qt5 qt4
 sci-electronics/pulseview -qt5 qt4
