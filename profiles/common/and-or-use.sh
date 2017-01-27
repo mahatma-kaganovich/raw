@@ -246,7 +246,7 @@ re1(){
 
 		for p in $(pkg); do
 			[[ "$r" == *' -'* ]] && ap "$r${r1:+#$r1}" "$d/package.use.mask"
-			[ -n "$u" ] && ap "$u #1" "$d/package.use$force" $f
+			[ -n "$u" ] && ap "$u" "$d/package.use$force" $f
 		done
 	done
 }

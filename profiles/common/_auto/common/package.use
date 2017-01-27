@@ -1,15 +1,15 @@
-kde-plasma/kwin:4 opengl -gles #1
-media-gfx/tachyon opengl #1
-media-libs/gst-plugins-bad:1.0 opengl -gles2 #1
+kde-plasma/kwin:4 opengl -gles
+media-gfx/tachyon opengl
+media-libs/gst-plugins-bad:1.0 opengl -gles2
 media-libs/mesa egl -gles1 -gles2
 media-video/mpv opengl egl
-net-libs/webkit-gtk:3 opengl -gles2 #1
+net-libs/webkit-gtk:3 opengl -gles2
 net-libs/webkit-gtk:3 opengl egl -gles2
-net-libs/webkit-gtk:2 opengl -gles2 #1
+net-libs/webkit-gtk:2 opengl -gles2
 net-libs/webkit-gtk:2 opengl egl -gles2
-net-libs/webkit-gtk:4 opengl -gles2 #1
+net-libs/webkit-gtk:4 opengl -gles2
 net-libs/webkit-gtk:4 opengl egl -gles2
-x11-libs/cairo opengl -gles2 #1
+x11-libs/cairo opengl -gles2
 app-admin/rsyslog ssl gcrypt
 app-admin/webmin ssl
 app-crypt/codecrypt cryptopp
@@ -20,16 +20,16 @@ app-emulation/wine ssl
 app-forensics/libewf ssl
 app-text/mupdf openssl
 app-text/wgetpaste ssl
-dev-db/mariadb openssl -yassl -libressl #1
+dev-db/mariadb openssl -yassl -libressl
 dev-db/mariadb openssl
-dev-db/mariadb-galera openssl -yassl -libressl #1
+dev-db/mariadb-galera openssl -yassl -libressl
 dev-db/mariadb-galera openssl
-dev-db/mysql openssl -yassl -libressl #1
+dev-db/mysql openssl -yassl -libressl
 dev-db/mysql openssl
-dev-db/mysql-cluster openssl -yassl -libressl #1
+dev-db/mysql-cluster openssl -yassl -libressl
 dev-db/mysql-cluster openssl
 dev-db/mysql-connector-c ssl
-dev-db/percona-server openssl -yassl -libressl #1
+dev-db/percona-server openssl -yassl -libressl
 dev-db/percona-server openssl
 dev-lang/python:2.7 ssl
 dev-lang/python:3.4 ssl
@@ -39,7 +39,7 @@ dev-libs/libevent ssl
 dev-libs/librelp ssl
 dev-libs/poco ssl
 dev-libs/rasqal mhash
-dev-libs/xmlsec gnutls gcrypt #1
+dev-libs/xmlsec gnutls gcrypt
 dev-libs/xmlsec openssl gnutls nss gcrypt
 dev-ml/lwt ssl
 dev-perl/DBD-mysql ssl
@@ -49,42 +49,42 @@ dev-python/foolscap ssl
 dev-qt/qtdiag ssl
 dev-qt/qtnetwork ssl
 dev-qt/qtwebsockets ssl
-dev-vcs/cvsync mhash -gcrypt #1
+dev-vcs/cvsync mhash -gcrypt
 dev-vcs/cvsync openssl mhash gcrypt
 dev-vcs/fossil ssl
 gnustep-apps/sogo ssl gnutls
 gnustep-base/gnustep-base ssl gnutls
 gnustep-libs/sope ssl gnutls
 mail-client/claws-mail gnutls
-mail-client/mutt ssl -gnutls -libressl #1
-mail-client/mutt ssl -libressl #1
+mail-client/mutt ssl -gnutls -libressl
+mail-client/mutt ssl -libressl
 mail-filter/anubis gnutls
 mail-filter/mailfilter ssl
 mail-filter/opendkim ssl gnutls
 mail-filter/spamdyke ssl
-mail-mta/msmtp gnutls ssl #1
-mail-mta/ssmtp gnutls  #1
+mail-mta/msmtp gnutls ssl
+mail-mta/ssmtp gnutls
 mail-mta/ssmtp ssl gnutls
 media-libs/mesa openssl nettle gcrypt
 media-plugins/vdr-vdrmanager ssl
 media-tv/kodi ssl
-media-video/vlc gnutls  #1
+media-video/vlc gnutls
 media-video/vlc gnutls gcrypt
-net-analyzer/echoping gnutls ssl #1
+net-analyzer/echoping gnutls ssl
 net-analyzer/monitoring-plugins ssl gnutls
 net-analyzer/nagios-plugins ssl
 net-dialup/xl2tpd kernel
-net-fs/s3fs openssl -gnutls -nss #1
-net-fs/s3fs nettle gnutls #1
-net-ftp/lftp openssl #1
+net-fs/s3fs openssl -gnutls -nss
+net-fs/s3fs nettle gnutls
+net-ftp/lftp openssl
 net-ftp/lftp ssl openssl gnutls
 net-ftp/lftp ssl gnutls
 net-im/bitlbee gnutls nss
 net-im/qutim ssl
-net-irc/iroffer-dinoex gnutls ssl #1
+net-irc/iroffer-dinoex gnutls ssl
 net-irc/kvirc ssl
 net-irc/quassel ssl
-net-irc/scrollz gnutls ssl #1
+net-irc/scrollz gnutls ssl
 net-irc/weechat ssl
 net-irc/znc ssl
 net-libs/glib-networking ssl
@@ -92,7 +92,7 @@ net-libs/gnutls openssl
 net-libs/gsoap ssl
 net-libs/gsoap ssl gnutls
 net-libs/ldns ssl
-net-libs/libgadu gnutls ssl #1
+net-libs/libgadu gnutls ssl
 net-libs/liboauth nss
 net-libs/libwebsockets ssl
 net-libs/nodejs ssl
@@ -100,14 +100,14 @@ net-libs/rabbitmq-c ssl
 net-libs/rb_libtorrent ssl
 net-libs/wvstreams ssl
 net-mail/dovecot ssl
-net-mail/mpop gnutls ssl #1
+net-mail/mpop gnutls ssl
 net-mail/uw-imap ssl
 net-misc/aria2 ssl gnutls nettle
 net-misc/icecast ssl
-net-misc/iputils openssl -nettle -gcrypt #1
+net-misc/iputils openssl -nettle -gcrypt
 net-misc/iputils ssl openssl nettle gcrypt
 net-misc/lcr ssl
-net-misc/networkmanager gnutls #1
+net-misc/networkmanager gnutls
 net-misc/networkmanager gnutls nss
 net-misc/openconnect gnutls
 net-misc/openssh ssl
@@ -116,7 +116,7 @@ net-misc/openvswitch ssl
 net-misc/strongswan openssl gcrypt
 net-misc/tinc ssl
 net-misc/vpnc gnutls
-net-misc/wget gnutls  #1
+net-misc/wget gnutls
 net-misc/wget ssl gnutls
 net-nds/shelldap ssl
 net-nntp/sabnzbd ssl
@@ -124,16 +124,16 @@ net-p2p/bitcoinxt-qt ssl
 net-p2p/bitcoinxtd ssl
 net-p2p/mktorrent ssl
 net-print/cups ssl
-net-proxy/shadowsocks-libev openssl -mbedtls #1
+net-proxy/shadowsocks-libev openssl -mbedtls
 net-proxy/shadowsocks-libev openssl
 net-voip/yate ssl
 net-wireless/hostapd ssl
 sys-apps/systemd ssl gcrypt
-sys-cluster/ceph nss -cryptopp #1
+sys-cluster/ceph nss -cryptopp
 sys-cluster/ceph nss cryptopp
-sys-fs/cryptsetup kernel -openssl -nettle #1
+sys-fs/cryptsetup kernel -openssl -nettle
 sys-fs/cryptsetup kernel openssl nettle gcrypt
-www-misc/litmus ssl -gnutls #1
+www-misc/litmus ssl -gnutls
 www-misc/litmus ssl gnutls
 www-misc/shellinabox ssl
 www-misc/zoneminder openssl gnutls gcrypt
