@@ -1,10 +1,10 @@
-#!/bin/bash
+#!/bin/sh
 
 fs='ext4:-L:zram:-E:discard'
 
 help="
 
-mount.zram v0.2 (c) mahatma, under Anarchy license
+mount.zram v0.3 (c) mahatma, under Anarchy license
 Mount helper to mount zram devices via /etc/fstab over most simple way, stupid.
 Dont use it directly, as command line hard related to standard linux mount.
 Loading zram module with number of devices just from FIRST mount device in fstab.
@@ -27,7 +27,7 @@ err(){
 
 
 [ "$3" = -o ] || err "$*$help"
-[[ "$1" == /dev/zram* ]] || err "$*$help"
+[ "$1" = "${1#/dev/zram}" ] && err "$*$help"
 [ -d "$2" ] || err " -d $2$help"
 n="${1##*/}"
 nn=${n#zram}
