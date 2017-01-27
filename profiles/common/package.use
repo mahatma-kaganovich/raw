@@ -75,5 +75,3 @@ sci-libs/silo silex qt4
 sci-libs/ViSP opencv
 sys-cluster/hpx -jemalloc
 x11-wm/xpra dec_av2
-dev-java/icedtea-bin nss
-dev-java/icedtea nss
