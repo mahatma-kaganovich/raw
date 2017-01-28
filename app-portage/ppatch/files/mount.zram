@@ -1,6 +1,8 @@
 #!/bin/sh
 
-fs='ext4:-L:zramX:-E:discard'
+fs='ext4:-q:-O:sparse_super2:-E:discard,num_backup_sb=0'
+kv=`uname -r`
+[ "${kv%%.*}" -lt 4 ] && fs='ext4:-E:discard'
 
 help="
 
@@ -17,7 +19,8 @@ Mount options:
 Examples of /etc/fstab:
 	/dev/zram3 /tmp zram disksize=8g 0 0
 	/dev/zram1 /tmp zram comp_algorithm=lz4,disksize=8g,lazytime,noatime,data=journal 0 0
-	/dev/zram0 /var/tmp/portage zram reset=1,comp_algorithm=lz4,disksize=12g,lazytime,sync,noatime,data=journal 0 0
+	/dev/zram1 /tmp zram comp_algorithm=lz4,disksize=8g,lazytime,noatime,dioread_nolock 0 0
+	/dev/zram0 /var/tmp/portage zram reset=1,comp_algorithm=lz4,disksize=12g,lazytime,sync,noatime,dioread_nolock,dax 0 0
 "
 
 err(){
@@ -32,9 +35,6 @@ modprobe zram num_devices=$((nn+1))
 n="${1##*/}"
 [ -e "/sys/block/$n/comp_algorithm" ] || err "no /sys/block/$n/comp_algorithm"
 o=
-opt ${4//,/ }
-[ -b "$1" ] || err " -b $1$help"
-o="${o#,}"
 for i in ${4//,/ }; do
 	v="${i#*=}"
 	[ "$v" = "$i" ] || {
@@ -51,8 +51,9 @@ for i in ${4//,/ }; do
 	}
 	o+=",$i"
 done
+[ -b "$1" ] || err " -b $1$help"
+o="${o#,}"
 
-fs="${fs/:-L:zramX:/:-L:$n:}"
 fs="${fs//:/ }"
 mkfs="${fs#* }"
 fs="${fs%% *}"
