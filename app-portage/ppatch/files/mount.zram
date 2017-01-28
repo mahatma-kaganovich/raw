@@ -1,6 +1,6 @@
 #!/bin/sh
 
-fs='ext4:-L:zram:-E:discard'
+fs='ext4:-L:zramX:-E:discard'
 
 help="
 
@@ -13,15 +13,16 @@ Mount options:
 	'fs=<fs[{:mkfs_options}]> (default fs=$fs),
 	<zram_param>=<value> where <zram_param> is any file from /sys/block/zramX/
 	other options pass directly to <fs> mount.
-	Also ext4 implies 'data=journal' and any fs trying to mount with 'discard'.
+	First trying to mount with '-o discard...'.
 Examples of /etc/fstab:
 	/dev/zram3 /tmp zram disksize=8g 0 0
-	/dev/zram0 /tmp zram comp_algorithm=lz4,disksize=8g,lazytime,noatime 0 0
-	/dev/zram0 /var/tmp/portage zram reset=1,comp_algorithm=lz4,disksize=8g,lazytime,sync,noatime 0 0
-todo: check various 'mount' compatibility & more flexible cmdline parsing"
+	/dev/zram1 /tmp zram comp_algorithm=lz4,disksize=8g,lazytime,noatime,data=journal 0 0
+	/dev/zram0 /var/tmp/portage zram reset=1,comp_algorithm=lz4,disksize=12g,lazytime,sync,noatime,data=journal 0 0
+"
 
 err(){
-	echo "ERROR mount.zram $1" >&2
+	echo "
+ERROR $0: $1" >&2
 	exit ${2:-1}
 }
 
@@ -31,6 +32,9 @@ modprobe zram num_devices=$((nn+1))
 n="${1##*/}"
 [ -e "/sys/block/$n/comp_algorithm" ] || err "no /sys/block/$n/comp_algorithm"
 o=
+opt ${4//,/ }
+[ -b "$1" ] || err " -b $1$help"
+o="${o#,}"
 for i in ${4//,/ }; do
 	v="${i#*=}"
 	[ "$v" = "$i" ] || {
@@ -47,9 +51,8 @@ for i in ${4//,/ }; do
 	}
 	o+=",$i"
 done
-[ -b "$1" ] || err " -b $1$help"
-o="${o#,}"
 
+fs="${fs/:-L:zramX:/:-L:$n:}"
 fs="${fs//:/ }"
 mkfs="${fs#* }"
 fs="${fs%% *}"
