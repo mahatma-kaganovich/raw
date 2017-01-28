@@ -18,9 +18,8 @@ Mount options:
 	First trying to mount with '-o discard...'.
 Examples of /etc/fstab:
 	/dev/zram3 /tmp zram disksize=8g 0 0
-	/dev/zram1 /tmp zram comp_algorithm=lz4,disksize=8g,lazytime,noatime,data=journal 0 0
 	/dev/zram1 /tmp zram comp_algorithm=lz4,disksize=8g,lazytime,noatime,dioread_nolock 0 0
-	/dev/zram0 /var/tmp/portage zram reset=1,comp_algorithm=lz4,disksize=12g,lazytime,sync,noatime,dioread_nolock,dax 0 0
+	/dev/zram0 /var/tmp/portage zram reset=1,comp_algorithm=lz4,disksize=12g,lazytime,sync,noatime,dioread_nolock 0 0
 "
 
 err(){
@@ -35,6 +34,8 @@ modprobe zram num_devices=$((nn+1))
 n="${1##*/}"
 [ -e "/sys/block/$n/comp_algorithm" ] || err "no /sys/block/$n/comp_algorithm"
 o=
+ig=
+re=",$4,"
 for i in ${4//,/ }; do
 	v="${i#*=}"
 	[ "$v" = "$i" ] || {
@@ -45,8 +46,11 @@ for i in ${4//,/ }; do
 		esac
 		f="/sys/block/$n/$x"
 		[ -e "$f" ] && {
-			echo "$v" >"$f" || err "echo $v >$f"
-			continue
+			#[ -n "${re##*,remount,*}" ] && continue
+			echo "$v" >"$f" 2>/dev/null && continue
+			ig+=",$i"
+			[ -n "${re##*,remount,*}" ] && continue
+			err "echo $v >$f"
 		}
 	}
 	o+=",$i"
@@ -70,6 +74,7 @@ for i in discard"${o+,$o}" "$o"; do
 	mount -t "$fs" ${i+-o $i} "$1" "$2" && {
 		[ -n "$m" ] && chmod -- "$m" "$2"
 		[ -n "$ug" ] && chown -- "$ug" "$2"
+		[ -n "$ig" ] && echo "WARNING $0: options '${ig#,}' ignored" >&2
 		exit 0
 	}
 	r=$?
