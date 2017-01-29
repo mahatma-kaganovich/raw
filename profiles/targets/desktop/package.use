@@ -25,3 +25,5 @@ app-crypt/pinentry gtk
 media-libs/opencv gtk
 # required for [wifi] mozillas -> networkmanager
 net-wireless/wpa_supplicant dbus
+# just want full & smooth visuals
+media-fonts/infinality-ultimate-meta ms
