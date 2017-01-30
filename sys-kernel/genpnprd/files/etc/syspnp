@@ -16,7 +16,7 @@ onbatt=false
 
 etest(){
 local x
-x=`(eval "$1" >/dev/null) 2>&1` && [ -z "$x" ] && echo OK && return 0
+x=`(eval "$1" >/dev/null) 2>&1` && [ -z "$x" ] && return 0
 echo -n "Internal script error in:
 $p
 
