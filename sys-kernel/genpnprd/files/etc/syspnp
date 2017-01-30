@@ -1,5 +1,5 @@
 #!/bin/sh
-## pnp modules bootloader v0.17
+## pnp modules bootloader v0.18
 ## (c) Denis Kaganovich, under Anarchy license
 ## consume preprocessed /lib/modules/$KV/modules.alias
 
@@ -13,6 +13,18 @@ export blkid_cache="/etc/blkid.sh.cache"
 
 pids=""
 onbatt=false
+
+etest(){
+local x
+x=`(eval "$1" >/dev/null) 2>&1` && [ -z "$x" ] echo OK && return 0
+echo -n "Internal script error in:
+$p
+
+- $x
+Error eval in${2:+ in '$2'}. Press enter to skip & continue:"
+read x
+return 1
+}
 
 _tee(){
 	local s="$1" i r=1
@@ -252,7 +264,8 @@ pnp_options(){
 	cmd_unload=false
 	cmd_noraid=false
 	cmd_real_init=/sbin/init
-	local i v m p= d="${TMPDIR}/modparam"
+	local i v m p= d="${TMPDIR}/modparam" x=';;
+'
 	mkdir $d
 	for i in "${@}" ; do
 	case "$i" in
@@ -260,7 +273,7 @@ pnp_options(){
 	parallel-startup=*) PARALLEL="${i#*=}" ;;
 	moduleparam=*)
 		i="${i#*=}"
-		p="*/${i%%:*}.ko)PARAM=\"${i#*:}\";;$p"
+		p="*/${i%%:*}.ko)PARAM=\"${i#*:}\"$x$p"
 	;;
 	md=*)	v="cmd_${i%%=*}"
 		eval "$v=\"\$$v ${i#*=}\""
@@ -280,28 +293,29 @@ pnp_options(){
 	for i in $(ls -1 "$d"); do
 		m="${i%%.*}"
 		[ -n "$m" ] && i="$(cat "$d/$i")" || continue
-		[ "x$i" = 'x!' ] && cmd_noload="$cmd_noload $m" && continue
+		[ "x$i" = 'x!' ] && cmd_noload="$cmd_noload,$m" && continue
 		[ -z "$i" ] && MDOLIST="$MDOLIST $m"
 		[ "$v" = "$m" ] && {
 			p="$p $i"
 			continue
 		}
-		[ -n "$v" ] && p="$p';;"
+		[ -n "$v" ] && p="$p'$x"
 		p="$p*/$m.ko)PARAM='$i"
 		v="$m"
 	done
-	[[ -n "$v" ]] && p="$p';;"
+	[[ -n "$v" ]] && p="$p'$x"
 	rm "$d" -Rf
-	$cmd_nofb && p="*/fb.ko|*/drm_kms_helper.ko)INSMOD=continue;;$p"
-	[[ -n "$cmd_noload" ]] && p="*/$(echo "${cmd_noload# }"|sed -e 's/,/.ko|*\//g').ko)INSMOD=continue;;$p"
-	echo "modparam(){
+	$cmd_nofb && p="*/fb.ko|*/drm_kms_helper.ko)INSMOD=continue$x$p"
+	[[ -n "$cmd_noload" ]] && p="*/$(echo "${cmd_noload#,}"|sed -e 's/,/.ko|*\//g').ko)INSMOD=continue$x$p"
+	p="modparam(){
 INSMOD=
 case \"\$1\" in
 1)INSMOD=\${REORDER:-continue};;
 $p
 *)PARAM='';;
 esac
-}" >/etc/modparam.sh
+}"
+	etest "$p" 'modparam.sh' && echo "$p" >/etc/modparam.sh
 	$cmd_quiet && good_msg(){ return; }
 }
 
