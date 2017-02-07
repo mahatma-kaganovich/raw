@@ -75,3 +75,7 @@ sci-libs/silo silex qt4
 sci-libs/ViSP opencv
 sys-cluster/hpx -jemalloc
 x11-wm/xpra dec_av2
+# try to avoid [qml] globally (IMHO hole)
+# dev-qt/qtwebengine
+dev-qt/qtwebchannel qml
+a
