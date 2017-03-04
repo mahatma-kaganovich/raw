@@ -1,0 +1,25 @@
+Aggressive ACK: every broadcast duplicated unicast.
+So "always-broadcast on;" will be always 2x ACKs -
+workaround some OS'es and some switches.
+
+--- a/server/dhcp.c	2016-10-10 14:18:21.000000000 +0300
++++ b/server/dhcp.c	2016-10-10 14:24:27.000000000 +0300
+@@ -3886,6 +3886,7 @@ void dhcp_reply (lease)
+ #endif
+ 	memset (to.sin_zero, 0, sizeof to.sin_zero);
+ 
++repeat:
+ 	/* If this was gatewayed, send it back to the gateway... */
+ 	if (raw.giaddr.s_addr) {
+ 		to.sin_addr = raw.giaddr;
+@@ -3975,6 +3976,10 @@ void dhcp_reply (lease)
+ 		       packet_length, state->ip->name);
+ 	}
+ 
++	if (raw.flags & htons (BOOTP_BROADCAST)) {
++		raw.flags ^= htons (BOOTP_BROADCAST);
++		goto repeat;
++	}
+ 
+ 	/* Free all of the entries in the option_state structure
+ 	   now that we're done with them. */
