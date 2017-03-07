@@ -87,7 +87,6 @@ games-emulation/fceux -gtk
 games-emulation/mupen64plus gtk
 games-emulation/snes9x gtk
 games-emulation/vbam gtk
-games-emulation/visualboyadvance gtk
 games-fps/eduke32 gtk
 games-misc/gBhed gtk
 games-roguelike/tome gtk
@@ -97,13 +96,12 @@ games-strategy/liquidwar6 gtk
 gnome-base/gvfs -gtk
 gnome-extra/cjs -gtk
 gnome-extra/libgda -gtk
-gnome-extra/libgsf gtk
 gnome-extra/libgsf -gtk
 kde-apps/print-manager gtk
 kde-plasma/plasma-desktop gtk2 -gtk3
 kde-plasma/plasma-meta -gtk
-kde-plasma/systemsettings:4 gtk
-kde-plasma/systemsettings:5 gtk
+kde-plasma/systemsettings gtk
+kde-plasma/systemsettings -gtk
 media-gfx/birdfont -gtk
 media-gfx/fontforge gtk
 media-gfx/graphviz gtk
@@ -150,6 +148,7 @@ media-sound/timidity++ gtk
 media-tv/ivtvplayer gtk
 media-tv/nvtv gtk
 media-video/blinkensim gtk
+media-video/dcpomatic gtk
 media-video/ffmpegthumbnailer -gtk
 media-video/handbrake -gtk
 media-video/mjpegtools gtk
@@ -174,7 +173,6 @@ net-libs/aqbanking gtk
 net-libs/gssdp -gtk
 net-libs/libinfinity -gtk
 net-misc/dhcpcd-ui gtk
-net-misc/hotot -gtk
 net-misc/mico gtk
 net-misc/networkmanager-fortisslvpn -gtk
 net-misc/networkmanager-openconnect -gtk
@@ -185,13 +183,8 @@ net-misc/networkmanager-sstp -gtk
 net-misc/networkmanager-vpnc -gtk
 net-misc/olsrd gtk
 net-misc/pavuk gtk
-net-misc/putty gtk
 net-misc/pymazon gtk
-net-misc/unison:2.27 gtk
-net-misc/unison:2.32 gtk
-net-misc/unison:2.40 gtk
-net-misc/unison:2.45 gtk
-net-misc/unison:2.48 gtk
+net-misc/unison gtk
 net-misc/wicd gtk
 net-misc/youtube-viewer gtk
 net-p2p/deluge -gtk
@@ -215,7 +208,6 @@ sys-apps/lshw gtk
 sys-apps/pcsc-tools gtk
 sys-auth/polkit -gtk
 sys-block/fio gtk
-sys-boot/plymouth gtk
 sys-cluster/ceph gtk
 sys-devel/distcc gtk
 sys-devel/sparse gtk
@@ -225,7 +217,6 @@ sys-fs/pysize gtk
 sys-libs/gwenhywfar gtk
 sys-power/nvclock gtk
 sys-process/latencytop gtk
-www-client/netsurf gtk
 www-client/netsurf -gtk
 www-client/opera gtk
 www-client/w3m -gtk
@@ -254,5 +245,5 @@ x11-themes/nimbus gtk
 x11-themes/qtcurve gtk
 x11-wm/afterstep gtk
 x11-wm/compiz gtk
-mail-client/thunderbird gstreamer-0 ffmpeg
-www-client/firefox gstreamer-0 ffmpeg
+mail-client/thunderbird ffmpeg
+www-client/firefox ffmpeg

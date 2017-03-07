@@ -19,12 +19,10 @@ media-libs/phonon-vlc qt5 -qt4
 media-libs/qt-gstreamer qt5 -qt4
 media-video/smplayer qt5 -qt4
 media-video/vlc qt5 -qt4
-net-analyzer/wireshark qt5 -qt4
 net-analyzer/wireshark qt5
 net-libs/jreen qt5 -qt4
 net-libs/qxmpp qt5 -qt4
 net-libs/telepathy-qt qt5 -qt4
-net-print/hplip qt5 -qt4
 sys-auth/polkit-qt qt5 -qt4
 sys-devel/qconf qt5 -qt4
 x11-libs/qscintilla qt5 -qt4

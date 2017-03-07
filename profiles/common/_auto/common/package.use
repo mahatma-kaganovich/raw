@@ -1,4 +1,3 @@
-kde-plasma/kwin:4 opengl -gles
 media-gfx/tachyon opengl
 media-libs/gst-plugins-bad:1.0 opengl -gles2
 media-libs/mesa egl -gles1 -gles2
@@ -56,8 +55,6 @@ gnustep-apps/sogo ssl gnutls
 gnustep-base/gnustep-base ssl gnutls
 gnustep-libs/sope ssl gnutls
 mail-client/claws-mail gnutls
-mail-client/mutt ssl -gnutls -libressl
-mail-client/mutt ssl -libressl
 mail-filter/anubis gnutls
 mail-filter/mailfilter ssl
 mail-filter/opendkim ssl gnutls
@@ -76,8 +73,6 @@ net-analyzer/nagios-plugins ssl
 net-dialup/xl2tpd kernel
 net-fs/s3fs openssl -gnutls -nss
 net-fs/s3fs nettle gnutls
-net-ftp/lftp openssl
-net-ftp/lftp ssl openssl gnutls
 net-ftp/lftp ssl gnutls
 net-im/bitlbee gnutls nss
 net-im/qutim ssl
@@ -119,7 +114,6 @@ net-misc/vpnc gnutls
 net-misc/wget gnutls
 net-misc/wget ssl gnutls
 net-nds/shelldap ssl
-net-nntp/sabnzbd ssl
 net-p2p/bitcoinxt-qt ssl
 net-p2p/bitcoinxtd ssl
 net-p2p/mktorrent ssl
@@ -167,6 +161,8 @@ dev-db/postgresql:9.4 python_single_target_python2_7 -python_single_target_pytho
 dev-db/postgresql:9.5 python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 dev-db/postgresql:9.6 python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 dev-db/postgresql:9.7 python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
+dev-embedded/libftdi:0 python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
+dev-embedded/libftdi:1 python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 dev-games/vamos python_single_target_python3_4 -python_single_target_python3_5
 dev-libs/boost-numpy python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 dev-libs/gobject-introspection python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
@@ -211,7 +207,6 @@ media-video/openshot:1 python_single_target_python3_4 -python_single_target_pyth
 media-video/pitivi python_single_target_python3_4 -python_single_target_python3_5
 media-video/totem python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 net-analyzer/fail2ban python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
-net-irc/hexchat python_single_target_python2_7 -python_single_target_python3_4
 net-irc/hexchat python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 net-irc/irker python_single_target_python2_7 -python_single_target_python3_4
 net-irc/irker python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
@@ -219,10 +214,8 @@ net-irc/weechat python_single_target_python2_7 -python_single_target_python3_4 -
 net-irc/znc python_single_target_python3_4 -python_single_target_python3_5
 net-mail/offlineimap python_single_target_python2_7 -python_single_target_python3_4
 net-misc/spice-gtk python_single_target_python2_7 -python_single_target_python3_4
-net-print/hplip python_single_target_python2_7 -python_single_target_python3_4
 net-print/hplip python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 net-wireless/blueman python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
-net-wireless/bluez python_single_target_python3_4 -python_single_target_python3_5
 sci-chemistry/pdb-tools python_single_target_python2_7
 sci-libs/clblas python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 sci-libs/grib_api python_single_target_python2_7 -python_single_target_python3_4

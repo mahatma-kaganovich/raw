@@ -1,4 +1,3 @@
-kde-plasma/kwin:4 -opengl gles
 media-gfx/tachyon -opengl # mpi
 media-libs/gst-plugins-bad:1.0 -opengl gles2
 net-libs/webkit-gtk:3 -opengl gles2
@@ -14,8 +13,6 @@ dev-db/percona-server -openssl yassl libressl
 dev-libs/xmlsec -gnutls -gcrypt
 dev-perl/DBD-mysql -ssl embedded
 dev-vcs/cvsync -mhash gcrypt
-mail-client/mutt -ssl gnutls libressl
-mail-client/mutt -ssl libressl
 mail-mta/courier -gnutls libressl
 mail-mta/msmtp -gnutls -ssl
 mail-mta/ssmtp -gnutls -ssl
@@ -23,7 +20,6 @@ media-video/vlc -gnutls -gcrypt
 net-analyzer/echoping -gnutls -ssl
 net-fs/s3fs -openssl gnutls nss
 net-fs/s3fs -nettle -gnutls
-net-ftp/lftp -openssl gnutls
 net-irc/iroffer-dinoex -gnutls -ssl
 net-irc/scrollz -gnutls -ssl
 net-libs/libgadu -gnutls -ssl

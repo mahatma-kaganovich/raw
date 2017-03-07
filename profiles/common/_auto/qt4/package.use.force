@@ -2,9 +2,7 @@ app-misc/qlcplus qt4 -qt5
 app-office/lyx -qt5
 app-office/texmaker qt4 -qt5
 app-office/texmaker qt4
-app-office/texstudio qt4
 dev-games/openscenegraph qt4 -qt5
-dev-libs/quazip qt4 -qt5
 dev-python/qscintilla-python qt4 -qt5
 kde-misc/kdiff3 qt4 -qt5
 media-video/smplayer qt4 -qt5
@@ -12,7 +10,6 @@ net-libs/qxmpp qt4 -qt5
 net-p2p/bitcoin-qt qt4 -qt5
 net-p2p/bitcoinxt-qt qt4 -qt5
 net-p2p/retroshare qt4
-net-print/hplip -qt5
 sci-electronics/pulseview qt4 -qt5
 sys-devel/qconf qt4 -qt5
 x11-libs/qscintilla qt4 -qt5
