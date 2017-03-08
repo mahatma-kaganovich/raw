@@ -20,10 +20,11 @@ Mount options:
 	First trying to mount with '-o discard...'.
 Examples of /etc/fstab:
 	/dev/zram3 /tmp zram disksize=8g 0 0
-	/dev/zram3 /tmp zram zramctl.-alz4:-s8g 0 0
-	/dev/zram3 /tmp zram zramctl.--algorithm=lz4:--size=8g 0 0
 	/dev/zram1 /tmp zram comp_algorithm=lz4,disksize=8g,lazytime,noatime,dioread_nolock 0 0
 	/dev/zram0 /var/tmp/portage zram reset=1,comp_algorithm=lz4,disksize=12g,lazytime,sync,noatime,dioread_nolock 0 0
+    Over zramctl:
+	/dev/zram3 /tmp zram zramctl.-alz4:-s8g 0 0
+	/dev/zram3 /tmp zram zramctl.--algorithm=lz4:--size=8g 0 0
 "
 
 err(){
@@ -40,7 +41,10 @@ nn=${1#/dev/zram}
 [ "$1" = "$nn" ] && err "$*$help"
 modprobe zram num_devices=$((nn+1))
 n="${1##*/}"
-[ -e "/sys/block/$n/comp_algorithm" ] || err "no /sys/block/$n/comp_algorithm"
+i="/sys/block/$n"
+[ -e "$i" ] || sleep 1
+i="$i/comp_algorithm"
+[ -e "$i" ] || err "no $i"
 o=
 ig=
 re=",$4,"
@@ -56,7 +60,7 @@ for i in ${4//,/ }; do
 		zramctl.*) # unify mkfs here?
 			c="${i#*.}"
 			c="${x%%.*} ${c//:/ } $1"
-			$c 2>/dev/null || sleep 1 || $c || ig "$c"
+			$c || ig "$c"
 			continue
 		;;
 		fs|mode|uid|gid)eval "$x=\"\$v\"";;&
