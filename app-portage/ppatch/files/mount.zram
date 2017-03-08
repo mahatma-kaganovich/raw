@@ -9,7 +9,7 @@ help="
 mount.zram v0.5 (c) mahatma, under Anarchy license
 Mount helper to mount zram devices via /etc/fstab over most simple way, stupid.
 Usage:	mount -t zram ...
-	mount.zram /dev/zram<X> <mountpoint> [-o <options>]
+	mount.zram /dev/zram<X> <mountpoint> -o <options>
 Loading zram module with number of devices just from FIRST mount device in fstab.
 (so, first device is highest number)
 Mount options:
