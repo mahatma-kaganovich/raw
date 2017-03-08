@@ -39,7 +39,7 @@ warn(){
 
 nn=${1#/dev/zram}
 [ "$1" = "$nn" ] && err "$*$help"
-modprobe zram num_devices=$((nn+1))
+[ -e /sys/module/zram -o -e /dev/zram0 ] || modprobe zram num_devices=$((nn+1))
 n="${1##*/}"
 i="/sys/block/$n"
 [ -e "$i" ] || sleep 1
