@@ -6,18 +6,22 @@ kv=`uname -r`
 
 help="
 
-mount.zram v0.4 (c) mahatma, under Anarchy license
+mount.zram v0.5 (c) mahatma, under Anarchy license
 Mount helper to mount zram devices via /etc/fstab over most simple way, stupid.
-Usage: mount -t zram ...
+Usage:	mount -t zram ...
+	mount.zram /dev/zram<X> <mountpoint> [-o <options>]
 Loading zram module with number of devices just from FIRST mount device in fstab.
 (so, first device is highest number)
 Mount options:
 	'fs=<fs[{:mkfs_options}]> (default fs=$fs),
 	<zram_param>=<value> where <zram_param> is any file from /sys/block/zramX/
+	zramctl.<options> - alternative to sysfs - use zramctl tool (spaces replaced to ':')
 	other options pass directly to <fs> mount.
 	First trying to mount with '-o discard...'.
 Examples of /etc/fstab:
 	/dev/zram3 /tmp zram disksize=8g 0 0
+	/dev/zram3 /tmp zram zramctl.-alz4:-s8g 0 0
+	/dev/zram3 /tmp zram zramctl.--algorithm=lz4:--size=8g 0 0
 	/dev/zram1 /tmp zram comp_algorithm=lz4,disksize=8g,lazytime,noatime,dioread_nolock 0 0
 	/dev/zram0 /var/tmp/portage zram reset=1,comp_algorithm=lz4,disksize=12g,lazytime,sync,noatime,dioread_nolock 0 0
 "
@@ -28,6 +32,10 @@ ERROR $0: $1" >&2
 	exit ${2:-1}
 }
 
+warn(){
+	echo "WARNING $0: ignored failed: $1" >&2
+}
+
 nn=${1#/dev/zram}
 [ "$1" = "$nn" ] && err "$*$help"
 modprobe zram num_devices=$((nn+1))
@@ -36,24 +44,31 @@ n="${1##*/}"
 o=
 ig=
 re=",$4,"
+ig(){
+	[ -z "${re##*,remount,*}" ] || err "$1"
+	ig="$ig,$i"
+}
 for i in ${4//,/ }; do
 	v="${i#*=}"
 	[ "$v" = "$i" ] || {
 		x="${i%%=*}"
 		case "$x" in
+		zramctl.*) # unify mkfs here?
+			c="${i#*.}"
+			c="${x%%.*} ${c//:/ } $1"
+			$c 2>/dev/null || sleep 1 || $c || ig "$c"
+			continue
+		;;
 		fs|mode|uid|gid)eval "$x=\"\$v\"";;&
 		fs)continue;;
 		esac
 		f="/sys/block/$n/$x"
 		[ -e "$f" ] && {
 			#[ -n "${re##*,remount,*}" ] && continue
-			echo "$v" >"$f" 2>/dev/null && continue
-			ig+=",$i"
-			[ -z "${re##*,remount,*}" ] && continue
-			err "echo $v >$f"
+			echo "$v" >"$f" 2>/dev/null || ig "echo $v >$f"
 		}
 	}
-	o+=",$i"
+	o="$o,$i"
 done
 [ -b "$1" ] || err " -b $1$help"
 o="${o#,}"
@@ -61,8 +76,9 @@ o="${o#,}"
 fs="${fs//:/ }"
 mkfs="${fs#* }"
 fs="${fs%% *}"
+mkfs="mkfs.$fs $mkfs $1"
 
-[ -z "${re##*,remount,*}" ] || yes '' | "mkfs.$fs" $mkfs "$1" # || err "mkfs -t $fs $mkfs $1"
+[ -z "${re##*,remount,*}" ] || yes '' | $mkfs || warn "$mkfs"
 
 # move original mountpoint permissions to mount if not fs-assisted
 [ -z "$mode" ] && m=`stat "$2" --format='%a'`
@@ -72,7 +88,7 @@ for i in discard"${o+,$o}" "$o"; do
 	mount -t "$fs" ${i+-o $i} "$1" "$2" && {
 		[ -n "$m" ] && chmod -- "$m" "$2"
 		[ -n "$ug" ] && chown -- "$ug" "$2"
-		[ -n "$ig" ] && echo "WARNING $0: options '${ig#,}' ignored" >&2
+		[ -n "$ig" ] && warn "options '${ig#,}'"
 		exit 0
 	}
 	r=$?
