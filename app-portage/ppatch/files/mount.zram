@@ -15,7 +15,7 @@ Loading zram module with number of devices just from FIRST mount device in fstab
 Mount options:
 	'fs=<fs[{:mkfs_options}]> (default fs=$fs),
 	<zram_param>=<value> where <zram_param> is any file from /sys/block/zramX/
-	zramctl.<options> - alternative to sysfs - use zramctl tool (spaces replaced to ':')
+	zramctl:<options> - alternative to sysfs - use zramctl tool (spaces replaced to ':')
 	other options pass directly to <fs> mount.
 	First trying to mount with '-o discard...'.
 Examples of /etc/fstab:
@@ -23,8 +23,8 @@ Examples of /etc/fstab:
 	/dev/zram1 /tmp zram comp_algorithm=lz4,disksize=8g,lazytime,noatime,dioread_nolock 0 0
 	/dev/zram0 /var/tmp/portage zram reset=1,comp_algorithm=lz4,disksize=12g,lazytime,sync,noatime,dioread_nolock 0 0
     Over zramctl:
-	/dev/zram3 /tmp zram zramctl.-alz4:-s8g 0 0
-	/dev/zram3 /tmp zram zramctl.--algorithm=lz4:--size=8g 0 0
+	/dev/zram3 /tmp zram zramctl:-alz4:-s8g 0 0
+	/dev/zram3 /tmp zram zramctl:--algorithm=lz4:--size=8g 0 0
 "
 
 err(){
@@ -57,9 +57,8 @@ for i in ${4//,/ }; do
 	[ "$v" = "$i" ] || {
 		x="${i%%=*}"
 		case "$x" in
-		zramctl.*) # unify mkfs here?
-			c="${i#*.}"
-			c="${x%%.*} ${c//:/ } $1"
+		zramctl:*) # unify mkfs here?
+			c="${i//:/ } $1"
 			$c || ig "$c"
 			continue
 		;;
