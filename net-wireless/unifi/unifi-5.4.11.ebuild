@@ -10,7 +10,12 @@ HOMEPAGE="https://www.ubnt.com/download/unifi"
 SRC_URI="http://dl.ubnt.com/unifi/${PV}/UniFi.unix.zip -> ${PN}-${PV}.zip"
 SLOT="0"
 KEYWORDS="~amd64 ~arm"
-RDEPEND="dev-db/mongodb virtual/jdk:1.8"
+#RDEPEND="dev-db/mongodb virtual/jdk:1.8"
+RDEPEND="dev-db/mongodb
+	|| (
+		dev-java/icedtea:8[sunec]
+		dev-java/icedtea-bin:8
+	)"
 
 src_unpack() {
 	default_src_unpack
@@ -30,4 +35,10 @@ src_install(){
 	ins "${FILESDIR}"/mongo.sh /etc/unifi/bin/mongo.sh
 	dosym /etc/unifi/bin/mongod.sh /opt/UniFi/bin/mongo
 	newinitd "${FILESDIR}/${PN}".init "${PN}"
+}
+
+pkg_postinst(){
+	einfo 'Remember to use NSS-enabled java VM (dev-java/icedtea:8[sunec] is good),'
+	einfo 'then uncomment NSS security provider in ${java.home}/jre/lib/security/java.security:'
+	einfo 'security.provider.10=sun.security.pkcs11.SunPKCS11 ${java.home}/lib/security/nss.cfg'
 }
