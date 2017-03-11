@@ -10,7 +10,7 @@ dev-db/mariadb-galera tokudb extraengine sst-xtrabackup
 sys-cluster/ceph xfs
 net-dns/bind threads caps
 app-emulation/qemu doc tls usbredir spice sasl
-net-fs/samba cluster ads addns ldap client addc acl
+net-fs/samba cluster ads addns ldap client addc acl python
 net-fs/cifs-utils ads creds acl
 net-dns/bind-tools gssapi
 net-libs/libssh server
