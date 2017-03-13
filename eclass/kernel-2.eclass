@@ -273,11 +273,12 @@ ext_firmware(){
 
 kernel-2_src_compile() {
 	kconfig_init
-
-	if [[ "${EAPI}" == 1 ]]; then
-		kernel-2_src_prepare
+	case ${EAPI:-0} in
+	0|1)
+#		kernel-2_src_prepare # ->src_unpack
 		kernel-2_src_configure
-	fi
+	;;
+	esac
 	####
 
 	_saved_src_compile
@@ -1207,10 +1208,7 @@ fno(){
 }
 
 kernel-2_src_prepare(){
-	case ${EAPI:-0} in
-	0|1);;
-	*)_saved_src_prepare;;
-	esac
+	_saved_src_prepare
 	[[ ${ETYPE} == sources ]] || return
 	kconfig_init
 
