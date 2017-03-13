@@ -1202,6 +1202,10 @@ _lsmod(){
 	find "${@}" -name "*.c"|sed -e 's:^.*/\([^/]*\).c$:\1:' -e 's:-:_:g'
 }
 
+fno(){
+	use custom-cflags && is-flagq -f$1 && sed -i '1i \n#pragma GCC optimize ("'"no-$1"'")'  "$2"
+}
+
 kernel-2_src_prepare(){
 	[[ ${ETYPE} == sources ]] || return
 	kconfig_init
@@ -1248,11 +1252,9 @@ kernel-2_src_prepare(){
 	;;&
 	# no time & reason to test all rare bugs with all kernels, so keep whole
 	# jist build old kernel with old gcc or fix this "case"
-	*)if use custom-cflags; then
+	4.*)if use custom-cflags; then
 		# gcc 4.5+ -O3 -ftracer
-		if is-flagq -ftracer; then
-			sed -i -e 's:^static unsigned long vmcs_readl:static noinline unsigned long vmcs_readl:' arch/x86/kvm/vmx.c
-		fi
+		fno tracer arch/x86/kvm/vmx.c
 		# gcc 4.7 -O3 or -finline-functions
 #		echo "CFLAGS_phy.o += -fno-inline-functions" >>drivers/net/ethernet/intel/e1000e/Makefile
 #		echo "CFLAGS_e1000_phy.o += -fno-inline-functions" >>drivers/net/ethernet/intel/igb/Makefile
@@ -1261,7 +1263,8 @@ kernel-2_src_prepare(){
 	fi;;
 	esac
 	# 2test more
-	use custom-cflags && is-flagq -ftracer && sed -i -e 's:^static void sleep_delay:static noinline void sleep_delay:' drivers/media/radio/radio-aimslab.c
+	fno tracer drivers/media/radio/radio-aimslab.c
+	sed -i -e 's:^static void sleep_delay:static noinline void sleep_delay:' drivers/media/radio/radio-aimslab.c
 	# ;)
 	sed -i -e 's:^#if 0$:#if 1:' drivers/net/tokenring/tms380tr.c
 	# deprecated
