@@ -15,14 +15,7 @@ for i in "${@}"; do
 done
 }
 
-
-case ${EAPI:-0} in
-	0|1)	reexport kernel-2 pkg_setup src_compile src_install pkg_postinst pkg_preinst
-		_saved_src_prepare(){ true; }
-	;;
-	*)	reexport kernel-2 pkg_setup src_compile src_install pkg_postinst pkg_preinst src_prepare;;
-esac
-
+reexport kernel-2 pkg_setup src_compile src_install pkg_postinst pkg_preinst src_prepare;;
 
 #UROOT="${ROOT}"
 UROOT=""
@@ -1214,7 +1207,10 @@ fno(){
 }
 
 kernel-2_src_prepare(){
-	_saved_src_prepare
+	case ${EAPI:-0} in
+	0|1);;
+	*)_saved_src_prepare;;
+	esac
 	[[ ${ETYPE} == sources ]] || return
 	kconfig_init
 
