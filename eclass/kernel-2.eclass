@@ -15,7 +15,7 @@ for i in "${@}"; do
 done
 }
 
-reexport kernel-2 pkg_setup src_compile src_install pkg_postinst pkg_preinst src_prepare;;
+reexport kernel-2 pkg_setup src_compile src_install pkg_postinst pkg_preinst src_prepare
 
 #UROOT="${ROOT}"
 UROOT=""
