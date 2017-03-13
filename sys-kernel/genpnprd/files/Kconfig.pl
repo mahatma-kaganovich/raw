@@ -105,6 +105,7 @@ $ENV{KERNEL_CONFIG}||='
 	64BIT==!y;KALLSYMS_BASE_RELATIVE
 	FB_SIMPLE =RXKAD BIG_KEYS
 	ARM==y;ARM64==y;-QCOM_.+
+	NLS==!y;NLS_CODEPAGE_437 NLS==!y;NLS_ISO8859_1 NLS==!y;NLS_UTF8
 	#ubuntu,suse TASKS_RCU
 	#usb_mouse_fix HID
 	###beleave_last_binutils: X86_X32

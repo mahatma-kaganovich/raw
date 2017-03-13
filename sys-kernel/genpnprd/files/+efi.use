@@ -1,1 +1,1 @@
-cfg_use efi EFI
+cfg_use efi EFI VFAT_FS
