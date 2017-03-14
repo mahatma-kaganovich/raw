@@ -2,10 +2,11 @@
 
 # openmp: experimental for system-wide
 omp=false
-#preferred_fp=sse
+preferred_fp=sse
 ## doubts: called "unstable performance" vs "double registers"
 ## found: (Paolo Bonzir) Yes.  It might (*might*) be better in GCC 4.4 thanks to the new register allocator, but it's unlikely that the manual page will be changed before the release.
-preferred_fp=both
+## upd: bashmark poor results and extremly poor in KVM
+#preferred_fp=both
 
 export LANG=C
 
