@@ -89,7 +89,7 @@ fi
 #(echo " $cmn"|grep -q 'disable-default-ssp') && f3+=' -fstack-protector-explicit'
 case "`cat /proc/cpuinfo`" in
 *GenuineTMx86*)f3="${f3/cacheline/abi} -fno-align-functions -fno-align-jumps -fno-align-loops -fno-align-labels -mno-align-stringops";;&
-*CentaurHauls*)preferred_fp=both;;
+*CentaurHauls*)preferred_fp=auto;; # bashmark: C7 better 387, nothing about Nano
 esac
 filter=break
 case "`uname -m`" in
