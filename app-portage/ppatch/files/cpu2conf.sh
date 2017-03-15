@@ -13,9 +13,11 @@ export LANG=C
 ct='--help=target -v -Q'
 lang=c
 filter=continue
+# gcc default defaults
+base=
 
 _c(){
-	gcc "${@}" $ct 2>&1
+	gcc $base "${@}" $ct 2>&1
 }
 
 _c1(){
@@ -59,7 +61,7 @@ _smp(){
 }
 
 conf_cpu(){
-local flags cpucaps f0= f1= f2= f3= f5= i j i1 j1 c c0 c1 lm=false fp=387 gccv
+local flags cpucaps f0= f1= f2= f3= f5= i j i1 j1 c c0 c1 lm=false fp=387 gccv m="`uname -m`"
 flags=$(_flags flags)
 cpucaps=$(_flags cpucaps)
 cmn=$(gcc --help=common -v -Q 2>&1)
@@ -92,10 +94,14 @@ case "`cat /proc/cpuinfo`" in
 *CentaurHauls*)preferred_fp=auto;; # bashmark: C7 better 387, nothing about Nano
 esac
 filter=break
-case "`uname -m`" in
-# -fschedule-insns is working (increasing registers range)
-# i?86 looks mostly working, exclude kernel
-x86_*|i?86)f3+=$(_f -fira-loop-pressure -flive-range-shrinkage -fsched-pressure -fschedule-insns -fsched-spec-load --param=sched-pressure-algorithm=2);;&
+case "$m" in
+x86_*|i?86)
+	# -fschedule-insns is working (increasing registers range)
+	# i?86 looks mostly working, exclude kernel
+	f3+=$(_f -fira-loop-pressure -flive-range-shrinkage -fsched-pressure -fschedule-insns -fsched-spec-load --param=sched-pressure-algorithm=2)
+	# gnostic - don't know how to get universal default of defaults for GCC
+	base="-mtune=generic -march=${m//_/-}"
+;;&
 esac
 filter=continue
 for i in $flags; do
