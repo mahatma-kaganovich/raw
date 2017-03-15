@@ -1226,7 +1226,21 @@ kernel-2_src_prepare(){
 	sed -i -e 's/_proxy_pda = 0/_proxy_pda = 1/g' "${S}"/arch/*/kernel/vmlinux.lds.S
 	[[ -e "${S}"arch/x86_64/kernel/x8664_ksyms.c ]] && ( grep -q "_proxy_pda" "${S}"arch/x86_64/kernel/x8664_ksyms.c || echo "EXPORT_SYMBOL(_proxy_pda);" >>arch/x86_64/kernel/x8664_ksyms.c )
 	# custom-arch
-	use custom-arch && sed -i -e 's/-m\(arch\|tune\|cpu\)=[a-z0-9\-]*//g' arch/*/Makefile*
+	use custom-arch && {
+		# mtune?
+		for i in arch/*/Makefile*; do
+			perl -E 'while(defined($s=<STDIN>)){
+			$ok=$ok1 || ($s=~/\$\(CONFIG_/);
+			$ok1=$ok && ($s=~/\/$/);
+			if($ok){
+			#while($s=~s/(\=| |cc-option,+)-march=[a-zA-Z0-9\-]*/$1/ig){
+			$s=~s/-march=[a-zA-Z0-9\-]*//g;
+			}
+			print $s;
+			}' <$i >$i._tmp && rename .tmp '' $i._tmp
+		done
+		#sed -i -e 's/\(\$(CONFIG_\)-m\(arch\|tune\|cpu\)=[a-z0-9\-]*)/$1/g' arch/*/Makefile*
+	}
 	# prevent to build twice
 #	sed -i -e 's%-I$(srctree)/arch/$(hdr-arch)/include%%' Makefile
 	case "$(gcc-version)" in
