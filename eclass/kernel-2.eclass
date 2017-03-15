@@ -1231,7 +1231,7 @@ kernel-2_src_prepare(){
 		for i in arch/*/Makefile*; do
 			perl -E 'while(defined($s=<STDIN>)){
 			$ok=$ok1 || ($s=~/\$\(CONFIG_/);
-			$ok1=$ok && ($s=~/\/$/);
+			$ok1=$ok && ($s=~/\\$/);
 			if($ok){
 			#while($s=~s/(\=| |cc-option,+)-march=[a-zA-Z0-9\-]*/$1/ig){
 			$s=~s/-march=[a-zA-Z0-9\-]*//g;
