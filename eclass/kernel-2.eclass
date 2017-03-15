@@ -1237,7 +1237,7 @@ kernel-2_src_prepare(){
 			$s=~s/-march=[a-zA-Z0-9\-]*//g;
 			}
 			print $s;
-			}' <$i >$i._tmp && rename .tmp '' $i._tmp
+			};exit 0' <$i >$i._tmp && rename ._tmp '' $i._tmp
 		done
 		#sed -i -e 's/\(\$(CONFIG_\)-m\(arch\|tune\|cpu\)=[a-z0-9\-]*)/$1/g' arch/*/Makefile*
 	}
