@@ -1,1 +1,1 @@
-_FLAGS="$_FLAGS -fpeel-loops -funroll-loops"
+_FLAGS="$_FLAGS -funroll-loops"

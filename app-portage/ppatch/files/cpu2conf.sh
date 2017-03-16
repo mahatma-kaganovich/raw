@@ -52,7 +52,7 @@ _cmp1(){
 }
 
 _flags(){
-	grep -s "^$1	*:" /proc/cpuinfo|sort -u|sed -e "s/^$1	*: //" -e 's:,: :g'
+	grep -s "^$1[ 	]*:" /proc/cpuinfo|sort -u|sed -e "s/^$1	*: //" -e 's:,: :g'
 }
 
 _smp(){
@@ -60,10 +60,16 @@ _smp(){
 	i=`grep "^$1[ 	]*: " /proc/cpuinfo` && i="${i##*: }" && echo $[i+$2]
 }
 
+_setflags(){
+	local i
+	for i in "${@}"; do
+		export "${i// /_}"="`_flags "$i"`"
+	done
+}
+
 conf_cpu(){
-local flags cpucaps f0= f1= f2= f3= f5= i j i1 j1 c c0 c1 lm=false fp=387 gccv m="`uname -m`"
-flags=$(_flags flags)
-cpucaps=$(_flags cpucaps)
+local f0= f1= f2= f3= f5= i j i1 j1 c c0 c1 lm=false fp=387 gccv m="`uname -m`"
+_setflags flags cpucaps 'cpu family' model fpu vendor_id
 cmn=$(gcc --help=common -v -Q 2>&1)
 f0=`_f -m{tune,cpu,arch}=native`
 f3='-malign-data=cacheline -momit-leaf-frame-pointer -mtls-dialect=gnu2 -fsection-anchors -minline-stringops-dynamically -maccumulate-outgoing-args'
@@ -91,7 +97,22 @@ fi
 #(echo " $cmn"|grep -q 'disable-default-ssp') && f3+=' -fstack-protector-explicit'
 case "`cat /proc/cpuinfo`" in
 *GenuineTMx86*)f3="${f3/cacheline/abi} -fno-align-functions -fno-align-jumps -fno-align-loops -fno-align-labels -mno-align-stringops";;&
-*CentaurHauls*)preferred_fp=auto;; # bashmark: C7 better 387, nothing about Nano
+*CentaurHauls*)preferred_fp=auto;;& # bashmark: C7 better 387, nothing about Nano
+*AuthenticAMD*" sse "*|*AuthenticAMD*Athlon*)
+#	f3+=' --param=max-unrolled-insns=100 -funroll-loops'
+	f3+=' --param=max-unrolled-insns=96 -funroll-loops'
+;;&
+*GenuineIntel*)
+	if [ $((cpu_family)) = 6 ]; then
+		if [ $((model)) -ge $((0x2e)) ]; then
+#			f3+=' --param=max-unrolled-insns=28 -funroll-loops'
+			f3+=' --param=max-unrolled-insns=24 -funroll-loops' # keep LSD working
+		elif [ $((model)) -ge $((0x0f)) ]; then
+#			f3+=' --param=max-unrolled-insns=18 -funroll-loops'
+			f3+=' --param=max-unrolled-insns=14 -funroll-loops' # keep LSD working
+		fi
+	fi
+;;&
 esac
 filter=break
 case "$m" in
@@ -107,7 +128,7 @@ filter=continue
 for i in $flags; do
 	i1="$i"
 	case "$i" in
-	sse)[ "`_flags fpu`" = yes ] && fp=$preferred_fp || fp=sse;;&
+	sse)[ "$fpu" = yes ] && fp=$preferred_fp || fp=sse;;&
 	pni)f1+=' sse3';;
 	lm)lm=true;;
 	sse|3dnowext)f1+=" $i mmxext";;
@@ -124,6 +145,7 @@ done
 f3+=" -mfpmath=$fp"
 $lm && f1+=" 64-bit-bfd" || f1+=" -64-bit-bfd"
 f3=`_f $f3`
+unroll=`_f $unroll`
 f5=`lang=c++ _f $f5`
 f1="${f1# }"
 f2="${f2# }"
