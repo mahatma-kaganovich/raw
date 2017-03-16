@@ -1,1 +1,2 @@
-cfg_use efi EFI VFAT_FS
+cfg_use efi EFI
+use efi && &FAT_FS &VFAT_FS &NLS_CODEPAGE_437 &NLS_ISO8859_1
