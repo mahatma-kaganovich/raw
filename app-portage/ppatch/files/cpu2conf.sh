@@ -125,8 +125,6 @@ x86_*|i?86)
 	base="-mtune=generic -march=${m//_/-}"
 ;;&
 esac
-echo "$f3"
-exit
 filter=continue
 for i in $flags; do
 	i1="$i"
