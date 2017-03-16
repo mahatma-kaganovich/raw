@@ -67,6 +67,10 @@ _setflags(){
 	done
 }
 
+max_unrolled(){
+	f3+=" --param=max-unrolled-insns=$(($1-4)) -funroll-loops"
+}
+
 conf_cpu(){
 local f0= f1= f2= f3= f5= i j i1 j1 c c0 c1 lm=false fp=387 gccv m="`uname -m`"
 _setflags flags cpucaps 'cpu family' model fpu vendor_id
@@ -98,18 +102,15 @@ fi
 case "`cat /proc/cpuinfo`" in
 *GenuineTMx86*)f3="${f3/cacheline/abi} -fno-align-functions -fno-align-jumps -fno-align-loops -fno-align-labels -mno-align-stringops";;&
 *CentaurHauls*)preferred_fp=auto;;& # bashmark: C7 better 387, nothing about Nano
-*AuthenticAMD*" sse "*|*AuthenticAMD*Athlon*)
-#	f3+=' --param=max-unrolled-insns=100 -funroll-loops'
-	f3+=' --param=max-unrolled-insns=96 -funroll-loops'
-;;&
+*AuthenticAMD*" sse "*|*AuthenticAMD*Athlon*) max_unrolled 99 ;;&
 *GenuineIntel*)
 	if [ $((cpu_family)) = 6 ]; then
+		# forced unroller, bound to LSD size, to avoid LSD off
+		# other cases subject to moderate
 		if [ $((model)) -ge $((0x2e)) ]; then
-#			f3+=' --param=max-unrolled-insns=28 -funroll-loops'
-			f3+=' --param=max-unrolled-insns=24 -funroll-loops' # keep LSD working
+			max_unrolled 28
 		elif [ $((model)) -ge $((0x0f)) ]; then
-#			f3+=' --param=max-unrolled-insns=18 -funroll-loops'
-			f3+=' --param=max-unrolled-insns=14 -funroll-loops' # keep LSD working
+			max_unrolled 18
 		fi
 	fi
 ;;&
@@ -124,6 +125,8 @@ x86_*|i?86)
 	base="-mtune=generic -march=${m//_/-}"
 ;;&
 esac
+echo "$f3"
+exit
 filter=continue
 for i in $flags; do
 	i1="$i"
