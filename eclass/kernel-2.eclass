@@ -809,7 +809,7 @@ pre_embed(){
 		use xen && [[ " $CF " != *' -XEN '* ]] && continue # xen have virtio too + unknown 2me others
 		einfo "QEMU virtio environment + USE=custom-arch"
 		CF1 VIRTIO -HYPERV -XEN -X86_EXTENDED_PLATFORM
-		CF1 _SENSORS_.+ -SERIAL_NONSTANDARD _SERIAL_.+ -SERIAL_8250_EXTENDED SERIAL_8250 -NEW_LEDS -POWER_SUPPLY -REGULATOR
+		CF1 _SENSORS_.+ -SERIAL_NONSTANDARD _SERIAL_.+ -SERIAL_8250_EXTENDED SERIAL_8250 -NEW_LEDS -POWER_SUPPLY -REGULATOR -THERMAL
 		use iscsi && scsi=true && CF1 ISCSI_TARGET
 		use !embed-hardware && vscsi=true && CF1 VIRTIO_.+ .+_VIRTIO
 		# -machine ..,usb=off, but respect USE=usb while
