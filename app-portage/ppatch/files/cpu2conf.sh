@@ -15,13 +15,14 @@ lang=c
 filter=continue
 # gcc default defaults
 base=
+code='int main(){}'
 
 _c(){
 	gcc $base "${@}" $ct 2>&1
 }
 
 _c1(){
-	echo 'int main(){}'|gcc -x $lang - -pipe "${@}" -o /dev/null 2>&1
+	echo "$code" |gcc -x $lang - -pipe $base "${@}" -o /dev/null 2>&1
 }
 
 _f(){
@@ -65,6 +66,30 @@ _setflags(){
 	for i in "${@}"; do
 		export "${i// /_}"="`_flags "$i"`"
 	done
+}
+
+pragma_ok(){
+code="
+#if$1
+#error $*
+#endif
+
+$code" _c1 $2 >/dev/null
+}
+
+flag_skip(){
+	local f="$1" m M x=
+	shift
+	case "$f" in
+	-mno-*)m="${f#-mno-}";;
+	-m*)m="${f#-m}";x=n;;
+	*)return 1;
+	esac
+	M="${m^^}"
+	M="${M//-/_}"
+	M="${M//./_}"
+	pragma_ok "ndef __${M}__" -m$m 1 && pragma_ok "def __${M}__" -mno-$m 2 && pragma_ok "${x}def __${M}__" "$*" 3
+#	pragma_ok "${x}def __${M}__" "$*" 1 && pragma_ok "ndef __${M}__" "$* -m$m" 2
 }
 
 max_unrolled(){
@@ -186,6 +211,13 @@ if c0=`_c $f0` && c=`_c $f4`; then
 		c0="$c"
 	done
 fi
+
+i1=
+for i in $f4; do
+	flag_skip "$i" "$i1" && continue
+	i1+=" $i"
+done
+f4="$i1"
 
 i1=
 for i in $f4; do
