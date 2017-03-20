@@ -195,9 +195,19 @@ for i in $f4; do
 done
 _cmp1 "$i1" "$f4" && f4="$i1"
 
+
+local ff='${_FLAGS}' fm=
+for i in $f3; do
+	case "$i" in
+	-m*)fm+=" $i";;
+	*)ff+=" $i";;
+	esac
+done
+
 echo "CFLAGS_NATIVE=\"$f0\"
 CFLAGS_CPU=\"$f4\"
-CFLAGS_M=\"$f3\"
+_FLAGS_M=\"$fm\"
+_FLAGS=\"$ff\"
 
 CXXFLAGS=\"\${CXXFLAGS}$f5\""
 }
