@@ -102,26 +102,21 @@ fi
 # overriding package (ceph) protector
 # 2do: patch over ssp patch to make default
 #(echo " $cmn"|grep -q 'disable-default-ssp') && f3+=' -fstack-protector-explicit'
-case "`cat /proc/cpuinfo`" in
+case "`cat /proc/cpuinfo|sed -e 's:$: :'`" in
 *GenuineTMx86*)f3="${f3/cacheline/abi} -fno-align-functions -fno-align-jumps -fno-align-loops -fno-align-labels -mno-align-stringops";;&
 *CentaurHauls*)preferred_fp=auto;;& # bashmark: C7 better 387, nothing about Nano
 *AuthenticAMD*" sse "*|*AuthenticAMD*Athlon*) max_unrolled 99 ;;&
-*GenuineIntel*)
-	if [ $((cpu_family)) = 6 ]; then
-		# Core2 lsd: 28 instructions
-		# Nehalem: lsd: 28 u-op
-		# Sandy Bridge: lsd: 28 u-op, decoded instruction cache: 1500
-		# Haswell: 2xSB + 2xLSD if HT disabled
-
-		# forced unroller, bound to LSD size, to avoid LSD off
-		# other cases subject to moderate
-		if [ $((model)) -ge $((0x2e)) ]; then
-			max_unrolled 28
-		elif [ $((model)) -ge $((0x0f)) ]; then
-			max_unrolled 18
-		fi
-	fi
-;;&
+# Core2 lsd: 18 instructions
+# Nehalem: lsd: 28 u-op
+# Sandy Bridge: lsd: 28 u-op, decoded instruction cache: 1500
+# Haswell: 2xSB + 2xLSD if HT disabled
+#*GenuineIntel* avx512f *)max_unrolled 28;; # knl
+#*GenuineIntel* adx *)max_unrolled 28;; # broadwell
+*GenuineIntel*" avx2 "*)max_unrolled 28;; # haswell 2do: double on !HT
+*GenuineIntel*" avx "*)max_unrolled 28;; # sandy bride
+*GenuineIntel*" movbe "*);; # silvermont/bonnel
+*GenuineIntel*" sse4_2 "*)max_unrolled 28;; # nehalem
+*GenuineIntel*" ssse3 "*)max_unrolled 18;; # core2
 esac
 filter=break
 case "$m" in
