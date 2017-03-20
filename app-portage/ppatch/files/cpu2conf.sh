@@ -108,6 +108,11 @@ case "`cat /proc/cpuinfo`" in
 *AuthenticAMD*" sse "*|*AuthenticAMD*Athlon*) max_unrolled 99 ;;&
 *GenuineIntel*)
 	if [ $((cpu_family)) = 6 ]; then
+		# Core2 lsd: 28 instructions
+		# Nehalem: lsd: 28 u-op
+		# Sandy Bridge: lsd: 28 u-op, decoded instruction cache: 1500
+		# Haswell: 2xSB + 2xLSD if HT disabled
+
 		# forced unroller, bound to LSD size, to avoid LSD off
 		# other cases subject to moderate
 		if [ $((model)) -ge $((0x2e)) ]; then

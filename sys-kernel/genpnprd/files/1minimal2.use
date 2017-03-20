@@ -12,7 +12,7 @@ if use !server; then
 	KERNEL_CONFIG+=" +IOSCHED_DEADLINE -IP_ADVANCED_ROUTER -TCP_CONG_ADVANCED"
 #elif [ "${VIRT:-0}" = 0 ]; then
 else
-	ts+="-TASK_XACCT"
+	ts+=" -TASK_XACCT"
 fi
 use server && KERNEL_CONFIG+=" -KEXEC -KEXEC_.+"
 use server && ts+=" -IRQ_TIME_ACCOUNTING" &&
