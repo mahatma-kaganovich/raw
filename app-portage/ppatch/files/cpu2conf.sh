@@ -139,7 +139,7 @@ case "`cat /proc/cpuinfo|sed -e 's:$: :'`" in
 #*GenuineIntel* adx *)max_unrolled 28;; # broadwell
 *GenuineIntel*" avx2 "*)max_unrolled 28;; # haswell 2do: double on !HT
 *GenuineIntel*" avx "*)max_unrolled 28;; # sandy bride
-*GenuineIntel*" movbe "*);; # silvermont/bonnel
+#*GenuineIntel*" movbe "*);; # silvermont/bonnel
 *GenuineIntel*" sse4_2 "*)max_unrolled 28;; # nehalem
 *GenuineIntel*" ssse3 "*)max_unrolled 18;; # core2
 esac
