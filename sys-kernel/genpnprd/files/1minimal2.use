@@ -10,12 +10,14 @@ fi
 ts="-TASKSTATS"
 if use !server; then
 	KERNEL_CONFIG+=" +IOSCHED_DEADLINE -IP_ADVANCED_ROUTER -TCP_CONG_ADVANCED"
-elif [ "${VIRT:-0}" = 0 ]; then
+#elif [ "${VIRT:-0}" = 0 ]; then
+else
 	ts="-TASK_XACCT"
 fi
 use server && KERNEL_CONFIG+=" -KEXEC -KEXEC_.+"
 use server && ts+=" -IRQ_TIME_ACCOUNTING" &&
-use rt || KERNEL_CONFIG+=" $ts"
+#use rt ||
+	KERNEL_CONFIG+=" $ts"
 use mdadm || use lvm || use evms || use device-mapper || KERNEL_CONFIG+=" -MD"
 [ "$VIRT" = 2 ] && {
 	# next remove some USB drivers and ACPI_HOTPLUG, may be useful under QEMU
