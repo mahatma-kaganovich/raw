@@ -214,8 +214,10 @@ fi
 
 i1=
 for i in $f4; do
-	flag_skip "$i" "$i1" && continue
-	i1+=" $i"
+	for j in $f0; do
+		[ "$i" = "$j" ] && continue 2
+	done
+	flag_skip "$i" "$i1" || i1+=" $i"
 done
 f4="$i1"
 
