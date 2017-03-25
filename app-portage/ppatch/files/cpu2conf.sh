@@ -213,11 +213,18 @@ if c0=`_c $f0` && c=`_c $f4`; then
 fi
 
 i1=
+c0=
 for i in $f4; do
 	for j in $f0; do
-		[ "$i" = "$j" ] && continue 2
+		[ "$i" = "$j" ] && i1+=" $i" && continue 2
 	done
-	flag_skip "$i" "$i1" || i1+=" $i"
+	if flag_skip "$i" "$i1"; then
+		[ -z "$c0" ] && c0=`_c $i1`
+		c=`_c $i1 $i`
+		[ -z "$(_cmp '/as ' '-Wa,')" ] && continue
+		c0="$c"
+	fi
+	i1+=" $i"
 done
 f4="$i1"
 
