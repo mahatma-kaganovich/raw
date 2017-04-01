@@ -183,7 +183,6 @@ net-misc/networkmanager-sstp -gtk
 net-misc/networkmanager-vpnc -gtk
 net-misc/olsrd gtk
 net-misc/pavuk gtk
-net-misc/pymazon gtk
 net-misc/unison gtk
 net-misc/wicd gtk
 net-misc/youtube-viewer gtk

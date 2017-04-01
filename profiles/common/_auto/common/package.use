@@ -89,10 +89,10 @@ net-libs/gsoap ssl gnutls
 net-libs/ldns ssl
 net-libs/libgadu gnutls ssl
 net-libs/liboauth nss
+net-libs/libtorrent-rasterbar ssl
 net-libs/libwebsockets ssl
 net-libs/nodejs ssl
 net-libs/rabbitmq-c ssl
-net-libs/rb_libtorrent ssl
 net-libs/wvstreams ssl
 net-mail/dovecot ssl
 net-mail/mpop gnutls ssl
@@ -104,13 +104,8 @@ net-misc/iputils ssl openssl nettle gcrypt
 net-misc/lcr ssl
 net-misc/networkmanager gnutls
 net-misc/networkmanager gnutls nss
-net-misc/openconnect gnutls
 net-misc/openssh ssl
-net-misc/openvpn ssl
 net-misc/openvswitch ssl
-net-misc/strongswan openssl gcrypt
-net-misc/tinc ssl
-net-misc/vpnc gnutls
 net-misc/wget gnutls
 net-misc/wget ssl gnutls
 net-nds/shelldap ssl
@@ -121,6 +116,11 @@ net-print/cups ssl
 net-proxy/shadowsocks-libev openssl -mbedtls
 net-proxy/shadowsocks-libev openssl
 net-voip/yate ssl
+net-vpn/openconnect gnutls
+net-vpn/openvpn ssl
+net-vpn/strongswan openssl gcrypt
+net-vpn/tinc ssl
+net-vpn/vpnc gnutls
 net-wireless/hostapd ssl
 sys-apps/systemd ssl gcrypt
 sys-cluster/ceph nss -cryptopp
@@ -136,6 +136,8 @@ www-servers/hiawatha ssl
 www-servers/uwsgi ssl
 app-admin/collectd python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 app-backup/backintime python_single_target_python3_4 -python_single_target_python3_5
+app-editors/gedit python_single_target_python3_4 -python_single_target_python3_5
+app-editors/gedit-plugins python_single_target_python3_4 -python_single_target_python3_5
 app-editors/vim-qt python_single_target_python2_7 -python_single_target_python3_4
 app-emulation/libguestfs python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 app-misc/gramps python_single_target_python3_4 -python_single_target_python3_5
@@ -150,7 +152,7 @@ app-portage/elogviewer python_single_target_python2_7 -python_single_target_pyth
 app-text/asciidoc python_single_target_python2_7
 app-text/pastebinit python_single_target_python2_7 -python_single_target_python3_4
 app-text/sigil python_single_target_python3_4 -python_single_target_python3_5
-app-text/wiki2beamer python_single_target_python2_7 -python_single_target_python3_4
+app-text/wiki2beamer python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 app-text/wklej python_single_target_python2_7 -python_single_target_python3_4
 app-vim/conque python_single_target_python2_7 -python_single_target_python3_4
 app-vim/vimcalc python_single_target_python2_7 -python_single_target_python3_4
@@ -181,6 +183,7 @@ dev-util/catfish python_single_target_python2_7 -python_single_target_python3_4
 dev-util/devhelp python_single_target_python3_4 -python_single_target_python3_5
 dev-util/eric python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 dev-util/include-what-you-use python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
+dev-util/kdevelop-python:5 python_single_target_python3_5
 dev-util/scanmem python_single_target_python2_7 -python_single_target_python3_4
 dev-util/scanmem python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 dev-util/setconf python_single_target_python2_7 -python_single_target_python3_4
@@ -202,6 +205,7 @@ media-libs/lensfun python_single_target_python3_4 -python_single_target_python3_
 media-libs/libopenshot python_single_target_python3_4 -python_single_target_python3_5
 media-libs/lv2 python_single_target_python2_7 -python_single_target_python3_4
 media-libs/openimageio python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
+media-sound/gnome-music python_single_target_python3_4 -python_single_target_python3_5
 media-sound/xmms2 python_single_target_python2_7 -python_single_target_python3_4
 media-video/openshot:1 python_single_target_python3_4 -python_single_target_python3_5
 media-video/pitivi python_single_target_python3_4 -python_single_target_python3_5
@@ -216,6 +220,7 @@ net-mail/offlineimap python_single_target_python2_7 -python_single_target_python
 net-misc/spice-gtk python_single_target_python2_7 -python_single_target_python3_4
 net-print/hplip python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 net-wireless/blueman python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
+sci-calculators/units python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 sci-chemistry/pdb-tools python_single_target_python2_7
 sci-libs/clblas python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 sci-libs/grib_api python_single_target_python2_7 -python_single_target_python3_4

@@ -14,5 +14,6 @@ net-p2p/bitcoinxt-qt qt5 -qt4
 net-p2p/retroshare qt5 -qt4
 sci-electronics/pulseview qt5 -qt4
 sys-devel/qconf qt5
+sys-devel/qconf qt5 -qt4
 x11-libs/qscintilla qt5
 x11-libs/qwtpolar qt5

@@ -168,7 +168,6 @@ net-libs/gssdp gtk
 net-libs/gtk-vnc gtk3
 net-libs/libinfinity gtk
 net-misc/dhcpcd-ui -gtk
-net-misc/electrum gtk3
 net-misc/mico -gtk
 net-misc/networkmanager-fortisslvpn gtk
 net-misc/networkmanager-openconnect gtk
