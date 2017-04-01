@@ -19,7 +19,7 @@ Mount options:
 	'fs=<fs[{:mkfs_options}]> (default fs=$fs),
 	<zram_param>=<value> where <zram_param> is any file from /sys/block/zramX/
 	zramctl:<options> - alternative to sysfs - use zramctl tool (spaces replaced to ':')
-	disksize=<N> - for /dev/zram0 - compatible with zram, bound single brd/ram disk to N.
+	disksize=<N> - for /dev/ram0 - compatible with zram, bound single brd/ram disk to N.
 	other options pass directly to <fs> mount.
 	First trying to mount with '-o discard...'.
 Examples of /etc/fstab:
