@@ -6,16 +6,20 @@ kv=`uname -r`
 
 help="
 
-mount.zram v0.5 (c) mahatma, under Anarchy license
-Mount helper to mount zram devices via /etc/fstab over most simple way, stupid.
+mount.zram v0.6 (c) mahatma, under Anarchy license
+Mount helper to mount zram (or ram/brd) devices via /etc/fstab over most simple way, stupid.
 Usage:	mount -t zram ...
 	mount.zram /dev/zram<X> <mountpoint> -o <options>
+	mount.zram /dev/ram<X> <mountpoint> -o <options>
+	mount.zram /dev/ram0 <mountpoint> -o disksize=<N>,<options>
 Loading zram module with number of devices just from FIRST mount device in fstab.
 (so, first device is highest number)
+Loading brd module for /dev/ram0 ONLY.
 Mount options:
 	'fs=<fs[{:mkfs_options}]> (default fs=$fs),
 	<zram_param>=<value> where <zram_param> is any file from /sys/block/zramX/
 	zramctl:<options> - alternative to sysfs - use zramctl tool (spaces replaced to ':')
+	disksize=<N> - for /dev/zram0 - compatible with zram, bound single brd/ram disk to N.
 	other options pass directly to <fs> mount.
 	First trying to mount with '-o discard...'.
 Examples of /etc/fstab:
@@ -37,14 +41,38 @@ warn(){
 	echo "WARNING $0: ignored failed: $1" >&2
 }
 
-nn=${1#/dev/zram}
-[ "$1" = "$nn" ] && err "$*$help"
-[ -e /sys/module/zram -o -e /dev/zram0 ] || modprobe zram num_devices=$((nn+1))
+disksize=
 n="${1##*/}"
 i="/sys/block/$n"
-[ -e "$i" ] || sleep 1
-i="$i/comp_algorithm"
-[ -e "$i" ] || err "no $i"
+case "$1" in
+/dev/*/*)err "$*$help";;
+/dev/zram*)
+	nn=${1#/dev/zram}
+	[ -e /sys/module/zram -o -e /dev/zram0 ] || modprobe zram num_devices=$((nn+1))
+	[ -e "$i" ] || sleep 1
+	i="$i/comp_algorithm"
+	[ -e "$i" ] || err "no $i"
+;;
+/dev/ram0)
+	for j in ${4//,/ }; do
+		v="${j#disksize=}"
+		[ "$v" = "$j" ]&& continue
+		case "${v}" in
+		*k|*K)v="${v%?}";;
+		*m|*M)v=$((${v%?}*1024));;
+		*g|*G)v=$((${v%?}*1024*1024));;
+		esac
+		disksize="$v"
+	done
+	[ -n "$disksize" ] && modprobe brd rd_nr=1 rd_size="$disksize" max_part=0
+;;&
+/dev/ram*)
+	[ -e "$i" ] || sleep 1
+	i="$i/size"
+	[ -e "$i" ] || err "no $i"
+;;
+*)err "$*$help";;
+esac
 o=
 ig=
 re=",$4,"
@@ -57,6 +85,7 @@ for i in ${4//,/ }; do
 	[ "$v" = "$i" ] || {
 		x="${i%%=*}"
 		case "$x" in
+		disksize)[ -n "$disksize" ] && continue;; # /dev/ram0
 		zramctl:*) # unify mkfs here?
 			c="${i//:/ } $1"
 			$c || ig "$c"
