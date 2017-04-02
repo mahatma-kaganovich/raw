@@ -107,9 +107,8 @@ done
 o="${o#,}"
 
 fs="${fs//:/ }"
-mkfs="${fs#* }"
+mkfs="mkfs.$fs $1"
 fs="${fs%% *}"
-mkfs="mkfs.$fs $mkfs $1"
 
 [ -z "${re##*,remount,*}" ] || yes '' | $mkfs || warn "$mkfs"
 
