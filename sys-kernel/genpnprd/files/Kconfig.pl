@@ -106,7 +106,7 @@ $ENV{KERNEL_CONFIG}||='
 	FB_SIMPLE =RXKAD BIG_KEYS
 	ARM==y;ARM64==y;-QCOM_.+
 	NLS==!y;NLS_CODEPAGE_437 NLS==!y;NLS_ISO8859_1 NLS==!y;NLS_UTF8
-	BLK_WBT BLK_TEST_WBT_SQ
+	BLK_WBT BLK_TEST_WBT_SQ =CPU_FREQ_GOV_[^_]+
 	#ubuntu,suse TASKS_RCU
 	#usb_mouse_fix HID
 	###beleave_last_binutils: X86_X32
