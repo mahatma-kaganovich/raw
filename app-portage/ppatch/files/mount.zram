@@ -1,7 +1,6 @@
 #!/bin/sh
 
-fs='ext4:-q:-O:sparse_super2:-O:^has_journal:-E:discard:-E:num_backup_sb=0'
-#fs='ext4:-q:-O:sparse_super2:-O:^has_journal:-O:inline_data:-O:dir_index:-E:discard:-E:num_backup_sb=0'
+fs='ext4:-q:-O:sparse_super2:-O:^has_journal:-O:inline_data:-O:dir_index:-O:extent:-E:discard:-E:num_backup_sb=0'
 kv=`uname -r`
 [ "${kv%%.*}" -lt 4 ] && fs='ext4:-E:discard'
 
@@ -27,6 +26,7 @@ Examples of /etc/fstab:
 	/dev/zram3 /tmp zram disksize=8g 0 0
 	/dev/zram1 /tmp zram comp_algorithm=lz4,disksize=8g,lazytime,noatime,dioread_nolock 0 0
 	/dev/zram0 /var/tmp/portage zram reset=1,comp_algorithm=lz4,disksize=12g,lazytime,sync,noatime,dioread_nolock 0 0
+	/dev/ram0 /var/cache/fscache zram disksize=1g,lazytime,dax,dioread_nolock,nobarrier,inode_readahead_blks=0,nodelalloc 0 0
     Over zramctl:
 	/dev/zram3 /tmp zram zramctl:-alz4:-s8g 0 0
 	/dev/zram3 /tmp zram zramctl:--algorithm=lz4:--size=8g 0 0
@@ -45,14 +45,14 @@ warn(){
 disksize=
 n="${1##*/}"
 i="/sys/block/$n"
+c="$i"
 case "$1" in
 /dev/*/*)err "$*$help";;
 /dev/zram*)
 	nn=${1#/dev/zram}
 	[ -e /sys/module/zram -o -e /dev/zram0 ] || modprobe zram num_devices=$((nn+1))
 	[ -e "$i" ] || sleep 1
-	i="$i/comp_algorithm"
-	[ -e "$i" ] || err "no $i"
+	c="$i/comp_algorithm"
 ;;
 /dev/ram0)
 	for j in ${4//,/ }; do
@@ -69,11 +69,12 @@ case "$1" in
 ;;&
 /dev/ram*)
 	[ -e "$i" ] || sleep 1
-	i="$i/size"
-	[ -e "$i" ] || err "no $i"
+	c="$i/size"
 ;;
 *)err "$*$help";;
 esac
+[ -z "$c" -o -e "$c" ] || err "no $c"
+echo 0 >"$i/queue/rotational"
 o=
 ig=
 re=",$4,"
