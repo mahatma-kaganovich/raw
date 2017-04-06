@@ -1,6 +1,7 @@
 #!/bin/sh
 
-fs='ext4:-q:-O:sparse_super2:-O:^has_journal:-O:inline_data:-O:dir_index:-E:discard:-E:num_backup_sb=0'
+fs='ext4:-q:-O:sparse_super2:-O:^has_journal:-E:discard:-E:num_backup_sb=0'
+#fs='ext4:-q:-O:sparse_super2:-O:^has_journal:-O:inline_data:-O:dir_index:-E:discard:-E:num_backup_sb=0'
 kv=`uname -r`
 [ "${kv%%.*}" -lt 4 ] && fs='ext4:-E:discard'
 
