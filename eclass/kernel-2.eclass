@@ -789,7 +789,7 @@ pre_embed(){
 		pci:*bc01*)echo "storage $s";vblk=false;vscsi=false;;
 		pci:v00008086d00007020sv*)CF1 USB_UHCI_HCD;usb=true;;
 		pci:v00001B36d00000100sv*);; # qxl
-		virtio:d00000008v*)CF1 SCSI_VIRTIO;vscsi=true;;
+		virtio:d00000008v*)CF1 SCSI_VIRTIO +BLK_DEV_SD;vscsi=true;;
 		virtio:d00000004v*)CF1 -HW_RANDOM_.+ HW_RANDOM_VIRTIO HW_RANDOM;;
 		# ...
 		virtio:d00000003v*)CF1 VIRTIO_CONSOLE;;
@@ -820,7 +820,7 @@ pre_embed(){
 			if ${scsi:-${vscsi:-false}}; then
 				CF1 SCSI
 			elif ${ata:-false}; then
-				CF1 ${e}SCSI +VIRTIO_SCSI # as soon...
+				CF1 +SCSI ${e}SCSI +SCSI_VIRTIO +BLK_DEV_SD # as soon...
 			else
 				CF1 -SCSI
 			fi
