@@ -15,10 +15,10 @@ src_install(){
 	cp -aT "$FILESDIR" "${D}/usr/share/${PN}" || die
 	insinto /etc/kernels
 	for i in "${D}/usr/share/${PN}"/*.etc; do
-		rename .etc '' $i
-		doins "${i%.etc}"
-		unlink "${i%.etc}"
+		doins "$i"
+		unlink "$i"
 	done
+	rename .etc '' "$D"/etc/kernels/*
 	rm -Rf `find "${D}" -name ".*"`
 	dobin ${PN}
 	dosym ../../bin/${PN} /usr/share/${PN}
