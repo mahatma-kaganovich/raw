@@ -271,6 +271,10 @@ ext_firmware(){
 	[ -n "$x" ] && KERNEL_CONFIG+=" EXTRA_FIRMWARE=\"${x# }\" EXTRA_FIRMWARE_DIR=\"$s\""
 }
 
+umake(){
+	kmake ARCH=um LDFLAGS="$(extract_flags -Wl, ${LDFLAGS})" CFLAGS="$(_filter_f CFLAGS '-flto*' '-*-lto-*' -fuse-linker-plugin)" "${@}"
+}
+
 kernel-2_src_compile() {
 	kconfig_init
 	case ${EAPI:-0} in
@@ -291,13 +295,12 @@ kernel-2_src_compile() {
 	if use uml; then
 		mv .config* "${WORKDIR}"
 		# User-Mode Linux: build defconfig with all embedded
-		kmake ARCH=um defconfig
+		umake defconfig
 		cat {"${SHARE}",/etc/kernels}/config-uml >>.config
-		yes ''|kmake ARCH=um oldconfig
-		kmake ARCH=um LDFLAGS="$ldflags" all
+		umake oldconfig all
 		mv linux "umlinux-${SLOT}" || die "Build user-mode failed"
 		mv .config .config-um
-		kmake mrproper
+		umake mrproper
 		mv "${WORKDIR}"/.config* "$S"
 	fi
 	for i in true false; do
@@ -331,7 +334,7 @@ kernel-2_src_compile() {
 			}
 			sed -i -e 's:^CONFIG_MODULES=y$:# CONFIG_MODULES is not set:' .config
 			sed -i -e 's:=m$:=y:g' .config
-			yes '' 2>/dev/null | kmake oldconfig &>/dev/null
+			kmake oldconfig &>/dev/null
 			i=true
 		fi
 		( [[ -n "$KERNEL_CLEANUP" ]] || use monolythe ) && use sources && kmake clean
@@ -440,7 +443,7 @@ initramfs(){
 CONFIG_INITRAMFS_ROOT_UID=0
 CONFIG_INITRAMFS_ROOT_GID=0
 CONFIG_INITRAMFS_COMPRESSION_$c=y" >>.config
-		yes '' 2>/dev/null | kmake oldconfig &>/dev/null
+		kmake oldconfig &>/dev/null
 		kmake bzImage
 	elif [[ "${c:-NONE}" != NONE ]]; then
 		c="${c,,} -9"
@@ -1143,7 +1146,7 @@ kconfig(){
 	load_conf
 
 	external_kconfig && {
-		yes '' 2>/dev/null | kmake oldconfig
+		kmake oldconfig
 		return
 	}
 	[[ -e .config ]] || kmake defconfig >/dev/null
@@ -1158,7 +1161,7 @@ kconfig(){
 		$ok && break
 		done
 		$ok || die "Kconfig.pl failed"
-		yes '' 2>/dev/null | kmake oldconfig >/dev/null
+		kmake oldconfig >/dev/null
 	done
 }
 
@@ -1184,7 +1187,10 @@ kmake(){
 	local o=""
 	local h="${CTARGET:-${CHOST}}"
 	[[ "${CBUILD}" != "${h}" ]] && o="CROSS_COMPILE=${h}-"
-	emake HOSTCC="$(tc-getBUILD_CC)" ARCH=$(arch) $o "${@}" ${KERNEL_MAKEOPT} || die
+	# say always ''
+	# input from /dev/null looks works same, but also may be safe against "file bombing" bugs
+#	yes '' 2>/dev/null |
+	emake HOSTCC="$(tc-getBUILD_CC)" ARCH=$(arch) $o "${@}" ${KERNEL_MAKEOPT} </dev/null || die
 }
 
 mktools(){
