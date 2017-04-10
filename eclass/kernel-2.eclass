@@ -29,7 +29,7 @@ IUSE="${IUSE} +build-kernel custom-cflags +pnp +compressed integrated
 	kernel-firmware +sources pnponly lzma xz lzo lz4
 	external-firmware xen +smp kernel-tools +multitarget 64-bit-bfd thin
 	lvm evms device-mapper unionfs luks gpg iscsi e2fsprogs mdadm btrfs
-	lguest acpi klibc +genkernel monolythe update-boot"
+	lguest acpi klibc +genkernel monolythe update-boot uml"
 DEPEND="${DEPEND}
 	!<app-portage/ppatch-0.08-r16
 	pnp? ( sys-kernel/genpnprd )
@@ -288,6 +288,17 @@ kernel-2_src_compile() {
 	local KV0="${KV}"
 	check_kv
 	use build-kernel || return
+	if use uml; then
+		mv .config* "${WORKDIR}"
+		# User-Mode Linux: build defconfig with all embedded
+		kmake ARCH=um defconfig
+		cat {"${SHARE}",/etc/kernels}/config-uml >>.config
+		yes ''|kmake ARCH=um oldconfig all
+		mv linux "umlinux-${SLOT}" || die "Build user-mode failed"
+		mv .config .config-um
+		kmake mrproper
+		mv "${WORKDIR}"/.config* "$S"
+	fi
 	for i in true false; do
 		if [[ -n "${KERNEL_MODULES_MAKEOPT}" ]]; then
 			einfo "Compiling kernel (bzImage)"
@@ -524,6 +535,7 @@ kernel-2_src_install() {
 			rm "${S}" -Rf
 		fi
 		# inherited
+		use uml && dobin "umlinux-${SLOT}"
 		[[ -e "${S}" ]] || mv "${D}"/usr/src/linux* "${WORKDIR}" || mkdir -p "${S}"
 		[[ -n "$sym" ]] && dosym "$sym" /usr/src/linux-${SLOT}
 	fi
@@ -1280,6 +1292,7 @@ kernel-2_src_prepare(){
 	esac
 	# 2test more
 	fno tracer drivers/media/radio/radio-aimslab.c
+	grep -q sysmacros arch/um/os-Linux/file.c || sed -i -e "s:^#include <sys/types\\.h>:#include <sys/sysmacros.h>\n#include <sys/types.h>:" arch/um/os-Linux/file.c
 	sed -i -e 's:^static void sleep_delay:static noinline void sleep_delay:' drivers/media/radio/radio-aimslab.c
 	# ;)
 	sed -i -e 's:^#if 0$:#if 1:' drivers/net/tokenring/tms380tr.c

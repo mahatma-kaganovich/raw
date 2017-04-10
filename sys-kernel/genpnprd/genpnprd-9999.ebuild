@@ -11,10 +11,14 @@ RDEPEND="|| ( sys-fs/cramfs sys-apps/util-linux[cramfs] )
 S="${FILESDIR}"
 
 src_install(){
-	insinto /etc/kernels
-	doins kernel.conf genkernel.conf
 	dodir /usr/share
 	cp -aT "$FILESDIR" "${D}/usr/share/${PN}" || die
+	insinto /etc/kernels
+	for i in "${D}/usr/share/${PN}"/*.etc; do
+		rename .etc '' $i
+		doins "${i%.etc}"
+		unlink "${i%.etc}"
+	done
 	rm -Rf `find "${D}" -name ".*"`
 	dobin ${PN}
 	dosym ../../bin/${PN} /usr/share/${PN}
