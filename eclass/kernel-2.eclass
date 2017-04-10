@@ -294,7 +294,7 @@ kernel-2_src_compile() {
 		kmake ARCH=um defconfig
 		cat {"${SHARE}",/etc/kernels}/config-uml >>.config
 		yes ''|kmake ARCH=um oldconfig
-		LDFLAGS="$ldflags" kmake ARCH=um all
+		kmake ARCH=um LDFLAGS="$ldflags" all
 		mv linux "umlinux-${SLOT}" || die "Build user-mode failed"
 		mv .config .config-um
 		kmake mrproper
