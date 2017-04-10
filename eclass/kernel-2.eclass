@@ -297,7 +297,8 @@ kernel-2_src_compile() {
 		# User-Mode Linux: build defconfig with all embedded
 		umake defconfig
 		cat {"${SHARE}",/etc/kernels}/config-uml >>.config
-		umake oldconfig all
+		umake oldconfig
+		umake all
 		mv linux "umlinux-${SLOT}" || die "Build user-mode failed"
 		mv .config .config-um
 		umake mrproper
@@ -334,7 +335,7 @@ kernel-2_src_compile() {
 			}
 			sed -i -e 's:^CONFIG_MODULES=y$:# CONFIG_MODULES is not set:' .config
 			sed -i -e 's:=m$:=y:g' .config
-			kmake oldconfig &>/dev/null
+			kmake oldconfig
 			i=true
 		fi
 		( [[ -n "$KERNEL_CLEANUP" ]] || use monolythe ) && use sources && kmake clean
@@ -443,7 +444,7 @@ initramfs(){
 CONFIG_INITRAMFS_ROOT_UID=0
 CONFIG_INITRAMFS_ROOT_GID=0
 CONFIG_INITRAMFS_COMPRESSION_$c=y" >>.config
-		kmake oldconfig &>/dev/null
+		kmake oldconfig
 		kmake bzImage
 	elif [[ "${c:-NONE}" != NONE ]]; then
 		c="${c,,} -9"
@@ -1161,7 +1162,7 @@ kconfig(){
 		$ok && break
 		done
 		$ok || die "Kconfig.pl failed"
-		kmake oldconfig >/dev/null
+		kmake oldconfig
 	done
 }
 
