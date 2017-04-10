@@ -299,7 +299,7 @@ kernel-2_src_compile() {
 		cat {"${SHARE}",/etc/kernels}/config-uml >>.config
 		umake oldconfig
 		umake all
-		mv linux "umlinux-${SLOT}" || die "Build user-mode failed"
+		mv linux "umlinux-${REAL_KV}" || die "Build user-mode failed"
 		mv .config .config-um
 		umake mrproper
 		mv "${WORKDIR}"/.config* "$S"
@@ -471,6 +471,7 @@ kernel-2_src_install() {
 		cd "${S}" || die
 		rm -f .config.old *.loopfs
 		rm -f lib/firmware "lib/modules/${REAL_KV}/kernel"
+		use uml && dobin "umlinux-${REAL_KV}"
 		dodir /boot
 		local f f1
 		if ! use integrated; then
@@ -540,7 +541,6 @@ kernel-2_src_install() {
 			rm "${S}" -Rf
 		fi
 		# inherited
-		use uml && dobin "umlinux-${SLOT}"
 		[[ -e "${S}" ]] || mv "${D}"/usr/src/linux* "${WORKDIR}" || mkdir -p "${S}"
 		[[ -n "$sym" ]] && dosym "$sym" /usr/src/linux-${SLOT}
 	fi
