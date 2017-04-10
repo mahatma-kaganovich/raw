@@ -293,7 +293,8 @@ kernel-2_src_compile() {
 		# User-Mode Linux: build defconfig with all embedded
 		kmake ARCH=um defconfig
 		cat {"${SHARE}",/etc/kernels}/config-uml >>.config
-		yes ''|kmake ARCH=um oldconfig all
+		yes ''|kmake ARCH=um oldconfig
+		LDFLAGS="$ldflags" kmake ARCH=um all
 		mv linux "umlinux-${SLOT}" || die "Build user-mode failed"
 		mv .config .config-um
 		kmake mrproper
