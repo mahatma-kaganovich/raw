@@ -32,4 +32,7 @@ _in_ject -fschedule-insns no-schedule-insns libttf/cmap.c netxen_nic_hw.c qlcnic
 _in_ject -floop- 'no-loop-nest-optimize no-graphite-identity' getopt.c Objects/obmalloc.c libopenjpeg/tcd.c nellymoser.c
 _in_ject -floop- '#if defined(__i386__)\n#pragma GCC optimize ("no-loop-nest-optimize")\n#pragma GCC optimize ("no-graphite-identity")\n#endif' src/cmspack.c libdw/dwarf_frame_register.c libmp3lame/quantize.c libtwolame/twolame.c src/secaudit.c
 
+# gcc 7 ICE
+[ -e src/osd/ReplicatedPG.h ] && [[ "`LANG=C gcc -v 2>&1`" == *" version 7.1"* ]] && _in_ject - no-devirtualize src/osd/{ECBackend,OSD,Watch}.cc
+
 }
