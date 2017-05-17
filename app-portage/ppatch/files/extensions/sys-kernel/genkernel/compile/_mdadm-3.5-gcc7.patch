@@ -1,0 +1,45 @@
+--- a/patches/mdadm/3.1.5/mdadm3-gcc7.patch	1970-01-01 03:00:00.000000000 +0300
++++ b/patches/mdadm/3.1.5/mdadm3-gcc7.patch	2017-05-17 18:35:18.000000000 +0300
+@@ -0,0 +1,42 @@
++http://archive.linuxfromscratch.org/mail-archives/blfs-dev/2015-June/030379.html
++again for gcc 7
++--- a/bitmap.c	2011-02-15 23:40:06.015360016 +0200
+++++ b/bitmap.c	2017-05-17 15:22:57.837129077 +0300
++@@ -20,7 +20,7 @@
++ 
++ #include "mdadm.h"
++ 
++-inline void sb_le_to_cpu(bitmap_super_t *sb)
+++static inline void sb_le_to_cpu(bitmap_super_t *sb)
++ {
++ 	sb->magic = __le32_to_cpu(sb->magic);
++ 	sb->version = __le32_to_cpu(sb->version);
++@@ -34,7 +34,7 @@ inline void sb_le_to_cpu(bitmap_super_t
++ 	sb->write_behind = __le32_to_cpu(sb->write_behind);
++ }
++ 
++-inline void sb_cpu_to_le(bitmap_super_t *sb)
+++static inline void sb_cpu_to_le(bitmap_super_t *sb)
++ {
++ 	sb_le_to_cpu(sb); /* these are really the same thing */
++ }
++@@ -74,7 +74,7 @@ typedef struct bitmap_info_s {
++ } bitmap_info_t;
++ 
++ /* count the dirty bits in the first num_bits of byte */
++-inline int count_dirty_bits_byte(char byte, int num_bits)
+++static inline int count_dirty_bits_byte(char byte, int num_bits)
++ {
++ 	int num = 0;
++ 
++--- a/Makefile	2011-03-23 03:19:09.015360016 +0200
+++++ b/Makefile	2017-05-17 15:22:49.053795196 +0300
++@@ -42,7 +42,7 @@ KLIBC_GCC = gcc -nostdinc -iwithprefix i
++ 
++ CC = $(CROSS_COMPILE)gcc
++ CXFLAGS = -ggdb
++-CWFLAGS = -Wall -Werror -Wstrict-prototypes -Wextra -Wno-unused-parameter
+++CWFLAGS = -Wall -Wstrict-prototypes -Wextra -Wno-unused-parameter
++ ifdef WARN_UNUSED
++ CWFLAGS += -Wp,-D_FORTIFY_SOURCE=2 -O
++ endif
