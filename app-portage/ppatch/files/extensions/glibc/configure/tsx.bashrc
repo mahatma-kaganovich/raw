@@ -1,7 +1,7 @@
 
-# I have Haswell model 79 with updated microcode 0xb00001f, host is OK, but in guest app-benchmarks/bashmark segfaulting
-
-[[ "${CFLAGS##*-march=}" == native* ]] && (grep "^flags" /proc/cpuinfo|grep -qw hle) && ! (grep "^flags" /proc/cpuinfo|grep -qw hypervisor) && {
+# kvm app-benchmarks/bashmark segfault
+! (grep "^flags" /proc/cpuinfo|grep -qw hypervisor) &&
+( [[ "${CFLAGS##*-march=}" == native* ]] || [[ "${CFLAGS_BASE##*-march=}" == native* ]] ) && (grep "^flags" /proc/cpuinfo|grep -qw hle) && {
 	echo "Detected and native enabling lock elision"
 	export enable_lock_elision=yes
 }
