@@ -3,18 +3,16 @@
 # dumb names to avoid collisions
 
 filterflag(){
-local p v x r=false
+local p v x r=false local f
 for p in $* ; do
-for v in LDFLAGS CFLAGS CPPFLAGS CXXFLAGS FFLAGS FCFLAGS; do
-	x="${!v}"
-	x="${x// $p / }"
-	x="${x#$p }"
-	x="${x% $p}"
-	[ "${!v}" = "$x" ] || {
-		export $v="$x"
-		r=true
-	}
-done
+    for v in LDFLAGS CFLAGS CPPFLAGS CXXFLAGS FFLAGS FCFLAGS; do
+	x=
+	for f in ${!v}; do
+		[[ "$f" != $p ]] && x+=" $f" && r=true
+	done
+	x="${x# }"
+	[ "$x" != "${!v}" ] && export $v="$x"
+    done
 done
 $r
 }
