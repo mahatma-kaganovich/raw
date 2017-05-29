@@ -1,0 +1,40 @@
+commit 493ce8904c2952fa2391738935b7365e7a7ae9df
+Author: Mihai Moldovan <ionic@ionic.de>
+Date:   Sun Apr 2 08:30:03 2017 +0200
+
+    media-libs/libid3tag: apply signature patch for gperf 3.1+ only.
+
+diff --git a/media-libs/libid3tag/files/libid3tag-0.15.1b-fix-signature.patch b/media-libs/libid3tag/files/libid3tag-0.15.1b-fix-signature.patch
+new file mode 100644
+index 0000000..a365811
+--- /dev/null
++++ b/media-libs/libid3tag/files/libid3tag-0.15.1b-fix-signature.patch
+@@ -0,0 +1,12 @@
++diff -pur libid3tag-0.15.1b-orig/compat.h libid3tag-0.15.1b/compat.h
++--- libid3tag-0.15.1b-orig/compat.h	2004-01-23 10:41:32.000000000 +0100
+++++ libid3tag-0.15.1b/compat.h	2017-03-15 01:49:23.808834401 +0100
++@@ -34,7 +34,7 @@ struct id3_compat {
++ };
++ 
++ struct id3_compat const *id3_compat_lookup(register char const *,
++-					   register unsigned int);
+++					   register size_t);
++ 
++ int id3_compat_fixup(struct id3_tag *);
++ 
+diff --git a/media-libs/libid3tag/libid3tag-0.15.1b-r4.ebuild b/media-libs/libid3tag/libid3tag-0.15.1b-r4.ebuild
+index ed5ff13..f5eb612 100644
+--- a/media-libs/libid3tag/libid3tag-0.15.1b-r4.ebuild
++++ b/media-libs/libid3tag/libid3tag-0.15.1b-r4.ebuild
+@@ -22,6 +22,11 @@ DEPEND="${RDEPEND}
+ src_prepare() {
+ 	epunt_cxx #74489
+ 	epatch "${FILESDIR}/${PV}"/*.patch
++
++	# gperf 3.1 and newer generate code with a size_t length parameter,
++	# older versions are incompatible and take an unsigned int.
++	has_version '>=dev-util/gperf-3.1' && epatch "${FILESDIR}/${P}-fix-signature.patch"
++
+ 	elibtoolize #sane .so versionning on fbsd and .so -> .so.version symlink
+ }
+ 
