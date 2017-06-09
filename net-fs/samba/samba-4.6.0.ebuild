@@ -37,7 +37,7 @@ MULTILIB_WRAPPED_HEADERS=(
 
 # sys-apps/attr is an automagic dependency (see bug #489748)
 # libaio probably not required more. 2check
-CDEPEND="${PYTHON_DEPS}
+CDEPEND="
 	>=app-arch/libarchive-3.1.2[${MULTILIB_USEDEP}]
 	dev-lang/perl:=
 	dev-libs/libaio[${MULTILIB_USEDEP}]
@@ -47,7 +47,7 @@ CDEPEND="${PYTHON_DEPS}
 	dev-python/subunit[${PYTHON_USEDEP},${MULTILIB_USEDEP}]
 	>=dev-util/cmocka-1.0.0[${MULTILIB_USEDEP}]
 	sys-apps/attr[${MULTILIB_USEDEP}]
-	>=sys-libs/ldb-1.1.29[ldap(+)?,python(+)?,${PYTHON_USEDEP},${MULTILIB_USEDEP}]
+	>=sys-libs/ldb-1.1.29[ldap(+)?,python(+),${PYTHON_USEDEP},${MULTILIB_USEDEP}]
 	sys-libs/libcap
 	sys-libs/ncurses:0=[${MULTILIB_USEDEP}]
 	sys-libs/readline:0=
@@ -60,7 +60,7 @@ CDEPEND="${PYTHON_DEPS}
 	acl? ( virtual/acl )
 	addns? (
 		net-dns/bind-tools[gssapi]
-		dev-python/dnspython[${PYTHON_USEDEP}]
+		dev-python/dnspython:=[${PYTHON_USEDEP}]
 	)
 	cluster? ( !dev-db/ctdb )
 	cups? ( net-print/cups )
@@ -86,8 +86,10 @@ CDEPEND="${PYTHON_DEPS}
 			>=sys-libs/uid_wrapper-1.2.1
 	)"
 DEPEND="${CDEPEND}
+	${PYTHON_DEPS}
 	virtual/pkgconfig"
 RDEPEND="${CDEPEND}
+	python? ( ${PYTHON_DEPS} )
 	client? ( net-fs/cifs-utils[ads?] )
 	selinux? ( sec-policy/selinux-samba )
 	!dev-perl/Parse-Yapp
