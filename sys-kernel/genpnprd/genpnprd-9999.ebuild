@@ -12,7 +12,7 @@ S="${FILESDIR}"
 
 src_install(){
 	dodir /usr/share
-	cp -aT "$FILESDIR" "${D}/usr/share/${PN}" || die
+	cp -aT "$(readlink -f $FILESDIR)" "${D}/usr/share/${PN}" || die
 	insinto /etc/kernels
 	for i in "${D}/usr/share/${PN}"/*.etc; do
 		doins "$i"
