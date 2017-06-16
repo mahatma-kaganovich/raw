@@ -31,8 +31,8 @@ src_install(){
 	dodir /opt
 	mv "${S}" "${D}"/opt/UniFi || die
 	rm "${D}"/opt/UniFi/bin/mongod
-	dodir /etc/unifi/bin
-	doins "${FILESDIR}"/mongod.sh /etc/unifi/bin/mongod.sh
+	insinto /etc/unifi/bin
+	doins "${FILESDIR}"/mongod.sh
 	dosym /etc/unifi/bin/mongod.sh /opt/UniFi/bin/mongod
 	newinitd "${FILESDIR}/${PN}".init "${PN}"
 }
