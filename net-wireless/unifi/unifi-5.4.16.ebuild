@@ -30,10 +30,10 @@ src_unpack() {
 src_install(){
 	dodir /opt
 	mv "${S}" "${D}"/opt/UniFi || die
-	rm "${D}"/opt/UniFi/bin/mongo
+	rm "${D}"/opt/UniFi/bin/mongod
 	dodir /etc/unifi/bin
-	ins "${FILESDIR}"/mongo.sh /etc/unifi/bin/mongo.sh
-	dosym /etc/unifi/bin/mongod.sh /opt/UniFi/bin/mongo
+	ins "${FILESDIR}"/mongod.sh /etc/unifi/bin/mongod.sh
+	dosym /etc/unifi/bin/mongod.sh /opt/UniFi/bin/mongod
 	newinitd "${FILESDIR}/${PN}".init "${PN}"
 }
 
