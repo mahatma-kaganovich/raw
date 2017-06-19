@@ -8,29 +8,8 @@ SLOT="0"
 KEYWORDS="alpha amd64 arm hppa ia64 mips ppc ppc64 s390 sh sparc x86"
 RDEPEND="dev-lang/perl"
 DEPEND="${RDEPEND}"
-IUSE="strict global-profile"
+IUSE="strict global-profile apache2_modules_unixd custom-defaults ddns extensions mmap pam-mount-auth pch pgo via-drm"
 PDEPEND=""
-
-: ${FILESDIR:=${EBUILD%/*}/files}
-
-# every patchset (=useflag) is files/... dir
-ppinit(){
-	local p p1 f pac
-	for p in "${FILESDIR}"/* ; do
-		[[ -d "$p" ]] || continue
-		f="${p##*/}"
-		f1="${f//[()|&^]}"
-		IUSE+=" ${f1#!}"
-#		[[ "$f" != "$f1" ]] && REQUIRED_USE+=" $f"
-#		for p1 in "$p"/*/* ; do
-#			[[ -d "${p1}" ]] || continue
-#			pac="${p1#$p/}"
-#			PDEPEND="$PDEPEND $f? ( $pac )"
-#		done
-	done
-}
-
-ppinit
 
 src_unpack(){
 	mkdir -p "${S}"
