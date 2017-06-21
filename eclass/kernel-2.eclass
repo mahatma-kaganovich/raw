@@ -326,7 +326,7 @@ kernel-2_src_compile() {
 			cfg_ "###cleanup: ${KERNEL_CONFIG2} $(detects_cleanup $i)"
 			i=true
 		fi
-		if use external-firmware; do
+		if use external-firmware; then
 			einfo "Processing external firmware"
 			cfg_ "###external-firmware: $(extra_firmware)"
 			i=true
