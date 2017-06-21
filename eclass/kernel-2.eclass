@@ -328,8 +328,8 @@ kernel-2_src_compile() {
 		fi
 		if use external-firmware; then
 			einfo "Processing external firmware"
-			cfg_ "###external-firmware: $(extra_firmware)"
-			i=true
+			local x="$(extra_firmware)"
+			[ -n "$x" ] && i=true && cfg_ "###external-firmware: $x"
 		fi
 		$i && kconfig
 		if use monolythe; then
