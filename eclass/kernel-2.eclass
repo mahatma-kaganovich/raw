@@ -330,7 +330,7 @@ kernel-2_src_compile() {
 			einfo "Processing external firmware"
 			cfg_ "###external-firmware: $(extra_firmware)"
 			i=true
-		done
+		fi
 		$i && kconfig
 		if use monolythe; then
 			einfo "Reconfiguring kernel as 'monolythe'"
