@@ -324,9 +324,14 @@ kernel-2_src_compile() {
 			i="${KERNEL_CLEANUP:-arch/$(arch) drivers/dma}"
 			einfo "Applying KERNEL_CLEANUP='$i'"
 			cfg_ "###cleanup: ${KERNEL_CONFIG2} $(detects_cleanup $i)"
-			kconfig
 			i=true
 		fi
+		if use external-firmware; do
+			einfo "Processing external firmware"
+			cfg_ "###external-firmware: $(extra_firmware)"
+			i=true
+		done
+		$i && kconfig
 		if use monolythe; then
 			einfo "Reconfiguring kernel as 'monolythe'"
 			use !embed-hadrware && [[ -z "$KERNEL_CLEANUP" ]] && {
@@ -1517,28 +1522,8 @@ modprobe_opt(){
 	done
 }
 
-detects(){
+extra_firmware(){
 	local i a b c d
-	_unmodule .
-	perl "${SHARE}"/mod2sh.pl "${WORKDIR}" >&2 || die "Unable to run '${SHARE}/mod2sh.pl'"
-	. "${WORKDIR}"/modules.alias.sh
-	sort -u "${WORKDIR}"/modules.pnp "${TMPDIR}"/overlay-rd/etc/modflags/* >>"${WORKDIR}"/modules.pnp_
-	sort -u "${WORKDIR}"/modules.pnp0 "${SHARE}"/etc/modflags/* >>"${WORKDIR}"/modules.pnp0_
-	{
-		# /sys
-		cat "${TMPDIR}/sys-modalias"
-		# rootfs
-		while read a b c d; do
-			[[ "$b" == / ]] && [[ "$c" != rootfs ]] && echo "$c" && {
-				grep -s "^${a#/dev/} :" /proc/mdstat|grep -o 'raid[0-9]*'
-			}
-		done </proc/mounts
-		# cpu flags
-		(cd "${TMPDIR}"/overlay-rd/etc/modflags && cat $(grep "${PNP_VENDOR}^flags" /proc/cpuinfo) $(cat /sys/bus/acpi/devices/*/path|sed -e 's:^\\::') </dev/null 2>/dev/null)
-	}|modalias_reconf m2y 1
-	(cd "${TMPDIR}"/overlay-rd/etc/modflags && cat $(cat "${TMPDIR}/unmodule.m2y") </dev/null 2>/dev/null)|modalias_reconf m2y
-
-	use external-firmware || return
 	# enabling firmware fallback only ondemand by security reason
 	d="$TMPDIR/absent-firmware.lst"
 	find . -name '*.ko'|while read i; do
@@ -1559,6 +1544,28 @@ detects(){
 	done <"$d"
 	[ -n "$b" ] && echo " EXTRA_FIRMWARE=\"${b# }\" EXTRA_FIRMWARE_DIR=\"$ROOT/lib/firmware\" "
 	[ -n "$a" ] && echo " ##${a// /,}: FW_LOADER_USER_HELPER_FALLBACK "
+}
+
+detects(){
+	local i a b c d
+	_unmodule .
+	perl "${SHARE}"/mod2sh.pl "${WORKDIR}" >&2 || die "Unable to run '${SHARE}/mod2sh.pl'"
+	. "${WORKDIR}"/modules.alias.sh
+	sort -u "${WORKDIR}"/modules.pnp "${TMPDIR}"/overlay-rd/etc/modflags/* >>"${WORKDIR}"/modules.pnp_
+	sort -u "${WORKDIR}"/modules.pnp0 "${SHARE}"/etc/modflags/* >>"${WORKDIR}"/modules.pnp0_
+	{
+		# /sys
+		cat "${TMPDIR}/sys-modalias"
+		# rootfs
+		while read a b c d; do
+			[[ "$b" == / ]] && [[ "$c" != rootfs ]] && echo "$c" && {
+				grep -s "^${a#/dev/} :" /proc/mdstat|grep -o 'raid[0-9]*'
+			}
+		done </proc/mounts
+		# cpu flags
+		(cd "${TMPDIR}"/overlay-rd/etc/modflags && cat $(grep "${PNP_VENDOR}^flags" /proc/cpuinfo) $(cat /sys/bus/acpi/devices/*/path|sed -e 's:^\\::') </dev/null 2>/dev/null)
+	}|modalias_reconf m2y 1
+	(cd "${TMPDIR}"/overlay-rd/etc/modflags && cat $(cat "${TMPDIR}/unmodule.m2y") </dev/null 2>/dev/null)|modalias_reconf m2y
 }
 
 detects_cleanup(){
