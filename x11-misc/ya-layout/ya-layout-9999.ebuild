@@ -21,6 +21,7 @@ RDEPEND=" ${DEPEND}
 	x11-misc/slock
 	alsa? ( media-sound/alsa-utils )
 	x11-apps/xfontsel
+	x11-misc/xdg-utils
 	!minimal? (
 		!tint2? ( || (
 		x11-misc/pcmanfm
