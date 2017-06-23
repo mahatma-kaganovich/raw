@@ -37,7 +37,7 @@ KEYWORDS="~x86 ~amd64"
 HOMEPAGE="http://raw.googlecode.com/"
 
 src_install(){
-	cp -aT "$FILESDIR" "${D}" || die
+	cp -aT "$FILESDIR"/* "${D}"/ || die
 	rm -Rf `find "${D}" -name ".*"`
 	chown root:root "${D}" -Rf
 	chmod 755 "${D}/usr/bin/"* "${D}/usr/share/${PN}"/auto.cifs
