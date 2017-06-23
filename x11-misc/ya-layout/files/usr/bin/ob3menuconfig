@@ -341,6 +341,7 @@ sub sort_tags{
 					for(sort keys %{$type}){
 						my $x=$i=$type->{$_};
 						($i,$x)=@{$i} if(ref($i));
+						~s/([$xml_])/\&$xml_{$1};/gs for($i,$x);
 						if($d=~/^$_$/){
 							($i,$def)=("<separator label='$sel1$x$sel2'/>");
 						}else{
