@@ -212,8 +212,24 @@ kernel-2_src_configure() {
 #		done
 		[[ "$(gcc-version)" == 4.8 ]] && append-flags -fno-inline-functions
 		cflags="$(flags_nosp "$(_filter_f CFLAGS "-msse*" -mmmx -m3dnow -mavx "-mfpmath=*" '-flto*' '-*-lto-*' -fuse-linker-plugin) ${cflags}")" #"
+
+		# dedup
+		local i="$cflags"
+		cflags=
+		for i in $i; do
+			local j="$cflags"
+			cflags=
+			for j in $j; do
+				[ "${j%=*}" = "${i%=*}" ] && cflags+=" $j"
+			done
+			cflags+=" $i"
+		done
+		cflags="${cflags# }"
+
 		aflags="$cflags" # at least now
 		ldflags="$(flags_nosp "$(extract_flags -Wl, ${LDFLAGS}) ${ldflags}")" #"
+		i="$cflags"
+		for 
 	fi
 	use unionfs && KERNEL_UTILS_CFLAGS+=" -std=gnu89"
 	cfg_ '###CFLAGS:'
