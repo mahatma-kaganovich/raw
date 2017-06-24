@@ -228,8 +228,6 @@ kernel-2_src_configure() {
 
 		aflags="$cflags" # at least now
 		ldflags="$(flags_nosp "$(extract_flags -Wl, ${LDFLAGS}) ${ldflags}")" #"
-		i="$cflags"
-		for 
 	fi
 	use unionfs && KERNEL_UTILS_CFLAGS+=" -std=gnu89"
 	cfg_ '###CFLAGS:'
