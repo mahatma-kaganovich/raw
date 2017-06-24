@@ -220,7 +220,7 @@ kernel-2_src_configure() {
 			local j="$cflags"
 			cflags=
 			for j in $j; do
-				[ "${j%=*}" = "${i%=*}" ] && cflags+=" $j"
+				[ "${j%=*}" = "${i%=*}" ] || cflags+=" $j"
 			done
 			cflags+=" $i"
 		done
