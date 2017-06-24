@@ -3,8 +3,10 @@ dev-libs/quazip qt4 -qt5
 games-emulation/gambatte qt4
 games-emulation/higan qt4
 games-emulation/mupen64plus qt4
-games-emulation/ppsspp qt4 -qt5
 media-gfx/librecad qt4 -qt5
+media-libs/phonon qt4 -qt5
+media-libs/phonon-gstreamer qt4 -qt5
+media-libs/phonon-vlc qt4 -qt5
 net-analyzer/flent qt4 -qt5
 net-p2p/retroshare qt4 -qt5
 sys-devel/qconf qt4 -qt5

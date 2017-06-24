@@ -4,11 +4,10 @@ app-office/texmaker qt5
 app-office/texmaker qt5 -qt4
 dev-games/openscenegraph qt5 -qt4
 dev-python/qscintilla-python qt5
-kde-misc/kdiff3 qt5
+kde-misc/kdiff3:4 qt5
 media-plugins/audacious-plugins qt5 -gtk -gtk3
 media-sound/audacious qt5 -gtk -gtk3
 media-video/smplayer qt5
-net-libs/qxmpp qt5
 net-p2p/bitcoin-qt qt5 -qt4
 net-p2p/bitcoinxt-qt qt5 -qt4
 net-p2p/retroshare qt5 -qt4

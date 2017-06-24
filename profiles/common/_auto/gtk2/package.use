@@ -27,7 +27,6 @@ app-i18n/ibus gtk -gtk3
 app-i18n/ibus-m17n gtk
 app-i18n/scim-bridge gtk
 app-i18n/uim gtk
-app-i18n/x-unikey gtk
 app-laptop/pommed gtk
 app-misc/ddccontrol gtk
 app-misc/geoclue:0 gtk
@@ -41,6 +40,7 @@ app-office/libreoffice gtk -gtk3
 app-portage/etc-proposals gtk
 app-text/aiksaurus gtk
 app-text/ghostscript-gpl -gtk
+dev-ada/gnatcoll -gtk
 dev-db/libiodbc gtk
 dev-db/postgis gtk
 dev-dotnet/mono-addins gtk
@@ -59,25 +59,23 @@ dev-libs/libindicate -gtk
 dev-lisp/clisp gtk
 dev-ml/cairo-ocaml gtk
 dev-ml/camlimages gtk
-dev-ml/lwt gtk
 dev-ml/ocaml-cairo gtk
 dev-ml/ocamlgraph gtk
 dev-ml/ocamlnet gtk
 dev-python/bpython gtk
 dev-python/ginga -gtk
 dev-python/matplotlib gtk
-dev-python/neovim-python-client gtk
 dev-python/pyglet gtk
 dev-python/pynotifier -gtk
 dev-python/sympy gtk
 dev-python/twisted-core gtk
 dev-qt/qtgui:5 -gtk
+dev-ruby/metasm:9999 -gtk
 dev-util/amtterm gtk
 dev-util/perf gtk
 dev-util/sysprof -gtk
 dev-util/trace-cmd gtk
 dev-vcs/bzr-explorer -gtk
-dev-vcs/git gtk
 games-arcade/bomns gtk
 games-arcade/crack-attack gtk
 games-arcade/xbill gtk
@@ -100,7 +98,6 @@ gnome-extra/libgsf -gtk
 kde-apps/print-manager gtk
 kde-plasma/plasma-desktop gtk2 -gtk3
 kde-plasma/plasma-meta -gtk
-kde-plasma/systemsettings gtk
 kde-plasma/systemsettings -gtk
 media-gfx/birdfont -gtk
 media-gfx/fontforge gtk
@@ -127,14 +124,12 @@ media-libs/mlt gtk
 media-libs/opencv gtk
 media-libs/suil gtk
 media-libs/xine-lib -gtk
-media-plugins/audacious-plugins gtk -gtk3
 media-plugins/audacious-plugins gtk
 media-plugins/hexter gtk
 media-plugins/libvisual-plugins gtk
 media-plugins/npapi-vlc gtk
 media-sound/alsa-tools -gtk
 media-sound/alsaplayer gtk
-media-sound/audacious gtk -gtk3
 media-sound/audacious gtk
 media-sound/aumix gtk
 media-sound/aylet gtk
@@ -175,6 +170,7 @@ net-libs/libinfinity -gtk
 net-misc/dhcpcd-ui gtk
 net-misc/mico gtk
 net-misc/networkmanager-fortisslvpn -gtk
+net-misc/networkmanager-libreswan -gtk
 net-misc/networkmanager-openconnect -gtk
 net-misc/networkmanager-openswan -gtk
 net-misc/networkmanager-openvpn -gtk
@@ -239,10 +235,10 @@ x11-misc/xlockmore gtk
 x11-plugins/purple-plugin_pack gtk
 x11-terms/mlterm -gtk
 x11-themes/arc-theme gtk2 -gtk3
-x11-themes/gnome-themes-standard gtk
 x11-themes/nimbus gtk
 x11-themes/qtcurve gtk
 x11-wm/afterstep gtk
 x11-wm/compiz gtk
+xfce-base/garcon gtk2
 mail-client/thunderbird ffmpeg
 www-client/firefox ffmpeg
