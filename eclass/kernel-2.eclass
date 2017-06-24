@@ -1325,10 +1325,11 @@ kernel-2_src_prepare(){
 	sed -i -e 's:^#if 0$:#if 1:' drivers/net/tokenring/tms380tr.c
 	# deprecated
 	sed -i -e 's:defined(@:(@:' kernel/timeconst.pl
-	if (use multitarget || use 64-bit-bfd) && test_cc -S -m64 -march=nocona && ! test_cc -S -m64 2>/dev/null; then
+#	i=" -march=nocona -mno-mmx -mno-sse -mno-sse2 -mno-sse3"
+	i=" -march=x86-64 -mno-mmx -mno-sse -mno-sse2 -mno-sse3"
+	if (use multitarget || use 64-bit-bfd) && test_cc -S -m64 $i && ! test_cc -S -m64 2>/dev/null; then
 		einfo "-m64 arch fix"
-		i=" -march=nocona -mno-mmx -mno-sse -mno-sse2 -mno-sse3"
-		sed -i -e "s/ -mcmodel=small/ -mcmodel=small -m64 $i/" arch/x86/boot/compressed/Makefile
+		sed -i -e "s/ -mcmodel=small/ -mcmodel=small -m64$i/" arch/x86/boot/compressed/Makefile drivers/firmware/efi/libstub/Makefile
 		sed -i -e "s/\(KBUILD_AFLAGS += -m64\)$/\1$i/" arch/x86/Makefile*
 	fi
 #	echo "CFLAGS_mdesc.o += -Wno-error=maybe-uninitialized" >>arch/sparc/kernel/Makefile
