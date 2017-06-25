@@ -35,6 +35,7 @@ exec($bin.'notify-send','-t',6000,$e);
 
 $tint2font=1; # = ob MenuItem
 $monitor='all';
+$panel_size2=2; # *fontsize
 
 my (%ico,%key,%cat,%cat1,%dir,@prof,$prof);
 #$misc='Other';
@@ -629,7 +630,7 @@ if(@apps){
 				if($_ && ($tint2_=_read($_))){
 					$t2d=crc32($tint2_);
 					if($_ ne $t2v){
-						tint2set('panel_size',1,$conf{'.font.size'}*2);
+						tint2set('panel_size',1,int($conf{'.font.size'}*$panel_size2));
 						tint2set('panel_monitor',0,$monitor,1);
 					}
 					last;
@@ -759,13 +760,12 @@ NOGEO:
 			tint2set('panel_size',0,$sz-2);
 			if($tint2font){
 				my $f=$conf{'.font.name'}.' '.$conf{'.font.weight'}.' '.$conf{'.font.slant'}.' ';
-				my $s=$conf{'.font.size'};
+				my $s=tint2get('panel_size',1)>>1;
 				my ($s1,$s2);
-				# $s1=$s2=($s>>1)+($s>>2);
 				$s1=$s-2;
 				$s2=$s-4;
 				$f=~s/normal //g;
-				tint2set('task_font',-1,$f.($s));
+				tint2set('task_font',-1,$f.$conf{'.font.size'});
 				tint2set('time1_font',-1,$f.$s1);
 				tint2set('time2_font',-1,$f.$s2);
 				tint2set('bat1_font',-1,$f.$s1);
