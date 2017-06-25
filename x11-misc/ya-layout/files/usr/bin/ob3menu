@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # (c) Denis Kaganovich, Anarchy or GPLv2
-# OpenBox3 pipe menu v0.13
+# OpenBox3 pipe menu v0.14
 # ob3menu {--<command> {params}}
 # 	--slow [<path/to/rc.xml> [XxY]]
 #	--autostart {profile}
@@ -760,12 +760,16 @@ NOGEO:
 			if($tint2font){
 				my $f=$conf{'.font.name'}.' '.$conf{'.font.weight'}.' '.$conf{'.font.slant'}.' ';
 				my $s=$conf{'.font.size'};
+				my ($s1,$s2);
+				# $s1=$s2=($s>>1)+($s>>2);
+				$s1=$s-2;
+				$s2=$s-4;
 				$f=~s/normal //g;
 				tint2set('task_font',-1,$f.($s));
-				tint2set('time1_font',-1,$f.($s-2));
-				tint2set('time2_font',-1,$f.($s-3));
-				tint2set('bat1_font',-1,$f.($s-2));
-				tint2set('bat2_font',-1,$f.($s-3));
+				tint2set('time1_font',-1,$f.$s1);
+				tint2set('time2_font',-1,$f.$s2);
+				tint2set('bat1_font',-1,$f.$s1);
+				tint2set('bat2_font',-1,$f.$s2);
 			}
 			$tint2_=undef if(_write($tint2[-1],$tint2_)!=1);;
 		}
