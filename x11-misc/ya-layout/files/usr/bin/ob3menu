@@ -632,8 +632,11 @@ if(@apps){
 				if($_ && ($tint2_=_read($_))){
 					$t2d=crc32($tint2_);
 					if($_ ne $t2v){
+						my $s=int($conf{'.font.size'}*$panel_size2);
 						tint2set('panel_size',1,int($conf{'.font.size'}*$panel_size2));
 						tint2set('panel_monitor',0,$monitor,1);
+						tint2set('systray_icon_size',-1,"$s $s");
+						tint2set('task_maximum_size',-1,($s<<4)." $s");
 					}
 					last;
 				}
