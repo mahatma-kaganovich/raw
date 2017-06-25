@@ -36,6 +36,8 @@ exec($bin.'notify-send','-t',6000,$e);
 $tint2font=1; # = ob MenuItem
 $monitor='all';
 $panel_size2=2; # *fontsize
+$font_size1=0.4; # *panel_size - clock, bat
+$font_size2=0.4; # date, bat2
 
 my (%ico,%key,%cat,%cat1,%dir,@prof,$prof);
 #$misc='Other';
@@ -760,10 +762,10 @@ NOGEO:
 			tint2set('panel_size',0,$sz-2);
 			if($tint2font){
 				my $f=$conf{'.font.name'}.' '.$conf{'.font.weight'}.' '.$conf{'.font.slant'}.' ';
-				my $s=tint2get('panel_size',1)>>1;
+				my $s=tint2get('panel_size',1);
 				my ($s1,$s2);
-				$s1=$s-2;
-				$s2=$s-4;
+				$s1=int($s*$font_size1);
+				$s2=int($s*$font_size2);
 				$f=~s/normal //g;
 				tint2set('task_font',-1,$f.$conf{'.font.size'});
 				tint2set('time1_font',-1,$f.$s1);
