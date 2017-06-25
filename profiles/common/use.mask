@@ -2,3 +2,7 @@ video_cards_nvidia
 video_cards_fglrx
 # removed from mesa 10.4
 openvg
+# enable multilib everywere
+-abi_x86_64
+-abi_x86_x32
+-multilib
