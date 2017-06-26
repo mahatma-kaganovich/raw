@@ -767,8 +767,8 @@ NOGEO:
 				my $f=$conf{'.font.name'}.' '.$conf{'.font.weight'}.' '.$conf{'.font.slant'}.' ';
 				my $s=tint2get('panel_size',1);
 				my ($s1,$s2);
-				$s1=int($s*$font_size1);
-				$s2=int($s*$font_size2);
+				$s1=$font_size1>0?$s*$font_size1:($s-$font_size1);
+				$s2=$font_size2>0?$s*$font_size2:($s-$font_size2);
 				$f=~s/normal //g;
 				tint2set('task_font',-1,$f.$conf{'.font.size'});
 				tint2set('time1_font',-1,$f.$s1);
