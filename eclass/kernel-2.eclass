@@ -1403,7 +1403,7 @@ kernel-2_pkg_preinst() {
 				# just help
 				l="vmlinuz-${SLOT}.efi"
 				r="initrd-${SLOT}.efi.img"
-				[ -e "$D/boot/r" ] && r=" initrd=/$r" || {
+				[ -e "$D/boot/$r" ] && r=" initrd=/$r" || {
 					use integrated || return
 					r=
 				}
