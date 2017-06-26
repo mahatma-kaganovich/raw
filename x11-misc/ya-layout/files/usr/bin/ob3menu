@@ -340,7 +340,7 @@ sub _xdg_mime{
 sub fontsize2{
 	my $s=tint2get('panel_size',1)-tint2get($_[0].'_padding',1)*4;
 	for(1,2){
-		my $x=$font_size[$i-1]
+		my $x=$font_size[$_-1];
 		$x=$x>0?int($s*$x):($s-$x);
 		tint2set($_[1].$_.'_font',-1,$_[2].$x);
 	}
