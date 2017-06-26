@@ -36,8 +36,7 @@ exec($bin.'notify-send','-t',6000,$e);
 $tint2font=1; # = ob MenuItem
 $monitor='all';
 $panel_size2=2; # *fontsize
-$font_size1=0.4; # *panel_size - clock, bat
-$font_size2=0.4; # date, bat2
+@font_size=(0.4,0.4); # *panel_size - clock|bat, date|bat2
 
 my (%ico,%key,%cat,%cat1,%dir,@prof,$prof);
 #$misc='Other';
@@ -336,6 +335,15 @@ sub _xdg_mime{
 		$p='Removed Associations';
 	}
 	_write($f,$s);
+}
+
+sub fontsize2{
+	my $s=tint2get('panel_size',1)-tint2get($_[0].'_padding',1)*4;
+	for(1,2){
+		my $x=$font_size[$i-1]
+		$x=$x>0?int($s*$x):($s-$x);
+		tint2set($_[1].$_.'_font',-1,$_[2].$x);
+	}
 }
 
 if(exists($P{$ma})){
@@ -765,16 +773,10 @@ NOGEO:
 			tint2set('panel_size',0,$sz-2);
 			if($tint2font){
 				my $f=$conf{'.font.name'}.' '.$conf{'.font.weight'}.' '.$conf{'.font.slant'}.' ';
-				my $s=tint2get('panel_size',1);
-				my ($s1,$s2);
-				$s1=$font_size1>0?$s*$font_size1:($s-$font_size1);
-				$s2=$font_size2>0?$s*$font_size2:($s-$font_size2);
 				$f=~s/normal //g;
 				tint2set('task_font',-1,$f.$conf{'.font.size'});
-				tint2set('time1_font',-1,$f.$s1);
-				tint2set('time2_font',-1,$f.$s2);
-				tint2set('bat1_font',-1,$f.$s1);
-				tint2set('bat2_font',-1,$f.$s2);
+				fontsize2('clock','time',$f);
+				fontsize2('battery','bat',$f);
 			}
 			$tint2_=undef if(_write($tint2[-1],$tint2_)!=1);;
 		}
