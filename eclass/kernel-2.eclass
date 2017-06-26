@@ -978,6 +978,7 @@ native|:native|native:native)
 		;;
 		xtopology)fakeHT=false;;
 		hwpstate)grep -qsF X86_FEATURE_HW_PSTATE "${S}/drivers/cpufreq/powernow-k8.c" && freq+=" X86_ACPI_CPUFREQ -X86_POWERNOW_K8";;
+		hwp)CF1 -INTEL_TURBO_MAX_3;;
 		esac
 	done
 	use xen && CF1 PARAVIRT{,_GUEST} HYPERVISOR_GUEST
@@ -1020,7 +1021,7 @@ native|:native|native:native)
 			[[ "$model" -lt 42 ]] && CF1 -X86_INTEL_PSTATE
 			[[ "$model" -gt 87 ]] && CF $knl
 		else
-			CF1 -IOSF_MBI '-X86_INTEL_(?:LPSS|MID|CE|QUARK)'
+			CF1 -IOSF_MBI '-X86_INTEL_(?:LPSS|MID|CE|QUARK)' -INTEL_TURBO_MAX_3
 		fi
 	;;
 	*AMD*)
@@ -1136,7 +1137,7 @@ use embed-hardware && [[ -n "$freq" ]] && CF1 -X86_POWERNOW_K8 -X86_ACPI_CPUFREQ
 CF1 -CPU_SUP_.+ "CPU_SUP_${V:-.+}"
 [ -n "$V" ] && {
 	CF1 -MICROCODE_AMD -MICROCODE_INTEL MICROCODE_$V
-	[ "$V" = INTEL ] || CF1 -X86_INTEL_PSTATE -IOSF_MBI '-X86_INTEL_(?:LPSS|MID|CE|QUARK)' -$knl
+	[ "$V" = INTEL ] || CF1 -X86_INTEL_PSTATE -IOSF_MBI '-X86_INTEL_(?:LPSS|MID|CE|QUARK)' -$knl -INTEL_TURBO_MAX_3
 	[ "$V" = AMD ] || CF1 -X86_AMD_PLATFORM_DEVICE -AMD_NUMA
 }
 [ -z "$V" -o "$V" = AMD ] && ucode "amd-ucode/*.bin" AuthenticAMD
