@@ -36,7 +36,6 @@ exec($bin.'notify-send','-t',6000,$e);
 $tint2font=1; # = ob MenuItem
 $monitor='all';
 $panel_size2=2; # *fontsize
-@font_size=(0.4,0.4); # *panel_size - clock|bat, date|bat2
 
 my (%ico,%key,%cat,%cat1,%dir,@prof,$prof);
 #$misc='Other';
@@ -338,12 +337,8 @@ sub _xdg_mime{
 }
 
 sub fontsize2{
-	my $s=tint2get('panel_size',1)-tint2get($_[0].'_padding',1)*4;
-	for(1,2){
-		my $x=$font_size[$_-1];
-		$x=$x>0?int($s*$x):($s-$x);
-		tint2set($_[1].$_.'_font',-1,$_[2].$x);
-	}
+	my $s=tint2get('panel_size',1)-tint2get($_[0].'_padding',1); # *2, but see not differences by simple change
+	tint2set($_[1].$_.'_font',-1,$_[2].($s>>1)) for(1,2);
 }
 
 if(exists($P{$ma})){
