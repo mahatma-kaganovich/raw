@@ -769,9 +769,11 @@ NOGEO:
 			if($tint2font){
 				my $f=$conf{'.font.name'}.' '.$conf{'.font.weight'}.' '.$conf{'.font.slant'}.' ';
 				$f=~s/normal //g;
-				tint2set('task_font',-1,$f.$conf{'.font.size'});
 				fontsize2('clock','time',$f);
 				fontsize2('battery','bat',$f);
+				$f.=$conf{'.font.size'};
+				tint2set('task_font',-1,$f);
+				tint2set('tooltip_font',-1,$f);
 			}
 			$tint2_=undef if(_write($tint2[-1],$tint2_)!=1);;
 		}
