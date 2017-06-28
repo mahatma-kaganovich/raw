@@ -100,9 +100,22 @@ max_unrolled(){
 }
 
 conf_cpu(){
-local f0= f1= f2= f3= f5= i j i1 j1 c c0 c1 lm=false fp=387 gccv m="`uname -m`"
+local f0= f1= f2= f3= f5= i j i1 j1 c c0 c1 lm=false fp=387 gccv m="`uname -m`" i
 _setflags flags cpucaps 'cpu family' model fpu vendor_id
 cmn=$(gcc --help=common -v -Q 2>&1)
+if i=$(echo "$cmn"|grep --max-count=1 "^Target: "); then
+	# for multilib transitions: use gcc target
+	i="${i#Target: }"
+	case "$m:$i" in
+	x86_64:i?86-*)
+		m="${i%%-*}"
+		echo "ARCH=\"$m\""
+		echo "CHOST=\"$i\""
+		echo "CBUILD=\"$i\""
+	;;
+	esac
+	m="$i"
+fi
 f0=`_f -m{tune,cpu,arch}=native`
 f3='-malign-data=cacheline -momit-leaf-frame-pointer -mtls-dialect=gnu2 -fsection-anchors -minline-stringops-dynamically -maccumulate-outgoing-args'
 # gcc 4.9 - -fno-lifetime-dse, gcc 6.3 - -flifetime-dse=1 - around some of projects(?) - keep 6.3 only safe
