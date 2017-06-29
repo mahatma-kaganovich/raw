@@ -114,7 +114,6 @@ if i=$(echo "$cmn"|grep --max-count=1 "^Target: "); then
 		echo "CBUILD=\"$i\""
 	;;
 	esac
-	m="$i"
 fi
 f0=`_f -m{tune,cpu,arch}=native`
 f3='-malign-data=cacheline -momit-leaf-frame-pointer -mtls-dialect=gnu2 -fsection-anchors -minline-stringops-dynamically -maccumulate-outgoing-args'
