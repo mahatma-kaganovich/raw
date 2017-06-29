@@ -109,7 +109,7 @@ if i=$(echo "$cmn"|grep --max-count=1 "^Target: "); then
 	case "$m:$i" in
 	x86_64:i?86-*)
 		m="${i%%-*}"
-		echo "ARCH=\"$m\""
+		echo "ARCH=\"x86\""
 		echo "CHOST=\"$i\""
 		echo "CBUILD=\"$i\""
 	;;
