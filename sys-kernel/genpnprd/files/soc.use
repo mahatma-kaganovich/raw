@@ -1,1 +1,1 @@
-KERNEL_CONFIG+="CPU_SUP_INTEL==!y;=X86_INTEL_(?:MID|CE|QUARK) CPU_SUP_INTEL==!y;=(?:.*_)?(?:PMIC|PMC|BAYTRAIL)(?:.*_)? =/arch/arm:ARCH_.+ =/arch/arm64:ARCH_.+ =.+_SOC_.+ =PINCTRL_.+ =SILEAD_DMI =SSB_DRIVER_.+"
+KERNEL_CONFIG+="CPU_SUP_INTEL==!y;=X86_INTEL_(?:MID|CE|QUARK) CPU_SUP_INTEL==!y;=(?:.+_)?(?:PMIC|PMC|BAYTRAIL)(?:_.+)? =/arch/arm:ARCH_.+ =/arch/arm64:ARCH_.+ =.+_SOC_.+ =PINCTRL_.+ =SILEAD_DMI =SSB_DRIVER_.+"
