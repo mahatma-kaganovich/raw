@@ -263,7 +263,7 @@ _ext_firmware1(){
 		[ -e "$d/$f" ] && return
 	done
 	echo -n " $m: ${f#firmware/}"
-	! [ -e "$s/$f" ] && echo' - not found' && return
+	! [ -e "$s/$f" ] && echo ' - not found' && return
 	echo
 	use external-firmware || continue
 	for d in "${@}"; do
