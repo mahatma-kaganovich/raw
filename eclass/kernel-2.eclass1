@@ -257,69 +257,32 @@ use__(){
 	use $1 && echo "--${2:-$1}"
 }
 
-_ext_firmware1(){
-	local d
-	for d in "${@}"; do
-		[ -e "$d/$f" ] && return
-	done
-	echo -n " $m: ${f#firmware/}"
-	! [ -e "$s/$f" ] && echo' - not found' && return
-	echo
-	use external-firmware || continue
-	for d in "${@}"; do
-		if [ -n "$d" ]; then
-			mkdir -p "$d/${f%/*}"
-			cp -aT "$s/$f" "$d/$f" || die
-		else
-			x+=" $f"
-		fi
-	done
-}
-
-_find_hidden_fw(){
-	local f
-	find "$s/firmware/" -type f|while read f;do
-		case "$f" in
-		*/.*|*.[ch]|*Makefile|*cmake|LICENCE*|LICENSE*|*README|WHENCE|GPL-2|*configure)continue;;
-		esac
-		f="${f#$s}"
-		f="${f#/}"
-		echo "$f"
-	done >"$TMPDIR/"fw2.lst
-	grep -xvFf "$TMPDIR/"fw{1,2}.lst | sort -u |sed -e 's:$:":' -e 's:^:":' |
-#	    grep -ohFf - . --include "*.[ch]" |
-	    grep -RFlf fw2.lst . --include "*.[ch]"|while read f; do [ -e "${f%?}o" ] && grep -Fohf fw2.lst "$f"; done |
-		sort -u | sed -e 's:^"::' -e 's:"$::'}
-}
-
 ext_firmware(){
-	local m f x=
+	local m f e d x=
 	local s="$1"
 	shift
-	use external-firmware && echo "Copying external firmware to $*"
-	einfo "Checking modules firmware $s"
+	einfo "Checking firmware $s -> $*"
+	use external-firmware && echo "Copying external firmware:"
 	cd "$S"
-	rm -f "$TMPDIR/"fw.lst
-	find . -name "*.ko" |while read m; do
+	find . -name "*.ko" | while read m; do
 		modinfo "$m"|grep "^firmware:"|sed -e 's:^.* ::'|while read f; do
-			echo "$f" >>"$TMPDIR/"fw.lst
 			f="firmware/$f"
 			m="${m##*/}"
-			_ext_firmware1 "${@}"
+			[ -e "$1/$f" ] && continue
+			[ -e "$s/$f" ] && e=true || e=false
+			echo " $m: ${f#firmware/}$($e || echo ' - not found')"
+			use external-firmware || continue
+			$e && for d in "${@}"; do
+				if [ -n "$d" ]; then
+					mkdir -p "$d/${f%/*}"
+					cp -aT "$s/$f" "$d/$f" || die
+				else
+					x+=" $f"
+				fi
+			done
 		done
 	done
-
-	einfo "Checking hidden firmware $s"
-	cat "$TMPDIR/"fw.lst >>"$TMPDIR/"fw1.lst
-	_find_hidden_fw >"$TMPDIR/"fw3.lst
-	m=
-	while read f; do _ext_firmware1 "${@}"; done <"$TMPDIR/"fw3.lst
-	# 2do: copy hidden in/ext firmware unpacked too
-	# local s="$S" f m=
-	# _find_hidden_fw |while read f; do _ext_firmware1 <dir>; done
-
 	[ -n "$x" ] && KERNEL_CONFIG+=" EXTRA_FIRMWARE=\"${x# }\" EXTRA_FIRMWARE_DIR=\"$s\""
-
 }
 
 umake(){
@@ -365,11 +328,11 @@ kernel-2_src_compile() {
 		grep -q "=m$" .config && [[ -z "`find . -name "*.ko" -print`" ]] && die "Modules configured, but not built"
 		$i || break
 		i=false
-		ext_firmware "$ROOT/lib" . "$BDIR/lib"
 		if use embed-hardware; then
 			einfo "Reconfiguring kernel with hardware detect"
 			cp .config .config.stage1
 			cfg_ "###detect: $(detects)"
+#			use external-firmware && ext_firmware "$ROOT/lib" . "$WORKDIR/external-firmware"
 			_cmdline "`modprobe_opt ''`"
 			kconfig
 			i="${KERNEL_CLEANUP:-arch/$(arch) drivers/dma}"
@@ -429,6 +392,7 @@ kernel-2_src_compile() {
     fi
 
 	cd "${S}"
+	use external-firmware && ext_firmware "$ROOT/lib" "$BDIR/lib"
 
 	if use sources || use klibc; then
 		einfo "Preparing kernel headers"
