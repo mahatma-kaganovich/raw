@@ -288,8 +288,8 @@ _find_hidden_fw(){
 	done >"$TMPDIR/"fw2.lst
 	grep -xvFf "$TMPDIR/"fw{1,2}.lst | sort -u |sed -e 's:$:":' -e 's:^:":' |
 #	    grep -ohFf - . --include "*.[ch]" |
-	    grep -RFlf fw2.lst . --include "*.[ch]"|while read f; do [ -e "${f%?}o" ] && grep -Fohf fw2.lst "$f"; done |
-		sort -u | sed -e 's:^"::' -e 's:"$::'}
+	    grep -RFlf "$TMPDIR/"fw2.lst . --include "*.[ch]"|while read f; do [ -e "${f%?}o" ] && grep -Fohf "$TMPDIR/"fw2.lst "$f"; done |
+		sort -u | sed -e 's:^"::' -e 's:"$::'
 }
 
 ext_firmware(){
