@@ -30,7 +30,7 @@ DSP3=${XY// /X}
 case "$cmd" in
 *ob3menu*\ --autostart*)a="$HOME/.cache/ya/autostart";;&
 *ob3menu*\ --launcher*)
-	x=" $HOME/.config/ya/tint2rc $HOME/.cache/ya/tint2rc.$DSP3"
+	x=" $HOME/.config/ya/tint2rc /etc/xdg/ya/tint2rc $HOME/.cache/ya/tint2rc.$DSP3"
 	c+=" $x"
 	cmd+=" --tint2 $x"
 	x="$HOME/.cache/ya/desk-sh"
