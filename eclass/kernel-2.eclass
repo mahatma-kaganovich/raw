@@ -282,9 +282,7 @@ _find_hidden_fw(){
 		case "$f" in
 		*/.*|*.[ch]|*Makefile|*cmake|LICENCE*|LICENSE*|*README|WHENCE|GPL-2|*configure)continue;;
 		esac
-		f="${f#$s}"
-		f="${f#/}"
-		echo "$f"
+		echo "${f#$s/firmware/}"
 	done >"$TMPDIR/"fw2.lst
 	grep -xvFf "$TMPDIR/"fw{1,2}.lst | sort -u |sed -e 's:$:":' -e 's:^:":' |
 #	    grep -ohFf - . --include "*.[ch]" |
