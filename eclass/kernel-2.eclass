@@ -271,7 +271,7 @@ _ext_firmware1(){
 			mkdir -p "$d/${f%/*}"
 			cp -aT "$s/$f" "$d/$f" || die
 		else
-			x+=" $f"
+			x+=" ${f#firmware/}"
 		fi
 	done
 }
@@ -315,8 +315,7 @@ ext_firmware(){
 	# 2do: copy hidden in/ext firmware unpacked too
 	# local s="$S" f m=
 	# _find_hidden_fw |while read f; do _ext_firmware1 <dir>; done
-
-	[ -n "$x" ] && KERNEL_CONFIG+=" EXTRA_FIRMWARE=\"${x# }\" EXTRA_FIRMWARE_DIR=\"$s\""
+	[ -n "$x" ] && KERNEL_CONFI+=" EXTRA_FIRMWARE=\"${x# }\" EXTRA_FIRMWARE_DIR=\"$s/firmware\""
 
 }
 
@@ -363,7 +362,7 @@ kernel-2_src_compile() {
 		grep -q "=m$" .config && [[ -z "`find . -name "*.ko" -print`" ]] && die "Modules configured, but not built"
 		$i || break
 		i=false
-		ext_firmware "$ROOT/lib" . "$BDIR/lib"
+		ext_firmware "$ROOT/lib" . "$BDIR/lib" && i=true
 		if use embed-hardware; then
 			einfo "Reconfiguring kernel with hardware detect"
 			cp .config .config.stage1
@@ -375,11 +374,7 @@ kernel-2_src_compile() {
 			cfg_ "###cleanup: ${KERNEL_CONFIG2} $(detects_cleanup $i)"
 			i=true
 		fi
-		if use external-firmware; then
-			einfo "Processing external firmware"
-			local x="$(extra_firmware)"
-			[ -n "$x" ] && i=true && cfg_ "###external-firmware: $x"
-		fi
+		use external-firmware && extra_firmware && i=true
 		$i && kconfig
 		if use monolythe; then
 			einfo "Reconfiguring kernel as 'monolythe'"
@@ -698,13 +693,34 @@ _cfg_use_(){
 	done
 }
 
-_cmdline(){
-	local i="$KERNEL_CONFIG_CMDLINE"
-	einfo "cmdline $*"
-	for i in '"' "'"; do # 2be removed, old def.config compat
-		[ "${KERNEL_CONFIG_CMDLINE%$i}" != "$KERNEL_CONFIG_CMDLINE" ] && KERNEL_CONFIG_CMDLINE="${KERNEL_CONFIG_CMDLINE%$i} $*$i" && return
+_append(){
+	local v="KERNEL_CONFIG_$1"
+	shift
+	einfo "$v+=$*"
+	export $v="${!v}${!v:+ }$*"
+}
+
+_append1(){
+	local v="KERNEL_CONFIG_$1"
+	shift
+	einfo "$v+=$*"
+	local s=" ${!v} " i
+	for i in "${@}"; do
+		[ "$s" = "${s##* $i *}" ] && s+=" $i "
 	done
-	KERNEL_CONFIG_CMDLINE+="${KERNEL_CONFIG_CMDLINE:+ } $*"
+	s="${s# }"
+	s="${s% }"
+	export $v="$s"
+}
+
+_cmdline(){
+	_append CMDLINE "${@}"
+}
+
+_append_firmware(){
+	[ -z "$*" ] && return
+	_append1 EXTRA_FIRMWARE "${@}"
+	KERNEL_CONFIG_EXTRA_FIRMWARE_DIR="${ROOT%/}/lib/firmware"
 }
 
 cfg_loop(){
@@ -1573,6 +1589,7 @@ modprobe_opt(){
 }
 
 extra_firmware(){
+	einfo "Postprocessing external firmware"
 	local i a b c d
 	# enabling firmware fallback only ondemand by security reason
 	d="$TMPDIR/absent-firmware.lst"
@@ -1592,8 +1609,9 @@ extra_firmware(){
 	while read i; do
 		$c && [ -e "$ROOT/lib/firmware/$i" ] && b+=" $i" || a+=" $i"
 	done <"$d"
-	[ -n "$b" ] && echo " EXTRA_FIRMWARE=\"${b# }\" EXTRA_FIRMWARE_DIR=\"$ROOT/lib/firmware\" "
-	[ -n "$a" ] && echo " ##${a// /,}: FW_LOADER_USER_HELPER_FALLBACK "
+	_append_firmware $b
+	[ -n "$a" ] && cfg_ " ##${a// /,}: FW_LOADER_USER_HELPER_FALLBACK "
+	[ -n "$a$b" ]
 }
 
 detects(){
