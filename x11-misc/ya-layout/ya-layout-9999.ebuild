@@ -75,7 +75,7 @@ src_install(){
 			echo "$s"
 		done <"${D}"/etc/xdg/ya/tint2rc >"${D}"/etc/xdg/ya/tint2rc.tmp
 		rename .tmp '' "${D}"/etc/xdg/ya/tint2rc.tmp
-		sed -i -e '/^[0-9a-z]*_font = /d' <"${D}"/etc/xdg/ya/tint2rc.tmp >"${D}"/etc/xdg/ya-minimal/tint2rc
+		sed -i -e '/^[0-9a-z]*_font = /d' <"${D}"/etc/xdg/ya/tint2rc >"${D}"/etc/xdg/ya-minimal/tint2rc
 		sed -i -e 's%YA_STARTUP:=XF86Desktop%YA_STARTUP:=TINT2%' "${D}"/usr/bin/ya-session
 	else
 		sed -i -e 's%YA_STARTUP:=TINT2%YA_STARTUP:=XF86Desktop%' "${D}"/usr/bin/ya-session
