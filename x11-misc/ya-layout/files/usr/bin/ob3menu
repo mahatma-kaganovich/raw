@@ -33,7 +33,7 @@ print STDERR ($e=join('',"$0: ",@_));
 exec($bin.'notify-send','-t',6000,$e);
 };
 
-$tint2font=1; # = ob MenuItem
+$tint2font=0.5; # = ob MenuItem, *fontsize
 $monitor='all';
 $panel_size2=2; # *fontsize
 
@@ -771,7 +771,7 @@ NOGEO:
 				$f=~s/normal //g;
 				fontsize2('clock','time',$f);
 				fontsize2('battery','bat',$f);
-				$f.=$conf{'.font.size'};
+				$f.=int($conf{'.font.size'}*$tint2font);
 				tint2set('task_font',-1,$f);
 				tint2set('tooltip_font',-1,$f);
 			}
