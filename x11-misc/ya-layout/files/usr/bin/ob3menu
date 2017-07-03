@@ -33,7 +33,7 @@ print STDERR ($e=join('',"$0: ",@_));
 exec($bin.'notify-send','-t',6000,$e);
 };
 
-$tint2font=0.5; # = ob MenuItem, *fontsize
+$tint2font=1; # = ob MenuItem, *fontsize
 $monitor='all';
 $panel_size2=2; # *fontsize
 
