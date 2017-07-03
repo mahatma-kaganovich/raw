@@ -37,6 +37,7 @@ KEYWORDS="~x86 ~amd64"
 HOMEPAGE="http://raw.googlecode.com/"
 
 src_install(){
+	local i s
 	cp -a "$FILESDIR"/* "${D}"/ || die
 	rm -Rf `find "${D}" -name ".*"`
 	chown root:root "${D}" -Rf
@@ -55,11 +56,25 @@ src_install(){
 		# top-right is also faster
 		cp /etc/xdg/tint2/tint2rc "${D}"/etc/xdg/ya/tint2rc &&
 		sed -i -e 's:777777:ffffff:' "${D}"/etc/xdg/ya/tint2rc &&
-		for i in 'task_font sans 12' 'panel_position top right horizontal' 'rounded 3' 'wm_menu 1' 'font_shadow 0' 'border_width 0' 'panel_padding 0 0 0' 'taskbar_padding 2 0 2' 'task_padding 0 0' 'panel_size 0 20' 'panel_items TSCB' 'mouse_right none' 'mouse_middle maximize_restore' 'clock_padding 1 8' 'battery_padding 1 8' 'systray_padding 1 1 1'; do
+		for i in 'task_font sans 12' 'panel_position top right horizontal' 'rounded 3' 'wm_menu 1' 'font_shadow 0' 'border_width 0' 'panel_padding 0 0 0' 'taskbar_padding 2 0 2' 'task_padding 0 0' 'panel_size 0 20' 'panel_items TSCB' 'mouse_right none' 'mouse_middle maximize_restore' 'clock_padding 1 8' 'battery_padding 1 8' 'systray_padding 1 1 1' 'taskbar_name = 0'; do
 			grep -q "^${i%% *}\s*=" "${D}"/etc/xdg/ya/tint2rc || echo "${i/ / = }" >>"${D}"/etc/xdg/ya/tint2rc
 			sed -i -e "s:^${i%% *} =.*\$:${i/ / = }:" "${D}"/etc/xdg/ya/tint2rc
-			cp "${D}"/etc/xdg/ya{,-minimal}/tint2rc
 		done
+		i=0
+		while read s; do
+			case "$s" in
+			background_color" "*)
+				i=$((i+1))
+				case $i in
+				2)s="${s% *} 20";;
+				3)s="${s% *} 40";;
+				esac
+			;;
+			esac
+			echo "$s"
+		done <"${D}"/etc/xdg/ya/tint2rc >"${D}"/etc/xdg/ya/tint2rc.tmp
+		rename .tmp '' "${D}"/etc/xdg/ya/tint2rc.tmp
+		cp "${D}"/etc/xdg/ya{,-minimal}/tint2rc
 		sed -i -e 's%YA_STARTUP:=XF86Desktop%YA_STARTUP:=TINT2%' "${D}"/usr/bin/ya-session
 	else
 		sed -i -e 's%YA_STARTUP:=TINT2%YA_STARTUP:=XF86Desktop%' "${D}"/usr/bin/ya-session
