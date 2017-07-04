@@ -172,7 +172,7 @@ cd "$rcdir" || die
 
 rcfile="$(readlink -f $IMAGE)"
 if [[ -f "$rcfile" ]]; then
-	( (bzip2 -dc $rcfile || gzip -dc $rcfile || xz -dc $rcfile || lzop -dc $rcfile || cat $rcfile) | cpio -iv 2>&1 | grep '^bin/busybox$' >tmp.lst ) || die "must be [gzipped] cpio file"
+	( (bzip2 -dc $rcfile || gzip -dc $rcfile || xz -dc $rcfile || lzop -dc $rcfile || lz4 -dc $rcfile || cat $rcfile) | cpio -iv 2>&1 | grep '^bin/busybox$' >tmp.lst ) || die "must be [gzipped] cpio file"
 	rm tmp.lst
 	ln -s busybox "$rcdir/bin/zcat" &>/dev/null
 	if [[ -n "$OVERLAY" ]]; then
@@ -385,7 +385,16 @@ $LIBLOOP && ldir='lib' || ldir=
 N=
 while true; do
     if $SQUASH ; then
-	mksquashfs "$rcdir/$ldir" "$tmp/${ldir:-rd}$N.loopfs" ${COMPRESS:+-comp $COMPRESS }-b 1048576 -all-root -no-recovery -no-progress || die "mksquashfs"
+	case "$COMPRESS" in
+	lzo)COMPRESS+=" -Xcompression-level 9";;
+	lz4)COMPRESS+=" -Xhc";;
+	esac
+	p=1
+	for i in ${MAKEOPTS}; do
+		[[ "$i" == -j* ]] && p=$((${i#-j}-1))
+		[[ "${p:-0}" == 0 ]] && p=1
+	done
+	mksquashfs "$rcdir/$ldir" "$tmp/${ldir:-rd}$N.loopfs" ${COMPRESS:+-comp $COMPRESS }-b 1048576 -all-root -no-recovery -no-progress ${p:+-processors $p} || die "mksquashfs"
     else
 	[[ -x /sbin/mkfs.cramfs ]] && mkcramfs(){ /sbin/mkfs.cramfs "${@}";}
 	mkcramfs "$rcdir/$ldir" "$tmp/${ldir:-rd}$N.loopfs" || die "mkcramfs"

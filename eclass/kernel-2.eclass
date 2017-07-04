@@ -443,7 +443,7 @@ kernel-2_src_compile() {
 	done
 
 	if use !klibc && use !genkernel; then
-		/usr/bin/genpnprd --IMAGE "initrd-${REAL_KV}.img" --S "${S}" --OVERLAY "${TMPDIR}/overlay-rd" --FILES "/bin/busybox
+		MAKEOPTS="$MAKEOPTS" /usr/bin/genpnprd --IMAGE "initrd-${REAL_KV}.img" --S "${S}" --OVERLAY "${TMPDIR}/overlay-rd" --FILES "/bin/busybox
 			$(use e2fsprogs && echo /sbin/blkid)
 			$(use mdadm && echo /sbin/mdadm /sbin/mdmon)
 			$(use device-mapper && echo /usr/sbin/dmraid)
@@ -468,7 +468,7 @@ kernel-2_src_compile() {
 	run_genkernel ramdisk "--kerneldir=\"${S}\" --bootdir=\"${S}\" --module-prefix=\"${BDIR}\" --no-mountboot ${p}"
 	r=`ls initramfs*-${REAL_KV}||ls "$TMPDIR"/genkernel/initramfs*` && mv "$r" "initrd-${REAL_KV}.img" || die "initramfs rename failed"
 	einfo "Preparing boot image"
-	bash "${SHARE}/genpnprd" "${S}/initrd-${REAL_KV}.img" "$( (use !pnp && echo nopnp)||(use pnponly && echo pnponly)||echo pnp )" "${TMPDIR}"/overlay-rd "${S}" ${comp:+--COMPRESS $comp} $(use thin||echo --THIN -)|| die
+	MAKEOPTS="$MAKEOPTS" bash "${SHARE}/genpnprd" "${S}/initrd-${REAL_KV}.img" "$( (use !pnp && echo nopnp)||(use pnponly && echo pnponly)||echo pnp )" "${TMPDIR}"/overlay-rd "${S}" ${comp:+--COMPRESS $comp} $(use thin||echo --THIN -)|| die
 	local i="initrd-${REAL_KV}.cpio" i1="initrd-${REAL_KV}.img"
 	( use pnp || use compressed || (use integrated && use !thin) ) &&
 		gzip -dc "$i1"  >"$i" && rm "$i1"
