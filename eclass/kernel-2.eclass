@@ -29,7 +29,7 @@ IUSE="${IUSE} +build-kernel custom-cflags +pnp +compressed integrated
 	kernel-firmware +sources pnponly lzma xz lzo lz4
 	external-firmware xen +smp kernel-tools +multitarget 64-bit-bfd thin
 	lvm evms device-mapper unionfs luks gpg iscsi e2fsprogs mdadm btrfs
-	lguest acpi klibc +genkernel monolythe update-boot uml"
+	lguest acpi klibc +genkernel monolythe update-boot uml paranoid"
 DEPEND="${DEPEND}
 	!<app-portage/ppatch-0.08-r16
 	pnp? ( sys-kernel/genpnprd )
@@ -311,12 +311,12 @@ ext_firmware(){
 	cat "$TMPDIR/"fw.lst >>"$TMPDIR/"fw1.lst
 	_find_hidden_fw >"$TMPDIR/"fw3.lst
 	m=
+	use paranoid && set "$1" "$2" ''
 	while read f; do f="firmware/$f"; ext_firmware1 "${@}"; done <"$TMPDIR/"fw3.lst
+	_append_firmware $x
 	# 2do: copy hidden in/ext firmware unpacked too
 	# local s="$S" f m=
 	# _find_hidden_fw |while read f; do _ext_firmware1 <dir>; done
-	[ -n "$x" ] && KERNEL_CONFI+=" EXTRA_FIRMWARE=\"${x# }\" EXTRA_FIRMWARE_DIR=\"$s/firmware\""
-
 }
 
 umake(){
@@ -372,6 +372,7 @@ kernel-2_src_compile() {
 			i="${KERNEL_CLEANUP:-arch/$(arch) drivers/dma}"
 			einfo "Applying KERNEL_CLEANUP='$i'"
 			cfg_ "###cleanup: ${KERNEL_CONFIG2} $(detects_cleanup $i)"
+			use paranoid && umake mrproper
 			i=true
 		fi
 		use external-firmware && extra_firmware && i=true
