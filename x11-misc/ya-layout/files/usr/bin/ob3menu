@@ -228,10 +228,10 @@ sub _restart{
 
 sub tint2set{
 	my $v=$_[0];
-	$tint2_=~s/^[ 	]*$v[ 	]*\=[ 	]*([^\n]*?)[ 	]*$/
-		my @x=$_[1]==-1?(0):split(\/\s+\/,$1);
+	$tint2_=~s/^[ 	]*($v)[ 	]*\=[ 	]*([^\n]*?)[ 	]*$/
+		my @x=$_[1]==-1?(0):split(\/\s+\/,$2);
 		$x[$_[1]]=$_[2];
-		"$v = @x"
+		"$1 = @x"
 	/emg;
 	$t2d.="@_ " if(!$_[3]);
 }
@@ -338,7 +338,7 @@ sub _xdg_mime{
 
 sub fontsize2{
 	my $s=tint2get('panel_size',1)-tint2get($_[0].'_padding',1); # *2, but see not differences by simple change
-	tint2set($_[1].$_.'_font',-1,$_[2].($s>>1)) for(1,2);
+	tint2set($_[1]'[12]_font',-1,$_[2].($s>>1));
 }
 
 if(exists($P{$ma})){
@@ -772,8 +772,7 @@ NOGEO:
 				fontsize2('clock','time',$f);
 				fontsize2('battery','bat',$f);
 				$f.=int($conf{'.font.size'}*$tint2font);
-				tint2set('task_font',-1,$f);
-				tint2set('tooltip_font',-1,$f);
+				tint2set('(?:task|tooltip)_font',-1,$f);
 			}
 			$tint2_=undef if(_write($tint2[-1],$tint2_)!=1);;
 		}

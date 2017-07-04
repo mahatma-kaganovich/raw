@@ -34,7 +34,7 @@ RDEPEND=" ${DEPEND}
 	)"
 #	x11-apps/setxkbmap x11-apps/xkbcomp x11-apps/xrdb x11-apps/xwininfo x11-apps/xkill
 KEYWORDS="~x86 ~amd64"
-HOMEPAGE="http://raw.googlecode.com/"
+HOMEPAGE="https://github.com/mahatma-kaganovich/raw"
 
 src_install(){
 	local i s
