@@ -312,7 +312,7 @@ ext_firmware(){
 	_find_hidden_fw >"$TMPDIR/"fw3.lst
 	m=
 	use paranoid && set "$1" "$2" ''
-	while read f; do f="firmware/$f"; ext_firmware1 "${@}"; done <"$TMPDIR/"fw3.lst
+	while read f; do f="firmware/$f"; _ext_firmware1 "${@}"; done <"$TMPDIR/"fw3.lst
 	_append_firmware $x
 	# 2do: copy hidden in/ext firmware unpacked too
 	# local s="$S" f m=
