@@ -338,7 +338,7 @@ sub _xdg_mime{
 
 sub fontsize2{
 	my $s=tint2get('panel_size',1)-tint2get($_[0].'_padding',1); # *2, but see not differences by simple change
-	tint2set($_[1]'[12]_font',-1,$_[2].($s>>1));
+	tint2set($_[1],'[12]_font',-1,$_[2].($s>>1));
 }
 
 if(exists($P{$ma})){
