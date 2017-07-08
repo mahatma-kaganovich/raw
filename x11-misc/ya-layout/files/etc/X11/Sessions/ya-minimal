@@ -1,2 +1,2 @@
 #set -- --minimal
-. /usr/bin/ya-session
+. /usr/bin/ya-session-auto
