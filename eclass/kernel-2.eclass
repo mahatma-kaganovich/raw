@@ -1590,6 +1590,7 @@ modprobe_opt(){
 }
 
 extra_firmware(){
+	[ -e "$TMPDIR/unmodule.m2y" ] || return
 	einfo "Postprocessing external firmware"
 	local i a b c d
 	# enabling firmware fallback only ondemand by security reason
