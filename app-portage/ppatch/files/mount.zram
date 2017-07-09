@@ -6,7 +6,7 @@ kv=`uname -r`
 
 help="
 
-mount.zram v0.6 (c) mahatma, under Anarchy license
+mount.zram v0.7 (c) mahatma, under Anarchy license
 Mount helper to mount zram (or ram/brd) devices via /etc/fstab over most simple way, stupid.
 Usage:	mount -t zram ...
 	mount.zram /dev/zram<X> <mountpoint> -o <options>
@@ -42,6 +42,18 @@ warn(){
 	echo "WARNING $0: ignored failed: $1" >&2
 }
 
+size2b(){
+	local v="$1" x
+	x="${v%?}"
+	case "$v" in
+	*k|*K)v="$x";;
+	*m|*M)v=$((x*1024));;
+	*g|*G)v=$((x*1024*1024));;
+	*t|*T)v=$((x*1024*1024*1024));;
+	esac
+	echo "$v"
+}
+
 disksize=
 n="${1##*/}"
 i="/sys/block/$n"
@@ -57,13 +69,7 @@ case "$1" in
 /dev/ram0)
 	for j in ${4//,/ }; do
 		v="${j#disksize=}"
-		[ "$v" = "$j" ]&& continue
-		case "${v}" in
-		*k|*K)v="${v%?}";;
-		*m|*M)v=$((${v%?}*1024));;
-		*g|*G)v=$((${v%?}*1024*1024));;
-		esac
-		disksize="$v"
+		[ "$v" = "$j" ] || disksize="$(size2b "$v")"
 	done
 	[ -n "$disksize" ] && modprobe brd rd_nr=1 rd_size="$disksize" max_part=0
 ;;&
@@ -99,7 +105,9 @@ for i in ${4//,/ }; do
 		f="/sys/block/$n/$x"
 		[ -e "$f" ] && {
 			#[ -n "${re##*,remount,*}" ] && continue
-			echo "$v" >"$f" 2>/dev/null || ig "echo $v >$f"
+			echo "$v" >"$f" 2>/dev/null && continue
+			v1="$(cat $f)" && [ -n "$v1" ] && ( [ "$v1" = "$v" ] || [ "$v1" = "$(size2b "$v")" ] || [ -z "${v1##*\[$v\]*}" ] ) && continue
+			ig "echo $v >$f"
 			continue
 		}
 	}
