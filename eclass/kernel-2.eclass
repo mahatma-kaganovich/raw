@@ -362,7 +362,11 @@ kernel-2_src_compile() {
 		grep -q "=m$" .config && [[ -z "`find . -name "*.ko" -print`" ]] && die "Modules configured, but not built"
 		$i || break
 		i=false
-		ext_firmware "$ROOT/lib" . "$BDIR/lib" && i=true
+		local i1=true
+		[ -n "$KERNEL_CONFIG_EXTRA_FIRMWARE" ] && i1=false
+		ext_firmware "$ROOT/lib" . "$BDIR/lib"
+		# else need repeat only if module with fw embeddeed by /etc/kernels/kernel.conf, don't care
+		[ -n "$KERNEL_CONFIG_EXTRA_FIRMWARE" ] && i=$i1
 		if use embed-hardware; then
 			einfo "Reconfiguring kernel with hardware detect"
 			cp .config .config.stage1
