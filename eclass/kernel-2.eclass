@@ -368,6 +368,7 @@ kernel-2_src_compile() {
 			cp .config .config.stage1
 			cfg_ "###detect: $(detects)"
 			_cmdline "`modprobe_opt ''`"
+			use external-firmware && extra_firmware
 			kconfig
 			i="${KERNEL_CLEANUP:-arch/$(arch) drivers/dma}"
 			einfo "Applying KERNEL_CLEANUP='$i'"
@@ -375,7 +376,6 @@ kernel-2_src_compile() {
 			use paranoid && umake clean
 			i=true
 		fi
-		use external-firmware && extra_firmware && i=true
 		$i && kconfig
 		if use monolythe; then
 			einfo "Reconfiguring kernel as 'monolythe'"
