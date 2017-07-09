@@ -106,7 +106,7 @@ for i in ${4//,/ }; do
 		[ -e "$f" ] && {
 			#[ -n "${re##*,remount,*}" ] && continue
 			echo "$v" >"$f" 2>/dev/null && continue
-			v1="$(cat $f)" && [ -n "$v1" ] && ( [ "$v1" = "$v" ] || [ "$v1" = "$(size2b "$v")" ] || [ -z "${v1##*\[$v\]*}" ] ) && continue
+			v1="$(cat "$f")" && [ -n "$v1" ] && ( [ "$v1" = "$v" ] || [ "$v1" = "$(size2b "$v")" ] || [ -z "${v1##*\[$v\]*}" ] ) && continue
 			ig "echo $v >$f"
 			continue
 		}
