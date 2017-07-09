@@ -1,2 +1,3 @@
+#!/bin/bash
 #set -- --minimal
 . /usr/bin/ya-session-auto

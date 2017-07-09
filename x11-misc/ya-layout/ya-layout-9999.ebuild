@@ -41,7 +41,7 @@ src_install(){
 	cp -a "$FILESDIR"/* "${D}"/ || die
 	rm -Rf `find "${D}" -name ".*"`
 	chown root:root "${D}" -Rf
-	chmod 755 "${D}/usr/bin/"* "${D}/usr/share/${PN}"/auto.cifs
+	chmod 755 "${D}/usr/bin/"* "${D}/usr/share/${PN}"/auto.cifs "${D}"/etc/X11/Sessions/*
 	dosym 'cifs/*' /mnt/auto/smb
 	if use udev; then
 		dosym /mnt/auto/disk /usr/share/${PN}/Desktop/disk
