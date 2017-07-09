@@ -736,10 +736,8 @@ NOGEO:
 			@wp && unshift(@wp,'-b');
 			@m=($bin.'feh','-m','-W',$X,'-H',$Y,'-y',$x,'-E',$y,@m,@wp,'-O');
 		}else{
-			my $f='ppm:-';
+			my $f='miff:-';
 			if(@wp){
-				# ppm not transparent, mpc:- keep cache file
-				$f='tiff:-';
 				$m=" $f |${bin}composite -background none -compose atop $f -resize ${X}x$Y! @wp";
 			}
 			$m="${bin}montage -background none -geometry ${x}x$y -tile ${xx}x$yy @m $f |${bin}convert -background none -splice ${spliceX}x$spliceY $f -extent ${X}x$Y$m";
