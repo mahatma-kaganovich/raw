@@ -43,13 +43,13 @@ warn(){
 }
 
 size2b(){
-	local v="$1" x
+	local v="$1" x  l="${2:-1}"
 	x="${v%?}"
 	case "$v" in
-	*k|*K)v="$x";;
-	*m|*M)v=$((x*1024));;
-	*g|*G)v=$((x*1024*1024));;
-	*t|*T)v=$((x*1024*1024*1024));;
+	*k|*K)v=$((x*l));;
+	*m|*M)v=$((x*1024*l));;
+	*g|*G)v=$((x*1024*1024*l));;
+	*t|*T)v=$((x*1024*1024*1024*l));;
 	esac
 	echo "$v"
 }
@@ -106,7 +106,7 @@ for i in ${4//,/ }; do
 		[ -e "$f" ] && {
 			#[ -n "${re##*,remount,*}" ] && continue
 			echo "$v" >"$f" 2>/dev/null && continue
-			v1="$(cat "$f")" && [ -n "$v1" ] && ( [ "$v1" = "$v" ] || [ "$v1" = "$(size2b "$v")" ] || [ -z "${v1##*\[$v\]*}" ] ) && continue
+			v1="$(cat "$f")" && [ -n "$v1" ] && ( [ "$v1" = "$v" ] || [ "$v1" = "$(size2b "$v" 1024)" ] || [ -z "${v1##*\[$v\]*}" ] ) && continue
 			ig "echo $v >$f"
 			continue
 		}
