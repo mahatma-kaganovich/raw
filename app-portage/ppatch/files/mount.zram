@@ -18,7 +18,7 @@ Loading brd module for /dev/ram0 ONLY.
 Mount options:
 	'fs=<fs[{:mkfs_options}]> (default fs=$fs),
 	<zram_param>=<value> where <zram_param> is any file from /sys/block/zramX/
-	zramctl:<options> - alternative to sysfs - use zramctl tool (spaces replaced to ':')
+	zramctl=<options> - alternative to sysfs - use zramctl tool (spaces replaced to ':')
 	disksize=<N> - for /dev/ram0 - compatible with zram, bound single brd/ram disk to N.
 	other options pass directly to <fs> mount.
 	First trying to mount with '-o discard...'.
@@ -28,8 +28,8 @@ Examples of /etc/fstab:
 	/dev/zram0 /var/tmp/portage zram reset=1,comp_algorithm=lz4,disksize=12g,lazytime,sync,noatime,dioread_nolock 0 0
 	/dev/ram0 /var/cache/fscache zram disksize=1g,lazytime,dax,dioread_nolock,nobarrier,inode_readahead_blks=0,nodelalloc 0 0
     Over zramctl:
-	/dev/zram3 /tmp zram zramctl:-alz4:-s8g 0 0
-	/dev/zram3 /tmp zram zramctl:--algorithm=lz4:--size=8g 0 0
+	/dev/zram3 /tmp zram zramctl=-alz4:-s8g 0 0
+	/dev/zram3 /tmp zram zramctl=--algorithm=lz4:--size=8g 0 0
 "
 
 err(){
@@ -82,21 +82,16 @@ esac
 [ -z "$c" -o -e "$c" ] || err "no $c"
 echo 0 >"$i/queue/rotational"
 o=
-ig=
 re=",$4,"
-ig(){
-	[ -z "${re##*,remount,*}" ] || err "$1"
-	ig="$ig,$i"
-}
 for i in ${4//,/ }; do
 	v="${i#*=}"
 	[ "$v" = "$i" ] || {
 		x="${i%%=*}"
 		case "$x" in
 		disksize)[ -n "$disksize" ] && continue;; # /dev/ram0
-		zramctl:*) # unify mkfs here?
-			c="${i//:/ } $1"
-			$c || ig "$c"
+		zramctl) # unify mkfs here?
+			c="$x ${v//:/ } $1"
+			$c || err "$c"
 			continue
 		;;
 		fs|mode|uid|gid)eval "$x=\"\$v\"";;&
@@ -104,11 +99,9 @@ for i in ${4//,/ }; do
 		esac
 		f="/sys/block/$n/$x"
 		[ -e "$f" ] && {
-			#[ -n "${re##*,remount,*}" ] && continue
-			echo "$v" >"$f" 2>/dev/null && continue
+			e=$(echo "$v" >"$f" 2>&1) && continue
 			v1="$(cat "$f")" && [ -n "$v1" ] && ( [ "$v1" = "$v" ] || [ "$v1" = "$(size2b "$v" 1024)" ] || [ -z "${v1##*\[$v\]*}" ] ) && continue
-			ig "echo $v >$f"
-			continue
+			err "echo \"$v\" >$f - $e"
 		}
 	}
 	o="$o,$i"
@@ -130,7 +123,6 @@ for i in discard"${o+,$o}" "$o"; do
 	mount -t "$fs" ${i+-o $i} "$1" "$2" && {
 		[ -n "$m" ] && chmod -- "$m" "$2"
 		[ -n "$ug" ] && chown -- "$ug" "$2"
-		[ -n "$ig" ] && warn "options '${ig#,}'"
 		exit 0
 	}
 	r=$?
