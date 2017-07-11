@@ -1,3 +1,4 @@
+sys-firmware/intel-microcode split-ucode monolithic
 sys-libs/gdbm berkdb
 dev-lang/perl berkdb
 mail-filter/spamassassin berkdb
