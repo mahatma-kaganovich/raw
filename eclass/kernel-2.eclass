@@ -263,7 +263,7 @@ _ext_firmware1(){
 		[ -e "$d/$f" ] && return
 	done
 	echo -n " $m: ${f#firmware/}"
-	! [ -e "$s/$f" ] && echo ' $s/$f- not found' && return
+	! [ -e "$s/$f" ] && echo " $s/$f- not found" && return
 	echo
 	use external-firmware || continue
 	for d in "${@}"; do
@@ -279,10 +279,11 @@ _ext_firmware1(){
 _find_hidden_fw(){
 	local f
 	find "$s/firmware/" -type f|while read f;do
+		f="${f#$s/firmware/}"
 		case "$f" in
-		*/.*|*.[ch]|*Makefile|*cmake|LICENCE*|LICENSE*|*README|WHENCE|GPL-2|*configure)continue;;
+		*/.*|.*|*.[ch]|*Makefile|*cmake|LICENCE*|LICENSE*|*README|WHENCE|GPL-?|*configure)continue;;
 		esac
-		echo "${f#$s/firmware/}"
+		echo "$f"
 	done >"$TMPDIR/"fw2.lst
 	grep -xvFf "$TMPDIR/"fw{1,2}.lst | sort -u |sed -e 's:$:":' -e 's:^:":' |
 #	    grep -ohFf - . --include "*.[ch]" |
