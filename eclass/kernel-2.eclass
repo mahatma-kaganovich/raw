@@ -86,13 +86,23 @@ fi
 
 BDIR="${WORKDIR}/build"
 
-CF1(){
+_CF1_(){
 	local i s='[ 	
 ]'
 	for i in "${@}"; do
 		CF="${CF//$s[+-]${i#[+-]}$s/ }"
-		CF="${CF//$s${i#[+-]}$s/ } ${i} "
+		CF="${CF//$s${i#[+-]}$s/ }"
 	done
+}
+
+CF1(){
+	_CF1_ "${@}"
+	CF+=" $* "
+}
+
+_CF1(){
+	_CF1_ "${@}"
+	CF=" $* $CF"
 }
 
 CF2(){
@@ -855,7 +865,7 @@ acpi_detect(){
 pre_embed(){
 	use custom-arch || return
 	# virtio: speedup build & smart embedding
-	local ata='' vblk='' scsi='' vscsi='' e='+' qemu='' cc='' usb=false iuse=" $IUSE "
+	local ata='' vblk='' scsi='' vscsi='' e='+' qemu='' cc='' cc1='' usb=false iuse=" $IUSE " i
 	use embed-hardware && e='&'
 	while read s; do
 		case "$s" in
@@ -871,13 +881,13 @@ pre_embed(){
 		pci:v00001AF4d*sv00001AF4*);; # just ignore all PCI aliases for qemu virtio
 		virtio:d00000001v*)CF1 VIRTIO_NET -ETHERNET -PHYLIB -FDDI -ATM;;
 		virtio:d00000002v*)CF1 VIRTIO_BLK;vblk=true;;
-		pci:v00008086d00007010sv*sd*bc*sc*i*)CF1 ${e}ATA_PIIX;ata=true;;
+		pci:v00008086d00007010sv*sd*bc*sc*i*)cc1+=' ATA_PIIX';ata=true;;
 		pci:v00008086d000025ABsv*sd*bc*sc*i*)CF1 _/drivers/watchdog/.+ I6300ESB_WDT;;
 		pci:*bc02sc00i*)echo "ethernet $s";cc+=' ETHERNET +PHYLIB';;
 		pci:*bc02sc02i*)echo "FDDI $s";cc+=' +FDDI';;
 		pci:*bc02sc03i*)echo "ATM $s";cc+=' +ATM';;
 #		pci:*bc04sc01i*)echo "sound $s";cc+=' +SND';;
-		pci:*bc01sc06i01)cc+=" ${e}SATA_AHCI";ata=true;;
+		pci:*bc01sc06i01)cc1+=" SATA_AHCI";ata=true;;
 		pci:*bc01*)echo "storage $s";vblk=false;vscsi=false;;
 		pci:v00008086d00007020sv*)CF1 USB_UHCI_HCD;usb=true;;
 		pci:v00001B36d00000100sv*);; # qxl
@@ -894,10 +904,10 @@ pre_embed(){
 #		pci:*v00001AF4*)echo "unknown possible qemu PCI device $s";unknown=true;;
 #		*v00001AF4*)echo "unknown possible qemu device $s";;
 		virtio:*)echo "virtio unknown device $s";;
-		platform:iTCO_wdt)CF1 '&ITCO_WDT';;
+		platform:iTCO_wdt)cc1+=' ITCO_WDT I2C';;
 		platform:platform-framebuffer)CF1 X86_SYSFB;;
-		platform:serial8250)CF1 '&SERIAL_8250';;
-		platform:i8042)CF1 '&SERIO_I8042';;
+		platform:serial8250)cc1+=' SERIAL_8250';;
+		platform:i8042)cc1+=' SERIO_I8042';;
 		esac
 	done <"${TMPDIR}/sys-modalias"
 	if ${qemu:-false}; then
@@ -905,7 +915,7 @@ pre_embed(){
 		use xen && [[ " $CF " != *' -XEN '* ]] && continue # xen have virtio too + unknown 2me others
 		einfo "QEMU virtio environment + USE=custom-arch"
 		CF1 VIRTIO -HYPERV -XEN -X86_EXTENDED_PLATFORM
-		CF1 _SENSORS_.+ -SERIAL_NONSTANDARD _SERIAL_.+ -SERIAL_8250_EXTENDED -NEW_LEDS -POWER_SUPPLY -REGULATOR -THERMAL -X86_PLATFORM_DEVICES
+		CF1 _SENSORS_.+ -SERIAL_NONSTANDARD _SERIAL_.+ -SERIAL_8250_EXTENDED -NEW_LEDS -POWER_SUPPLY -REGULATOR -THERMAL -X86_PLATFORM_DEVICES -POWER_SUPPLY
 		use iscsi && scsi=true && CF1 ISCSI_TARGET
 		use !embed-hardware && vscsi=true && CF1 VIRTIO_.+ .+_VIRTIO
 		# -machine ..,usb=off, but respect USE=usb while
@@ -921,13 +931,16 @@ pre_embed(){
 				CF1 -SCSI
 			fi
 			if ${ata:-false}; then
-				CF1 ${e}ATA
+				cc1+=' ATA'
 			else
 				CF1 -ATA
 			fi
 		fi
 	fi
 	CF1 $cc
+	for i in $cc1; do
+		CF1 +$i ${e}$i
+	done
 }
 
 ucode(){
