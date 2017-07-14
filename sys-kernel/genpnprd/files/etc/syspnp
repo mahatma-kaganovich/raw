@@ -252,7 +252,7 @@ local d=/sys/kernel/mm/transparent_hugepage
 [ "$cmd_transparent_hugepage_misc" = true -a -d $d ] || return
 case "`cat $d/enabled`" in
 *\[never\]*);;
-*)echo defer >$d/defrag;;
+*)echo defer+madvise >$d/defrag 2>/dev/null||echo defer >$d/defrag;;
 esac
 echo force >$d/shmem_enabled
 }
