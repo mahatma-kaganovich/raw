@@ -894,6 +894,10 @@ pre_embed(){
 #		pci:*v00001AF4*)echo "unknown possible qemu PCI device $s";unknown=true;;
 #		*v00001AF4*)echo "unknown possible qemu device $s";;
 		virtio:*)echo "virtio unknown device $s";;
+		platform:iTCO_wdt)CF1 &ITCO_WDT;;
+		platform:platform-framebuffer)CF1 X86_SYSFB;;
+		platform:serial8250)CF1 &SERIAL_8250;;
+		platform:i8042)CF1 &SERIO_I8042;;
 		esac
 	done <"${TMPDIR}/sys-modalias"
 	if ${qemu:-false}; then
@@ -901,7 +905,7 @@ pre_embed(){
 		use xen && [[ " $CF " != *' -XEN '* ]] && continue # xen have virtio too + unknown 2me others
 		einfo "QEMU virtio environment + USE=custom-arch"
 		CF1 VIRTIO -HYPERV -XEN -X86_EXTENDED_PLATFORM
-		CF1 _SENSORS_.+ -SERIAL_NONSTANDARD _SERIAL_.+ -SERIAL_8250_EXTENDED SERIAL_8250 -NEW_LEDS -POWER_SUPPLY -REGULATOR -THERMAL
+		CF1 _SENSORS_.+ -SERIAL_NONSTANDARD _SERIAL_.+ -SERIAL_8250_EXTENDED -NEW_LEDS -POWER_SUPPLY -REGULATOR -THERMAL -X86_PLATFORM_DEVICES
 		use iscsi && scsi=true && CF1 ISCSI_TARGET
 		use !embed-hardware && vscsi=true && CF1 VIRTIO_.+ .+_VIRTIO
 		# -machine ..,usb=off, but respect USE=usb while
