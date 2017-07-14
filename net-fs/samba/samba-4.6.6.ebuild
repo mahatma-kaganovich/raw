@@ -17,7 +17,7 @@ SRC_PATH="stable"
 SRC_URI="mirror://samba/${SRC_PATH}/${MY_P}.tar.gz
 	https://dev.gentoo.org/~polynomial-c/samba-4.6.0-disable-python-patches.tar.xz"
 [[ ${PV} = *_rc* ]] || \
-KEYWORDS="~amd64 ~hppa ~x86"
+KEYWORDS="~amd64 ~arm64 ~hppa ~x86"
 
 DESCRIPTION="Samba Suite Version 4"
 HOMEPAGE="http://www.samba.org/"
@@ -78,16 +78,17 @@ CDEPEND="
 		app-crypt/mit-krb5[${MULTILIB_USEDEP}]
 		>=app-crypt/heimdal-1.5[-ssl,${MULTILIB_USEDEP}]
 	) )
-	systemd? ( sys-apps/systemd:0= )
+	systemd? ( sys-apps/systemd:0= )"
+
+DEPEND="${CDEPEND}
+	${PYTHON_DEPS}
+	virtual/pkgconfig
 	test? (
 			>=sys-libs/nss_wrapper-1.1.3
 			>=net-dns/resolv_wrapper-1.1.4
 			>=net-libs/socket_wrapper-1.1.7
 			>=sys-libs/uid_wrapper-1.2.1
-	)"
-DEPEND="${CDEPEND}
-	${PYTHON_DEPS}
-	virtual/pkgconfig"
+	)"	
 RDEPEND="${CDEPEND}
 	python? ( ${PYTHON_DEPS} )
 	client? ( net-fs/cifs-utils[ads?] )
@@ -102,13 +103,13 @@ REQUIRED_USE="addc? ( gnutls )
 	gpg? ( addc )
 	${PYTHON_REQUIRED_USE}"
 
-S="${WORKDIR}/${MY_P}"
-
 # the test suite is messed, it uses system-installed samba
 # bits instead of what was built, tests things disabled via use
 # flags, and generally just fails to work in a way ebuilds could
 # rely on in its current state
 RESTRICT="test"
+
+S="${WORKDIR}/${MY_P}"
 
 PATCHES=(
 	"${FILESDIR}/${PN}-4.5.1-compile_et_fix.patch"
@@ -136,7 +137,6 @@ src_prepare() {
 
 	use sasl || sed -i -e 's:HAVE_SASL:HAVE_SASL_:' source4/auth/wscript_configure
 	sed -i -e 's:/tmp/ctdb.socket:/run/ctdb/ctdb.socket:g' {ctdb/doc,docs-xml/smbdotconf/misc}/*ml
-	sed -i -e 's:<gpgme.h>:<gpgme/gpgme.h>:' source4/dsdb/samdb/ldb_modules/password_hash.c
 
 	# install the patches from tarball(s)
 	eapply "${WORKDIR}/patches"
@@ -149,6 +149,10 @@ src_prepare() {
 
 	# ugly hackaround for bug #592502
 	cp /usr/include/tevent_internal.h "${S}"/lib/tevent/ || die
+
+	sed -e 's:<gpgme\.h>:<gpgme/gpgme.h>:' \
+		-i source4/dsdb/samdb/ldb_modules/password_hash.c \
+		|| die
 
 	multilib_copy_sources
 }

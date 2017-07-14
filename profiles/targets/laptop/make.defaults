@@ -1,2 +1,2 @@
-USE="bluetooth pcmcia dvb ieee1394 fbcon laptop soc tslib battery hid"
+USE="bluetooth pcmcia dvb ieee1394 fbcon laptop soc tslib battery hid geolocation orientation"
 LCD_DEVICES="*"
