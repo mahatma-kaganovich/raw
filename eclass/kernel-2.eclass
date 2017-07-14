@@ -674,7 +674,7 @@ cfg_use(){
 	shift
 	for i in $* "#use:$u
 "; do
-		use $u && cfg $i || cfg -${i#[+=&]}
+		use $u && cfg $i || cfg "-${i#[+=&]}"
 	done
 }
 
@@ -684,7 +684,7 @@ cfg_use_(){
 	cfg_ "
 	#use:$u "
 	for i in $* ; do
-		use $u && cfg_ $i || cfg_ -${i#[+=&]}
+		use $u && cfg_ $i || cfg_ "-${i#[+=&]}"
 	done
 }
 
@@ -695,7 +695,7 @@ _cfg_use_(){
 	#use:$u "
 	for i in $* "#use:$u
 "; do
-		use $u && cfg_ $i || cfg -${i#[+=&]}
+		use $u && cfg_ $i || cfg "-${i#[+=&]}"
 	done
 }
 
@@ -894,10 +894,10 @@ pre_embed(){
 #		pci:*v00001AF4*)echo "unknown possible qemu PCI device $s";unknown=true;;
 #		*v00001AF4*)echo "unknown possible qemu device $s";;
 		virtio:*)echo "virtio unknown device $s";;
-		platform:iTCO_wdt)CF1 &ITCO_WDT;;
+		platform:iTCO_wdt)CF1 '&ITCO_WDT';;
 		platform:platform-framebuffer)CF1 X86_SYSFB;;
-		platform:serial8250)CF1 &SERIAL_8250;;
-		platform:i8042)CF1 &SERIO_I8042;;
+		platform:serial8250)CF1 '&SERIAL_8250';;
+		platform:i8042)CF1 '&SERIO_I8042';;
 		esac
 	done <"${TMPDIR}/sys-modalias"
 	if ${qemu:-false}; then
