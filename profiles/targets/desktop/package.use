@@ -1,7 +1,6 @@
 app-text/djvu xml
 media-video/vlc vlm
 dev-db/sqlite secure-delete
-dev-lang/python sqlite
 app-office/abiword math latex
 net-p2p/mldonkey bittorrent fasttrack gd gnutella magic
 media-gfx/imagemagick opencl
