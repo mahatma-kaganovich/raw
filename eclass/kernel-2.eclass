@@ -291,7 +291,7 @@ _find_hidden_fw(){
 	find "$s/firmware/" -type f|while read f;do
 		f="${f#$s/firmware/}"
 		case "$f" in
-		*/.*|.*|*.[ch]|*Makefile|*cmake|LICENCE*|LICENSE*|*README|WHENCE|GPL-?|*configure)continue;;
+		*/.*|.*|*.[ch]|*Makefile|*cmake|LICENCE*|LICENSE*|*README|WHENCE|GPL-?|GPL|*configure)continue;;
 		esac
 		echo "$f"
 	done >"$TMPDIR/"fw2.lst
