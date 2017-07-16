@@ -300,7 +300,7 @@ _find_hidden_fw(){
 		[[ "$f" == */* ]] && echo "\"${f##*/}\""
 	done >"$TMPDIR/"fw2_.lst
 	grep -RFlf "$TMPDIR/"fw2_.lst . --include "*.[ch]"|while read f; do
-		[ -e "${f%?}o" ] && grep -Fohf "$TMPDIR/"fw2_.lst "$f"
+		use paranoid || [ -e "${f%?}o" ] && grep -Fohf "$TMPDIR/"fw2_.lst "$f"
 	done | while read f; do
 		[[ "$f" == */* ]] && echo "$f" && continue
 		grep -F "/${f#?}" "$TMPDIR/"fw2_.lst || echo "$f"
