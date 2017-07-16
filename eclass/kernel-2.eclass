@@ -291,7 +291,7 @@ _find_hidden_fw(){
 	find "$s/firmware/" -type f|while read f;do
 		f="${f#$s/firmware/}"
 		case "$f" in
-		*/.*|.*|*.[ch]|*Makefile|*cmake|LICENCE*|LICENSE*|*README|WHENCE|GPL-?|GPL|*configure)continue;;
+		*/.*|.*|*.[ch]|*Makefile|*cmake|LICENCE*|LICENSE*|*README|WHENCE|GPL-?|GPL|*/GPL|*configure)continue;;
 		esac
 		echo "$f"
 	done >"$TMPDIR/"fw2.lst
@@ -300,7 +300,7 @@ _find_hidden_fw(){
 		[[ "$f" == */* ]] && echo "\"${f##*/}\""
 	done >"$TMPDIR/"fw2_.lst
 	grep -RFlf "$TMPDIR/"fw2_.lst . --include "*.[ch]"|while read f; do
-		use paranoid || [ -e "${f%?}o" ] && grep -Fohf "$TMPDIR/"fw2_.lst "$f"
+		[ -e "${f%?}o" ] || (use paranoid && ([[ "$f" == *include* ]] || [[ "$f" == *h && -n "`find "${f%/*}" -name "*.o"`" ]] ) ) && grep -Fohf "$TMPDIR/"fw2_.lst "$f"
 	done | while read f; do
 		[[ "$f" == */* ]] && echo "$f" && continue
 		grep -F "/${f#?}" "$TMPDIR/"fw2_.lst || echo "$f"
