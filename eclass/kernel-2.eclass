@@ -295,10 +295,16 @@ _find_hidden_fw(){
 		esac
 		echo "$f"
 	done >"$TMPDIR/"fw2.lst
-	grep -xvFf "$TMPDIR/"fw{1,2}.lst | sort -u |sed -e 's:$:":' -e 's:^:":' |
-#	    grep -ohFf - . --include "*.[ch]" |
-	    grep -RFlf "$TMPDIR/"fw2.lst . --include "*.[ch]"|while read f; do [ -e "${f%?}o" ] && grep -Fohf "$TMPDIR/"fw2.lst "$f"; done |
-		sort -u | sed -e 's:^"::' -e 's:"$::'
+	grep -xvFf "$TMPDIR/"fw{1,2}.lst|sort -u|while read f; do
+		echo "\"$f\""
+		[[ "$f" == */* ]] && echo "\"${f##*/}\""
+	done >"$TMPDIR/"fw2_.lst
+	grep -RFlf "$TMPDIR/"fw2_.lst . --include "*.[ch]"|while read f; do
+		[ -e "${f%?}o" ] && grep -Fohf "$TMPDIR/"fw2_.lst "$f"
+	done | while read f; do
+		[[ "$f" == */* ]] && echo "$f" && continue
+		grep -F "/${f#?}" "$TMPDIR/"fw2_.lst || echo "$f"
+	done | sed -e 's:^"::' -e 's:"$::' | sort -u
 }
 
 ext_firmware(){
