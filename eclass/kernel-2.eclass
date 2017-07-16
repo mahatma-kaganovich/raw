@@ -330,10 +330,10 @@ ext_firmware(){
 	m=
 	use paranoid && set "$1" "$2" ''
 	while read f; do f="firmware/$f"; _ext_firmware1 "${@}"; done <"$TMPDIR/"fw3.lst
-	_append_firmware $x
 	# 2do: copy hidden in/ext firmware unpacked too
 	# local s="$S" f m=
 	# _find_hidden_fw |while read f; do _ext_firmware1 <dir>; done
+	_append_firmware $x
 }
 
 umake(){
@@ -379,11 +379,8 @@ kernel-2_src_compile() {
 		grep -q "=m$" .config && [[ -z "`find . -name "*.ko" -print`" ]] && die "Modules configured, but not built"
 		$i || break
 		i=false
-		local i1=true
-		[ -n "$KERNEL_CONFIG_EXTRA_FIRMWARE" ] && i1=false
-		ext_firmware "$ROOT/lib" . "$BDIR/lib"
+		ext_firmware "$ROOT/lib" . "$BDIR/lib" && i=true
 		# else need repeat only if module with fw embeddeed by /etc/kernels/kernel.conf, don't care
-		[ -n "$KERNEL_CONFIG_EXTRA_FIRMWARE" ] && i=$i1
 		if use embed-hardware; then
 			einfo "Reconfiguring kernel with hardware detect"
 			cp .config .config.stage1
@@ -726,13 +723,16 @@ _append1(){
 	local v="KERNEL_CONFIG_$1"
 	shift
 	einfo "$v+=$*"
-	local s=" ${!v} " i
+	local s=" ${!v} " i s0="${!v}"
 	for i in "${@}"; do
 		[ "$s" = "${s##* $i *}" ] && s+=" $i "
 	done
+	s="${s//  / }"
+	s="${s//  / }"
 	s="${s# }"
 	s="${s% }"
 	export $v="$s"
+	[ "$s" != "$s0" ]
 }
 
 _cmdline(){
@@ -742,7 +742,6 @@ _cmdline(){
 _append_firmware(){
 	[ -z "$*" ] && return
 	_append1 EXTRA_FIRMWARE "${@}"
-	KERNEL_CONFIG_EXTRA_FIRMWARE_DIR="${ROOT%/}/lib/firmware"
 }
 
 cfg_loop(){
@@ -1639,9 +1638,8 @@ extra_firmware(){
 	while read i; do
 		$c && [ -e "$ROOT/lib/firmware/$i" ] && b+=" $i" || a+=" $i"
 	done <"$d"
-	_append_firmware $b
 	[ -n "$a" ] && cfg_ " ##${a// /,}: FW_LOADER_USER_HELPER_FALLBACK "
-	[ -n "$a$b" ]
+	_append_firmware $b || [ -n "$a" ]
 }
 
 detects(){
