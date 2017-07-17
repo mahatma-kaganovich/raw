@@ -1,9 +1,11 @@
 # compensate "minimal", etc
 cfg_use_ server "TCP_CONG_ADVANCED =IP_ADVANCED_ROUTER"
 use server && {
+ # even if used PREEMPT[_VOLUNTARY] on pure server as bugless mainstream, make HZ_100
+use desktop && KERNEL_CONFIG+=" HZ_250" || KERNEL_CONFIG+=" HZ_100"
 KERNEL_CONFIG+="
 NETFILTER_NETLINK_QUEUE_CT NETLINK_MMAP
-HZ_250 &IOSCHED_DEADLINE DEFAULT_(?:NOOP|CFQ)= DEFAULT_DEADLINE
+&IOSCHED_DEADLINE DEFAULT_(?:NOOP|CFQ)= DEFAULT_DEADLINE
 -OPTIMIZE_INLINING HUGETLBFS TRANSPARENT_HUGEPAGE =PCIEASPM_PERFORMANCE"
 
 # VM server: keep "cores" threads alive to force real cores distribution
