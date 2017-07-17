@@ -391,7 +391,7 @@ kernel-2_src_compile() {
 			i="${KERNEL_CLEANUP:-arch/$(arch) drivers/dma}"
 			einfo "Applying KERNEL_CLEANUP='$i'"
 			cfg_ "###cleanup: ${KERNEL_CONFIG2} $(detects_cleanup $i)"
-			use paranoid && umake clean
+			use paranoid && kmake clean
 			i=true
 		fi
 		$i && kconfig
