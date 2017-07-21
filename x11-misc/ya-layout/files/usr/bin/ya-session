@@ -266,12 +266,14 @@ obconfig(){
 	$minimal && m='/var/lib'
 	ob3menuconfig --config - --fix <"$2" | \
 	sed -e 's:<animateIconify>yes</animateIconify>:<animateIconify>no</animateIconify>:' \
+		-e 's:<noStrut>.*</noStrut>:<noStrut>no</noStrut>:' \
 		-e 's:<file>menu\.xml</file>:<file>'"$m"'/ya/menu.xml</file>:' \
 		-e 's:<!-- Menus -->:<!-- Menus -->\n    <mousebind button="Left" action="Press">\n      <action name="execute"><execute>~/.cache/ya'"$suff"'/desk-sh $pointer</execute></action>\n    </mousebind>:' \
 		-e 's:</keyboard>:<!-- ya.keybind -->\
 <keybind key="C-Escape"><action name="ShowMenu"><menu>client-list-combined-menu</menu></action></keybind>\
 <keybind key="Menu"><action name="ShowMenu"><menu>root-menu</menu></action></keybind>\
 '"$a"'<!-- /ya.keybind -->\n</keyboard>:' | \
+			fixml 'Bottom' '<dock>' '<position>' '[^<]*' | \
 			fixml 'root' '<context name="Icon">' '<mousebind button="Right" action="Press">' '<menu>' 'client' | \
 			fixml 'Onyx-Citrus' '<theme>' '<name>' '[^<]*' >$1
 }

@@ -1,0 +1,13 @@
+--- a/src/xkbd.c	2009-04-20 13:21:46.000000000 +0300
++++ b/src/xkbd.c	2017-06-27 20:00:02.258835584 +0300
+@@ -369,7 +369,9 @@ int main(int argc, char **argv)
+     
+       wm_hints = XAllocWMHints();
+       wm_hints->input = False;
+-      wm_hints->flags = InputHint;
++      wm_hints->flags = InputHint | IconWindowHint | WindowGroupHint | StateHint;
++      wm_hints->initial_state = WithdrawnState;
++      wm_hints->icon_window = wm_hints->window_group = win;
+       XSetWMHints(display, win, wm_hints );
+ 
+       /* Tell the WM we dont want no borders */

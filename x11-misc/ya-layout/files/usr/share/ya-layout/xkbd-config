@@ -1,0 +1,88 @@
+#!/usr/bin/perl
+# generate xkbd config for "us,..." multi-layout
+
+sub key{
+	my ($s,$n)=@_;
+	my %s;
+	$s=~s/<\/*key>//gs;
+	for(split(/\n/,$s)){
+		my ($x,$y)=$_=~/^\s*(\S+)\s+(.*?)\s*$/ or next;
+		$s{$x}=$y;
+	}
+	if(exists($s{'default_ks'})){
+		my $d=$s{'default_ks'};
+		my $sh;
+		for(@k){
+			next if($_->[0] ne $d);
+			$sh=$_->[1];
+			next if(exists($s{'shift_ks'}) && $sh ne $s{'shift_ks'});
+			my $i=($n<<1);
+			for my $x ('default','shift'){
+				my $y=$x.'_ks';
+				if((!exists($s{$y}) || $s{$y} ne $_->[$i]) && $_->[$i] ne 'NoSymbol' && $_->[$i] ne ''){
+					$s{$y}=$_->[$i];
+					$n && delete($s{$x});
+				}
+				$i++;
+			}
+			last;
+		}
+	}
+	return '' if(scalar(keys %s)==1 && exists($s{'default_ks'}));
+	for my $x ('default','shift','mod'){
+		exists($s{$x})&&next;
+		my $y=$x.'_ks';
+		exists($s{$y})||next;
+		$y=$s{$y};
+		$y=exists($u{$y})?$u{$y}:$y;
+		$s{$x}=$y if($y=~/\S/);
+	}
+	$s{'width'}=10 if(!exists($s{'width'}) && !exists($s{'img'}));
+	$s{'obey_capslock'}='yes' if(exists($s{'default'}) && exists($s{'shift'}) && uc($s{'default'}) eq uc($s{'shift'}));
+	$s{'obey_capslock'}='yes' if(exists($s{'shift_ks'}) && uc($s{'default_ks'}) eq uc($s{'shift_ks'}));
+	return join("\n",'	<key>',(map{"		$_ $s{$_}"}sort keys %s),'	</key>');
+}
+
+
+open F,'<',$ARGV[0]||'/usr/share/ya-layout/xkbd-default' or die;
+read(F,$k,-s F);
+close(F);
+$k=~s/#.*$//gm;
+$k=~s/^\s+//gm;
+$k=~s/\s+$//gm;
+
+open F,'<','/usr/include/X11/keysymdef.h' or die;
+while(defined($s=<F>)){
+	my ($x,$y)=$s=~/^#define\s+XK_(\S+)\s+0x\S+\s*\/\*\s+U\+([0-9A-F]+)\s/gs or next;
+	$y=chr(hex($y));
+	$u{$x}=$y;
+}
+close(F);
+
+open F,'-|','xmodmap -pke' or die;
+while(defined($s=<F>)){
+	my ($x)=$s=~/^keycode +[0-9]+ += +(\S.*?)\s*$/;
+	push @k,[split(/\s+/,$x)];
+}
+close(F);
+
+for(@k){
+	$n{($#{$_}>>1)+1}++ if(length($_->[0])==1);
+}
+
+($n)=((sort{$n{$b}<=>$n{$a}}keys %n),1);
+
+($l)=$k=~/(<layout>.*<\/layout>)/gs;
+
+$k=~s/[ 	]*(<key>.*?<\/key>)/key($1,0)/gse;
+$k=~s/switch 0/switch 1/ if($n>1);
+utf8::encode($k);
+print $k;
+
+for(2..$n){
+	$l1=$l;
+	$l1=~s/[ 	]*(<key>.*?<\/key>)/key($1,$n-1)/gse;
+	$l1=~s/switch 0/switch $_/ if($_<$n);
+	utf8::encode($l1);
+	print "\n",$l1;
+}
