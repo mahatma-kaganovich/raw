@@ -27,7 +27,6 @@ border_col 63:63:63
 
 # button style, can be rounded ( default ), square or plain
 # button_style plain
-button_style plain
 repeat_delay 50
 
 </global>
