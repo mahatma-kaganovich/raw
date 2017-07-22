@@ -22,6 +22,8 @@ RDEPEND=" ${DEPEND}
 	alsa? ( media-sound/alsa-utils )
 	x11-apps/xfontsel
 	x11-misc/xdg-utils
+	x11-misc/xkbd
+	x11-apps/xmodmap
 	!minimal? (
 		!tint2? ( || (
 		x11-misc/pcmanfm
