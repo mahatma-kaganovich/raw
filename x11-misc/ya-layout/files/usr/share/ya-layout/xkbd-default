@@ -13,7 +13,7 @@ font arial-20|fixed
 col  0:0:0
 
 # color of an active key ( default black )
-down_col  0:31:31
+down_col  0:63:63
 
 # color of key text ( default black )
 txt_col 63:127:127
@@ -55,8 +55,8 @@ repeat_delay 50
 <layout>
 <row>
 	<key>
-		default     Esc
-		default_ks  Escape
+		default Esc
+		default_ks Escape
 	</key>
 	<key>default_ks grave</key>
 	<key>
@@ -107,18 +107,14 @@ repeat_delay 50
 		default_ks equal
 		mod_ks F12
 	</key>
-#	<key>default_ks backslash</key>
-	<key>
-#		img  /usr/share/ya-layout/img/backspace.xpm
-		default_ks  BackSpace
-	</key>
+	<key>default_ks BackSpace</key>
+	<key>default_ks Print</key>
+	<key>default_ks Scroll_Lock</key>
+	<key>default_ks Pause</key>
 </row>
 
 <row>
-	<key>
-#		img /usr/share/ya-layout/img/tab.xpm
-		default_ks  Tab
-	</key>
+	<key>default_ks Tab</key>
 	<key>default_ks q</key>
 	<key>default_ks w</key>
 	<key>default_ks e</key>
@@ -129,16 +125,19 @@ repeat_delay 50
 	<key>default_ks i</key>
 	<key>default_ks o</key>
 	<key>default_ks p</key>
-	<key>default_ks numbersign</key>
 	<key>default_ks bracketleft</key>
 	<key>default_ks bracketright</key>
 	<key>default_ks backslash</key>
+	<key>default_ks KP_Home</key>
+	<key>default_ks KP_Up</key>
+	<key>default_ks KP_Prior</key>
 </row>
 
 <row>
 	<key>
 		default CPS
 		default_ks Caps_Lock
+		width 10
 	</key>
 	<key>default_ks a</key>
 	<key>default_ks s</key>
@@ -152,17 +151,20 @@ repeat_delay 50
 	<key>default_ks semicolon</key>
 	<key>default_ks apostrophe</key>
 	<key>
-#		img  /usr/share/ya-layout/img/return.xpm
-		default  Enter
-		default_ks  Return
+		default Enter
+		default_ks Return
+		width 11
 	</key>
+	<key>default_ks KP_Left</key>
+	<key>default_ks KP_Begin</key>
+	<key>default_ks KP_Right</key>
 </row>
 
 <row>
 	<key>
-#		img /usr/share/ya-layout/img/shift.xpm
 		default Shift
-		default_ks  Shift_L
+		default_ks Shift_L
+		width 14
 	</key>
 	<key>default_ks bar</key>
 	<key>default_ks z</key>
@@ -176,44 +178,58 @@ repeat_delay 50
 	<key>default_ks period</key>
 	<key>default_ks slash</key>
 	<key>
-#		img         /usr/share/ya-layout/img/shift.xpm
 		default Shift
-		default_ks  Shift_R
+		default_ks Shift_R
+		width 14
 	</key>
+	<key>default_ks KP_End</key>
+	<key>default_ks KP_Down</key>
+	<key>default_ks KP_Next</key>
 </row>
 
 <row>
 	<key>
-		default  CTRL
-		default_ks  Control_L
-		#bg  30:30:00
-		#fg  100:0:100
+		default Ctrl
+		default_ks Control_L
 	</key>
 	<key>
-		default  ALT
-		default_ks  Alt_L
+		default Fn
+		default_ks !Mod
 	</key>
 	<key>
-		default  Fn
-		default_ks  !Mod
+		default Win
+		default_ks Super_L
 	</key>
 	<key>
-		default  i18l
+		default Alt
+		default_ks Alt_L
+	</key>
+	<key>
+		default i18l
 		switch 0
 	</key>
 	<key>
-		default_ks  space
-		width 50
+		default_ks space
+		width 42
 	</key>
 	<key>
-		default  ALT
-		default_ks  Alt_L
+		default Alt
+		default_ks Alt_L
 	</key>
 	<key>
-		default  CTRL
-		default_ks  Control_R
+		default Win
+		default_ks Super_L
 	</key>
-	<key>default_ks Insert</key>
-	<key>default_ks Delete</key>
+	<key>
+		default Menu
+		default_ks Menu
+	</key>
+	<key>
+		default Ctrl
+		default_ks Control_R
+	</key>
+	<key>default_ks KP_Insert</key>
+	<key>default_ks KP_Delete</key>
+	<key>default_ks KP_Enter</key>
 </row>
 </layout>
