@@ -37,7 +37,7 @@ sub key{
 		exists($s{$y})||next;
 		$y=$s{$y};
 		if(exists($s{'default'})){
-			if(exists($s{'default_ks'} && $y eq $s{'default_ks'}){
+			if(exists($s{'default_ks'}) && $y eq $s{'default_ks'}){
 				$s{$x}=$s{'default'};
 				next;
 			}elsif($y eq 'ISO_Next_Group'){

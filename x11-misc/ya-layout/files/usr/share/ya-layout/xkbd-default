@@ -242,7 +242,7 @@ repeat_delay 50
 		default_ks !Mod
 	</key>
 	<key>
-		default Win
+		default Super
 		default_ks Super_L
 	</key>
 	<key>
@@ -262,7 +262,7 @@ repeat_delay 50
 		default_ks Alt_R
 	</key>
 	<key>
-		default Win
+		default Super
 		default_ks Super_R
 	</key>
 	<key>
