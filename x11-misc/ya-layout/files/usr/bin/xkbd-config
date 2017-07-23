@@ -12,7 +12,7 @@ sub key{
 	if(exists($s{'default_ks'})){
 		my $d=$s{'default_ks'};
 		my $sh;
-		my $cnt;
+		my $cnt=exists($s{'default'});
 		for(@k){
 			next if($_->[0] ne $d);
 			$sh=$_->[1];
