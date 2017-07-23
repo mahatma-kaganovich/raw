@@ -55,7 +55,7 @@ repeat_delay 50
 <layout>
 <row>
 	<key>
-		default     esc
+		default     Esc
 		default_ks  Escape
 	</key>
 	<key>default_ks grave</key>
@@ -109,14 +109,14 @@ repeat_delay 50
 	</key>
 #	<key>default_ks backslash</key>
 	<key>
-		img  /usr/share/ya-layout/img/backspace.xpm
+#		img  /usr/share/ya-layout/img/backspace.xpm
 		default_ks  BackSpace
 	</key>
 </row>
 
 <row>
 	<key>
-		img /usr/share/ya-layout/img/tab.xpm
+#		img /usr/share/ya-layout/img/tab.xpm
 		default_ks  Tab
 	</key>
 	<key>default_ks q</key>
@@ -152,15 +152,16 @@ repeat_delay 50
 	<key>default_ks semicolon</key>
 	<key>default_ks apostrophe</key>
 	<key>
-		img  /usr/share/ya-layout/img/return.xpm
-		#default  RET
+#		img  /usr/share/ya-layout/img/return.xpm
+		default  Enter
 		default_ks  Return
 	</key>
 </row>
 
 <row>
 	<key>
-		img /usr/share/ya-layout/img/shift.xpm
+#		img /usr/share/ya-layout/img/shift.xpm
+		default Shift
 		default_ks  Shift_L
 	</key>
 	<key>default_ks bar</key>
@@ -175,7 +176,8 @@ repeat_delay 50
 	<key>default_ks period</key>
 	<key>default_ks slash</key>
 	<key>
-		img         /usr/share/ya-layout/img/shift.xpm
+#		img         /usr/share/ya-layout/img/shift.xpm
+		default Shift
 		default_ks  Shift_R
 	</key>
 </row>
