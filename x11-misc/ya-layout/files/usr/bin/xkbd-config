@@ -67,10 +67,10 @@ while(defined($s=<F>)){
 close(F);
 
 for(@k){
-	$n{($#{$_}>>1)+1}++ if(length($_->[0])==1);
+	$n{($#{$_}>>1)}++ if(length($_->[0])==1);
 }
-
-($n)=((sort{$n{$b}<=>$n{$a}}keys %n),1);
+($n)=((sort{$n{$b}<=>$n{$a}}keys %n));
+$n++;
 
 ($l)=$k=~/(<layout>.*<\/layout>)/gs;
 
