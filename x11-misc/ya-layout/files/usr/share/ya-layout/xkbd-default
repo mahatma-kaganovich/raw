@@ -16,10 +16,10 @@ col  0:0:0
 down_col  100:100:200
 
 # color of key text ( default black )
-txt_col 127:127:127
+txt_col 63:127:127
 
 # color of key borders ( default black )
-border_col 63:63:63
+border_col 31:63:63
 
 # keyboard dimentions
 #width  xxx
@@ -109,14 +109,14 @@ repeat_delay 50
 	</key>
 #	<key>default_ks backslash</key>
 	<key>
-		img  /usr/share/xkbd/img/backspace.xpm
+		img  /usr/share/ya-layout/img/backspace.xpm
 		default_ks  BackSpace
 	</key>
 </row>
 
 <row>
 	<key>
-		img /usr/share/xkbd/img/tab.xpm
+		img /usr/share/ya-layout/img/tab.xpm
 		default_ks  Tab
 	</key>
 	<key>default_ks q</key>
@@ -152,7 +152,7 @@ repeat_delay 50
 	<key>default_ks semicolon</key>
 	<key>default_ks apostrophe</key>
 	<key>
-		img  /usr/share/xkbd/img/return.xpm
+		img  /usr/share/ya-layout/img/return.xpm
 		#default  RET
 		default_ks  Return
 	</key>
@@ -160,7 +160,7 @@ repeat_delay 50
 
 <row>
 	<key>
-		img /usr/share/xkbd/img/shift.xpm
+		img /usr/share/ya-layout/img/shift.xpm
 		default_ks  Shift_L
 	</key>
 	<key>default_ks bar</key>
@@ -175,7 +175,7 @@ repeat_delay 50
 	<key>default_ks period</key>
 	<key>default_ks slash</key>
 	<key>
-		img         /usr/share/xkbd/img/shift.xpm
+		img         /usr/share/ya-layout/img/shift.xpm
 		default_ks  Shift_R
 	</key>
 </row>
