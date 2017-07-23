@@ -21,6 +21,12 @@ txt_col 63:127:127
 # color of key borders ( default black )
 border_col 31:63:63
 
+# color of non-chars
+grey_col 0:31:31
+
+# color of keypad
+kp_col 0:31:31
+
 # keyboard dimentions
 #width  xxx
 #height xxx
@@ -57,6 +63,7 @@ repeat_delay 50
 	<key>
 		default Esc
 		default_ks Escape
+		width 4
 	</key>
 	<key>default_ks grave</key>
 	<key>
@@ -107,10 +114,22 @@ repeat_delay 50
 		default_ks equal
 		mod_ks F12
 	</key>
-	<key>default_ks BackSpace</key>
-	<key>default_ks Print</key>
-	<key>default_ks Scroll_Lock</key>
-	<key>default_ks Pause</key>
+	<key>
+		default_ks BackSpace
+		width 6
+	</key>
+	<key>
+		default_ks Print
+		width 6
+	</key>
+	<key>
+		default_ks Scroll_Lock
+		width 6
+	</key>
+	<key>
+		default_ks Pause
+		width 6
+	</key>
 </row>
 
 <row>
@@ -247,7 +266,10 @@ repeat_delay 50
 		default_ks Control_R
 	</key>
 	<key>default_ks KP_Insert</key>
-	<key>default_ks KP_Delete</key>
+	<key>
+		default_ks KP_Delete
+		shift .
+	</key>
 	<key>default_ks KP_Enter</key>
 </row>
 </layout>

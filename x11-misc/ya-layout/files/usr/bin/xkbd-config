@@ -40,11 +40,12 @@ sub key{
 		$y=exists($u{$y})?$u{$y}:$y;
 		$s{$x}=$y if($y=~/\S/);
 	}
+	$s{'bg'}=$p{'grey_col'} if(exists($s{'default'}) && length($s{'default'})>1);	
 	if(!exists($s{'width'}) && !exists($s{'img'})){
 		$s{'width'}=7;
 		if(exists($s{'default_ks'}) && substr($s{'default_ks'},0,3) eq 'KP_'){
 			$s{'width'}=6;
-			$s{'bg'}='0,31,31';
+			$s{'bg'}=$p{'kp_col'};
 		}
 	}
 	$s{'obey_capslock'}='yes' if(exists($s{'default'}) && exists($s{'shift'}) && uc($s{'default'}) eq uc($s{'shift'}));
@@ -75,6 +76,11 @@ while(defined($s=<F>)){
 	push @k,[split(/\s+/,$x)];
 }
 close(F);
+
+for('grey_col','kp_col'){
+	my($x)=$k=~/^\s*$_[ 	]+(\S*)/m;
+	$p{$_}=defined($x)?$x:'0:0:0';
+}
 
 for(@k){
 	$n{$#{$_}>>1}++ if(length($_->[0])==1);
