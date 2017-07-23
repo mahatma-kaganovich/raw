@@ -129,8 +129,14 @@ repeat_delay 50
 	<key>default_ks bracketright</key>
 	<key>default_ks backslash</key>
 	<key>default_ks KP_Home</key>
-	<key>default_ks KP_Up</key>
-	<key>default_ks KP_Prior</key>
+	<key>
+		default ↑
+		default_ks KP_Up
+	</key>
+	<key>
+		default PgUp
+		default_ks KP_Prior
+	</key>
 </row>
 
 <row>
@@ -155,9 +161,15 @@ repeat_delay 50
 		default_ks Return
 		width 11
 	</key>
-	<key>default_ks KP_Left</key>
+	<key>
+		default ←
+		default_ks KP_Left
+	</key>
 	<key>default_ks KP_Begin</key>
-	<key>default_ks KP_Right</key>
+	<key>
+		default →
+		default_ks KP_Right
+	</key>
 </row>
 
 <row>
@@ -183,8 +195,14 @@ repeat_delay 50
 		width 14
 	</key>
 	<key>default_ks KP_End</key>
-	<key>default_ks KP_Down</key>
-	<key>default_ks KP_Next</key>
+	<key>
+		default ↓
+		default_ks KP_Down
+	</key>
+	<key>
+		default PgDn
+		default_ks KP_Next
+	</key>
 </row>
 
 <row>
