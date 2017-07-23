@@ -1,19 +1,19 @@
 <global>
 
 # set to 'xft' for AA fonts, set to anything else and default X fonts are used.
-#render xft
-render X
+render xft
+#render X
 
 # font name, for an xft font, specify the point size after a '-'
 # default font is fixed
 #font verdana-12|fixed
-font arial-12|fixed
+font arial-20|fixed
 
 # color of keboard background ( default white )
 col  0:0:0
 
 # color of an active key ( default black )
-down_col  100:100:200
+down_col  0:31:31
 
 # color of key text ( default black )
 txt_col 63:127:127
@@ -194,11 +194,11 @@ repeat_delay 50
 		default_ks  Alt_L
 	</key>
 	<key>
-		default  F#
+		default  Fn
 		default_ks  !Mod
 	</key>
 	<key>
-		default  >>
+		default  i18l
 		switch 0
 	</key>
 	<key>
