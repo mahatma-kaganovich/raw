@@ -65,7 +65,10 @@ repeat_delay 50
 		default_ks Escape
 		width 4
 	</key>
-	<key>default_ks grave</key>
+	<key>
+		default_ks grave
+		width 6
+	</key>
 	<key>
 		default_ks 1
 		mod_ks F1
@@ -115,14 +118,16 @@ repeat_delay 50
 		mod_ks F12
 	</key>
 	<key>
+		default BkSp
 		default_ks BackSpace
-		width 6
 	</key>
 	<key>
 		default_ks Print
 		width 6
 	</key>
 	<key>
+		font 10
+		default SclLk
 		default_ks Scroll_Lock
 		width 6
 	</key>
@@ -133,7 +138,10 @@ repeat_delay 50
 </row>
 
 <row>
-	<key>default_ks Tab</key>
+	<key>
+		shift LTab
+		default_ks Tab
+	</key>
 	<key>default_ks q</key>
 	<key>default_ks w</key>
 	<key>default_ks e</key>
@@ -160,7 +168,7 @@ repeat_delay 50
 
 <row>
 	<key>
-		default CPS
+		default Caps
 		default_ks Caps_Lock
 		width 10
 	</key>
@@ -251,11 +259,11 @@ repeat_delay 50
 	</key>
 	<key>
 		default Alt
-		default_ks Alt_L
+		default_ks Alt_R
 	</key>
 	<key>
 		default Win
-		default_ks Super_L
+		default_ks Super_R
 	</key>
 	<key>
 		default Menu

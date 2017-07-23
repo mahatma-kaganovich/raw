@@ -22,7 +22,7 @@ sub key{
 			for my $x ('default','shift'){
 				my $y=$x.'_ks';
 				if((!exists($s{$y}) || $s{$y} ne $_->[$i]) && $_->[$i] ne 'NoSymbol' && $_->[$i] ne ''){
-					$s{$y}=$_->[$i];
+					$s{$y}=$_->[$i] if(!($x eq 'shift' && $_->[$i-1] eq $_->[$i]));
 					$n && delete($s{$x});
 				}
 				$i++;
@@ -36,8 +36,21 @@ sub key{
 		my $y=$x.'_ks';
 		exists($s{$y})||next;
 		$y=$s{$y};
+		if(exists($s{'default'})){
+			if(exists($s{'default_ks'} && $y eq $s{'default_ks'}){
+				$s{$x}=$s{'default'};
+				next;
+			}elsif($y eq 'ISO_Next_Group'){
+				$s{$x}='+'.$s{'default'};
+				next;
+			}
+		}
 		$y=~s/^KP_//;
-		$y=exists($u{$y})?$u{$y}:$y;
+		if(exists($u{$y})){
+			$y=$u{$y};
+		}elsif(length($y)>1){
+			$y=~s/_//g;
+		}
 		$s{$x}=$y if($y=~/\S/);
 	}
 	$s{'bg'}=$p{'grey_col'} if(exists($s{'default'}) && length($s{'default'})>1);	
@@ -54,7 +67,7 @@ sub key{
 }
 
 
-open F,'<',$ARGV[0]||'/usr/share/ya-layout/xkbd-default' or die;
+open F,'<',$ARGV[0]||'/usr/share/ya-layout/xkbd-default' or die $!;
 read(F,$k,-s F);
 close(F);
 utf8::decode($k);
@@ -62,7 +75,7 @@ $k=~s/#.*$//gm;
 $k=~s/^\s+//gm;
 $k=~s/\s+$//gm;
 
-open F,'<','/usr/include/X11/keysymdef.h' or die;
+open F,'<','/usr/include/X11/keysymdef.h' or die $!;
 while(defined($s=<F>)){
 	my ($x,$y)=$s=~/^#define\s+XK_(\S+)\s+0x\S+\s*\/\*\s+U\+([0-9A-F]+)\s/gs or next;
 	$y=chr(hex($y));
@@ -70,7 +83,7 @@ while(defined($s=<F>)){
 }
 close(F);
 
-open F,'-|','xmodmap -pke' or die;
+open F,'-|','xmodmap -pke' or die $!;
 while(defined($s=<F>)){
 	my ($x)=$s=~/^keycode +[0-9]+ += +(\S.*?)\s*$/;
 	push @k,[split(/\s+/,$x)];
