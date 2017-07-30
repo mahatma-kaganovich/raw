@@ -569,9 +569,9 @@ sub Kconfig{
 	modules($_) for(split(/\s+/,$ENV{KERNEL_MODULES}));
 	print "Applying config: $ENV{KERNEL_CONFIG}\n";
 	conf($_) for(split(/\s+/,$ENV{KERNEL_CONFIG}));
-	for(grep(/^KERNEL_CONFIG_/,keys %ENV)){
+	for(sort grep(/^KERNEL_CONFIG_/,keys %ENV)){
 		my $x=$ENV{$_};
-		$x="\"$x\"" if($x=~/^[^\"].*\s.*[^\"]$/s);
+		$x="\"$x\"" if($x=~/^[^\"0-9].*[^\"]$/s);
 		cfg(substr($_,14),$x);
 		msg("$_=$x");
 	}
