@@ -7,8 +7,6 @@ firmware? (
 	kernel-firmware? (
 		!sys-kernel/linux-firmware
 		sys-block/qla-fc-firmware
-		X? ( x11-drivers/radeon-ucode )
-		dri? ( x11-drivers/radeon-ucode )
 		dvb? ( media-tv/linuxtv-dvb-firmware )
 		atm? (
 			net-dialup/ueagle-atm
@@ -28,6 +26,10 @@ firmware? (
 	sys-firmware/intel-microcode[split-ucode]
 )
 "
+
+#		X? ( x11-drivers/radeon-ucode )
+#		dri? ( x11-drivers/radeon-ucode )
+
 
 DEPEND+="${_dep}"
 RDEPEND+="${_dep}"
