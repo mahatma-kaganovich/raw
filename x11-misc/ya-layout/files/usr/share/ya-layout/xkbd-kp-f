@@ -63,76 +63,67 @@ repeat_delay 50
 	<key>
 		default Esc
 		default_ks Escape
-		width 4
 	</key>
+	<key>default_ks F1</key>
+	<key>default_ks F2</key>
+	<key>default_ks F3</key>
+	<key>default_ks F4</key>
+	<key>default_ks F5</key>
+	<key>default_ks F6</key>
+	<key>default_ks F7</key>
+	<key>default_ks F8</key>
+	<key>default_ks F9</key>
+	<key>default_ks F10</key>
+	<key>default_ks F11</key>
+	<key>default_ks F12</key>
+	<key>default_ks Print</key>
+	<key>
+		default SclLk
+		default_ks Scroll_Lock
+	</key>
+	<key>default_ks Pause</key>
+	<key>
+		default NumLk
+		default_ks !Mod
+	</key>
+	<key>
+		default -
+		default_ks KP_Substract
+	</key>
+</row>
+<row>
 	<key>
 		default_ks grave
 		width 6
 	</key>
-	<key>
-		default_ks 1
-		mod_ks F1
-	</key>
-	<key>
-		default_ks 2
-		mod_ks F2
-	</key>
-	<key>
-		default_ks 3
-		mod_ks F3
-	</key>
-	<key>
-		default_ks 4
-		mod_ks F4
-	</key>
-	<key>
-		default_ks 5
-		mod_ks F5
-	</key>
-	<key>
-		default_ks 6
-		mod_ks F6
-	</key>
-	<key>
-		default_ks 7
-		mod_ks F7
-	</key>
-	<key>
-		default_ks 8
-		mod_ks F8
-	</key>
-	<key>
-		default_ks 9
-		mod_ks F9
-	</key>
-	<key>
-		default_ks 0
-		mod_ks F10
-	</key>
-	<key>
-		default_ks minus
-		mod_ks F11
-	</key>
-	<key>
-		default_ks equal
-		mod_ks F12
-	</key>
+	<key>default_ks 1</key>
+	<key>default_ks 2</key>
+	<key>default_ks 3</key>
+	<key>default_ks 4</key>
+	<key>default_ks 5</key>
+	<key>default_ks 6</key>
+	<key>default_ks 7</key>
+	<key>default_ks 8</key>
+	<key>default_ks 9</key>
+	<key>default_ks 0</key>
+	<key>default_ks minus</key>
+	<key>default_ks equal</key>
 	<key>
 		default BkSp
 		default_ks BackSpace
+		width 8
 	</key>
 	<key>
-		default_ks Print
-		width 6
+		default /
+		default_ks KP_Divide
 	</key>
 	<key>
-		default SclLk
-		default_ks Scroll_Lock
-		width 6
+		default *
+		default_ks KP_Multiply
 	</key>
 	<key>
-		default_ks Pause
-		width 6
+		default +
+		default_ks KP_Add
 	</key>
 </row>
 
@@ -154,14 +145,19 @@ repeat_delay 50
 	<key>default_ks bracketleft</key>
 	<key>default_ks bracketright</key>
 	<key>default_ks backslash</key>
-	<key>default_ks KP_Home</key>
+	<key>
+		default_ks KP_Home
+		mod_ks 7
+	</key>
 	<key>
 		default ↑
 		default_ks KP_Up
+		mod_ks 8
 	</key>
 	<key>
 		default PgUp
 		default_ks KP_Prior
+		mod_ks 9
 	</key>
 </row>
 
@@ -190,11 +186,16 @@ repeat_delay 50
 	<key>
 		default ←
 		default_ks KP_Left
+		mod_ks 4
 	</key>
-	<key>default_ks KP_Begin</key>
+	<key>
+		default_ks KP_Begin
+		mod_ks 5
+	</key>
 	<key>
 		default →
 		default_ks KP_Right
+		mod_ks 6
 	</key>
 </row>
 
@@ -219,14 +220,19 @@ repeat_delay 50
 		default_ks Shift_R
 		width 14
 	</key>
-	<key>default_ks KP_End</key>
+	<key>
+		default_ks KP_End
+		mod_ks 1
+	</key>
 	<key>
 		default ↓
 		default_ks KP_Down
+		mod_ks 2
 	</key>
 	<key>
 		default PgDn
 		default_ks KP_Next
+		mod_ks 3
 	</key>
 </row>
 
@@ -234,10 +240,6 @@ repeat_delay 50
 	<key>
 		default Ctrl
 		default_ks Control_L
-	</key>
-	<key>
-		default Fn
-		default_ks !Mod
 	</key>
 	<key>
 		default Super
@@ -275,10 +277,14 @@ repeat_delay 50
 		default Ctrl
 		default_ks Control_R
 	</key>
-	<key>default_ks KP_Insert</key>
+	<key>
+		default_ks KP_Insert
+		mod_ks 0
+	</key>
 	<key>
 		default_ks KP_Delete
 		shift .
+		mod_ks .
 	</key>
 	<key>default_ks KP_Enter</key>
 </row>

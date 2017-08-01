@@ -67,9 +67,13 @@ sub key{
 }
 
 
-open F,'<',$ARGV[0]||'/usr/share/ya-layout/xkbd-default' or die $!;
-read(F,$k,-s F);
-close(F);
+for(@ARGV?(@ARGV):('/etc/xkbd-default','/usr/share/ya-layout/xkbd-default')){
+	open F,'<',$ARGV[0]||'/usr/share/ya-layout/xkbd-default' or next;
+	read(F,$k,-s F);
+	close(F);
+	last;
+}
+die $! if($k eq '');
 utf8::decode($k);
 $k=~s/#.*$//gm;
 $k=~s/^\s+//gm;

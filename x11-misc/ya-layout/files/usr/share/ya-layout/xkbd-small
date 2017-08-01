@@ -126,7 +126,6 @@ repeat_delay 50
 		width 6
 	</key>
 	<key>
-		font 10
 		default SclLk
 		default_ks Scroll_Lock
 		width 6
