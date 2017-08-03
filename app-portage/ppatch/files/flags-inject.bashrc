@@ -14,8 +14,8 @@ _in_ject(){
 			c="${c#??}"
 	}
 	shift
-	for n in "${@}"; do
-		for f in `find "${WORKDIR}" -name "${n##*/}"`; do
+	for f in $(find "${WORKDIR}" -name "${n##*/}"); do
+		for n in "${@}"; do
 			[[ "$f" == *"$n" ]] && sed -i "1i $c" "$f" && ok=true
 		done
 	done
@@ -29,7 +29,7 @@ _in_ject fast '#pragma GCC optimize ("no-fast-math")\n#ifdef __FAST_MATH__\n#def
 
 _in_ject -fschedule-insns no-schedule-insns libttf/cmap.c netxen_nic_hw.c qlcnic_hw.c gf100.c src/css.c
 
-_in_ject -floop- 'no-loop-nest-optimize no-graphite-identity' getopt.c Objects/obmalloc.c libopenjpeg/tcd.c nellymoser.c libfreerdp/codec/nsc_encode.c
+_in_ject -floop- 'no-loop-nest-optimize no-graphite-identity' getopt.c Objects/obmalloc.c libopenjpeg/tcd.c nellymoser.c libfreerdp/codec/nsc_encode.c r819xU_cmdpkt.c
 _in_ject -floop- '#if defined(__i386__)\n#pragma GCC optimize ("no-loop-nest-optimize")\n#pragma GCC optimize ("no-graphite-identity")\n#endif' src/cmspack.c libdw/dwarf_frame_register.c libmp3lame/quantize.c libtwolame/twolame.c src/secaudit.c
 
 # gcc 7 ICE
