@@ -14,8 +14,8 @@ _in_ject(){
 			c="${c#??}"
 	}
 	shift
-	for f in $(find "${WORKDIR}" -name "${n##*/}"); do
-		for n in "${@}"; do
+	for n in "${@}"; do
+		for f in $(find "${WORKDIR}" -name "${n##*/}"); do
 			[[ "$f" == *"$n" ]] && sed -i "1i $c" "$f" && ok=true
 		done
 	done
