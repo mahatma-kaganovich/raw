@@ -67,7 +67,7 @@ sub key{
 }
 
 
-for(@ARGV?(@ARGV):('/etc/xkbd-default','/usr/share/ya-layout/xkbd-default')){
+for(@ARGV?(@ARGV):('/etc/xkbd-config.conf','/usr/share/ya-layout/xkbd-kp-f')){
 	open F,'<',$ARGV[0]||'/usr/share/ya-layout/xkbd-default' or next;
 	read(F,$k,-s F);
 	close(F);
