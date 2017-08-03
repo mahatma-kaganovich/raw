@@ -68,10 +68,7 @@ sub key{
 
 
 for(@ARGV?(@ARGV):('/etc/xkbd-config.conf','/usr/share/ya-layout/xkbd-kp-f')){
-	open F,'<',$ARGV[0]||'/usr/share/ya-layout/xkbd-default' or next;
-	read(F,$k,-s F);
-	close(F);
-	last;
+	open(F,'<',$_) && read(F,$k,-s F) && close(F) && last;
 }
 die $! if($k eq '');
 utf8::decode($k);
