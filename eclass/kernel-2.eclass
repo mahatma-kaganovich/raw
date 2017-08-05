@@ -453,7 +453,7 @@ kernel-2_src_compile() {
 
 	if use kernel-tools; then
 		einfo "Compiling tools"
-		mktools
+		mktools all
 	fi
 
 	for i in `find Documentation -name "*.c"`; do
@@ -554,7 +554,7 @@ kernel-2_src_install() {
 		fi
 		[[ -e "${BDIR}" ]] && ( mv "${BDIR}"/* "${D}/" || die )
 		kmake INSTALL_PATH="${D}/boot" install
-		use kernel-tools && mktools INSTALL_PATH="${D}" DESTDIR="${D}" install
+		use kernel-tools && mktools install INSTALL_PATH="${D}" DESTDIR="${D}"
 		for f in vmlinuz System.map config ; do
 			f1="${D}/boot/${f}"
 			if [[ -e "${f1}" ]] ; then
@@ -1293,10 +1293,7 @@ kmake(){
 }
 
 mktools(){
-	local i
-	for i in tools/*/Makefile; do
-		kmake -C "${i%/Makefile}" CFLAGS="${KERNEL_UTILS_CFLAGS}" "${@}"
-	done
+	kmake -i tools/"${@}" CFLAGS="${KERNEL_UTILS_CFLAGS}"
 }
 
 _log(){
