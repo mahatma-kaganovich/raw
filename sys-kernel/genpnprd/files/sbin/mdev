@@ -252,10 +252,10 @@ cpufreq(){
 		min*powersave*)i=powersave;;
 		max*perfomance*)i=perfomance;;
 		esac
-		echo "$i" >$c/scaling_governor || [[ "${_cmd_cpufreq}" != _ ]] && {
+		echo "$i" >$c/scaling_governor ||
+			[[ "${_cmd_cpufreq}" == _ ]] ||
 			cat $c/cpuinfo_${f}_freq >$c/scaling_setspeed ||
 			cat $c/cpuinfo_${f}_freq >$c/scaling_max_freq
-		}
 	done 2>/dev/null
 }
 
