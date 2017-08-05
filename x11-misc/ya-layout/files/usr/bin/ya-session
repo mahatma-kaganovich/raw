@@ -267,11 +267,12 @@ obconfig(){
 	ob3menuconfig --config - --fix <"$2" | \
 	sed -e 's:<animateIconify>yes</animateIconify>:<animateIconify>no</animateIconify>:' \
 		-e 's:<noStrut>.*</noStrut>:<noStrut>no</noStrut>:' \
-		-e 's:\(<context name="Titlebar">\):\1\n<mousebind button="Left" action="Click"><action name="ShowMenu"><menu>root-menu</menu></action></mousebind>:' \
+		-e 's:\(<context name="Titlebar">\):\1\n<mousebind button="Left" action="Click"><action name="ShowMenu"><menu>root-menu</menu></action></mousebind>\n<mousebind button="Middle" action="Click"><action name="ShowMenu"><menu>root-menu</menu></action></mousebind>:' \
 		-e 's:<file>menu\.xml</file>:<file>'"$m"'/ya/menu.xml</file>:' \
 		-e 's:\(<!-- Menus -->\):\1\
 <!-- "Drag" not working here -->\
 <mousebind button="Left" action="DoubleClick"><action name="ShowMenu"><menu>root-menu</menu></action></mousebind>\
+<mousebind button="Middle" action="Click"><action name="execute"><execute>~/.cache/ya'"$suff"'/desk-sh $pointer</execute></action>/mousebind>\
 <mousebind button="Left" action="Click"><action name="execute"><execute>~/.cache/ya'"$suff"'/desk-sh $pointer</execute></action>/mousebind>\n:\
 ' \
 		-e 's:</keyboard>:<!-- ya.keybind -->\
