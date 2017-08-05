@@ -7,7 +7,7 @@ for i in /sys/class/power_supply/*; do
 	[ -e "$i/present" ] && [ "$(cat "$i/present")" = 1 -a "$(cat "$i/type")" = Battery -a "$(cat "$i/capacity")" != 0 ] || continue
 	case "$(cat "$i/status")" in
 	Discharging|Critical)exit 0;;
-	Unknown|Charging)exit 1;;
+	Unknown|Charging|Full)exit 1;;
 	esac
 done
 $ac && exit 1
