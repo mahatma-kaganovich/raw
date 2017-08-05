@@ -241,11 +241,7 @@ fstab(){
 cpufreq(){
 	local i c g f j min max mid
 	grep -sq UltraSPARC /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor && return
-	if (grep -sq 1 /sys/class/power_supply/*/present && grep -sq 0 /sys/class/power_supply/*/online && ! grep -sq 1 /sys/class/power_supply/*/online) || grep -sq "state:.*off-line" /proc/acpi/ac_adapter/*/state || grep -sq "AC Power.*: 0" /proc/pmu/info; then
-		f=min
-	else
-		f=max
-	fi
+	/sbin/onbatt && f=min || f=max
 	for c in /sys/devices/system/cpu/cpu*/cpufreq; do
 		g="$c/scaling_available_governors"
 		[[ -e "$g" ]] || continue

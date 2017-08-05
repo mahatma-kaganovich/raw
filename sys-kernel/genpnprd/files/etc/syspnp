@@ -943,12 +943,7 @@ syspnp(){
 	done
 	[[ ${cmd_passwd:-false} != false ]] && [[ -n /etc/passwd ]] &&
 		echo "$cmd_passwd" >/etc/passwd
-
-	onbatt=false
-	if (grep -sq 1 /sys/class/power_supply/*/present && grep -sq 0 /sys/class/power_supply/*/online && ! grep -sq 1 /sys/class/power_supply/*/online) || grep -sq "state:.*off-line" /proc/acpi/ac_adapter/*/state || grep -sq "AC Power.*: 0" /proc/pmu/info; then
-		onbatt=true
-	fi
-
+	/sbin/onbatt && onbatt=true || onbatt=false
 	good_msg "Searching pnp"
 	override_modprobe
 	[[ "${SHLOADED##* modprobe }" == "${SHLOADED}" ]] && mod(){ modprobe -q -a "${@}";}

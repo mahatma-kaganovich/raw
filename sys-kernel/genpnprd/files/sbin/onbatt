@@ -1,0 +1,14 @@
+#!/bin/sh
+
+# sometimes AC or Battery driver is broken. First be sure in Battery driver [health]
+ac=false
+for i in /sys/class/power_supply/*; do
+	[ -e "$i/online" ] && [ "$(cat "$i/online")" = 1 ] && ac=true
+	[ -e "$i/present" ] && [ "$(cat "$i/present")" = 1 -a "$(cat "$i/type")" = Battery -a "$(cat "$i/capacity")" != 0 ] || continue
+	case "$(cat "$i/status")" in
+	Discharging|Critical)exit 0;;
+	Unknown|Charging)exit 1;;
+	esac
+done
+$ac && exit 1
+grep -sq "state:.*off-line" /proc/acpi/ac_adapter/*/state || grep -sq "AC Power.*: 0" /proc/pmu/info
