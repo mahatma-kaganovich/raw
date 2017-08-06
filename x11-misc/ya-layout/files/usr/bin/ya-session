@@ -278,6 +278,7 @@ obconfig(){
 		-e 's:</keyboard>:<!-- ya.keybind -->\
 <keybind key="C-Escape"><action name="ShowMenu"><menu>client-list-combined-menu</menu></action></keybind>\
 <keybind key="Menu"><action name="ShowMenu"><menu>root-menu</menu></action></keybind>\
+<keybind key="XF86PowerOff"><action name="Execute"><prompt>Power off?</prompt><command>/sbin/poweroff</command></action></keybind>\
 '"$a"'<!-- /ya.keybind -->\n</keyboard>:' | \
 			fixml 'Bottom' '<dock>' '<position>' '[^<]*' | \
 			fixml 'root' '<context name="Icon">' '<mousebind button="Right" action="Press">' '<menu>' 'client' | \
