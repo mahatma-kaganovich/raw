@@ -4,6 +4,7 @@ KERNEL_CONFIG+=" -ISDN -DECNET -IPX -ATALK -WAN"
 	KERNEL_CONFIG+=" -NAMESPACES -CGROUPS"
 use fbcon || if use dri || use X; then
 	KERNEL_MODULES+=" -drivers/video +drivers/gpu"
+	use laptop || use soc && KERNEL_MODULES+=" +drivers/video/backlight"
 	KERNEL_CONFIG+=" +FB +FRAMEBUFFER_CONSOLE"
 else
 	KERNEL_CONFIG+=" -FB"
