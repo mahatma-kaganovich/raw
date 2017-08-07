@@ -381,16 +381,15 @@ kernel-2_src_compile() {
 		i=false
 		ext_firmware "$ROOT/lib" . "$BDIR/lib" && i=true
 		# else need repeat only if module with fw embeddeed by /etc/kernels/kernel.conf, don't care
+		cp .config .config.stage1
 		if use embed-hardware; then
 			einfo "Reconfiguring kernel with hardware detect"
-			cp .config .config.stage1
 			cfg_ "###detect: $(detects)"
-			cfg_ "###paranoid: $(paranoid_y)"
+			paranoid_y
 			_cmdline "`modprobe_opt ''`"
 			i=true
 		else
-			local x="$(paranoid_y)"
-			[ -n "$x" ] && i=true && cp .config .config.stage1 && cfg_ "###paranoid: $x"
+			paranoid_y && i=true
 		fi
 		if $i; then
 			use external-firmware && extra_firmware
@@ -1836,9 +1835,7 @@ _paranoid_y1(){
 	d=
 }
 
-paranoid_y(){
-use paranoid || return
-einfo "Searching unaliased hw modules, bounded by $SHARE/paranoid.m2y"
+_paranoid_y(){
 local x y i j l n1 i= n= a= d=
 modinfo $(find "${S}" -name "*.ko") >"$TMPDIR/modinfo.lst"
 rm "$TMPDIR/aliased.lst" "$TMPDIR/unaliased.lst" -f
@@ -1877,4 +1874,13 @@ while read i; do
 	grep -qFx "$n1" "$TMPDIR/aliased.lst" || echo "$n
 $n1"
 done <"$TMPDIR/unaliased.lst"|sort -u |modalias_reconf m2y 1
+}
+
+paranoid_y(){
+	use paranoid || return 1
+	einfo "Searching unaliased hw modules, bounded by $SHARE/paranoid.m2y"
+	local x="$(_paranoid_y)"
+	[ -z "$x" ] && return 1
+	cfg_ "###paranoid: $x"
+	return 0
 }
