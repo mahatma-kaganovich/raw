@@ -370,6 +370,7 @@ kernel-2_src_compile() {
 		mv "${WORKDIR}"/.config* "$S"
 	fi
 	for i in true false; do
+		use paranoid && kmake clean
 		if [[ -n "${KERNEL_MODULES_MAKEOPT}" ]]; then
 			einfo "Compiling kernel (bzImage)"
 			kmake bzImage
@@ -400,7 +401,6 @@ kernel-2_src_compile() {
 				cfg_ "###cleanup: ${KERNEL_CONFIG2} $(detects_cleanup $i)"
 				kconfig
 			fi
-			use paranoid && kmake clean
 		fi
 		rm "$TMPDIR/unmodule.tmp" -f
 		if use monolythe; then
@@ -414,8 +414,8 @@ kernel-2_src_compile() {
 			kmake oldconfig
 			i=true
 		fi
-		( [[ -n "$KERNEL_CLEANUP" ]] || use monolythe ) && use sources && kmake clean
 		$i || break
+		( [[ -n "$KERNEL_CLEANUP" ]] || use monolythe ) && use sources && kmake clean
 	done
 
 	KV="${KV0}"
