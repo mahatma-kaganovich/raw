@@ -385,20 +385,25 @@ kernel-2_src_compile() {
 			einfo "Reconfiguring kernel with hardware detect"
 			cp .config .config.stage1
 			cfg_ "###detect: $(detects)"
+			cfg_ "###paranoid: $(paranoid_y)"
 			_cmdline "`modprobe_opt ''`"
-			use external-firmware && extra_firmware
-			kconfig
-			i="${KERNEL_CLEANUP:-arch/$(arch) drivers/dma}"
-			einfo "Applying KERNEL_CLEANUP='$i'"
-			cfg_ "###cleanup: ${KERNEL_CONFIG2} $(detects_cleanup $i)"
 			i=true
 		else
 			local x="$(paranoid_y)"
-			[ -n "$x" ] && i=true && cfg_ "###paranoid: $x"
+			[ -n "$x" ] && i=true && cp .config .config.stage1 && cfg_ "###paranoid: $x"
 		fi
-		$i && use paranoid && kmake clean
+		if $i; then
+			use external-firmware && extra_firmware
+			kconfig
+			if use embed-hardware; then
+				i="${KERNEL_CLEANUP:-arch/$(arch) drivers/dma}"
+				einfo "Applying KERNEL_CLEANUP='$i'"
+				cfg_ "###cleanup: ${KERNEL_CONFIG2} $(detects_cleanup $i)"
+				use paranoid && kmake clean
+				kconfig
+			fi
+		fi
 		rm "$TMPDIR/unmodule.tmp" -f
-		$i && kconfig
 		if use monolythe; then
 			einfo "Reconfiguring kernel as 'monolythe'"
 			use !embed-hadrware && [[ -z "$KERNEL_CLEANUP" ]] && {
@@ -1663,7 +1668,6 @@ detects(){
 		# cpu flags
 		(cd "${TMPDIR}"/overlay-rd/etc/modflags && cat $(grep "${PNP_VENDOR}^flags" /proc/cpuinfo) $(cat /sys/bus/acpi/devices/*/path|sed -e 's:^\\::') </dev/null 2>/dev/null)
 	}|modalias_reconf m2y 1
-	paranoid_y
 	(cd "${TMPDIR}"/overlay-rd/etc/modflags && cat $(cat "${TMPDIR}/unmodule.m2y") </dev/null 2>/dev/null)|modalias_reconf m2y
 }
 
