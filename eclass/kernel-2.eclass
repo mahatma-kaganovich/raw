@@ -384,7 +384,8 @@ kernel-2_src_compile() {
 		cp .config .config.stage1
 		if use embed-hardware; then
 			einfo "Reconfiguring kernel with hardware detect"
-			cfg_ "###detect: $(detects)"
+			cfg_ "###detect: $(detects)
+"
 			paranoid_y
 			_cmdline "`modprobe_opt ''`"
 			i=true
@@ -1881,6 +1882,7 @@ paranoid_y(){
 	einfo "Searching unaliased hw modules, bounded by $SHARE/paranoid.m2y"
 	local x="$(_paranoid_y)"
 	[ -z "$x" ] && return 1
-	cfg_ "###paranoid: $x"
+	cfg_ "###paranoid: $x
+"
 	return 0
 }
