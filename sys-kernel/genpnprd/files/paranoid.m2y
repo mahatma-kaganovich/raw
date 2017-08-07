@@ -1,0 +1,16 @@
+#/
+/drivers/watchdog
+#/drivers/net
+#/drivers/input
+/drivers/regulator
+#/drivers/media
+/drivers/leds
+/drivers/power
+/drivers/extcon
+/drivers/mfd
+/drivers/gpio
+/drivers/rtc
+/drivers/lightnvm
+/drivers/platform
+/drivers/firmware
+/arch

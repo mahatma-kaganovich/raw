@@ -391,9 +391,13 @@ kernel-2_src_compile() {
 			i="${KERNEL_CLEANUP:-arch/$(arch) drivers/dma}"
 			einfo "Applying KERNEL_CLEANUP='$i'"
 			cfg_ "###cleanup: ${KERNEL_CONFIG2} $(detects_cleanup $i)"
-			use paranoid && kmake clean
 			i=true
+		else
+			local x="$(paranoid_y)"
+			[ -n "$x" ] && i=true && cfg_ "###paranoid: $x"
 		fi
+		$i && use paranoid && kmake clean
+		rm "$TMPDIR/unmodule.tmp" -f
 		$i && kconfig
 		if use monolythe; then
 			einfo "Reconfiguring kernel as 'monolythe'"
@@ -1410,6 +1414,7 @@ kernel-2_src_prepare(){
 	fi
 #	echo "CFLAGS_mdesc.o += -Wno-error=maybe-uninitialized" >>arch/sparc/kernel/Makefile
 	# pnp
+#	use paranoid && return
 	use pnp || return
 	einfo "Fixing modules hardware info exports (forced mode, waiting for bugs!)"
 	sh "${SHARE}/modulesfix" "${S}" f
@@ -1658,6 +1663,7 @@ detects(){
 		# cpu flags
 		(cd "${TMPDIR}"/overlay-rd/etc/modflags && cat $(grep "${PNP_VENDOR}^flags" /proc/cpuinfo) $(cat /sys/bus/acpi/devices/*/path|sed -e 's:^\\::') </dev/null 2>/dev/null)
 	}|modalias_reconf m2y 1
+	paranoid_y
 	(cd "${TMPDIR}"/overlay-rd/etc/modflags && cat $(cat "${TMPDIR}/unmodule.m2y") </dev/null 2>/dev/null)|modalias_reconf m2y
 }
 
@@ -1814,4 +1820,57 @@ slink /usr/$libdir lib 0755 0 0"
 	fi
 	initramfs $img $c
 	mv "$TMPDIR/modules.alias" "${mod}"
+}
+
+
+
+_paranoid_y1(){
+	[ -n "$a" ] && echo "$n$a$d" >>"$TMPDIR/aliased.lst" || echo "$i" >>"$TMPDIR/unaliased.lst"
+	i=
+	n=
+	a=
+	d=
+}
+
+paranoid_y(){
+use paranoid || return
+einfo "Searching unaliased hw modules, bounded by $SHARE/paranoid.m2y"
+local x y i j l n1 i= n= a= d=
+modinfo $(find "${S}" -name "*.ko") >"$TMPDIR/modinfo.lst"
+rm "$TMPDIR/aliased.lst" "$TMPDIR/unaliased.lst" -f
+while read x y; do
+	[ -n "$y" ] &&
+	case "$x" in
+	filename:)
+		_paranoid_y1
+		i="$y"
+		n=${i##*/}
+		n=${n%.ko}
+		n=${n//-/_}
+	;;
+	alias:)a+="
+$y";;
+	depends:)
+		y="${y//-/_}"
+		d+="
+${y//,/
+}"
+	;;
+	esac
+done <"$TMPDIR/modinfo.lst"
+_paranoid_y1
+l=`cat "$SHARE/paranoid.m2y"`
+[ -e "$TMPDIR/unmodule.tmp" ] || _unmodule .
+while read i; do
+	n=
+	for j in $l; do
+		[[ "$i" == "${S%/}$j"* ]] && n="$i" && break
+	done
+	[ -z "$n" ] && continue
+	n=${n##*/}
+	n=${n%.ko}
+	n1=${n//-/_}
+	grep -qFx "$n1" "$TMPDIR/aliased.lst" || echo "$n
+$n1"
+done <"$TMPDIR/unaliased.lst"|sort -u |modalias_reconf m2y 1
 }
