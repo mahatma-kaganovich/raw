@@ -396,9 +396,9 @@ kernel-2_src_compile() {
 			use external-firmware && extra_firmware
 			kconfig
 			if use embed-hardware; then
-				i="${KERNEL_CLEANUP:-arch/$(arch) drivers/dma}"
-				einfo "Applying KERNEL_CLEANUP='$i'"
-				cfg_ "###cleanup: ${KERNEL_CONFIG2} $(detects_cleanup $i)"
+				local c="${KERNEL_CLEANUP:-arch/$(arch) drivers/dma}"
+				einfo "Applying KERNEL_CLEANUP='$c'"
+				cfg_ "###cleanup: ${KERNEL_CONFIG2} $(detects_cleanup $c)"
 				kconfig
 			fi
 		fi
