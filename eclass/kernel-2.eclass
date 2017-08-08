@@ -363,6 +363,7 @@ kernel-2_src_compile() {
 		umake defconfig
 		cat {"${SHARE}",/etc/kernels}/config-uml >>.config
 		umake oldconfig
+		use paranoid
 		umake all
 		mv linux "umlinux-${REAL_KV}" || die "Build user-mode failed"
 		mv .config .config-um
@@ -1650,11 +1651,15 @@ extra_firmware(){
 	_append_firmware $b || [ -n "$a" ]
 }
 
+load_modinfo(){
+	[ -e "$TMPDIR/unmodule.tmp" ] || _unmodule .
+	[ -e "${WORKDIR}"/modules.alias.sh ] || perl "${SHARE}"/mod2sh.pl "${WORKDIR}" >&2 || die "Unable to run '${SHARE}/mod2sh.pl'"
+	. "${WORKDIR}"/modules.alias.sh
+}
+
 detects(){
 	local i a b c d
-	_unmodule .
-	perl "${SHARE}"/mod2sh.pl "${WORKDIR}" >&2 || die "Unable to run '${SHARE}/mod2sh.pl'"
-	. "${WORKDIR}"/modules.alias.sh
+	load_modinfo
 	sort -u "${WORKDIR}"/modules.pnp "${TMPDIR}"/overlay-rd/etc/modflags/* >>"${WORKDIR}"/modules.pnp_
 	sort -u "${WORKDIR}"/modules.pnp0 "${SHARE}"/etc/modflags/* >>"${WORKDIR}"/modules.pnp0_
 	{
@@ -1862,8 +1867,8 @@ ${y//,/
 	esac
 done <"$TMPDIR/modinfo.lst"
 _paranoid_y1
+load_modinfo
 l=`cat "$SHARE/paranoid.m2y"`
-[ -e "$TMPDIR/unmodule.tmp" ] || _unmodule .
 while read i; do
 	n=
 	for j in $l; do
