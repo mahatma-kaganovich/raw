@@ -403,7 +403,7 @@ kernel-2_src_compile() {
 				kconfig
 			fi
 		fi
-		rm "$TMPDIR/unmodule.tmp" -f
+		rm "$TMPDIR/unmodule.tmp" "${WORKDIR}"/modules.alias.sh -f
 		if use monolythe; then
 			einfo "Reconfiguring kernel as 'monolythe'"
 			use !embed-hadrware && [[ -z "$KERNEL_CLEANUP" ]] && {
