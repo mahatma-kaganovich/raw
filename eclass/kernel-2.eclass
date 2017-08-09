@@ -90,8 +90,9 @@ _CF1_(){
 	local i s='[ 	
 ]'
 	for i in "${@}"; do
-		CF="${CF//$s[+-]${i#[+-]}$s/ }"
-		CF="${CF//$s${i#[+-]}$s/ }"
+		i="${i#[+-]}"
+		CF="${CF//$s[+-]$i$s/ }"
+		CF="${CF//$s$i$s/ }"
 	done
 }
 
@@ -691,6 +692,7 @@ cfg_(){
 	KERNEL_CONFIG+=" $*"
 	[[ "$*" == '#'* ]] && KERNEL_CONFIG+="
 "
+	return 0
 }
 
 cfg_use(){
@@ -1225,7 +1227,8 @@ use acpi && use embed-hardware && acpi_detect
 use embed-hardware && [[ -n "$freq" ]] && CF1 -X86_POWERNOW_K8 -X86_ACPI_CPUFREQ $freq CPU_FREQ_GOV_${gov} CPU_FREQ_DEFAULT_GOV_${gov}
 CF1 -CPU_SUP_.+ "CPU_SUP_${V:-.+}"
 [ -n "$V" ] && {
-	CF1 -MICROCODE_AMD -MICROCODE_INTEL MICROCODE_$V
+	CF1 -MICROCODE_AMD -MICROCODE_INTEL
+	CF1 MICROCODE_$V
 	[ "$V" = INTEL ] || CF1 -X86_INTEL_PSTATE -IOSF_MBI '-X86_INTEL_(?:LPSS|MID|CE|QUARK)' -$knl -INTEL_TURBO_MAX_3
 	[ "$V" = AMD ] || CF1 -X86_AMD_PLATFORM_DEVICE -AMD_NUMA
 }
