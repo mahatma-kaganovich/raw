@@ -983,7 +983,7 @@ for i in $cpuinfo; do
 done
 export PNP_VENDOR="^vendor_id\|"
 export VIRT=0
-CF1 -SMP -X86{BIGSMP,GENERIC} X86_{X2APIC,UP_APIC,UP_IOAPIC} -SPARSE_IRQ -CPUSETS X86_INTEL_PSTATE INTEL_RAPL INTEL_TXT -$knl
+CF1 -SMP -X86{BIGSMP,GENERIC} X86_{X2APIC,UP_APIC,UP_IOAPIC} -SPARSE_IRQ -CPUSETS X86_INTEL_PSTATE INTEL_TXT -$knl
 CF1 SPARC_.+_CPUFREQ US3_MC
 use xen && CF1 -HIGHMEM64G -HIGHMEM4G NOHIGHMEM X86_PAE -X86_VSMP
 use smp && CF1 SMP X86_BIGSMP SCHED_{SMT,MC} SPARSE_IRQ CPUSETS NUMA
@@ -1107,11 +1107,10 @@ native|:native|native:native)
 		if [[ "$cpu_family" == 6 ]]; then
 			[[ "$model" -gt 25 ]] && CF1 INTEL_IDLE
 			# 42 or 45, but+
-			# turbo_max is for broadwell-x 79, but keep so
-			[[ "$model" -lt 42 ]] && CF1 -X86_INTEL_PSTATE -INTEL_RAPL -INTEL_TURBO_MAX_3
+			[[ "$model" -lt 42 ]] && CF1 -X86_INTEL_PSTATE
 			[[ "$model" -gt 87 ]] && CF $knl
 		else
-			CF1 -IOSF_MBI '-X86_INTEL_(?:LPSS|MID|CE|QUARK)' -INTEL_TURBO_MAX_3 -X86_INTEL_PSTATE -INTEL_RAPL
+			CF1 -IOSF_MBI '-X86_INTEL_(?:LPSS|MID|CE|QUARK)' -INTEL_TURBO_MAX_3
 		fi
 	;;
 	*AMD*)
@@ -1207,7 +1206,7 @@ pentium4|pentium4m|prescott|nocona)
 	esac
 	freq="X86_ACPI_CPUFREQ X86_P4_CLOCKMOD"
 ;;
-core2)CF1 MCORE2 $m64g;freq=X86_ACPI_CPUFREQ;;
+core2)CF1 MCORE2 $m64g X86_INTEL_PSTATE;freq=X86_ACPI_CPUFREQ;;
 atom|nehalem|westmere|sandybridge|ivybridge|haswell|broadwell|bonnell|silvermont)CF1 MCORE2 M${march^^} $m64g;freq=X86_ACPI_CPUFREQ;V=INTEL;;
 knl)CF1 MCORE2 $m64g $knl;V=INTEL;;
 k6-3)CF1 MK6 $m64g -SCHED_SMT;freq=X86_POWERNOW_K6;V=AMD;;
@@ -1227,7 +1226,7 @@ use embed-hardware && [[ -n "$freq" ]] && CF1 -X86_POWERNOW_K8 -X86_ACPI_CPUFREQ
 CF1 -CPU_SUP_.+ "CPU_SUP_${V:-.+}"
 [ -n "$V" ] && {
 	CF1 -MICROCODE_AMD -MICROCODE_INTEL MICROCODE_$V
-	[ "$V" = INTEL ] || CF1 -X86_INTEL_PSTATE -INTEL_RAPL -IOSF_MBI '-X86_INTEL_(?:LPSS|MID|CE|QUARK)' -$knl -INTEL_TURBO_MAX_3
+	[ "$V" = INTEL ] || CF1 -X86_INTEL_PSTATE -IOSF_MBI '-X86_INTEL_(?:LPSS|MID|CE|QUARK)' -$knl -INTEL_TURBO_MAX_3
 	[ "$V" = AMD ] || CF1 -X86_AMD_PLATFORM_DEVICE -AMD_NUMA
 }
 [ -z "$V" -o "$V" = AMD ] && ucode "amd-ucode/*.bin" AuthenticAMD
