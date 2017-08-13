@@ -13,7 +13,7 @@ ex(){
 
 cmd=
 for i in "${@}"; do
-	[[ "$i" == /newroot ]] && i=/
+	[ "$i" = "${i#/newroot}" ] || i="/${i#/newroot}"
 	cmd="$cmd $i"
 done
 mount -t proc proc /newroot/proc &&

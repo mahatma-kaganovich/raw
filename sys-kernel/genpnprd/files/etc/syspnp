@@ -1,5 +1,5 @@
 #!/bin/sh
-## pnp modules bootloader v0.18
+## pnp modules bootloader v0.19
 ## (c) Denis Kaganovich, under Anarchy license
 ## consume preprocessed /lib/modules/$KV/modules.alias
 
@@ -156,24 +156,62 @@ mnt_loop(){
 }
 
 root_fsck_rw(){
-	! [[ -w $NEW_ROOT ]] && {
-		/sbin/fsck -C0 -T -p $NEW_ROOT
-		case $? in
-		0|1)mount -o remount,rw $NEW_ROOT;;
-		2|3)sync;echo b >/proc/sysrq-trigger;;
-		esac
-	}
+	# -w not working here
+#	[[ -w "$1" ]] && return
+	(grep -q " $1 .* rw," /proc/mounts || ! grep -q " $1 .* ro," /proc/mounts) && return
+	echo "fsck+rw $1"
+	/sbin/fsck -C0 -T -p "$1"
+	case $? in
+	0|1)mount -o remount,rw "$1";;
+	2|3)sync;echo b >/proc/sysrq-trigger;;
+	esac
 }
 
 upcase(){
 	echo "$*"|tr a-z A-Z
 }
 
+# rootoverlay=/boot to overlay RW real_root
+zram_overlay(){
+	local dev="$1" ov=/overlay ov1="$NEW_ROOT/mnt/root-overlay"
+	[[ "$dev" == true ]] && dev=
+	[[ -z "$dev" ]] && dev=/dev/zram0
+	echo -ne '(overlay)'
+	mkdir $ov
+	case "$dev" in
+	/dev/zram*)
+		local d="${dev#/dev/}"
+		ln -s fsck /sbin/mkfs.ext4
+		echo "${2:-lz4hc}" >/sys/block/"$d"/comp_algorithm &&
+		echo "${3:-8g}" >/sys/block/"$d"/disksize &&
+		mkfs.ext4 -q -O sparse_super2 -O ^has_journal -O inline_data -O dir_index -O extent -E discard -E num_backup_sb=0 -I 256 "$dev" &&
+		mount -t ext4 -o noatime,discard "$dev" $ov || return 1
+	;;
+	*)
+		if [ -b "$dev" ] || ! [ -d "$NEW_ROOT/$dev" ]; then
+			mount -t auto -o noatime "$dev" $ov || return 1
+		else
+			mount --bind "$NEW_ROOT/$dev" $ov || return 1
+		fi
+	;;
+	esac
+	mkdir -p $ov/up $ov/low $ov/work
+	mount --move "$NEW_ROOT" $ov/low &&
+	mount -t overlay -o upperdir=$ov/up,lowerdir=$ov/low,workdir=$ov/work none $NEW_ROOT &&
+	mkdir -p "$ov1" &&
+	mount --move $ov "$ov1"
+}
+
 mod_unload(){
 	local h i="$NEW_ROOT/lib/modules/$KV" l="$NEW_ROOT/usr/src/linux-$KV" m="" x y yy r=$NEW_ROOT/mnt/ram
 	cd /
 	echo "$SAVE_HOTPLUG" >/proc/sys/kernel/hotplug
-	${cmd_fsck:-false} && root_fsck_rw
+	${cmd_fsck:-false} && if grep -q "^[^ ]* $NEW_ROOT squashfs" /proc/mounts; then
+		root_fsck_rw "$NEW_ROOT/boot"
+	else
+		root_fsck_rw "$NEW_ROOT"
+	fi
+	[[ "${cmd_rootoverlay:-false}" != false ]] && zram_overlay $(echo "$cmd_rootoverlay"|sed -e 's/:/ /g')
 	if grep -q "^[^ ]* $NEW_ROOT squashfs" /proc/mounts; then
 		echo -ne "(squashfs)"
 		mkdir -p /etc/mnt
