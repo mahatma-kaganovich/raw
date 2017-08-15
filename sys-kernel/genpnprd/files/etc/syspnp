@@ -378,9 +378,8 @@ link_dir(){
 }
 
 pnp_init(){
-	local l=/proc/cmdline
-	[ -e /cmdline ] && l="$l /cmdline"
-	eval "pnp_options $(cat $l)" # parsing
+	local l
+	eval "pnp_options $(cat /proc/cmdline) $(cat /cmdline 2>/dev/null)" # parsing
 	read SAVE_HOTPLUG </proc/sys/kernel/hotplug
 	for l in /*.loopfs; do
 	if [[ -f "$l" ]]; then
