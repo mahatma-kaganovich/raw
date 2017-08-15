@@ -194,7 +194,7 @@ ${_cmd_quiet:-true} || msg=echo
 
 cmdline(){
 [ $modprobe != /sbin/modprobe ] && mkdir -p options
-read cmdline </proc/cmdline
+[ -e /etc/cmdline ] && cmdline="$(cat /proc/cmdline /etc/cmdline)" || read cmdline </proc/cmdline
 cmd $cmdline
 #eval "cmd $cmdline"
 echo "$cmdline" >cmdline

@@ -464,7 +464,7 @@ done
 
 cmd(){
 	local x y
-	read x </proc/cmdline
+	[ -e /etc/cmdline ] && x="$(cat /proc/cmdline /etc/cmdline)" || read x </proc/cmdline
 	[[ -e $C/cmdline ]] && read y <$C/cmdline && [[ "$x" != "$y" ]] && rm "$C" -Rf
 	[[ -e $C/cmd ]] && . $C/cmd || {
 	mkdir -p $C # /etc/modules/ /etc/modprobe.d/
