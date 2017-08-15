@@ -379,7 +379,7 @@ link_dir(){
 
 pnp_init(){
 	local l=/proc/cmdline
-	[ -e /etc/cmdline ] && l="$l /etc/cmdline"
+	[ -e /cmdline ] && l="$l /cmdline"
 	eval "pnp_options $(cat $l)" # parsing
 	read SAVE_HOTPLUG </proc/sys/kernel/hotplug
 	for l in /*.loopfs; do
