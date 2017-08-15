@@ -156,8 +156,7 @@ criu)filterldflag;;
 ffmpeg|libav)_iuse abi_x86_32 && filterflag -fno-omit-frame-pointer;; # x86 mmx -Os
 faad2|openssl|patch)gccve 5. && filterflag -floop-nest-optimize;;
 geos|readahead-list|thin-provisioning-tools|libprojectm|gtkmathview|qtfm|qtgui|qtwebkit)gccve 6. && export CXXFLAGS="$CXXFLAGS -std=gnu++98";;
-#ruby)filterflag -funroll-loops -fweb;;
-ruby)filterflag -fweb;;
+ruby)filterflag -funroll-loops -fweb;;
 esac
 
 #[ "${CFLAGS//-flto}" != "$CFLAGS" ] &&
