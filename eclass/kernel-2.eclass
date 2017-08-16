@@ -691,6 +691,7 @@ cfg_(){
 	KERNEL_CONFIG+=" $*"
 	[[ "$*" == '#'* ]] && KERNEL_CONFIG+="
 "
+	true
 }
 
 cfg_use(){
