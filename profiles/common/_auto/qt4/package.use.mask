@@ -1,7 +1,6 @@
 app-crypt/pinentry -qt4 qt5
 app-misc/qlcplus -qt4 qt5
 app-office/lyx -qt4 qt5
-app-office/texmaker -qt4 qt5
 dev-games/openscenegraph -qt4 qt5
 dev-python/qscintilla-python -qt4 qt5
 kde-misc/kdiff3:4 -qt4 qt5
@@ -10,8 +9,6 @@ media-libs/opencv -qt4 qt5
 media-video/smplayer -qt4 qt5
 net-misc/dhcpcd-ui -qt4 gtk gtk3
 net-p2p/bitcoin-qt -qt4 qt5
-net-p2p/bitcoinxt-qt -qt4 qt5
-net-p2p/retroshare -qt4 qt5
 net-wireless/wpa_supplicant -qt4 qt5
 sci-electronics/pulseview -qt4 qt5
 sys-devel/qconf -qt4 qt5

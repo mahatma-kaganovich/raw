@@ -1,4 +1,5 @@
 app-editors/bluefish -gtk2
+app-emulation/fuse gtk -sdl
 media-plugins/audacious-plugins gtk3 -gtk -qt5
 media-sound/audacious gtk3 -gtk -qt5
 net-misc/dhcpcd-ui gtk3 -gtk

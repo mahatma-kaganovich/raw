@@ -1,6 +1,5 @@
 app-crypt/qca qt5 -qt4
 app-office/lyx qt5 -qt4
-app-office/texmaker qt5 -qt4
 dev-libs/libdbusmenu-qt qt5 -qt4
 dev-libs/qtkeychain qt5 -qt4
 dev-python/qscintilla-python qt5 -qt4
@@ -12,8 +11,6 @@ kde-misc/kdiff3:4 qt5 -qt4
 media-libs/liblastfm qt5 -qt4
 media-libs/libmygpo-qt qt5 -qt4
 media-libs/phonon qt5 -qt4
-media-libs/phonon-gstreamer qt5 -qt4
-media-libs/phonon-vlc qt5 -qt4
 media-libs/qt-gstreamer qt5 -qt4
 media-video/smplayer qt5 -qt4
 media-video/vlc qt5 -qt4

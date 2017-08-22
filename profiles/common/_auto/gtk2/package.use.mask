@@ -1,7 +1,11 @@
 app-editors/bluefish -gtk2 gtk3 # gucharmap
 app-editors/bluefish -gtk2 gtk3
+app-emulation/fuse -X gtk sdl # fbcon svga
 app-emulation/qemu -gtk2 -gtk
 app-emulation/vice -gtk sdl
+app-i18n/ibus -gtk2 -gtk
+app-i18n/ibus-m17n -gtk2 -gtk
+app-i18n/ibus-unikey -gtk2 -gtk
 media-libs/libmediaart:1.0 -gtk qt4 qt5
 media-libs/libmediaart:2.0 -gtk qt5
 media-plugins/audacious-plugins -gtk gtk3 qt5
@@ -11,6 +15,7 @@ net-misc/dhcpcd-ui -gtk gtk3 qt4
 net-misc/dhcpcd-ui -gtk gtk3
 net-misc/dhcpcd-ui -gtk -gtk gtk3
 x11-misc/spacefm -gtk2 gtk3
+x11-terms/mlterm -gtk2 -gtk
 app-misc/tracker -gstreamer ffmpeg
 dev-qt/qtmultimedia:5 -gstreamer010 gstreamer
 dev-qt/qtwebkit:5 -gstreamer010 gstreamer # multimedia

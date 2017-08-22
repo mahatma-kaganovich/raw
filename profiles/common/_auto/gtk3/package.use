@@ -1,4 +1,3 @@
-app-admin/kedpm -gtk
 app-admin/packagekit -gtk
 app-arch/gnome-autoar gtk
 app-cdr/dvdshrink -gtk
@@ -16,14 +15,14 @@ app-editors/emacs:25 gtk3
 app-editors/emacs-vcs:25 gtk3
 app-editors/emacs-vcs:26 gtk3
 app-editors/gvim -gtk
-app-editors/mp -gtk
-app-emulation/fuse -gtk
+app-emulation/fuse gtk
 app-emulation/qemu gtk
 app-emulation/virt-manager gtk
 app-emulation/winetricks gtk
 app-i18n/fcitx-configtool gtk3
-app-i18n/ibus gtk3
-app-i18n/ibus-m17n -gtk
+app-i18n/ibus gtk -gtk2
+app-i18n/ibus-m17n gtk
+app-i18n/ibus-unikey gtk -gtk2
 app-i18n/scim-anthy gtk3
 app-i18n/scim-bridge -gtk
 app-i18n/uim -gtk
@@ -34,6 +33,7 @@ app-misc/hachoir-metadata gtk
 app-misc/lirc gtk
 app-misc/razertool -gtk
 app-misc/tracker gtk
+app-misc/tracker -gtk
 app-misc/vifm -gtk
 app-mobilephone/sobexsrv -gtk
 app-office/libreoffice gtk3
@@ -46,7 +46,6 @@ dev-db/postgis -gtk
 dev-embedded/gpsim -gtk
 dev-games/openscenegraph -gtk
 dev-java/gnu-classpath -gtk
-dev-lang/falcon -gtk
 dev-lang/gnu-smalltalk -gtk
 dev-libs/gjs gtk
 dev-libs/libdbusmenu -gtk
@@ -68,6 +67,7 @@ dev-python/twisted-core -gtk
 dev-qt/qtgui:5 gtk
 dev-ruby/metasm:9999 -gtk
 dev-util/amtterm -gtk
+dev-util/amtterm gtk
 dev-util/perf -gtk
 dev-util/sysprof gtk
 dev-util/trace-cmd -gtk
@@ -175,6 +175,7 @@ net-misc/networkmanager-vpnc gtk
 net-misc/olsrd -gtk
 net-misc/pavuk -gtk
 net-misc/putty gtk
+net-misc/trackma gtk
 net-misc/unison -gtk
 net-misc/wicd gtk
 net-misc/youtube-viewer -gtk
@@ -197,6 +198,7 @@ sci-misc/oww -gtk
 sys-apps/lshw -gtk
 sys-apps/pcsc-tools -gtk
 sys-auth/polkit gtk
+sys-auth/polkit -gtk
 sys-block/fio -gtk
 sys-boot/plymouth gtk
 sys-cluster/ceph -gtk
@@ -229,10 +231,9 @@ x11-misc/xaos -gtk
 x11-misc/xdg-user-dirs gtk
 x11-misc/xlockmore -gtk
 x11-plugins/purple-plugin_pack -gtk
-x11-terms/mlterm -gtk
+x11-terms/mlterm gtk
 x11-themes/arc-theme gtk3 -gtk2
 x11-themes/nimbus -gtk
 x11-wm/afterstep -gtk
 x11-wm/compiz -gtk
 mail-client/thunderbird ffmpeg -gstreamer
-www-client/firefox ffmpeg -gstreamer

@@ -1,7 +1,7 @@
 app-crypt/pinentry -qt5 qt4
+app-i18n/ibus -kde -gtk
 app-misc/qlcplus -qt5 qt4
 app-office/lyx -qt5 qt4
-app-office/texmaker -qt5 qt4
 dev-games/openscenegraph -qt5 qt4
 dev-python/qscintilla-python -qt5 qt4
 games-emulation/ppsspp -qt5 sdl
@@ -13,8 +13,6 @@ media-plugins/audacious-plugins -qt5 gtk gtk3
 media-sound/audacious -qt5 gtk gtk3
 media-video/smplayer -qt5 qt4
 net-p2p/bitcoin-qt -qt5 qt4
-net-p2p/bitcoinxt-qt -qt5 qt4
-net-p2p/retroshare -qt5 qt4
 net-wireless/wpa_supplicant -qt5 qt4
 sci-electronics/pulseview -qt5 qt4
 sys-devel/qconf -qt5 qt4
