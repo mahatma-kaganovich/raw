@@ -1,1 +1,3 @@
-KERNEL_CONFIG+="-NO_HZ_FULL"
+# Clear Linux use "in production"
+# docs say about RT and HPC
+#KERNEL_CONFIG+="-NO_HZ_FULL"
