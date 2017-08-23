@@ -171,6 +171,11 @@ upcase(){
 	echo "$*"|tr a-z A-Z
 }
 
+part_(){
+	[[ -b "$1" ]] && echo "$*" && return
+	( blkid $1 || blkid -t "$1" ) | sed -e 's:^.* TYPE="swap".*$::g' -e 's/:.*$//g'
+}
+
 # rootoverlay=/boot to overlay RW real_root
 zram_overlay(){
 	local dev="$1" ov=/overlay ov1="$NEW_ROOT/mnt/root-overlay"
@@ -189,6 +194,14 @@ zram_overlay(){
 	;;
 	*)
 		if [ -b "$dev" ] || ! [ -d "$NEW_ROOT/$dev" ]; then
+			[ -b "$dev" ] || {
+				# rootoverlay=LABEL=...
+				rm /sbin/blkid -f
+				ln -s fsck /sbin/blkid
+				loadsh blkid
+				dev="$(part_ "$dev")"
+				dev="${dev%% *}"
+			}
 			mount -t auto -o noatime "$dev" $ov || return 1
 		else
 			mount --bind "$NEW_ROOT/$dev" $ov || return 1
@@ -506,11 +519,6 @@ detect_part(){
 #	[[ -e "/DETECT_ROOT/$cmd_real_init" ]] && DETECTED_ROOTS="$DETECTED_ROOTS $1"
 	umount /DETECT_ROOT >/dev/null 2>&1
 	rmdir /DETECT_ROOT
-}
-
-part_(){
-	[[ -b "$1" ]] && echo "$*" && return
-	( blkid $1 || blkid -t "$1" ) | sed -e 's:^.* TYPE="swap".*$::g' -e 's/:.*$//g'
 }
 
 detect_root(){
