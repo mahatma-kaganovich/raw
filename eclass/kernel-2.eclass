@@ -1083,7 +1083,7 @@ native|:native|native:native)
 	[[ "${fpu}" != yes ]] && CF1 MATH_EMULATION
 
 	use acpi && acpi_detect
-	[[ -n "${CF##* -NUMA *}" ]] && CF1 SPARSE_IRQ CPUSETS
+	[[ -n "${CF##* -NUMA *}" ]] && CF1 SPARSE_IRQ CPUSETS SLAB
 
 	case "${vendor_id}" in
 	*Intel*)
