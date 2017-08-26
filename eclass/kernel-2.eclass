@@ -1055,6 +1055,8 @@ native|:native|native:native)
 		hypervisor)
 			export VIRT=$[VIRT+1]
 			CF1 PARAVIRT{,_GUEST,_SPINLOCKS,_TIME_ACCOUNTING} XEN KVM_GUEST HYPERVISOR_GUEST '&.+_KVM'
+			# as seen on Clear Linux. IMHO for hw-core-agnostic case
+			use smp && CF1 SLAB
 			case "`lscpu|grep "^Hypervisor vendor:"`" in
 			*XEN)CF1 -KVM_GUEST -HYPERV -X86_EXTENDED_PLATFORM;;
 			?*)CF1 -XEN;; # my KVM = "Microsoft"
