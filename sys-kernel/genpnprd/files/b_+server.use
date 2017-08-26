@@ -8,7 +8,8 @@ NETFILTER_NETLINK_QUEUE_CT NETLINK_MMAP
 &IOSCHED_DEADLINE DEFAULT_(?:NOOP|CFQ)= DEFAULT_DEADLINE
 -OPTIMIZE_INLINING HUGETLBFS TRANSPARENT_HUGEPAGE =PCIEASPM_PERFORMANCE"
 
-# VM server: keep "cores" threads alive to force real cores distribution
-# equal to "nohz=off", but hardcode optimized
-[ "${VIRT:-0}" = 0 ] || KERNEL_CONFIG+=" -NO_HZ -NO_HZ_.+ HZ_PERIODIC"
+#[ "${VIRT:-0}" = 0 ] || KERNEL_CONFIG+=" -NO_HZ -NO_HZ_.+ HZ_PERIODIC"
+# ClearLinux behaviour. believe it perform better, even with NO_HZ_FULL overhead
+KERNEL_CONFIG+=" NO_HZ_FULL RCU_NOCB_CPU_ALL -TASKS_RCU"
+#KERNEL_CONFIG+=" NO_HZ_FULL_ALL"
 }
