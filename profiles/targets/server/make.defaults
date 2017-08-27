@@ -1,1 +1,1 @@
-USE="xattr rbd cephfs -tmem -cups -awt -X -xinerama -opengl -drm -gtk -gui -kernel-alsa -kernel-drm -hibernate -alsa -bluetooth -dri -joystick -pcmcia -v4l -wifi server minimal2 rt -introspection -vala milter vhosts broadway headless-awt dmarc spf headless"
+USE="xattr rbd cephfs -tmem -cups -awt -X -xinerama -opengl -drm -gtk -gui -kernel-alsa -kernel-drm -hibernate -alsa -bluetooth -dri -joystick -pcmcia -v4l -wifi server minimal2 rt2 -introspection -vala milter vhosts broadway headless-awt dmarc spf headless"

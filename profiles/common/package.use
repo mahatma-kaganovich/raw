@@ -82,3 +82,4 @@ x11-wm/xpra dec_av2
 dev-qt/qtwebchannel qml
 # openssl sometimes more hw accelerated
 net-wireless/wpa_supplicant -gnutls
+sys-kernel/gentoo-sources rt
