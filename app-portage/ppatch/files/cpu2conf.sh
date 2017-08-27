@@ -120,7 +120,9 @@ f3='-malign-data=cacheline -momit-leaf-frame-pointer -mtls-dialect=gnu2 -fsectio
 # gcc 4.9 - -fno-lifetime-dse, gcc 6.3 - -flifetime-dse=1 - around some of projects(?) - keep 6.3 only safe
 f5='-fvisibility-inlines-hidden -flifetime-dse=1'
 # gcc 6. oneshot clarification. must not affect legacy build
-f5+=' -fpermissive -fno-strict-aliasing -w'
+f5+=' -fpermissive -w'
+# try to remove. performance
+#f5+=' -fno-strict-aliasing'
 if i=`_smp processor 1 || _smp 'ncpus active' 0`; then
 	if [ "$i" = 1 ]; then
 		f1+=' -smp -numa'
