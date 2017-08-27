@@ -83,3 +83,4 @@ dev-qt/qtwebchannel qml
 # openssl sometimes more hw accelerated
 net-wireless/wpa_supplicant -gnutls
 sys-kernel/gentoo-sources rt
+=dev-qt/qtwebengine-5.7.1* -system-icu
