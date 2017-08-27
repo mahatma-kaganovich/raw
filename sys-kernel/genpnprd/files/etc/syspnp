@@ -415,10 +415,14 @@ pnp_init(){
 
 # postprocess embedded module params. load zswap modules, etc
 post_modparam(){
-	local i p v v0
+	local i p v v0 v1 n
 	for i in "$TMPDIR/modparam"/*.*; do
-		p="/sys/module/${i%%.*}/parameters/${i#*.}"
-		[ -e "$p" ] && read v <"$i" && read v0 <"$p" && [ "$v0" != "$v" ] && echo "$v" >"$p"
+		p="${i##*/}"
+		n="${p#*.}"
+		p="/sys/module/${p%%.*}/parameters/$n"
+		[ -e "$p" ] && read v <"$i" && v1="${v#$n=}" && [ "$v" != "$v1" ] && read v0 <"$p" &&
+			[ "$v0" != "$v1" -a "$v0:$v1" != Y:1 -a "$v0:$v1" != N:0 ] &&
+			echo "$v1" >"$p"
 	done
 }
 
