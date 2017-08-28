@@ -101,6 +101,24 @@ filter86_32(){
 	filterflag2 'CFLAGS_amd64 CFLAGS_x32' "${@}"
 }
 
+filter_cf(){
+	local i c="$1" v="$2" vv v1
+	[ -z "${!c}" ] && return
+	vv="${v}_${c}"
+	v1="${!vv}"
+	[ -z "$v1" ] && {
+		for i in ${!v}; do
+			echo 'int main(){}' |${!c} -x $3 - -pipe $i -o /dev/null 2>&1 >/dev/null && v1+=" $i" || echo "filtered $v ${!c} $i"
+		done
+		v1="${v1# }"
+		export ${vv}="$v1"
+	}
+	export ${v}="${!vv}"
+}
+
+filter_cf CC CFLAGS c
+filter_cf CXX CXXFLAGS c++
+
 case "$PN" in
 xemacs)_isflag -flto && {
 	ldf=' '
