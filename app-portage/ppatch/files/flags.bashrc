@@ -102,14 +102,15 @@ filter86_32(){
 }
 
 filter_cf(){
-	local i c="$1" v="$2" vv v1
+	local i c="$1" v="$2" vv v1 ff=
 	[ -z "${!c}" ] && return
 	vv="${v}_${c}"
 	v1="${!vv}"
 	[ -z "$v1" ] && {
 		for i in ${!v}; do
-			echo 'int main(){}' |${!c} -x $3 - -pipe $i -o /dev/null 2>&1 >/dev/null && v1+=" $i" || echo "filtered $v ${!c} $i"
+			echo 'int main(){}' |${!c} -x $3 - -pipe $i -o /dev/null >/dev/null 2>&1 && v1+=" $i" || ff+=" $i"
 		done
+		[ -n "$ff" ] && echo "filtered $v ${!c} $ff"
 		v1="${v1# }"
 		export ${vv}="$v1"
 	}
