@@ -110,7 +110,7 @@ filter_cf(){
 		for i in ${!v}; do
 			echo 'int main(){}' |${!c} -x $3 - -pipe $i -o /dev/null >/dev/null 2>&1 && v1+=" $i" || ff+=" $i"
 		done
-		[ -n "$ff" ] && echo "filtered $v ${!c} $ff"
+		[ -n "$ff" ] && echo "filtered $v ${!c}$ff"
 		v1="${v1# }"
 		export ${vv}="$v1"
 	}
