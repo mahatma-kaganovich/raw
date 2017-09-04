@@ -91,6 +91,7 @@ src_install(){
 	ewarn "Edit /etc/conf.d/autofs: MASTER_MAP_NAME=\"/usr/share/${PN}/auto.master\"
 Then do: \"ya-session --layout [user]\" - to copy minimal Desktop/*
 and, possible, restart [udev]"
+	ewarn "remove XTerm.*background & XTerm.*foreground from .Xresources and use XTerm.*.reverseVideo instead"
 	dodir /var/lib/ya
 	touch "$D"/var/lib/ya/menu.xml
 	for i in "${D}"/etc/xdg/ya/*.patch; do

@@ -1025,6 +1025,7 @@ $fontn=$font;
 $fontb=($fontn=~s/ bold / /);
 $fonti=($fontn=~s/ italic / /);
 ($fontn,$fontsz)=$fontn=~/^(.*?)\s+(\d+)$/;
+my $fclist=['','*',split(/\n/,`$bin/fc-list :scalable=true:spacing=mono: family`)];
 my %xrparam=(
 'Xft.antialias'=>$b,
 'Xft.autohint'=>$b,
@@ -1067,10 +1068,13 @@ my %xrparam=(
 'xscreensaver.procInterrupts'=>$bb,
 #'XTerm.*.faceName'=>'*',
 #'XTerm.*.faceSize'=>$fontsz,
-'XTerm.*.faceName'=>['','*',split(/\n/,`$bin/fc-list :scalable=true:spacing=mono: family`)],
+'XTerm.*.faceName'=>$fclist,
+'XTerm.*.faceNameDoublesize'=>$fclist,
 'XTerm.*.faceSize'=>['',5..32],
-'XTerm.*.background'=>'black',
-'XTerm.*.foreground'=>'white',
+'XTerm.*.reverseVideo'=>$bb,
+'XTerm.*.scrollBar'=>$bb,
+'XTerm.*.selectToClipboard'=>$bb,
+'XTerm.scaleHeight'=>[0.9,1.0,1.1,1.2,1.3,1.4,1.5],
 "$xrfont (=$allfont)"=>$font,
 'Font_ (non-Xft)'=>['','auto','[xfontsel]'],
 #'Xft.dpi'=>
