@@ -996,7 +996,7 @@ mntnewroot(){
 }
 
 syspnp(){
-	[[ -e "/lib/modules/${KV}/modules.alias.sh" ]] || return
+	[ -e "/lib/modules/$KV/kernel" -a ! -e "/lib/modules/$KV/modules.alias.sh" ] && return
 	$cmd_nopnp && return
 	early_huge
 	# +some compats
@@ -1019,6 +1019,7 @@ syspnp(){
 	empty_hwopts firewire net pata pcmcia sata scsi usb   ataraid dmraid evms lvm mdadm fs
 	[[ -z "$ISCSI_INITIATORNAME$ISCSI_TARGET$ISCSI_ADDRESS" ]] && empty_hwopts iscsi
 	post_modparam
+    $cmd_fast && [ ! -e "/lib/modules/$KV/modules.alias.sh" ] ||
     for pnpass in 0 0; do
 	for i in 0 1 2 3 4 5; do
 		echo -ne "" >"${PNP_TMP}.$i"
@@ -1103,7 +1104,7 @@ syspnp(){
 		# try again
 		MDOLIST="$NOTLOADED"
 	fi
-	rm "${PNP_TMP}".?
+	rm "${PNP_TMP}".? -f
 #	cd /
 }
 
