@@ -26,3 +26,5 @@ media-libs/opencv gtk
 net-wireless/wpa_supplicant dbus
 # just want full & smooth visuals
 media-fonts/infinality-ultimate-meta ms
+# airplay
+net-dns/avahi mdnsresponder-compat dbus

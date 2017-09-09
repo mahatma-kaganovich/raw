@@ -19,7 +19,7 @@ net-libs/libssh server
 media-gfx/imagemagick corefonts lzma xml
 sys-boot/syslinux -custom-cflags
 sys-devel/llvm clang gold
-sys-apps/util-linux tty-helpers
+sys-apps/util-linux tty-helpers static-libs
 sys-fs/ntfs3g -external-fuse
 x11-libs/libdrm libkms
 media-libs/mesa xa r600-llvm-compiler

@@ -178,7 +178,8 @@ part_(){
 
 # rootoverlay=/boot to overlay RW real_root
 zram_overlay(){
-	local dev="$1" ov=/overlay ov1="$NEW_ROOT/mnt/root-overlay"
+    local dev ov=/overlay ov1="$NEW_ROOT/mnt/root-overlay" i
+    for dev in "${@}"; do
 	[[ "$dev" == true ]] && dev=
 	[[ -z "$dev" ]] && dev=/dev/zram0
 	echo -ne '(overlay)'
@@ -190,7 +191,8 @@ zram_overlay(){
 		echo "${2:-lz4hc}" >/sys/block/"$d"/comp_algorithm &&
 		echo "${3:-8g}" >/sys/block/"$d"/disksize &&
 		mkfs.ext4 -q -O sparse_super2 -O ^has_journal -O inline_data -O dir_index -O extent -E discard -E num_backup_sb=0 -I 256 "$dev" &&
-		mount -t ext4 -o noatime,discard "$dev" $ov || return 1
+		mount -t ext4 -o noatime,discard,lazytime "$dev" $ov || return 1
+		# olways last choise
 	;;
 	*)
 		if [ -b "$dev" ] || ! [ -d "$NEW_ROOT/$dev" ]; then
@@ -202,9 +204,10 @@ zram_overlay(){
 				dev="$(part_ "$dev")"
 				dev="${dev%% *}"
 			}
-			mount -t auto -o noatime "$dev" $ov || return 1
+			mount -t auto -o noatime,lazytime "$dev" $ov ||
+			mount -t auto -o noatime "$dev" $ov || continue
 		else
-			mount --bind "$NEW_ROOT/$dev" $ov || return 1
+			mount --bind "$NEW_ROOT/$dev" $ov || continue
 		fi
 	;;
 	esac
@@ -213,6 +216,9 @@ zram_overlay(){
 	mount -t overlay -o upperdir=$ov/up,lowerdir=$ov/low,workdir=$ov/work none $NEW_ROOT &&
 	mkdir -p "$ov1" &&
 	mount --move $ov "$ov1"
+	return $?
+    done
+    return 1
 }
 
 mod_unload(){
