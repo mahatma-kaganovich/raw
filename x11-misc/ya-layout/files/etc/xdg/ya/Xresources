@@ -6,3 +6,13 @@ Xft.hinting: true
 Xft.lcdfilter: lcddefault
 Xft.rgba: rgb
 Xft.antialias: true
+XTerm.*.faceName: Monospace
+XTerm.*.faceName: Monospace:Bold
+XTerm.*.reverseVideo: true
+XTerm.*.selectToClipboard: true
+XTerm.*.jumpScroll: true
+XTerm.*.fastScroll: true
+XTerm.*.multiScroll: true
+XTerm.*.saveLines: 1000
+XTerm.*.autoWrap: true
+*font: -misc-fixed-medium-r-normal-*-10-*-*-*-*-*-*-*

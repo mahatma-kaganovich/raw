@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # (c) Denis Kaganovich, Anarchy or GPLv2
-# openbox config pipe menu v0.10
+# openbox config pipe menu v0.11
 # using /usr/share/openbox*/rc.xsd
 
 %xml_=('<'=>'lt','>'=>'gt',"'"=>'apos','"'=>'quot','&'=>'amp');
@@ -10,6 +10,12 @@ $bin='/usr/bin/';
 
 $allfont='MenuItem';
 $xrfont='!Font';
+
+for('LANG','LC_ALL'){
+	($lang)=$ENV{$_}=~/^([a-z][a-z_]+)/i or next;
+	$lang=~s/_/-/g;
+	$lang=":lang=$lang";
+}
 
 my %config=(
 'config_mode'=>{
@@ -530,7 +536,7 @@ exit;
 }
 
 sub fonts{
-~s/^(?:.*:\s)?(.+):.*$/$fonts{quotemeta($1)}=[$1,$1]/e for(split(/\n/,`${bin}fc-list`));
+~s/^(?:.*:\s)?(.+):.*$/$fonts{quotemeta($1)}=[$1,$1]/e for(split(/\n/,`${bin}fc-list $lang`));
 if(!$?){
 	fontconfig('/etc/fonts/fonts.conf');
 	for(my ($n,$n1)=(1); $n ne $n1; ($n,$n1)=(scalar(%fonts),$n)){
@@ -910,12 +916,20 @@ sub setxkbmap{
 
 sub simple_menu{
 	$s='[ 	]*';
+	my $lv;
 	for(sort keys %{$_[0]}){
 		my $m=$_;
 		$m=~s/ .*//g;
 		my $d=$_[1]->{$m};
 		my $i=$_;
 		~s/([$xml_])/\&$xml_{$1};/g for($i,$d,$m);
+		my ($lv1,$i1);
+		$i=$i1 if(($lv1,$i1)=$i=~/^([^\.\*]+[\.\*])(.*)$/);
+		if($lv1 ne $lv){
+			print '</menu>' if($lv ne '');
+			print "<menu id='$MENU:$lv1' label='$lv1'>" if($lv1 ne '');
+			$lv=$lv1;
+		}
 		$conf++;
 		print "<menu id='$MENU:$conf' label='$i'>";
 		my $def;
@@ -932,6 +946,7 @@ sub simple_menu{
 		}
 		print $def,'</menu>';
 	}
+	print '</menu>' if($lv ne '');
 }
 
 sub _conffile{
@@ -1025,7 +1040,7 @@ $fontn=$font;
 $fontb=($fontn=~s/ bold / /);
 $fonti=($fontn=~s/ italic / /);
 ($fontn,$fontsz)=$fontn=~/^(.*?)\s+(\d+)$/;
-my $fclist=['','*',split(/\n/,`$bin/fc-list :scalable=true:spacing=mono: family`)];
+my $fclist=['','*','Monospace','Monospace:bold','Monospace:antialias=false','Monospace:antialias=false:bold',split(/\n/,`$bin/fc-list :scalable=true:spacing=mono$lang family`)];
 my %xrparam=(
 'Xft.antialias'=>$b,
 'Xft.autohint'=>$b,
@@ -1074,9 +1089,15 @@ my %xrparam=(
 'XTerm.*.reverseVideo'=>$bb,
 'XTerm.*.scrollBar'=>$bb,
 'XTerm.*.selectToClipboard'=>$bb,
+'XTerm.*.jumpScroll'=>$bb,
+'XTerm.*.fastScroll'=>$bb,
+'XTerm.*.multiScroll'=>$bb,
+'XTerm.*.saveLines'=>[100,500,1000,5000],
+'XTerm.*.autoWrap'=>$bb,
+
 'XTerm.scaleHeight'=>[0.9,1.0,1.1,1.2,1.3,1.4,1.5],
 "$xrfont (=$allfont)"=>$font,
-'Font_ (non-Xft)'=>['','auto','[xfontsel]'],
+'*font'=>['','auto','[xfontsel]'],
 #'Xft.dpi'=>
 #'Xft.scale'=>
 #'Xft.maxglyphmemory'=>
@@ -1085,13 +1106,13 @@ my %exec=(
 '[xfontsel]'=>sub{`$bin/xfontsel -print -fn ''`},
 );
 my %cname=(
-'Font_'=>['XTerm.*.font','*font'],
+#'*font'=>['XTerm.*.font'],
 );
 my %def=(
-'Font_'=>'auto',
+'*font'=>'auto',
 );
 my %auto=(
-'Font_: auto'=>sub{"-*-*-medium-r-normal-*-$fontsz-*-*-*-*-*-*-*"},
+'*font: auto'=>sub{"-misc-fixed-medium-r-normal-*-$fontsz-*-*-*-*-*-*-*"},
 );
 #my $s=`${bin}xrdb -query`;
 #$? && return;
@@ -1101,8 +1122,9 @@ $s=~s/\"$//s;
 $s.="\n";
 my $ss='[ 	]*';
 my %x;
-while(my ($x,$y)=each %xrparam){
-	my $m=$x;
+for(keys %xrparam){
+	my $y=$xrparam{$_};
+	my $m=$_;
 	$m=~s/ .*//g;
 	if(ref($y)){
 		my $x=quotemeta($m);
@@ -1128,7 +1150,8 @@ for(@xfiles){
 	}else{
 		next;
 	}
-	while(my ($x,$y)=each %xrparam){
+	for my $x (keys %xrparam){
+		my $y=$xrparam{$x};
 		my $m=$x;
 		$m=~s/ .*//g;
 		my $i=$m;
