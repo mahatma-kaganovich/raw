@@ -11,12 +11,6 @@ $bin='/usr/bin/';
 $allfont='MenuItem';
 $xrfont='!Font';
 
-for('LANG','LC_ALL'){
-	($lang)=$ENV{$_}=~/^([a-z][a-z_]+)/i or next;
-	$lang=~s/_/-/g;
-	$lang=":lang=$lang";
-}
-
 my %config=(
 'config_mode'=>{
 	($config_mode='TREE/xml')=>sub{($sel1,$sel2,$xml_mode)=('*')},
@@ -386,6 +380,40 @@ sub sort_tags{
 	}
 }
 
+sub fc_list{
+	my %r;
+	if(!defined($fcl)){
+		my $lang=':';
+		for('LANG','LC_ALL'){
+			($lang)=$ENV{$_}=~/^([a-z][a-z_]+)/i or next;
+			$lang=~s/_/-/g;
+			$lang=":lang=$lang";
+			last;
+		}
+		for(split(/\n/,`$bin/fc-list $lang --format '%{family[0]}:%{style}:%{scalable}:%{spacing}\n'`)){
+			my @f=split(/:/,$_);
+			for my $st (split(/,/,$f[1])){
+				$fcl{($f{3} eq '')+0}->{$f[2]}->{$st}->{$f[0]}=undef;;
+			}
+		}
+	}
+	for my $sp (@{$_[0]}?(@{$_[0]}):(keys %fcl)){
+		exists($fcl{$sp}) || next;
+		for my $sc (@{$_[1]}?@{$_[1]}:(keys %{$fcl{$sp}})){
+			exists($fcl{$sp}->{$sc}) || next;
+			for my $st (@{$_[2]}?@{$_[2]}:(keys %{$fcl{$sp}->{$sc}})){
+				exists($fcl{$sp}->{$sc}->{$st}) || next;
+				if(defined($_[2])){
+					$r{"$_:style=$st"}=undef for(keys %{$fcl{$sp}->{$sc}->{$st}});
+				}else{
+					%r=(%r,%{$fcl{$sp}->{$sc}->{$st}});
+				}
+			}
+		}
+	}
+	\%r;
+}
+
 sub fontconfig{
 	for(@_){
 		next if(defined($fontcfg{$_}));
@@ -536,7 +564,7 @@ exit;
 }
 
 sub fonts{
-~s/^(?:.*:\s)?(.+):.*$/$fonts{quotemeta($1)}=[$1,$1]/e for(split(/\n/,`${bin}fc-list $lang`));
+$fonts{quotemeta($_)}=[$_,$_] for(keys %{fc_list()});
 if(!$?){
 	fontconfig('/etc/fonts/fonts.conf');
 	for(my ($n,$n1)=(1); $n ne $n1; ($n,$n1)=(scalar(%fonts),$n)){
@@ -916,27 +944,35 @@ sub setxkbmap{
 
 sub simple_menu{
 	$s='[ 	]*';
-	my $lv;
+	my $lx;
 	for(sort keys %{$_[0]}){
 		my $m=$_;
 		$m=~s/ .*//g;
 		my $d=$_[1]->{$m};
 		my $i=$_;
 		~s/([$xml_])/\&$xml_{$1};/g for($i,$d,$m);
-		my ($lv1,$i1);
-		$i=$i1 if(($lv1,$i1)=$i=~/^([^\.\*]+[\.\*])(.*)$/);
-		if($lv1 ne $lv){
-			print '</menu>' if($lv ne '');
-			print "<menu id='$MENU:$lv1' label='$lv1'>" if($lv1 ne '');
-			$lv=$lv1;
+		my ($lx1,$i1);
+		$i=$i1 if(($lx1,$i1)=$i=~/^([^\.\*]+[\.\*])(.*)$/);
+		if($lx1 ne $lx){
+			print '</menu>' if($lx ne '');
+			print "<menu id='$MENU:$lx1' label='$lx1'>" if($lx1 ne '');
+			$lx=$lx1;
 		}
 		$conf++;
 		print "<menu id='$MENU:$conf' label='$i'>";
 		my $def;
 		$def="<separator label='*$d'/>" if($d ne '');
+		my $ly;
 		for(@{$_[0]->{$_}}){
 			my $i=$_;
 			$i=~s/([$xml_])/\&$xml_{$1};/g;
+			my ($ly1,$i1);
+			$i=$i1 if(($ly1,$i1)=$i=~/^([^:]+)([:].*)$/);
+			if($ly1 ne $ly){
+				print '</menu>' if($ly ne '');
+				print "<menu id='$MENU:$conf:$ly1' label='$ly1'>" if($ly1 ne '');
+				$ly=$ly1;
+			}
 			if($i eq $d && defined($def)){
 				print $def;
 				$def=undef;
@@ -944,9 +980,10 @@ sub simple_menu{
 				print "<item label='$i'><action name='execute'><execute>$0 --@ARGV &quot;$m&quot; &quot;$i&quot;</execute></action></item>";
 			}
 		}
+		print '</menu>' if($ly ne '');
 		print $def,'</menu>';
 	}
-	print '</menu>' if($lv ne '');
+	print '</menu>' if($lx ne '');
 }
 
 sub _conffile{
@@ -1040,7 +1077,6 @@ $fontn=$font;
 $fontb=($fontn=~s/ bold / /);
 $fonti=($fontn=~s/ italic / /);
 ($fontn,$fontsz)=$fontn=~/^(.*?)\s+(\d+)$/;
-my $fclist=['','*','Monospace','Monospace:bold','Monospace:antialias=false','Monospace:antialias=false:bold',split(/\n/,`$bin/fc-list :scalable=true:spacing=mono$lang family`)];
 my %xrparam=(
 'Xft.antialias'=>$b,
 'Xft.autohint'=>$b,
@@ -1083,8 +1119,8 @@ my %xrparam=(
 'xscreensaver.procInterrupts'=>$bb,
 #'XTerm.*.faceName'=>'*',
 #'XTerm.*.faceSize'=>$fontsz,
-'XTerm.*.faceName'=>$fclist,
-'XTerm.*.faceNameDoublesize'=>$fclist,
+'XTerm.*.faceName'=>['','*','Monospace','Monospace:style=bold','Monospace:antialias=false','Monospace:antialias=false:style=bold',sort keys %{fc_list([1],['True'],[])}],
+'XTerm.*.faceNameDoublesize'=>['','*','Monospace:style=Italic','Monospace:style=bold',sort keys %{fc_list([1],['True'],[])}],
 'XTerm.*.faceSize'=>['',5..32],
 'XTerm.*.reverseVideo'=>$bb,
 'XTerm.*.scrollBar'=>$bb,

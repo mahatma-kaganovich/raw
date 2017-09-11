@@ -7,7 +7,7 @@ Xft.lcdfilter: lcddefault
 Xft.rgba: rgb
 Xft.antialias: true
 XTerm.*.faceName: Monospace
-XTerm.*.faceName: Monospace:Bold
+XTerm.*.faceNameDoublesize: Monospace:style=Bold
 XTerm.*.reverseVideo: true
 XTerm.*.selectToClipboard: true
 XTerm.*.jumpScroll: true
