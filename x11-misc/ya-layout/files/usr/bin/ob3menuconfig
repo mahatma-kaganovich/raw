@@ -1097,7 +1097,7 @@ my %xrparam=(
 
 'XTerm.scaleHeight'=>[0.9,1.0,1.1,1.2,1.3,1.4,1.5],
 "$xrfont (=$allfont)"=>$font,
-'*font'=>['','auto','[xfontsel]'],
+'font'=>['','auto','[xfontsel]'],
 #'Xft.dpi'=>
 #'Xft.scale'=>
 #'Xft.maxglyphmemory'=>
@@ -1106,13 +1106,13 @@ my %exec=(
 '[xfontsel]'=>sub{`$bin/xfontsel -print -fn ''`},
 );
 my %cname=(
-#'*font'=>['XTerm.*.font'],
+'font'=>['*font'],
 );
 my %def=(
-'*font'=>'auto',
+'font'=>'auto',
 );
 my %auto=(
-'*font: auto'=>sub{"-misc-fixed-medium-r-normal-*-$fontsz-*-*-*-*-*-*-*"},
+'font: auto'=>sub{"-misc-fixed-medium-r-normal-*-$fontsz-*-*-*-*-*-*-*"},
 );
 #my $s=`${bin}xrdb -query`;
 #$? && return;
