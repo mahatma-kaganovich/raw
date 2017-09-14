@@ -179,7 +179,8 @@ part_(){
 # rootoverlay=/boot to overlay RW real_root
 zram_overlay(){
     local dev ov=/overlay ov1="$NEW_ROOT/mnt/root-overlay" x1 x2 x3
-    for dev in "${@}"; do
+    while [ "$#" -gt 0 ]; do
+	dev="$1"
 	[[ "$dev" == true ]] && dev=
 	[[ -z "$dev" ]] && dev=/dev/zram0
 	echo -ne '(overlay)'
@@ -193,13 +194,17 @@ zram_overlay(){
 		mkfs.ext4 -q -O sparse_super2 -O ^has_journal -O inline_data -O dir_index -O extent -E discard -E num_backup_sb=0 -I 256 "$dev" &&
 		mount -t ext4 -o noatime,discard,lazytime "$dev" $ov || return 1
 		# always last choise
+		shift
+		shift
+		shift
 	;;
 	*)
+		shift
 		while read x1 x2 x3; do
 			[ "$x1" = "$dev" -a -z "${x2##$NEW_ROOT/*}" ] && dev="${x2#$NEW_ROOT}" && break
 		done </proc/mounts
 		if [ -b "$dev" ] || ! [ -d "$NEW_ROOT/$dev" ]; then
-			[ -b "$dev" ] || {
+			[ -z "${dev##*=*}" ] && {
 				# rootoverlay=LABEL=...
 				rm /sbin/blkid -f
 				ln -s fsck /sbin/blkid
@@ -207,6 +212,7 @@ zram_overlay(){
 				dev="$(part_ "$dev")"
 				dev="${dev%% *}"
 			}
+			[ -z "$dev" ] && continue
 			mount -t auto -o noatime,lazytime "$dev" $ov ||
 			mount -t auto -o noatime "$dev" $ov || continue
 		else
