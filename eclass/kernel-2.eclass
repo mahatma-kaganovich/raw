@@ -28,7 +28,7 @@ IUSE="${IUSE} +build-kernel custom-cflags +pnp +compressed integrated
 	netboot custom-arch embed-hardware
 	kernel-firmware +sources pnponly lzma xz lzo lz4
 	external-firmware xen +smp kernel-tools +multitarget 64-bit-bfd thin
-	lvm evms device-mapper unionfs luks gpg iscsi e2fsprogs mdadm btrfs
+	lvm evms device-mapper unionfs luks gpg iscsi e2fsprogs mdadm btrfs nfs
 	lguest acpi klibc +genkernel monolythe update-boot uml paranoid"
 DEPEND="${DEPEND}
 	!<app-portage/ppatch-0.08-r16
@@ -486,6 +486,7 @@ kernel-2_src_compile() {
 
 	einfo "Generating initrd image"
 	local p="$(use__ lvm lvm2) $(use__ evms) $(use__ luks) $(use__ gpg) $(use__ iscsi) $(use__ device-mapper dmraid) $(use__ unionfs) $(use__ e2fsprogs disklabel) $(use__ mdadm) $(use__ btrfs)"
+	use nfs && p+' --nfs' || p+' --no-nfs'
 	use netboot && p+=" --netboot"
 	use monolythe && p+=" --static"
 	if use pnp || use compressed; then
