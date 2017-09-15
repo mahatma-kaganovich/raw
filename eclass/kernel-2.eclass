@@ -1276,7 +1276,11 @@ kconfig(){
 		$ok && break
 		done
 		$ok || die "Kconfig.pl failed"
-		kmake oldconfig
+		if use paranoid; then
+			kmake oldconfig
+		else
+			kmake oldconfig >/dev/null 2>&1
+		fi
 	done
 }
 
