@@ -28,7 +28,7 @@ IUSE="${IUSE} +build-kernel custom-cflags +pnp +compressed integrated
 	netboot custom-arch embed-hardware
 	kernel-firmware +sources pnponly lzma xz lzo lz4
 	external-firmware xen +smp kernel-tools +multitarget 64-bit-bfd thin
-	lvm evms device-mapper unionfs luks gpg iscsi e2fsprogs mdadm btrfs nfs
+	lvm evms device-mapper unionfs luks gpg iscsi e2fsprogs mdadm btrfs nfs +keymap
 	lguest acpi klibc +genkernel monolythe update-boot uml paranoid"
 DEPEND="${DEPEND}
 	!<app-portage/ppatch-0.08-r16
@@ -482,8 +482,8 @@ kernel-2_src_compile() {
 
 	einfo "Generating initrd image"
 	local p=
-	for i in 'lvm lvm2' evms luks gpg iscsi 'device-mapper dmraid' unionfs 'e2fsprogs disklabel' mdadm btrfs nfs netboot 'monolythe static'; do
-		use "${i%% *}" && p+=" --${i##* }" # || p+=" --no-${i##* }"
+	for i in 'lvm lvm2' evms luks gpg iscsi 'device-mapper dmraid' unionfs 'e2fsprogs disklabel' mdadm btrfs nfs keymap netboot 'monolythe static'; do
+		use "${i% *}" && p+=" --${i##* }" # || p+=" --no-${i##* }"
 	done
 	if use pnp || use compressed; then
 		use monolythe || p+=" --all-ramdisk-modules"
