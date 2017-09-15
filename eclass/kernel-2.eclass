@@ -263,10 +263,6 @@ kernel-2_src_configure() {
 	export comp
 }
 
-use__(){
-	use $1 && echo "--${2:-$1}"
-}
-
 _ext_firmware1(){
 	local d
 	for d in "${@}"; do
@@ -485,10 +481,10 @@ kernel-2_src_compile() {
 	use klibc && mv initrd-${REAL_KV}.img initrd-${REAL_KV}.klibc.img
 
 	einfo "Generating initrd image"
-	local p="$(use__ lvm lvm2) $(use__ evms) $(use__ luks) $(use__ gpg) $(use__ iscsi) $(use__ device-mapper dmraid) $(use__ unionfs) $(use__ e2fsprogs disklabel) $(use__ mdadm) $(use__ btrfs)"
-	use nfs && p+=' --nfs' || p+=' --no-nfs'
-	use netboot && p+=" --netboot"
-	use monolythe && p+=" --static"
+	local p=
+	for i in 'lvm lvm2' evms luks gpg iscsi 'device-mapper dmraid' unionfs 'e2fsprogs disklabel' mdadm btrfs nfs netboot 'monolythe static'; do
+		use "${i%% *}" && p+=" --${i##* }" # || p+=" --no-${i##* }"
+	done
 	if use pnp || use compressed; then
 		use monolythe || p+=" --all-ramdisk-modules"
 		[[ -e "${BDIR}/lib/firmware" ]] && p="${p} --firmware --firmware-dir=\"${BDIR}/lib/firmware\""

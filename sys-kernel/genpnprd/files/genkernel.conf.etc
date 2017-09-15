@@ -1,4 +1,5 @@
 ZFS="no"
 BTRFS="no"
+NFS="no"
 source /etc/genkernel.conf
 DISKLABEL=""
