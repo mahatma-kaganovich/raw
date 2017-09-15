@@ -486,7 +486,7 @@ kernel-2_src_compile() {
 
 	einfo "Generating initrd image"
 	local p="$(use__ lvm lvm2) $(use__ evms) $(use__ luks) $(use__ gpg) $(use__ iscsi) $(use__ device-mapper dmraid) $(use__ unionfs) $(use__ e2fsprogs disklabel) $(use__ mdadm) $(use__ btrfs)"
-	use nfs && p+' --nfs' || p+' --no-nfs'
+	use nfs && p+=' --nfs' || p+=' --no-nfs'
 	use netboot && p+=" --netboot"
 	use monolythe && p+=" --static"
 	if use pnp || use compressed; then
