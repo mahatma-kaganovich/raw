@@ -28,4 +28,4 @@ use mdadm || use lvm || use evms || use device-mapper || KERNEL_CONFIG+=" -MD"
 	use usb || KERNEL_CONFIG+=" -USB"
 }
 use efi || KERNEL_CONFIG+=" -RELOCATABLE"
-use soc || use laptop || KERNEL_CONFIG+=" -X86_EXTENDED_PLATFORM -IOSF_MBI -X86_INTEL_LPSS -X86_AMD_PLATFORM_DEVICE -.+_MID"
+use soc || use laptop || KERNEL_CONFIG+=" -X86_EXTENDED_PLATFORM -X86_INTEL_LPSS -X86_AMD_PLATFORM_DEVICE -.+_MID"
