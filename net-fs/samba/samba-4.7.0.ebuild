@@ -163,12 +163,6 @@ automagic(){
 
 multilib_src_configure() {
 	local myconf=()
-
-	local a="${CFLAGS##*-march=}"
-	a="${a%% *}"
-	[ "$a" = native ] && grep -qs ' aes ' /proc/cpuinfo && myconf=( --accel-aes=intelaesni )
-	([[ " $CFLAGS " == *' -maes '* ]] && [[ " $CFLAGS " != *' -maes '*' -mno-aes '* ]]) && myconf=( --accel-aes=intelaesni )
-	
 	myconf=(
 		--enable-fhs
 		--sysconfdir="${EPREFIX}/etc"
@@ -187,6 +181,7 @@ multilib_src_configure() {
 	if multilib_is_native_abi ; then
 
 		myconf+=(
+			$(usex cpu_flags_x86_aes --accel-aes=intelaesni '')
 			$(use_with acl acl-support)
 			$(usex addc '' '--without-ad-dc')
 			$(use_with addns dnsupdate)
