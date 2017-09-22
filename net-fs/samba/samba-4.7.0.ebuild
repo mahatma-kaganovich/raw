@@ -163,6 +163,12 @@ automagic(){
 
 multilib_src_configure() {
 	local myconf=()
+
+	local a="${CFLAGS##*-march=}"
+	a="${a%% *}"
+	[ "$a" = native ] && grep -qs ' aes ' /proc/cpuinfo && myconf=( --accel-aes=intelaesni )
+	([[ " $CFLAGS " == *' -maes '* ]] && [[ " $CFLAGS " != *' -maes '*' -mno-aes '* ]]) && myconf=( --accel-aes=intelaesni )
+	
 	myconf=(
 		--enable-fhs
 		--sysconfdir="${EPREFIX}/etc"
