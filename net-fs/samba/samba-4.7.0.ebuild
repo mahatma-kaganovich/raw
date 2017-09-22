@@ -25,7 +25,7 @@ LICENSE="GPL-3"
 SLOT="0"
 
 IUSE="acl addc addns ads client cluster cups dmapi fam gnutls gpg iprint ldap pam python
-quota selinux syslog systemd test winbind afs sasl zeroconf"
+quota selinux syslog systemd test winbind afs sasl zeroconf cpu_flags_x86_aes"
 
 MULTILIB_WRAPPED_HEADERS=(
 	/usr/include/samba-4.0/policy.h
