@@ -3,3 +3,8 @@ use laptop && KERNEL_CONFIG+=' HZ_300'
 use server && use !minimal2 && KERNEL_CONFIG+=' -NO_HZ_FULL'
 use server && use !desktop && KERNEL_CONFIG+=' -TASKS_RCU'
 use server || KERNEL_CONFIG+=' -SLUB_CPU_PARTIAL'
+
+# this is anti-"rt" setting, but save power and compensate high HZ
+# also it make this switch similar to Intel Clear Linux defaults
+# anymore, it increase from-idle state, so affect mostly unstable workloads
+use rt || KERNEL_CONFIG+=' RCU_EXPERT RCU_FAST_NO_HZ'
