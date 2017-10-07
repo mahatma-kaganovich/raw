@@ -1,4 +1,4 @@
-[ -n "$D" ] && for i in "${D}"/usr/lib*; do
+[ -n "$D" ] && [ -e "$D" ] && for i in "${D}"/usr/lib*; do
 	l="../$(readlink "$i/libilbc.so")" &&
 	mkdir "$i/libilbc" &&
 	ln -s "$l" "$i/libilbc/libilbc.so" &&
