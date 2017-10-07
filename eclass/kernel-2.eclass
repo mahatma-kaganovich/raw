@@ -1079,6 +1079,8 @@ native|:native|native:native)
 	[[ "${siblings:-0}" -gt "${cpu_cores:-1}" ]] && CF1 SMP SCHED_SMT
 #	grep -Fqs ',' /sys/devices/system/cpu/cpu*/topology/thread_siblings_list && CF1 SMP SCHED_SMT
 	[[ "$(grep "^siblings\s*:\|^cpu cores\s*:" /proc/cpuinfo|sort -u|wc -l)" -gt 2 ]] && CF1 SMP SCHED_{SMT,MC} NUMA
+	local nodes="$(grep "^physical id\s\s*:" /proc/cpuinfo|sort -u|wc -l)"
+	[[ "$nodes" -gt 1 ]] && CF1 SMP NUMA NODES_SHIFT=$nodes
 	[[ "${fpu}" != yes ]] && CF1 MATH_EMULATION
 
 	use acpi && acpi_detect
