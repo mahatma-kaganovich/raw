@@ -2,7 +2,7 @@ EAPI=2
 SLOT=0
 DESCRIPTION="Configure kernel, generate PNP initrd or update & compress genkernel's initrd"
 KEYWORDS="x86 amd64"
-HOMEPAGE="http://raw.googlecode.com/"
+HOMEPAGE="https://github.com/mahatma-kaganovich/raw"
 RDEPEND="|| ( sys-fs/cramfs sys-apps/util-linux[cramfs] )
 	sys-fs/squashfs-tools
 	app-misc/pax-utils

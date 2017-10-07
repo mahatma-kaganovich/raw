@@ -29,3 +29,5 @@ use mdadm || use lvm || use evms || use device-mapper || KERNEL_CONFIG+=" -MD"
 }
 use efi || KERNEL_CONFIG+=" -RELOCATABLE"
 use soc || use laptop || KERNEL_CONFIG+=" -X86_EXTENDED_PLATFORM -X86_INTEL_LPSS -X86_AMD_PLATFORM_DEVICE -.+_MID"
+# Intel's default
+KERNEL_CONFIG+=" NODES_SHIFT=2"
