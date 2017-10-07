@@ -24,7 +24,7 @@ LICENSE="GPL-3"
 
 SLOT="0"
 
-IUSE="acl addc addns ads client cluster cups dmapi fam gnutls gpg iprint ldap pam python
+IUSE="acl addc addns ads client cluster cups debug dmapi fam gnutls gpg iprint ldap pam python
 quota selinux syslog systemd test winbind afs sasl zeroconf cpu_flags_x86_aes"
 
 MULTILIB_WRAPPED_HEADERS=(
@@ -44,7 +44,7 @@ CDEPEND="
 	dev-libs/iniparser:0
 	dev-libs/popt[${MULTILIB_USEDEP}]
 	dev-python/subunit[${PYTHON_USEDEP},${MULTILIB_USEDEP}]
-	>=dev-util/cmocka-1.0.0[${MULTILIB_USEDEP}]
+	>=dev-util/cmocka-1.1.1[${MULTILIB_USEDEP}]
 	sys-apps/attr[${MULTILIB_USEDEP}]
 	>=sys-libs/ldb-1.2.2[ldap(+)?,python?,${PYTHON_USEDEP},${MULTILIB_USEDEP}]
 	sys-libs/libcap
@@ -63,6 +63,7 @@ CDEPEND="
 	)
 	cluster? ( !dev-db/ctdb )
 	cups? ( net-print/cups )
+	debug? ( dev-util/lttng-ust )
 	dmapi? ( sys-apps/dmapi )
 	fam? ( virtual/fam )
 	gnutls? (
@@ -188,6 +189,7 @@ multilib_src_configure() {
 			$(use_with ads)
 			$(use_with cluster cluster-support)
 			$(use_enable cups)
+			$(use_with debug lttng)
 			$(use_with dmapi)
 			$(use_with fam)
 			$(use_enable gnutls)
@@ -222,6 +224,7 @@ multilib_src_configure() {
 			--without-gpgme
 			--disable-iprint
 			$(use_with ldap)
+			$(use_with debug lttng)
 			--without-pam
 			--without-quotas
 			--without-syslog
