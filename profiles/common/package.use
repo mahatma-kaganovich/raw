@@ -28,6 +28,8 @@ app-portage/layman cvs bazaar mercurial g-sorcery squashfs
 net-firewall/ipsec-tools nat hybrid
 x11-misc/bmpanel -libev
 net-fs/nfs-utils nfsdcld nfsv41
+# optimize
+sys-apps/openrc -ncurses
 # for any our app
 dev-lang/php ssl curl tokenizer xmlrpc fastbuild mysqli postgres gd apache2 berkdb bzip2 cgi cli crypt ctype filter gdbm iconv ipv6 ldap mysql ncurses nls pcre readline reflection session spell spl -threads truetype unicode xml zlib zip hash pdo mysqlnd sqlite3 json intl fileinfo imap mhash simplexml soap sockets bcmath -kerberos xmlwriter xmlreader sysvipc -phar posix -gmp
 app-admin/testdisk ntfs reiserfs
