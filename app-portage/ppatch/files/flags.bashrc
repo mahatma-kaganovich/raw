@@ -121,7 +121,7 @@ filter_cf CC CFLAGS c
 filter_cf CXX CXXFLAGS c++
 
 case "$PN" in
-quota|xinetd) _iuse !rpc || {
+quota|xinetd|samba) _iuse !rpc || {
 	export CFLAGS="$CFLAGS $(pkg-config libtirpc --cflags-only-I)"
 	export CXXFLAGS="$CXXFLAGS $(pkg-config libtirpc --cflags-only-I)"
 	export LDFLAGS="$LDFLAGS $(pkg-config libtirpc --libs)"
