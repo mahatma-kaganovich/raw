@@ -9,7 +9,7 @@ sys-apps/iproute2 berkdb
 app-crypt/heimdal -ssl -threads
 dev-db/mariadb tokudb extraengine
 dev-db/mariadb-galera tokudb extraengine sst-xtrabackup
-sys-cluster/ceph xfs
+sys-cluster/ceph xfs nss -ssl
 net-dns/bind threads caps
 app-emulation/qemu doc tls usbredir spice sasl
 net-fs/samba cluster ads addns ldap client addc acl python

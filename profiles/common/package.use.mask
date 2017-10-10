@@ -7,6 +7,7 @@ sys-firmware/alsa-firmware alsa_cards_ymfpci alsa_cards_korg1212 alsa_cards_maes
 x11-drivers/xf86-video-nouveau glamor
 =lxde-base/lxterminal-0.2.0-r1 gtk3
 sys-devel/gcc -gcj
+sys-cluster/ceph -ssl
 
 # decrease devel binaries size, speedup build, remove weird translations
 sys-devel/binutils nls
