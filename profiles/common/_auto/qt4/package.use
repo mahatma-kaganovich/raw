@@ -1,3 +1,4 @@
+dev-libs/qtkeychain qt4 -qt5
 dev-libs/quazip qt4 -qt5
 games-emulation/gambatte qt4
 games-emulation/higan qt4
@@ -6,9 +7,8 @@ media-gfx/librecad qt4 -qt5
 media-libs/phonon qt4 -qt5
 media-libs/phonon-gstreamer qt4 -qt5
 media-libs/phonon-vlc qt4 -qt5
+media-video/vlc qt4 -qt5
 net-analyzer/flent qt4 -qt5
-sys-auth/polkit-qt qt4 -qt5
-sys-devel/qconf qt4 -qt5
 x11-apps/fusion-icon qt4
 x11-misc/lightdm qt4 -qt5
 x11-themes/adwaita-qt qt4 -qt5

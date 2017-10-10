@@ -7,10 +7,8 @@ dev-qt/qtlockedfile qt5 -qt4
 dev-qt/qtsingleapplication qt5 -qt4
 games-emulation/mgba qt5
 games-strategy/freeciv qt5
-kde-misc/kdiff3:4 qt5 -qt4
 media-libs/liblastfm qt5 -qt4
 media-libs/libmygpo-qt qt5 -qt4
-media-libs/phonon qt5 -qt4
 media-libs/qt-gstreamer qt5 -qt4
 media-video/smplayer qt5 -qt4
 media-video/vlc qt5 -qt4
@@ -19,6 +17,7 @@ net-libs/jreen qt5 -qt4
 net-libs/telepathy-qt qt5 -qt4
 sys-auth/polkit-qt qt5 -qt4
 sys-devel/qconf qt5 -qt4
+x11-apps/fusion-icon qt5
 x11-libs/qscintilla qt5 -qt4
 x11-libs/qwtpolar qt5 -qt4
 x11-misc/lightdm qt5 -qt4

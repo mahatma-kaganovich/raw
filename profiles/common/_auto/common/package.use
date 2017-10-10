@@ -29,6 +29,11 @@ app-emulation/wine-any:2.9 ssl
 app-emulation/wine-any:2.10 ssl
 app-emulation/wine-any:2.11 ssl
 app-emulation/wine-any:2.12 ssl
+app-emulation/wine-any:2.13 ssl
+app-emulation/wine-any:2.14 ssl
+app-emulation/wine-any:2.15 ssl
+app-emulation/wine-any:2.16 ssl
+app-emulation/wine-any:2.17 ssl
 app-emulation/wine-any:9999 ssl
 app-emulation/wine-d3d9:2.0 ssl
 app-emulation/wine-d3d9:2.1 ssl
@@ -43,6 +48,11 @@ app-emulation/wine-d3d9:2.9 ssl
 app-emulation/wine-d3d9:2.10 ssl
 app-emulation/wine-d3d9:2.11 ssl
 app-emulation/wine-d3d9:2.12 ssl
+app-emulation/wine-d3d9:2.13 ssl
+app-emulation/wine-d3d9:2.14 ssl
+app-emulation/wine-d3d9:2.15 ssl
+app-emulation/wine-d3d9:2.16 ssl
+app-emulation/wine-d3d9:2.17 ssl
 app-emulation/wine-d3d9:9999 ssl
 app-emulation/wine-staging:2.0 ssl
 app-emulation/wine-staging:2.1 ssl
@@ -57,6 +67,11 @@ app-emulation/wine-staging:2.9 ssl
 app-emulation/wine-staging:2.10 ssl
 app-emulation/wine-staging:2.11 ssl
 app-emulation/wine-staging:2.12 ssl
+app-emulation/wine-staging:2.13 ssl
+app-emulation/wine-staging:2.14 ssl
+app-emulation/wine-staging:2.15 ssl
+app-emulation/wine-staging:2.16 ssl
+app-emulation/wine-staging:2.17 ssl
 app-emulation/wine-staging:9999 ssl
 app-emulation/wine-vanilla:2.0 ssl
 app-emulation/wine-vanilla:2.0.1 ssl
@@ -74,6 +89,11 @@ app-emulation/wine-vanilla:2.10 ssl
 app-emulation/wine-vanilla:2.11 ssl
 app-emulation/wine-vanilla:2.12 ssl
 app-emulation/wine-vanilla:2.13 ssl
+app-emulation/wine-vanilla:2.14 ssl
+app-emulation/wine-vanilla:2.15 ssl
+app-emulation/wine-vanilla:2.16 ssl
+app-emulation/wine-vanilla:2.17 ssl
+app-emulation/wine-vanilla:2.18 ssl
 app-emulation/wine-vanilla:9999 ssl
 app-forensics/libewf ssl
 app-text/mupdf openssl
@@ -183,6 +203,7 @@ net-wireless/hostapd ssl
 sys-apps/systemd ssl gcrypt
 sys-cluster/ceph nss -cryptopp
 sys-cluster/ceph nss cryptopp
+sys-cluster/ceph ssl nss
 sys-fs/cryptmount ssl
 sys-fs/cryptsetup kernel -openssl -nettle
 sys-fs/cryptsetup kernel openssl nettle gcrypt
@@ -202,9 +223,11 @@ app-editors/gedit-plugins python_single_target_python3_4 -python_single_target_p
 app-editors/gvim python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 app-editors/vim python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 app-emulation/libguestfs python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
+app-eselect/eselect-repository python_single_target_python3_4 -python_single_target_python3_5
 app-i18n/ibus-anthy python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 app-i18n/ibus-libpinyin python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 app-i18n/ibus-table python_single_target_python3_4 -python_single_target_python3_5
+app-i18n/ibus-typing-booster python_single_target_python3_4 -python_single_target_python3_5
 app-misc/gramps python_single_target_python3_4 -python_single_target_python3_5
 app-misc/hivex python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 app-misc/lirc python_single_target_python3_4 -python_single_target_python3_5
@@ -224,7 +247,9 @@ app-vim/conque python_single_target_python2_7 -python_single_target_python3_4 -p
 app-vim/editorconfig-vim python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 app-vim/gundo python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 app-vim/pydoc python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
+app-vim/vimoutliner python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 app-vim/vimpython python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
+dev-db/pgadmin4 python_single_target_python3_4 -python_single_target_python3_5
 dev-db/postgresql:9.2 python_single_target_python2_7 -python_single_target_python3_4
 dev-db/postgresql:9.2 python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 dev-db/postgresql:9.3 python_single_target_python2_7 -python_single_target_python3_4
@@ -249,8 +274,11 @@ dev-libs/libpeas python_single_target_python3_4 -python_single_target_python3_5
 dev-libs/volume_key python_single_target_python3_4 -python_single_target_python3_5
 dev-perl/Inline-Python python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 dev-python/PythonQt python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
+dev-python/brython:3.3.2-r1 python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
+dev-python/brython:3.3.3 python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 dev-python/pyotherside python_single_target_python3_4 -python_single_target_python3_5
 dev-python/uranium python_single_target_python3_4 -python_single_target_python3_5
+dev-ruby/rbst python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 dev-tcltk/tclpython python_single_target_python2_7 -python_single_target_python3_4
 dev-tcltk/tclpython python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 dev-util/bcc python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
@@ -261,6 +289,7 @@ dev-util/devhelp python_single_target_python3_4 -python_single_target_python3_5
 dev-util/eric python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 dev-util/include-what-you-use python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 dev-util/kdevelop-python python_single_target_python3_4 -python_single_target_python3_5
+dev-util/meld python_single_target_python3_4 -python_single_target_python3_5
 dev-util/scanmem python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 dev-util/setconf python_single_target_python2_7 -python_single_target_python3_4
 dev-util/setconf python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
@@ -287,7 +316,9 @@ media-libs/lensfun python_single_target_python3_4 -python_single_target_python3_
 media-libs/libopenshot python_single_target_python3_4 -python_single_target_python3_5
 media-libs/lv2 python_single_target_python2_7 -python_single_target_python3_4
 media-libs/lv2 python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
+media-libs/opencolorio python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 media-libs/openimageio python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
+media-libs/partio python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 media-sound/gnome-music python_single_target_python3_4 -python_single_target_python3_5
 media-sound/rhythmbox python_single_target_python3_4 -python_single_target_python3_5
 media-sound/xmms2 python_single_target_python2_7 -python_single_target_python3_4
@@ -297,6 +328,7 @@ media-video/pitivi python_single_target_python3_4 -python_single_target_python3_
 media-video/totem python_single_target_python3_4 -python_single_target_python3_5
 net-analyzer/fail2ban python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 net-analyzer/rrdtool python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
+net-im/toxic python_single_target_python3_4 -python_single_target_python3_5
 net-irc/hexchat python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 net-irc/irker python_single_target_python2_7 -python_single_target_python3_4
 net-irc/irker python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
@@ -308,6 +340,7 @@ net-wireless/blueman python_single_target_python2_7 -python_single_target_python
 net-wireless/blueman python_single_target_python3_4 -python_single_target_python3_5
 sci-calculators/units python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 sci-chemistry/pdb-tools python_single_target_python2_7
+sci-electronics/klayout python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 sci-electronics/pulseview python_single_target_python3_4 -python_single_target_python3_5
 sci-electronics/sigrok-cli python_single_target_python3_4 -python_single_target_python3_5
 sci-geosciences/qgis python_single_target_python3_4 -python_single_target_python3_5
@@ -319,6 +352,7 @@ sci-libs/libsigrokdecode python_single_target_python3_4 -python_single_target_py
 sci-libs/shogun python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 sci-mathematics/relational python_single_target_python3_4 -python_single_target_python3_5
 sci-misc/mendeleydesktop python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
+sci-misc/vitables python_single_target_python2_7
 sci-physics/espresso python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 sys-apps/fwupd python_single_target_python3_4 -python_single_target_python3_5
 sys-apps/pcsc-lite python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5

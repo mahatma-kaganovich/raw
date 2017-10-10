@@ -1,15 +1,13 @@
 app-editors/bluefish -gtk3 gtk2
 app-emulation/fuse -gtk sdl # X fbcon svga
 app-emulation/vice -gtk sdl
-media-libs/libmediaart:1.0 -gtk qt4 qt5
-media-libs/libmediaart:2.0 -gtk qt5
+media-libs/libmediaart -gtk qt5
 media-plugins/audacious-plugins -gtk3 gtk qt5
 media-sound/audacious -gtk3 gtk qt5
 net-analyzer/pinger -gtk3 gtk2
-net-misc/dhcpcd-ui -gtk3 gtk qt4
 net-misc/dhcpcd-ui -gtk3 gtk
 x11-misc/spacefm -gtk3 gtk2
 app-misc/tracker -gstreamer ffmpeg
-dev-qt/qtmultimedia:5 -gstreamer gstreamer010
 dev-qt/qtwebkit:5 -gstreamer gstreamer010 # multimedia
+dev-qt/qtwebkit:5 -gstreamer # multimedia
 media-gfx/blender -ffmpeg # libav

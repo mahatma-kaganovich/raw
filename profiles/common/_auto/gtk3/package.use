@@ -12,10 +12,11 @@ app-editors/bluefish gtk3
 app-editors/emacs:23 -gtk
 app-editors/emacs:24 gtk3
 app-editors/emacs:25 gtk3
-app-editors/emacs-vcs:25 gtk3
 app-editors/emacs-vcs:26 gtk3
+app-editors/emacs-vcs:27 gtk3
 app-editors/gvim -gtk
 app-emulation/fuse gtk
+app-emulation/libguestfs gtk
 app-emulation/qemu gtk
 app-emulation/virt-manager gtk
 app-emulation/winetricks gtk
@@ -65,6 +66,7 @@ dev-python/pynotifier gtk
 dev-python/sympy -gtk
 dev-python/twisted-core -gtk
 dev-qt/qtgui:5 gtk
+dev-qt/qtwidgets gtk
 dev-ruby/metasm:9999 -gtk
 dev-util/amtterm -gtk
 dev-util/amtterm gtk
@@ -111,8 +113,7 @@ media-libs/libcanberra gtk3
 media-libs/libchamplain gtk
 media-libs/libextractor gtk
 media-libs/libgpod gtk
-media-libs/libmediaart:1.0 -gtk
-media-libs/libmediaart:2.0 -gtk
+media-libs/libmediaart -gtk
 media-libs/libopenraw -gtk
 media-libs/libquicktime -gtk
 media-libs/libsixel -gtk
@@ -163,6 +164,7 @@ net-libs/gssdp gtk
 net-libs/gtk-vnc gtk3
 net-libs/libinfinity gtk
 net-misc/dhcpcd-ui -gtk
+net-misc/ipsorcery -gtk
 net-misc/mico -gtk
 net-misc/networkmanager-fortisslvpn gtk
 net-misc/networkmanager-libreswan gtk
@@ -210,10 +212,10 @@ sys-fs/pysize -gtk
 sys-libs/gwenhywfar -gtk
 sys-power/nvclock -gtk
 sys-process/latencytop -gtk
-www-client/chromium gtk3
 www-client/netsurf -gtk
 www-client/opera -gtk
 www-client/w3m -gtk
+x11-apps/fusion-icon gtk
 x11-apps/xinput_calibrator gtk
 x11-drivers/nvidia-drivers -gtk
 x11-libs/c++-gtk-utils:3 gtk
