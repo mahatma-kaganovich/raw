@@ -1,6 +1,3 @@
 app-misc/lirc -gtk
 kde-apps/print-manager -gtk
 media-libs/phonon -vlc
-# or
-#dev-qt/qtwidgets -gtk
-dev-qt/qtgui dbus
