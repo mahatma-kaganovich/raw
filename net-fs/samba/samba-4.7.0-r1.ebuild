@@ -113,6 +113,7 @@ S="${WORKDIR}/${MY_P}"
 
 PATCHES=(
 	"${FILESDIR}/${PN}-4.5.1-compile_et_fix.patch"
+	"${FILESDIR}"/talloc-disable-python.patch
 )
 
 #CONFDIR="${FILESDIR}/$(get_version_component_range 1-2)"
