@@ -1,3 +1,4 @@
 app-crypt/pinentry ncurses
+sys-process/procps ncurses
 # ceph
 dev-libs/boost python context
