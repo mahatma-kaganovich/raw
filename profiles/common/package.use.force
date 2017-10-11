@@ -6,4 +6,4 @@ dev-libs/libxml2 python
 net-fs/cifs-utils acl
 net-fs/samba acl
 sys-devel/gcc -pie
-media-fonts/* nls
+media-libs/libepoxy X
