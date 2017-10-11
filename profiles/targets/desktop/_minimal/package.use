@@ -1,2 +1,3 @@
 media-libs/libsdl2 -gles -wayland
 www-client/seamonkey minimal -roaming
+dev-qt/qtwidgets -gtk
