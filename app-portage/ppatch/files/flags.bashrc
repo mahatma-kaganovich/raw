@@ -122,6 +122,7 @@ filter_cf CXX CXXFLAGS c++
 
 case "$PN" in
 quota|xinetd|samba|python) _iuse !rpc || [ -e /usr/include/rpc/rpc.h ] || {
+	# python - only if libnsl present (module nis)
 	export CFLAGS="$CFLAGS $(pkg-config libtirpc --cflags-only-I)"
 	export CXXFLAGS="$CXXFLAGS $(pkg-config libtirpc --cflags-only-I)"
 	export LDFLAGS="$LDFLAGS $(pkg-config libtirpc --libs)"
