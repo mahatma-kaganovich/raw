@@ -27,6 +27,15 @@ src_compile(){
 		esac
 		. "${FILESDIR}/cpu2conf.sh"
 	} >"${WORKDIR}/make.defaults"
+	# "media-fonts/*" atom works only in /etc/portage/package.use
+	# so simple enum all fonts to exclude from system-wide USE=-nls
+	local i n c
+	for i in "${PORTDIR:-/usr/portage}"/media-fonts/*; do
+		n="${i##*/}"
+		i="${i%/*}"
+		c="${i##*/}"
+		echo "$c/$n nls"
+	done|sort >"${WORKDIR}/package.use.force"
 }
 
 src_install(){
@@ -56,7 +65,7 @@ src_install(){
 	done
     done
     insinto $r/profiles
-    doins "${WORKDIR}/make.defaults"
+    doins "${WORKDIR}/"{make.defaults,package.*}
 }
 
 migrate(){
