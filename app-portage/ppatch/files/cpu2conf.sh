@@ -176,6 +176,7 @@ for i in $flags; do
 	lm)lm=true;;
 	sse|3dnowext)f1+=" $i mmxext";;
 	fma)f2+=" $i fma3";;
+	ace_en)f1+=" padlock";;
 	*)
 		if (grep "^$i1 " /usr/portage/profiles/use.desc ; grep "^[^ 	]*:$i " /usr/portage/profiles/use.local.desc)|grep -q 'CPU\|processor\|chip\|instruction'; then
 			f1+=" $i"
