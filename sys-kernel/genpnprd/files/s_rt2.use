@@ -8,3 +8,4 @@ use server || KERNEL_CONFIG+=' -SLUB_CPU_PARTIAL'
 # also it make this switch similar to Intel Clear Linux defaults
 # anymore, it increase from-idle state, so affect mostly unstable workloads
 use rt || KERNEL_CONFIG+=' RCU_EXPERT RCU_FAST_NO_HZ'
+KERNEL_CONFIG+=' =IRQ_TIME_ACCOUNTING'

@@ -1060,7 +1060,8 @@ native|:native|native:native)
 			?*)CF1 -XEN;; # my KVM = "Microsoft"
 			esac;
 			# at least KVM migration & other asymmetry
-			#CF1 -NO_HZ -SCHED_HRTICK -IRQ_TIME_ACCOUNTING
+			#CF1 -NO_HZ -SCHED_HRTICK
+			CF1 -IRQ_TIME_ACCOUNTING
 #			ewarn "*************************************************************"
 #			ewarn "** With QEMU VM migration I get best results with cmdline: **"
 #			ewarn "** nohz=off divider=10 clocksource=acpi_pm notsc  (FIXME!) **"
