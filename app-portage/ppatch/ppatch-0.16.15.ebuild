@@ -31,6 +31,7 @@ src_compile(){
 	# so simple enum all fonts to exclude from system-wide USE=-nls
 	local i n c
 	for i in "${PORTDIR:-/usr/portage}"/media-fonts/*; do
+		[ -d "$i" ] || continue
 		n="${i##*/}"
 		i="${i%/*}"
 		c="${i##*/}"
