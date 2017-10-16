@@ -75,7 +75,8 @@ CF NET_SCH_PSP_HARDCHAIN
 ## dirty fast way to respect CONFIG_CHECK
 #KERNEL_RESPECT="nouveau-drm drbd-kernel"
 
-#external_kconfig(){
-#	cat /usr/share/genkernel/defaults/kernel*config > "$S"/.config
-#	true
-#}
+# use genkernel config, ignore all ebuild configs
+#external_kconfig(){ cat /usr/share/genkernel/defaults/kernel*config >"$S"/.config; }
+
+# running config vs. defconfig; faster configure, but possible some entropy (or not?)
+#external_kconfig(){ [ -e /proc/config.gz ] && zcat /proc/config.gz >"$S/.config"; false;}
