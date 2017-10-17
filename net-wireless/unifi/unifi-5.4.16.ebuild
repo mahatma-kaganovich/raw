@@ -11,7 +11,8 @@ case "$PV" in
 *)v1='';;
 esac
 #SRC_URI="http://dl.ubnt.com/unifi/${PV}/unifi_sysvinit_all.deb -> ${PN}-${PV}.deb"
-SRC_URI="http://dl.ubnt.com/unifi/${PV}$v1/UniFi.unix.zip -> ${PN}-${PV}.zip"
+SRC_URI="https://dl.ubnt.com/unifi/${PV}$v1/UniFi.unix.zip -> ${PN}-${PV}.zip
+	https://dl.ubnt.com/unifi/${PV}$v1/unifi_sh_api -> unifi_sh_api-$PV"
 SLOT="0"
 KEYWORDS="~amd64 ~arm"
 #RDEPEND="dev-db/mongodb virtual/jdk:1.8"
@@ -24,11 +25,24 @@ RDEPEND="dev-db/mongodb
 src_unpack() {
 	default_src_unpack
 	cd "${WORKDIR}" || die
-	if [[ "${SRC_URI}" == *deb ]]; then
-		unpack ./data.tar.gz && mv usr/lib/unifi "${S}" || die
+	local f
+	for f in $A; do
+		case "$f" in
+		*.deb)unpack ./data.tar.gz && mv usr/lib/unifi "${S}" || die;;
+		unifi_sh_api-*)cp "$DISTDIR/$f" "${S}/unifi_sh_api";;
+		*.zip)mv UniFi "${S}" || die;;
+		esac
+	done
+}
+
+src_prepare(){
+	local n="$S/lib/native"
+	if use amd64; then
+		rm "$n/Linux/armhf" -Rf
 	else
-		mv UniFi "${S}" || die
+		rm "$n/Linux/x86_64" -Rf
 	fi
+	rm "$n/"{Mac,Windows} -Rf
 }
 
 src_install(){
