@@ -30,6 +30,7 @@ x11-misc/bmpanel -libev
 net-fs/nfs-utils nfsdcld nfsv41
 media-libs/libmypaint gegl
 media-gfx/inkscape cdr inkjar
+dev-libs/elfutils static-libs
 # optimize
 sys-apps/openrc -ncurses
 app-editors/nano -ncurses
