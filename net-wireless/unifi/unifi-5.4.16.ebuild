@@ -6,8 +6,12 @@ EAPI="5"
 inherit eutils
 DESCRIPTION="UniFi controller"
 HOMEPAGE="https://www.ubnt.com/download/unifi"
+case "$PV" in
+5.6.19)v1=-17e4cda571;;
+*)v1='';;
+esac
 #SRC_URI="http://dl.ubnt.com/unifi/${PV}/unifi_sysvinit_all.deb -> ${PN}-${PV}.deb"
-SRC_URI="http://dl.ubnt.com/unifi/${PV}/UniFi.unix.zip -> ${PN}-${PV}.zip"
+SRC_URI="http://dl.ubnt.com/unifi/${PV}$v1/UniFi.unix.zip -> ${PN}-${PV}.zip"
 SLOT="0"
 KEYWORDS="~amd64 ~arm"
 #RDEPEND="dev-db/mongodb virtual/jdk:1.8"
