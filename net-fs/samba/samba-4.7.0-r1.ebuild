@@ -25,7 +25,7 @@ LICENSE="GPL-3"
 SLOT="0"
 
 IUSE="acl addc addns ads client cluster cups debug dmapi fam gnutls gpg iprint ldap pam python
-quota selinux syslog systemd test winbind afs sasl zeroconf cpu_flags_x86_aes"
+quota selinux syslog systemd test winbind afs sasl zeroconf cpu_flags_x86_aes nls"
 
 MULTILIB_WRAPPED_HEADERS=(
 	/usr/include/samba-4.0/policy.h
@@ -78,6 +78,7 @@ CDEPEND="
 		app-crypt/mit-krb5[${MULTILIB_USEDEP}]
 		>=app-crypt/heimdal-1.5[-ssl,${MULTILIB_USEDEP}]
 	) )
+	nls? ( sys-devel/gettext )
 	systemd? ( sys-apps/systemd:0= )"
 
 DEPEND="${CDEPEND}
@@ -189,6 +190,7 @@ multilib_src_configure() {
 			$(use_with addns dnsupdate)
 			$(use_with ads)
 			$(use_with cluster cluster-support)
+			$(use_with nls gettext)
 			$(use_enable cups)
 			$(use_with debug lttng)
 			$(use_with dmapi)
