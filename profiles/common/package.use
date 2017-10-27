@@ -35,7 +35,7 @@ dev-libs/elfutils static-libs
 sys-apps/openrc -ncurses
 app-editors/nano -ncurses
 # for any our app
-dev-lang/php ssl curl tokenizer xmlrpc fastbuild mysqli postgres gd apache2 berkdb bzip2 cgi cli crypt ctype filter gdbm iconv ipv6 ldap mysql ncurses nls pcre readline reflection session spell spl -threads truetype unicode xml zlib zip hash pdo mysqlnd sqlite3 json intl fileinfo imap mhash simplexml soap sockets bcmath -kerberos xmlwriter xmlreader sysvipc -phar posix -gmp
+dev-lang/php ssl curl tokenizer xmlrpc fastbuild mysqli postgres gd apache2 berkdb bzip2 cgi cli crypt ctype filter gdbm iconv ipv6 ldap mysql ncurses nls pcre readline reflection session spell spl -threads truetype unicode xml zlib zip hash pdo mysqlnd sqlite3 json intl fileinfo imap mhash simplexml soap sockets bcmath -kerberos xmlwriter xmlreader sysvipc -phar posix -gmp dumpio
 app-admin/testdisk ntfs
 sci-libs/hdf5 -threads
 sci-libs/vtk rendering all-modules python xdmf2
