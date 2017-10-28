@@ -805,23 +805,16 @@ detect_fs(){
 		else
 			mddef=false
 			[[ -n "$t" ]] && echo "DEVICE $t" >/etc/mdadm.conf
-			mdadm --examine --scan -v >/etc/mdadm.conf.all
+			# filter all extra info around bug with journal=spares
+			mdadm --examine --scan|grep '^ARRAY' >/etc/mdadm.conf.all
 			mod `grep " level=" /etc/mdadm.conf.all | sed -e 's:^.* level=\([^ ]*\) .*$:\1:g' | sort -u`
 			if [[ "$cmd_detect_root" != true ]] && [[ -n "$USE_MDADM" ]]; then
 				# do not assemble other raids
-				local a=""
 				while read i; do
-					if [[ "${i#ARRAY $REAL_ROOT }" != "$i" ]] || [[ "${i#ARRAY $cmd_detect_root }" != "$i" ]]; then
-						a=1
-					elif [[ "${i#ARRAY }" != "$i" ]]; then
-						a=""
-					else
-						i=" $i"
-					fi
-					[[ -n "$a" ]] && echo "$i"
+					[ "${i#ARRAY $REAL_ROOT }" = "$i" -a "${i#ARRAY $cmd_detect_root }" = "$i" ] || echo "$i"
 				done </etc/mdadm.conf.all >/etc/mdadm.conf
 			fi
-			[ -s /etc/mdadm.conf ] || cp /etc/mdadm.conf.all /etc/mdadm.conf
+			[ -s /etc/mdadm.conf ] || cp /etc/mdadm.conf.all >/etc/mdadm.conf
 		fi
 		if ! $cmd_noraid && ( [[ -n "$md" ]] || grep -q ARRAY /etc/mdadm.conf ); then
 			msg_
