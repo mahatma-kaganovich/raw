@@ -698,7 +698,7 @@ resume(){
 }
 
 mdadm(){
-	echo "mdadm $*"
+	echo " # mdadm $*" >&2
 	/sbin/mdadm "${@}"
 }
 
