@@ -6,11 +6,11 @@ EAPI="5"
 inherit eutils
 DESCRIPTION="UniFi controller"
 HOMEPAGE="https://www.ubnt.com/download/unifi"
-case "$PV" in
+case "$PVR" in
 5.6.19)v1=-17e4cda571;;
 *)v1='';;
 esac
-#SRC_URI="http://dl.ubnt.com/unifi/${PV}/unifi_sysvinit_all.deb -> ${PN}-${PV}.deb"
+SRC_URI="http://dl.ubnt.com/unifi/${PV}/unifi_sysvinit_all.deb -> ${PN}-${PV}.deb"
 SRC_URI="https://dl.ubnt.com/unifi/${PV}$v1/UniFi.unix.zip -> ${PN}-${PV}.zip
 	https://dl.ubnt.com/unifi/${PV}$v1/unifi_sh_api -> unifi_sh_api-$PV"
 SLOT="0"
