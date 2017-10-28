@@ -814,7 +814,7 @@ detect_fs(){
 					[ "${i#ARRAY $REAL_ROOT }" = "$i" -a "${i#ARRAY $cmd_detect_root }" = "$i" ] || echo "$i"
 				done </etc/mdadm.conf.all >/etc/mdadm.conf
 			fi
-			[ -s /etc/mdadm.conf ] || cp /etc/mdadm.conf.all >/etc/mdadm.conf
+			[ -s /etc/mdadm.conf ] || cp /etc/mdadm.conf.all /etc/mdadm.conf
 		fi
 		if ! $cmd_noraid && ( [[ -n "$md" ]] || grep -q ARRAY /etc/mdadm.conf ); then
 			msg_
