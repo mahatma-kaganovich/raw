@@ -807,7 +807,6 @@ detect_fs(){
 			[[ -n "$t" ]] && echo "DEVICE $t" >/etc/mdadm.conf
 			mdadm --examine --scan -v >/etc/mdadm.conf.all
 			mod `grep " level=" /etc/mdadm.conf.all | sed -e 's:^.* level=\([^ ]*\) .*$:\1:g' | sort -u`
-			cp /etc/mdadm.conf.all /etc/mdadm.conf
 			if [[ "$cmd_detect_root" != true ]] && [[ -n "$USE_MDADM" ]]; then
 				# do not assemble other raids
 				local a=""
@@ -822,10 +821,11 @@ detect_fs(){
 					[[ -n "$a" ]] && echo "$i"
 				done </etc/mdadm.conf.all >/etc/mdadm.conf
 			fi
+			[ -s /etc/mdadm.conf ] || cp /etc/mdadm.conf.all /etc/mdadm.conf
 		fi
 		if ! $cmd_noraid && ( [[ -n "$md" ]] || grep -q ARRAY /etc/mdadm.conf ); then
 			msg_
-			[ "${USE_MDADM:-true}" = true ] && $USE_MDADM='--scan -v'
+			[ "$USE_MDADM" = true ] && $USE_MDADM=--scan
 			case "$USE_MDADM" in
 			async)
 				mod $(wild "/md/")
@@ -833,10 +833,11 @@ detect_fs(){
 				USE_MDADM_=""
 				sleep 5
 			;;
-			*) mdadm --assemble $USE_MDADM ||
+			?*) mdadm --assemble $USE_MDADM ||
 			    ( mod $(wild "/md/") ; ( mdadm --assemble $USE_MDADM || ( [[ -n "$cmd_part$REAL_ROOT" ]] && mdstart $cmd_part $REAL_ROOT ) || raidautorun $REAL_ROOT ) ) &&
 			    USE_MDADM_=""
 			;;
+			*)mdadm --assemble $REAL_ROOT && USE_MDADM_="";;
 			esac
 		fi
 		$mddef || rm /etc/mdadm.conf
