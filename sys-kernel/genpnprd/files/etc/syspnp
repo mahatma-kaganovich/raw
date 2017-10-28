@@ -697,6 +697,11 @@ resume(){
 	echo "0:0" >/sys/power/resume 2>/dev/null
 }
 
+mdadm(){
+	echo "mdadm $*"
+	/sbin/mdadm "${@}"
+}
+
 detect_fs(){
 	local i m="" md="$USE_MDADM" dm="$USE_DMRAID_NORMAL" t="$cmd_detect_root" lvm="$USE_LVM_NORMAL" evms="$USE_EVMS_NORMAL" mddef=true
 	[[ -n "$NFSLIKE_FS" ]] && [[ "$REAL_ROOT" == /dev/nfs ]] && REAL_ROOT="/dev/$NFSLIKE_FS"
@@ -791,16 +796,16 @@ detect_fs(){
 			i="--assemble /dev/md$i"
 		fi
 		msg_
-		/sbin/mdadm $i --raid-devices=$# $*
+		mdadm $i --raid-devices=$# $*
 	done
 	if [[ -n "$md$dm" ]]; then
 		# maybe dm wrong here, but try
 		if [[ -e '/etc/mdadm.conf' ]]; then
-			mod `( grep " level=" /etc/mdadm.conf || ( /sbin/mdadm --examine --scan -v|grep " level=" ) ) | sed -e 's:^.* level=\([^ ]*\) .*$:\1:g' | sort -u`
+			mod `( grep " level=" /etc/mdadm.conf || ( mdadm --examine --scan -v|grep " level=" ) ) | sed -e 's:^.* level=\([^ ]*\) .*$:\1:g' | sort -u`
 		else
 			mddef=false
 			[[ -n "$t" ]] && echo "DEVICE $t" >/etc/mdadm.conf
-			/sbin/mdadm --examine --scan -v >/etc/mdadm.conf.all
+			mdadm --examine --scan -v >/etc/mdadm.conf.all
 			mod `grep " level=" /etc/mdadm.conf.all | sed -e 's:^.* level=\([^ ]*\) .*$:\1:g' | sort -u`
 			cp /etc/mdadm.conf.all /etc/mdadm.conf
 			if [[ "$cmd_detect_root" != true ]] && [[ -n "$USE_MDADM" ]]; then
@@ -820,10 +825,19 @@ detect_fs(){
 		fi
 		if ! $cmd_noraid && ( [[ -n "$md" ]] || grep -q ARRAY /etc/mdadm.conf ); then
 			msg_
-			# busybox | mdadm | all raid modules; raidautorun - wrong
-			/sbin/mdadm --assemble || /sbin/mdadm --assemble --scan ||
-			    ( mod $(wild "/md/") ; ( /sbin/mdadm --assemble || /sbin/mdadm --assemble --scan || ( [[ -n "$cmd_part$REAL_ROOT" ]] && mdstart $cmd_part $REAL_ROOT ) || raidautorun $REAL_ROOT ) ) &&
+			[ "${USE_MDADM:-true}" = true ] && $USE_MDADM='--scan -v'
+			case "$USE_MDADM" in
+			async)
+				mod $(wild "/md/")
+				mdadm --assemble --scan &
+				USE_MDADM_=""
+				sleep 5
+			;;
+			*) mdadm --assemble $USE_MDADM ||
+			    ( mod $(wild "/md/") ; ( mdadm --assemble $USE_MDADM || ( [[ -n "$cmd_part$REAL_ROOT" ]] && mdstart $cmd_part $REAL_ROOT ) || raidautorun $REAL_ROOT ) ) &&
 			    USE_MDADM_=""
+			;;
+			esac
 		fi
 		$mddef || rm /etc/mdadm.conf
 	fi
