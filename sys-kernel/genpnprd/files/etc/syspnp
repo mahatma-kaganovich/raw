@@ -818,7 +818,7 @@ detect_fs(){
 		fi
 		if ! $cmd_noraid && ( [[ -n "$md" ]] || grep -q ARRAY /etc/mdadm.conf ); then
 			msg_
-			[ "$USE_MDADM" = true ] && $USE_MDADM=--scan
+			[ "$USE_MDADM" = true -o "$USE_MDADM" = 1 ] && $USE_MDADM=--scan
 			case "$USE_MDADM" in
 			async)
 				mod $(wild "/md/")
