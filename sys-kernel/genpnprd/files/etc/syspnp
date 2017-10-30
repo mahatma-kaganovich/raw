@@ -818,17 +818,18 @@ detect_fs(){
 		fi
 		if ! $cmd_noraid && ( [[ -n "$md" ]] || grep -q ARRAY /etc/mdadm.conf ); then
 			msg_
-			[ "$USE_MDADM" = true -o "$USE_MDADM" = 1 ] && $USE_MDADM=--scan
-			case "$USE_MDADM" in
+			case "$cmd_domdadm" in
 			async)
 				mod $(wild "/md/")
 				mdadm --assemble --scan &
 				USE_MDADM_=""
 				sleep 5
 			;;
-			?*) mdadm --assemble $USE_MDADM ||
-			    ( mod $(wild "/md/") ; ( mdadm --assemble $USE_MDADM || ( [[ -n "$cmd_part$REAL_ROOT" ]] && mdstart $cmd_part $REAL_ROOT ) || raidautorun $REAL_ROOT ) ) &&
-			    USE_MDADM_=""
+			?*)
+				[ "$cmd_domdadm" = true ] && cmd_domdadm=--scan
+				mdadm --assemble $cmd_domdadm ||
+				    ( mod $(wild "/md/") ; ( mdadm --assemble $cmd_domdadm || ( [[ -n "$cmd_part$REAL_ROOT" ]] && mdstart $cmd_part $REAL_ROOT ) || raidautorun $REAL_ROOT ) ) &&
+				    USE_MDADM_=""
 			;;
 			*)mdadm --assemble $REAL_ROOT && USE_MDADM_="";;
 			esac
