@@ -114,7 +114,7 @@ media-libs/gst-plugins-bad:1.0 -gtk
 media-libs/libcanberra gtk -gtk3
 media-libs/libextractor -gtk
 media-libs/libgpod gtk
-media-libs/libmediaart gtk
+media-libs/libmediaart -gtk
 media-libs/libopenraw -gtk
 media-libs/libquicktime gtk
 media-libs/libsixel -gtk
@@ -195,9 +195,11 @@ sci-astronomy/predict gtk
 sci-electronics/pcb gtk
 sci-geosciences/gpscorrelate gtk
 sci-libs/scikits_image gtk
+sci-mathematics/alt-ergo gtk
 sci-mathematics/coq gtk
 sci-mathematics/gretl -gtk
 sci-mathematics/pspp -gtk
+sci-mathematics/why3-for-spark gtk
 sci-misc/oww gtk
 sys-apps/bleachbit gtk
 sys-apps/lshw gtk

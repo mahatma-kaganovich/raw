@@ -5,6 +5,8 @@ app-i18n/ibus
 app-i18n/ibus-m17n gtk2 gtk
 app-i18n/ibus-unikey gtk2
 media-plugins/audacious-plugins gtk -gtk3 -qt5
+media-plugins/audacious-plugins gtk -qt5
 media-sound/audacious gtk -gtk3 -qt5
+media-sound/audacious gtk -qt5
 x11-misc/spacefm gtk2
 x11-terms/mlterm gtk2 gtk

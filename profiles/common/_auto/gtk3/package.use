@@ -181,7 +181,7 @@ net-misc/trackma gtk
 net-misc/unison -gtk
 net-misc/wicd gtk
 net-misc/youtube-viewer -gtk
-net-p2p/deluge gtk
+net-p2p/deluge -gtk
 net-p2p/eiskaltdcpp gtk
 net-p2p/mldonkey gtk
 net-p2p/transmission gtk
@@ -193,9 +193,11 @@ sci-astronomy/predict -gtk
 sci-electronics/pcb -gtk
 sci-geosciences/gpscorrelate -gtk
 sci-libs/scikits_image -gtk
+sci-mathematics/alt-ergo -gtk
 sci-mathematics/coq -gtk
 sci-mathematics/gretl gtk
 sci-mathematics/pspp gtk
+sci-mathematics/why3-for-spark -gtk
 sci-misc/oww -gtk
 sys-apps/lshw -gtk
 sys-apps/pcsc-tools -gtk

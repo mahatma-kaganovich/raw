@@ -1,5 +1,7 @@
 media-gfx/tachyon opengl
 media-libs/gst-plugins-bad:1.0 opengl -gles2
+media-libs/gst-plugins-bad:1.0 -gles2
+media-libs/gst-plugins-bad:1.0 opengl egl -gles2
 media-libs/mesa egl -gles1 -gles2
 media-video/mpv opengl egl
 net-libs/webkit-gtk:3 opengl -gles2
@@ -34,6 +36,8 @@ app-emulation/wine-any:2.14 ssl
 app-emulation/wine-any:2.15 ssl
 app-emulation/wine-any:2.16 ssl
 app-emulation/wine-any:2.17 ssl
+app-emulation/wine-any:2.18 ssl
+app-emulation/wine-any:2.19 ssl
 app-emulation/wine-any:9999 ssl
 app-emulation/wine-d3d9:2.0 ssl
 app-emulation/wine-d3d9:2.1 ssl
@@ -53,6 +57,8 @@ app-emulation/wine-d3d9:2.14 ssl
 app-emulation/wine-d3d9:2.15 ssl
 app-emulation/wine-d3d9:2.16 ssl
 app-emulation/wine-d3d9:2.17 ssl
+app-emulation/wine-d3d9:2.18 ssl
+app-emulation/wine-d3d9:2.19 ssl
 app-emulation/wine-d3d9:9999 ssl
 app-emulation/wine-staging:2.0 ssl
 app-emulation/wine-staging:2.1 ssl
@@ -72,10 +78,13 @@ app-emulation/wine-staging:2.14 ssl
 app-emulation/wine-staging:2.15 ssl
 app-emulation/wine-staging:2.16 ssl
 app-emulation/wine-staging:2.17 ssl
+app-emulation/wine-staging:2.18 ssl
+app-emulation/wine-staging:2.19 ssl
 app-emulation/wine-staging:9999 ssl
 app-emulation/wine-vanilla:2.0 ssl
 app-emulation/wine-vanilla:2.0.1 ssl
 app-emulation/wine-vanilla:2.0.2 ssl
+app-emulation/wine-vanilla:2.0.3 ssl
 app-emulation/wine-vanilla:2.1 ssl
 app-emulation/wine-vanilla:2.2 ssl
 app-emulation/wine-vanilla:2.3 ssl
@@ -94,6 +103,8 @@ app-emulation/wine-vanilla:2.15 ssl
 app-emulation/wine-vanilla:2.16 ssl
 app-emulation/wine-vanilla:2.17 ssl
 app-emulation/wine-vanilla:2.18 ssl
+app-emulation/wine-vanilla:2.19 ssl
+app-emulation/wine-vanilla:2.20 ssl
 app-emulation/wine-vanilla:9999 ssl
 app-forensics/libewf ssl
 app-text/mupdf openssl
@@ -302,6 +313,7 @@ gnome-extra/chrome-gnome-shell python_single_target_python2_7 -python_single_tar
 gnome-extra/cinnamon-desktop python_single_target_python3_4 -python_single_target_python3_5
 gnome-extra/cinnamon-screensaver python_single_target_python3_4 -python_single_target_python3_5
 gnome-extra/gnome-builder python_single_target_python3_4 -python_single_target_python3_5
+gnome-extra/gnome-commander python_single_target_python2_7 -python_single_target_python3_4
 kde-apps/kajongg python_single_target_python3_5
 kde-apps/lokalize python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 kde-frameworks/ki18n python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5

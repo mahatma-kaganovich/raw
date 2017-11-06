@@ -1,8 +1,5 @@
 app-office/lyx -qt5
 dev-python/qscintilla-python qt4 -qt5
-media-video/smplayer qt4 -qt5
 net-p2p/bitcoin-qt qt4 -qt5
-sci-electronics/pulseview qt4 -qt5
-sys-devel/qconf qt4 -qt5
 x11-libs/qscintilla qt4 -qt5
 x11-libs/qwtpolar qt4 -qt5
