@@ -1,0 +1,23 @@
+hci_bcm.c bcm_setup() have undefined fw_name,
+making garbage firmware name from unknown UART IDs.
+Just make synthetic default name for this exotic device(s).
+
+In my case there are:
+Lenovo Thinkpad 10 2nd - BCM4354A2 - brcm/BCM-unknown-uart-230f-2.hcd
+So, find, rename (or symlink) BCM4356A2.hcd,
+Then "btattach -B /dev/ttyS1 -P bcm".
+
+Signed-off-by: Dzianis Kahanovich <mahatma@eu.by>
+
+--- a/drivers/bluetooth/btbcm.c	2017-11-10 03:14:03.480002093 +0300
++++ b/drivers/bluetooth/btbcm.c	2017-11-10 03:22:21.829372649 +0300
+@@ -358,6 +358,9 @@ int btbcm_initialize(struct hci_dev *hde
+ 	if (err)
+ 		return err;
+ 
++	snprintf(fw_name, len, "brcm/BCM-unknown-uart-%x-%x.hcd",
++		subver, (rev & 0xf000) >> 12);
++
+ 	switch ((rev & 0xf000) >> 12) {
+ 	case 0:
+ 	case 1:
