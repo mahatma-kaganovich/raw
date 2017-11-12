@@ -1017,7 +1017,7 @@ native|:native|native:native)
     *)
 #    x86|i386)
 	export PNP_VENDOR=""
-	CF1 -SCHED_{SMT,MC} -X86_{UP_APIC,TSC,PAT,MSR,MCE,CMOV,X2APIC} -MTRR -INTEL_IDLE -KVM_INTEL -KVM_AMD -SPARSE_IRQ -CPUSETS -INTEL_TXT -$knl
+	CF1 -SCHED_{SMT,MC} -X86_{UP_APIC,TSC,PAT,MSR,MCE,CMOV,X2APIC} -MTRR -INTEL_IDLE -KVM_INTEL -KVM_AMD -SPARSE_IRQ -CPUSETS -INTEL_TXT -$knl -INTEL_RDT_?A?
 	case "$srcarch" in
 	x86|i386)
 		if use multitarget || use 64-bit-bfd; then
@@ -1070,6 +1070,7 @@ native|:native|native:native)
 		xtopology)fakeHT=false;;
 		hwpstate)grep -qsF X86_FEATURE_HW_PSTATE "${S}/drivers/cpufreq/powernow-k8.c" && freq+=" X86_ACPI_CPUFREQ -X86_POWERNOW_K8";;
 		hwp)CF1 -INTEL_TURBO_MAX_3;;
+		rdt_a)CF1 INTEL_RDT_?A?
 		esac
 	done
 	use xen && CF1 PARAVIRT{,_GUEST} HYPERVISOR_GUEST
