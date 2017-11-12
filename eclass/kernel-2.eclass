@@ -1070,7 +1070,7 @@ native|:native|native:native)
 		xtopology)fakeHT=false;;
 		hwpstate)grep -qsF X86_FEATURE_HW_PSTATE "${S}/drivers/cpufreq/powernow-k8.c" && freq+=" X86_ACPI_CPUFREQ -X86_POWERNOW_K8";;
 		hwp)CF1 -INTEL_TURBO_MAX_3;;
-		rdt_a)CF1 INTEL_RDT_?A?
+		rdt_a)CF1 INTEL_RDT_?A?;;
 		esac
 	done
 	use xen && CF1 PARAVIRT{,_GUEST} HYPERVISOR_GUEST
