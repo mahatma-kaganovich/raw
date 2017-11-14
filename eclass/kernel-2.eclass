@@ -803,7 +803,7 @@ useconfig(){
 	cfg $o
 	cfg_ "
 "
-	ewarn "If failed here after update ('not in IUSE') - touch kernel-2.eclass"
+	ewarn "If failed here after update ('not in IUSE') - do 'emerge --regen'"
 	for i in "${SHARE}"/*use; do
 		[[ "${i##*/}" == *_dep_* ]] && continue
 		o="${i##*[/:_]}"
