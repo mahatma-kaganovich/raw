@@ -16,8 +16,8 @@ inherit kernel-2 git-r3
 n="${PN%%-*}"
 DESCRIPTION="Linux-$n"
 HOMEPAGE="http://www.kernel.org"
-EGIT_REPO_URI="git://git.kernel.org/pub/scm/linux/kernel/git/$n/linux${n:+-}$n.git"
-EGIT_REPO_URI+=" ${EGIT_REPO_URI/git:/https:}"
+EGIT_REPO_URI="https://git.kernel.org/pub/scm/linux/kernel/git/$n/linux${n:+-}$n.git"
+EGIT_REPO_URI+=" ${EGIT_REPO_URI/https:/git:}"
 
 KEYWORDS="~alpha ~amd64 ~arm ~hppa ~ia64 ~mips ~ppc ~ppc64 ~s390 ~sh ~sparc ~x86"
 #IUSE="deblob"
