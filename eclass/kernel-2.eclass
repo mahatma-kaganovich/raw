@@ -1717,8 +1717,11 @@ mksquash(){
 	case "$comp" in
 	lzo)c+='-Xcompression-level 9 ';;
 	lz4)c+='-Xhc ';;
+	xz)for i in X86:x86 ARM:arm,armthumb ARM64:arm,armthumb POWERPC:powerpc SPARC:sparc IA64:ia64; do
+		grep -q "^CONFIG_${i%:*}=y$" "$S/.config" && c+=" -Xbcj ${i#*:}" && break
+	done;;
 	esac
-	mksquashfs "${@}" $c-b 1048576 -no-recovery -no-progress ${p:+-processors $p} || die "mksquashfs failed"
+	mksquashfs "${@}" $c-b 1m -no-recovery -no-progress ${p:+-processors $p} || die "mksquashfs failed"
 }
 
 LICENSE(){
