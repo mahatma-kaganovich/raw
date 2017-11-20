@@ -746,7 +746,7 @@ NOGEO:
 			my $sz;
 			my @margin=(0,0);;
 			my $pad=0;
-			
+			@wp || tint2set('disable_transparency',0,1);
 			if(tint2get('autohide',0) && !tint2get('panel_background_id',0)){
 				if($vert){
 					$sz=$YY+$sy;
