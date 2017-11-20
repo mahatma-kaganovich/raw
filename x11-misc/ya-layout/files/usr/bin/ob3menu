@@ -28,9 +28,8 @@ $HOME=$ENV{HOME};
 @xinerama=('--no-xinerama'); # pan
 
 $SIG{__DIE__}=sub{
-return if(!exists($ENV{DBUS_SESSION_BUS_ADDRESS}));
-print STDERR ($e=join('',"$0: ",@_));
-exec($bin.'notify-send','-t',6000,$e);
+	print STDERR ($e=join('',"$0: ",@_));
+	exists($ENV{DBUS_SESSION_BUS_ADDRESS}) && exec($bin.'notify-send','-t',6000,$e);
 };
 
 $tint2font=1; # = ob MenuItem, *fontsize
