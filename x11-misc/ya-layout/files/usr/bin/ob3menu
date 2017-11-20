@@ -726,11 +726,10 @@ NOGEO:
 		}
 		$a.=(@m?'':"false\n")."}\n";
 		@wp=() if(!@wp && ! -r ($wp[0]=(glob("$fconf/wallpaper{$DSP1}.*"))[0]));
-		$wp0=$wp[0];
 		# for top-left & !composite & !svg cmd use feh, else - ImageMagick
 		# todo: since openbox support svg, think about un-feh. bud feh still thin
 		if(!@m){
-			@m=($bin.'feh','-m','-W',$X,'-H',$Y,'-y',0,'-E',0,$wp0,'-b',$wp0,'-O') if($wp0);
+			@m=($bin.'feh','-m','-W',$X,'-H',$Y,'-y',0,'-E',0,$wp[0],'-b',$wp[0],'-O') if($wp[0]);
 		}elsif(!$spliceX && !$spliceY && $yy==1 && ($#wp<1||$wp[1] eq '-a') && ! grep(/\.svg$/,@m)){
 #			$wp[0]||='trans'; # artefacts
 			@wp && unshift(@wp,'-b');
