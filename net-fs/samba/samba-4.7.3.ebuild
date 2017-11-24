@@ -52,7 +52,7 @@ CDEPEND="
 	sys-libs/readline:0=
 	>=sys-libs/talloc-2.1.9[python?,${PYTHON_USEDEP},${MULTILIB_USEDEP}]
 	>=sys-libs/tdb-1.3.14[python?,${PYTHON_USEDEP},${MULTILIB_USEDEP}]
-	>=sys-libs/tevent-0.9.33[python?,${PYTHON_USEDEP},${MULTILIB_USEDEP}]
+	>=sys-libs/tevent-0.9.34[python?,${PYTHON_USEDEP},${MULTILIB_USEDEP}]
 	sys-libs/zlib[${MULTILIB_USEDEP}]
 	virtual/libiconv
 	pam? ( virtual/pam )
@@ -266,7 +266,7 @@ multilib_src_install() {
 
 		# create symlink for cups (bug #552310)
 		if use cups ; then
-			dosym /usr/bin/smbspool /usr/libexec/cups/backend/smb
+			dosym ../../../bin/smbspool /usr/libexec/cups/backend/smb
 		fi
 
 		# install example config file
