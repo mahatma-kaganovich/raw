@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # (c) Denis Kaganovich, Anarchy or GPLv2
-# OpenBox3 pipe menu v0.14
+# OpenBox3 pipe menu v0.15
 # ob3menu {--<command> {params}}
 # 	--slow [<path/to/rc.xml> [XxY]]
 #	--autostart {profile}
@@ -85,6 +85,9 @@ $mimemenu='_app';
 @conf=(['showIcons'],['dock',['position'],['direction']],['font place="MenuItem"',['name'],['size'],['weight'],['slant']]);
 $id=0;
 
+%noico=('svg'=>1,'xpm'=>1);
+%prefico=('svg'=>1);
+
 for(@ARGV){
 	if($_=~s/^--//){
 		undef $P{$i=$_};
@@ -124,41 +127,20 @@ sub icons{
 	closedir($D);
 	if($_[1]){
 	for(@d){
+		my $p=$_[0].$_;
 		if(my ($i,$j)=$_=~/^(.*)\.(...)$/){
-			$ico1{$_}=$_[0].$_;
-			$ico1{$i}=$_[0].$_ if($j ne 'svg');
+			$ico1{$_}=$p;
+			$ico1{$i}=$p if(!exists($noico{$j}));
 		}elsif(!($_=~/^\.*$/)){
-			icons("$_[0]$_/",1);
+			icons("$p/",1);
 		}
 	}
 	}else{
 	for(@d){
+		my $p=$_[0].$_;
 		if(my ($i,$j)=$_=~/^(.*)\.(...)$/){
-			$ico{$_}=$_[0].$_;
-			$ico{$i}=$_[0].$_ if($j ne 'svg');
-		}elsif(!($_=~/^\.*$/)){
-			icons("$_[0]$_/",$_=~/$THEME/);
-		}
-	}
-	}
-}
-
-sub icons_svg{
-	opendir(my $D,$_[0])||return;
-	my @d=readdir($D);
-	closedir($D);
-	if($_[1]){
-	for(@d){
-		if(my ($i,$j)=$_=~/^(.*)\.(...)$/){
-			$ico1{$i}=$ico1{$_}=$_[0].$_;
-		}elsif(!($_=~/^\.*$/)){
-			icons("$_[0]$_/",1);
-		}
-	}
-	}else{
-	for(@d){
-		if(my ($i,$j)=$_=~/^(.*)\.(...)$/){
-			$ico{$i}=$ico{$_}=$_[0].$_;
+			$ico{$_}=$p;
+			$ico{$i}=$p if(!exists($noico{$j}));
 		}elsif(!($_=~/^\.*$/)){
 			icons("$_[0]$_/",$_=~/$THEME/);
 		}
@@ -392,17 +374,35 @@ if(exists($P{slow})){
 		$vanilla=$fconf=~/\/openbox$/;
 	}
 	$THEME='(?:'.join('|',@{$P{'theme'}}).')';
-	*icons=*icons_svg if(exists($P{'svg'}));
+	for(keys %noico){
+		if(exists($P{$_})){
+			delete($noico{$_});
+		}else{
+			delete($prefico{$_});
+		}
+	}
 	icons('/usr/share/icons/');
 	icons('/usr/share/pixmaps/');
 	icons($HOME.'/.local/share/icons/');
 	icons($HOME.'/.local/share/pixmaps/');
-	if(exists($P{'svg'})){
-		$ico{substr($_,0,-4)}=$ico{$_} for(grep(/\.svg$/,keys %ico));
-		$ico1{substr($_,0,-4)}=$ico1{$_} for(grep(/\.svg$/,keys %ico1));
-	}else{
-		$ico{$_}=$ico{substr($_,0,-4)} for(grep(/\.svg$/,keys %ico));
-		$ico1{$_}=$ico1{substr($_,0,-4)} for(grep(/\.svg$/,keys %ico1));
+	if(%prefico){
+		my @l=keys %prefico;
+		my $l=$#l?'(?:'.join('|',@l).')':$l[0];
+		for $i ('ico','ico1'){
+			for(grep(/\.$l$/,keys %{$i})){
+				${$i}{substr($_,0,-4)}=${$i}{$_} if(exists(${$i}{$_}));
+			}
+		}
+	}
+	if(%noico){
+		my @l=keys %noico;
+		my $l=$#l?'(?:'.join('|',@l).')':$l[0];
+		for $i ('ico','ico1'){
+			for(grep(/\.$l$/,keys %{$i})){
+				my $n=substr($_,0,-4);
+				${$i}{$_}=${$i}{$n} if(exists(${$i}{$n}));
+			}
+		}
 	}
 	%ico=(%ico,%ico1) if(%ico1);
 }
