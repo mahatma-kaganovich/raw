@@ -1,0 +1,29 @@
+#!/usr/bin/perl
+
+#$term='xterm -e ';
+$term='ya-session --run +';
+push @u,('root');
+push @u,($ENV{'USER'}) if($ENV{'USER'} ne 'root');
+
+print "<openbox_pipe_menu><separator label='ssh'/>\n";
+for my $u (@u){
+    open(F,'<',"$ENV{HOME}/.ssh/known_hosts")||die $!;
+    $#u && print "<menu id='ssh:$u' label='$u'><separator label='ssh -l $u'/>";
+    while(defined(my $s=<F>)){
+	my @s=split(/\s+/,$s);
+	my @h=split(',',$s[0]);
+	$h=$h[0]  if(!(($h,$p)=$h[0]=~/^\[(.+)\]:([0-9]+)/));
+#	exists($H{"$h:$p"}) && next;
+#	$H{"$h:$p"}=1;
+	if(defined($p)){
+		$h1="$h:$p";
+		$h2="$h -p $p";
+	}else{
+		$h1=$h2=$h;
+	}
+	print "<item label='$h1'><action name='Execute'><execute>${term}ssh -l $u $h2 </execute></action></item>\n";
+    }
+    $#u && print '</menu>';
+    close(F);
+}
+print '</openbox_pipe_menu>';
