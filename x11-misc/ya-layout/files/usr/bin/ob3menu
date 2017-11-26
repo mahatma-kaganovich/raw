@@ -142,7 +142,7 @@ sub icons{
 			$ico{$_}=$p;
 			$ico{$i}=$p if(!exists($noico{$j}));
 		}elsif(!($_=~/^\.*$/)){
-			icons("$_[0]$_/",$_=~/$THEME/);
+			icons("$p/",$_=~/$THEME/);
 		}
 	}
 	}
