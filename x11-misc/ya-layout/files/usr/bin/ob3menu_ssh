@@ -13,8 +13,6 @@ for my $u (@u){
 	my @s=split(/\s+/,$s);
 	my @h=split(',',$s[0]);
 	$h=$h[0]  if(!(($h,$p)=$h[0]=~/^\[(.+)\]:([0-9]+)/));
-#	exists($H{"$h:$p"}) && next;
-#	$H{"$h:$p"}=1;
 	if(defined($p)){
 		$h1="$h:$p";
 		$h2="$h -p $p";
