@@ -6,23 +6,24 @@ push @u,('root');
 push @u,($ENV{'USER'}) if($ENV{'USER'} ne 'root');
 
 sub _open{
-	open(F,'<',"$ENV{HOME}/$_[0]") && return 1;
-	die $! if(-e "$ENV{HOME}/$_[0]");
+	my $f="$ENV{HOME}/$_[0]";
+	open(F,'<',$f) && return 1;
+	die $! if(-e $f);
 	0;
 }
 
 print "<openbox_pipe_menu>";
 for my $u (@u){
     _open('.ssh/known_hosts') || last;
-    $#u && print "<menu id='ssh:$u' label='ssh:$u'><separator label='ssh:$u'/>";
+    $#u && print "<menu id='ssh:$u' label='ssh $u'><separator label='ssh $u'/>";
     while(defined(my $s=<F>)){
 	my @h=split(/[, ]/,$s,2);
 	$h=$h[0]  if(!(($h,$p)=$h[0]=~/^\[(.+)\]:([0-9]+)/));
 	($h1,$h2)=defined($p)?("$h:$p","$h -p $p"):($h,$h);
 	print "<item label='$h1'><action name='Execute'><execute>${term}ssh -l $u $h2</execute></action></item>";
     }
-    $#u && print '</menu>';
     close(F);
+    $#u && print '</menu>';
 }
 if(_open('.config/freerdp/known_hosts2')){
 	print "<menu id='rdp:' label='rdp'><separator label='rdp'/>";
@@ -32,6 +33,7 @@ if(_open('.config/freerdp/known_hosts2')){
 		$h.=":$h[1]" if($h[1] ne 3389);
 		print "<item label='$h'><action name='Execute'><execute>${term}xfreerdp /bpp:8 /compression-level:2 /admin +sec-ext -themes -wallpaper +fonts /nsc /jpeg /v:$h</execute></action></item>\n";
 	}
+	close(F);
 	print '</menu>';
 }
 print '</openbox_pipe_menu>';
