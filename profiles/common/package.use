@@ -92,3 +92,5 @@ sys-kernel/gentoo-sources rt
 =dev-qt/qtwebengine-5.7.1* -system-icu
 # on my CherryTrail SNA xterm loose chars/regions. keep old code too
 x11-drivers/xf86-video-intel uxa
+# prefer alsa & apulse
+media-sound/pulseaudio -alsa-plugin
