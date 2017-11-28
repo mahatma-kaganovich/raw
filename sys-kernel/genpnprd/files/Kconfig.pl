@@ -470,9 +470,7 @@ sub conf{
 	my ($eq,$ne);
 	$ne=($eq=($d=~s/(.*?)=(.*)/$y=$2;$1/se) && ($y=~s/^=//)) && ($y=~s/^\!//);
 	my @l;
-	if(exists($vars{$d})){
-		@l=($d);
-	}elsif(substr($d,0,1) eq '/'){
+	if(substr($d,0,1) eq '/'){
 		my %ll;
 		substr($d,0,1)='^';
 		for(grep(/$d$/,keys %tristate,keys %bool,keys %menu)){
@@ -481,6 +479,8 @@ sub conf{
 			$ll{$i}=1 if(exists($vars{$i}))
 		}
 		@l=keys %ll;
+	}elsif(exists($vars{$d})){
+		@l=($d);
 	}else{
 		@l=grep(/^$d$/,keys %vars);
 		@l=($d) if($#l==-1 && !($d=~/[^A-Za-z0-9_]/) && $_[0] eq $_);
