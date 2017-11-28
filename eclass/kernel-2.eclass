@@ -803,7 +803,7 @@ useconfig(){
 	cfg $o
 	cfg_ "
 "
-	ewarn "If failed here after update ('not in IUSE') - do 'emerge --regen'"
+	ewarn "If failed here after update ('not in IUSE') - do 'emerge --regen' or 'rm $(find /var/cache/edb/dep -name "$PN-$PVR")'"
 	for i in "${SHARE}"/*use; do
 		[[ "${i##*/}" == *_dep_* ]] && continue
 		o="${i##*[/:_]}"
