@@ -178,13 +178,17 @@ part_(){
 
 # rootoverlay=/boot to overlay RW real_root
 zram_overlay(){
-    local dev ov=/overlay ov1="$NEW_ROOT/mnt/root-overlay" x1 x2 x3
+    local dev ov=/overlay ov1="$NEW_ROOT/mnt/root-overlay" x1 x2 x3 next low=0 d
+    # first is upper/work RW dir, then going low
     while [ "$#" -gt 0 ]; do
-	dev="$1"
+	dev="${1#+}"
+	next=false
+	[[ "$dev" != "$1" ]] && next=true
 	[[ "$dev" == true ]] && dev=
 	[[ -z "$dev" ]] && dev=/dev/zram0
 	echo -ne '(overlay)'
-	mkdir $ov
+	[ $low = 0 ] && d="$ov" || d="$ov/low$low"
+	mkdir -p $d
 	case "$dev" in
 	/dev/zram*)
 		local d="${dev#/dev/}"
@@ -192,7 +196,7 @@ zram_overlay(){
 		echo "${2:-lz4hc}" >/sys/block/"$d"/comp_algorithm &&
 		echo "${3:-8g}" >/sys/block/"$d"/disksize &&
 		mkfs.ext4 -q -O sparse_super2 -O ^has_journal -O inline_data -O dir_index -O extent -E discard -E num_backup_sb=0 -I 256 "$dev" &&
-		mount -t ext4 -o noatime,discard,lazytime "$dev" $ov || return 1
+		mount -t ext4 -o noatime,discard,lazytime "$dev" $d || return 1
 		# always last choise
 		shift
 		shift
@@ -213,20 +217,29 @@ zram_overlay(){
 				dev="${dev%% *}"
 			}
 			[ -z "$dev" ] && continue
-			mount -t auto -o noatime,lazytime "$dev" $ov ||
-			mount -t auto -o noatime "$dev" $ov || continue
+			mount -t auto -o noatime,lazytime "$dev" $d ||
+			mount -t auto -o noatime "$dev" $d || continue
 		else
-			mount --bind "$NEW_ROOT/$dev" $ov || continue
+			mount --bind "$NEW_ROOT/$dev" $d || continue
 		fi
 	;;
 	esac
+	low=$((low+1))
+	$next || break
+    done
+    if [[ "$low" != 0 ]]; then
+	local o=
 	mkdir -p $ov/up $ov/low $ov/work
-	mount --move "$NEW_ROOT" $ov/low &&
-	mount -t overlay -o upperdir=$ov/up,lowerdir=$ov/low,workdir=$ov/work none $NEW_ROOT &&
+	mount --move "$NEW_ROOT" $ov/low || continue
+	while  [ $low -gt 0 ]; do
+		low=$((low-1))
+		o="$o:$ov/low$i"
+	done
+	mount -t overlay -o upperdir=$ov/up,workdir=$ov/work,lowerdir=$ov/low$o none $NEW_ROOT &&
 	mkdir -p "$ov1" &&
 	mount --move $ov "$ov1"
 	return $?
-    done
+    fi
     return 1
 }
 
