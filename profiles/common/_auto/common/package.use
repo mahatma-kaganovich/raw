@@ -167,7 +167,6 @@ net-fs/s3fs openssl -gnutls -nss
 net-fs/s3fs nettle gnutls
 net-ftp/lftp ssl gnutls
 net-im/bitlbee gnutls nss
-net-im/qutim ssl
 net-irc/iroffer-dinoex gnutls ssl
 net-irc/kvirc ssl
 net-irc/quassel ssl
@@ -320,7 +319,6 @@ kde-frameworks/ki18n python_single_target_python2_7 -python_single_target_python
 mail-filter/afew python_single_target_python3_4 -python_single_target_python3_5
 media-gfx/cura python_single_target_python3_4 -python_single_target_python3_5
 media-gfx/eog-plugins python_single_target_python3_4 -python_single_target_python3_5
-media-gfx/fontforge python_single_target_python2_7 -python_single_target_python3_4
 media-gfx/fontforge python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 media-gfx/hugin python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 media-gfx/openvdb python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
@@ -378,7 +376,6 @@ sys-kernel/bliss-initramfs python_single_target_python3_4 -python_single_target_
 sys-libs/libblockdev python_single_target_python3_4 -python_single_target_python3_5
 sys-process/systemd-cron python_single_target_python3_4
 sys-process/systemd-cron python_single_target_python3_4 -python_single_target_python3_5
-www-apache/mod_wsgi python_single_target_python2_7 -python_single_target_python3_4
 www-apache/mod_wsgi python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 x11-misc/libinput-gestures python_single_target_python3_4 -python_single_target_python3_5
 x11-misc/treeline python_single_target_python3_4 -python_single_target_python3_5

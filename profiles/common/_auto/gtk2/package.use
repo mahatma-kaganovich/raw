@@ -221,7 +221,6 @@ www-client/w3m -gtk
 www-plugins/gnash gtk
 x11-apps/fusion-icon gtk
 x11-apps/xinput_calibrator -gtk
-x11-drivers/nvidia-drivers gtk
 x11-libs/gtkmathview gtk
 x11-libs/libfm gtk
 x11-libs/libyui -gtk

@@ -1,4 +1,4 @@
-app-crypt/qca qt5 -qt4
+app-office/libreoffice qt5 -qt4
 app-office/lyx qt5 -qt4
 dev-libs/libdbusmenu-qt qt5 -qt4
 dev-libs/qtkeychain qt5 -qt4
@@ -19,4 +19,3 @@ x11-apps/fusion-icon qt5
 x11-libs/qscintilla qt5 -qt4
 x11-libs/qwtpolar qt5 -qt4
 x11-misc/lightdm qt5 -qt4
-x11-themes/qtcurve qt5 -qt4
