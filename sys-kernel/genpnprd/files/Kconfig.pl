@@ -501,14 +501,22 @@ sub conf{
 	}
 	for(sort @l){
 		if($c eq '+'){
-			cfg($_,'m');
+			if(exists($tristate_{$_})){
+				cfg($_,'m');
+			}else{
+				print "WARNING: +$_ - not tristate\n";
+			}
 		}elsif($c eq '-'){
 			%off=();
 			cfg($_);
 		}elsif($c eq '~'){
 			exists($oldconfig{$_})?cfg($_,$oldconfig{$_}):delete($config{$_});
 		}elsif($c eq '&'){
-			_and($_,$y,$_);
+			if(exists($tristate_{$_})){
+				_and($_,$y,$_);
+			}else{
+				print "WARNING: \&$_ - not tristate\n";
+			}
 		}elsif($c eq '_'){
 			cfg($_) if($config{$_} eq 'm');
 		}elsif($c eq '?'){
