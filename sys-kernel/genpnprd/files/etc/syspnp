@@ -231,7 +231,7 @@ zram_overlay(){
 	local o=
 	mkdir -p $ov/up $ov/low $ov/work
 	mount --move "$NEW_ROOT" $ov/low || continue
-	while  [ $low -gt 0 ]; do
+	while  [ $low -gt 1 ]; do
 		low=$((low-1))
 		o="$o:$ov/low$i"
 	done
