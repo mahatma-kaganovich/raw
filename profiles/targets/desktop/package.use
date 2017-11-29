@@ -1,5 +1,5 @@
 app-text/djvu xml
-media-video/vlc vlm
+media-video/vlc vlm -qt4
 dev-db/sqlite secure-delete
 app-office/abiword math latex
 net-p2p/mldonkey bittorrent fasttrack gd gnutella magic
