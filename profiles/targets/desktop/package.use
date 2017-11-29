@@ -10,7 +10,7 @@ dev-db/sqlite tools tcl
 app-office/libreoffice collada pdfimport
 kde-plasma/plasma-desktop legacy-systray
 # until figure-out test-programs
-net-wireless/bluez test-programs extra-tools experimental python_single_target_python3_5 python_targets_python3_5
+net-wireless/bluez test-programs experimental python_single_target_python3_5 python_targets_python3_5
 dev-python/pycairo python_targets_python3_5
 dev-python/pygobject python_targets_python3_5
 dev-python/dbus-python python_targets_python3_5
