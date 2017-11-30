@@ -1,7 +1,7 @@
-#!/bin/sh
+#!/bin/bash
 
 killall -qw xkbd -u "$USER" && exit
 f="$HOME/.cache/ya/xkbd.conf"
 c="$(xkbd-config)"
-[ "$c" = "$(cat "$f" 2>/dev/null)" ] || echo "$c" >"$f"
+[ "$c" = "$(< "$f")" ] || echo "$c" >"$f"
 exec xkbd -k "$f"

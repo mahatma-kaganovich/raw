@@ -1,5 +1,5 @@
 #!/bin/bash
-# pipe menu cache for OpenBox3 v0.9
+# pipe menu cache for OpenBox3 v0.10
 # icons changes not tracked
 # param: generator command:
 
@@ -15,7 +15,7 @@ mk="$m.$DSP.key"
 mk1="${mk}1"
 if [ "$mk1" -ot "/var/log/Xorg.${DSP1#:}.log" ] && k1=`xrandr --current`; then
 	XY=`echo $(echo "$k1"|grep -o ' current [0-9]* x [0-9]*\| connected [0-9x+]*'|sed -e 's: \|current\|connected::g')`
-	if [ "$XY" = "`cat "$mk1"`" ]; then
+	if [ "$XY" = "$(< "$mk1")" ]; then
 		touch "$mk1"
 	else
 		unlink "$mk"
@@ -41,7 +41,7 @@ case "$cmd" in
 [[ "$DSP" == *:* && "$DSP" != *:*.* ]] && DSP+=.0
 read DSP3 <~/.cache/ya/menu.xml.$DSP.key1 || DSP3="$DSP"
 . "$0.${DSP3// /X}"'
-	[ -e "$y" -o "$dsh" = "`cat "$x"`" ] || {
+	[ -e "$y" -o "$dsh" = "$(< "$x")" ] || {
 		unlink "$mk"
 		echo "$dsh" >$x
 		chmod 700 "$x"
