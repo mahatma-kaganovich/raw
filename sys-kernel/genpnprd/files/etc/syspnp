@@ -333,7 +333,7 @@ case "`cat $d/enabled`" in
 *\[never\]*);;
 *)echo defer+madvise >$d/defrag 2>/dev/null||echo defer >$d/defrag;;
 esac
-echo force >$d/shmem_enabled
+echo always >$d/shmem_enabled
 }
 
 pnp_options(){
