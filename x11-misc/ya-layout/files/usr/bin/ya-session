@@ -575,7 +575,7 @@ tint2chk(){
 	}
 	[ -s $a ] && cp $a "$b" && cp $b "$c"
 	$minimal || [ -e "$cache/desk-sh" ] || {
-		i="$(< /etc/xdg/ya$suff/menu.xml)$(< "$obconfdir/menu.xml)"
+		i="$(< /etc/xdg/ya$suff/menu.xml)$(< "$obconfdir/menu.xml")"
 		i="${i##*execute=\"}"
 		i="${i%%\"*}"
 		desk="${i// \~/ $HOME}"
