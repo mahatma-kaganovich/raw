@@ -182,10 +182,9 @@ zram_overlay(){
     # first is upper/work RW dir, then going low
     while [ "$#" -gt 0 ]; do
 	dev="${1#+}"
-	next=false
-	[[ "$dev" != "$1" ]] && next=true
-	[[ "$dev" == true ]] && dev=
-	[[ -z "$dev" ]] && dev=/dev/zram0
+	[ "$dev" = "$1" ] && next=false || next=true
+	[ "$dev" = true ] && dev=
+	[ -z "$dev" ] && dev=/dev/zram0
 	echo -ne '(overlay)'
 	[ $low = 0 ] && d="$ov" || d="$ov/low$low"
 	mkdir -p $d
@@ -227,13 +226,13 @@ zram_overlay(){
 	low=$((low+1))
 	$next || break
     done
-    if [[ "$low" != 0 ]]; then
+    if [ "$low" != 0 ]; then
 	local o=
 	mkdir -p $ov/up $ov/low $ov/work
 	mount --move "$NEW_ROOT" $ov/low || continue
 	while  [ $low -gt 1 ]; do
 		low=$((low-1))
-		o="$o:$ov/low$i"
+		o="$o:$ov/low$low"
 	done
 	mount -t overlay -o upperdir=$ov/up,workdir=$ov/work,lowerdir=$ov/low$o none $NEW_ROOT &&
 	mkdir -p "$ov1" &&
