@@ -191,10 +191,10 @@ zram_overlay(){
 	mkdir -p $d
 	case "$dev" in
 	/dev/zram*)
-		local d="${dev#/dev/}"
+		local b="/sys/block/${dev#/dev/}"
 		ln -s fsck /sbin/mkfs.ext4
-		echo "${2:-lz4hc}" >/sys/block/"$d"/comp_algorithm &&
-		echo "${3:-8g}" >/sys/block/"$d"/disksize &&
+		echo "${2:-lz4hc}" >"$b"/comp_algorithm &&
+		echo "${3:-8g}" >"$b"/disksize &&
 		mkfs.ext4 -q -O sparse_super2 -O ^has_journal -O inline_data -O dir_index -O extent -E discard -E num_backup_sb=0 -I 256 "$dev" &&
 		mount -t ext4 -o noatime,discard,lazytime "$dev" $d || return 1
 		# always last choise
