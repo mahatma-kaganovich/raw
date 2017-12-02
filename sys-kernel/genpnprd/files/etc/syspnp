@@ -178,7 +178,7 @@ part_(){
 
 # rootoverlay=/boot to overlay RW real_root
 zram_overlay(){
-    local dev ov=/overlay ov1="$NEW_ROOT/mnt/root-overlay" x1 x2 x3 next low=0 d
+    local dev ov=/overlay ov1="$NEW_ROOT/mnt/root-overlay" x1 x2 x3 next low=0 d b
     # first is upper/work RW dir, then going low
     while [ "$#" -gt 0 ]; do
 	dev="${1#+}"
@@ -190,7 +190,7 @@ zram_overlay(){
 	mkdir -p $d
 	case "$dev" in
 	/dev/zram*)
-		local b="/sys/block/${dev#/dev/}"
+		b="/sys/block/${dev#/dev/}"
 		ln -s fsck /sbin/mkfs.ext4
 		echo "${2:-lz4hc}" >"$b"/comp_algorithm &&
 		echo "${3:-8g}" >"$b"/disksize &&
@@ -206,7 +206,8 @@ zram_overlay(){
 		while read x1 x2 x3; do
 			[ "$x1" = "$dev" -a -z "${x2##$NEW_ROOT/*}" ] && dev="${x2#$NEW_ROOT}" && break
 		done </proc/mounts
-		if [ -b "$dev" ] || ! [ -d "$NEW_ROOT/$dev" ]; then
+		b="$NEW_ROOT/${dev#/}"
+		if [ -b "$dev" ] || ! [ -d "$b" ]; then
 			[ -z "${dev##*=*}" ] && {
 				# rootoverlay=LABEL=...
 				rm /sbin/blkid -f
@@ -219,7 +220,8 @@ zram_overlay(){
 			mount -t auto -o noatime,lazytime "$dev" $d ||
 			mount -t auto -o noatime "$dev" $d || continue
 		else
-			mount --bind "$NEW_ROOT/$dev" $d || continue
+			mount --move "$b" $d 2>/dev/null ||
+			mount --bind "$b" $d || continue
 		fi
 	;;
 	esac
