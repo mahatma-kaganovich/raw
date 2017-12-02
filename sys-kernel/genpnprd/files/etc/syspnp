@@ -158,12 +158,21 @@ mnt_loop(){
 root_fsck_rw(){
 	# -w not working here
 #	[[ -w "$1" ]] && return
-	(grep -q " $1 .* rw," /proc/mounts || ! grep -q " $1 .* ro," /proc/mounts) && return
-	echo "fsck+rw $1"
-	/sbin/fsck -C0 -T -p "$1"
+	local b
+	b="$(grep "^[^ ]* / .* ro," /proc/mounts)" || return
+	b="${b%% *}"
+	grep -q "^[^ ]* $1 .* rw," /proc/mounts && return
+	echo "fsck+rw $b $1"
+	/sbin/fsck -C0 -T -p "$b"
 	case $? in
 	0|1)mount -o remount,rw "$1";;
-	2|3)sync;echo b >/proc/sysrq-trigger;;
+	2|3)
+		sync
+		echo fsck inspired reboot after 5 sec
+		sleep 5
+		sync
+		echo b >/proc/sysrq-trigger
+	;;
 	esac
 }
 
