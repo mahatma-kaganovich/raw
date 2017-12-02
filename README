@@ -90,6 +90,7 @@ rootoverlay[=device1{[:deviceX]} - lowerdir(s) ("OR" or "+deviceX" to multiple).
 		device, "/boot" can be used for this image.
 	Default: "/dev/zram0" AKA "/dev/zram0:lz4hc:8g".
 	(Logical first device contains "upper" & "work", every next - lower.)
+rootoverlayflags=<flags> - additional mount flags for overlayfs
 
 Examples:
 	"real_root=/dev/sda2 loop=system.squashfs rootoverlay"

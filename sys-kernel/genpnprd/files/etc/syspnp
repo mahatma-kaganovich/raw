@@ -238,14 +238,14 @@ zram_overlay(){
 	$next || break
     done
     if [ "$low" != 0 ]; then
-	local o=
+	local o
 	mkdir -p $ov/up $ov/low $ov/work
 	mount --move "$NEW_ROOT" $ov/low || continue
 	while  [ $low -gt 1 ]; do
 		low=$((low-1))
 		o="$o:$ov/low$low"
 	done
-	mount -t overlay -o upperdir=$ov/up,workdir=$ov/work,lowerdir=$ov/low$o none $NEW_ROOT &&
+	mount -t overlay -o upperdir=$ov/up,workdir=$ov/work,lowerdir=$ov/low$o,$cmd_rootoverlayflags none $NEW_ROOT &&
 	mkdir -p "$ov1" &&
 	mount --move $ov "$ov1"
 	return $?
