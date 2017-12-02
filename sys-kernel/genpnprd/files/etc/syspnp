@@ -159,7 +159,7 @@ root_fsck_rw(){
 	# -w not working here
 #	[[ -w "$1" ]] && return
 	local b
-	b="$(grep "^[^ ]* / .* ro," /proc/mounts)" || return
+	b="$(grep "^[^ ]* $1 .* ro," /proc/mounts)" || return
 	b="${b%% *}"
 	grep -q "^[^ ]* $1 .* rw," /proc/mounts && return
 	echo "fsck+rw $b $1"
