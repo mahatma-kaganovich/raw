@@ -16,4 +16,5 @@ XTerm.*.multiScroll: true
 XTerm.*.saveLines: 1000
 XTerm.*.autoWrap: true
 XTerm.*.scrollBar: true
+XTerm.*.rightScrollBar: true
 *font: -misc-fixed-medium-r-normal-*-10-*-*-*-*-*-*-*

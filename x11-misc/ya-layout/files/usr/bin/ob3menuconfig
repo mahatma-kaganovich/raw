@@ -1124,6 +1124,7 @@ my %xrparam=(
 'XTerm.*.faceSize'=>['',5..32],
 'XTerm.*.reverseVideo'=>$bb,
 'XTerm.*.scrollBar'=>$bb,
+'XTerm.*.rightScrollBar'=>$bb,
 'XTerm.*.selectToClipboard'=>$bb,
 'XTerm.*.jumpScroll'=>$bb,
 'XTerm.*.fastScroll'=>$bb,
