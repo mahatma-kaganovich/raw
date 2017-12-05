@@ -1,0 +1,49 @@
+On my "Thinkpad 10 2nd" pad, WCOM5020 touchpad randomly working,
+randomly stop working later. In log observed random failure messages,
+look like power interface buggy or have some special issues or timeouts.
+Simple disabling power commands works fine. So, adding quirk.
+
+Signed-off-by: Denis Kaganovich <mahatma@eu.by>
+
+--- a/drivers/hid/hid-ids.h	2017-12-05 16:48:12.728154538 +0300
++++ b/drivers/hid/hid-ids.h	2017-12-05 17:16:05.509070442 +0300
+@@ -1092,6 +1092,7 @@
+ #define USB_VENDOR_ID_WACOM		0x056a
+ #define USB_DEVICE_ID_WACOM_GRAPHIRE_BLUETOOTH	0x81
+ #define USB_DEVICE_ID_WACOM_INTUOS4_BLUETOOTH   0x00BD
++#define I2C_PRODUCT_ID_WACOM_WCOM5020	0x5020
+ 
+ #define USB_VENDOR_ID_WALTOP				0x172f
+ #define USB_DEVICE_ID_WALTOP_SLIM_TABLET_5_8_INCH	0x0032
+--- a/drivers/hid/i2c-hid/i2c-hid.c	2017-12-05 16:54:44.144134860 +0300
++++ b/drivers/hid/i2c-hid/i2c-hid.c	2017-12-05 17:22:45.862050315 +0300
+@@ -47,6 +47,7 @@
+ /* quirks to control the device */
+ #define I2C_HID_QUIRK_SET_PWR_WAKEUP_DEV	BIT(0)
+ #define I2C_HID_QUIRK_NO_IRQ_AFTER_RESET	BIT(1)
++#define I2C_HID_QUIRK_NO_POWER_CONTROL		BIT(2)
+ 
+ /* flags */
+ #define I2C_HID_STARTED		0
+@@ -171,6 +172,8 @@ static const struct i2c_hid_quirks {
+ 		I2C_HID_QUIRK_SET_PWR_WAKEUP_DEV },
+ 	{ I2C_VENDOR_ID_HANTICK, I2C_PRODUCT_ID_HANTICK_5288,
+ 		I2C_HID_QUIRK_NO_IRQ_AFTER_RESET },
++	{ USB_VENDOR_ID_WACOM, I2C_PRODUCT_ID_WACOM_WCOM5020,
++		I2C_HID_QUIRK_NO_POWER_CONTROL },
+ 	{ 0, 0 }
+ };
+ 
+@@ -390,6 +393,12 @@ static int i2c_hid_set_power(struct i2c_
+ 	i2c_hid_dbg(ihid, "%s\n", __func__);
+ 
+ 	/*
++		At least WCOM5020 have random power on/off results,
++		but skipping works fine.
++	*/
++	if (ihid->quirks & I2C_HID_QUIRK_NO_POWER_CONTROL)
++		return 0;
++	/*
+ 	 * Some devices require to send a command to wakeup before power on.
+ 	 * The call will get a return value (EREMOTEIO) but device will be
+ 	 * triggered and activated. After that, it goes like a normal device.

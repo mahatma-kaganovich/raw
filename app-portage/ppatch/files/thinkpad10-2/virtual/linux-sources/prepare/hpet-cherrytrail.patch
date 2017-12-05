@@ -1,0 +1,20 @@
+--- a/drivers/char/hpet.c	2017-05-01 05:47:48.000000000 +0300
++++ b/drivers/char/hpet.c	2017-06-30 10:57:43.186684151 +0300
+@@ -886,10 +886,13 @@ int hpet_alloc(struct hpet_data *hdp)
+ 	ntimer = ((cap & HPET_NUM_TIM_CAP_MASK) >> HPET_NUM_TIM_CAP_SHIFT) + 1;
+ 
+ 	if (hpetp->hp_ntimer != ntimer) {
+-		printk(KERN_WARNING "hpet: number irqs doesn't agree"
+-		       " with number of timers\n");
+-		kfree(hpetp);
+-		return -ENODEV;
++		printk(KERN_WARNING "hpet: number irqs (%u) doesn't agree"
++		       " with number of timers (%u)\n", hpetp->hp_ntimer, ntimer);
++		if (hpetp->hp_ntimer > ntimer) {
++			kfree(hpetp);
++			return -ENODEV;
++		}
++		printk(KERN_WARNING "hpet: reducing timers to irq");
+ 	}
+ 
+ 	if (last)
