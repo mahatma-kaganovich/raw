@@ -1,0 +1,14 @@
+Optimize human memory.
+Disable annoying task migration on panel.
+
+--- a/src/mouse_actions.c	2017-11-05 14:28:35.000000000 +0300
++++ b/src/mouse_actions.c	2017-12-10 17:54:08.984515228 +0300
+@@ -82,7 +82,7 @@ void handle_mouse_press_event(XEvent *e)
+         forward_click(e);
+         return;
+     }
+-    task_drag = click_task(panel, e->xbutton.x, e->xbutton.y);
++//    task_drag = click_task(panel, e->xbutton.x, e->xbutton.y);
+ 
+     if (panel_layer == BOTTOM_LAYER)
+         XLowerWindow(server.display, panel->main_win);
