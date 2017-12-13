@@ -20,7 +20,6 @@ app-emulation/libguestfs gtk
 app-emulation/qemu gtk
 app-emulation/virt-manager gtk
 app-emulation/winetricks gtk
-app-i18n/fcitx-configtool gtk3
 app-i18n/ibus gtk -gtk2
 app-i18n/ibus-m17n gtk
 app-i18n/ibus-unikey gtk -gtk2

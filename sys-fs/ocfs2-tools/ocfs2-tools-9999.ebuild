@@ -36,7 +36,7 @@ RDEPEND="X? (
 	pacemaker? (
 			sys-cluster/corosync
 			sys-cluster/pacemaker
-			|| ( sys-cluster/cluster >=sys-cluster/dlm-lib-3 )
+			>=sys-cluster/dlm-lib-3
 			dev-libs/libxml2
 		)
 	>=dev-libs/glib-2.2.3

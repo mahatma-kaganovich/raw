@@ -19,64 +19,16 @@ app-crypt/qca ssl nss gcrypt
 app-emulation/crossover-bin ssl
 app-emulation/wine ssl
 app-emulation/wine-any:2.0 ssl
-app-emulation/wine-any:2.1 ssl
-app-emulation/wine-any:2.2 ssl
-app-emulation/wine-any:2.3 ssl
-app-emulation/wine-any:2.4 ssl
-app-emulation/wine-any:2.5 ssl
-app-emulation/wine-any:2.6 ssl
-app-emulation/wine-any:2.7 ssl
-app-emulation/wine-any:2.8 ssl
-app-emulation/wine-any:2.9 ssl
-app-emulation/wine-any:2.10 ssl
-app-emulation/wine-any:2.11 ssl
-app-emulation/wine-any:2.12 ssl
-app-emulation/wine-any:2.13 ssl
-app-emulation/wine-any:2.14 ssl
-app-emulation/wine-any:2.15 ssl
-app-emulation/wine-any:2.16 ssl
 app-emulation/wine-any:2.17 ssl
 app-emulation/wine-any:2.18 ssl
 app-emulation/wine-any:2.19 ssl
 app-emulation/wine-any:9999 ssl
 app-emulation/wine-d3d9:2.0 ssl
-app-emulation/wine-d3d9:2.1 ssl
-app-emulation/wine-d3d9:2.2 ssl
-app-emulation/wine-d3d9:2.3 ssl
-app-emulation/wine-d3d9:2.4 ssl
-app-emulation/wine-d3d9:2.5 ssl
-app-emulation/wine-d3d9:2.6 ssl
-app-emulation/wine-d3d9:2.7 ssl
-app-emulation/wine-d3d9:2.8 ssl
-app-emulation/wine-d3d9:2.9 ssl
-app-emulation/wine-d3d9:2.10 ssl
-app-emulation/wine-d3d9:2.11 ssl
-app-emulation/wine-d3d9:2.12 ssl
-app-emulation/wine-d3d9:2.13 ssl
-app-emulation/wine-d3d9:2.14 ssl
-app-emulation/wine-d3d9:2.15 ssl
-app-emulation/wine-d3d9:2.16 ssl
 app-emulation/wine-d3d9:2.17 ssl
 app-emulation/wine-d3d9:2.18 ssl
 app-emulation/wine-d3d9:2.19 ssl
 app-emulation/wine-d3d9:9999 ssl
 app-emulation/wine-staging:2.0 ssl
-app-emulation/wine-staging:2.1 ssl
-app-emulation/wine-staging:2.2 ssl
-app-emulation/wine-staging:2.3 ssl
-app-emulation/wine-staging:2.4 ssl
-app-emulation/wine-staging:2.5 ssl
-app-emulation/wine-staging:2.6 ssl
-app-emulation/wine-staging:2.7 ssl
-app-emulation/wine-staging:2.8 ssl
-app-emulation/wine-staging:2.9 ssl
-app-emulation/wine-staging:2.10 ssl
-app-emulation/wine-staging:2.11 ssl
-app-emulation/wine-staging:2.12 ssl
-app-emulation/wine-staging:2.13 ssl
-app-emulation/wine-staging:2.14 ssl
-app-emulation/wine-staging:2.15 ssl
-app-emulation/wine-staging:2.16 ssl
 app-emulation/wine-staging:2.17 ssl
 app-emulation/wine-staging:2.18 ssl
 app-emulation/wine-staging:2.19 ssl
@@ -85,23 +37,6 @@ app-emulation/wine-vanilla:2.0 ssl
 app-emulation/wine-vanilla:2.0.1 ssl
 app-emulation/wine-vanilla:2.0.2 ssl
 app-emulation/wine-vanilla:2.0.3 ssl
-app-emulation/wine-vanilla:2.1 ssl
-app-emulation/wine-vanilla:2.2 ssl
-app-emulation/wine-vanilla:2.3 ssl
-app-emulation/wine-vanilla:2.4 ssl
-app-emulation/wine-vanilla:2.5 ssl
-app-emulation/wine-vanilla:2.6 ssl
-app-emulation/wine-vanilla:2.7 ssl
-app-emulation/wine-vanilla:2.8 ssl
-app-emulation/wine-vanilla:2.9 ssl
-app-emulation/wine-vanilla:2.10 ssl
-app-emulation/wine-vanilla:2.11 ssl
-app-emulation/wine-vanilla:2.12 ssl
-app-emulation/wine-vanilla:2.13 ssl
-app-emulation/wine-vanilla:2.14 ssl
-app-emulation/wine-vanilla:2.15 ssl
-app-emulation/wine-vanilla:2.16 ssl
-app-emulation/wine-vanilla:2.17 ssl
 app-emulation/wine-vanilla:2.18 ssl
 app-emulation/wine-vanilla:2.19 ssl
 app-emulation/wine-vanilla:2.20 ssl
@@ -154,7 +89,6 @@ mail-filter/spamdyke ssl
 mail-mta/msmtp gnutls ssl
 mail-mta/ssmtp gnutls
 mail-mta/ssmtp ssl gnutls
-media-libs/mesa openssl nettle gcrypt
 media-plugins/vdr-vdrmanager ssl
 media-video/vlc gnutls
 media-video/vlc gnutls gcrypt
@@ -223,6 +157,7 @@ www-misc/zoneminder ssl gnutls gcrypt
 www-servers/hiawatha ssl
 www-servers/uwsgi ssl
 app-admin/collectd python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
+app-admin/syslog-ng python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 app-backup/backintime python_single_target_python3_4 -python_single_target_python3_5
 app-cdr/cdemu python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 app-cdr/gcdemu python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
@@ -247,6 +182,7 @@ app-office/libreoffice-bin python_single_target_python2_7 -python_single_target_
 app-office/unoconv python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 app-portage/elogviewer python_single_target_python2_7 -python_single_target_python3_4
 app-portage/elogviewer python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
+app-portage/unsymlink-lib python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 app-text/asciidoc python_single_target_python2_7
 app-text/gtranslator python_single_target_python3_4 -python_single_target_python3_5
 app-text/pastebinit python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
@@ -333,7 +269,7 @@ media-sound/gnome-music python_single_target_python3_4 -python_single_target_pyt
 media-sound/rhythmbox python_single_target_python3_4 -python_single_target_python3_5
 media-sound/xmms2 python_single_target_python2_7 -python_single_target_python3_4
 media-sound/xmms2 python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
-media-video/openshot:1 python_single_target_python3_4 -python_single_target_python3_5
+media-video/openshot python_single_target_python3_4 -python_single_target_python3_5
 media-video/pitivi python_single_target_python3_4 -python_single_target_python3_5
 media-video/totem python_single_target_python3_4 -python_single_target_python3_5
 net-analyzer/fail2ban python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5

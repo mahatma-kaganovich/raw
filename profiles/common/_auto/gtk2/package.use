@@ -21,7 +21,6 @@ app-emulation/ski gtk
 app-emulation/vice gtk
 app-emulation/virt-manager -gtk
 app-emulation/winetricks -gtk
-app-i18n/fcitx-configtool gtk -gtk3
 app-i18n/ibus gtk2
 app-i18n/ibus-m17n -gtk
 app-i18n/ibus-unikey gtk2
@@ -47,10 +46,8 @@ dev-dotnet/mono-addins gtk
 dev-embedded/gpsim -gtk
 dev-games/openscenegraph gtk
 dev-java/gnu-classpath gtk
-dev-java/icedtea:8 gtk
-dev-java/icedtea:7 gtk
-dev-java/icedtea-bin:8 gtk
-dev-java/icedtea-bin:7 gtk
+dev-java/icedtea gtk
+dev-java/icedtea-bin gtk
 dev-lang/gnu-smalltalk gtk
 dev-libs/gjs -gtk
 dev-libs/libdbusmenu gtk
@@ -83,7 +80,6 @@ games-arcade/xbill gtk
 games-board/gnubg gtk
 games-board/xboard gtk
 games-emulation/fceux -gtk
-games-emulation/mupen64plus gtk
 games-emulation/snes9x gtk
 games-emulation/vbam gtk
 games-fps/eduke32 gtk
