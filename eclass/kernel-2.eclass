@@ -1086,7 +1086,11 @@ native|:native|native:native)
 	[[ "${fpu}" != yes ]] && CF1 MATH_EMULATION
 
 	use acpi && acpi_detect
-	[[ -n "${CF##* -NUMA *}" ]] && CF1 SPARSE_IRQ CPUSETS SLAB
+	if [[ -n "${CF##* -NUMA *}" ]] then
+		CF1 SPARSE_IRQ
+		# use SLAB for NUMA, but with low/middle number of CPUs
+		[[ -n "${CF##* MAXSMP *}" ]] && CPUSETS 'MAXSMP==y;=SLAB' 'MAXSMP=!y;=SLOB' 
+	fi
 
 	case "${vendor_id}" in
 	*Intel*)
