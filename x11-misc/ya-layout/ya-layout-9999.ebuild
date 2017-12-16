@@ -6,7 +6,6 @@ DESCRIPTION="Simple desktop layout"
 LICENSE="*"
 IUSE="+udev libnotify minimal bluetooth wifi +jpeg +tiff svg tint2 alsa"
 DEPEND="tint2? ( x11-misc/tint2 )
-	x11-misc/xkbd
 	>=x11-wm/openbox-3.5.0"
 RDEPEND=" ${DEPEND}
 	udev? ( virtual/udev net-fs/autofs )
@@ -24,6 +23,7 @@ RDEPEND=" ${DEPEND}
 	x11-apps/xfontsel
 	x11-misc/xdg-utils
 	x11-apps/xmodmap
+	>=x11-misc/xkbd-0.8.17
 	!minimal? (
 		!tint2? ( || (
 		x11-misc/pcmanfm
@@ -41,10 +41,7 @@ HOMEPAGE="https://github.com/mahatma-kaganovich/raw"
 src_install(){
 	local i s d="${D}/usr/share/ya-layout"
 	cp -a "$FILESDIR"/* "${D}"/ || die
-#	mkdir -p "$d"/img
-#	cp /usr/share/xkbd/img/*.xpm "$d"/img/
-#	sed -i -e 's:#000000:#3f7f7f:' -e 's:#424242:#1f3f3f:' -e 's:#444444:#3d7d7d:' -e 's:#aaaaaa:#1f3f3f:' -e 's:#888888:#0f1f1f:' "$d"/img/*.xpm
-	rm -Rf `find "${D}" -name ".*"`
+[5~	rm -Rf `find "${D}" -name ".*"`
 	chown root:root "${D}" -Rf
 	chmod 755 "${D}/usr/bin/"* "${D}/usr/share/${PN}"/auto.cifs "${D}"/etc/X11/Sessions/*
 	dosym 'cifs/*' /mnt/auto/smb
