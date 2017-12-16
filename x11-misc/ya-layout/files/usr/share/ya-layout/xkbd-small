@@ -122,36 +122,22 @@ repeat_delay 50
 		default_ks BackSpace
 	</key>
 	<key>
-		default_ks Print
-		width 6
-	</key>
-	<key>
-		default SclLk
-		default_ks Scroll_Lock
-		width 6
-	</key>
-	<key>
-		default_ks Pause
-		width 6
-	</key>
-	<key>
 		default_ks Insert
-		width 6
 	</key>
 	<key>
 		default_ks Delete
-		width 6
+		mod SclLk
+		mod_ks Scroll_Lock
 	</key>
 	<key>
 		default_ks Home
-		width 6
+		mod_ks Print
 	</key>
 	<key>
 		default End
 		default_ks End
-		shift Begin
 		shift_ks Begin
-		width 6
+		mod_ks Pause
 	</key>
 </row>
 
