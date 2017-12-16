@@ -33,7 +33,9 @@ kp_col 0:31:31
 
 # button style, can be rounded ( default ), square or plain
 # button_style plain
-repeat_delay 50
+#repeat_delay 50
+# 0 disable repeat & improve events
+repeat_time 0
 
 </global>
 
