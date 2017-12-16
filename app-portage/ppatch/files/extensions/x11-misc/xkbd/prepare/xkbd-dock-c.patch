@@ -1,15 +1,6 @@
-diff -pruN a/src/xkbd.c d/src/xkbd.c
 --- a/src/xkbd.c	2017-12-16 02:51:21.355040272 +0300
-+++ d/src/xkbd.c	2017-12-16 03:53:52.855841242 +0300
-@@ -141,6 +141,7 @@ void usage(void)
-    printf("  -k  <keybaord file> Select the keyboard definition file\n");
-    printf("                      other than" DEFAULTCONFIG "\n");
-    printf("  -xid used for gtk embedding   \n");
-+   printf("  -c dock (openbox, etc)\n");
-    printf("  -v  version\n");
-    printf("  -h  this help\n\n");
- }
-@@ -183,6 +184,7 @@ int main(int argc, char **argv)
++++ b/src/xkbd.c	2017-12-16 03:46:52.737502848 +0300
+@@ -183,6 +183,7 @@ int main(int argc, char **argv)
     char *font_name = NULL;
     int cmd_xft_selected = 0; /* ugly ! */
     int embed = 0;
@@ -17,7 +8,7 @@ diff -pruN a/src/xkbd.c d/src/xkbd.c
     Bool use_normal_win = False;
     
     XEvent an_event;
-@@ -226,6 +228,9 @@ int main(int argc, char **argv)
+@@ -226,6 +227,9 @@ int main(int argc, char **argv)
  	    case 'x' :
  	       embed = 1;
  	       break;
@@ -27,7 +18,7 @@ diff -pruN a/src/xkbd.c d/src/xkbd.c
  	    case 'n' :
  	       use_normal_win = True;
  	       break;
-@@ -370,6 +375,11 @@ int main(int argc, char **argv)
+@@ -370,6 +374,11 @@ int main(int argc, char **argv)
        wm_hints = XAllocWMHints();
        wm_hints->input = False;
        wm_hints->flags = InputHint;
