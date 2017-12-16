@@ -203,7 +203,6 @@ repeat_delay 50
 	<key>
 		default Shift
 		default_ks Shift_L
-		mod_ks Shift_R
 		width 14
 	</key>
 	<key>default_ks z</key>
@@ -224,8 +223,8 @@ repeat_delay 50
 		bg 0:31:31
 	</key>
 	<key>
-		default Enter
-		default_ks Return
+		default Shift
+		default_ks Shift_R
 	</key>
 </row>
 
@@ -233,7 +232,6 @@ repeat_delay 50
 	<key>
 		default Ctrl
 		default_ks Control_L
-		mod_ks Control_R
 	</key>
 	<key>
 		default Fn
@@ -248,7 +246,6 @@ repeat_delay 50
 	<key>
 		default Alt
 		default_ks Alt_L
-		mod_ks Alt_R
 	</key>
 	<key>
 		default i18l
@@ -256,7 +253,11 @@ repeat_delay 50
 	</key>
 	<key>
 		default_ks space
-		width 28
+		width 14
+	</key>
+	<key>
+		default Alt
+		default_ks Alt_R
 	</key>
 	<key>
 		default Super
@@ -267,6 +268,10 @@ repeat_delay 50
 	<key>
 		default Menu
 		default_ks Menu
+	</key>
+	<key>
+		default Ctrl
+		default_ks Control_R
 	</key>
 	<key>
 		default ←
