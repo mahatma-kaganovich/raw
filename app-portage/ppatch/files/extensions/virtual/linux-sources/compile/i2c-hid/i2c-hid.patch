@@ -65,7 +65,7 @@ in kernel - I will think more.
 +	 * strict behaviour & delay.
 +	 */
 +	mutex_lock(&ihid->reset_lock);
-+	ret=__i2c_hid_set_power(client,power_state);
++	ret=__i2c_hid_set_power(client, power_state);
 +	mutex_unlock(&ihid->reset_lock);
  	return ret;
  }
