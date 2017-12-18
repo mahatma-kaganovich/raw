@@ -1,10 +1,12 @@
+v3 (v2 lock uninitializied mutex, but v1 sent to vger is good)
+
 Similar patch I send to vger, but there added serialization of
 regulator_enable() too. Personally I have no ("dummy") regulator and think
 about it later, but as soon main (i2c) part will be included (or rejected)
 in kernel - I will think more.
 
 --- a/drivers/hid/i2c-hid/i2c-hid.c	2017-12-17 15:13:10.089624753 +0300
-+++ b/drivers/hid/i2c-hid/i2c-hid.c	2017-12-18 02:39:50.677588022 +0300
++++ b/drivers/hid/i2c-hid/i2c-hid.c	2017-12-18 03:08:05.720892749 +0300
 @@ -60,6 +60,12 @@ static bool debug;
  module_param(debug, bool, 0444);
  MODULE_PARM_DESC(debug, "print a lot of debug information");
@@ -13,7 +15,7 @@ in kernel - I will think more.
 +/* for some of strange devices or i2c like WCOM5020 even 1000 is enough */
 +static int post_power_delay_ms_default;
 +module_param(post_power_delay_ms_default, int, 0444);
-+MODULE_PARM_DESC(post_power_delay_ms_default, "default post power-on delay, ms");
++MODULE_PARM_DESC(post_power_delay_ms_default, "default post power-on delay");
 +
  #define i2c_hid_dbg(ihid, fmt, arg...)					  \
  do {									  \
@@ -63,7 +65,7 @@ in kernel - I will think more.
 +	 * strict behaviour & delay.
 +	 */
 +	mutex_lock(&ihid->reset_lock);
-+	ret=__i2c_hid_set_power(client, power_state);
++	ret=__i2c_hid_set_power(client,power_state);
 +	mutex_unlock(&ihid->reset_lock);
  	return ret;
  }
@@ -96,28 +98,7 @@ in kernel - I will think more.
  	}
  
  out_unlock:
-@@ -951,6 +983,20 @@ static inline int i2c_hid_of_probe(struc
- }
- #endif
- 
-+static int i2c_hid_regulator_enable(struct i2c_hid *ihid, struct i2c_client *client)
-+{
-+	int ret;
-+
-+	mutex_lock(&ihid->reset_lock);
-+	ret = regulator_enable(ihid->pdata.supply);
-+	if (ret < 0)
-+		dev_err(&client->dev, "Failed to enable supply: %d\n", ret);
-+	else
-+		i2c_hid_power_delay(ihid);
-+	mutex_unlock(&ihid->reset_lock);
-+	return ret;
-+}
-+
- static int i2c_hid_probe(struct i2c_client *client,
- 			 const struct i2c_device_id *dev_id)
- {
-@@ -979,6 +1025,8 @@ static int i2c_hid_probe(struct i2c_clie
+@@ -979,6 +1011,8 @@ static int i2c_hid_probe(struct i2c_clie
  	if (!ihid)
  		return -ENOMEM;
  
@@ -126,33 +107,28 @@ in kernel - I will think more.
  	if (client->dev.of_node) {
  		ret = i2c_hid_of_probe(client, &ihid->pdata);
  		if (ret)
-@@ -1003,14 +1051,9 @@ static int i2c_hid_probe(struct i2c_clie
+@@ -1009,8 +1043,7 @@ static int i2c_hid_probe(struct i2c_clie
+ 			ret);
  		goto err;
  	}
- 
--	ret = regulator_enable(ihid->pdata.supply);
--	if (ret < 0) {
--		dev_err(&client->dev, "Failed to enable regulator: %d\n",
--			ret);
-+	ret = i2c_hid_regulator_enable(ihid, client);
-+	if (ret < 0)
- 		goto err;
--	}
 -	if (ihid->pdata.post_power_delay_ms)
 -		msleep(ihid->pdata.post_power_delay_ms);
++	i2c_hid_power_delay(ihid);
  
  	i2c_set_clientdata(client, ihid);
  
-@@ -1183,11 +1226,7 @@ static int i2c_hid_resume(struct device
+@@ -1183,11 +1216,12 @@ static int i2c_hid_resume(struct device
  	int wake_status;
  
  	if (!device_may_wakeup(&client->dev)) {
--		ret = regulator_enable(ihid->pdata.supply);
--		if (ret < 0)
--			hid_warn(hid, "Failed to enable supply: %d\n", ret);
++		mutex_lock(&ihid->reset_lock);
+ 		ret = regulator_enable(ihid->pdata.supply);
+ 		if (ret < 0)
+ 			hid_warn(hid, "Failed to enable supply: %d\n", ret);
 -		if (ihid->pdata.post_power_delay_ms)
 -			msleep(ihid->pdata.post_power_delay_ms);
-+		ret = i2c_hid_regulator_enable(ihid, client);
++		i2c_hid_power_delay(ihid);
++		mutex_unlock(&ihid->reset_lock);
  	} else if (ihid->irq_wake_enabled) {
  		wake_status = disable_irq_wake(client->irq);
  		if (!wake_status)
