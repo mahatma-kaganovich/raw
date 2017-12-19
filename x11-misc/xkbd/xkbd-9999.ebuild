@@ -1,15 +1,25 @@
-# Copyright 1999-2017 Gentoo Foundation
+ # Copyright 1999-2017 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=6
 
+if [[ "$PV" == 9999* ]]; then
+	git=git-r3
+	EGIT_REPO_URI="https://github.com/mahatma-kaganovich/$PN.git"
+else
+	git=
+	SRC_URI="https://github.com/mahatma-kaganovich/$PN/archive/$PN-$PV.tar.gz"
+	S="$WORKDIR/$PN-$PN-$PV"
+fi
+KEYWORDS="amd64 ~arm ~ppc x86"
+
+inherit autotools $git
+
 DESCRIPTION="onscreen soft keyboard for X11"
 HOMEPAGE="https://github.com/mahatma-kaganovich/xkbd"
-SRC_URI="https://github.com/mahatma-kaganovich/xkbd/archive/xkbd-0.8.17.tar.gz"
 
 LICENSE="GPL-2"
 SLOT="0"
-KEYWORDS="amd64 ~arm ~ppc x86"
 IUSE="debug xpm"
 
 RDEPEND="x11-libs/libXrender
@@ -28,12 +38,10 @@ RDEPEND="${RDEPEND}
 	x11-apps/xmodmap"
 
 DOCS=( AUTHORS )
-S="$WORKDIR/$PN-$PN-$PV"
 
 src_prepare(){
 	default
-	# postfixed
-	sed -i -e "s:/ya/:/:" "$S"/data/xkbd-onoff
+	eautoreconf
 }
 
 src_configure() {
