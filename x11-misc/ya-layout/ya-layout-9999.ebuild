@@ -41,7 +41,7 @@ HOMEPAGE="https://github.com/mahatma-kaganovich/raw"
 src_install(){
 	local i s d="${D}/usr/share/ya-layout"
 	cp -a "$FILESDIR"/* "${D}"/ || die
-[5~	rm -Rf `find "${D}" -name ".*"`
+	rm -Rf `find "${D}" -name ".*"`
 	chown root:root "${D}" -Rf
 	chmod 755 "${D}/usr/bin/"* "${D}/usr/share/${PN}"/auto.cifs "${D}"/etc/X11/Sessions/*
 	dosym 'cifs/*' /mnt/auto/smb
