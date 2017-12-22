@@ -37,6 +37,7 @@ MULTILIB_WRAPPED_HEADERS=(
 # sys-apps/attr is an automagic dependency (see bug #489748)
 # libaio probably not required more. 2check
 CDEPEND="
+	|| ( net-libs/rpcsvc-proto <sys-libs/glibc-2.26 )
 	>=app-arch/libarchive-3.1.2[${MULTILIB_USEDEP}]
 	dev-lang/perl:=
 	dev-libs/libaio[${MULTILIB_USEDEP}]
