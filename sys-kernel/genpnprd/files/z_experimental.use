@@ -2,4 +2,5 @@
 # my patch (in ppatch package) still experimental too...
 # but respect OLPC (at least).
 KERNEL_CONFIG+="X86==y;OF"
+KERNEL_CONFIG+="+SPI_INTEL_SPI_PLATFORM"
 KERNEL_CONFIG2+=" X86==y;?OF"
