@@ -59,8 +59,4 @@ src_install(){
 	dodir "$s/examples"
 	dosym "../usr/share/$PN/xkbd-small.conf" /etc/xkbd-config.conf
 	mv "$D/$s"/*.xkbd "$D/$s/examples"
-	for i in "$D/$s/$PN-"{config,onoff}; do
-		dobin "$i"
-		unlink "$i"
-	done
 }
