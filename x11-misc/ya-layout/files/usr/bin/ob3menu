@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # (c) Denis Kaganovich, Anarchy or GPLv2
-# OpenBox3 pipe menu v0.15
+# OpenBox3 pipe menu v0.16
 # ob3menu {--<command> {params}}
 # 	--slow [<path/to/rc.xml> [XxY]]
 #	--autostart {profile}
@@ -13,6 +13,7 @@
 #	--dock
 #	--multiserver
 #	--svg
+#	--low
 #	--theme {theme}
 # "--slow" - +keybinds, 3.5.0+ menu icons, better with cache.
 #
@@ -125,6 +126,11 @@ sub icons{
 	opendir(my $D,$_[0])||return;
 	my @d=readdir($D);
 	closedir($D);
+	my $l=$_[2]+1;
+	if($l<4){
+		@d=sort{length($a)<=>length($b) || $a cmp $b} @d;
+		@d=reverse @d if(exists($P{'low'}));
+	}
 	if($_[1]){
 	for(@d){
 		my $p=$_[0].$_;
@@ -132,7 +138,7 @@ sub icons{
 			$ico1{$_}=$p;
 			$ico1{$i}=$p if(!exists($noico{$j}));
 		}elsif(!($_=~/^\.*$/)){
-			icons("$p/",1);
+			icons("$p/",1,$l);
 		}
 	}
 	}else{
@@ -142,7 +148,7 @@ sub icons{
 			$ico{$_}=$p;
 			$ico{$i}=$p if(!exists($noico{$j}));
 		}elsif(!($_=~/^\.*$/)){
-			icons("$p/",$_=~/$THEME/);
+			icons("$p/",$_=~/$THEME/,$l);
 		}
 	}
 	}
@@ -728,11 +734,11 @@ NOGEO:
 		# for top-left & !composite & !svg cmd use feh, else - ImageMagick
 		# todo: since openbox support svg, think about un-feh. bud feh still thin
 		if(!@m){
-			@m=($bin.'feh','-m','-W',$X,'-H',$Y,'-y',0,'-E',0,$wp[0],'-b',$wp[0],'-O') if($wp[0]);
+			@m=($bin.'feh','-m','-s','-W',$X,'-H',$Y,'-y',0,'-E',0,$wp[0],'-b',$wp[0],'-O') if($wp[0]);
 		}elsif(!$spliceX && !$spliceY && $yy==1 && ($#wp<1||$wp[1] eq '-a') && ! grep(/\.svg$/,@m)){
 #			$wp[0]||='trans'; # artefacts
 			@wp && unshift(@wp,'-b');
-			@m=($bin.'feh','-m','-W',$X,'-H',$Y,'-y',$x,'-E',$y,@m,@wp,'-O');
+			@m=($bin.'feh','-m','-s','-W',$X,'-H',$Y,'-y',$x,'-E',$y,@m,@wp,'-O');
 		}else{
 			my $f='miff:-';
 			if(@wp){
