@@ -13,7 +13,7 @@
 #	--dock
 #	--multiserver
 #	--svg
-#	--low
+#	--low  [{unwanted} [+ {preferred}]]
 #	--theme {theme}
 # "--slow" - +keybinds, 3.5.0+ menu icons, better with cache.
 #
@@ -128,8 +128,11 @@ sub icons{
 	closedir($D);
 	my $l=$_[2]+1;
 	if($l<4){
-		@d=sort{length($a)<=>length($b) || $a cmp $b} @d;
-		@d=reverse @d if(exists($P{'low'}));
+		@d=$low?%low?
+			sort{$low{$b}<=>$low{$a} || length($b)<=>length($a) || $b cmp $a} @d:
+			sort{length($b)<=>length($a) || $b cmp $a} @d:
+			sort{length($a)<=>length($b) || $a cmp $b} @d;
+
 	}
 	if($_[1]){
 	for(@d){
@@ -386,6 +389,17 @@ if(exists($P{slow})){
 		}else{
 			delete($prefico{$_});
 		}
+	}
+	if($low=exists($P{'low'})){
+		my ($i,$s)=($#ARGV,-1);
+		for(@{$P{'low'}}){
+			if($_ eq '+'){
+				($i,$s)=(-$#ARGV,1);
+			}else{
+				$low{$_}=$i+=$s;
+			}
+		my $i;
+		$low{$_}=++$i for(reverse @{$P{'low'}});
 	}
 	icons('/usr/share/icons/');
 	icons('/usr/share/pixmaps/');
