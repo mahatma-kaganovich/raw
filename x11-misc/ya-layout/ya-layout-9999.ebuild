@@ -4,7 +4,7 @@ inherit eutils
 SLOT=0
 DESCRIPTION="Simple desktop layout"
 LICENSE="*"
-IUSE="+udev libnotify minimal bluetooth wifi +jpeg +tiff svg tint2 alsa"
+IUSE="+udev libnotify minimal bluetooth wifi +jpeg +tiff svg tint2 alsa laptop"
 DEPEND="tint2? ( x11-misc/tint2 )
 	>=x11-wm/openbox-3.5.0"
 RDEPEND=" ${DEPEND}
@@ -23,7 +23,10 @@ RDEPEND=" ${DEPEND}
 	x11-apps/xfontsel
 	x11-misc/xdg-utils
 	x11-apps/xmodmap
-	>=x11-misc/xkbd-0.8.17
+	laptop? (
+		>=x11-misc/xkbd-0.8.17
+		tint2? ( x11-misc/tint2[battery] )
+	)
 	!minimal? (
 		!tint2? ( || (
 		x11-misc/pcmanfm
@@ -91,6 +94,7 @@ and, possible, restart [udev]"
 	ewarn "remove XTerm.*background & XTerm.*foreground from .Xresources and use XTerm.*.reverseVideo instead"
 	dodir /var/lib/ya
 	touch "$D"/var/lib/ya/menu.xml
+	use laptop && sed -i -e 's:--slow:--low 8x8 16x16 + HighContrast locolor Adwaita --slow:' "$D"/etc/xdg/ya/menu.xml
 	for i in "${D}"/etc/xdg/ya/*.patch; do
 		patch -Ntp1 -i "$i"  -d "$D"
 	done
