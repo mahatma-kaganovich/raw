@@ -155,7 +155,7 @@ ceph)_isflag '-floop-*' '-fgraphite*' && { # prefer graphite vs. lto
 ;;&
 glibc)gccve 6. && appendflag -fno-tree-slp-vectorize;;&
 glibc)gccve 6. || filterflag -ftracer;;&
-glibc)filterflag -Ofast -ffast-math -fopenmp -fopenmp-simd;;&
+glibc)filterflag -Ofast -ffast-math -fopenmp -fopenmp-simd '-*parallelize*';;&
 sqlite|postgresql*|goffice|db|protobuf|qtwebkit|qtwebengine|webkit-gtk|python|guile|chromium|rrdtool)filterflag -Ofast -ffast-math;;&
 fontforge)filterflag -Ofast;;
 mit-krb5|ceph)export CFLAGS="${CFLAGS//-Os/-O2}";export CXXFLAGS="${CXXFLAGS//-Os/-O2}";;
