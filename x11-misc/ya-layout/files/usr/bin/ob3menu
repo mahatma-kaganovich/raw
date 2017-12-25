@@ -398,8 +398,7 @@ if(exists($P{slow})){
 			}else{
 				$low{$_}=$i+=$s;
 			}
-		my $i;
-		$low{$_}=++$i for(reverse @{$P{'low'}});
+		}
 	}
 	icons('/usr/share/icons/');
 	icons('/usr/share/pixmaps/');
