@@ -202,6 +202,7 @@ kernel-2_src_configure() {
 	kconfig_init
 	cd "${S}"
 	cpu2K
+	filter-flags '-fopenmp*' '-*parallelize*'
 	: ${KERNEL_UTILS_CFLAGS:="${CFLAGS}"}
 
 	# ???
@@ -222,7 +223,7 @@ kernel-2_src_configure() {
 #			test_cc $i && cflags+=" $i"
 #		done
 		[[ "$(gcc-version)" == 4.8 ]] && append-flags -fno-inline-functions
-		cflags="$(flags_nosp "$(_filter_f CFLAGS "-msse*" -mmmx -m3dnow -mavx "-mfpmath=*" '-flto*' '-*-lto-*' -fuse-linker-plugin '-fopenmp*' '-*parallelize*') ${cflags}")" #"
+		cflags="$(flags_nosp "$(_filter_f CFLAGS "-msse*" -mmmx -m3dnow -mavx "-mfpmath=*" '-flto*' '-*-lto-*' -fuse-linker-plugin) ${cflags}")" #"
 
 		# dedup
 		local i="$cflags"
