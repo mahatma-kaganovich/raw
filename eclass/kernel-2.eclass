@@ -1470,6 +1470,7 @@ kernel-2_pkg_prerm() {
 }
 
 kernel-2_pkg_setup() {
+	check_kv
 	# once apon a time portage starts to check RO before pkg_prerm
 	_umount
 	_saved_pkg_setup

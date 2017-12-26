@@ -23,5 +23,5 @@ KEYWORDS="~alpha ~amd64 ~arm ~hppa ~ia64 ~mips ~ppc ~ppc64 ~s390 ~sh ~sparc ~x86
 #IUSE="deblob"
 
 pkg_setup(){
-    true
+	kernel-2_pkg_setup
 }
