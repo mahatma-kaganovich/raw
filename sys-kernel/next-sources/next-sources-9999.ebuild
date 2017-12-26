@@ -11,6 +11,7 @@ ETYPE="sources"
 #KV_PATCH=0
 KV="" # autodetect by overlayed kernel-2.eclass
 inherit kernel-2 git-r3
+#inherit kernel-2 git-2
 #detect_version
 
 n="${PN%%-*}"
@@ -22,6 +23,3 @@ EGIT_REPO_URI+=" ${EGIT_REPO_URI/https:/git:}"
 KEYWORDS="~alpha ~amd64 ~arm ~hppa ~ia64 ~mips ~ppc ~ppc64 ~s390 ~sh ~sparc ~x86"
 #IUSE="deblob"
 
-pkg_setup(){
-	kernel-2_pkg_setup
-}
