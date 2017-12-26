@@ -244,7 +244,7 @@ sub set_config{
 	$s=~s/\n(?:# )?CONFIG_(?:$x)(?:=[^\n]*| is not set)//gs;
 	# de-randomized:
 	for(sort{$order{$a} && $order{$b} ? $order{$a}<=>$order{$b} : $order1{$a} && $order1{$b} ? $order1{$a}<=>$order1{$b} : $a cmp $b}keys %config){
-		my $y=$config{$_};
+		defined(my $y=$config{$_})||next;
 		$_=~/^["'_]/ && next; #"
 #		next if(defined($oldconfig{$_}) && $oldconfig{$_} eq $y);
 		$y=$y ne ''?"CONFIG_$_=$y":"# CONFIG_$_ is not set";
@@ -436,14 +436,7 @@ sub _and{
 			_and($_,@_[1,2]) for(split(/[ )(]/,$_));
 		}
 	}
-#	my @s;
-#	for(@{$select{$_[0]}}){
-#		my $i=$_;
-#		$i=~s/.*://;
-#		return if($config{$i} eq 'y');
-#		push @s,$i;
-#	}
-#	_and($_,@_[1,2]) for(@s);
+	# $select{$_[0]) may be checked only for auto-selectable choises (not for human)
 }
 
 sub onoff{
