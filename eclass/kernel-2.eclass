@@ -1522,6 +1522,10 @@ kernel-2_pkg_preinst() {
 						einfo " # efibootmgr -c -d "${p%$i}" -p $i -l $l -L vmlinuz-${SLOT}-nord -u '$r'"
 					}
 				fi
+			else
+				# make static bootloaders happy too
+				einfo "Renaming to slot *"
+				rename -- "-${REAL_KV}" "-${SLOT}" "${D}"/boot/{vmlinuz,initrd}*
 			fi
 		fi
 	fi
