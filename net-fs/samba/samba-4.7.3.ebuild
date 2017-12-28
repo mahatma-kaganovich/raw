@@ -139,7 +139,7 @@ src_prepare() {
 	default
 
 	local i
-	for i in "${FILESDIR}/${PN}-${PV}-"*; do
+	for i in "${FILESDIR}/${PN}-${PV}"-*.patch; do
 		[ -e "$i" ] && epatch "$i"
 	done
 
