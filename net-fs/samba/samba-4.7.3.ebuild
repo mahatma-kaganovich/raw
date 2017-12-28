@@ -138,6 +138,11 @@ pkg_setup() {
 src_prepare() {
 	default
 
+	local i
+	for i in "${FILESDIR}/${PN}-${PV}-*"; do
+		[ -e "$i" ] && epatch "$i"
+	done
+
 	use sasl || sed -i -e 's:HAVE_SASL:HAVE_SASL_:' source4/auth/wscript_configure
 	sed -i -e 's:/tmp/ctdb.socket:/run/ctdb/ctdb.socket:g' {ctdb/doc,docs-xml/smbdotconf/misc}/*ml
 
