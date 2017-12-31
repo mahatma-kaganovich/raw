@@ -82,6 +82,7 @@ gnustep-base/gnustep-base ssl gnutls
 gnustep-base/gnustep-base gnutls
 gnustep-libs/sope ssl gnutls
 mail-client/claws-mail gnutls
+mail-client/mutt ssl gnutls
 mail-filter/anubis gnutls
 mail-filter/mailfilter ssl
 mail-filter/opendkim ssl gnutls
@@ -212,7 +213,6 @@ dev-games/vamos python_single_target_python3_4 -python_single_target_python3_5
 dev-libs/boost-numpy python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 dev-libs/gobject-introspection python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 dev-libs/libarcus python_single_target_python3_4 -python_single_target_python3_5
-dev-libs/libbytesize python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 dev-libs/libcec python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 dev-libs/libixion python_single_target_python3_4 -python_single_target_python3_5
 dev-libs/liborcus python_single_target_python3_4 -python_single_target_python3_5
@@ -223,6 +223,7 @@ dev-python/PythonQt python_single_target_python2_7 -python_single_target_python3
 dev-python/brython:3.3.2-r1 python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 dev-python/brython:3.3.3 python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 dev-python/pyotherside python_single_target_python3_4 -python_single_target_python3_5
+dev-python/thunarx-python python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 dev-python/uranium python_single_target_python3_4 -python_single_target_python3_5
 dev-ruby/rbst python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 dev-tcltk/tclpython python_single_target_python2_7 -python_single_target_python3_4
@@ -253,6 +254,7 @@ kde-apps/kajongg python_single_target_python3_5
 kde-apps/lokalize python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 kde-frameworks/ki18n python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 mail-filter/afew python_single_target_python3_4 -python_single_target_python3_5
+media-gfx/blender python_single_target_python3_5
 media-gfx/cura python_single_target_python3_4 -python_single_target_python3_5
 media-gfx/eog-plugins python_single_target_python3_4 -python_single_target_python3_5
 media-gfx/fontforge python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
@@ -267,6 +269,7 @@ media-libs/openimageio python_single_target_python2_7 -python_single_target_pyth
 media-libs/partio python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 media-sound/gnome-music python_single_target_python3_4 -python_single_target_python3_5
 media-sound/rhythmbox python_single_target_python3_4 -python_single_target_python3_5
+media-sound/soundconverter python_single_target_python3_4 -python_single_target_python3_5
 media-sound/xmms2 python_single_target_python2_7 -python_single_target_python3_4
 media-sound/xmms2 python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 media-video/openshot python_single_target_python3_4 -python_single_target_python3_5
@@ -300,6 +303,7 @@ sci-mathematics/relational python_single_target_python3_4 -python_single_target_
 sci-misc/mendeleydesktop python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 sci-misc/vitables python_single_target_python2_7
 sci-physics/espresso python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
+sci-physics/root:6.12 python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 sys-apps/fwupd python_single_target_python3_4 -python_single_target_python3_5
 sys-apps/pcsc-lite python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 sys-apps/razercfg python_single_target_python3_4 -python_single_target_python3_5
@@ -308,6 +312,7 @@ sys-auth/sssd python_single_target_python2_7 -python_single_target_python3_4
 sys-cluster/singularity python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 sys-devel/gdb python_single_target_python2_7 -python_single_target_python3_4
 sys-devel/gdb python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
+sys-fs/cryptsetup python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 sys-kernel/bliss-initramfs python_single_target_python3_4 -python_single_target_python3_5
 sys-libs/libblockdev python_single_target_python3_4 -python_single_target_python3_5
 sys-process/systemd-cron python_single_target_python3_4

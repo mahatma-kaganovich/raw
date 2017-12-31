@@ -1,4 +1,3 @@
-app-crypt/pinentry -qt4 qt5
 app-office/libreoffice -qt4 # -kde
 app-office/lyx -qt4 qt5
 net-p2p/bitcoin-qt -qt4 qt5

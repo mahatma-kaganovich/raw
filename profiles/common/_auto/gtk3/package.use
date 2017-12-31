@@ -121,6 +121,7 @@ media-libs/opencv -gtk
 media-libs/suil -gtk
 media-libs/xine-lib gtk
 media-plugins/audacious-plugins -gtk
+media-plugins/calf -gtk
 media-plugins/hexter -gtk
 media-plugins/libvisual-plugins -gtk
 media-plugins/npapi-vlc -gtk
@@ -217,7 +218,7 @@ www-client/netsurf -gtk
 www-client/opera -gtk
 www-client/w3m -gtk
 x11-apps/fusion-icon gtk
-x11-apps/xinput_calibrator gtk
+x11-apps/xinput_calibrator -gtk
 x11-libs/c++-gtk-utils:3 gtk
 x11-libs/c++-gtk-utils:0 gtk
 x11-libs/gtkmathview -gtk

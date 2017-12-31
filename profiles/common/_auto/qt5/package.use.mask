@@ -1,4 +1,3 @@
-app-crypt/pinentry -qt5 qt4
 app-i18n/ibus -kde -gtk
 app-office/lyx -qt5 qt4
 games-emulation/ppsspp -qt5 sdl

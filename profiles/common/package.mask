@@ -7,3 +7,5 @@ sys-apps/systemd
 =sys-devel/gcc-6.1*
 =sys-devel/gcc-6.2*
 <dev-libs/isl-0.18
+# keep minimal 2.4
+>=dev-lang/ruby-2.5
