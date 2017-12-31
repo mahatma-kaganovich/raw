@@ -83,6 +83,7 @@ sci-libs/silo silex qt4
 sci-libs/ViSP opencv
 sys-cluster/hpx -jemalloc
 x11-wm/xpra dec_av2
+x11-base/xorg-drivers -video_cards_i915 -video_cards_virtualbox
 # try to avoid [qml] globally (IMHO hole)
 # dev-qt/qtwebengine
 dev-qt/qtwebchannel qml

@@ -1,3 +1,3 @@
-USE="pcmcia dvb ieee1394 fbcon laptop soc tslib battery hid geolocation orientation stroke"
+USE="pcmcia dvb ieee1394 fbcon laptop soc tslib battery hid geolocation orientation stroke input_devices_synaptics"
 USE="$USE bluetooth pulseaudio dbus"
 LCD_DEVICES="*"
