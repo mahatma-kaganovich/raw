@@ -1434,6 +1434,7 @@ kernel-2_src_prepare(){
 		sed -i -e "s/\(KBUILD_AFLAGS += -m64\)$/\1$i/" arch/x86/Makefile*
 	fi
 #	echo "CFLAGS_mdesc.o += -Wno-error=maybe-uninitialized" >>arch/sparc/kernel/Makefile
+	chmod 770 tools/objtool/sync-check.sh
 	# pnp
 #	use paranoid && return
 	use pnp || return
