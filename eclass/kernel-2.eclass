@@ -28,7 +28,7 @@ if [[ ${ETYPE} == sources ]]; then
 IUSE="${IUSE} +build-kernel custom-cflags +pnp +compressed integrated
 	netboot custom-arch embed-hardware
 	kernel-firmware +sources pnponly lzma xz lzo lz4
-	external-firmware xen +smp kernel-tools +multitarget 64-bit-bfd thin
+	external-firmware xen +smp kernel-tools multitarget 64-bit-bfd thin
 	lvm evms device-mapper unionfs luks gpg iscsi e2fsprogs mdadm btrfs +keymap
 	lguest acpi klibc +genkernel monolythe update-boot uml paranoid"
 DEPEND="${DEPEND}
