@@ -1017,11 +1017,11 @@ native|:native|native:native)
 	[ "$ncpus_probed:$ncpus_active" = 1:1 ] && CF1 -SMP
     ;;
     *)
-#    x86|i386)
+#    x86|i386|x86_64)
 	export PNP_VENDOR=""
 	CF1 -SCHED_{SMT,MC} -X86_{UP_APIC,TSC,PAT,MSR,MCE,CMOV,X2APIC} -MTRR -INTEL_IDLE -KVM_INTEL -KVM_AMD -SPARSE_IRQ -CPUSETS -INTEL_TXT -$knl -INTEL_RDT_?A?
 	case "$srcarch" in
-	x86|i386)
+	x86|i386|x86_64)
 		if use multitarget || use 64-bit-bfd; then
 			CF1 -64BIT
 			[ "$KERNEL_ARCH" = x86_64 ] && CF1 64BIT
