@@ -1128,7 +1128,7 @@ native|:native|native:native)
 		local amf=
 		[ "$cpu_family" -ge 21 ] && amf="{,_fam$(printf '%02x' ${cpu_family}})h"
 		ucode "amd-ucode/microcode_amd${amf}.bin" $vendor_id
-		CF1 -X86_AMD_PLATFORM_DEVICE
+		CF1 -X86_AMD_PLATFORM_DEVICE -PAGE_TABLE_ISOLATION
 		case "${cpu_family}:${model}:${flags}:${model_name}" in
 		4:[3789]:*)CF1 M486;;
 		4:*\ mmx\ *)CF1 M586MMX;;
