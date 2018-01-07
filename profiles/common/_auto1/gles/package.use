@@ -1,0 +1,10 @@
+dev-games/ogre gles2 -opengl
+dev-libs/weston gles2
+kde-plasma/kinfocenter gles2 -opengl
+media-libs/cogl gles2 -opengl
+media-libs/gst-plugins-bad:1.0 gles2 -opengl
+media-libs/mesa gles2 gles1
+media-tv/kodi gles -opengl
+net-libs/webkit-gtk:3 gles2 -opengl
+net-libs/webkit-gtk:2 gles2 -opengl
+net-libs/webkit-gtk:4 gles2 -opengl

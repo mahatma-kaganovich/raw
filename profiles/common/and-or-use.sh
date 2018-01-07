@@ -10,6 +10,9 @@ d=`pwd`
 export LANG=C
 list="${@:-*/*}"
 
+#cache=metadata/md5-cache
+cache=/var/cache/edb/dep/usr/portage
+
 pkg(){
 	local p="$PCN" x
 #	while [[ "$p" == */*-* ]] && [ ! -e "/usr/portage/$p" ]; do
@@ -306,7 +309,7 @@ local x=0 or1= or2= or3= or= d="$d/_auto/${1#+}"
 shift
 mkdir -p "$d"
 [ -e "$d/eapi" ] || echo 5 >>"$d/eapi"
-cd "$d" && cd /usr/portage/metadata/md5-cache || return 1
+cd "$d" && cd "$cache" || return 1
 v=${6#+}
 [ "$v" = "$6" ] && prob=0 || prob=1
 x='\|'

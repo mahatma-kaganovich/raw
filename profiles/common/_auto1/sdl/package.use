@@ -1,0 +1,5 @@
+app-emulation/vice sdl
+games-emulation/ppsspp sdl
+games-strategy/freeciv sdl
+media-video/vlc sdl
+net-wireless/gnuradio sdl
