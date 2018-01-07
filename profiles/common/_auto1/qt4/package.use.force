@@ -1,4 +1,0 @@
-app-office/libreoffice qt4 -
-app-office/lyx -qt5
-net-p2p/bitcoin-qt qt4 -qt5
-x11-libs/qwtpolar qt4 -qt5
