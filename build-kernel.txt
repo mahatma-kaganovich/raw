@@ -21,8 +21,8 @@ Say "emerge -pv gentoo-sources" and look for "pnp" useflag. Without
 bug flag must be visible.
 
 Workaround:
-1. Add PORTAGE_RSYNC_EXTRA_OPTS="--exclude=/metadata/cache" in make.conf;
-2. say "rm /usr/portage/metadata/cache -Rf"
+1. Add PORTAGE_RSYNC_EXTRA_OPTS="--exclude=/metadata/md5-cache" in make.conf;
+2. say "rm /usr/portage/metadata/md5-cache -Rf"
 
 Then check bug again. If flag not visible - try "emerge --regen",
 remove FEATURES="metadata-transfer", edit /usr/portage/metadata/layout.conf,
