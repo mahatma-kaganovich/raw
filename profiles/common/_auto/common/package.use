@@ -1,5 +1,4 @@
 media-gfx/tachyon opengl
-media-libs/gst-plugins-bad:1.0 opengl -gles2
 media-libs/gst-plugins-bad:1.0 -gles2
 media-libs/gst-plugins-bad:1.0 opengl egl -gles2
 media-libs/mesa egl -gles1 -gles2
@@ -17,7 +16,6 @@ app-crypt/codecrypt cryptopp
 app-crypt/gnupg gnutls
 app-crypt/qca ssl nss gcrypt
 app-emulation/crossover-bin ssl
-app-emulation/wine ssl
 app-emulation/wine-any:2.0 ssl
 app-emulation/wine-any:2.17 ssl
 app-emulation/wine-any:2.18 ssl
@@ -220,8 +218,7 @@ dev-libs/libpeas python_single_target_python3_4 -python_single_target_python3_5
 dev-libs/volume_key python_single_target_python3_4 -python_single_target_python3_5
 dev-perl/Inline-Python python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 dev-python/PythonQt python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
-dev-python/brython:3.3.2-r1 python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
-dev-python/brython:3.3.3 python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
+dev-python/brython python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 dev-python/pyotherside python_single_target_python3_4 -python_single_target_python3_5
 dev-python/thunarx-python python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 dev-python/uranium python_single_target_python3_4 -python_single_target_python3_5

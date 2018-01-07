@@ -58,7 +58,6 @@ dev-ml/camlimages gtk
 dev-ml/ocaml-cairo gtk
 dev-ml/ocamlgraph gtk
 dev-ml/ocamlnet gtk
-dev-python/bpython gtk
 dev-python/ginga -gtk
 dev-python/matplotlib gtk
 dev-python/pyglet gtk
@@ -73,7 +72,6 @@ dev-util/amtterm -gtk
 dev-util/perf gtk
 dev-util/sysprof -gtk
 dev-util/trace-cmd gtk
-dev-vcs/bzr-explorer -gtk
 games-arcade/bomns gtk
 games-arcade/crack-attack gtk
 games-arcade/xbill gtk

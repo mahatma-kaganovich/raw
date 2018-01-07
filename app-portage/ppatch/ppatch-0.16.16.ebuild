@@ -78,6 +78,7 @@ pkg_postinst(){
     SS="${PORTAGE_CONFIGROOT}" "${ROOT}"/usr/sbin/p-patch "${ROOT}"/usr/ppatch/bashrc.p-patch
     local f=
     use global-profile && f=force
+    rm "{PORTDIR:-/usr/portage}"/metadata/md5-cache -Rf
     migrate $f
     raw_pkg_postinst
 }
