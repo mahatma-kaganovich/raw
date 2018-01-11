@@ -81,6 +81,10 @@ filterflag2(){
 
 _iuse(){
 	local i
+	for i in $USE; do
+		[ "$i" = "$1" ] && return 0
+	done
+	# [sometimes] broken
 	for i in $IUSE; do
 		[ "~$i" = "$1" ] && return 0
 		if [ "$i" = "${1#!}" ]; then
