@@ -83,6 +83,7 @@ sci-libs/silo silex qt4
 sci-libs/ViSP opencv
 sys-cluster/hpx -jemalloc
 x11-wm/xpra dec_av2
+app-admin/syslog-ng -http -ipv6
 
 # modern video cards 2D perform better on modesetting driver: Nvidia G8+, Radeon R600+ ...
 x11-base/xorg-drivers -video_cards_i915 -video_cards_virtualbox -video_cards_nouveau -video_cards_nv -video_cards_mga -video_cards_amdgpu -video_cards_ati
