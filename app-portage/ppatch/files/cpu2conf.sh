@@ -100,7 +100,7 @@ max_unrolled(){
 }
 
 conf_cpu(){
-local f0= f1= f2= f3= f5= i j i1 j1 c c0 c1 lm=false fp=387 gccv m="`uname -m`" i
+local f0= f1= f2= f3= f5= i j i1 j1 c c0 c1 lm=false fp=387 gccv m="`uname -m`" i fsec=
 _setflags flags cpucaps 'cpu family' model fpu vendor_id
 cmn=$(gcc --help=common -v -Q 2>&1)
 if i=$(echo "$cmn"|grep --max-count=1 "^Target: "); then
@@ -116,6 +116,8 @@ if i=$(echo "$cmn"|grep --max-count=1 "^Target: "); then
 	esac
 fi
 f0=`_f -m{tune,cpu,arch}=native`
+# testing
+#fsec=`_f -mindirect-branch=thunk-extern -mindirect-branch-register`
 f3='-malign-data=cacheline -momit-leaf-frame-pointer -mtls-dialect=gnu2 -fsection-anchors -minline-stringops-dynamically -maccumulate-outgoing-args'
 # gcc 4.9 - -fno-lifetime-dse, gcc 6.3 - -flifetime-dse=1 - around some of projects(?) - keep 6.3 only safe
 f5='-fvisibility-inlines-hidden -flifetime-dse=1'
@@ -263,6 +265,7 @@ done
 echo "CFLAGS_NATIVE=\"$f0\"
 CFLAGS_CPU=\"$f4\"
 CFLAGS_M=\"$fm\"
+CFLAGS_SECURE=\"$fsec\"
 _FLAGS=\"$ff\${_FLAGS}\"
 
 CXXFLAGS=\"\${CXXFLAGS}$f5\""
