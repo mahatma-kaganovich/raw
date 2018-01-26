@@ -1,3 +1,4 @@
+sys-devel/gcc pie
 dev-lang/python sqlite
 sys-firmware/intel-microcode split-ucode monolithic
 sys-libs/gdbm berkdb
