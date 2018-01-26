@@ -15,6 +15,3 @@
 =net-dialup/pptpd-1.3.4
 # use mail-filter/smf-grey++ instead
 mail-filter/smf-grey+tym
-# intel legacy
-=sys-firmware/intel-microcode-20180108*
-=sys-firmware/intel-microcode-20171117_p20171215*
