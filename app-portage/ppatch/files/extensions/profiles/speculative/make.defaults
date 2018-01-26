@@ -1,5 +1,5 @@
 _FLAGS="$_FLAGS$CFLAGS_NATIVE$CFLAGS_M"
-USE="speculative -ssp -pie nossp nopie -sanitize -vtv"
+USE="speculative -ssp nossp nopie -sanitize -vtv"
 
 CFLAGS="$CFLAGS $_FLAGS"
 FFLAGS="$FFLAGS $_FLAGS"
