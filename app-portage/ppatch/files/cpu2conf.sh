@@ -118,6 +118,7 @@ fi
 f0=`_f -m{tune,cpu,arch}=native`
 # testing
 #fsec=`_f -mindirect-branch=thunk-extern -mindirect-branch-register`
+#fsec=`_f -mindirect-branch=thunk`
 f3='-malign-data=cacheline -momit-leaf-frame-pointer -mtls-dialect=gnu2 -fsection-anchors -minline-stringops-dynamically -maccumulate-outgoing-args'
 # gcc 4.9 - -fno-lifetime-dse, gcc 6.3 - -flifetime-dse=1 - around some of projects(?) - keep 6.3 only safe
 f5='-fvisibility-inlines-hidden -flifetime-dse=1'

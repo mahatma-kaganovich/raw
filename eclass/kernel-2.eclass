@@ -202,7 +202,7 @@ kernel-2_src_configure() {
 	kconfig_init
 	cd "${S}"
 	cpu2K
-	filter-flags '-fopenmp*' '-*parallelize*'
+	filter-flags '-fopenmp*' '-*parallelize*' '-mindirect-branch*' '-mfunction-return=*'
 	: ${KERNEL_UTILS_CFLAGS:="${CFLAGS}"}
 
 	# ???
