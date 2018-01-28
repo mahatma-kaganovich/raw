@@ -117,6 +117,7 @@ if i=$(echo "$cmn"|grep --max-count=1 "^Target: "); then
 fi
 f0=`_f -m{tune,cpu,arch}=native`
 # testing
+#fsec+=`_f -mmitigate-rop`
 # thunk may be better in some cases, but incompatible with -mcmodel=large, so be simple universal
 #grep -q "^bugs.* spectre_v2" /proc/cpuinfo && fsec+=`_f -mindirect-branch=thunk-inline -mfunction-return=thunk-inline -mindirect-branch-register`
 f3='-malign-data=cacheline -momit-leaf-frame-pointer -mtls-dialect=gnu2 -fsection-anchors -minline-stringops-dynamically -maccumulate-outgoing-args'
