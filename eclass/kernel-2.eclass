@@ -1352,9 +1352,11 @@ kernel-2_src_prepare(){
 	[[ ${ETYPE} == sources ]] || return
 	kconfig_init
 
-	local i
+	local i reg=false
+	test_cc -mgeneral-regs-only && reg=true
 	to_overlay
 	einfo "Fixing compats"
+	echo "Supporting -mgeneral-regs-only: $reg"
 	# glibc 2.8+
 	for i in "${S}/scripts/mod/sumversion.c" ; do
 		[[ -e "${i}" ]] || continue
@@ -1426,13 +1428,15 @@ kernel-2_src_prepare(){
 	sed -i -e 's:^#if 0$:#if 1:' drivers/net/tokenring/tms380tr.c
 	# deprecated
 	sed -i -e 's:defined(@:(@:' kernel/timeconst.pl
-#	i=" -march=nocona -mno-mmx -mno-sse -mno-sse2 -mno-sse3"
-	i=" -march=x86-64 -mno-mmx -mno-sse -mno-sse2 -mno-sse3"
+#	i=" -march=nocona"
+	i=" -march=x86-64"
+	$reg && i+=' -mgeneral-regs-only' || i+=' -mno-mmx -mno-sse -mno-sse2 -mno-sse3'
 	if (use multitarget || use 64-bit-bfd) && test_cc -S -m64 $i && ! test_cc -S -m64 2>/dev/null; then
 		einfo "-m64 arch fix"
 		sed -i -e "s/ -mcmodel=small/ -mcmodel=small -m64$i/" arch/x86/boot/compressed/Makefile drivers/firmware/efi/libstub/Makefile
 		sed -i -e "s/\(KBUILD_AFLAGS += -m64\)$/\1$i/" arch/x86/Makefile*
 	fi
+	$reg && ! grep -Fq mgeneral-regs-only arch/x86/Makefile && sed -i -e 's:+= \(-mno-mmx -mno-sse\|-mno-sse -mno-mmx -mno-sse2 -mno-3dnow\):+= -mgeneral-regs-only:' -e '/KBUILD_CFLAGS += .*-mno-\(avx\|80387\|fp-ret-in-387\)/d' {arch/x86,arch/x86/boot/compressed,drivers/firmware/efi/libstub}/Makefile
 #	echo "CFLAGS_mdesc.o += -Wno-error=maybe-uninitialized" >>arch/sparc/kernel/Makefile
 	chmod 770 tools/objtool/sync-check.sh
 	# pnp
