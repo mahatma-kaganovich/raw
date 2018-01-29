@@ -188,6 +188,7 @@ ffmpeg|libav)_iuse abi_x86_32 && filterflag -fno-omit-frame-pointer;; # x86 mmx 
 faad2|openssl|patch)gccve 5. && filterflag -floop-nest-optimize;;
 geos|readahead-list|thin-provisioning-tools|libprojectm|gtkmathview|qtfm|qtgui|qtwebkit)gccve 6. && export CXXFLAGS="$CXXFLAGS -std=gnu++98";;
 ruby)filterflag -funroll-loops -fweb;;
+ghostscript-gpl)filterflag -mmitigate-rop;; # ????!
 esac
 
 #[ "${CFLAGS//-flto}" != "$CFLAGS" ] &&
