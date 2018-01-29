@@ -100,7 +100,7 @@ max_unrolled(){
 }
 
 conf_cpu(){
-local f0= f1= f2= f3= f5= i j i1 j1 c c0 c1 lm=false fp=387 gccv m="`uname -m`" i fsec=
+local f0= f1= f2= f3= f5= i j i1 j1 c c0 c1 lm=false fp=387 gccv m="`uname -m`" i fsec='-mmitigate-rop' ind=
 _setflags flags cpucaps 'cpu family' model fpu vendor_id
 cmn=$(gcc --help=common -v -Q 2>&1)
 if i=$(echo "$cmn"|grep --max-count=1 "^Target: "); then
@@ -115,11 +115,15 @@ if i=$(echo "$cmn"|grep --max-count=1 "^Target: "); then
 	;;
 	esac
 fi
+# "thunk" may be better in some cases, but incompatible with -mcmodel=large, so be simple universal
+ind+=' -mindirect-branch=thunk-inline -mindirect-branch-register'
+case "$vendor_id:$cpu_family:$model" in
+GenuineIntel:6:78|GenuineIntel:6:94|GenuineIntel:6:85|GenuineIntel:6:142|GenuineIntel:6:158)
+	# fixme: skylake/kabylake, nobody else?
+	ind+=' -mfunction-return=thunk-inline'
+;;
+esac
 f0=`_f -m{tune,cpu,arch}=native`
-# testing
-#fsec+=`_f -mmitigate-rop`
-# thunk may be better in some cases, but incompatible with -mcmodel=large, so be simple universal
-#grep -q "^bugs.* spectre_v2" /proc/cpuinfo && fsec+=`_f -mindirect-branch=thunk-inline -mfunction-return=thunk-inline -mindirect-branch-register`
 f3='-malign-data=cacheline -momit-leaf-frame-pointer -mtls-dialect=gnu2 -fsection-anchors -minline-stringops-dynamically -maccumulate-outgoing-args'
 # gcc 4.9 - -fno-lifetime-dse, gcc 6.3 - -flifetime-dse=1 - around some of projects(?) - keep 6.3 only safe
 f5='-fvisibility-inlines-hidden -flifetime-dse=1'
@@ -146,6 +150,7 @@ fi
 # 2do: patch over ssp patch to make default
 #(echo " $cmn"|grep -q 'disable-default-ssp') && f3+=' -fstack-protector-explicit'
 case "`cat /proc/cpuinfo|sed -e 's:$: :'`" in
+*spectre_v2*)fsec+=" $ind";;&
 *GenuineTMx86*)f3="${f3/cacheline/abi} -fno-align-functions -fno-align-jumps -fno-align-loops -fno-align-labels -mno-align-stringops";;&
 *CentaurHauls*)preferred_fp=auto;;& # bashmark: C7 better 387, nothing about Nano
 *AuthenticAMD*" sse "*|*AuthenticAMD*Athlon*) max_unrolled 99 ;;&
@@ -195,6 +200,7 @@ $lm && f1+=" 64-bit-bfd" || f1+=" -64-bit-bfd"
 f3=`_f $f3`
 unroll=`_f $unroll`
 f5=`lang=c++ _f $f5`
+fsec=`_f $fsec`
 f1="${f1# }"
 f2="${f2# }"
 [ -n "${f1// }" ] && echo "USE=\"\$USE $f1\""
