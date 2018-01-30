@@ -100,7 +100,7 @@ max_unrolled(){
 }
 
 conf_cpu(){
-local f0= f1= f2= f3= f5= i j i1 j1 c c0 c1 lm=false fp=387 gccv m="`uname -m`" i fsec='-mmitigate-rop' ind=
+local f0= f1= f2= f3= f5= i j i1 j1 c c0 c1 lm=false fp=387 gccv m="`uname -m`" i fsec= ind=
 _setflags flags cpucaps 'cpu family' model fpu vendor_id
 cmn=$(gcc --help=common -v -Q 2>&1)
 if i=$(echo "$cmn"|grep --max-count=1 "^Target: "); then
@@ -131,6 +131,8 @@ f5='-fvisibility-inlines-hidden -flifetime-dse=1'
 f5+=' -fpermissive -w'
 # try to remove. performance
 #f5+=' -fno-strict-aliasing'
+# break build of few things like ghostscript-gpl & mozillas, wantfix/wantest
+#fsec+=' -mmitigate-rop'
 if i=`_smp processor 1 || _smp 'ncpus active' 0`; then
 	if [ "$i" = 1 ]; then
 		f1+=' -smp -numa'
