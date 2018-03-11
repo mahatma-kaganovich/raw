@@ -1,0 +1,154 @@
+--- a/include/net/netfilter/nf_conntrack.h	2018-01-29 00:20:33.000000000 +0300
++++ b/include/net/netfilter/nf_conntrack.h	2018-03-11 11:10:16.390542935 +0300
+@@ -73,6 +73,9 @@ struct nf_conn {
+ 
+ 	/* jiffies32 when this ct is considered dead */
+ 	u32 timeout;
++#ifdef CONFIG_NETFILTER_XT_MATCH_CONNLIMIT_ACTIVE
++	unsigned long use_time;
++#endif
+ 
+ 	possible_net_t ct_net;
+ 
+--- a/net/netfilter/Kconfig	2018-01-29 00:20:33.000000000 +0300
++++ b/net/netfilter/Kconfig	2018-03-11 11:10:16.390542935 +0300
+@@ -1124,6 +1124,15 @@ config NETFILTER_XT_MATCH_CONNLIMIT
+ 	  This match allows you to match against the number of parallel
+ 	  connections to a server per client IP address (or address block).
+ 
++config NETFILTER_XT_MATCH_CONNLIMIT_ACTIVE
++	bool '"connlimit" only active connections'
++	depends on NETFILTER_XT_MATCH_CONNLIMIT
++	help
++	  Skip keepalive and other not closed inactive connections.
++
++	  N to care memory usage,
++	  Y to care channel usage.
++
+ config NETFILTER_XT_MATCH_CONNMARK
+ 	tristate  '"connmark" connection mark match support'
+ 	depends on NF_CONNTRACK
+--- a/net/netfilter/nf_conntrack_core.c	2018-01-29 00:20:33.000000000 +0300
++++ b/net/netfilter/nf_conntrack_core.c	2018-03-11 11:10:16.391543055 +0300
+@@ -796,6 +796,9 @@ __nf_conntrack_confirm(struct sk_buff *s
+ 	/* Timer relative to confirmation time, not original
+ 	   setting time, otherwise we'd get timer wrap in
+ 	   weird delay cases. */
++#ifdef CONFIG_NETFILTER_XT_MATCH_CONNLIMIT_ACTIVE
++	ct->use_time = jiffies;
++#endif
+ 	ct->timeout += nfct_time_stamp;
+ 	atomic_inc(&ct->ct_general.use);
+ 	ct->status |= IPS_CONFIRMED;
+@@ -1497,6 +1500,10 @@ void __nf_ct_refresh_acct(struct nf_conn
+ {
+ 	WARN_ON(!skb);
+ 
++#ifdef CONFIG_NETFILTER_XT_MATCH_CONNLIMIT_ACTIVE
++	ct->use_time = jiffies;
++#endif
++
+ 	/* Only update if this is not a fixed timeout */
+ 	if (test_bit(IPS_FIXED_TIMEOUT_BIT, &ct->status))
+ 		goto acct;
+--- a/net/netfilter/xt_connlimit.c	2018-01-29 00:20:33.000000000 +0300
++++ b/net/netfilter/xt_connlimit.c	2018-03-11 11:13:21.689729071 +0300
+@@ -42,6 +42,11 @@
+ 
+ #define CONNLIMIT_GC_MAX_NODES	8
+ 
++#ifdef CONFIG_NETFILTER_XT_MATCH_CONNLIMIT_ACTIVE
++/* 10 sec */
++#define CONNLIMIT_TIMEOUT (10*HZ)
++#endif
++
+ /* we will save the tuples of all connections we care about */
+ struct xt_connlimit_conn {
+ 	struct hlist_node		node;
+@@ -114,7 +119,8 @@ static unsigned int check_hlist(struct n
+ 				struct hlist_head *head,
+ 				const struct nf_conntrack_tuple *tuple,
+ 				const struct nf_conntrack_zone *zone,
+-				bool *addit)
++				bool *addit,
++				const struct nf_conn *ct)
+ {
+ 	const struct nf_conntrack_tuple_hash *found;
+ 	struct xt_connlimit_conn *conn;
+@@ -152,6 +158,20 @@ static unsigned int check_hlist(struct n
+ 			kmem_cache_free(connlimit_conn_cachep, conn);
+ 			continue;
+ 		}
++#ifdef CONFIG_NETFILTER_XT_MATCH_CONNLIMIT_ACTIVE
++		if (found_ct != NULL) {
++			/* count only active connections */
++			if (jiffies - found_ct->use_time > CONNLIMIT_TIMEOUT) {
++				nf_ct_put(found_ct);
++				continue;
++			}
++			/* force to first connections to be active */
++			if (found_ct == ct) {
++				nf_ct_put(found_ct);
++				break;
++			}
++		}
++#endif
+ 
+ 		nf_ct_put(found_ct);
+ 		length++;
+@@ -177,7 +197,8 @@ static unsigned int
+ count_tree(struct net *net, struct rb_root *root,
+ 	   const struct nf_conntrack_tuple *tuple,
+ 	   const union nf_inet_addr *addr,
+-	   u8 family, const struct nf_conntrack_zone *zone)
++	   u8 family, const struct nf_conntrack_zone *zone,
++	   const struct nf_conn *ct)
+ {
+ 	struct xt_connlimit_rb *gc_nodes[CONNLIMIT_GC_MAX_NODES];
+ 	struct rb_node **rbnode, *parent;
+@@ -205,7 +226,7 @@ count_tree(struct net *net, struct rb_ro
+ 		} else {
+ 			/* same source network -> be counted! */
+ 			unsigned int count;
+-			count = check_hlist(net, &rbconn->hhead, tuple, zone, &addit);
++			count = check_hlist(net, &rbconn->hhead, tuple, zone, &addit, ct);
+ 
+ 			tree_nodes_free(root, gc_nodes, gc_count);
+ 			if (!addit)
+@@ -221,7 +242,7 @@ count_tree(struct net *net, struct rb_ro
+ 			continue;
+ 
+ 		/* only used for GC on hhead, retval and 'addit' ignored */
+-		check_hlist(net, &rbconn->hhead, tuple, zone, &addit);
++		check_hlist(net, &rbconn->hhead, tuple, zone, &addit, ct);
+ 		if (hlist_empty(&rbconn->hhead))
+ 			gc_nodes[gc_count++] = rbconn;
+ 	}
+@@ -265,7 +286,8 @@ static int count_them(struct net *net,
+ 		      const struct nf_conntrack_tuple *tuple,
+ 		      const union nf_inet_addr *addr,
+ 		      u_int8_t family,
+-		      const struct nf_conntrack_zone *zone)
++		      const struct nf_conntrack_zone *zone,
++		      const struct nf_conn *ct)
+ {
+ 	struct rb_root *root;
+ 	int count;
+@@ -279,7 +301,7 @@ static int count_them(struct net *net,
+ 
+ 	spin_lock_bh(&xt_connlimit_locks[hash % CONNLIMIT_LOCK_SLOTS]);
+ 
+-	count = count_tree(net, root, tuple, addr, family, zone);
++	count = count_tree(net, root, tuple, addr, family, zone, ct);
+ 
+ 	spin_unlock_bh(&xt_connlimit_locks[hash % CONNLIMIT_LOCK_SLOTS]);
+ 
+@@ -326,7 +348,7 @@ connlimit_mt(const struct sk_buff *skb,
+ 	}
+ 
+ 	connections = count_them(net, info->data, tuple_ptr, &addr,
+-				 xt_family(par), zone);
++				 xt_family(par), zone, ct);
+ 	if (connections == 0)
+ 		/* kmalloc failed, drop it entirely */
+ 		goto hotdrop;
