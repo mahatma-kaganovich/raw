@@ -17,33 +17,38 @@ app-crypt/gnupg gnutls
 app-crypt/qca ssl nss gcrypt
 app-emulation/crossover-bin ssl
 app-emulation/wine-any:2.0 ssl
-app-emulation/wine-any:2.17 ssl
-app-emulation/wine-any:2.18 ssl
 app-emulation/wine-any:2.19 ssl
+app-emulation/wine-any:2.20 ssl
+app-emulation/wine-any:2.21 ssl
 app-emulation/wine-any:9999 ssl
 app-emulation/wine-d3d9:2.0 ssl
-app-emulation/wine-d3d9:2.17 ssl
-app-emulation/wine-d3d9:2.18 ssl
 app-emulation/wine-d3d9:2.19 ssl
+app-emulation/wine-d3d9:2.20 ssl
+app-emulation/wine-d3d9:2.21 ssl
 app-emulation/wine-d3d9:9999 ssl
 app-emulation/wine-staging:2.0 ssl
-app-emulation/wine-staging:2.17 ssl
-app-emulation/wine-staging:2.18 ssl
 app-emulation/wine-staging:2.19 ssl
+app-emulation/wine-staging:2.20 ssl
+app-emulation/wine-staging:2.21 ssl
 app-emulation/wine-staging:9999 ssl
 app-emulation/wine-vanilla:2.0 ssl
 app-emulation/wine-vanilla:2.0.1 ssl
 app-emulation/wine-vanilla:2.0.2 ssl
 app-emulation/wine-vanilla:2.0.3 ssl
-app-emulation/wine-vanilla:2.18 ssl
-app-emulation/wine-vanilla:2.19 ssl
+app-emulation/wine-vanilla:2.0.4 ssl
 app-emulation/wine-vanilla:2.20 ssl
+app-emulation/wine-vanilla:2.21 ssl
+app-emulation/wine-vanilla:2.22 ssl
+app-emulation/wine-vanilla:3.0 ssl
+app-emulation/wine-vanilla:3.1 ssl
+app-emulation/wine-vanilla:3.2 ssl
 app-emulation/wine-vanilla:9999 ssl
 app-forensics/libewf ssl
 app-text/mupdf openssl
 app-text/wgetpaste ssl
 dev-db/mariadb openssl -yassl -libressl
 dev-db/mariadb openssl
+dev-db/mariadb-connector-c ssl gnutls
 dev-db/mariadb-galera openssl -yassl -libressl
 dev-db/mariadb-galera openssl
 dev-db/mysql openssl -yassl -libressl
@@ -91,9 +96,13 @@ mail-mta/ssmtp ssl gnutls
 media-plugins/vdr-vdrmanager ssl
 media-video/vlc gnutls
 media-video/vlc gnutls gcrypt
+media-video/vlc ssl
+media-video/vlc ssl gcrypt
 net-analyzer/echoping gnutls ssl
 net-analyzer/monitoring-plugins ssl gnutls
 net-analyzer/nagios-plugins ssl
+net-analyzer/sngrep gnutls -openssl
+net-analyzer/sngrep openssl -gnutls
 net-dialup/xl2tpd kernel
 net-dns/dnsdist ssl
 net-fs/s3fs openssl -gnutls -nss
@@ -109,7 +118,6 @@ net-irc/znc ssl
 net-libs/glib-networking ssl
 net-libs/gnutls openssl
 net-libs/gsoap ssl gnutls
-net-libs/ldns ssl
 net-libs/libgadu gnutls ssl
 net-libs/liboauth nss
 net-libs/libtorrent-rasterbar ssl
@@ -134,8 +142,6 @@ net-misc/wget ssl gnutls
 net-nds/shelldap ssl
 net-p2p/mktorrent ssl
 net-print/cups ssl
-net-proxy/shadowsocks-libev openssl -mbedtls
-net-proxy/shadowsocks-libev openssl
 net-voip/yate ssl
 net-vpn/openconnect gnutls
 net-vpn/openvpn ssl
@@ -150,6 +156,8 @@ sys-cluster/ceph ssl nss
 sys-fs/cryptmount ssl
 sys-fs/cryptsetup kernel -openssl -nettle
 sys-fs/cryptsetup kernel openssl nettle gcrypt
+www-client/uget openssl
+www-client/uget openssl gnutls
 www-misc/litmus ssl -gnutls
 www-misc/litmus ssl gnutls
 www-misc/zoneminder ssl gnutls gcrypt
@@ -175,9 +183,9 @@ app-i18n/ibus-typing-booster python_single_target_python3_4 -python_single_targe
 app-misc/gramps python_single_target_python3_4 -python_single_target_python3_5
 app-misc/hivex python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 app-misc/lirc python_single_target_python3_4 -python_single_target_python3_5
+app-misc/pax-utils python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 app-mobilephone/obexftp python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 app-office/libreoffice python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
-app-office/libreoffice-bin python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 app-office/unoconv python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 app-portage/elogviewer python_single_target_python2_7 -python_single_target_python3_4
 app-portage/elogviewer python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
@@ -218,7 +226,9 @@ dev-libs/libpeas python_single_target_python3_4 -python_single_target_python3_5
 dev-libs/volume_key python_single_target_python3_4 -python_single_target_python3_5
 dev-perl/Inline-Python python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 dev-python/PythonQt python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
-dev-python/brython python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
+dev-python/brython:0 python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
+dev-python/brython:3.3.4 python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
+dev-python/brython:3.3.5 python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 dev-python/pyotherside python_single_target_python3_4 -python_single_target_python3_5
 dev-python/thunarx-python python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 dev-python/uranium python_single_target_python3_4 -python_single_target_python3_5
@@ -238,7 +248,6 @@ dev-util/scanmem python_single_target_python2_7 -python_single_target_python3_4 
 dev-util/setconf python_single_target_python2_7 -python_single_target_python3_4
 dev-util/setconf python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 dev-vcs/git-bz python_single_target_python2_7
-dev-vcs/git-cola python_single_target_python2_7 -python_single_target_python3_4
 dev-vcs/git-cola python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 games-misc/ponysay python_single_target_python3_4 -python_single_target_python3_5
 gnome-base/libglade python_single_target_python2_7
@@ -258,6 +267,7 @@ media-gfx/fontforge python_single_target_python2_7 -python_single_target_python3
 media-gfx/hugin python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 media-gfx/openvdb python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 media-libs/lensfun python_single_target_python3_4 -python_single_target_python3_5
+media-libs/libffado python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 media-libs/libopenshot python_single_target_python3_4 -python_single_target_python3_5
 media-libs/lv2 python_single_target_python2_7 -python_single_target_python3_4
 media-libs/lv2 python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
@@ -265,6 +275,7 @@ media-libs/opencolorio python_single_target_python2_7 -python_single_target_pyth
 media-libs/openimageio python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 media-libs/partio python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 media-sound/gnome-music python_single_target_python3_4 -python_single_target_python3_5
+media-sound/picard python_single_target_python3_5
 media-sound/rhythmbox python_single_target_python3_4 -python_single_target_python3_5
 media-sound/soundconverter python_single_target_python3_4 -python_single_target_python3_5
 media-sound/xmms2 python_single_target_python2_7 -python_single_target_python3_4
@@ -280,6 +291,7 @@ net-irc/irker python_single_target_python2_7 -python_single_target_python3_4
 net-irc/irker python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 net-irc/weechat python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 net-irc/znc python_single_target_python3_4 -python_single_target_python3_5
+net-misc/dropbox python_single_target_python2_7 -python_single_target_python3_5
 net-news/liferea python_single_target_python3_4 -python_single_target_python3_5
 net-print/hplip python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 net-wireless/blueman python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
@@ -289,7 +301,6 @@ sci-chemistry/pdb-tools python_single_target_python2_7
 sci-electronics/klayout python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 sci-electronics/pulseview python_single_target_python3_4 -python_single_target_python3_5
 sci-electronics/sigrok-cli python_single_target_python3_4 -python_single_target_python3_5
-sci-geosciences/qgis python_single_target_python3_4 -python_single_target_python3_5
 sci-libs/clblas python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 sci-libs/grib_api python_single_target_python2_7 -python_single_target_python3_4
 sci-libs/grib_api python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
@@ -312,8 +323,11 @@ sys-devel/gdb python_single_target_python2_7 -python_single_target_python3_4 -py
 sys-fs/cryptsetup python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 sys-kernel/bliss-initramfs python_single_target_python3_4 -python_single_target_python3_5
 sys-libs/libblockdev python_single_target_python3_4 -python_single_target_python3_5
+sys-libs/libsmbios python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
+sys-process/htop python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 sys-process/systemd-cron python_single_target_python3_4
 sys-process/systemd-cron python_single_target_python3_4 -python_single_target_python3_5
 www-apache/mod_wsgi python_single_target_python2_7 -python_single_target_python3_4 -python_single_target_python3_5
 x11-misc/libinput-gestures python_single_target_python3_4 -python_single_target_python3_5
 x11-misc/treeline python_single_target_python3_4 -python_single_target_python3_5
+x11-terms/kitty python_single_target_python3_5

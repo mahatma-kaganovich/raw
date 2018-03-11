@@ -21,6 +21,7 @@ app-emulation/ski gtk
 app-emulation/vice gtk
 app-emulation/virt-manager -gtk
 app-emulation/winetricks -gtk
+app-i18n/fcitx gtk2 -gtk3
 app-i18n/ibus gtk2
 app-i18n/ibus-m17n -gtk
 app-i18n/ibus-unikey gtk2
@@ -36,7 +37,7 @@ app-misc/tracker -gtk
 app-misc/vifm gtk
 app-mobilephone/sobexsrv gtk
 app-office/libreoffice gtk -gtk3
-app-portage/etc-proposals gtk
+app-office/libreoffice gtk2
 app-text/aiksaurus gtk
 app-text/ghostscript-gpl -gtk
 dev-ada/gnatcoll -gtk
@@ -79,7 +80,6 @@ games-board/gnubg gtk
 games-board/xboard gtk
 games-emulation/fceux -gtk
 games-emulation/snes9x gtk
-games-emulation/vbam gtk
 games-fps/eduke32 gtk
 games-misc/gBhed gtk
 games-roguelike/tome gtk
@@ -96,6 +96,7 @@ kde-plasma/systemsettings -gtk
 media-gfx/birdfont -gtk
 media-gfx/fontforge gtk
 media-gfx/graphviz gtk
+media-gfx/sane-frontends gtk
 media-gfx/ufraw gtk
 media-gfx/zbar gtk
 media-libs/allegro:5 gtk
@@ -121,7 +122,6 @@ media-plugins/audacious-plugins gtk
 media-plugins/calf gtk
 media-plugins/hexter gtk
 media-plugins/libvisual-plugins gtk
-media-plugins/npapi-vlc gtk
 media-sound/alsa-tools -gtk
 media-sound/alsaplayer gtk
 media-sound/audacious gtk
@@ -189,7 +189,6 @@ sci-astronomy/celestia gtk
 sci-astronomy/predict gtk
 sci-electronics/pcb gtk
 sci-geosciences/gpscorrelate gtk
-sci-libs/scikits_image gtk
 sci-mathematics/alt-ergo gtk
 sci-mathematics/coq gtk
 sci-mathematics/gretl -gtk
@@ -214,7 +213,6 @@ www-client/netsurf -gtk
 www-client/opera gtk
 www-client/w3m -gtk
 www-plugins/gnash gtk
-x11-apps/fusion-icon gtk
 x11-apps/xinput_calibrator -gtk
 x11-libs/gtkmathview gtk
 x11-libs/libfm gtk
@@ -235,6 +233,5 @@ x11-themes/arc-theme gtk2 -gtk3
 x11-themes/nimbus gtk
 x11-themes/qtcurve gtk
 x11-wm/afterstep gtk
-x11-wm/compiz gtk
 xfce-base/garcon gtk2
 mail-client/thunderbird ffmpeg

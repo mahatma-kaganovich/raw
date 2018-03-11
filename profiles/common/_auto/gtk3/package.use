@@ -20,6 +20,7 @@ app-emulation/libguestfs gtk
 app-emulation/qemu gtk
 app-emulation/virt-manager gtk
 app-emulation/winetricks gtk
+app-i18n/fcitx gtk3 -gtk2
 app-i18n/ibus gtk -gtk2
 app-i18n/ibus-m17n gtk
 app-i18n/ibus-unikey gtk -gtk2
@@ -32,12 +33,11 @@ app-misc/geoclue:0 -gtk
 app-misc/hachoir-metadata gtk
 app-misc/lirc gtk
 app-misc/razertool -gtk
-app-misc/tracker gtk
 app-misc/tracker -gtk
 app-misc/vifm -gtk
 app-mobilephone/sobexsrv -gtk
 app-office/libreoffice gtk3
-app-portage/etc-proposals -gtk
+app-office/libreoffice gtk -gtk2
 app-text/aiksaurus -gtk
 app-text/ghostscript-gpl -gtk
 dev-ada/gnatcoll gtk
@@ -78,7 +78,6 @@ games-board/gnubg -gtk
 games-board/xboard -gtk
 games-emulation/fceux gtk
 games-emulation/snes9x -gtk
-games-emulation/vbam gtk
 games-fps/eduke32 -gtk
 games-misc/gBhed -gtk
 games-roguelike/tome -gtk
@@ -97,6 +96,7 @@ kde-plasma/systemsettings gtk
 media-gfx/birdfont gtk
 media-gfx/fontforge -gtk
 media-gfx/graphviz -gtk
+media-gfx/sane-frontends -gtk
 media-gfx/ufraw -gtk
 media-gfx/zbar -gtk
 media-libs/allegro:5 -gtk
@@ -122,7 +122,6 @@ media-plugins/audacious-plugins -gtk
 media-plugins/calf -gtk
 media-plugins/hexter -gtk
 media-plugins/libvisual-plugins -gtk
-media-plugins/npapi-vlc -gtk
 media-sound/alsa-tools -gtk
 media-sound/alsaplayer -gtk
 media-sound/audacious -gtk
@@ -190,7 +189,6 @@ sci-astronomy/celestia -gtk
 sci-astronomy/predict -gtk
 sci-electronics/pcb -gtk
 sci-geosciences/gpscorrelate -gtk
-sci-libs/scikits_image -gtk
 sci-mathematics/alt-ergo -gtk
 sci-mathematics/coq -gtk
 sci-mathematics/gretl gtk
@@ -215,7 +213,6 @@ sys-process/latencytop -gtk
 www-client/netsurf -gtk
 www-client/opera -gtk
 www-client/w3m -gtk
-x11-apps/fusion-icon gtk
 x11-apps/xinput_calibrator -gtk
 x11-libs/c++-gtk-utils:3 gtk
 x11-libs/c++-gtk-utils:0 gtk
@@ -236,5 +233,4 @@ x11-terms/mlterm gtk
 x11-themes/arc-theme gtk3 -gtk2
 x11-themes/nimbus -gtk
 x11-wm/afterstep -gtk
-x11-wm/compiz -gtk
 mail-client/thunderbird ffmpeg -gstreamer
