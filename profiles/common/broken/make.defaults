@@ -5,7 +5,7 @@ LIRC_DEVICES="userspace"
 
 # reasonable fast by default
 MAKEOPTS="-j2 -s"
-PYTHON_TARGETS="python2_7"
+#PYTHON_TARGETS="python2_7"
 
 # some -O2
 _FLAGS="$_FLAGS -finline-small-functions -findirect-inlining"
