@@ -204,7 +204,6 @@ sys-cluster/ceph gtk
 sys-devel/distcc gtk
 sys-devel/sparse gtk
 sys-fs/ecryptfs-utils gtk
-sys-fs/ocfs2-tools gtk
 sys-fs/pysize gtk
 sys-libs/gwenhywfar gtk
 sys-power/nvclock gtk
