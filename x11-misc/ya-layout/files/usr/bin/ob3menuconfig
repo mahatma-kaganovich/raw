@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # (c) Denis Kaganovich, Anarchy or GPLv2
-# openbox config pipe menu v0.11
+# openbox config pipe menu v0.12
 # using /usr/share/openbox*/rc.xsd
 
 %xml_=('<'=>'lt','>'=>'gt',"'"=>'apos','"'=>'quot','&'=>'amp');
@@ -964,9 +964,10 @@ sub simple_menu{
 		$def="<separator label='*$d'/>" if($d ne '');
 		my $ly;
 		for(@{$_[0]->{$_}}){
-			my $i=$_;
+			my ($i,$i0,$ly1,$i1);
+			$i=$_;
 			$i=~s/([$xml_])/\&$xml_{$1};/g;
-			my ($ly1,$i1);
+			$i0=$i;
 			$i=$i1 if(($ly1,$i1)=$i=~/^([^:]+)([:].*)$/);
 			if($ly1 ne $ly){
 				print '</menu>' if($ly ne '');
@@ -977,7 +978,7 @@ sub simple_menu{
 				print $def;
 				$def=undef;
 			}else{
-				print "<item label='$i'><action name='execute'><execute>$0 --@ARGV &quot;$m&quot; &quot;$i&quot;</execute></action></item>";
+				print "<item label='$i'><action name='execute'><execute>$0 --@ARGV &quot;$m&quot; &quot;$i0&quot;</execute></action></item>";
 			}
 		}
 		print '</menu>' if($ly ne '');
