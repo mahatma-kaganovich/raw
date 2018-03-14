@@ -25,7 +25,7 @@ LICENSE="GPL-3"
 SLOT="0"
 
 IUSE="acl addc addns ads ceph client cluster cups debug dmapi fam gnutls gpg iprint ldap pam python
-quota selinux syslog systemd test winbind afs sasl zeroconf cpu_flags_x86_aes nls"
+quota selinux syslog systemd test winbind afs sasl zeroconf cpu_flags_x86_aes nls etcd"
 
 MULTILIB_WRAPPED_HEADERS=(
 	/usr/include/samba-4.0/policy.h
@@ -62,6 +62,7 @@ CDEPEND="
 		dev-python/dnspython:=[${PYTHON_USEDEP}]
 	)
 	ceph? ( sys-cluster/ceph )
+	etcd? ( dev-db/etcd )
 	cluster? ( !dev-db/ctdb )
 	cups? ( net-print/cups )
 	debug? ( dev-util/lttng-ust )
@@ -196,6 +197,7 @@ multilib_src_configure() {
 		$(use_with nls gettext)
 		$(multilib_native_use_with afs fake-kaserver)
 		$(use cluster && use_enable ceph ceph-reclock) # multilib?
+		$(use cluster && use_enable etcd etcd-reclock) # multilib?
 		$(gcc -v | grep -q disable-default-pie && echo --without-pie)
 		$(multilib_native_use_with acl acl-support)
 		$(multilib_native_usex addc '' '--without-ad-dc')
