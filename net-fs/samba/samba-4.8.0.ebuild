@@ -227,8 +227,8 @@ multilib_src_configure() {
 	use cluster && myconf+=(
 		--with-cluster-support
 		--with-socketpath=/run/ctdb/ctdbd.socket
-		$(usex ceph --enable-ceph-reclock)
-		$(usex etcd --enable-etcd-reclock)
+		$(usex ceph --enable-ceph-reclock '')
+		$(usex etcd --enable-etcd-reclock '')
 	)
 
 	CPPFLAGS="-I${SYSROOT}${EPREFIX}/usr/include/et ${CPPFLAGS}" \
