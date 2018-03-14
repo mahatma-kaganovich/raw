@@ -193,8 +193,9 @@ multilib_src_configure() {
 		--nopyo
 		 --without-ntvfs-fileserver
 		$(multilib_native_usex cpu_flags_x86_aes --accel-aes=intelaesni '')
-		$(multilib_native_use_with nls gettext)
+		$(use_with nls gettext)
 		$(multilib_native_use_with afs fake-kaserver)
+		$(use cluster && use_enable ceph ceph-reclock) # multilib?
 		$(multilib_native_use_with acl acl-support)
 		$(multilib_native_usex addc '' '--without-ad-dc')
 		$(multilib_native_use_with addns dnsupdate)
