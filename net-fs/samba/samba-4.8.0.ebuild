@@ -196,6 +196,7 @@ multilib_src_configure() {
 		$(use_with nls gettext)
 		$(multilib_native_use_with afs fake-kaserver)
 		$(use cluster && use_enable ceph ceph-reclock) # multilib?
+		$(gcc -v | grep -q disable-default-pie && echo --without-pie)
 		$(multilib_native_use_with acl acl-support)
 		$(multilib_native_usex addc '' '--without-ad-dc')
 		$(multilib_native_use_with addns dnsupdate)
