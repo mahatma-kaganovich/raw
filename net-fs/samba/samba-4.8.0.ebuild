@@ -196,15 +196,12 @@ multilib_src_configure() {
 		$(multilib_native_usex cpu_flags_x86_aes --accel-aes=intelaesni '')
 		$(use_with nls gettext)
 		$(multilib_native_use_with afs fake-kaserver)
-		$(use cluster && use_enable ceph ceph-reclock) # multilib?
-		$(use cluster && use_enable etcd etcd-reclock) # multilib?
 		$(gcc -v | grep -q disable-default-pie && echo --without-pie)
 		$(multilib_native_use_with acl acl-support)
 		$(multilib_native_usex addc '' '--without-ad-dc')
 		$(multilib_native_use_with addns dnsupdate)
 		$(multilib_native_use_with ads)
 		$(multilib_native_use_enable ceph cephfs)
-		$(use_with cluster cluster-support) # multilib?
 		$(multilib_native_use_enable cups)
 		$(multilib_native_use_with dmapi)
 		$(multilib_native_use_with fam)
@@ -225,6 +222,14 @@ multilib_src_configure() {
 		$(use_with ldap)
 	)  #'"
 	multilib_is_native_abi && myconf+=( --with-shared-modules=${SHAREDMODS} )
+
+	# multilib_is_native_abi &&
+	use cluster && myconf+=(
+		--with-cluster-support
+		--with-socketpath=/run/ctdb/ctdbd.socket
+		$(usex ceph --enable-ceph-reclock)
+		$(usex etcd --enable-etcd-reclock)
+	)
 
 	CPPFLAGS="-I${SYSROOT}${EPREFIX}/usr/include/et ${CPPFLAGS}" \
 		waf-utils_src_configure ${myconf[@]}
