@@ -31,6 +31,7 @@ net-fs/nfs-utils nfsdcld nfsv41
 media-libs/libmypaint gegl
 media-gfx/inkscape cdr inkjar
 dev-libs/elfutils static-libs
+x11-terms/xterm Xaw3d
 # optimize
 sys-apps/openrc -ncurses
 app-editors/nano -ncurses
