@@ -31,6 +31,7 @@ net-fs/nfs-utils nfsdcld nfsv41
 media-libs/libmypaint gegl
 media-gfx/inkscape cdr inkjar
 dev-libs/elfutils static-libs
+# xterm:unicode - "luit allows xterm to support character encodings other than ISO-8859-1 and UTF-8."
 x11-terms/xterm Xaw3d -unicode
 # optimize
 sys-apps/openrc -ncurses
