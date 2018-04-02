@@ -2,4 +2,6 @@
 
 unset LD_PRELOAD
 [ -e /opt/UniFi/data/db/WiredTiger ] && set -- --wiredTigerCacheSizeGB 1 "${@}"
-exec /usr/bin/mongod "${@}"
+p="$*"
+(/usr/bin/mongod --help|grep nohttpinterface) || p="${p// --nohttpinterface}"
+exec /usr/bin/mongod $p
