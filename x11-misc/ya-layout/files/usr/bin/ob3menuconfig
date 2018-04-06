@@ -1132,6 +1132,10 @@ my %xrparam=(
 'XTerm.*.multiScroll'=>$bb,
 'XTerm.*.saveLines'=>[100,500,1000,5000],
 'XTerm.*.autoWrap'=>$bb,
+'XTerm.*.titeInhibit'=>$bb,
+'XTerm.*.visualBell'=>$bb,
+'XTerm.*.scrollKey'=>$bb,
+'XTerm.*.scrollTtyOutput'=>$bb,
 
 'XTerm.scaleHeight'=>[0.9,1.0,1.1,1.2,1.3,1.4,1.5],
 "$xrfont (=$allfont)"=>$font,
