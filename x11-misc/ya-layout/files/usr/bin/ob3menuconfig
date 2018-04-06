@@ -1136,6 +1136,7 @@ my %xrparam=(
 'XTerm.*.visualBell'=>$bb,
 'XTerm.*.scrollKey'=>$bb,
 'XTerm.*.scrollTtyOutput'=>$bb,
+'XTerm.*.utf8Title'=>$bb,
 
 'XTerm.scaleHeight'=>[0.9,1.0,1.1,1.2,1.3,1.4,1.5],
 "$xrfont (=$allfont)"=>$font,
