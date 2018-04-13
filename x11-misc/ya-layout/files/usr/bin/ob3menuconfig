@@ -1138,6 +1138,7 @@ my %xrparam=(
 'XTerm.*.scrollTtyOutput'=>$bb,
 'XTerm.*.utf8Title'=>$bb,
 
+'XTerm.keyboardType'=>['unknown','default','legacy','hp','sco','sun','tcap','vt220'],
 'XTerm.scaleHeight'=>[0.9,1.0,1.1,1.2,1.3,1.4,1.5],
 "$xrfont (=$allfont)"=>$font,
 'font'=>['','auto','[xfontsel]'],

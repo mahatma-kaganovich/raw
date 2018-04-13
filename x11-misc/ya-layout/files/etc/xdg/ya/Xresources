@@ -14,8 +14,8 @@ XTerm.*.jumpScroll: true
 XTerm.*.fastScroll: true
 XTerm.*.multiScroll: true
 XTerm.*.saveLines: 1000
-XTerm.*.autoWrap: true
 XTerm.*.scrollBar: true
 XTerm.*.rightScrollBar: true
 XTerm.*.utf8Title: true
+XTerm.menuLocale: C
 *font: -misc-fixed-medium-r-normal-*-10-*-*-*-*-*-*-*
