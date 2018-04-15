@@ -79,7 +79,7 @@ unsigned char bat_ec_rd(int fd, char arg0)
     return bufi[0];
 }
 
-char *get_status(int fd)
+void get_status(int fd)
 {
     unsigned int Local0, Local1, Local2, Local3, Local4, Local5, Local6, Local7;
     unsigned int PBST[4];
@@ -144,8 +144,8 @@ char *get_status(int fd)
         tbat = (remWh / rateW) * 60; // minutes
     } else
         tbat = 0.;
-    printf("%i%% %02i:%02i\n",100*PBST[2]/28000,(int)tbat/60,(int)tbat%60);
-    return res;
+    printf("%i%%\n",100*PBST[2]/28000);
+    fprintf(stderr,"%s %02i:%02i",res,(int)tbat/60,(int)tbat%60);
 }
 
 int main(int argc, char **argv)
@@ -166,13 +166,14 @@ int main(int argc, char **argv)
     }
 
     if (argc >= 2 && !strcmp(argv[1],"-1")) {
-        printf("%s\n", get_status(fd));
+        get_status(fd);
     } else {
       while (1) {
 	time(&rt);
 	t=localtime(&rt);
-	printf("%02i/%02i#%i %02i:%02i\n",t->tm_mon,t->tm_mday,t->tm_wday,t->tm_hour,t->tm_min);
-        get_status(fd);
+	printf("%02i:%02i\n",t->tm_hour,t->tm_min);
+	fprintf(stderr,"\x1b[2J%i/%02i/%02i #%i\n",1900+t->tm_year,t->tm_mon,t->tm_mday,t->tm_wday);
+	get_status(fd);
 	fflush(stdout);
 	sleep(60-t->tm_sec);
       }

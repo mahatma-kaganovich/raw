@@ -4,21 +4,24 @@
 $|=1;
 
 for(glob('/sys/class/power_supply/*/capacity')){
-	my $F;
-	open($F,'<',$_) || next;
+	open(my $F,'<',$_) || next;
 	push @B,$F;
 	$_=~s/.*\/(.*?)\/capacity/$1/gs;
-	print STDERR "$_\n";
+	$b.="\n$_";
 }
-my $dc=@B?" ":"\n";
 
+$md=-1;
 while(1){
 	my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime();
-	print sprintf("%02i/%02i#%i$dc%02i:%02i\n",$mon,$mday,$wday,$hour,$min),(map{
+	print sprintf("%02i:%02i\n",$hour,$min),(map{
 		seek($_,0,0);
 		my $c=readline($_);
 		chomp($c);
 		$c?"$c% ":();
 	}@B),"\n";
+	if($md!=$mday){
+		print STDERR "\x1b[2J".localtime.$b;
+		$md=$mday;
+	}
 	sleep(60-$sec);
 }

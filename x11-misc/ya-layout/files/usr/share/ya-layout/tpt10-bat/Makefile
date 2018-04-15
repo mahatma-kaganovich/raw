@@ -14,7 +14,7 @@ SRC=tpt10-bat.c
 all: $(PRG)
 
 $(PRG): $(OBJ)
-	$(CC) -o  $(PRG) $(OBJ) $(CFLAGS)
+	$(CC) -o $(PRG) $(OBJ) $(CFLAGS) && chmod 4755 $(PRG)
 
 clean:
 	rm -f $(PRG) $(OBJ)
