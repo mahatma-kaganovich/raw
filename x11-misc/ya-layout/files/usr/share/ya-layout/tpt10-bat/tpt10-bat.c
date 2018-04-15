@@ -119,11 +119,19 @@ void get_status(int fd)
     }
     fprintf(stderr, "\n");
 #endif
+    rateW = (double)PBST[1] / 1000000.;
+    remWh = (double)PBST[2] / 1000.;
+    volt = (double)PBST[3] / 1000.;
+    if (PBST[0] == 1) { // discharging, time till empty
+        tbat = (remWh / rateW) * 60; // minutes
+    } else
+        tbat = 0.;
+
     switch (PBST[0]) {
       case 0:
         res="AC online";
-        printf("+");
-        break;
+	printf("\n");
+        goto EX;
       case 1:
         res="Discharging";
         break;
@@ -133,19 +141,12 @@ void get_status(int fd)
         break;
       default:
         res="Unknown";
-        fprintf(stderr, "Unknown %2d\n", PBST[0]);
         break;
     }
 
-    rateW = (double)PBST[1] / 1000000.;
-    remWh = (double)PBST[2] / 1000.;
-    volt = (double)PBST[3] / 1000.;
-    if (PBST[0] == 1) { // discharging, time till empty
-        tbat = (remWh / rateW) * 60; // minutes
-    } else
-        tbat = 0.;
     printf("%i%%\n",100*PBST[2]/28000);
-    fprintf(stderr,"%s %02i:%02i",res,(int)tbat/60,(int)tbat%60);
+EX:
+    fprintf(stderr,"%s/%i %02i:%02i",res,PBST[0],(int)tbat/60,(int)tbat%60);
 }
 
 int main(int argc, char **argv)
