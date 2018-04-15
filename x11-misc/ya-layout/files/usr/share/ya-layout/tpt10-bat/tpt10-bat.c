@@ -79,11 +79,12 @@ unsigned char bat_ec_rd(int fd, char arg0)
     return bufi[0];
 }
 
-void get_status(int fd)
+char *get_status(int fd)
 {
     unsigned int Local0, Local1, Local2, Local3, Local4, Local5, Local6, Local7;
     unsigned int PBST[4];
     double rateW, remWh, volt, tbat;
+    char *res;
 #ifdef DEBUG
     int i;
 #endif
@@ -120,21 +121,21 @@ void get_status(int fd)
 #endif
     switch (PBST[0]) {
       case 0:
-        fprintf(stderr, "AC online ");
+        res="AC online";
         printf("+");
         break;
       case 1:
-        fprintf(stderr, "Discharging ");
+        res="Discharging";
         break;
       case 2:
-        fprintf(stderr, "Charging ");
+        res="Charging";
         printf("+");
         break;
       default:
-        fprintf(stderr, "Unknown %2d ", PBST[0]);
+        res="Unknown";
+        fprintf(stderr, "Unknown %2d\n", PBST[0]);
         break;
     }
-
 
     rateW = (double)PBST[1] / 1000000.;
     remWh = (double)PBST[2] / 1000.;
@@ -144,6 +145,7 @@ void get_status(int fd)
     } else
         tbat = 0.;
     printf("%i%% %02i:%02i\n",100*PBST[2]/28000,(int)tbat/60,(int)tbat%60);
+    return res;
 }
 
 int main(int argc, char **argv)
@@ -164,7 +166,7 @@ int main(int argc, char **argv)
     }
 
     if (argc >= 2 && !strcmp(argv[1],"-1")) {
-        get_status(fd);
+        printf("%s\n", get_status(fd));
     } else {
       while (1) {
 	time(&rt);

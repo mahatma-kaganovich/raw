@@ -4,6 +4,7 @@
 #
 
 CFLAGS=-O3 -Wall
+LDFLAGS=
 # CFLAGS+=-DDEBUG
 
 PRG=tpt10-bat
@@ -13,7 +14,7 @@ SRC=tpt10-bat.c
 all: $(PRG)
 
 $(PRG): $(OBJ)
-	$(CC) -o $(PRG) $(OBJ)
+	$(CC) -o  $(PRG) $(OBJ) $(CFLAGS)
 
 clean:
 	rm -f $(PRG) $(OBJ)
