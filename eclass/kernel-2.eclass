@@ -1737,7 +1737,7 @@ mksquash(){
 		grep -q "^CONFIG_${i%:*}=y$" "$S/.config" && c+=" -Xbcj ${i#*:}" && break
 	done;;
 	esac
-	mksquashfs "${@}" $c -b 1m -no-recovery -no-progress ${p:+-processors $p} || die "mksquashfs failed"
+	mksquashfs "${@}" $c -b 1m -no-recovery -no-exports -always-use-fragments -no-progress ${p:+-processors $p} || die "mksquashfs failed"
 }
 
 LICENSE(){

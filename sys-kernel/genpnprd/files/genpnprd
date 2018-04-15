@@ -388,16 +388,19 @@ while true; do
 	case "$COMPRESS" in
 	lzo)COMPRESS+=' -Xcompression-level 9';;
 	lz4)COMPRESS+=' -Xhc';;
-	xz)for i in X86:x86 ARM:arm,armthumb ARM64:arm,armthumb POWERPC:powerpc SPARC:sparc IA64:ia64; do
-		grep -q "^CONFIG_${i%:*}=y$" "$S/.config" && COMPRESS+=" -Xbcj ${i#*:}" && break
-	done;;
+	xz)
+		COMPRESS+=' -always-use-fragments'
+		for i in X86:x86 ARM:arm,armthumb ARM64:arm,armthumb POWERPC:powerpc SPARC:sparc IA64:ia64; do
+			grep -q "^CONFIG_${i%:*}=y$" "$S/.config" && COMPRESS+=" -Xbcj ${i#*:}" && break
+		done
+	;;
 	esac
 	p=1
 	for i in ${MAKEOPTS}; do
 		[[ "$i" == -j* ]] && p=$((${i#-j}-1))
 		[[ "${p:-0}" == 0 ]] && p=1
 	done
-	mksquashfs "$rcdir/$ldir" "$tmp/${ldir:-rd}$N.loopfs" ${COMPRESS:+-comp $COMPRESS }-b 1m -all-root -no-recovery -no-exports -no-progress ${p:+-processors $p} || die "mksquashfs"
+	mksquashfs "$rcdir/$ldir" "$tmp/${ldir:-rd}$N.loopfs" ${COMPRESS:+-comp $COMPRESS }-b 1m -all-root -no-recovery -no-exports -nopad -no-progress ${p:+-processors $p} || die "mksquashfs"
     else
 	[[ -x /sbin/mkfs.cramfs ]] && mkcramfs(){ /sbin/mkfs.cramfs "${@}";}
 	mkcramfs "$rcdir/$ldir" "$tmp/${ldir:-rd}$N.loopfs" || die "mkcramfs"
