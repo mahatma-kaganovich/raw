@@ -25,7 +25,6 @@ RDEPEND=" ${DEPEND}
 	x11-apps/xmodmap
 	laptop? (
 		>=x11-misc/xkbd-0.8.17
-		tint2? ( x11-misc/tint2[battery] )
 	)
 	!minimal? (
 		!tint2? ( || (
@@ -59,9 +58,20 @@ src_install(){
 	if use tint2; then
 		# hate effects & decorations - non-ergonomic for eyes
 		# top-right is also faster
-		cp /etc/xdg/tint2/tint2rc "${D}"/etc/xdg/ya/tint2rc &&
+		echo "
+#---------
+# execp ergonomic clock & battery
+execp = new
+execp_command = nice -1 perl /usr/share/ya-layout/clock-bat.pl
+execp_interval = 0
+execp_continuous = 2
+execp_font_color = #ffffff 100
+execp_font = sans 12
+execp_padding = 1 8
+
+"|cat /etc/xdg/tint2/tint2rc - >"${D}"/etc/xdg/ya/tint2rc &&
 		sed -i -e 's:777777:ffffff:' "${D}"/etc/xdg/ya/tint2rc &&
-		for i in {task,bat1,bat2,time1,time2,tooltip}'_font sans 12' 'panel_position top right horizontal' 'rounded 3' 'wm_menu 1' 'font_shadow 0' 'border_width 0' 'panel_padding 0 0 0' 'taskbar_padding 2 0 2' 'task_padding 0 0' 'panel_size 0 20' 'panel_items TSCB' 'mouse_right none' 'mouse_middle maximize_restore' 'clock_padding 1 8' 'battery_padding 1 8' 'systray_padding 1 1 1' 'taskbar_name 0' 'disable_transparency 0' 'mouse_effects 0'; do
+		for i in {task,bat1,bat2,time1,time2,tooltip,execp}'_font sans 12' 'panel_position top right horizontal' 'rounded 3' 'wm_menu 1' 'font_shadow 0' 'border_width 0' 'panel_padding 0 0 0' 'taskbar_padding 2 0 2' 'task_padding 0 0' 'panel_size 0 20' 'panel_items TSE' 'mouse_right none' 'mouse_middle maximize_restore' 'clock_padding 1 8' 'battery_padding 1 8' 'systray_padding 1 1 1' 'taskbar_name 0' 'disable_transparency 0' 'mouse_effects 0'; do
 			grep -q "^${i%% *}\s*=" "${D}"/etc/xdg/ya/tint2rc || echo "${i/ / = }" >>"${D}"/etc/xdg/ya/tint2rc
 			sed -i -e "s:^${i%% *} =.*\$:${i/ / = }:" "${D}"/etc/xdg/ya/tint2rc
 		done

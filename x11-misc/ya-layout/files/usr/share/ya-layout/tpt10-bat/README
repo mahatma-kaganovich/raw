@@ -1,0 +1,3 @@
+Based from utility by Nicole Faerber from http://www.id3p.de/gitweb/?p=tpt10-bat.git;a=tree
+Reworked for per-minute tint2 execp usage.
+Use under suid.

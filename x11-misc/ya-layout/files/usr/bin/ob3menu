@@ -786,6 +786,7 @@ NOGEO:
 				$f=~s/normal //g;
 				fontsize2('clock','time',$f);
 				fontsize2('battery','bat',$f);
+				fontsize2('execp','execp',$f);
 				$f.=int($conf{'.font.size'}*$tint2font);
 				tint2set('(?:task|tooltip)_font',-1,$f);
 			}
