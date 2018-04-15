@@ -120,10 +120,21 @@ void get_status(int fd)
 #endif
     switch (PBST[0]) {
       case 0:
-      case 2:
+        fprintf(stderr, "AC online ");
         printf("+");
         break;
+      case 1:
+        fprintf(stderr, "Discharging ");
+        break;
+      case 2:
+        fprintf(stderr, "Charging ");
+        printf("+");
+        break;
+      default:
+        fprintf(stderr, "Unknown %2d ", PBST[0]);
+        break;
     }
+
 
     rateW = (double)PBST[1] / 1000000.;
     remWh = (double)PBST[2] / 1000.;
@@ -152,13 +163,17 @@ int main(int argc, char **argv)
         exit(1);
     }
 
-    while (1) {
+    if (argc >= 2 && !strcmp(argv[1],"-1")) {
+        get_status(fd);
+    } else {
+      while (1) {
 	time(&rt);
 	t=localtime(&rt);
 	printf("%02i/%02i#%i %02i:%02i\n",t->tm_mon,t->tm_mday,t->tm_wday,t->tm_hour,t->tm_min);
         get_status(fd);
 	fflush(stdout);
 	sleep(60-t->tm_sec);
+      }
     }
 
     close(fd);
