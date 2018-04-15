@@ -20,7 +20,9 @@ while(1){
 		$c?"$c% ":();
 	}@B),"\n";
 	if($md!=$mday){
-		print STDERR "\x1b[2J".localtime.$b;
+#		use POSIX; $d=strftime('%A %e %B %Y', localtime);
+		$d=localtime; $d=~s/\d\d:\d\d:\d\d *//;
+		print STDERR "\x1b[2J$d";
 		$md=$mday;
 	}
 	sleep(60-$sec);
