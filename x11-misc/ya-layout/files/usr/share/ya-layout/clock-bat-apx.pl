@@ -73,7 +73,7 @@ while(1){
 		}
 		$NOW[$_]=$now;
 		if($r>0){
-			$r=$now/$r;
+			$r=int($now/$r);
 			push @res,sprintf("%i%%-%02i:%02i",$p,$r/60,$r%60);
 			next
 		}elsif(defined($r)){
