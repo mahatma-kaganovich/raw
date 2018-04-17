@@ -591,10 +591,10 @@ kernel-2_src_install() {
 		$slot0 && use sources && sym="linux-${KV_FULL}"
 		if use sources ; then
 			dodir /usr/src
-			find "${S}" -name "*.cmd" | while read f ; do
-				sed -i -e 's%'"${S}"'%/usr/src/linux-'"${REAL_KV}"'%g' ${f}
-#			find "${S}" -name "*.cmd"|sed -e 's:[^/]*$::'|sort -u | while read f ; do
-#				(cd "$f" && sed -i -e 's%'"${S}"'%/usr/src/linux-'"${REAL_KV}"'%g' *.cmd) || die
+#			find "${S}" -name "*.cmd" | while read f ; do
+#				sed -i -e 's%'"${S}"'%/usr/src/linux-'"${REAL_KV}"'%g' ${f}
+			find "${S}" -name ".*.cmd"|sed -e 's:[^/]*$::'|sort -u | while read f ; do
+				(cd "$f" && sed -i -e 's%'"${S}"'%/usr/src/linux-'"${REAL_KV}"'%g' .*.cmd) || die
 			done
 			if use pnp && use compressed; then
 				einfo "Compressing with squashfs"
