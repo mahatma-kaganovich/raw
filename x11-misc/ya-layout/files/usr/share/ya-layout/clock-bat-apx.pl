@@ -46,11 +46,10 @@ $b="No battery found or configured" if(!@F);
 $md=-1;
 @NOW=@FULL;
 while(1){
-	$T=time;
-	my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst)=localtime($T);
+	my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst)=localtime;
 	if($md!=$mday){
 #		use POSIX; $d=strftime('%A %x',$sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst);
-		$d=localtime($T); $d=~s/\d\d:\d\d:\d\d *//;
+		$d=localtime; $d=~s/\d\d:\d\d:\d\d *//;
 		print STDERR "\x1b[2J$d\n$b\n";
 		$md=$mday;
 	}
@@ -61,10 +60,11 @@ while(1){
 		seek($F[$_],0,0);
 		chomp($now);
 		my $p=int($now*100/$FULL[$_]);
-
-		my ($r,$rh,$rm);
 		my $d=$NOW[$_]-$now;
-		if($d<=0){
+		my $r;
+		if($sec>30){
+			defined($rate[$_]) && last;
+		}elsif($d<=0){
 			$rate[$_]=undef;
 		}elsif(defined($rate[$_])){
 			$r=$rate[$_]=($rate[$_]*($N-1)+$d)/$N;
@@ -73,10 +73,8 @@ while(1){
 		}
 		$NOW[$_]=$now;
 		if($r>0){
-			$rm=$now/$r;
-			$rh=int($rm/60);
-			$rm=$rm%60;
-			push @res,sprintf("%i%%-%02i:%02i",$p,$rh,$rm);
+			$r=$now/$r;
+			push @res,sprintf("%i%%-%02i:%02i",$p,$r/60,$r%60);
 			next
 		}elsif(defined($r)){
 			$rate[$_]=0;
