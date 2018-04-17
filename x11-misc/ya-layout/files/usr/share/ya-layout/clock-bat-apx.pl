@@ -40,9 +40,9 @@ for(glob('/sys/class/power_supply/*/uevent')){
 	push @FULL,$full;
 
 	$_=~s/.*\/(.*?)\//$1/gs;
-	$b.="\n$_";
+	$b.="$_\n";
 }
-$b="No battery found or configured" if(!@F);
+$b.="No battery found or configured\n" if(!@F);
 $md=-1;
 @NOW=@FULL;
 while(1){
@@ -50,7 +50,7 @@ while(1){
 	if($md!=$mday){
 #		use POSIX; $d=strftime('%A %x',$sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst);
 		$d=localtime; $d=~s/\d\d:\d\d:\d\d *//;
-		print STDERR "\x1b[2J$d\n$b\n";
+		print STDERR "\x1b[2J$d\n$b";
 		$md=$mday;
 	}
 	$i=0;
@@ -59,7 +59,6 @@ while(1){
 		my $now=readline($F[$_]);
 		seek($F[$_],0,0);
 		chomp($now);
-		my $p=int($now*100/$FULL[$_]);
 		my $d=$NOW[$_]-$now;
 		my $r;
 		if($sec>30){
@@ -72,6 +71,7 @@ while(1){
 			$r=$rate[$_]=$d*60/$wait;
 		}
 		$NOW[$_]=$now;
+		my $p=int($now*100/$FULL[$_]);
 		if($r>0){
 			$r=int($now/$r);
 			push @res,sprintf("%i%%-%02i:%02i",$p,$r/60,$r%60);

@@ -9,7 +9,7 @@ for(glob('/sys/class/power_supply/*/capacity')){
 	open(my $F,'<',$_) || next;
 	push @B,$F;
 	$_=~s/.*\/(.*?)\/capacity/$1/gs;
-	$b.="\n$_";
+	$b.="$_/b";
 }
 
 $md=-1;
@@ -18,7 +18,7 @@ while(1){
 	if($md!=$mday){
 #		use POSIX; $d=strftime('%A %e %B %Y',localtime);
 		$d=localtime; $d=~s/\d\d:\d\d:\d\d *//;
-		print STDERR "\x1b[2J$d\n$b\n";
+		print STDERR "\x1b[2J$d\n$b";
 		$md=$mday;
 	}
 	print sprintf("%02i:%02i\n ",$hour,$min),(map{
