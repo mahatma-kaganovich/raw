@@ -591,7 +591,8 @@ kernel-2_src_install() {
 		$slot0 && use sources && sym="linux-${KV_FULL}"
 		if use sources ; then
 			dodir /usr/src
-			find "${S}" -name "*.cmd" | while read f ; do
+#			find "${S}" -name "*.cmd" | while read f ; do
+			find . -name "*.cmd"|sed -e 's:[^/]*$:*.cmd:'|sort -u | while read f ; do
 				sed -i -e 's%'"${S}"'%/usr/src/linux-'"${REAL_KV}"'%g' ${f}
 			done
 			if use pnp && use compressed; then
