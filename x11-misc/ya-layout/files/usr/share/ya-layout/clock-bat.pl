@@ -1,5 +1,7 @@
 #!/usr/bin/perl
+# (c) Denis Kaganovich, under Anarchy license
 # tint2 execp for energy efficient clock & battery
+# minimal
 
 $|=1;
 
@@ -16,7 +18,7 @@ while(1){
 	if($md!=$mday){
 #		use POSIX; $d=strftime('%A %e %B %Y',localtime);
 		$d=localtime; $d=~s/\d\d:\d\d:\d\d *//;
-		print STDERR "\x1b[2J$d\n";
+		print STDERR "\x1b[2J$d\n$b\n";
 		$md=$mday;
 	}
 	print sprintf("%02i:%02i\n ",$hour,$min),(map{
