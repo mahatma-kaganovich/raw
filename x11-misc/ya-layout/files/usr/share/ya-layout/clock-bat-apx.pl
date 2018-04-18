@@ -61,15 +61,16 @@ while(1){
 		chomp($now);
 		my $d=$NOW[$_]-$now;
 		my $r;
+		my $r1=$rate[$_];
 		if($sec>30){
-			defined($rate[$_]) && last;
+			defined($r1) && last;
 		}elsif($d<=0){
-			$rate[$_]=undef;
-		}elsif(defined($rate[$_])){
-			$r=$rate[$_]=($rate[$_]*($N-1)+$d)/$N;
+		}elsif(defined($r1)){
+			$r=($r1*($N-1)+$d)/$N;
 		}elsif($wait>10){
-			$r=$rate[$_]=$d*60/$wait;
+			$r=$d*60/$wait;
 		}
+		$rate[$_]=$r;
 		$NOW[$_]=$now;
 		my $p=int($now*100/$FULL[$_]);
 		if($r>0){
