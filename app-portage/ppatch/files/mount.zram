@@ -1,18 +1,21 @@
 #!/bin/sh
 
-fs='ext4:-q:-O:sparse_super2:-O:^has_journal:-O:dir_index:-O:extent:-E:discard:-E:num_backup_sb=0:-I:256'
-fs_zram=':-O:inline_data'
-# dax
-fs_ram=
+fs='ext4:-q:-O:sparse_super2:-O:^has_journal:-O:^extent:-O:^64bit:-E:discard:-E:num_backup_sb=0'
+fs_zram=':-O:inline_data:-I:256:-O:dir_index'
+fs_ram=':-O:^inline_data:-I:128:-O:^dir_index'
 
-try='dax,discard discard'
+# no remount
+try='dax'
+
+# remount
+try1='discard dioread_nolock noblock_validity lazytime nobarrier nodelalloc'
 
 kv=`uname -r`
 [ "${kv%%.*}" -lt 4 ] && fs='ext4:-E:discard'
 
 help="
 
-mount.zram v0.8 (c) mahatma, under Anarchy license
+mount.zram v0.9 (c) mahatma, under Anarchy license
 Mount helper to mount zram (or ram/brd) devices via /etc/fstab over most simple way, stupid.
 Usage:	mount -t zram ...
 	mount.zram /dev/zram<X> <mountpoint> -o <options>
@@ -22,7 +25,7 @@ Loading zram module with number of devices just from FIRST mount device in fstab
 (so, first device is highest number)
 Loading brd module for /dev/ram0 ONLY.
 Mount options:
-	'fs=<fs[{:mkfs_options}]> (default fs=$fs, zram fs+=$fs_zram),
+	'fs=<fs[{:mkfs_options}]> (default fs=$fs, zram fs+=$fs_zram, ram fs+=$fs_ram),
 	<zram_param>=<value> where <zram_param> is any file from /sys/block/zramX/
 	zramctl=<options> - alternative to sysfs - use zramctl tool (spaces replaced to ':')
 	disksize=<N> - for /dev/ram0 - compatible with zram, bound single brd/ram disk to N.
@@ -72,7 +75,7 @@ case "$1" in
 	[ -e "$i" ] || sleep 1
 	c="$i/comp_algorithm"
 	fs="$fs$fs_zram"
-	try=discard
+#	try=discard
 ;;
 /dev/ram0)
 	for j in ${4//,/ }; do
@@ -80,18 +83,18 @@ case "$1" in
 		[ "$v" = "$j" ] || disksize="$(size2b "$v")"
 	done
 	[ -n "$disksize" ] && modprobe brd rd_nr=1 rd_size="$disksize" max_part=0
-	fs="$fs$fs_ram"
 ;;&
 /dev/ram*)
 	[ -e "$i" ] || sleep 1
+	fs="$fs$fs_ram"
 	c="$i/size"
 ;;
 *)err "$*$help";;
 esac
 [ -z "$c" -o -e "$c" ] || err "no $c"
 echo 0 >"$i/queue/rotational"
+[ "$3" = '-o' -o "$3" = '' ] || err "invalid option '$3'"
 o=
-re=",$4,"
 for i in ${4//,/ }; do
 	v="${i#*=}"
 	[ "$v" = "$i" ] || {
@@ -122,19 +125,29 @@ fs="${fs//:/ }"
 mkfs="mkfs.$fs $1"
 fs="${fs%% *}"
 
+re=",$4,"
 [ -z "${re##*,remount,*}" ] || yes '' | $mkfs || warn "$mkfs"
 
 # move original mountpoint permissions to mount if not fs-assisted
 [ -z "$mode" ] && m=`stat "$2" --format='%a'`
 [ -z "$uid$gid" ] && ug=`stat "$2" --format='%u:%g'` || ug=
 
+t1="${try1// /,}"
 for i in $try ''; do
+    for i in "$t1,$i" "$i" ; do
 	[ -n "$i" -a -n "$o" ] && i="$i,$o" || i="$i$o"
-	mount -t "$fs" ${i+-o $i} "$1" "$2" && {
+	mount -t "$fs"$oo${i:+ -o }"$i" "$1" "$2" && {
+		case "$i,1" in
+		$t1,*);;
+		*)for i1 in $try1; do
+			mount -t "$fs"$oo -o "remount,$i1${i:+,$i}" "$1" "$2"
+		done;;
+		esac
 		[ -n "$m" ] && chmod -- "$m" "$2"
 		[ -n "$ug" ] && chown -- "$ug" "$2"
 		exit 0
 	}
 	r=$?
+    done
 done
-err "mount -t $fs ${o+-o $o} $1 $2" $r
+err "mount -t $fs$oo ${o+-o $o} $1 $2" $r
