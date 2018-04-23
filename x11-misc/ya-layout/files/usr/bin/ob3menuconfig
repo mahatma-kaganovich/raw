@@ -63,7 +63,7 @@ push @rc,"/etc/xdg/$prof/rc.xml";
 
 my (%type,%xsd,%fontcfg,%fonts,%fonts_,%CNT,%xtype,%add_del,%add);
 
-$fix=$0;
+$fix=$0.' --fix';
 $fix=~s/^\/usr\/bin\///gs if(!$bin);
 
 $ID='ob:openbox_config';
