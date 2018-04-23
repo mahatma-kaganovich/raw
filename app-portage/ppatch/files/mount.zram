@@ -136,11 +136,11 @@ t1="${try1// /,}"
 for i in $try ''; do
     for i in "$t1,$i" "$i" ; do
 	[ -n "$i" -a -n "$o" ] && i="$i,$o" || i="$i$o"
-	mount -t "$fs"$oo${i:+ -o }"$i" "$1" "$2" && {
+	mount -t "$fs"${i:+ -o }"$i" "$1" "$2" && {
 		case "$i,1" in
 		$t1,*);;
 		*)for i1 in $try1; do
-			mount -t "$fs"$oo -o "remount,$i1${i:+,$i}" "$1" "$2"
+			mount -t "$fs" -o "remount,$i1${i:+,$i}" "$1" "$2"
 		done;;
 		esac
 		[ -n "$m" ] && chmod -- "$m" "$2"
@@ -150,4 +150,4 @@ for i in $try ''; do
 	r=$?
     done
 done
-err "mount -t $fs$oo ${o+-o $o} $1 $2" $r
+err "mount -t $fs ${o+-o $o} $1 $2" $r
