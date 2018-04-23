@@ -203,8 +203,8 @@ zram_overlay(){
 		ln -s fsck /sbin/mkfs.ext4
 		echo "${2:-lz4hc}" >"$b"/comp_algorithm &&
 		echo "${3:-8g}" >"$b"/disksize &&
-		mkfs.ext4 -q -O sparse_super2 -O ^has_journal -O inline_data -O dir_index -O ^extent -O ^64bit -E discard -E num_backup_sb=0 -I 256 "$dev" &&
-		mount -t ext4 -o noatime,discard,lazytime,noblock_validity,dioread_nolock,nodelalloc,nobarrier "$dev" $d || return 1
+		mkfs.ext4 -q -O sparse_super2 -O ^has_journal -O ^inline_data -O dir_index -O ^project:-O ^quota -E discard -E num_backup_sb=0 -b 4096 -I 128 "$dev" &&
+		mount -t ext4 -o noatime,discard,lazytime,noblock_validity,dioread_nolock,delalloc,nobarrier "$dev" $d || return 1
 		# always last choise
 		shift
 		shift

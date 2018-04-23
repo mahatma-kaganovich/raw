@@ -1,14 +1,14 @@
 #!/bin/sh
 
-fs='ext4:-q:-O:sparse_super2:-O:^has_journal:-O:^extent:-O:^64bit:-E:discard:-E:num_backup_sb=0'
-fs_zram=':-O:inline_data:-I:256:-O:dir_index'
-fs_ram=':-O:^inline_data:-I:128:-O:^dir_index'
+fs='ext4:-q:-O:sparse_super2:-O:^has_journal:-O:dir_index:-O:^project:-O:^quota:-E:discard:-E:num_backup_sb=0:-b:4096'
+#fs="$fs:-O:inline_data:-I:256"
+fs="$fs:-O:^inline_data:-I:128"
 
 # no remount
 try='dax'
 
 # remount
-try1='discard dioread_nolock noblock_validity lazytime nobarrier nodelalloc'
+try1='discard dioread_nolock noblock_validity lazytime nobarrier delalloc'
 
 kv=`uname -r`
 [ "${kv%%.*}" -lt 4 ] && fs='ext4:-E:discard'
@@ -75,7 +75,7 @@ case "$1" in
 	[ -e "$i" ] || sleep 1
 	c="$i/comp_algorithm"
 	fs="$fs$fs_zram"
-#	try=discard
+#	try=
 ;;
 /dev/ram0)
 	for j in ${4//,/ }; do
