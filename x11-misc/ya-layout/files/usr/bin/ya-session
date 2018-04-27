@@ -29,6 +29,7 @@ ENV="$cache/environment.$DSP"
 DSPS=
 disconnected=false
 kbd=true
+xinitrc=false
 
 #xinerama='--xinerama-index 0'
 xinerama='--no-xinerama' # pan
@@ -678,6 +679,11 @@ case "$1" in
 	kbd=false
 	continue
 ;;
+--xinitrc)
+	shift
+	xinitrc=true
+	continue
+;;
 --obsession)
 	shift
 	envir openbox
@@ -757,6 +763,9 @@ Launcher:
 *)
 	rm -f "$cache/"$DSP1-[1-9]* "$ENV"
 	[ -e /etc/udev/rules.d/88-autofs.rules -a ! -e /var/run/auto.dev ] && . /usr/share/ya-layout/autofs-all
+	if $xinitrc; then
+		. /etc/X11/xinit/xinitrc
+	fi
 	[ -x /usr/bin/dbus-launch ] && _env /usr/bin/dbus-launch --sh-syntax --exit-with-session
 	for i in gtk{3,2}; do
 		for j in /usr/lib*/qt5/plugins/platformthemes/libq$i.so; do
