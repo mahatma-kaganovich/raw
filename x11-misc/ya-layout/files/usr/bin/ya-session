@@ -28,6 +28,7 @@ DSP3=
 ENV="$cache/environment.$DSP"
 DSPS=
 disconnected=false
+kbd=true
 
 #xinerama='--xinerama-index 0'
 xinerama='--no-xinerama' # pan
@@ -224,7 +225,7 @@ print $s;' "${@}"
 _mix1(){
 	local i='/usr/bin/amixer -q set'
 	# standard channel is "Master", I have simple USB card with "Headphone", try to detect some other exotic
-	if [ -n "$mixer" -a "$mixer" != Master -a "$mixer" != Headphone]; then
+	if [ -n "$mixer" -a "$mixer" != Master -a "$mixer" != Headphone ]; then
 		echo "$i Master $* || $i '$mixer' $* || $i Headphone $*"
 	else
 		echo "$i Master $* || $i Headphone $*"
@@ -232,7 +233,7 @@ _mix1(){
 }
 
 _mix(){
-	echo "$(_mix1 $* -c 0) || $(mix1 $*)"
+	echo "$(_mix1 $* -c 0) || $(_mix1 $*)"
 }
 
 obconfig(){
@@ -269,12 +270,9 @@ obconfig(){
 		-e 's:<noStrut>.*</noStrut>:<noStrut>no</noStrut>:' \
 		-e 's:\(<context name="Titlebar">\):\1\n<mousebind button="Left" action="Click"><action name="ShowMenu"><menu>root-menu</menu></action></mousebind>\n<mousebind button="Middle" action="Click"><action name="ShowMenu"><menu>root-menu</menu></action></mousebind>:' \
 		-e 's:<file>menu\.xml</file>:<file>'"$m"'/ya/menu.xml</file>:' \
-		-e 's:\(<!-- Menus -->\):\1\
+		-e 's:\(<!-- Menus -->\):\1
 <!-- "Drag" not working here -->\
-<mousebind button="Left" action="DoubleClick"><action name="ShowMenu"><menu>root-menu</menu></action></mousebind>\
-<mousebind button="Middle" action="Click"><action name="execute"><execute>~/.cache/ya'"$suff"'/desk-sh $pointer</execute></action>/mousebind>\
-<mousebind button="Left" action="Click"><action name="execute"><execute>~/.cache/ya'"$suff"'/desk-sh $pointer</execute></action>/mousebind>\n:\
-' \
+<mousebind button="Left" action="DoubleClick"><action name="ShowMenu"><menu>root-menu</menu></action></mousebind>\n:' \
 		-e 's:</keyboard>:<!-- ya.keybind -->\
 <keybind key="C-Escape"><action name="ShowMenu"><menu>client-list-combined-menu</menu></action></keybind>\
 <keybind key="Menu"><action name="ShowMenu"><menu>root-menu</menu></action></keybind>\
@@ -591,6 +589,44 @@ _unalias(){
 	echo "YA_ENV_KEY=$i;unalias -a"
 }
 
+_setxkbmap(){
+	setxkbmap "${@}" && [ "$DSP1" = :0 ] || setxkbmap "${@}" -print|xkbcomp - $DISPLAY
+}
+
+# add keyboards for all used locales
+# true if multilang
+_setkb(){
+	i="
+`setxkbmap -query`"
+	o="${i##*options: }"
+	o="${o%%
+*}"
+	o="${o// }"
+	i="${i##*layout: }"
+	i="${i%%
+*}"
+
+	i="${i// }"
+	i1=
+	for l in "$LANG" "${!LC_@}"; do
+		l="${l#*_}"
+		l="${l%%[.@]*}"
+		l="${l,,}"
+		[ -n "${i##*$l*}" ] && i1+=",$l"
+	done
+	[ -z "$o" ] && o='-option grp:ctrl_shift_toggle' || o=
+	[ -n "$i1" ] && i+="$i1" && i="${i#,}" && _setxkbmap -layout "$i" $o
+
+	read j 2>/dev/null <"$obconfdir/xkbmap" && _setxkbmap $j
+	setxkbmap -query|grep -q '^layout: .*,'
+	if read j 2>/dev/null <"$obconfdir/xkbmap"; then
+		_setxkbmap $j
+		setxkbmap -query|grep -q '^layout: .*,'
+	else
+		[[ "$i" == *,* ]]
+	fi
+}
+
 [ -e "$ENV" ] && . "$ENV" || mkdir -p "$cache"
 i=`stat --printf=%Z $prefapps /usr/share/applications /usr/bin/ya-session 2>/dev/null`
 [ "$i" != "$YA_ENV_KEY" ] && _env _unalias
@@ -635,6 +671,11 @@ case "$1" in
 -f|--disconnected)
 	shift
 	disconnected=true
+	continue
+;;
+--nokbd)
+	shift
+	kbd=false
 	continue
 ;;
 --obsession)
@@ -696,6 +737,7 @@ case "$1" in
 Commands: -noop, --ya, -p|--profile <profile>, --exit, --0, --obsession, --open,
 	--layout [user], --run <cmd>, --runs 'cmd1' ['cmd2'...],
 	-f|--disconnected
+	--nokbd
 .xinitrc examples:
 	minimal: exec ya-session'
 	openbox-style: exec ya-session --open --obsession
@@ -716,38 +758,12 @@ Launcher:
 	rm -f "$cache/"$DSP1-[1-9]* "$ENV"
 	[ -e /etc/udev/rules.d/88-autofs.rules -a ! -e /var/run/auto.dev ] && . /usr/share/ya-layout/autofs-all
 	[ -x /usr/bin/dbus-launch ] && _env /usr/bin/dbus-launch --sh-syntax --exit-with-session
-
-	# add keyboards for all used locales
-	i="
-`setxkbmap -query`"
-	o="${i##*options: }"
-	o="${o%%
-*}"
-	o="${o// }"
-	i="${i##*layout: }"
-	i="${i%%
-*}"
-
-	i="${i// }"
-	i1=
-	for l in "$LANG" "${!LC_@}"; do
-		l="${l#*_}"
-		l="${l%%[.@]*}"
-		l="${l,,}"
-		[ -n "${i##*$l*}" ] && i1+=",$l"
-	done
-	[ -z "$o" ] && o='-option grp:ctrl_shift_toggle' || o=
-	[ -n "$i1" ] && i+="$i1" && setxkbmap -layout "${i#,}" $o
 	for i in gtk{3,2}; do
 		for j in /usr/lib*/qt5/plugins/platformthemes/libq$i.so; do
 			[ -e "$j" ] && export QT_QPA_PLATFORMTHEME="$i" QT_STYLE_OVERRIDE="$i" && break 2
 		done
 	done
-	read i 2>/dev/null <"$obconfdir/xkbmap" && {
-		setxkbmap $i
-		[ "$DSP1" != :0 ] && setxkbmap $i -print|xkbcomp - $DISPLAY
-	}
-	setxkbmap -query|grep '^layout: .*,' && kbdd=true || kbdd=false
+	$kbd && _setkb && kbdd=true || kbdd=false
 	xprop -root -remove _NET_NUMBER_OF_DESKTOPS -remove _NET_DESKTOP_NAMES -remove _NET_CURRENT_DESKTOP
 	envir ya$suff
 	[ -s "$obconf" ] || obconfig "$obconf" $(_1cfg openbox/rc.xml)
