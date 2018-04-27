@@ -29,6 +29,7 @@ ENV="$cache/environment.$DSP"
 DSPS=
 disconnected=false
 kbd=true
+kbdd=false
 xinitrc=false
 
 #xinerama='--xinerama-index 0'
@@ -594,8 +595,11 @@ _setxkbmap(){
 	setxkbmap "${@}" && [ "$DSP1" = :0 ] || setxkbmap "${@}" -print|xkbcomp - $DISPLAY
 }
 
+_xcat(){
+	cat {/etc/X11/xinit/,/etc/xdg/ya$suff/,"$HOME"/.config/ya$suff/,"$HOME"/.}"$1" 2>/dev/null
+}
+
 # add keyboards for all used locales
-# true if multilang
 _setkb(){
 	i="
 `setxkbmap -query`"
@@ -617,15 +621,13 @@ _setkb(){
 	done
 	[ -z "$o" ] && o='-option grp:ctrl_shift_toggle' || o=
 	[ -n "$i1" ] && i+="$i1" && i="${i#,}" && _setxkbmap -layout "$i" $o
-
-	read j 2>/dev/null <"$obconfdir/xkbmap" && _setxkbmap $j
-	setxkbmap -query|grep -q '^layout: .*,'
-	if read j 2>/dev/null <"$obconfdir/xkbmap"; then
+	if read j <"$obconfdir/xkbmap"; then
 		_setxkbmap $j
-		setxkbmap -query|grep -q '^layout: .*,'
-	else
-		[[ "$i" == *,* ]]
+		setxkbmap -query|grep -q '^layout: .*,' && kbdd=true
+	elif [[ "$i" == *,* ]]; then
+		kbdd=true
 	fi
+	$xinitrc || _xcat Xmodmap | xmodmap -
 }
 
 [ -e "$ENV" ] && . "$ENV" || mkdir -p "$cache"
@@ -772,14 +774,14 @@ Launcher:
 			[ -e "$j" ] && export QT_QPA_PLATFORMTHEME="$i" QT_STYLE_OVERRIDE="$i" && break 2
 		done
 	done
-	$kbd && _setkb && kbdd=true || kbdd=false
+	$kbd && _setkb
 	xprop -root -remove _NET_NUMBER_OF_DESKTOPS -remove _NET_DESKTOP_NAMES -remove _NET_CURRENT_DESKTOP
 	envir ya$suff
 	[ -s "$obconf" ] || obconfig "$obconf" $(_1cfg openbox/rc.xml)
 _run_dsp(){
 	resolution
 	[ "$YA_STARTUP" = TINT2 ] && tint2chk
-	cat {/etc/X11,/etc/xdg/ya$suff,"$HOME"/.config/ya$suff}/Xresources "$HOME/.Xresources" 2>/dev/null  | xrdb -merge
+	$xinitrc || _xcat Xresources | xrdb -merge
 	xssaver
 	$kbdd && kbdd
 	[ -n "$desk" ] && i=`_1cfg "ya$suff/wallpaper{$DSP2,$DSP,${DSP%:*},${DSP%.*},}.*"` && case "$desk" in
