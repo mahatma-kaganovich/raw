@@ -737,6 +737,10 @@ for(sort grep(/^$i[^:]*$/,keys %type)){
 "<$r1>$r2</$e[-1]>"
 }
 
+sub _kbname{
+	exists($c{$_[0]}->{$_[1]})?$c{$_[0]}->{$_[1]}:defined($_[2])?$_[2]:$_[1];
+}
+
 sub _xkbmap{
 	my (%k,%k1,%ch);
 	while(my ($c,$v)=each %kb){
@@ -747,9 +751,10 @@ sub _xkbmap{
 		my $s=1;
 		for(0..$#{$_[0]}){
 			my ($c,$v)=($_[0]->[$_],$_[2]->[$_]);
+			my $v1=($c eq 'variant')?"$_[2]->[1]:$v":$v;
 			$ch{$c}=1;
 			$k{$c}->[$_[1]]=$v;
-			$n||=exists($c{$c}->{$v})?$c{$c}->{$v}:$v;
+			$n||=_kbname($c,$v1,$v);
 			$s&&=exists($kb1{$c}->{$v})==($v ne '');
 		}
 		$n="*$n" if($s);
@@ -757,8 +762,15 @@ sub _xkbmap{
 		for(@{$_[0]}){
 			$ch{$_}=1;
 			my $v=$k{$_}->[$_[1]];
-			$n||=exists($c{$_}->{$v})?$c{$_}->{$v}:$v;
-			splice(@{$k{$_}},$_[1],1)
+			if($n){
+			}elsif($_ eq 'variant'){
+				my $l=$k{'layout'}->[$_[1]];
+				$n=_kbname('layout',$l);
+				$n.=':'._kbname($_,"$l:$v",$v) if($v);
+			}else{
+				$n=_kbname($c,$v);
+			}
+			splice(@{$k{$_}},$_[1],1);
 		}
 		$n="- *$n";
 	}else{
@@ -772,9 +784,9 @@ sub _xkbmap{
 		$kch{$c}||$ch{$c}||next;
 		$n++;
 		if($c eq 'option'){
-			print join(" -$c ",'','',@$v);
+			print join(" -$c '",'','',@$v)."'";
 		}else{
-			print " -$c ".join(',',@$v);
+			print " -$c '".join(',',@$v)."'";
 		}
 	}
 	$n||print ' -';
@@ -840,6 +852,11 @@ sub setxkbmap{
 		$y=~s/\&lt;/</gsi;
 		$y=~s/\&gt;/>/gsi;
 		$y=~s/([$xml_])/\&$xml_{$1};/g;
+		if($c eq 'variant' && (my ($l,$t)=$y=~/^(\S+): (.*)$/)){
+			$x="$l:$x";
+			$y=$t;
+		}
+		exists($c{$c}->{$x}) && print STDERR "WARNING: xkb '$c' duplicate: '$x'\n";
 		$c{$c}->{$x}=$y;
 	}
 	close($F);
@@ -856,12 +873,12 @@ sub setxkbmap{
 	for(['Cherry','cherryblue'],['BTC','btc9116u']){
 		$vendor{$_->[0]}->{$_->[1]}=undef if(exists($vendor{$_->[0]}) && exists($c{'model'}->{$_->[1]}));
 	}
-	while(my ($v,$t)=each %{$c{'variant'}}){
-		my ($l,$t)=$t=~/^(\S+): (.*)$/;
+	while(my ($v1,$t)=each %{$c{'variant'}}){
+		my ($l,$v)=split(/:/,$v1,2);
 		if(exists($c{'layout'}->{$l})){
-			my $ln="$c{'layout'}->{$l} ";
-			substr($t,0,length($ln))='' if(substr($t,0,length($ln)) eq $ln);
-			$lv{$l}->{$v}=$c{'variant'}->{$v}=$t;
+			my $n=quotemeta($c{'layout'}->{$l});
+			$t=~s/^\s*$n\s*\((.*)\)\s*$/$1/i;
+			$lv{$l}->{$v}=$c{'variant'}->{$v1}=$t;
 		}
 	}
 	$s='';
@@ -921,7 +938,7 @@ sub setxkbmap{
 		print "<menu id='$MENU:$conf' label='$c{'layout'}->{$_}'>";
 		_xkbmap($i,$n,['',$_]);
 		print '<separator/>';
-		for my $v (sort{$c{'variant'}->{$a} cmp $c{'variant'}->{$b}}keys %{$lv{$_}}){
+		for my $v (sort{$lv{$_}->{$a} cmp $lv{$_}->{$b}}keys %{$lv{$_}}){
 			_xkbmap($i,$n,[$v,$_]);
 		}
 		print '</menu>';
