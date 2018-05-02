@@ -6,7 +6,8 @@ EAPI=6
 PYTHON_COMPAT=( python2_7 )
 PYTHON_REQ_USE='threads(+),xml(+)'
 
-inherit python-single-r1 waf-utils multilib-minimal linux-info systemd eutils
+inherit python-single-r1 waf-utils multilib-minimal linux-info systemd
+# eutils
 
 MY_PV="${PV/_rc/rc}"
 MY_P="${PN}-${MY_PV}"
@@ -124,7 +125,7 @@ S="${WORKDIR}/${MY_P}"
 PATCHES=(
 	"${FILESDIR}/${PN}-4.5.1-compile_et_fix.patch"
 #	"${FILESDIR}"/talloc-disable-python.patch
-	"${FILESDIR}/${PN}-4.7.4-no_ads.patch"
+#	"${FILESDIR}/${PN}-4.7.4-no_ads.patch"
 )
 
 #CONFDIR="${FILESDIR}/$(get_version_component_range 1-2)"
