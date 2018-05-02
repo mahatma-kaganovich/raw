@@ -1,0 +1,257 @@
+2018-05-02 Dzianis Kahanovich <mahatma@eu.by>
+
+PR target/40171
+* config/i386/driver-i386.c (host_detect_local_cpu): Add "astune" mode (assembler mtune).
+* config/i386/i386.h (ASM_SPEC_MTUNE): Detect & pass -mtune=native to the GNU assembler.
+* config/i386/linux64.h (ASM_SPEC): Append ASM_SPEC_MTUNE.
+* config/i386/linux.h (ASM_SPEC): Likewise.
+* config/i386/mingw-w64.h (ASM_SPEC): Likewise.
+* config/i386/sol2-10.h (ASM_SPEC): Likewise.
+* config/i386/x86-64.h (ASM_SPEC): Likewise.
+
+--- a/gcc/config/i386/driver-i386.c	2018-04-20 16:30:13.000000000 +0300
++++ b/gcc/config/i386/driver-i386.c	2018-05-02 21:29:03.000000000 +0300
+@@ -425,7 +425,7 @@ const char *host_detect_local_cpu (int a
+   unsigned int has_vpclmulqdq = 0;
+   unsigned int has_movdiri = 0, has_movdir64b = 0;
+ 
+-  bool arch;
++  bool arch, tune, astune;
+ 
+   unsigned int l2sizekb = 0;
+ 
+@@ -433,8 +433,10 @@ const char *host_detect_local_cpu (int a
+     return NULL;
+ 
+   arch = !strcmp (argv[0], "arch");
++  tune = !arch && !strcmp (argv[0], "tune");
++  astune = !arch && !tune && !strcmp (argv[0], "astune");
+ 
+-  if (!arch && strcmp (argv[0], "tune"))
++  if (!arch && !tune && !astune)
+     return NULL;
+ 
+   max_level = __get_cpuid_max (0, &vendor);
+@@ -616,7 +618,7 @@ const char *host_detect_local_cpu (int a
+       has_avx512vl = 0;
+     }
+ 
+-  if (!arch)
++  if (tune)
+     {
+       if (vendor == signature_AMD_ebx
+ 	  || vendor == signature_CENTAUR_ebx
+@@ -745,7 +747,7 @@ const char *host_detect_local_cpu (int a
+ 	case 0x1c:
+ 	case 0x26:
+ 	  /* Bonnell.  */
+-	  cpu = "bonnell";
++	  cpu = astune ? "core2" : "bonnell";
+ 	  break;
+ 	case 0x37:
+ 	case 0x4a:
+@@ -753,7 +755,7 @@ const char *host_detect_local_cpu (int a
+ 	case 0x5a:
+ 	case 0x5d:
+ 	  /* Silvermont.  */
+-	  cpu = "silvermont";
++	  cpu = astune ? "core2" : "silvermont";
+ 	  break;
+ 	case 0x0f:
+ 	  /* Merom.  */
+@@ -767,37 +769,37 @@ const char *host_detect_local_cpu (int a
+ 	case 0x1f:
+ 	case 0x2e:
+ 	  /* Nehalem.  */
+-	  cpu = "nehalem";
++	  cpu = astune ? "corei7" : "nehalem";
+ 	  break;
+ 	case 0x25:
+ 	case 0x2c:
+ 	case 0x2f:
+ 	  /* Westmere.  */
+-	  cpu = "westmere";
++	  cpu =  astune ? "corei7" : "westmere";
+ 	  break;
+ 	case 0x2a:
+ 	case 0x2d:
+ 	  /* Sandy Bridge.  */
+-	  cpu = "sandybridge";
++	  cpu =  astune ? "corei7" : "sandybridge";
+ 	  break;
+ 	case 0x3a:
+ 	case 0x3e:
+ 	  /* Ivy Bridge.  */
+-	  cpu = "ivybridge";
++	  cpu = astune ? "corei7" : "ivybridge";
+ 	  break;
+ 	case 0x3c:
+ 	case 0x3f:
+ 	case 0x45:
+ 	case 0x46:
+ 	  /* Haswell.  */
+-	  cpu = "haswell";
++	  cpu = astune ? "corei7" : "haswell";
+ 	  break;
+ 	case 0x3d:
+ 	case 0x47:
+ 	case 0x4f:
+ 	case 0x56:
+ 	  /* Broadwell.  */
+-	  cpu = "broadwell";
++	  cpu = astune ? "corei7" :"broadwell";
+ 	  break;
+ 	case 0x4e:
+ 	case 0x5e:
+@@ -805,19 +807,19 @@ const char *host_detect_local_cpu (int a
+ 	case 0x8e:
+ 	case 0x9e:
+ 	  /* Kaby Lake.  */
+-	  cpu = "skylake";
++	  cpu = astune ? "corei7" : "skylake";
+ 	  break;
+ 	case 0x55:
+ 	  /* Skylake with AVX-512.  */
+-	  cpu = "skylake-avx512";
++	  cpu = astune ? "corei7" : "skylake-avx512";
+ 	  break;
+ 	case 0x57:
+ 	  /* Knights Landing.  */
+-	  cpu = "knl";
++	  cpu = astune ? "k1om" : "knl";
+ 	  break;
+ 	case 0x66:
+ 	  /* Cannon Lake.  */
+-	  cpu = "cannonlake";
++	  cpu = astune ? "corei7" : "cannonlake";
+ 	  break;
+ 	case 0x85:
+ 	  /* Knights Mill.  */
+@@ -915,7 +917,7 @@ const char *host_detect_local_cpu (int a
+ 	    }
+ 	  else
+ 	    /* For -mtune, we default to -mtune=generic.  */
+-	    cpu = "generic";
++	    cpu = astune ? NULL : "generic";
+ 	  break;
+ 	}
+       break;
+@@ -931,17 +933,17 @@ const char *host_detect_local_cpu (int a
+ 	cpu = "pentium4";
+       break;
+     case PROCESSOR_GEODE:
+-      cpu = "geode";
++      cpu = astune ? NULL : "geode";
+       break;
+     case PROCESSOR_K6:
+       if (arch && has_3dnow)
+-	cpu = "k6-3";
++	cpu = astune ? "k6-2" : "k6-3";
+       else
+ 	cpu = "k6";
+       break;
+     case PROCESSOR_ATHLON:
+       if (arch && has_sse)
+-	cpu = "athlon-4";
++	cpu = astune ? "athlon" : "athlon-4";
+       else
+ 	cpu = "athlon";
+       break;
+@@ -961,7 +963,7 @@ const char *host_detect_local_cpu (int a
+ 		cpu = "eden-x2";
+ 	      else
+ 		/* Default to k8 */
+-		cpu = "k8";
++		cpu = "k8-sse3";
+ 	    }
+ 	  else if (has_sse3)
+ 	    cpu = "k8-sse3";
+@@ -1025,7 +1027,7 @@ const char *host_detect_local_cpu (int a
+ 	    cpu = "pentium";
+ 	}
+       else
+-	cpu = "generic";
++	cpu = astune ? NULL : "generic";
+     }
+ 
+   if (arch)
+@@ -1114,9 +1116,19 @@ const char *host_detect_local_cpu (int a
+ 			avx512vbmi2, avx512vnni, vaes, vpclmulqdq,
+ 			avx512bitalg, movdiri, movdir64b, NULL);
+     }
++  else if (astune)
++    {
++/* Looks like gcc don't pass flag(s) to as after "native". Place it here. */
++      const char *sse2avx = has_avx ? " -msse2avx" : "";
++      
++      options = concat (options, sse2avx, NULL);
++    }
+ 
+ done:
+-  return concat (cache, "-m", argv[0], "=", cpu, options, NULL);
++  return cpu ? (astune ?
++	concat (cache, "-mtune=", cpu, options, NULL) :
++	concat (cache, "-m", argv[0], "=", cpu, options, NULL)) :
++		cache;
+ }
+ #else
+ 
+--- a/gcc/config/i386/gnu-user64.h	2018-01-03 13:03:58.000000000 +0300
++++ b/gcc/config/i386/gnu-user64.h	2018-05-02 21:18:44.000000000 +0300
+@@ -47,7 +47,7 @@ see the files COPYING3 and COPYING.RUNTI
+ #endif
+ 
+ #undef ASM_SPEC
+-#define ASM_SPEC "%{" SPEC_32 ":--32} \
++#define ASM_SPEC ASM_SPEC_MTUNE "%{" SPEC_32 ":--32} \
+  %{" SPEC_64 ":--64} \
+  %{" SPEC_X32 ":--x32} \
+  %{!mno-sse2avx:%{mavx:-msse2avx}} %{msse2avx:%{!mavx:-msse2avx}}"
+--- a/gcc/config/i386/gnu-user.h	2018-01-03 13:03:58.000000000 +0300
++++ b/gcc/config/i386/gnu-user.h	2018-05-02 21:18:44.000000000 +0300
+@@ -67,6 +67,7 @@ along with GCC; see the file COPYING3.
+ 
+ #undef  ASM_SPEC
+ #define ASM_SPEC \
++  ASM_SPEC_MTUNE \
+   "--32 %{!mno-sse2avx:%{mavx:-msse2avx}} %{msse2avx:%{!mavx:-msse2avx}}"
+ 
+ #undef  SUBTARGET_EXTRA_SPECS
+--- a/gcc/config/i386/i386.h	2018-04-20 16:30:13.000000000 +0300
++++ b/gcc/config/i386/i386.h	2018-05-02 21:18:44.000000000 +0300
+@@ -698,6 +698,13 @@ extern const char *host_detect_local_cpu
+ %{mtune=native:%>mtune=native %:local_cpu_detect(tune)}"
+ #endif
+ #endif
++
++#if defined(HAVE_LOCAL_CPU_DETECT) && defined(HAVE_GNU_AS)
++#define ASM_SPEC_MTUNE "%{march=native:%{!mtune=*:%>march=native %:local_cpu_detect(astune)}} \
++ %{mtune=native:%>mtune=native %:local_cpu_detect(astune)}"
++#else
++#define ASM_SPEC_MTUNE ""
++#endif
+ 
+ /* Target CPU builtins.  */
+ #define TARGET_CPU_CPP_BUILTINS() ix86_target_macros ()
+--- a/gcc/config/i386/mingw-w64.h	2018-01-03 13:03:58.000000000 +0300
++++ b/gcc/config/i386/mingw-w64.h	2018-05-02 21:18:44.000000000 +0300
+@@ -40,7 +40,7 @@ along with GCC; see the file COPYING3.
+ /* Enable multilib.  */
+ 
+ #undef ASM_SPEC
+-#define ASM_SPEC "%{m32:--32} %{m64:--64}"
++#define ASM_SPEC ASM_SPEC_MTUNE "%{m32:--32} %{m64:--64}"
+ 
+ #undef LIB_SPEC
+ #define LIB_SPEC "%{pg:-lgmon} %{" SPEC_PTHREAD1 ":-lpthread} " \
+--- a/gcc/config/i386/x86-64.h	2018-01-03 13:03:58.000000000 +0300
++++ b/gcc/config/i386/x86-64.h	2018-05-02 21:18:44.000000000 +0300
+@@ -49,7 +49,7 @@ see the files COPYING3 and COPYING.RUNTI
+ #define WCHAR_TYPE_SIZE 32
+ 
+ #undef ASM_SPEC
+-#define ASM_SPEC "%{m16|m32:--32} %{m64:--64} %{mx32:--x32}"
++#define ASM_SPEC ASM_SPEC_MTUNE "%{m16|m32:--32} %{m64:--64} %{mx32:--x32}"
+ 
+ #undef ASM_OUTPUT_ALIGNED_BSS
+ #define ASM_OUTPUT_ALIGNED_BSS(FILE, DECL, NAME, SIZE, ALIGN) \
