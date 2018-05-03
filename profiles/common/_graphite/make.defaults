@@ -6,6 +6,10 @@ _FLAGS="$_FLAGS -floop-nest-optimize"
 # broken: libvpx, grub, mupdf
 #-floop-unroll-and-jam"
 
+# again, -floop-nest-optimize implies (by man):
+# 7.3.0: -ftree-loop-linear -floop-strip-mine -floop-block
+# 8.1.0: -ftree-loop-linear -floop-strip-mine -floop-block -floop-interchange -floop-unroll-and-jam
+
 # looks like debugging
 #_FLAGS="$_FLAGS -fgraphite-identity"
 
