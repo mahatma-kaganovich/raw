@@ -9,7 +9,8 @@ inf(){
 }
 
 	case "$1" in
-	make|cmake)set -- make "${@}";;
+#	make|cmake);;
+	*)set -- make "${@}";;
 	esac
 
 	cl=false
