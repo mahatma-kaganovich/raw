@@ -46,6 +46,7 @@ src_install(){
     doexe p-patch
     # lazy to make separate package just for 1 script
     dosbin mount.zram
+    dobin make.lto
     insinto $r
     doins *.{p-patch,bashrc,sh}
     dodir $r/virtual

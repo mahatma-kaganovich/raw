@@ -1,0 +1,36 @@
+#!/bin/bash
+[ -z "$CFLAGS" ] && exit 1
+[ -z "$WORKDIR" ] && exit 1
+
+	cl=false
+	while true; do
+		/usr/bin/make "${@}" && exit 0
+		r=$?
+#		$cl && {
+#			/usr/bin/make clean $MAKEOPTS
+#			/usr/bin/"${@}" && exit 0
+#			r=$?
+#		}
+		cl=false
+		f1=
+		f2=
+		case "$CFLAGS" in
+		*' -flto '*)
+			f1=' -flto '
+			f2=' -fno-lto '
+		;;
+		esac
+		[ -z "$f1" ] && break
+#		cl=true
+		echo "$CATEGORY/$PN-$PV '$f1' -> '$f2' $*" >>/var/tmp/portage/filter.log
+		echo "restarting $*"
+		export CFLAGS="${CFLAGS//$f1/$f2}"
+		export CXXFLAGS="${CXXFLAGS//$f1/$f2}"
+		export CPPFLAGS="${CPPFLAGS//$f1/$f2}"
+		export LDFLAGS="${LDFLAGS//$f1/$f2}"
+		export FFLAGS="${FFLAGS//$f1/$f2}"
+		export FCFLAGS="${FCFLAGS//$f1/$f2}"
+		(cd "$WORKDIR" && sed -i -e "s:$f1:$f2:g" $(grep -lRF "$f1" --include='Makefile*' --include='*.cmake' --include='*.make' --include=link.txt) )
+	done
+	exit $r
+
