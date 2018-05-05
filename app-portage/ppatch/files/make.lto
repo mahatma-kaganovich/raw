@@ -8,9 +8,9 @@ log="${WORKDIR%/*/*/work}/filter.log"
 		"${@}" && exit 0
 		r=$?
 		$cl && {
-			echo "$CATEGORY/$PN-$PV make clean"
+			echo "$CATEGORY/$PN-$PV $1 clean" >>$log
 			$1 clean $MAKEOPTS || exit 1
-			echo "$CATEGORY/$PN-$PV make $*"
+			echo "$CATEGORY/$PN-$PV $*" >>$log
 			"${@}" && exit 0
 			r=$?
 		}
@@ -25,7 +25,7 @@ log="${WORKDIR%/*/*/work}/filter.log"
 		esac
 		[ -z "$f1" ] && break
 		[ "$1" = make ] && cl=true
-		echo "$CATEGORY/$PN-$PV '$f1' -> '$f2' make $*" >>$log
+		echo "$CATEGORY/$PN-$PV '$f1' -> '$f2' $*" >>$log
 		echo "restarting $*"
 		export CFLAGS="${CFLAGS//$f1/$f2}"
 		export CXXFLAGS="${CXXFLAGS//$f1/$f2}"
