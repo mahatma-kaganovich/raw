@@ -3,14 +3,23 @@
 [ -z "$WORKDIR" ] && exit 1
 log="${WORKDIR%/*/*/work}/filter.log"
 
+inf(){
+	echo "$CATEGORY/$PN-$PV $*" >>$log
+	echo "$*"
+}
+
+	case "$1" in
+	make|cmake)set -- make "${@}";;
+	esac
+
 	cl=false
 	while true; do
 		"${@}" && exit 0
 		r=$?
 		$cl && {
-			echo "$CATEGORY/$PN-$PV $1 clean" >>$log
+			inf "$1 clean"
 			$1 clean $MAKEOPTS || exit 1
-			echo "$CATEGORY/$PN-$PV $*" >>$log
+			inf "$*"
 			"${@}" && exit 0
 			r=$?
 		}
@@ -25,8 +34,7 @@ log="${WORKDIR%/*/*/work}/filter.log"
 		esac
 		[ -z "$f1" ] && break
 		[ "$1" = make ] && cl=true
-		echo "$CATEGORY/$PN-$PV '$f1' -> '$f2' $*" >>$log
-		echo "restarting $*"
+		inf "'$f1' -> '$f2' $*"
 		export CFLAGS="${CFLAGS//$f1/$f2}"
 		export CXXFLAGS="${CXXFLAGS//$f1/$f2}"
 		export CPPFLAGS="${CPPFLAGS//$f1/$f2}"

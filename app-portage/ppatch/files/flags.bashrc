@@ -139,7 +139,7 @@ xemacs)_isflag -flto && {
 };;&
 # libaio breaks others
 # gtkmm too (cdrdao)
-icedtea|qtwebkit|xf86-video-intel|gtkmm|mysql|mariadb|clamav|heimdal|glibc|lxc|qemu|elfutils|cvs|lksctp-tools|libreoffice|samba|pciutils|xfsprogs|numactl|ncurses|alsa-lib|lynx|pinentry)filterflag '-flto*' '-*-lto-*' -fuse-linker-plugin;;&
+icedtea|qtwebkit|xf86-video-intel|mplayer|gtkmm|mysql|mariadb|clamav|heimdal|glibc|lxc|qemu|elfutils|cvs|lksctp-tools|libreoffice|samba|pciutils|xfsprogs|numactl|ncurses|alsa-lib|lynx|pinentry)filterflag '-flto*' '-*-lto-*' -fuse-linker-plugin;;&
 glibc)filterflag -mfpmath=387;;&
 glibc)_isflag -fno-omit-frame-pointer && filterflag -f{,no-}omit-frame-pointer;;& # 2.23
 ilmbase)_isflag -flto && export LDFLAGS="$LDFLAGS -lpthread";;& # openexr
