@@ -1,0 +1,1 @@
+export with_linker_hash_style=gnu
