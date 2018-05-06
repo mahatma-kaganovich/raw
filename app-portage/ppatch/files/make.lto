@@ -4,13 +4,16 @@ log="${WORKDIR%/*/*/work}/filter.log"
 [ -z "$WORKDIR" ] && log=/dev/null
 
 inf(){
-	echo "$CATEGORY/$PN-$PV $*" >>$log
+	echo "$(date +'%F.%T') $EBUILD_PHASE:$CATEGORY/$PN-$PV $*" >>$log
 	echo "$*"
 }
 
 	case "$1" in
 #	make|cmake);;
-	*)set -- make "${@}";;
+	*)
+		export MAKE=make
+		set -- make "${@}"
+	;;
 	esac
 
 	cl=false
@@ -27,22 +30,22 @@ inf(){
 		cl=false
 		f1=
 		f2=
-		case "$CFLAGS" in
+		case " $CFLAGS " in
+		*' -fno-lto '*);;
 		*' -flto '*)
 			f1=' -flto '
 			f2=' -fno-lto '
 		;;
 		esac
 		[ -z "$f1" ] && break
-		[ "$1" = make ] && cl=true
 		inf "'$f1' -> '$f2' $*"
-		export CFLAGS="${CFLAGS//$f1/$f2}"
-		export CXXFLAGS="${CXXFLAGS//$f1/$f2}"
-		export CPPFLAGS="${CPPFLAGS//$f1/$f2}"
-		export LDFLAGS="${LDFLAGS//$f1/$f2}"
-		export FFLAGS="${FFLAGS//$f1/$f2}"
-		export FCFLAGS="${FCFLAGS//$f1/$f2}"
-		(cd "$WORKDIR" && sed -i -e "s:$f1:$f2:g" $(grep -lRF "$f1" --include='Makefile*' --include='*.cmake' --include='*.make' --include=link.txt --include='*.gmk' --include='*.mak') )
+		ff=$(cd "$WORKDIR" && grep -lRF "$f1" --include='Makefile*' --include='*.cmake' --include='*.make' --include=link.txt --include='*.gmk' --include='*.mak' --include=config.h --include=libtool) || {
+			ff=$(cd "$WORKDIR" && grep -lRF "$f1")
+			inf " - not found. check: $ff"
+			break
+		}
+#		[ "$1" = make ] && cl=true
+		(cd "$WORKDIR" && sed -i -e "s:$f1:$f2:g" $ff)
 	done
 	exit $r
 

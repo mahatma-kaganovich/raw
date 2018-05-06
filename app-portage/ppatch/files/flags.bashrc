@@ -11,7 +11,7 @@ for p in $* ; do
 		[[ "$f" != $p ]] && x+=" $f" && r=true
 	done
 	x="${x# }"
-	[ "$x" != "${!v}" ] && export $v="$x"
+	[ "$x" != "${!v}" ] && export $v="$x" && echo "flag filtered $p"
     done
 done
 $r
@@ -21,7 +21,7 @@ filterldflag(){
 	local i="$LDFLAGS"
 	LDFLAGS=
 	for i in $i; do
-		[[ "$i" == -Wl* ]] && LDFLAGS+=" $i"
+		[[ "$i" == -Wl* ]] && LDFLAGS+=" $i" && echo "flag filtered LDFLAGS $p"
 	done
 	export LDFLAGS="${LDFLAGS# }"
 }
@@ -31,6 +31,7 @@ appendflag(){
 	for v in CFLAGS CPPFLAGS CXXFLAGS FFLAGS FCFLAGS; do
 		export $v="${!v} $*"
 	done
+	echo "flag appended $*"
 }
 
 appendflag1(){
@@ -38,6 +39,7 @@ appendflag1(){
 	for v in CFLAGS CPPFLAGS CXXFLAGS FFLAGS FCFLAGS LDFLAGS; do
 		export $v="${!v} $*"
 	done
+	echo "flag appended $*"
 }
 
 _isflag(){
@@ -137,9 +139,10 @@ xemacs)_isflag -flto && {
 	filterflag2 ldf '-Wl,*'
 	export LDFLAGS="${ldf# }"
 };;&
+qtcore)gccve 8.1. && filterflag -flto;;
 # libaio breaks others
 # gtkmm too (cdrdao)
-icedtea|qtwebkit|xf86-video-intel|mplayer|gtkmm|mysql|mariadb|heimdal|glibc|vcs|libreoffice|samba|xfsprogs|ncurses|lynx)filterflag '-flto*' '-*-lto-*' -fuse-linker-plugin;;&
+icedtea|qtwebkit|xf86-video-intel|mplayer|gtkmm|mysql|mariadb|heimdal|glibc|cvs|pulseaudio|libreoffice|samba|xfsprogs|ncurses|lynx)filterflag '-flto*' '-*-lto-*' -fuse-linker-plugin;;&
 glibc)filterflag -mfpmath=387;;&
 glibc)_isflag -fno-omit-frame-pointer && filterflag -f{,no-}omit-frame-pointer;;& # 2.23
 ilmbase)_isflag -flto && export LDFLAGS="$LDFLAGS -lpthread";;& # openexr
