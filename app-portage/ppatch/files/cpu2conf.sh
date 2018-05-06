@@ -61,6 +61,24 @@ _smp(){
 	i=`grep "^$1[ 	]*: " /proc/cpuinfo` && i="${i##*: }" && echo $[i+$2]
 }
 
+_smp1(){
+	local i x n=0 p= s= nn
+	nn=$(cat /proc/cpuinfo|sed -e 's:[ 	][ 	]*: :g'|while read i; do
+		x="${i##* : }"
+		case "$i" in
+		'')p='';s='';;
+		"$1 : "*)p="$x";;
+		"$2 : "*)s="$x";;
+		esac
+		[ -n "$p" -a -n "$s" ] && echo "$p.$s"
+	done|sort -u|while read i; do
+		i="${i##*.}"
+		n=$[n+i]
+		echo $n
+	done|tail -n 1)
+	[ -n "$nn" ] && echo $nn
+}
+
 _setflags(){
 	local i
 	for i in "${@}"; do
@@ -133,7 +151,9 @@ f5+=' -fpermissive -w'
 #f5+=' -fno-strict-aliasing'
 # break build of few things like ghostscript-gpl & mozillas, wantfix/wantest
 #fsec+=' -mmitigate-rop'
-if i=`_smp processor 1 || _smp 'ncpus active' 0`; then
+# new in gcc8 - 2test
+#fsec+=' -fstack-clash-protection'
+if i=`_smp1 'physical id' 'cpu cores' || _smp processor 1 || _smp 'ncpus active' 0`; then
 	if [ "$i" = 1 ]; then
 		f1+=' -smp -numa'
 		$omp && f3+=' -fopenmp-simd'
@@ -144,7 +164,7 @@ if i=`_smp processor 1 || _smp 'ncpus active' 0`; then
 	echo "ncpu=$i"
 	i=$[i+1]
 	echo "ncpu1=$i"
-	echo "MAKEOPTS=\"-j$i -s\""
+	echo "MAKEOPTS=\"-j$i -l$[((i-2)*10+9)/10].9 -s\""
 else
 	$omp && f3+=' -fopenmp-simd'
 fi
