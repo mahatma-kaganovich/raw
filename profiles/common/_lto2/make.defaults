@@ -1,0 +1,4 @@
+# relaxed LTO mode
+_FLAGS="$_FLAGS -flto -fuse-linker-plugin -ffat-lto-objects -flto-compression-level=1 -flto-partition=none"
+LDFLAGS="$LDFLAGS $CFLAGS $_FLAGS"
+MAKE="make.lto"
