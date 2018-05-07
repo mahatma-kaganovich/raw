@@ -143,7 +143,8 @@ qtcore)gccve 8.1. && filterflag -flto;;
 # libaio breaks others
 # gtkmm too (cdrdao)
 icedtea|qtwebkit|xf86-video-intel|mplayer|gtkmm|mysql|mariadb|heimdal|glibc|cvs|pulseaudio|libreoffice|samba|ncurses|lynx)filterflag '-flto*' '-*-lto-*' -fuse-linker-plugin;;&
-numactl|alsa-lib|elfutils|dhcdrop|lksctp-tools)filterflag -flto;;&
+# works over make.lto wrapper, but wrapper wrong for some other packets
+numactl|alsa-lib|elfutils|dhcdrop|lksctp-tools|autofs|mysql-connector-c)filterflag -flto;;&
 glibc)filterflag -mfpmath=387;;&
 glibc)_isflag -fno-omit-frame-pointer && filterflag -f{,no-}omit-frame-pointer;;& # 2.23
 ilmbase)_isflag -flto && export LDFLAGS="$LDFLAGS -lpthread";;& # openexr
