@@ -11,7 +11,7 @@ for p in $* ; do
 		[[ "$f" != $p ]] && x+=" $f" && r=true
 	done
 	x="${x# }"
-	[ "$x" != "${!v}" ] && export $v="$x" && echo "flag filtered $V $p"
+	[ "$x" != "${!v}" ] && export $v="$x" && echo "flag filtered $v $p"
     done
 done
 $r
@@ -143,7 +143,7 @@ qtcore)gccve 8.1. && filterflag -flto;;
 # libaio breaks others
 # gtkmm too (cdrdao)
 icedtea|qtwebkit|xf86-video-intel|mplayer|gtkmm|mysql|mariadb|heimdal|glibc|cvs|pulseaudio|libreoffice|samba|ncurses|lynx)filterflag '-flto*' '-*-lto-*' -fuse-linker-plugin;;&
-xfsprogs)filterflag -flto-partition={balanced,1to1} && appendflag1 -flto-partition=none;;&
+numactl|alsa-lib|elfutils|dhcdrop|lksctp-tools)filterflag -flto;;&
 glibc)filterflag -mfpmath=387;;&
 glibc)_isflag -fno-omit-frame-pointer && filterflag -f{,no-}omit-frame-pointer;;& # 2.23
 ilmbase)_isflag -flto && export LDFLAGS="$LDFLAGS -lpthread";;& # openexr
