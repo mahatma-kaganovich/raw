@@ -1,4 +1,3 @@
-# we need extra accuracy and a lot of RAM
-_FLAGS="$_FLAGS -flto -fuse-linker-plugin -ffat-lto-objects -flto-compression-level=9 -fdevirtualize-at-ltrans -flto-odr-type-merging"
+# relaxed LTO mode, less conflicting, relative fast
+_FLAGS="$_FLAGS -flto -fuse-linker-plugin -ffat-lto-objects -flto-compression-level=1 -fdevirtualize-at-ltrans -flto-partition=none"
 LDFLAGS="$LDFLAGS $CFLAGS $_FLAGS"
-MAKE="make.lto"
