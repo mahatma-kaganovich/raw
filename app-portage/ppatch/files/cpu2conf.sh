@@ -143,8 +143,10 @@ GenuineIntel:6:78|GenuineIntel:6:94|GenuineIntel:6:85|GenuineIntel:6:142|Genuine
 esac
 f0=`_f -m{tune,cpu,arch}=native`
 f3='-malign-data=cacheline -momit-leaf-frame-pointer -mtls-dialect=gnu2 -fsection-anchors -minline-stringops-dynamically -maccumulate-outgoing-args'
-# gcc 4.9 - -fno-lifetime-dse, gcc 6.3 - -flifetime-dse=1 - around some of projects(?) - keep 6.3 only safe
-f5='-fvisibility-inlines-hidden -flifetime-dse=1'
+f5='-fvisibility-inlines-hidden'
+# gcc 4.9 - -fno-lifetime-dse, gcc 6.3 - around some of projects(?) - keep 6.3 only safe
+# try to forget after years of upstream fixing
+#f5+=' -flifetime-dse=1'
 # gcc 6. oneshot clarification. must not affect legacy build
 f5+=' -fpermissive -w'
 # try to remove. performance
