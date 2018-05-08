@@ -1,3 +1,5 @@
 #!/bin/bash
+. /etc/profile
+. ~/.profile
 export DISPLAY="${DISPLAY%.0}"
 . /usr/bin/ya-session
