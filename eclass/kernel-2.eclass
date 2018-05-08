@@ -1731,7 +1731,8 @@ mksquash(){
 	for i in ${MAKEOPTS}; do
 		[[ "$i" == -j* ]] && p=$((${i#-j}-1))
 	done
-	[[ "${p:-0}" == 0 ]] && p=1
+	[ "${p:-0}" = 0 ] && p=1
+	[ "$p" = -1 ] && p=
 	case "$comp" in
 	lzo)c+=' -Xcompression-level 9';;
 	lz4)c+=' -Xhc';;
