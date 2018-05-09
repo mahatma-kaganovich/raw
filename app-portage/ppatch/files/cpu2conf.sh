@@ -197,7 +197,7 @@ case "$m" in
 x86_*|i?86)
 	# -fschedule-insns is working (increasing registers range)
 	# i?86 looks mostly working, exclude kernel
-	f3+=$(_f -fira-loop-pressure -flive-range-shrinkage -fsched-pressure -fschedule-insns -fsched-spec-load --param=sched-pressure-algorithm=2)
+	f3+=$(_f -fira-loop-pressure -fira-hoist-pressure -flive-range-shrinkage -fsched-pressure -fschedule-insns -fsched-spec-load --param=sched-pressure-algorithm=2)
 	# gnostic - don't know how to get universal default of defaults for GCC
 	base="-mtune=generic -march=${m//_/-}"
 ;;&

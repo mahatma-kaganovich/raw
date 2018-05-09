@@ -1,4 +1,0 @@
-# balanced is default, but most conflicting. experemental...
-_FLAGS="$_FLAGS -flto -fuse-linker-plugin -ffat-lto-objects -flto-compression-level=9 -fdevirtualize-at-ltrans -flto-partition=balanced"
-LDFLAGS="$LDFLAGS $CFLAGS $_FLAGS"
-MAKE="make.lto"
