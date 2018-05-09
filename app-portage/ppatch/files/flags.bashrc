@@ -134,7 +134,7 @@ quota|xinetd|samba|python) _iuse !rpc || [ -e /usr/include/rpc/rpc.h ] || {
 	export LDFLAGS="$LDFLAGS $(pkg-config libtirpc --libs)"
 }
 ;;&
-xemacs)_isflag -flto && {
+xemacs)_isflag -flto '-flto=*' && {
 	ldf=' '
 	filterflag2 ldf '-Wl,*'
 	export LDFLAGS="${ldf# }"
@@ -143,17 +143,17 @@ xemacs)_isflag -flto && {
 # gtkmm too (cdrdao)
 icedtea|qtwebkit|xf86-video-intel|mplayer|gtkmm|mysql|mariadb|heimdal|glibc|cvs|pulseaudio|libreoffice|samba|ncurses|lynx)filterflag '-flto*' '-*-lto-*' -fuse-linker-plugin -fdevirtualize-at-ltrans;;&
 # works over make.lto wrapper, but wrapper wrong for some other packets
-numactl|alsa-lib|elfutils|dhcdrop|lksctp-tools|autofs|mysql-connector-c)filterflag -flto -fdevirtualize-at-ltrans;;&
-qtcore)gccve 8.1. && filterflag -flto -fdevirtualize-at-ltrans;;&
+numactl|alsa-lib|elfutils|dhcdrop|lksctp-tools|autofs|mysql-connector-c)filterflag '-flto*' -fdevirtualize-at-ltrans;;&
+qtcore)gccve 8.1. && filterflag '-flto*' -fdevirtualize-at-ltrans;;&
 clang*)filterflag -flto-partition=none;;&
 glibc)filterflag -mfpmath=387;;&
 glibc)_isflag -fno-omit-frame-pointer && filterflag -f{,no-}omit-frame-pointer;;& # 2.23
-ilmbase)_isflag -flto && export LDFLAGS="$LDFLAGS -lpthread";;& # openexr
-libaio|qtscript)_isflag -flto && export LDFLAGS="$LDFLAGS -fno-lto";;&
+ilmbase)_isflag -flto '-flto=*' && export LDFLAGS="$LDFLAGS -lpthread";;& # openexr
+libaio|qtscript)_isflag -flto '-flto=*' && export LDFLAGS="$LDFLAGS -fno-lto";;&
 cdrdao|gcr|ufraw|gdal|dosemu|xemacs|soxr|flac|libgcrypt)filterflag2 '' -flto;;&
-boost)filter86_32 '-flto*' '-*-lto-*' -fuse-linker-plugin;;&
-perl)_isflag -flto && export LDFLAGS="$LDFLAGS -fPIC";;&
-cmake)_isflag -flto && _isflag '-floop-*' '-fgraphite*' && filterflag -fipa-pta;;&
+boost)filter86_32 '-flto*' '-*-lto-*' -fuse-linker-plugin -fdevirtualize-at-ltrans;;&
+perl)_isflag -flto '-flto=*' && export LDFLAGS="$LDFLAGS -fPIC";;&
+cmake)_isflag -flto '-flto=*' && _isflag '-floop-*' '-fgraphite*' && filterflag -fipa-pta;;&
 ceph)_isflag '-floop-*' '-fgraphite*' && { # prefer graphite vs. lto
 	# handle lto <-> no-lto transition
 	if filterflag '-flto*' '-*-lto-*' -fuse-linker-plugin; then
@@ -189,7 +189,7 @@ gmp) _isflag '-floop-*' && {
 	appendflag -fno-loop-unroll-and-jam
 };;
 sarg)filterflag -w;;
-criu)filterldflag;filterflag -maccumulate-outgoing-args -flto;;
+criu)filterldflag;filterflag -maccumulate-outgoing-args '-flto=*';;
 ffmpeg|libav)_iuse abi_x86_32 && filterflag -fno-omit-frame-pointer;; # x86 mmx -Os
 faad2|openssl|patch)gccve 5. && filterflag -floop-nest-optimize;;
 geos|readahead-list|thin-provisioning-tools|libprojectm|gtkmathview|qtfm|qtgui|qtwebkit)gccve 6. && export CXXFLAGS="$CXXFLAGS -std=gnu++98";;
