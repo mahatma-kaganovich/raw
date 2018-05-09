@@ -2,7 +2,7 @@
 
 USE="-vtv nopie nossp -pie -ssp"
 
-_FLAGS="$_FLAGS -O2 -Os -fno-omit-frame-pointer -Wa,--reduce-memory-overheads -fconserve-stack"
+_FLAGS="$_FLAGS -O2 -Os -fno-omit-frame-pointer -fconserve-stack"
 # O2
 # _FLAGS="$_FLAGS -fschedule-insns2 -finline-small-functions -findirect-inlining"
 # O3
@@ -11,5 +11,3 @@ _FLAGS="$_FLAGS -fgcse-after-reload -fpredictive-commoning -ftree-loop-distribut
 _FLAGS="$_FLAGS -fvect-cost-model -ftree-partial-pre"
 # 4.9
 #_FLAGS="$_FLAGS -fno-var-tracking-assignments"
-
-LDFLAGS="$LDFLAGS -Wl,--no-keep-memory -Wl,--reduce-memory-overheads"

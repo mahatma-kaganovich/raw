@@ -24,7 +24,3 @@ _FLAGS="$_FLAGS -fmodulo-sched -fmodulo-sched-allow-regmoves -freschedule-modulo
 
 # 5 "improve code quality"? to grok
 #_FLAGS="$_FLAGS -fno-semantic-interposition"
-
-LDFLAGS="$LDFLAGS -Wl,--no-keep-memory -Wl,--reduce-memory-overheads"
-
-CPPFLAGS="-pipe"

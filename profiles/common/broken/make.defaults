@@ -1,4 +1,4 @@
-# if most of gcc optimization broken, low memory
+# if most of gcc optimization broken
 
 USE="-modules -pgo -lto"
 LIRC_DEVICES="userspace"
@@ -9,5 +9,4 @@ MAKEOPTS="-j2 -s"
 
 # some -O2
 _FLAGS="$_FLAGS -finline-small-functions -findirect-inlining"
-LDFLAGS="-Wl,-O1 -Wl,--as-needed -Wl,--hash-style=gnu -Wl,--sort-common -Wl,--no-keep-memory -Wl,--reduce-memory-overheads"
-CPPFLAGS="-pipe"
+#LDFLAGS="-Wl,-O1 -Wl,--as-needed -Wl,--hash-style=gnu -Wl,--sort-common"
