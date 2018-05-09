@@ -15,7 +15,7 @@ kv=`uname -r`
 
 help="
 
-mount.zram v0.9 (c) mahatma, under Anarchy license
+mount.zram v0.10 (c) mahatma, under Anarchy license
 Mount helper to mount zram (or ram/brd) devices via /etc/fstab over most simple way, stupid.
 Usage:	mount -t zram ...
 	mount.zram /dev/zram<X> <mountpoint> -o <options>
@@ -67,12 +67,13 @@ disksize=
 n="${1##*/}"
 i="/sys/block/$n"
 c="$i"
+w=true
+#w=false
 case "$1" in
 /dev/*/*)err "$*$help";;
 /dev/zram*)
 	nn=${1#/dev/zram}
-	[ -e /sys/module/zram -o -e /dev/zram0 ] || modprobe zram num_devices=$((nn+1))
-	[ -e "$i" ] || sleep 1
+	! [ -e /sys/module/zram -o -e /dev/zram0 ] && modprobe zram num_devices=$((nn+1)) && w=true
 	c="$i/comp_algorithm"
 	fs="$fs$fs_zram"
 #	try=
@@ -82,19 +83,23 @@ case "$1" in
 		v="${j#disksize=}"
 		[ "$v" = "$j" ] || disksize="$(size2b "$v")"
 	done
-	[ -n "$disksize" ] && modprobe brd rd_nr=1 rd_size="$disksize" max_part=0
+	[ -n "$disksize" ] && modprobe brd rd_nr=1 rd_size="$disksize" max_part=0 && w=true
 ;;&
 /dev/ram*)
-	[ -e "$i" ] || sleep 1
 	fs="$fs$fs_ram"
 	c="$i/size"
 ;;
 *)err "$*$help";;
 esac
-[ -z "$c" -o -e "$c" ] || err "no $c"
+$w && for w in $w true false false false; do
+	[ -e "$c" ] && break
+	sleep 0.1
+done
+[ -e "$c" ] || err "no $c"
 echo 0 >"$i/queue/rotational"
 [ "$3" = '-o' -o "$3" = '' ] || err "invalid option '$3'"
 o=
+w=true
 for i in ${4//,/ }; do
 	v="${i#*=}"
 	[ "$v" = "$i" ] || {
@@ -111,7 +116,12 @@ for i in ${4//,/ }; do
 		esac
 		f="/sys/block/$n/$x"
 		[ -e "$f" ] && {
-			e=$(echo "$v" >"$f" 2>&1) && continue
+			# after modprobe reset not ready
+			for w in $w true false; do
+				e=$(echo "$v" >"$f" 2>&1) && continue 2
+				$w || break
+				sleep 0.1
+			done
 			v1="$(cat "$f")" && [ -n "$v1" ] && ( [ "$v1" = "$v" ] || [ "$v1" = "$(size2b "$v" 1024)" ] || [ -z "${v1##*\[$v\]*}" ] ) && continue
 			err "echo \"$v\" >$f - $e"
 		}
