@@ -1,6 +1,6 @@
 KERNEL_CONFIG+="RCU_EXPERT -RCU_FAST_NO_HZ -IRQ_TIME_ACCOUNTING"
 # novadays no good? to figure out
-KERNEL_CONFIG+=" SLAB"
+#KERNEL_CONFIG+=" SLAB"
 use rt2 && KERNEL_CONFIG+=" HZ_1000" || KERNEL_CONFIG+=" -TASKS_RCU HZ_100"
 # default is voluntary by mainstream quality
 use rt || use rt2 || KERNEL_CONFIG+=" PREEMPT_NONE"
