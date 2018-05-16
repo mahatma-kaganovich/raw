@@ -5,7 +5,7 @@ fs='ext4:-q:-O:sparse_super2:-O:^has_journal:-O:dir_index:-O:^project:-O:^quota:
 fs="$fs:-O:^inline_data:-I:128"
 
 # no remount
-try='dax'
+try=
 
 # remount
 try1='discard dioread_nolock noblock_validity lazytime nobarrier delalloc'
@@ -76,7 +76,6 @@ case "$1" in
 	! [ -e /sys/module/zram -o -e /dev/zram0 ] && modprobe zram num_devices=$((nn+1)) && w=true
 	c="$i/comp_algorithm"
 	fs="$fs$fs_zram"
-#	try=
 ;;
 /dev/ram0)
 	for j in ${4//,/ }; do
@@ -86,6 +85,7 @@ case "$1" in
 	[ -n "$disksize" ] && modprobe brd rd_nr=1 rd_size="$disksize" max_part=0 && w=true
 ;;&
 /dev/ram*)
+	try="$try dax"
 	fs="$fs$fs_ram"
 	c="$i/size"
 ;;
