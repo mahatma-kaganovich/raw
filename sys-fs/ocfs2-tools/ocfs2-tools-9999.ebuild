@@ -74,6 +74,7 @@ src_prepare(){
 	for i in "${FILESDIR}"/${P}*.patch; do
 		[[ -e "$i" ]] && epatch "$i"
 	done
+	sed -i -e "s:^#include <$i\\.h>:#include <sys/sysmacros.h>\n#include <$i.h>:" `grep -lR "^#include <$i\\.h>" "$S"`
 }
 
 src_configure(){
