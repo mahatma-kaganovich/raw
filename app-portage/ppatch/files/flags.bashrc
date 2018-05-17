@@ -151,9 +151,9 @@ xemacs)_fLTO && {
 };;&
 # libaio breaks others
 # gtkmm too (cdrdao)
-wayland|privoxy|icedtea|qtwebkit|xf86-video-intel|mplayer|gtkmm|mysql|mariadb|heimdal|glibc|cvs|pulseaudio|libreoffice|samba|ncurses|lynx)filterflag '-flto*' '-*-lto-*' -fuse-linker-plugin -fdevirtualize-at-ltrans;;&
+wayland|privoxy|icedtea|qtwebkit|xf86-video-intel|mplayer|gtkmm|mysql|mariadb|heimdal|glibc|cvs|pulseaudio|libreoffice|ncurses|lynx)filterflag '-flto*' '-*-lto-*' -fuse-linker-plugin -fdevirtualize-at-ltrans;;&
 # works over make.lto wrapper, but wrapper wrong for some other packets
-php|numactl|alsa-lib|elfutils|dhcdrop|lksctp-tools|autofs|mysql-connector-c)filterflag '-flto*' -fdevirtualize-at-ltrans;;&
+php|numactl|alsa-lib|elfutils|dhcdrop|lksctp-tools|mysql-connector-c)filterflag '-flto*' -fdevirtualize-at-ltrans;;&
 qtcore)gccve 8.1. && filterflag '-flto*' -fdevirtualize-at-ltrans;;&
 # ilmbase -> openexr
 ilmbase|mesa)_fLTO_f -Wl,-lpthread -lpthread;;&
@@ -163,7 +163,7 @@ glibc)_isflag -fno-omit-frame-pointer && filterflag -f{,no-}omit-frame-pointer;;
 libaio|qtscript)_fLTO && export LDFLAGS="$LDFLAGS -fno-lto";;&
 cdrdao|gcr|ufraw|gdal|dosemu|xemacs|soxr|flac|libgcrypt)filterflag2 '' -flto;;&
 boost)filter86_32 '-flto*' '-*-lto-*' -fuse-linker-plugin -fdevirtualize-at-ltrans;;&
-perl)_fLTO && export LDFLAGS="$LDFLAGS -fPIC";;&
+perl|autofs)_fLTO && export LDFLAGS="$LDFLAGS -fPIC";;&
 cmake)_fLTO && _isflag '-floop-*' '-fgraphite*' && filterflag -fipa-pta;;&
 ceph)_isflag '-floop-*' '-fgraphite*' && { # prefer graphite vs. lto
 	# handle lto <-> no-lto transition

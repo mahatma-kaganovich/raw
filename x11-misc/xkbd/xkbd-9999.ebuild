@@ -35,6 +35,7 @@ DEPEND="${RDEPEND}
 	x11-proto/xextproto"
 
 RDEPEND="${RDEPEND}
+	x11-apps/setxkbmap
 	x11-apps/xmodmap"
 
 DOCS=( AUTHORS )
