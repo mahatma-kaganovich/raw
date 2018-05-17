@@ -103,3 +103,5 @@ sys-kernel/gentoo-sources rt
 x11-drivers/xf86-video-intel uxa
 # prefer alsa & apulse
 media-sound/pulseaudio -alsa-plugin
+# -pam
+kde-plasma/kscreenlocker -seccomp

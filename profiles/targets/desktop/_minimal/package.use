@@ -2,3 +2,4 @@ media-libs/libsdl2 -gles -wayland
 www-client/seamonkey minimal -roaming
 net-fs/samba -addc -ads -gnutls -python -cluster -ldap -addns
 net-nds/openldap -perl -gnutls -ssl -crypt -experimental
+#xfce-base/thunar dbus
