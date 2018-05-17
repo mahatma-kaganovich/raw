@@ -123,6 +123,16 @@ filter_cf(){
 	export ${v}="${!vv}"
 }
 
+_fLTO(){
+	_isflag -flto '-flto=*'
+}
+
+_fLTO_f(){
+	_fLTO || return 1
+	appendflag1 "${@}"
+	export LDFLAGS="$* $LDFLAGS"
+}
+
 filter_cf CC CFLAGS c
 filter_cf CXX CXXFLAGS c++
 
@@ -134,7 +144,7 @@ quota|xinetd|samba|python) _iuse !rpc || [ -e /usr/include/rpc/rpc.h ] || {
 	export LDFLAGS="$LDFLAGS $(pkg-config libtirpc --libs)"
 }
 ;;&
-xemacs)_isflag -flto '-flto=*' && {
+xemacs)_fLTO && {
 	ldf=' '
 	filterflag2 ldf '-Wl,*'
 	export LDFLAGS="${ldf# }"
@@ -145,15 +155,16 @@ wayland|privoxy|icedtea|qtwebkit|xf86-video-intel|mplayer|gtkmm|mysql|mariadb|he
 # works over make.lto wrapper, but wrapper wrong for some other packets
 php|numactl|alsa-lib|elfutils|dhcdrop|lksctp-tools|autofs|mysql-connector-c)filterflag '-flto*' -fdevirtualize-at-ltrans;;&
 qtcore)gccve 8.1. && filterflag '-flto*' -fdevirtualize-at-ltrans;;&
+# ilmbase -> openexr
+ilmbase|mesa)_fLTO_f -Wl,-lpthread -lpthread;;&
 clang*)filterflag -flto-partition=none;;&
 glibc)filterflag -mfpmath=387;;&
 glibc)_isflag -fno-omit-frame-pointer && filterflag -f{,no-}omit-frame-pointer;;& # 2.23
-ilmbase)_isflag -flto '-flto=*' && export LDFLAGS="$LDFLAGS -lpthread";;& # openexr
-libaio|qtscript)_isflag -flto '-flto=*' && export LDFLAGS="$LDFLAGS -fno-lto";;&
+libaio|qtscript)_fLTO && export LDFLAGS="$LDFLAGS -fno-lto";;&
 cdrdao|gcr|ufraw|gdal|dosemu|xemacs|soxr|flac|libgcrypt)filterflag2 '' -flto;;&
 boost)filter86_32 '-flto*' '-*-lto-*' -fuse-linker-plugin -fdevirtualize-at-ltrans;;&
-perl)_isflag -flto '-flto=*' && export LDFLAGS="$LDFLAGS -fPIC";;&
-cmake)_isflag -flto '-flto=*' && _isflag '-floop-*' '-fgraphite*' && filterflag -fipa-pta;;&
+perl)_fLTO && export LDFLAGS="$LDFLAGS -fPIC";;&
+cmake)_fLTO && _isflag '-floop-*' '-fgraphite*' && filterflag -fipa-pta;;&
 ceph)_isflag '-floop-*' '-fgraphite*' && { # prefer graphite vs. lto
 	# handle lto <-> no-lto transition
 	if filterflag '-flto*' '-*-lto-*' -fuse-linker-plugin; then
