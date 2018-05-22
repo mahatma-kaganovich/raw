@@ -20,7 +20,7 @@ HOMEPAGE="https://github.com/mahatma-kaganovich/xkbd"
 
 LICENSE="GPL-2"
 SLOT="0"
-IUSE="debug xpm"
+IUSE="debug xpm minimal"
 
 RDEPEND="x11-libs/libXrender
 	x11-libs/libX11
@@ -47,6 +47,7 @@ src_prepare(){
 
 src_configure() {
 	econf \
+		$(use_enable minimal) \
 		$(use_enable xpm) \
 		$(use_enable debug)
 }
