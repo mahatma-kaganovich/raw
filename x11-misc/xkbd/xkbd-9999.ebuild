@@ -20,16 +20,15 @@ HOMEPAGE="https://github.com/mahatma-kaganovich/xkbd"
 
 LICENSE="GPL-2"
 SLOT="0"
-IUSE="debug xpm minimal"
+IUSE="debug xpm minimal +multitouch"
 
-RDEPEND="x11-libs/libXrender
-	x11-libs/libX11
+# x11-libs/libXrender media-libs/freetype dev-libs/expat sys-libs/zlib
+RDEPEND="x11-libs/libX11
 	x11-libs/libXft
 	x11-libs/libXtst
 	xpm? ( x11-libs/libXpm )
-	media-libs/freetype
-	dev-libs/expat
-	sys-libs/zlib"
+	multitouch? ( x11-libs/libXi )"
+
 DEPEND="${RDEPEND}
 	x11-proto/xproto
 	x11-proto/xextproto"
@@ -49,6 +48,7 @@ src_configure() {
 	econf \
 		$(use_enable minimal) \
 		$(use_enable xpm) \
+		$(use_enable multitouch xi) \
 		$(use_enable debug)
 }
 
