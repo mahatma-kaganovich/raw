@@ -197,6 +197,13 @@ test_cc(){
 	echo "int main(){}"|$(tc-getBUILD_CC) "${@}" -x c - -o /dev/null
 }
 
+_run_env(){
+	# everything
+	CC="$(tc-getCC)" LD="$(tc-getLD)" CXX="$(tc-getCXX)" CPP="$(tc-getCPP)" AS="$(tc-getAS)" AR="$(tc-getAR)" STRIP="$(tc-getSTRIP)" NM="$(tc-getNM)" OBJCOPY="$(tc-getOBJCOPY)" OBJDUMP="$(tc-getOBJDUMP)" RANLIB="$(tc-getRANLIB)" \
+	HOSTCC="$(tc-getBUILD_CC)" HOSTLD="$(tc-getBUILD_LD)" HOSTCXX="$(tc-getBUILD_CXX)" HOSTCPP="$(tc-getBUILD_CPP)" HOSTAS="$(tc-getBUILD_AS)" HOSTAR="$(tc-getBUILD_AR)" HOSTSTRIP="$(tc-getBUILD_STRIP)" HOSTNM="$(tc-getBUILD_NM)" HOSTOBJCOPY="$(tc-getBUILD_OBJCOPY)" HOSTOBJDUMP="$(tc-getBUILD_OBJDUMP)" HOSTRANLIB="$(tc-getBUILD_RANLIB)" \
+	SRCARCH="$a" srctree="$S" "${@}"
+}
+
 kernel-2_src_configure() {
 	[[ ${ETYPE} == sources ]] || return
 	kconfig_init
@@ -667,8 +674,8 @@ run_genkernel(){
 	local a="$(arch "" 1)" opt=
 	ls "$UROOT/usr/share/genkernel/arch/$a/*busy*" >/dev/null 2>&1 || opt+=" --busybox-config=${TMPDIR}/busy-config"
 	# e2fsprogs & mdraid need more crosscompile info
-	ac_cv_target="${CTARGET:-${CHOST}}" ac_cv_build="${CBUILD}" ac_cv_host="${CHOST:-${CTARGET}}" CC="$(tc-getCC)" LD="$(tc-getLD)" CXX="$(tc-getCXX)" CPP="$(tc-getCPP)" AS="$(tc-getAS)" \
-	unmcode y n
+	ac_cv_target="${CTARGET:-${CHOST}}" ac_cv_build="${CBUILD}" ac_cv_host="${CHOST:-${CTARGET}}" \
+	_run_env unmcode y n
 	CFLAGS="${KERNEL_UTILS_CFLAGS}" LDFLAGS="${KERNEL_GENKERNEL_LDFLAGS}" "${S}/genkernel" $opt\
 		--config=/etc/kernels/genkernel.conf \
 		--cachedir="${TMPDIR}/genkernel-cache" \
@@ -1278,7 +1285,7 @@ kconfig(){
 		local ok=false o a
 		for o in '' '-relax'; do
 		for a in "$(arch)" ''; do
-			SRCARCH="$a" srctree="$S" /usr/bin/perl "${SHARE}/Kconfig.pl" $o && ok=true && break
+			_run_env /usr/bin/perl "${SHARE}/Kconfig.pl" $o && ok=true && break
 		done
 		$ok && break
 		done
@@ -1316,7 +1323,8 @@ kmake(){
 	# say always ''
 	# input from /dev/null looks works same, but also may be safe against "file bombing" bugs
 #	yes '' 2>/dev/null |
-	emake HOSTCC="$(tc-getBUILD_CC)" ARCH=$(arch) $o "${@}" ${KERNEL_MAKEOPT} </dev/null || die
+	emake HOSTCC="$(tc-getBUILD_CC)" HOSTLD="$(tc-getBUILD_LD)" HOSTCXX="$(tc-getBUILD_CXX)" HOSTCPP="$(tc-getBUILD_CPP)" HOSTAS="$(tc-getBUILD_AS)" HOSTAR="$(tc-getBUILD_AR)" HOSTSTRIP="$(tc-getBUILD_STRIP)" HOSTNM="$(tc-getBUILD_NM)" HOSTOBJCOPY="$(tc-getBUILD_OBJCOPY)" HOSTOBJDUMP="$(tc-getBUILD_OBJDUMP)" HOSTRANLIB="$(tc-getBUILD_RANLIB)" \
+		ARCH=$(arch) $o "${@}" ${KERNEL_MAKEOPT} </dev/null || die
 }
 
 mktools(){
