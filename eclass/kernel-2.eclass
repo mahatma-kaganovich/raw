@@ -1278,7 +1278,7 @@ kconfig(){
 		local ok=false o a
 		for o in '' '-relax'; do
 		for a in "$(arch)" ''; do
-			SRCARCH="$a" /usr/bin/perl "${SHARE}/Kconfig.pl" $o && ok=true && break
+			SRCARCH="$a" srctree="$S" /usr/bin/perl "${SHARE}/Kconfig.pl" $o && ok=true && break
 		done
 		$ok && break
 		done

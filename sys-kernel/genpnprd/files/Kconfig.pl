@@ -191,6 +191,8 @@ sub Kcload{
 		$s=~s/(?:If\s+(?:[a-z\s]*\s)?(?:unsure|doubts?)(?:\s+about\s+this)?,\s+s|S)ay\s+\'?([YN])\'?(?:\s+here)?\./${$1 eq 'Y'?'yes':'no'}{$v}=1;next/e;
 		next if(!$ENV{SRCARCH});
 		$s=~s/^\s*option\s+env="(\w+)"/$env{$1}=1;next/e;
+		$s=~s/\$\((\w+)\)/exists($ENV{$1}) || print "ENV: $1\n";exists($ENV{$1})?$ENV{$1}:"\$($1)"/eg;
+		$s=~s/\$\((.*\W.*)\)/print "ENV?: $1\n";"\$($1)"/e;
 		$s=~s/\$(\w+)/$env{$1}?$ENV{$1}:"\$$1"/e;
 		$s=~s/^\s*source\s+"(.*)"/Kcload("$ENV{S}\/$1");next/e;
 		$s=~s/^\s*source\s+(.*)/Kcload("$ENV{S}\/$1");next/e;
