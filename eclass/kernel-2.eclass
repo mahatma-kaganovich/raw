@@ -1323,7 +1323,7 @@ kmake(){
 	# say always ''
 	# input from /dev/null looks works same, but also may be safe against "file bombing" bugs
 #	yes '' 2>/dev/null |
-	emake \
+	_run_env emake \
 		CC="$(tc-getCC)" LD="$(tc-getLD)" CXX="$(tc-getCXX)" CPP="$(tc-getCPP)" AS="$(tc-getAS)" AR="$(tc-getAR)" STRIP="$(tc-getSTRIP)" NM="$(tc-getNM)" OBJCOPY="$(tc-getOBJCOPY)" OBJDUMP="$(tc-getOBJDUMP)" RANLIB="$(tc-getRANLIB)" \
 		HOSTCC="$(tc-getBUILD_CC)" HOSTLD="$(tc-getBUILD_LD)" HOSTCXX="$(tc-getBUILD_CXX)" HOSTCPP="$(tc-getBUILD_CPP)" HOSTAS="$(tc-getBUILD_AS)" HOSTAR="$(tc-getBUILD_AR)" HOSTSTRIP="$(tc-getBUILD_STRIP)" HOSTNM="$(tc-getBUILD_NM)" HOSTOBJCOPY="$(tc-getBUILD_OBJCOPY)" HOSTRANLIB="$(tc-getBUILD_RANLIB)" \
 		ARCH=$(arch) $o "${@}" ${KERNEL_MAKEOPT} </dev/null || die
