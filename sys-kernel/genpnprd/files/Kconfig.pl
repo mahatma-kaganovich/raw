@@ -556,7 +556,9 @@ sub Kconfig{
 		Kclist($ENV{S});
 	}
 	for(keys %multichoice){
-		delete($choice{$_}) for(@{$choice{$_}},$_);
+		delete($choice{$_}) for(@{$choice{$_}});
+		# Use of freed value in iteration
+		delete($choice{$_})
 	}
 	my $c="$ENV{S}/.config";
 	if(load_config("$c.default")){
