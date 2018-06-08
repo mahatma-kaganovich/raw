@@ -1,2 +1,2 @@
 _FLAGS="$_FLAGS -flto -fuse-linker-plugin -ffat-lto-objects -fdevirtualize-at-ltrans"
-LDFLAGS="$LDFLAGS $CFLAGS $_FLAGS"
+#LDFLAGS="$LDFLAGS $CFLAGS $_FLAGS"
