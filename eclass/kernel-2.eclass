@@ -1447,6 +1447,7 @@ kernel-2_src_prepare(){
 		einfo "-m64 arch fix"
 		sed -i -e "s/ -mcmodel=small/ -mcmodel=small -m64$i/" arch/x86/boot/compressed/Makefile drivers/firmware/efi/libstub/Makefile
 		sed -i -e "s/\(KBUILD_AFLAGS += -m64\)$/\1$i/" arch/x86/Makefile*
+		touch "$TMPDIR/_cross"
 	fi
 	$reg && ! grep -Fq mgeneral-regs-only arch/x86/Makefile && sed -i -e 's:-mno-mmx -mno-sse$:-mgeneral-regs-only:' -e 's:-mno-sse -mno-mmx -mno-sse2 -mno-3dnow:-mgeneral-regs-only:' -e '/KBUILD_CFLAGS += .*-mno-\(avx\|80387\|fp-ret-in-387\)/d' {arch/x86,arch/x86/boot/compressed,drivers/firmware/efi/libstub}/Makefile
 #	echo "CFLAGS_mdesc.o += -Wno-error=maybe-uninitialized" >>arch/sparc/kernel/Makefile

@@ -1,6 +1,7 @@
 # open firmware on x86 change cache tophology detection in unknown way;
 # my patch (in ppatch package) still experimental too...
 # but respect OLPC (at least).
-KERNEL_CONFIG+="X86==y;OF"
-KERNEL_CONFIG+="+SPI_INTEL_SPI_PLATFORM"
+KERNEL_CONFIG+=" X86==y;OF"
+KERNEL_CONFIG+=" +SPI_INTEL_SPI_PLATFORM"
 KERNEL_CONFIG2+=" X86==y;?OF"
+[ -e "$TMPDIR/_cross" -o "${CTARGET:-${CHOST}}" != "${CBUILD}" ] && KERNEL_CONFIG+=" BPFILTER_UMH"
