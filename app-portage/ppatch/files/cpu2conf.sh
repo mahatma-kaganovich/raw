@@ -144,8 +144,6 @@ esac
 f0=`_f -m{tune,cpu,arch}=native`
 f3='-malign-data=cacheline -momit-leaf-frame-pointer -mtls-dialect=gnu2 -fsection-anchors -minline-stringops-dynamically -maccumulate-outgoing-args'
 f5='-fvisibility-inlines-hidden'
-# from -Os
-f5+=' -fdeclone-ctor-dtor'
 # gcc 4.9 - -fno-lifetime-dse, gcc 6.3 - around some of projects(?) - keep 6.3 only safe
 # try to forget after years of upstream fixing
 #f5+=' -flifetime-dse=1'
