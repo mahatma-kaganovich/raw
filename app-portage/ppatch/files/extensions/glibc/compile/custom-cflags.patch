@@ -1,12 +1,16 @@
 --- a/Makeconfig	2012-05-03 14:50:29.000000000 +0300
-+++ b/Makeconfig	2012-05-03 17:46:26.000000000 +0300
-@@ -786,6 +786,11 @@
++++ b/Makeconfig	2018-06-18 13:07:04.009382758 +0300
+@@ -786,6 +786,15 @@
  libtype.ob = lib%_b.a
  endif
  
 +ifdef CFLAGS_BASE
-+CFLAGS-.o += $(CFLAGS_BASE) -DNDEBUG=1 # -D__USE_STRING_INLINES # 2.17 broken, build with omitfp
-+CFLAGS-.os += $(CFLAGS_BASE) -DNDEBUG=1 # -D__USE_STRING_INLINES
++CFLAGS-.o += $(CFLAGS_BASE) -DNDEBUG=1
++CFLAGS-.os += $(CFLAGS_BASE) -DNDEBUG=1
++endif
++ifdef CXXFLAGS_BASE
++CXXFLAGS-.o += $(CXXFLAGS_BASE) -DNDEBUG=1
++CXXFLAGS-.os += $(CXXFLAGS_BASE) -DNDEBUG=1
 +endif
 +
  object-suffixes-for-libc := $(object-suffixes)
