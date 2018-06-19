@@ -30,8 +30,7 @@ RDEPEND="x11-libs/libX11
 	multitouch? ( x11-libs/libXi )"
 
 DEPEND="${RDEPEND}
-	x11-proto/xproto
-	x11-proto/xextproto"
+	x11-base/xorg-proto"
 
 RDEPEND="${RDEPEND}
 	x11-apps/setxkbmap
