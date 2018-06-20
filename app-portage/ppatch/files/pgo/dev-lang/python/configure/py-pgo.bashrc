@@ -4,6 +4,7 @@ case "$PV" in
 	export with_lto=no
 	export enable_optimizations=yes
 	export MAKEOPTS=-j1
+	unlink "$S"/Lib/distutils/tests/test_bdist_rpm.py
     }
 ;;
 esac
