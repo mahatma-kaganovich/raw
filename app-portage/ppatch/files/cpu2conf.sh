@@ -206,7 +206,8 @@ filter=continue
 for i in $flags; do
 	i1="$i"
 	case "$i" in
-	sse)[ "$fpu" = yes ] && fp=$preferred_fp || fp=sse;;&
+	sse)[ "$fpu" = yes ] && fp=both || fp=sse;;&
+	sse2)[ "$fpu" = yes ] && fp=$preferred_fp || fp=sse;;&
 	pni)f1+=' sse3';;
 	lm)lm=true;;
 	sse|3dnowext)f1+=" $i mmxext";;
