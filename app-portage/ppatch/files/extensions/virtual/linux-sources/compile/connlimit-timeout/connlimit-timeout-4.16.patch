@@ -1,5 +1,15 @@
+--- a/include/net/netfilter/nf_conntrack_count.h	2018-04-02 00:20:27.000000000 +0300
++++ b/include/net/netfilter/nf_conntrack_count.h	2018-06-21 18:04:11.000000000 +0300
+@@ -13,5 +13,6 @@ unsigned int nf_conncount_count(struct n
+ 				const u32 *key,
+ 				unsigned int family,
+ 				const struct nf_conntrack_tuple *tuple,
+-				const struct nf_conntrack_zone *zone);
++				const struct nf_conntrack_zone *zone,
++				const struct nf_conn *ct);
+ #endif
 --- a/include/net/netfilter/nf_conntrack.h	2018-04-02 00:20:27.000000000 +0300
-+++ b/include/net/netfilter/nf_conntrack.h	2018-06-10 20:17:09.000000000 +0300
++++ b/include/net/netfilter/nf_conntrack.h	2018-06-21 18:03:54.000000000 +0300
 @@ -73,6 +73,9 @@ struct nf_conn {
  
  	/* jiffies32 when this ct is considered dead */
@@ -11,7 +21,7 @@
  	possible_net_t ct_net;
  
 --- a/net/netfilter/Kconfig	2018-04-02 00:20:27.000000000 +0300
-+++ b/net/netfilter/Kconfig	2018-06-10 20:33:46.000000000 +0300
++++ b/net/netfilter/Kconfig	2018-06-21 18:03:54.000000000 +0300
 @@ -1159,6 +1159,15 @@ config NETFILTER_XT_MATCH_CONNLIMIT
  	  This match allows you to match against the number of parallel
  	  connections to a server per client IP address (or address block).
@@ -29,7 +39,7 @@
  	tristate  '"connmark" connection mark match support'
  	depends on NF_CONNTRACK
 --- a/net/netfilter/nf_conncount.c	2018-04-02 00:20:27.000000000 +0300
-+++ b/net/netfilter/nf_conncount.c	2018-06-10 20:25:39.000000000 +0300
++++ b/net/netfilter/nf_conncount.c	2018-06-21 18:03:54.000000000 +0300
 @@ -42,6 +42,11 @@
  #define CONNCOUNT_GC_MAX_NODES	8
  #define MAX_KEYLEN		5
@@ -121,7 +131,7 @@
  	spin_unlock_bh(&nf_conncount_locks[hash % CONNCOUNT_LOCK_SLOTS]);
  
 --- a/net/netfilter/nf_conntrack_core.c	2018-04-02 00:20:27.000000000 +0300
-+++ b/net/netfilter/nf_conntrack_core.c	2018-06-10 20:17:09.000000000 +0300
++++ b/net/netfilter/nf_conntrack_core.c	2018-06-21 18:03:54.000000000 +0300
 @@ -794,6 +794,9 @@ __nf_conntrack_confirm(struct sk_buff *s
  	/* Timer relative to confirmation time, not original
  	   setting time, otherwise we'd get timer wrap in
@@ -143,3 +153,14 @@
  	/* Only update if this is not a fixed timeout */
  	if (test_bit(IPS_FIXED_TIMEOUT_BIT, &ct->status))
  		goto acct;
+--- a/net/netfilter/xt_connlimit.c	2018-04-02 00:20:27.000000000 +0300
++++ b/net/netfilter/xt_connlimit.c	2018-06-21 18:04:47.000000000 +0300
+@@ -68,7 +68,7 @@ connlimit_mt(const struct sk_buff *skb,
+ 	}
+ 
+ 	connections = nf_conncount_count(net, info->data, key,
+-					 xt_family(par), tuple_ptr, zone);
++					 xt_family(par), tuple_ptr, zone, ct);
+ 	if (connections == 0)
+ 		/* kmalloc failed, drop it entirely */
+ 		goto hotdrop;
