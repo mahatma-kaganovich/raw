@@ -207,7 +207,7 @@ geos|readahead-list|thin-provisioning-tools|libprojectm|gtkmathview|qtfm|qtgui|q
 ruby)filterflag -funroll-loops -fweb;;
 ghostscript-gpl)filterflag -mmitigate-rop;; # ????!
 # mozilla (seamonkey) don't want -Os
-thunderbird|seamonkey|firefox|spidermonkey)filterflag -fdeclone-ctor-dtor;;&
+#thunderbird|seamonkey|firefox|spidermonkey)filterflag -fdeclone-ctor-dtor;;&
 esac
 
 #[ "${CFLAGS//-flto}" != "$CFLAGS" ] &&
