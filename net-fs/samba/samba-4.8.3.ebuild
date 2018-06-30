@@ -47,7 +47,7 @@ CDEPEND="
 	dev-python/subunit[${PYTHON_USEDEP},${MULTILIB_USEDEP}]
 	>=dev-util/cmocka-1.1.1[${MULTILIB_USEDEP}]
 	sys-apps/attr[${MULTILIB_USEDEP}]
-	>=sys-libs/ldb-1.3.3[ldap(+)?,python?,${PYTHON_USEDEP},${MULTILIB_USEDEP}]
+	>=sys-libs/ldb-1.3.4[ldap(+)?,python?,${PYTHON_USEDEP},${MULTILIB_USEDEP}]
 	sys-libs/libcap
 	sys-libs/ncurses:0=[${MULTILIB_USEDEP}]
 	sys-libs/readline:0=
@@ -124,8 +124,6 @@ S="${WORKDIR}/${MY_P}"
 
 PATCHES=(
 	"${FILESDIR}/${PN}-4.5.1-compile_et_fix.patch"
-#	"${FILESDIR}"/talloc-disable-python.patch
-#	"${FILESDIR}/${PN}-4.7.4-no_ads.patch"
 )
 
 #CONFDIR="${FILESDIR}/$(get_version_component_range 1-2)"
