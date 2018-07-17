@@ -22,7 +22,6 @@ LICENSE="GPL-2"
 SLOT="0"
 IUSE="debug xpm minimal +multitouch"
 
-# x11-libs/libXrender media-libs/freetype dev-libs/expat sys-libs/zlib
 RDEPEND="x11-libs/libX11
 	x11-libs/libXft
 	x11-libs/libXtst
@@ -33,6 +32,7 @@ DEPEND="${RDEPEND}
 	x11-base/xorg-proto"
 
 RDEPEND="${RDEPEND}
+	sys-process/procps
 	x11-apps/setxkbmap
 	x11-apps/xmodmap"
 
