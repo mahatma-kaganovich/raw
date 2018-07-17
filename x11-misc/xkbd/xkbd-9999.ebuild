@@ -20,7 +20,7 @@ HOMEPAGE="https://github.com/mahatma-kaganovich/xkbd"
 
 LICENSE="GPL-2"
 SLOT="0"
-IUSE="debug xpm minimal +multitouch"
+IUSE="debug xpm minimal +multitouch +lock"
 
 RDEPEND="x11-libs/libX11
 	x11-libs/libXft
@@ -33,6 +33,7 @@ DEPEND="${RDEPEND}
 
 RDEPEND="${RDEPEND}
 	sys-process/procps
+	lock? ( x11-apps/xinput x11-misc/slock )
 	x11-apps/setxkbmap
 	x11-apps/xmodmap"
 
