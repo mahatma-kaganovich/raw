@@ -10,6 +10,8 @@ case "$PVR" in
 5.6.19)v1=-17e4cda571;;
 5.6.22_pre1)v1=-78ce2979bb;;
 5.6.29_pre1)v1=-445c8ce6c7;;
+5.6.29_pre1)v1=-445c8ce6c7;;
+5.8.25_rc1)v1=-34502471b9;;
 *)v1='';;
 esac
 #SRC_URI="http://dl.ubnt.com/unifi/"${PV%_*}"/unifi_sysvinit_all.deb -> ${PN}-${PV}.deb"
