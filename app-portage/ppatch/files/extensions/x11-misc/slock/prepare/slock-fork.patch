@@ -1,0 +1,40 @@
+fork/daemonize after lock.
+Simple trick to safe wait for lock & continue.
+(for example - in .xinitrc -like safe lock on start
+to paranoid ensure startup process is continued locked)
+© Denis Kaganovich <mahatma@eu.by>
+
+--- a/slock.c	2016-11-20 03:31:23.000000000 +0300
++++ b/slock.c	2018-07-18 14:10:45.388657273 +0300
+@@ -292,7 +292,7 @@ lockscreen(Display *dpy, struct xrandr *
+ static void
+ usage(void)
+ {
+-	die("usage: slock [-v] [cmd [arg ...]]\n");
++	die("usage: slock [-v] [cmd [arg ...]|-]\n");
+ }
+ 
+ int
+@@ -368,15 +368,22 @@ main(int argc, char **argv) {
+ 
+ 	/* run post-lock command */
+ 	if (argc > 0) {
++		/* command = "-" - post-lock daemonize */
++		s = (argc == 1 && argv[0][0] == '-' && argv[0][1] == 0);
+ 		switch (fork()) {
+ 		case -1:
+ 			die("slock: fork failed: %s\n", strerror(errno));
+ 		case 0:
++			if (s)
++				break;
+ 			if (close(ConnectionNumber(dpy)) < 0)
+ 				die("slock: close: %s\n", strerror(errno));
+ 			execvp(argv[0], argv);
+ 			fprintf(stderr, "slock: execvp %s: %s\n", argv[0], strerror(errno));
+ 			_exit(1);
++		default:
++			if (s)
++				return 0;
+ 		}
+ 	}
+ 
