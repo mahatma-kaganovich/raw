@@ -173,7 +173,7 @@ int main(int argc, char **argv)
 	time(&rt);
 	t=localtime(&rt);
 	printf("%02i:%02i\n",t->tm_hour,t->tm_min);
-	fprintf(stderr,"\x1b[2J%i/%02i/%02i #%i\n",1900+t->tm_year,t->tm_mon,t->tm_mday,t->tm_wday);
+	fprintf(stderr,"\x1b[2J%i/%02i/%02i #%i\n",1900+t->tm_year,t->tm_mon+1,t->tm_mday,t->tm_wday);
 	get_status(fd);
 	fflush(stdout);
 	sleep(60-t->tm_sec);
