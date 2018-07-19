@@ -7,10 +7,6 @@ inherit eutils
 DESCRIPTION="UniFi controller"
 HOMEPAGE="https://www.ubnt.com/download/unifi"
 case "$PVR" in
-5.6.19)v1=-17e4cda571;;
-5.6.22_pre1)v1=-78ce2979bb;;
-5.6.29_pre1)v1=-445c8ce6c7;;
-5.6.29_pre1)v1=-445c8ce6c7;;
 5.8.25_rc1)v1=-34502471b9;;
 *)v1='';;
 esac
@@ -20,6 +16,7 @@ SRC_URI="https://dl.ubnt.com/unifi/"${PV%_*}"$v1/UniFi.unix.zip -> ${PN}-${PV}.z
 SLOT="0"
 KEYWORDS="~amd64 ~arm"
 #RDEPEND="dev-db/mongodb virtual/jdk:1.8"
+#=dev-db/mongodb-3.4* but 3.6+WiredTiger working
 RDEPEND="dev-db/mongodb
 	|| (
 		dev-java/icedtea:8[sunec]
