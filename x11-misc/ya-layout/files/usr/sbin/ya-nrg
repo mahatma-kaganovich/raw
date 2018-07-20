@@ -28,13 +28,13 @@ case "$(< /sys/devices/virtual/dmi/id/uevent)" in
 esac
 
 save1(){
-	local y=$1 f=$2 x=
-	[ -e "$f" ] || return
-	[[ "$y" == *'['*']'* ]] && y=${y#*'['} && y=${y%%']'*}
+	[ -e "$2" ] || return
+	local y=${1#*'['} x=
+	y=${y%%']'*}
 	read x <"$2"
-	echo "$f $x" >>&4
-	$echo "$y -> $f"
-	[ "$x" = "$y" ] || [[ "$x" == *"[$y]"* ]] || echo "$y" >"$f"
+	echo "$2 $x" >>$save
+	$echo "$y -> $2"
+	[ "$x" = "$y" ] || [[ "$x" == *"[$y]"* ]] || echo "$y" >"$2"
 }
 
 
@@ -60,7 +60,6 @@ save(){
 	flock 3
 	[ -e $save ] && return
 	local f i x x1
-	{
 	for i in /sys/devices/system/cpu/cpu*/cpufreq; do
 		save1 powersave "$i/scaling_governor"
 		read x <"$i/cpuinfo_min_freq" && {
@@ -83,16 +82,14 @@ save(){
 	done
 	save1 1 /sys/devices/system/cpu/intel_pstate/no_turbo
 	save1 0 /sys/devices/system/cpu/cpufreq/boost
-	} 4>$save
 
-	{
+	save+=1
 	[ -n "$cores" ] && [ "$[cores-1]" -lt "$cores" -a "$cores" -ge 0 ] &&
 	    for i in /sys/devices/system/cpu/cpu*/online; do
 		[ -e "$i" ] || break
 		[ "$cores" -gt 0 ] || save1 0 "$i"
 		cores=$[cores-1]
 	done
-	} 4>${save}1
     } 3>>$save.lock
 }
 
