@@ -1,4 +1,3 @@
-=net-wireless/unifi/unifi-5.8.24
 =sys-fs/ocfs2-tools-1.4.9999
 =sys-fs/ocfs2-tools-9999
 =sys-kernel/genpnprd-9999
