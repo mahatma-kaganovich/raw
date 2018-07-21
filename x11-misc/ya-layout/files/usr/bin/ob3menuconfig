@@ -1281,7 +1281,7 @@ if(_mparam(@_)){
 	}
 	exit;
 }
-delete($xrparam{$_}) for($x{'xscreensaver.mode'} eq 'X'?grep(/xscreensaver\.(?!mode|dpms|timeout|cycle)/,keys %xrparam):());
+delete($xrparam{$_}) for($x{'xscreensaver.mode'} eq 'X'?grep(/xscreensaver\.(?!mode|dpms|timeout|cycle|lock)/,keys %xrparam):());
 simple_menu(\%xrparam,\%x);
 }
 
