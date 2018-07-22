@@ -25,6 +25,7 @@ IUSE="debug xpm minimal +multitouch +lock"
 RDEPEND="x11-libs/libX11
 	x11-libs/libXft
 	x11-libs/libXtst
+	x11-libs/libXScrnSaver
 	xpm? ( x11-libs/libXpm )
 	multitouch? ( x11-libs/libXi )"
 
