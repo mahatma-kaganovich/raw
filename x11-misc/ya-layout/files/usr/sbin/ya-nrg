@@ -38,7 +38,8 @@ save1(){
 }
 
 balance(){
-	pgrep -x irqbalance >/dev/null || /usr/sbin/irqbalance -o # -f
+	pkill -x irqbalance -F /run/irqbalance-o.pid && sleep 1
+	/usr/sbin/irqbalance -o -s /run/irqbalance-o.pid # -f
 }
 
 restore(){
