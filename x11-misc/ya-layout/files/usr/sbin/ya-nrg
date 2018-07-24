@@ -38,7 +38,7 @@ save1(){
 }
 
 balance(){
-	/usr/sbin/irqbalance -o # -f
+	pgrep -x irqbalance >/dev/null || /usr/sbin/irqbalance -o # -f
 }
 
 restore(){
