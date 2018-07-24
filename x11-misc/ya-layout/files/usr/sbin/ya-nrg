@@ -42,6 +42,10 @@ balance(){
 	/usr/sbin/irqbalance -o -f
 }
 
+jiff(){
+	sleep 0.1
+}
+
 restore(){
     {
 	flock -s 3
@@ -54,7 +58,7 @@ restore(){
 		$echo "restore $x -> $f"
 		echo "$x" >"$f"
 	    done <$s
-	    [ "$s" = ${save}1 ] && b=true
+	    [ "$s" = ${save}1 ] && b=true && jiff
 	    unlink $s
 	done
 	$b && balance
@@ -92,7 +96,10 @@ save(){
 
 	save+=1
 	[ -n "$cores" ] && [ "$[cores-1]" -lt "$cores" -a "$cores" -ge 0 ] && {
-	    sync
+	    sync &
+	    i=$!
+	    jiff
+	    wait $i
 	    for i in /sys/devices/system/cpu/cpu*/online; do
 		[ -e "$i" ] || break
 		[ "$cores" -gt 0 ] || save1 0 "$i"
