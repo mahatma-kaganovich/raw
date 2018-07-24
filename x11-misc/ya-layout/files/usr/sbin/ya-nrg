@@ -38,8 +38,8 @@ save1(){
 }
 
 balance(){
-	pkill -x irqbalance -F /run/irqbalance-o.pid && sleep 1
-	/usr/sbin/irqbalance -o -s /run/irqbalance-o.pid # -f
+	[ "$batt" = true ] && return
+	/usr/sbin/irqbalance -o -f
 }
 
 restore(){
@@ -57,7 +57,7 @@ restore(){
 	    [ "$s" = ${save}1 ] && b=true
 	    unlink $s
 	done
-	b && balance
+	$b && balance
     } 3>>$save.lock
 }
 
@@ -98,7 +98,8 @@ save(){
 		[ "$cores" -gt 0 ] || save1 0 "$i"
 		cores=$[cores-1]
 	    done
-	    balance
+	    # single CPU must be balances. fixme
+	    #balance
 	}
     } 3>>$save.lock
 }
