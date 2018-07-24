@@ -37,12 +37,15 @@ save1(){
 	[ "$x" = "$y" ] || [[ "$x" == *"[$y]"* ]] || echo "$y" >"$2"
 }
 
+balance(){
+	/usr/sbin/irqbalance -o # -f
+}
 
 restore(){
     {
 	flock -s 3
 	[ -e $save ] || return
-	local f x i s
+	local f x i s b=false
 	for s in ${save}1 $save; do
 	    [ -e $s ] || continue
 	    while read f x; do
@@ -50,8 +53,10 @@ restore(){
 		$echo "restore $x -> $f"
 		echo "$x" >"$f"
 	    done <$s
+	    [ "$s" = ${save}1 ] && b=true
 	    unlink $s
 	done
+	b && balance
     } 3>>$save.lock
 }
 
@@ -85,12 +90,15 @@ save(){
 	save1 0 /sys/devices/system/cpu/cpufreq/boost
 
 	save+=1
-	[ -n "$cores" ] && [ "$[cores-1]" -lt "$cores" -a "$cores" -ge 0 ] &&
+	[ -n "$cores" ] && [ "$[cores-1]" -lt "$cores" -a "$cores" -ge 0 ] && {
+	    sync
 	    for i in /sys/devices/system/cpu/cpu*/online; do
 		[ -e "$i" ] || break
 		[ "$cores" -gt 0 ] || save1 0 "$i"
 		cores=$[cores-1]
-	done
+	    done
+	    balance
+	}
     } 3>>$save.lock
 }
 
