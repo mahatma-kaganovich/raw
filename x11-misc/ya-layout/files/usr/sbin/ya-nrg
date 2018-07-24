@@ -98,7 +98,7 @@ save(){
 		[ "$cores" -gt 0 ] || save1 0 "$i"
 		cores=$[cores-1]
 	    done
-	    # single CPU must be balances. fixme
+	    # single CPU must be balanced. fixme
 	    #balance
 	}
     } 3>>$save.lock
@@ -112,10 +112,10 @@ cores=
 light=
 pw=
 
-while [ -z "$pw" ]; do
+while [ -n "$*" ]; do
 case "$1" in
-light|cores)declare $1="$2";shift;shift;;
-verbose)echo=echo;shift;;
+light|cores)declare $1="$2";shift;;
+verbose)echo=echo;;
 powersave|save|power|low)pw=save;;
 performance|perf|restore|high)pw=restore;;
 auto|bat|batt)
@@ -127,9 +127,9 @@ auto|bat|batt)
 		eval "$onbatt" && batt=true
 	;;
 	esac
-	$batt && pw=save || pw=restore
-;;
+;;&
 bat|batt)pw=$batt;;
+auto)$batt && pw=save || pw=restore;;
 *)
 echo "Simple control powersave <-> default & check battery state.
 Designed for use in parallel with screen locker on laptop.
@@ -148,9 +148,10 @@ Add to sudo:
   or
  echo 'ALL ALL=(ALL) NOPASSWD: /usr/sbin/ya-nrg' >/etc/sudoers.d/ya-nrg
 "
-pw=false
+pw=
 ;;
 esac
+shift
 done
 
-$pw
+${pw:-false}
