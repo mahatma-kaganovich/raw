@@ -1,4 +1,5 @@
 dev-libs/efl -opengl gles
+dev-libs/efl -opengl egl
 media-gfx/tachyon -opengl # mpi
 media-libs/gst-plugins-bad:1.0 -opengl gles2
 net-libs/webkit-gtk -opengl gles2
@@ -6,7 +7,6 @@ x11-libs/cairo -opengl gles2
 app-admin/sudo -openssl gcrypt
 app-i18n/yaskkserv -gnutls libressl
 dev-db/mariadb -openssl yassl libressl
-dev-db/mariadb-galera -openssl yassl libressl
 dev-db/mysql -openssl yassl libressl
 dev-db/mysql-cluster -openssl yassl libressl
 dev-db/percona-server -openssl yassl libressl

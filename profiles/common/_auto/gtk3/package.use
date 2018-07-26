@@ -26,7 +26,7 @@ app-i18n/ibus-m17n gtk
 app-i18n/ibus-unikey gtk -gtk2
 app-i18n/scim-anthy gtk3
 app-i18n/scim-bridge -gtk
-app-i18n/uim -gtk
+app-i18n/uim gtk
 app-laptop/pommed -gtk
 app-misc/ddccontrol -gtk
 app-misc/geoclue:0 -gtk
@@ -36,7 +36,6 @@ app-misc/razertool -gtk
 app-misc/tracker -gtk
 app-misc/vifm -gtk
 app-mobilephone/sobexsrv -gtk
-app-office/libreoffice gtk3
 app-office/libreoffice gtk -gtk2
 app-text/aiksaurus -gtk
 app-text/ghostscript-gpl -gtk
@@ -51,6 +50,7 @@ dev-libs/gjs gtk
 dev-libs/libdbusmenu -gtk
 dev-libs/libindicate gtk
 dev-libs/libpeas gtk
+dev-libs/libreport gtk
 dev-lisp/clisp -gtk
 dev-ml/cairo-ocaml -gtk
 dev-ml/camlimages -gtk
@@ -58,15 +58,12 @@ dev-ml/ocaml-cairo -gtk
 dev-ml/ocamlgraph -gtk
 dev-ml/ocamlnet -gtk
 dev-python/ginga gtk
-dev-python/matplotlib -gtk
 dev-python/pyglet -gtk
 dev-python/pynotifier gtk
 dev-python/sympy -gtk
 dev-python/twisted-core -gtk
-dev-qt/qtgui:5 gtk
 dev-qt/qtwidgets gtk
 dev-ruby/metasm:9999 -gtk
-dev-util/amtterm -gtk
 dev-util/amtterm gtk
 dev-util/perf -gtk
 dev-util/sysprof gtk
@@ -78,6 +75,7 @@ games-board/gnubg -gtk
 games-board/xboard -gtk
 games-emulation/fceux gtk
 games-emulation/snes9x -gtk
+games-emulation/snes9x gtk
 games-fps/eduke32 -gtk
 games-misc/gBhed -gtk
 games-roguelike/tome -gtk
@@ -89,8 +87,6 @@ gnome-extra/evolution-data-server gtk
 gnome-extra/libgda gtk
 gnome-extra/libgsf -gtk
 kde-apps/print-manager gtk
-kde-plasma/kde-gtk-config gtk3
-kde-plasma/plasma-desktop gtk3 -gtk2
 kde-plasma/plasma-meta gtk
 kde-plasma/systemsettings gtk
 media-gfx/birdfont gtk
@@ -158,12 +154,10 @@ net-im/ekg2 -gtk
 net-im/qtox -gtk
 net-libs/aqbanking -gtk
 net-libs/gssdp gtk
-net-libs/gtk-vnc gtk3
 net-libs/libinfinity gtk
 net-misc/dhcpcd-ui -gtk
 net-misc/ipsorcery -gtk
 net-misc/mico -gtk
-net-misc/networkmanager gtk
 net-misc/networkmanager-fortisslvpn gtk
 net-misc/networkmanager-libreswan gtk
 net-misc/networkmanager-openconnect gtk
@@ -171,15 +165,15 @@ net-misc/networkmanager-openvpn gtk
 net-misc/networkmanager-pptp gtk
 net-misc/networkmanager-sstp gtk
 net-misc/networkmanager-vpnc gtk
+net-misc/networkmanager-wireguard gtk
 net-misc/olsrd -gtk
-net-misc/pavuk -gtk
 net-misc/putty gtk
 net-misc/spice-gtk gtk3
 net-misc/trackma gtk
 net-misc/unison -gtk
 net-misc/wicd gtk
 net-misc/youtube-viewer -gtk
-net-p2p/deluge -gtk
+net-p2p/deluge gtk
 net-p2p/eiskaltdcpp gtk
 net-p2p/mldonkey gtk
 net-p2p/transmission gtk
@@ -198,9 +192,9 @@ sci-mathematics/why3-for-spark -gtk
 sci-misc/oww -gtk
 sys-apps/lshw -gtk
 sys-apps/pcsc-tools -gtk
-sys-auth/polkit gtk
 sys-auth/polkit -gtk
 sys-block/fio -gtk
+sys-block/libzbc gtk
 sys-boot/plymouth gtk
 sys-cluster/ceph -gtk
 sys-devel/distcc -gtk
@@ -218,7 +212,6 @@ x11-libs/c++-gtk-utils:0 gtk
 x11-libs/gtkmathview -gtk
 x11-libs/libfm -gtk
 x11-libs/libyui gtk
-x11-misc/libinput-gestures gtk
 x11-misc/lightdm gtk
 x11-misc/piedock -gtk
 x11-misc/redshift gtk
@@ -232,4 +225,5 @@ x11-terms/mlterm gtk
 x11-themes/arc-theme gtk3 -gtk2
 x11-themes/nimbus -gtk
 x11-wm/afterstep -gtk
+xfce-extra/xfce4-taskmanager gtk3
 mail-client/thunderbird ffmpeg -gstreamer

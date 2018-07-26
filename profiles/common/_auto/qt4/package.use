@@ -1,9 +1,1 @@
-app-crypt/qca qt4 -qt5
 app-i18n/fcitx qt4
-dev-qt/qtlockedfile qt4 -qt5
-dev-qt/qtsingleapplication qt4 -qt5
-media-libs/phonon qt4 -qt5
-media-libs/phonon-gstreamer qt4 -qt5
-media-libs/phonon-vlc qt4 -qt5
-x11-themes/adwaita-qt qt4 -qt5
-x11-themes/qtcurve qt4 -qt5

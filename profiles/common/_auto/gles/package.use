@@ -3,6 +3,10 @@ dev-libs/weston gles2
 kde-plasma/kinfocenter gles2 -opengl
 media-libs/cogl gles2 -opengl
 media-libs/gst-plugins-bad:1.0 gles2 -opengl
+media-libs/gst-plugins-base:1.0 gles2 -opengl
 media-libs/mesa gles2 gles1
+media-plugins/gst-plugins-gtk gles2 -opengl
+media-plugins/gst-plugins-vaapi gles2 -opengl
 media-tv/kodi gles -opengl
 net-libs/webkit-gtk gles2 -opengl
+sys-apps/kmscon gles2

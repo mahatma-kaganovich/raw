@@ -26,7 +26,7 @@ app-i18n/ibus gtk2
 app-i18n/ibus-m17n -gtk
 app-i18n/ibus-unikey gtk2
 app-i18n/scim-bridge gtk
-app-i18n/uim gtk
+app-i18n/uim -gtk
 app-laptop/pommed gtk
 app-misc/ddccontrol gtk
 app-misc/geoclue:0 gtk
@@ -36,7 +36,6 @@ app-misc/razertool gtk
 app-misc/tracker -gtk
 app-misc/vifm gtk
 app-mobilephone/sobexsrv gtk
-app-office/libreoffice gtk -gtk3
 app-office/libreoffice gtk2
 app-text/aiksaurus gtk
 app-text/ghostscript-gpl -gtk
@@ -60,15 +59,12 @@ dev-ml/ocaml-cairo gtk
 dev-ml/ocamlgraph gtk
 dev-ml/ocamlnet gtk
 dev-python/ginga -gtk
-dev-python/matplotlib gtk
 dev-python/pyglet gtk
 dev-python/pynotifier -gtk
 dev-python/sympy gtk
 dev-python/twisted-core gtk
-dev-qt/qtgui:5 -gtk
 dev-qt/qtwidgets -gtk
 dev-ruby/metasm:9999 -gtk
-dev-util/amtterm gtk
 dev-util/amtterm -gtk
 dev-util/perf gtk
 dev-util/sysprof -gtk
@@ -80,6 +76,7 @@ games-board/gnubg gtk
 games-board/xboard gtk
 games-emulation/fceux -gtk
 games-emulation/snes9x gtk
+games-emulation/snes9x -gtk
 games-fps/eduke32 gtk
 games-misc/gBhed gtk
 games-roguelike/tome gtk
@@ -90,7 +87,6 @@ gnome-base/gvfs -gtk
 gnome-extra/cjs -gtk
 gnome-extra/libgda -gtk
 gnome-extra/libgsf -gtk
-kde-plasma/plasma-desktop gtk2 -gtk3
 kde-plasma/plasma-meta -gtk
 kde-plasma/systemsettings -gtk
 media-gfx/birdfont -gtk
@@ -109,7 +105,7 @@ media-libs/gst-plugins-bad:1.0 -gtk
 media-libs/libcanberra gtk -gtk3
 media-libs/libextractor -gtk
 media-libs/libgpod gtk
-media-libs/libmediaart -gtk
+media-libs/libmediaart gtk
 media-libs/libopenraw -gtk
 media-libs/libquicktime gtk
 media-libs/libsixel -gtk
@@ -164,7 +160,6 @@ net-libs/libinfinity -gtk
 net-misc/dhcpcd-ui gtk
 net-misc/ipsorcery gtk
 net-misc/mico gtk
-net-misc/networkmanager -gtk
 net-misc/networkmanager-fortisslvpn -gtk
 net-misc/networkmanager-libreswan -gtk
 net-misc/networkmanager-openconnect -gtk
@@ -172,8 +167,8 @@ net-misc/networkmanager-openvpn -gtk
 net-misc/networkmanager-pptp -gtk
 net-misc/networkmanager-sstp -gtk
 net-misc/networkmanager-vpnc -gtk
+net-misc/networkmanager-wireguard -gtk
 net-misc/olsrd gtk
-net-misc/pavuk gtk
 net-misc/trackma -gtk
 net-misc/unison gtk
 net-misc/wicd gtk
@@ -200,6 +195,7 @@ sys-apps/lshw gtk
 sys-apps/pcsc-tools gtk
 sys-auth/polkit -gtk
 sys-block/fio gtk
+sys-block/libzbc -gtk
 sys-cluster/ceph gtk
 sys-devel/distcc gtk
 sys-devel/sparse gtk
@@ -216,7 +212,6 @@ x11-libs/gtkmathview gtk
 x11-libs/libfm gtk
 x11-libs/libyui -gtk
 x11-libs/mx gtk
-x11-misc/libinput-gestures -gtk
 x11-misc/lightdm gtk
 x11-misc/piedock gtk
 x11-misc/redshift -gtk

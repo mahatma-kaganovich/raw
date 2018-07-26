@@ -14,6 +14,5 @@ net-analyzer/pinger -gtk2 gtk3
 net-misc/dhcpcd-ui -gtk gtk3
 x11-terms/mlterm -gtk2 -gtk
 app-misc/tracker -gstreamer ffmpeg
-dev-qt/qtwebkit -gstreamer010 gstreamer # multimedia
 dev-qt/qtwebkit -gstreamer # multimedia
 media-gfx/blender -ffmpeg # libav

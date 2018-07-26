@@ -4,5 +4,6 @@ dev-qt/qtgui:5 gles2 egl
 media-libs/gst-plugins-bad:1.0 gles2
 media-libs/mesa gles1
 media-libs/mesa gles2
+media-plugins/gst-plugins-vaapi gles2
 net-libs/webkit-gtk gles2
 x11-libs/cairo gles2 -opengl

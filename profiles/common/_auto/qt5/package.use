@@ -1,6 +1,3 @@
 games-emulation/mgba qt5
 games-strategy/freeciv qt5
-media-libs/liblastfm qt5 -qt4
-media-libs/libmygpo-qt qt5 -qt4
-x11-libs/qscintilla qt5 -qt4
 x11-misc/lightdm qt5

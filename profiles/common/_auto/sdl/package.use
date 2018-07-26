@@ -1,5 +1,7 @@
 app-emulation/vice sdl
+games-emulation/dolphin sdl
 games-emulation/ppsspp sdl
+games-emulation/yabause sdl
 games-strategy/freeciv sdl
 media-video/vlc sdl
 net-wireless/gnuradio sdl
