@@ -1118,7 +1118,7 @@ my %xrparam=(
 'xscreensaver.dpmsSuspend'=>$tm,
 'xscreensaver.dpmsOff'=>$tm,
 'xscreensaver.dpmsQuickOff'=>$bb,
-'xscreensaver.mode'=>['random','random-same','one','blank','off','X'],
+'xscreensaver.mode'=>['random','random-same','one','blank','off','X','lock'],
 
 'xscreensaver.passwdTimeout'=>$tm,
 'xscreensaver.lock'=>$bb,
