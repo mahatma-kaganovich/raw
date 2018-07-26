@@ -1,9 +1,6 @@
-dev-python/qscintilla-python qt5 -qt4
 games-emulation/mgba qt5
 games-strategy/freeciv qt5
 media-libs/liblastfm qt5 -qt4
 media-libs/libmygpo-qt qt5 -qt4
-net-analyzer/wireshark qt5
 x11-libs/qscintilla qt5 -qt4
-x11-libs/qwtpolar qt5 -qt4
 x11-misc/lightdm qt5

@@ -1,16 +1,7 @@
-dev-db/sqlcipher -readline libedit
-dev-lang/php:5.6 -readline libedit
-dev-lang/php:7.0 -readline libedit
-dev-lang/php:7.1 -readline libedit
-dev-lang/php:7.2 -readline libedit
-dev-libs/libpcre -readline libedit
-dev-libs/libpcre2 -readline libedit
-net-misc/chrony -readline libedit
+dev-libs/efl -opengl gles
 media-gfx/tachyon -opengl # mpi
 media-libs/gst-plugins-bad:1.0 -opengl gles2
-net-libs/webkit-gtk:3 -opengl gles2
-net-libs/webkit-gtk:2 -opengl gles2
-net-libs/webkit-gtk:4 -opengl gles2
+net-libs/webkit-gtk -opengl gles2
 x11-libs/cairo -opengl gles2
 app-admin/sudo -openssl gcrypt
 app-i18n/yaskkserv -gnutls libressl
@@ -19,10 +10,12 @@ dev-db/mariadb-galera -openssl yassl libressl
 dev-db/mysql -openssl yassl libressl
 dev-db/mysql-cluster -openssl yassl libressl
 dev-db/percona-server -openssl yassl libressl
+dev-libs/efl -gnutls -ssl
 dev-libs/xmlsec -gnutls -gcrypt
 dev-perl/DBD-mysql -ssl embedded
 dev-vcs/cvsync -mhash gcrypt
 mail-mta/courier -gnutls libressl
+mail-mta/exim -gnutls -ssl
 mail-mta/msmtp -gnutls -ssl
 mail-mta/ssmtp -gnutls -ssl
 media-video/vlc -gnutls -gcrypt
@@ -45,3 +38,12 @@ sys-cluster/ceph -ssl nss
 sys-fs/cryptsetup -kernel openssl nettle gcrypt
 www-client/uget -openssl gnutls
 www-misc/litmus -ssl gnutls
+dev-db/sqlcipher -readline libedit
+dev-lang/php:5.6 -readline libedit
+dev-lang/php:7.0 -readline libedit
+dev-lang/php:7.1 -readline libedit
+dev-lang/php:7.2 -readline libedit
+dev-lang/php:7.3 -readline libedit
+dev-libs/libpcre -readline libedit
+dev-libs/libpcre2 -readline libedit
+net-misc/chrony -readline libedit

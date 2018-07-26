@@ -11,10 +11,10 @@ app-editors/bluefish gtk2 -gtk3
 app-editors/emacs:23 gtk
 app-editors/emacs:24 gtk -gtk3
 app-editors/emacs:25 gtk -gtk3
+app-editors/emacs:26 gtk -gtk3
 app-editors/emacs-vcs:26 gtk -gtk3
 app-editors/emacs-vcs:27 gtk -gtk3
 app-editors/gvim gtk
-app-emulation/fuse -gtk
 app-emulation/libguestfs -gtk
 app-emulation/qemu -gtk
 app-emulation/ski gtk
@@ -164,10 +164,10 @@ net-libs/libinfinity -gtk
 net-misc/dhcpcd-ui gtk
 net-misc/ipsorcery gtk
 net-misc/mico gtk
+net-misc/networkmanager -gtk
 net-misc/networkmanager-fortisslvpn -gtk
 net-misc/networkmanager-libreswan -gtk
 net-misc/networkmanager-openconnect -gtk
-net-misc/networkmanager-openswan -gtk
 net-misc/networkmanager-openvpn -gtk
 net-misc/networkmanager-pptp -gtk
 net-misc/networkmanager-sstp -gtk
@@ -210,7 +210,6 @@ sys-power/nvclock gtk
 sys-process/latencytop gtk
 www-client/netsurf -gtk
 www-client/opera gtk
-www-client/w3m -gtk
 www-plugins/gnash gtk
 x11-apps/xinput_calibrator -gtk
 x11-libs/gtkmathview gtk

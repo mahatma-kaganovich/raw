@@ -1,7 +1,5 @@
 app-editors/bluefish -gtk2
-app-emulation/fuse gtk -sdl
 dev-java/oracle-jdk-bin:9 gtk3 -gtk2
 dev-java/oracle-jre-bin:9 gtk3 -gtk2
 media-plugins/audacious-plugins gtk3 -gtk -qt5
 media-sound/audacious gtk3 -gtk -qt5
-x11-misc/spacefm -gtk2

@@ -1,4 +1,3 @@
-app-emulation/fuse -sdl gtk # X fbcon svga
 app-emulation/vice -sdl gtk
 games-emulation/pcsxr -sdl # alsa openal oss pulseaudio
 games-emulation/ppsspp -sdl qt5

@@ -2,5 +2,3 @@ app-i18n/ibus
 app-office/libreoffice 
 media-plugins/audacious-plugins qt5 -gtk -gtk3
 media-sound/audacious qt5 -gtk -gtk3
-net-p2p/bitcoin-qt qt5 -qt4
-x11-libs/qwtpolar qt5
