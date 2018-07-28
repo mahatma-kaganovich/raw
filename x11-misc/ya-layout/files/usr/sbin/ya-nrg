@@ -115,7 +115,7 @@ save(){
 #			$f -c $x 0
 		done
 		$echo "$f 0"
-		$f 0
+		$f 15
 	}
 	save+=1
 	[ -n "$cores" ] && [ "$[cores-1]" -lt "$cores" -a "$cores" -ge 0 ] && {
