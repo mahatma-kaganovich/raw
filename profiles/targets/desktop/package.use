@@ -6,14 +6,10 @@ net-p2p/mldonkey bittorrent fasttrack gd gnutella magic
 media-gfx/imagemagick opencl
 app-cdr/cdrdao gcdmaster
 dev-db/sqlite tools tcl
-#>app-office/libreoffice-5.1 python_single_target_python3_4 python_targets_python3_4
 app-office/libreoffice collada pdfimport
 kde-plasma/plasma-desktop legacy-systray
 # until figure-out test-programs
-net-wireless/bluez test-programs experimental python_single_target_python3_5 python_targets_python3_5
-dev-python/pycairo python_targets_python3_5
-dev-python/pygobject python_targets_python3_5
-dev-python/dbus-python python_targets_python3_5
+net-wireless/bluez test-programs experimental
 net-fs/samba -addc
 media-libs/mesa gles1 gles2 wayland
 net-wireless/gnuradio audio
