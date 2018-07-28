@@ -70,6 +70,7 @@ save(){
 	flock 3
 	[ -e $save ] && return
 	local f i x x1
+	save1 passive /sys/devices/system/cpu/intel_pstate/status
 	for i in /sys/devices/system/cpu/cpu*/cpufreq; do
 		save1 powersave "$i/scaling_governor"
 		read x <"$i/cpuinfo_min_freq" && {
@@ -77,7 +78,6 @@ save(){
 			#[ "$(< "$i/scaling_cur_freq")" = "$x" ] ||  echo "$x" >"$i/scaling_cur_freq"
 		}
 	done
-	save1 passive /sys/devices/system/cpu/intel_pstate/status
 	for i in "min_power:/sys/class/scsi_host/*/link_power_management_policy" ; do
 		x=${i%%:*}
 		for f in ${x%*:}; do
