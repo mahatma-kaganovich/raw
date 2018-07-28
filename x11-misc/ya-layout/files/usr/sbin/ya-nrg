@@ -109,12 +109,10 @@ save(){
 			x="${x#cpu}"
 			[ "$x" = "$[x]" ] || continue
 			i="${i##* }"
-			i=$[i]
-			$echo "$f -c $x $i"
-			echo "$f -c $x $i" >>$save
+			echo "$f -c $x $[i]" >>$save
 #			$f -c $x 0
 		done
-		$echo "$f 0"
+		$echo "$f 15"
 		$f 15
 	}
 	save+=1
