@@ -28,18 +28,22 @@ case "$(< /sys/devices/virtual/dmi/id/uevent)" in
 esac
 
 save1(){
-	[ -e "$2" ] || return
-	local y=${1#*'['} x=
-	y=${y%%']'*}
-	read x <"$2"
-	echo "$2 $x" >>$save
-	$echo "$y -> $2"
-	[ "$x" = "$y" ] || [[ "$x" == *"[$y]"* ]] || echo "$y" >"$2"
+	[ -e "$2" ] || return 1
+	local f y=$1 x=
+	shift
+	for f in "${@}"; do
+		read x <$f || continue
+		x=${x#*'['}
+		x=${x%%']'*}
+		echo "$f $x" >>$save
+		$echo "$y -> $f"
+		[ "$x" = "$y" ] || [[ "$x" == *"[$y]"* ]] || echo "$y" >$f
+	done
+	return 0
 }
 
 balance(){
-	[ "$batt" = true ] && return
-	/usr/sbin/irqbalance -o -f
+	[ "$batt" = true ] || /usr/sbin/irqbalance -o -f -t 1
 }
 
 jiff(){
@@ -54,9 +58,17 @@ restore(){
 	for s in ${save}1 $save; do
 	    [ -e $s ] || continue
 	    while read f x; do
-		f=$(readlink -f "$f") && [[ "$f" == /sys/* ]] || continue # paranoid
-		$echo "restore $x -> $f"
-		echo "$x" >"$f"
+		case "$f" in
+		/sys/*)
+#			f=$(readlink -f "$f") && [[ "$f" == /sys/* ]] || continue # paranoid
+			$echo "restore $x -> $f"
+			echo "$x" >"$f"
+		;;
+		x86_energy_perf_policy)
+			$echo "$f $x"
+			($f $x)
+		;;
+		esac
 	    done <$s
 	    [ "$s" = ${save}1 ] && b=true && jiff
 	    unlink $s
@@ -70,19 +82,16 @@ save(){
 	flock 3
 	[ -e $save ] && return
 	local f i x x1
-	save1 passive /sys/devices/system/cpu/intel_pstate/status
+	save1 min_power /sys/class/scsi_host/*/link_power_management_policy
+	save1 powersupersave /sys/module/pcie_aspm/parameters/policy
+	# must be ordered
+#	save1 passive /sys/devices/system/cpu/intel_pstate/status
 	for i in /sys/devices/system/cpu/cpu*/cpufreq; do
 		save1 powersave "$i/scaling_governor"
 		read x <"$i/cpuinfo_min_freq" && {
 			save1 "$x" "$i/scaling_max_freq"
 			#[ "$(< "$i/scaling_cur_freq")" = "$x" ] ||  echo "$x" >"$i/scaling_cur_freq"
 		}
-	done
-	for i in "min_power:/sys/class/scsi_host/*/link_power_management_policy" ; do
-		x=${i%%:*}
-		for f in ${x%*:}; do
-			save1 "$x" "$f"
-		done
 	done
 	[ -n "$light" ] &&
 	    for i in /sys/class/backlight/*; do
@@ -93,7 +102,21 @@ save(){
 	done
 	save1 1 /sys/devices/system/cpu/intel_pstate/no_turbo
 	save1 0 /sys/devices/system/cpu/cpufreq/boost
-
+	save1 power /sys/devices/system/cpu/cpu*/cpufreq/energy_performance_preference || {
+		f=x86_energy_perf_policy
+		$f -r|while read i; do
+			x="${i%%:*}"
+			x="${x#cpu}"
+			[ "$x" = "$[x]" ] || continue
+			i="${i##* }"
+			i=$[i]
+			$echo "$f -c $x $i"
+			echo "$f -c $x $i" >>$save
+#			$f -c $x 0
+		done
+		$echo "$f 0"
+		$f 0
+	}
 	save+=1
 	[ -n "$cores" ] && [ "$[cores-1]" -lt "$cores" -a "$cores" -ge 0 ] && {
 	    sync &
@@ -123,9 +146,17 @@ while [ -n "$*" ]; do
 case "$1" in
 light|cores)declare $1="$2";shift;;
 verbose)echo=echo;;
-powersave|save|power|low)pw=save;;
+xss|xss-auto)
+	shift
+	case "$1" in
+	on);;
+	off|disabled)pw=restore;;&
+	*)shift;continue;;
+	esac
+;;&
+powersave|save|power|low|xss)pw=save;;
 performance|perf|restore|high)pw=restore;;
-auto|bat|batt)
+auto|bat|batt|xss-auto)
 	case "$batt" in
 	true|false);;
 	*)	onbatt=onbatt
@@ -136,7 +167,7 @@ auto|bat|batt)
 	esac
 ;;&
 bat|batt)pw=$batt;;
-auto)$batt && pw=save || pw=restore;;
+auto|xss-auto)$batt && pw=save || pw=restore;;
 *)
 echo "Simple control powersave <-> default & check battery state.
 Designed for use in parallel with screen locker on laptop.
@@ -150,6 +181,7 @@ cmd is:
  performance|perf|restore|high
  auto [<onbatt_test>]
  bat|batt
+ xss[-auto] [on|off|...]
 Add to sudo:
  echo '%plugdev ALL=(ALL) NOPASSWD: /usr/sbin/ya-nrg' >/etc/sudoers.d/ya-nrg
   or
