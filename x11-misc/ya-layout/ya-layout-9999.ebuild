@@ -57,7 +57,7 @@ src_install(){
 		rm "${D}/etc/udev" -Rf
 	fi
 	use jpeg || sed -i -e 's:jpg:tiff:g' "${D}"{/usr/bin/ob3menu,/etc/xdg/ya/menu.xml}
-	use tiff || sed -i -e 's:tiff:png:g' "${D}"{/usr/bin/ob3menu,/etc/xdg/ya/menu.xml}
+	use tiff || sed -i -e 's/tiff:-/miff:-/g' -e 's:tiff:png:g' "${D}"{/usr/bin/ob3menu,/etc/xdg/ya/menu.xml}
 	use svg || sed -i -e 's: --svg::g' "${D}"/etc/xdg/ya/menu.xml
 	if use tint2; then
 		# hate effects & decorations - non-ergonomic for eyes

@@ -753,7 +753,8 @@ NOGEO:
 			@wp && unshift(@wp,'-b');
 			@m=($bin.'feh','-m','-s','-W',$X,'-H',$Y,'-y',$x,'-E',$y,@m,@wp,'-O');
 		}else{
-			my $f='miff:-';
+			# time-to-time others broken
+			my $f='tiff:-';
 			if(@wp){
 				$m=" $f |${bin}composite -background none -compose atop $f -resize ${X}x$Y! @wp";
 			}
