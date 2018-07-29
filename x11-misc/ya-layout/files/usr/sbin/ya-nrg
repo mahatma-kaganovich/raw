@@ -2,6 +2,11 @@
 
 save=/run/power.save
 
+die(){
+	echo "$0: $*. Aborting..."
+	exit 1
+}
+
 onbatt(){
 	local i ac
 	ac=false
@@ -32,18 +37,25 @@ save1(){
 	local f y=$1 x=
 	shift
 	for f in "${@}"; do
-		read x <$f || continue
-		x=${x#*'['}
-		x=${x%%']'*}
-		echo "$f $x" >>$save
-		$echo "$y -> $f"
-		[ "$x" = "$y" ] || [[ "$x" == *"[$y]"* ]] || echo "$y" >$f
+		read x <$f &&
+		x=${x#*'['} &&
+		x=${x%%']'*} &&
+		echo "$f $x" >>$save &&
+		$echo "$x -> $y => $f" &&
+		[ "$x" != "$y" ] &&
+		echo "$y" >$f
 	done
 	return 0
 }
 
+fchk(){
+	[ -e $1 ] || touch $1 || die "file '$1' create error"
+	[ "$(stat $1 -c '%u:%g:%f')" = 0:0:8180 ] || die "file '$1' insecure! check & remove"
+	[ -s $1 ]
+}
+
 balance(){
-	[ "$batt" = true ] || /usr/sbin/irqbalance -o -f -t 1
+	[ "$batt" = true ] || /usr/sbin/irqbalance -o -f -t 1 &
 }
 
 jiff(){
@@ -51,14 +63,22 @@ jiff(){
 }
 
 restore(){
+    fchk $save.lock
     {
 	flock -s 3
-	[ -e $save ] || return
+	[ -s $save ] || return
 	local f x i s b=false
 	for s in ${save}1 $save; do
-	    [ -e $s ] || continue
-	    while read f x; do
+	    fchk $s || continue
+	    if $fast; then
+		(. $s)
+	    else
+	      while read f x; do
 		case "$f" in
+		'echo')
+			echo "fast mode restore file in secure run"
+			exit 1
+		;;
 		/sys/*)
 #			f=$(readlink -f "$f") && [[ "$f" == /sys/* ]] || continue # paranoid
 			$echo "restore $x -> $f"
@@ -69,18 +89,20 @@ restore(){
 			($f $x)
 		;;
 		esac
-	    done <$s
+	      done <$s
+	    fi
 	    [ "$s" = ${save}1 ] && b=true && jiff
-	    unlink $s
+	    true >$s
 	done
 	$b && balance
     } 3>>$save.lock
 }
 
 save(){
+    fchk $save.lock
     {
 	flock 3
-	[ -e $save ] && return
+	fchk $save && return
 	local f i x x1
 	save1 min_power /sys/class/scsi_host/*/link_power_management_policy
 	save1 powersupersave /sys/module/pcie_aspm/parameters/policy
@@ -110,13 +132,14 @@ save(){
 			[ "$x" = "$[x]" ] || continue
 			i="${i##* }"
 			echo "$f -c $x $[i]" >>$save
-#			$f -c $x 0
+#			$f -c $x 15
 		done
 		$echo "$f 15"
 		$f 15
 	}
-	save+=1
 	[ -n "$cores" ] && [ "$[cores-1]" -lt "$cores" -a "$cores" -ge 0 ] && {
+	    save+=1
+	    fchk $save
 	    sync &
 	    i=$!
 	    jiff
@@ -136,9 +159,11 @@ save(){
 umask 077
 
 echo=true
+echo1=echo
 cores=
 light=
 pw=
+fast=false
 
 while [ -n "$*" ]; do
 case "$1" in
@@ -166,6 +191,23 @@ auto|bat|batt|xss-auto)
 ;;&
 bat|batt)pw=$batt;;
 auto|xss-auto)$batt && pw=save || pw=restore;;
+fast)
+    fast=true
+    save1(){
+	[ -e "$2" ] || return 1
+	local f y=$1 x=
+	shift
+	for f in "${@}"; do
+		read x <$f &&
+		x=${x#*'['} &&
+		x=${x%%']'*} &&
+		[ "$x" != "$y" ] &&
+		echo "$y" >$f &&
+		echo "echo $x >$f"
+	done >>$save
+	return 0
+    }
+;;
 *)
 echo "Simple control powersave <-> default & check battery state.
 Designed for use in parallel with screen locker on laptop.
@@ -174,6 +216,7 @@ opt is:
  light <brightness_percent>
  cores <num>
  verbose
+ fast
 cmd is:
  powersave|save|power|low
  performance|perf|restore|high
