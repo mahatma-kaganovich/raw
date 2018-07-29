@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # (c) Denis Kaganovich, Anarchy or GPLv2
-# OpenBox3 pipe menu v0.16
+# OpenBox3 pipe menu v0.17
 # ob3menu {--<command> {params}}
 # 	--slow [<path/to/rc.xml> [XxY]]
 #	--autostart {profile}
@@ -196,23 +196,39 @@ sub _restart{
 	# xkill don't properly close tray [on some X], so tray icons not restarting
 	# try to kill by pid first
 	my $d=quotemeta($ENV{'DISPLAY'});
-	my (@p,$w);
-	my $n=$_[0];
+	my ($w,$chk);
+	my ($p,$get,@p)=@_;
+	my $p1="$p @p";
+	my $n=$p;
 	$n=~s/^.*\///g;
-	for(split(/\n/,`${bin}pgrep $n -u "$ENV{'USER'}"`)){
-		push @p,$_ if(_read("</proc/$_/environ",0)=~/(?:^|\x0)DISPLAY=$d(?:\x0|\$)/s);
+	if (!@PIDS) {
+		for(glob('/proc/*/environ')){
+			next if (! -r $_);
+			my ($pid)=$_=~/^\/proc\/([0-9]+)/;
+			my $s=_read("/proc/$pid/cmdline",0);
+			$s=~s/\0/ /gs;
+			$s=~s/ $//gs;
+			if ($s eq $p1){
+				$chk=1;
+			}else{
+				$s=~s/ .*//gs;
+				next if ($s ne $p);
+			}
+			push @PIDS,$pid if(_read($_,0)=~/(?:^|\x0)DISPLAY=$d(?:\x0|\$)/s);
+		}
 	}
-	if(@p){
-		system('kill',@p);
-		while(map{-e "/proc/$_" || ()}@p){sleep(1)};
+	$get && return $chk;
+	if(@PIDS){
+		system('kill',@PIDS);
+		while(map{-e "/proc/$_" || ()}@PIDS){sleep(1)};
 	}
 	if($^O eq 'linux' || !($ENV{'DISPLAY'}=~/^\:0\.?/) || exists($P{multiserver})){
 		system($bin.'xkill','-id',$w) if(($w)=`${bin}xwininfo -name $n`=~/ Window id: (0x\S+) /s);
 	}else{
-		system('killall','-w',$_[0],'-u',$ENV{'USER'});
+		system('killall','-w',$p,'-u',$ENV{'USER'});
 	}
-	sleep(1) if(@p || $w); # font
-	exec(@_);
+	sleep(1) if(@PIDS || $w); # font
+	exec($p,@p);
 	die $!;
 }
 
@@ -753,8 +769,7 @@ NOGEO:
 			@wp && unshift(@wp,'-b');
 			@m=($bin.'feh','-m','-s','-W',$X,'-H',$Y,'-y',$x,'-E',$y,@m,@wp,'-O');
 		}else{
-			# time-to-time others broken
-			my $f='tiff:-';
+			my $f='miff:-';
 			if(@wp){
 				$m=" $f |${bin}composite -background none -compose atop $f -resize ${X}x$Y! @wp";
 			}
@@ -791,18 +806,25 @@ NOGEO:
 				$f.=int($conf{'.font.size'}*$tint2font);
 				tint2set('(?:task|tooltip)_font',-1,$f);
 			}
-			$tint2_=undef if(_write($tint2[-1],$tint2_)!=1);;
+			$tint2_='' if(_write($tint2[-1],$tint2_)!=1);;
 		}
 		$?=0;
 		$i=newname($img,($m||"@m").$img.$t2d)||(-e $sh ?0:2);
-		if($i){
+		if($i || defined($tint2_)){
 			fork() && goto NOFORK;
 			close(STDOUT);
 			open STDOUT,">&2";
-			$tint2_ && !fork() && _restart($bin.'tint2','-c',$tint2[-1]);
+			@PIDS=();
+			if (!$i) {
+				# check resolution changed by tint2 cmdline
+				# if yes - simple restart tint2 & redraw bg
+				_restart($bin.'tint2',1,'-c',$tint2[-1]) && exit;
+				$tint2_=$i=3;
+			}
+			$tint2_ && !fork() && _restart($bin.'tint2',0,'-c',$tint2[-1]);
 			$tint2_=undef;
 		}
-		goto (nolauncher,NEWIMG,NEWSH)[$i];
+		goto (nolauncher,NEWIMG,NEWSH,DRAW)[$i];
 NEWIMG:
 		unlink($sh);
 		if($m){
@@ -816,13 +838,16 @@ NEWSH:
 		if($?){
 			system($bin.'notify-send',$out='Picture montage failed: '.($m||"@m")." $img \n$out");
 			print STDERR $out,"\n";
-		}elsif(_write($sh,$a,0700)){
-			system($bin.'xsetroot','-solid','black') if(!$img || $#xi==1);
-			$img && (
-				(@xi && !system($bin.'feh','--no-fehbg',@xi,'--bg-center',$img)) ||
-				system($bin.'feh','--no-fehbg','--bg-tile',$img)
-				);
+			exit;
+		}elsif(!_write($sh,$a,0700)){
+			exit;
 		}
+DRAW:
+		system($bin.'xsetroot','-solid','black') if(!$img || $#xi==1);
+		$img && (
+			(@xi && !system($bin.'feh','--no-fehbg',@xi,'--bg-center',$img)) ||
+			system($bin.'feh','--no-fehbg','--bg-tile',$img)
+		);
 		exit;
 NOFORK:
 	$tint2_=undef;
