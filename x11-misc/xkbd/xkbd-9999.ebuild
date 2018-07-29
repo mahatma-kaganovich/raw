@@ -34,7 +34,7 @@ DEPEND="${RDEPEND}
 
 RDEPEND="${RDEPEND}
 	sys-process/procps
-	lock? ( x11-apps/xinput x11-misc/slock )
+	lock? ( x11-apps/xinput x11-misc/slock sys-process/procps )
 	x11-apps/setxkbmap
 	x11-apps/xmodmap"
 

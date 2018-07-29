@@ -4,7 +4,7 @@ inherit eutils
 SLOT=0
 DESCRIPTION="Simple desktop layout"
 LICENSE="*"
-IUSE="+udev libnotify minimal bluetooth wifi +jpeg +tiff svg tint2 alsa laptop"
+IUSE="+udev libnotify minimal bluetooth wifi +jpeg +tiff svg tint2 alsa laptop +dhcp"
 DEPEND="tint2? ( x11-misc/tint2 )
 	>=x11-wm/openbox-3.5.0"
 RDEPEND=" ${DEPEND}
@@ -23,6 +23,10 @@ RDEPEND=" ${DEPEND}
 	x11-apps/xfontsel
 	x11-misc/xdg-utils
 	x11-apps/xmodmap
+	dhcp? (
+		net-misc/dhcpcd
+		net-dns/dnrd
+	)
 	laptop? (
 		>=x11-misc/xkbd-0.8.17
 	)
