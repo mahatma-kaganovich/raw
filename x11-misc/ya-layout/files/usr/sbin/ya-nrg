@@ -77,10 +77,6 @@ restore(){
 	    else
 	      while read f x; do
 		case "$f" in
-		'echo')
-			echo "fast mode restore file in secure run"
-			exit 1
-		;;
 		/sys/*)
 #			f=$(readlink -f "$f") && [[ "$f" == /sys/* ]] || continue # paranoid
 			$echo "restore $x -> $f"
@@ -90,6 +86,9 @@ restore(){
 			$echo "$f $x"
 			($f $x)
 		;;
+		exit);;
+		echo)die "fast mode restore file in secure run";;
+		*)die "invalid file '$s' command '$f'";;
 		esac
 	      done <$s
 	    fi
@@ -106,6 +105,7 @@ save(){
 	flock 3
 	fchk $save && return
 	local f i x x1
+	$fast || echo exit >>$save
 	save1 min_power /sys/class/scsi_host/*/link_power_management_policy
 	save1 powersupersave /sys/module/pcie_aspm/parameters/policy
 	# must be ordered
@@ -146,6 +146,7 @@ save(){
 	    i=$!
 	    jiff
 	    wait $i
+	    $fast || echo exit >>$save
 	    for i in /sys/devices/system/cpu/cpu*/online; do
 		[ -e "$i" ] || break
 		[ "$cores" -gt 0 ] || save1 0 "$i"
