@@ -66,7 +66,6 @@ restore(){
     fchk $save.lock
     {
 	flock -s 3
-	[ -s $save ] || return
 	local f x i s b=false
 	for s in ${save}1 $save; do
 	    fchk $s || continue
