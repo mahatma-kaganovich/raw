@@ -198,4 +198,6 @@ esac
 shift
 done
 
+[ "$EUID:$UID" = 0:0 ] || die "mut be run as root"
+
 ${pw:-false}
