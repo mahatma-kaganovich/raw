@@ -54,6 +54,10 @@ fchk(){
 	[ -s $1 ]
 }
 
+_root(){
+	[ "$EUID:$UID" = 0:0 ] || die "mut be run as root"
+}
+
 balance(){
 	[ "$batt" = true ] || /usr/sbin/irqbalance -o -f -t 1 &
 }
@@ -63,6 +67,7 @@ jiff(){
 }
 
 restore(){
+    _root
     fchk $save.lock
     {
 	flock -s 3
@@ -77,6 +82,7 @@ restore(){
 }
 
 save(){
+    _root
     fchk $save.lock
     {
 	flock 3
@@ -135,7 +141,6 @@ save(){
 	}
     } 3>>$save.lock
 }
-
 
 umask 077
 
@@ -197,7 +202,5 @@ pw=
 esac
 shift
 done
-
-[ "$EUID:$UID" = 0:0 ] || die "mut be run as root"
 
 ${pw:-false}
