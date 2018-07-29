@@ -49,8 +49,11 @@ save1(){
 }
 
 fchk(){
-	[ -e $1 ] || touch $1 || die "file '$1' create error"
-	[ "$(stat $1 -c '%u:%g:%f')" = 0:0:8180 ] || die "file '$1' insecure! check & remove"
+	local s
+	s="$(stat $1 -c '%u:%g:%f')" || {
+		touch $1 && s="$(stat $1 -c '%u:%g:%f')" || die "file '$1' insecure! check & remove"
+	}
+	[ "$s" = 0:0:8180 ] || die "file '$1' insecure! check & remove"
 	[ -s $1 ]
 }
 
