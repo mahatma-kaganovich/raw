@@ -208,6 +208,7 @@ ruby)filterflag -funroll-loops -fweb;;
 ghostscript-gpl)filterflag -mmitigate-rop;; # ????!
 # mozilla (seamonkey) don't want -Os
 #thunderbird|seamonkey|firefox|spidermonkey)filterflag -fdeclone-ctor-dtor;;&
+sys-libs/compiler-rt)filterflag -flimit-function-alignment;;
 esac
 
 #[ "${CFLAGS//-flto}" != "$CFLAGS" ] &&
