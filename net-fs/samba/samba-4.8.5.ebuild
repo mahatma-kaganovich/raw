@@ -26,7 +26,7 @@ LICENSE="GPL-3"
 SLOT="0"
 
 IUSE="acl addc addns ads ceph client cluster cups debug dmapi fam gnutls gpg iprint ldap pam python
-quota selinux syslog systemd test winbind afs sasl zeroconf cpu_flags_x86_aes nls etcd"
+quota selinux syslog systemd test winbind afs sasl zeroconf cpu_flags_x86_aes nls etcd system-ldb"
 
 MULTILIB_WRAPPED_HEADERS=(
 	/usr/include/samba-4.0/policy.h
@@ -47,8 +47,8 @@ CDEPEND="
 	dev-python/subunit[${PYTHON_USEDEP},${MULTILIB_USEDEP}]
 	>=dev-util/cmocka-1.1.1[${MULTILIB_USEDEP}]
 	sys-apps/attr[${MULTILIB_USEDEP}]
-	>=sys-libs/ldb-1.3.4[ldap(+)?,python?,${PYTHON_USEDEP},${MULTILIB_USEDEP}]
-	<sys-libs/ldb-1.4.0[ldap(+)?,python?,${PYTHON_USEDEP},${MULTILIB_USEDEP}]
+	system-ldb? ( sys-libs/ldb )
+	!system-ldb? ( !sys-libs/ldb )
 	sys-libs/libcap
 	sys-libs/ncurses:0=[${MULTILIB_USEDEP}]
 	sys-libs/readline:0=
@@ -180,14 +180,17 @@ automagic(){
 }
 
 multilib_src_configure() {
+	local ldb=
+	# 4.9+: +use lmdb
+	use system-ldb || ldb='ldb,'
 	local myconf=(
 		--enable-fhs
 		--sysconfdir="${EPREFIX}/etc"
 		--localstatedir="${EPREFIX}/var"
 		--with-modulesdir="${EPREFIX}/usr/$(get_libdir)/samba"
 		--with-piddir="${EPREFIX}/run/${PN}"
-#		--bundled-libraries=$(usex addc heimdal NONE)
-		--bundled-libraries=$(usex addc heimbase,heimntlm,hdb,kdc,krb5,wind,gssapi,hcrypto,hx509,roken,asn1,com_err,NONE NONE)
+#		--bundled-libraries=$(usex addc ${ldb}heimdal ${ldb}NONE)
+		--bundled-libraries=$(usex addc heimbase,heimntlm,hdb,kdc,krb5,wind,gssapi,hcrypto,hx509,roken,asn1,com_err,${ldb}NONE ${ldb}NONE)
 		--builtin-libraries=NONE
 		--disable-rpath
 		--disable-rpath-install
