@@ -163,7 +163,7 @@ glibc)_isflag -fno-omit-frame-pointer && filterflag -f{,no-}omit-frame-pointer;;
 libaio|qtscript)_fLTO && export LDFLAGS="$LDFLAGS -fno-lto";;&
 cdrdao|gcr|ufraw|gdal|dosemu|xemacs|soxr|flac|libgcrypt)filterflag2 '' -flto;;&
 boost)filter86_32 '-flto*' '-*-lto-*' -fuse-linker-plugin -fdevirtualize-at-ltrans;;&
-perl|autofs)_fLTO && export LDFLAGS="$LDFLAGS -fPIC";;&
+perl|autofs|dovecot)_fLTO && export LDFLAGS="$LDFLAGS -fPIC";;&
 cmake)_fLTO && _isflag '-floop-*' '-fgraphite*' && filterflag -fipa-pta;;&
 ceph)_isflag '-floop-*' '-fgraphite*' && { # prefer graphite vs. lto
 	# handle lto <-> no-lto transition
