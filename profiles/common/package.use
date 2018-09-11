@@ -10,11 +10,11 @@ app-crypt/heimdal -ssl -threads
 dev-db/mariadb tokudb extraengine
 dev-db/mariadb-galera tokudb extraengine sst-xtrabackup
 sys-cluster/ceph xfs nss -ssl
-net-dns/bind threads caps
+net-dns/bind threads caps -idn libidn2
 app-emulation/qemu doc tls usbredir spice sasl
 net-fs/samba cluster ads addns ldap client addc acl python
 net-fs/cifs-utils ads creds acl
-net-dns/bind-tools gssapi
+net-dns/bind-tools gssapi -idn libidn2
 net-libs/libssh server
 media-gfx/imagemagick corefonts lzma xml
 sys-boot/syslinux -custom-cflags
