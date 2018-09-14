@@ -132,7 +132,7 @@ PATCHES=(
 )
 
 #CONFDIR="${FILESDIR}/$(get_version_component_range 1-2)"
-CONFDIR="${FILESDIR}/4.4"
+CONFDIR="${FILESDIR}/4.9"
 
 WAF_BINARY="${S}/buildtools/bin/waf"
 
@@ -288,13 +288,13 @@ multilib_src_install() {
 
 		# Install init script and conf.d file
 		newinitd "${CONFDIR}/samba4.initd-r1" samba
-		newconfd "${CONFDIR}/samba4.confd" samba
+		#newconfd "${CONFDIR}/samba4.confd" samba
 
 		if use cluster; then
 			newinitd "${CONFDIR}/ctdb.initd" ctdb
 			newconfd "${CONFDIR}/ctdb.confd" ctdb
 			exeinto /etc/ctdb/notify.d
-			doexe "${CONFDIR}/10.samba"
+			doexe "${CONFDIR}/10.samba.script"
 		fi
 
 		systemd_dotmpfilesd "${FILESDIR}"/samba.conf
