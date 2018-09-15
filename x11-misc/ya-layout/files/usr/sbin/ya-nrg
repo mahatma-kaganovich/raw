@@ -71,6 +71,10 @@ restore(){
     fchk $save.lock
     {
 	flock -s 3
+	[ -e $save.lock1 ] && {
+		$force || return
+		unlink $save.lock1
+	}
 	local f x i s b=false
 	for s in ${save}1 $save; do
 		fchk $s || continue
@@ -87,6 +91,7 @@ save(){
     {
 	flock 3
 	fchk $save && return
+	$force && touch $save.lock1
 	local f i x x1
 	echo '#' >>$save
 	save1 min_power /sys/class/scsi_host/*/link_power_management_policy
@@ -144,6 +149,7 @@ save(){
 
 umask 077
 
+force=false
 echo=true
 cores=
 light=
@@ -178,6 +184,7 @@ auto|bat|batt|xss-auto)
 ;;&
 bat|batt)pw=$batt;;
 auto|xss-auto)$batt && pw=save || pw=restore;;
+force)force=true;;
 *)
 echo "Simple control powersave <-> default & check battery state.
 Designed for use in parallel with screen locker on laptop.
@@ -186,6 +193,7 @@ opt is:
  light <brightness_percent>
  cores <num>
  verbose
+ force
 cmd is:
  powersave|save|power|low
  performance|perf|restore|high

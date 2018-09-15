@@ -1,0 +1,15 @@
+#!/bin/bash
+
+if [ -s /run/power.save ]; then
+	t=save
+	t1=restore
+	a=restore
+else
+	t=performance
+	t1=save
+	a='cores 0 save'
+fi
+
+echo "<openbox_pipe_menu><separator label='power:$t'/>
+<item label='$t1'><action name='Execute'><execute>sudo -n /usr/sbin/ya-nrg force $a</execute></action></item>
+</openbox_pipe_menu>"
