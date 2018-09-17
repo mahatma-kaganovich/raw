@@ -12,5 +12,6 @@ case "$PV" in
 	export enable_optimizations=yes
 	export MAKEOPTS=-j1
 	rm "$S"/Lib/distutils/tests/test_bdist_rpm.py "$S"/Lib/test/test_compileall.py
+	rm "$S"/Lib/test/test_socket.py
 ;;
 esac
