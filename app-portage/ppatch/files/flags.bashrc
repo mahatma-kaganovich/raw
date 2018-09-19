@@ -151,7 +151,8 @@ xemacs)_fLTO && {
 };;&
 # libaio breaks others
 # gtkmm too (cdrdao)
-wayland|privoxy|icedtea|qtwebkit|xf86-video-intel|mplayer|gtkmm|mysql|mariadb|heimdal|glibc|cvs|pulseaudio|libreoffice|ncurses|lynx)filterflag '-flto*' '-*-lto-*' -fuse-linker-plugin -fdevirtualize-at-ltrans;;&
+# fuse: e2fsprogs failed only on gcc 8.2
+fuse|wayland|privoxy|icedtea|qtwebkit|xf86-video-intel|mplayer|gtkmm|mysql|mariadb|heimdal|glibc|cvs|pulseaudio|libreoffice|ncurses|lynx)filterflag '-flto*' '-*-lto-*' -fuse-linker-plugin -fdevirtualize-at-ltrans;;&
 # works over make.lto wrapper, but wrapper wrong for some other packets
 php|numactl|alsa-lib|elfutils|dhcdrop|lksctp-tools|mysql-connector-c)filterflag '-flto*' -fdevirtualize-at-ltrans;;&
 qtcore)gccve 8.1. && filterflag '-flto*' -fdevirtualize-at-ltrans;;&
