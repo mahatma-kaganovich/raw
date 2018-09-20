@@ -1,3 +1,19 @@
+_iuse(){
+	local i
+	for i in $USE; do
+		[ "$i" = "$1" ] && return 0
+	done
+	# [sometimes] broken
+	for i in $IUSE; do
+		[ "~$i" = "$1" ] && return 0
+		if [ "$i" = "${1#!}" ]; then
+			use $1
+			return $?
+		fi
+	done
+	return 1
+}
+
 [ "$EBUILD_PHASE" = setup ] && {
 
 # dumb names to avoid collisions
@@ -79,22 +95,6 @@ filterflag2(){
 		r=true
 	done
 	$r
-}
-
-_iuse(){
-	local i
-	for i in $USE; do
-		[ "$i" = "$1" ] && return 0
-	done
-	# [sometimes] broken
-	for i in $IUSE; do
-		[ "~$i" = "$1" ] && return 0
-		if [ "$i" = "${1#!}" ]; then
-			use $1
-			return $?
-		fi
-	done
-	return 1
 }
 
 gccve(){
@@ -226,12 +226,26 @@ _iuse gold && filterflag -Wl,--sort-section=alignment
 # 2do: find bad -O3 flags for seamonkey
 #_iuse custom-optimization && filterflag -Ofast -O3
 _iuse custom-optimization && _isflag -O3 -Ofast && {
-	export CXXFLAGS="$CXXFLAGS -fno-ipa-cp-clone -fno-tree-loop-vectorize -fno-tree-slp-vectorize -fno-inline-functions"
+	export CXXFLAGS="$CXXFLAGS -fno-ipa-cp-clone -fno-tree-loop-vectorize -fno-tree-slp-vectorize -fno-inline-functions -flifetime-dse=1"
 	# unsure. keep safe until testing
-	export CFLAGS="$CFLAGS -fno-ipa-cp-clone -fno-tree-loop-vectorize -fno-tree-slp-vectorize"
+#	export CFLAGS="$CFLAGS -fno-ipa-cp-clone -fno-tree-loop-vectorize -fno-tree-slp-vectorize"
 }
 
 #filter86_32 -fschedule-insns -fira-loop-pressure
 
 }
 
+[ "$EBUILD_PHASE" = configure ] && _iuse custom-optimization && _iuse custom-cflags && {
+	filter-flags(){
+		local f="$S/.mozconfig"
+		[ -e "$f" ] || return 0
+		_iuse minimal && echo "ac_add_options --disable-pie
+#ac_add_options --enable-mobile-optimize
+ac_add_options --jitreport-granularity=0" >>"$f"
+		_isflag -O3 -Ofast && sed -i -e 's:O2:O3:g' "$f"
+		true
+	}
+	append-cxxflags(){
+		true
+	}
+}
