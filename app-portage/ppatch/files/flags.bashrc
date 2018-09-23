@@ -228,6 +228,7 @@ _iuse gold && filterflag -Wl,--sort-section=alignment
 _iuse custom-optimization && _isflag -O3 -Ofast && {
 #	export CXXFLAGS="$CXXFLAGS -fno-ipa-cp-clone -fno-tree-loop-vectorize -fno-tree-slp-vectorize -fno-inline-functions -flifetime-dse=1"
 	export CXXFLAGS="$CXXFLAGS -flifetime-dse=1 -fno-devirtualize -fno-ipa-cp-clone"
+#	_iuse abi_x86_32 && CXXFLAGS="$CXXFLAGS -fno-tree-vectorize"
 }
 
 #filter86_32 -fschedule-insns -fira-loop-pressure
