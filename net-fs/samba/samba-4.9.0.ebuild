@@ -292,7 +292,6 @@ multilib_src_install() {
 
 		if use cluster; then
 			newinitd "${CONFDIR}/ctdb.initd" ctdb
-			newconfd "${CONFDIR}/ctdb.confd" ctdb
 			exeinto /etc/ctdb/events/notification
 			doexe "${CONFDIR}/10.samba.script"
 		fi
