@@ -1,3 +1,4 @@
 USE="$USE -nls minimal optimisememory -wayland -r600-llvm-compiler -gtk -egl -gbm -drm -kms -libkms -opencl -opengl gles -gles1 -gles2 -dri3 -openvg -vdpau -llvm -glamor -xvmc -glut -cairo -graphviz -wxwidgets legacy-drivers -svg -wayland -xwayland -openmax -xa -gltf"
-_FLAGS="$_FLAGS -Os -fno-omit-frame-pointer"
+_FLAGS="$_FLAGS -Os"
+#_FLAGS="$_FLAGS -fno-omit-frame-pointer"
 VIDEO_CARDS="-* vesa fbdev"

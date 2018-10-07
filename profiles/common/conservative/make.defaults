@@ -5,4 +5,7 @@ _FLAGS="$_FLAGS -fmodulo-sched -fmodulo-sched-allow-regmoves -freschedule-modulo
 # ?
 #_FLAGS="$_FLAGS -fgcse-sm -fgcse-las"
 
+# may be enabled -O2 in future
+_FLAGS="$_FLAGS -fisolate-erroneous-paths-attribute"
+
 LDFLAGS="-Wl,-O1 -Wl,--as-needed -Wl,--hash-style=gnu -Wl,--sort-common -Wl,--sort-section=alignment"

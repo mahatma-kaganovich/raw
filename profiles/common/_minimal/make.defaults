@@ -1,4 +1,5 @@
-_FLAGS="$_FLAGS -fno-ident -fomit-frame-pointer -fivopts -fbranch-target-load-optimize"
+#_FLAGS="$_FLAGS -fomit-frame-pointer"
+_FLAGS="$_FLAGS -fno-ident -fivopts -fbranch-target-load-optimize"
 _FLAGS="$_FLAGS -finline-small-functions -findirect-inlining"
 _FLAGS="$_FLAGS -ffast-math"
 # ?
