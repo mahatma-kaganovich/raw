@@ -111,14 +111,14 @@ flag_skip(){
 }
 
 max_unrolled(){
-	f3+=" --param=max-unrolled-insns=$(($1-4)) -funroll-loops"
+	ffast+=" --param=max-unrolled-insns=$(($1-4)) -funroll-loops"
 	# prefetching can cause code expansion. disable for low values to prefer code streaming
-	f3+=" --param=prefetch-min-insn-to-mem-ratio=$(($1+1))" # make effect of data streaming reasonable solid, related to code streaming
-	f3+=" --param=min-insn-to-prefetch-ratio=$(($1+1)) -fprefetch-loop-arrays" # gcc 6: insn_to_prefetch_ratio = (unroll_factor * ninsns) / prefetch_count;
+	ffast+=" --param=prefetch-min-insn-to-mem-ratio=$(($1+1))" # make effect of data streaming reasonable solid, related to code streaming
+	ffast+=" --param=min-insn-to-prefetch-ratio=$(($1+1)) -fprefetch-loop-arrays" # gcc 6: insn_to_prefetch_ratio = (unroll_factor * ninsns) / prefetch_count;
 }
 
 conf_cpu(){
-local f0= f1= f2= f3= f5= i j i1 j1 c c0 c1 lm=false fp=387 gccv m="`uname -m`" i fsec= ind=
+local f0= f1= f2= f3= f4= f5= fsmall= ffast= i j i1 j1 c c0 c1 lm=false fp=387 gccv m="`uname -m`" i fsec= ind=
 _setflags flags cpucaps 'cpu family' model fpu vendor_id
 cmn=$(gcc --help=common -v -Q 2>&1)
 if i=$(echo "$cmn"|grep --max-count=1 "^Target: "); then
@@ -142,7 +142,7 @@ GenuineIntel:6:78|GenuineIntel:6:94|GenuineIntel:6:85|GenuineIntel:6:142|Genuine
 ;;
 esac
 f0=`_f -m{tune,cpu,arch}=native`
-f3='-malign-data=cacheline -momit-leaf-frame-pointer -mtls-dialect=gnu2 -fsection-anchors -minline-stringops-dynamically -maccumulate-outgoing-args'
+f3='-momit-leaf-frame-pointer -mtls-dialect=gnu2 -fsection-anchors'
 f5='-fvisibility-inlines-hidden'
 # gcc 4.9 - -fno-lifetime-dse, gcc 6.3 - around some of projects(?) - keep 6.3 only safe
 # try to forget after years of upstream fixing
@@ -155,6 +155,8 @@ f5+=' -fpermissive -w'
 #fsec+=' -mmitigate-rop'
 # new in gcc8 - 2test
 #fsec+=' -fstack-clash-protection'
+ffast+=' -malign-data=cacheline -minline-stringops-dynamically'
+fsmall+=' -malign-data=abi'
 if i=`_smp1 'physical id' 'cpu cores' || _smp processor 1 || _smp 'ncpus active' 0`; then
 	if [ "$i" = 1 ]; then
 		f1+=' -smp -numa'
@@ -200,7 +202,11 @@ x86_*|i?86)
 	f3+=$(_f -fira-loop-pressure -fira-hoist-pressure -flive-range-shrinkage -fsched-pressure -fschedule-insns -fsched-spec-load --param=sched-pressure-algorithm=2)
 	# gnostic - don't know how to get universal default of defaults for GCC
 	base="-mtune=generic -march=${m//_/-}"
-;;&
+	ffast+=' -maccumulate-outgoing-args'
+;;
+*)
+	f3+=' -maccumulate-outgoing-args' # sh?
+;;
 esac
 filter=continue
 for i in $flags; do
@@ -225,6 +231,8 @@ done
 f3+=" -mfpmath=$fp"
 $lm && f1+=" 64-bit-bfd" || f1+=" -64-bit-bfd"
 f3=`_f $f3`
+ffast=`_f $ffast`
+fsmall=`_f $fsmall`
 unroll=`_f $unroll`
 f5=`lang=c++ _f $f5`
 fsec=`_f $fsec`
@@ -300,6 +308,8 @@ done
 echo "CFLAGS_NATIVE=\"$f0\"
 CFLAGS_CPU=\"$f4\"
 CFLAGS_M=\"$fm\"
+CFLAGS_FAST=\"$ffast\"
+CFLAGS_SMALL=\"$fsmall\"
 CFLAGS_SECURE=\"$fsec\"
 _FLAGS=\"$ff\${_FLAGS}\"
 

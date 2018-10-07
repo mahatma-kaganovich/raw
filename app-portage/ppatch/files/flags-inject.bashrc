@@ -40,6 +40,6 @@ _in_ject -floop- '#if defined(__i386__)\n#pragma GCC optimize ("no-loop-nest-opt
 [ -e "$S/Modules/cmathmodule.c" ]  && [[ "`LANG=C gcc -v 2>&1`" == *" version 7."* ]] && _in_ject - '#if defined(__i386__)\n#pragma GCC target ("no-sse2")\n#endif' cmathmodule.c
 
 # mozilla [gcc 8] ICE
-_in_ject '' '#if defined(__i386__)\n#pragma GCC optimize ("no-tree-vectorize")\n#endif' seccomp-bpf/syscall.cc common/linux/file_id.h
+_in_ject '' '#pragma GCC optimize ("no-tree-vectorize")\n#pragma GCC optimize ("no-schedule-insns")\n#pragma GCC optimize ("no-schedule-insns2")' seccomp-bpf/syscall.cc common/linux/file_id.h chrome/common/ipc_message.h
 
 }

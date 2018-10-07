@@ -1,5 +1,5 @@
 # low RAM. no -pipe, etc
-_FLAGS="$_FLAGS$CFLAGS_FAST$CFLAGS_NATIVE$CFLAGS_M -flimit-function-alignment -Wa,--reduce-memory-overheads"
+_FLAGS="$_FLAGS$CFLAGS_SMALL$CFLAGS_NATIVE$CFLAGS_M -flimit-function-alignment -Wa,--reduce-memory-overheads"
 # ? -fconserve-stack
 
 USE="speculative -ssp nossp nopie -sanitize -vtv -pie -pic -rsync-verify"

@@ -3,7 +3,7 @@ MAKEOPTS="-j2 -s"
 CPU_FLAGS_X86="smp"
 USE="$CPU_FLAGS_X86"
 
-_FLAGS="$_FLAGS -mtune=generic -mfpmath=387 -momit-leaf-frame-pointer -mtls-dialect=gnu2 -minline-stringops-dynamically -maccumulate-outgoing-args -fira-loop-pressure -flive-range-shrinkage -fsched-pressure -fschedule-insns --param=sched-pressure-algorithm=2$CFLAGS_SECURE"
+_FLAGS="$_FLAGS -maccumulate-outgoing-args -mtune=generic -mfpmath=387 -momit-leaf-frame-pointer -mtls-dialect=gnu2 -minline-stringops-dynamically -maccumulate-outgoing-args -fira-loop-pressure -flive-range-shrinkage -fsched-pressure -fschedule-insns --param=sched-pressure-algorithm=2$CFLAGS_SECURE"
 CXXFLAGS="$CXXFLAGS -fvisibility-inlines-hidden -fpermissive -fno-strict-aliasing -w -fno-lifetime-dse"
 
 CFLAGS="$CFLAGS $_FLAGS"

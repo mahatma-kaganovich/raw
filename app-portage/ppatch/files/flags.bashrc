@@ -1,3 +1,7 @@
+[ "$EBUILD_PHASE" = setup ] && {
+
+# dumb names to avoid collisions
+
 _iuse(){
 	local i
 	for i in $USE; do
@@ -13,10 +17,6 @@ _iuse(){
 	done
 	return 1
 }
-
-[ "$EBUILD_PHASE" = setup ] && {
-
-# dumb names to avoid collisions
 
 filterflag(){
 local p v x r=false local f
@@ -207,8 +207,6 @@ faad2|openssl|patch)gccve 5. && filterflag -floop-nest-optimize;;
 geos|readahead-list|thin-provisioning-tools|libprojectm|gtkmathview|qtfm|qtgui|qtwebkit)gccve 6. && export CXXFLAGS="$CXXFLAGS -std=gnu++98";;
 ruby)filterflag -funroll-loops -fweb;;
 ghostscript-gpl)filterflag -mmitigate-rop;; # ????!
-# mozilla (seamonkey) don't want -Os
-#thunderbird|seamonkey|firefox|spidermonkey)filterflag -fdeclone-ctor-dtor;;&
 compiler-rt)filterflag -flimit-function-alignment;;
 esac
 
@@ -225,29 +223,9 @@ _iuse !system-sqlite && filterflag -Ofast -ffast-math
 _iuse gold && filterflag -Wl,--sort-section=alignment
 # 2do: find bad -O3 flags for seamonkey
 #_iuse custom-optimization && filterflag -Ofast -O3
-_iuse custom-optimization && _isflag -O3 -Ofast && {
-	# old
-#	export CXXFLAGS="$CXXFLAGS -fno-ipa-cp-clone -fno-tree-loop-vectorize -fno-tree-slp-vectorize -fno-inline-functions -flifetime-dse=1"
-	# new
-	export CXXFLAGS="$CXXFLAGS -flifetime-dse=1 -fno-devirtualize -fno-ipa-cp-clone -fno-delete-null-pointer-checks"
-#	_iuse abi_x86_32 && CXXFLAGS="$CXXFLAGS -fno-tree-vectorize"
-}
+
 
 #filter86_32 -fschedule-insns -fira-loop-pressure
 
 }
 
-[ "$EBUILD_PHASE" = configure ] && _iuse custom-optimization && _iuse custom-cflags && {
-	filter-flags(){
-		local f="$S/.mozconfig"
-		[ -e "$f" ] || return 0
-		_iuse minimal && echo "ac_add_options --disable-pie
-#ac_add_options --enable-mobile-optimize
-ac_add_options --jitreport-granularity=0" >>"$f"
-		_isflag -O3 -Ofast && sed -i -e 's:O2:O3:g' "$f"
-		true
-	}
-	append-cxxflags(){
-		true
-	}
-}
