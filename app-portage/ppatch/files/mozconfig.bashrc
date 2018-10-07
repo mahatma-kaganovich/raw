@@ -10,12 +10,14 @@ mozconfig_annotate() {
 		;;&
 		--enable-pie)gcc -v 2>&1 |grep -q "\--disable-default-pie" && x='--disable-pie';;
 		--enable-linker=gold)export LDFLAGS="${LDFLAGS// -Wl,--sort-section=alignment/}";;
-		--enable-optimize=-O*)
+		--enable-optimize=-O*)use custom-optimization && {
 			o=${CFLAGS##*-O}
 			[ "$o" = "$CFLAGS" ] || {
 				o=${o%% *}
-				[ -n "$o" ] && x="--enable-optimize=-O$o" && reason="CFLAGS"
+				[ -n "$o" ] && x="--enable-optimize=-O$o" && reason=custom-optimization
 			}
+		}
+		;;
 		esac
 		echo "ac_add_options ${x} # ${reason}" >>.mozconfig
 	done
