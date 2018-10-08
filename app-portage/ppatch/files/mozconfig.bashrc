@@ -23,13 +23,15 @@ mozconfig_annotate() {
 	done
 }
 case "$PN" in
+thunderbird);;
 seamonkey);;
-*)CXXFLAGS="${CXXFLAGS//-mtls-dialect=gnu2/-mtls-dialect=gnu}";;
+*)
+	filter-flags -mtls-dialect=gnu2
+;;
 esac
-CXXFLAGS="$CXXFLAGS -flifetime-dse=1 -fno-devirtualize -fno-ipa-cp-clone -fno-delete-null-pointer-checks"
-CXXFLAGS="$CXXFLAGS -fno-fast-math"
-#use abi_x86_32 &
-#CXXFLAGS="$CXXFLAGS -fno-tree-vectorize -fno-tree-loop-vectorize -fno-tree-slp-vectorize"
+CXXFLAGS+=' -fno-fast-math'
+CXXFLAGS+=' -flifetime-dse=1 -fno-devirtualize -fno-ipa-cp-clone -fno-delete-null-pointer-checks'
+#use x86 && CXXFLAGS+=" -fno-tree-vectorize -fno-tree-loop-vectorize -fno-tree-slp-vectorize"
 export CXXFLAGS
 use custom-optimization && filter-flags(){ true; }
 use custom-cflags && append-cxxflags(){ true; }

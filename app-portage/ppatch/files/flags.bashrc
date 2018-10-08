@@ -187,7 +187,7 @@ ncurses)_iuse profile && filterflag -fomit-frame-pointer;;
 xf86-video-siliconmotion|vlc|xorg-server)appendflag -w;;
 libX11|wget)_isflag -Os && _isflag -Ofast -ffast-math -funsafe-math-optimizations && ! _isflag -fno-unsafe-math-optimizations && appendflag -fno-unsafe-math-optimizations -fno-signed-zeros -fno-trapping-math -fassociative-math -freciprocal-math;;
 cairo)[[ "$PV" == 1.12.16* ]] && appendflag1 -fno-lto;;
-udev)filterflag -Wl,--sort-section=alignment;; # gold
+udev|spidermonkey)filterflag -Wl,--sort-section=alignment;; # gold
 fltk)_isflag '-floop-*' '-fgraphite*' && filterflag -ftree-loop-distribution;; # -O2+
 freeglut)_isflag '-floop-*' '-fgraphite*' && appendflag -fno-ipa-cp-clone;;
 # 5.1
