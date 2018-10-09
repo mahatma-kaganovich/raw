@@ -39,7 +39,7 @@ _in_ject -floop- '#if defined(__i386__)\n#pragma GCC optimize ("no-loop-nest-opt
 # gcc 7.2 python 3.6.1
 [ -e "$S/Modules/cmathmodule.c" ]  && [[ "`LANG=C gcc -v 2>&1`" == *" version 7."* ]] && _in_ject - '#if defined(__i386__)\n#pragma GCC target ("no-sse2")\n#endif' cmathmodule.c
 
-# mozilla [gcc 8] ICE
-use x86 && _in_ject '' '#pragma GCC optimize ("no-tree-vectorize")\n#pragma GCC optimize ("no-schedule-insns")\n#pragma GCC optimize ("no-schedule-insns2")' seccomp-bpf/syscall.cc common/linux/file_id.h chrome/common/ipc_message.h
+# mozilla [gcc 8] ICE [x86]
+use amd64 || _in_ject '' no-tree-vectorize seccomp-bpf/syscall.cc profiler/core/shared-libraries-linux.cc common/linux/file_id.cc
 
 }
