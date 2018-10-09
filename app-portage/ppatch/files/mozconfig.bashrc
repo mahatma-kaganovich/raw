@@ -29,7 +29,7 @@ seamonkey);;
 	filter-flags -mtls-dialect=gnu2
 ;;
 esac
-CXXFLAGS+=' -fno-fast-math'
+(is-flagq -Ofast || is-flagq -ffast-math) && CXXFLAGS+=' -fno-fast-math'
 CXXFLAGS+=' -flifetime-dse=1 -fno-devirtualize -fno-ipa-cp-clone -fno-delete-null-pointer-checks'
 #use x86 && CXXFLAGS+=" -fno-tree-vectorize -fno-tree-loop-vectorize -fno-tree-slp-vectorize"
 export CXXFLAGS
