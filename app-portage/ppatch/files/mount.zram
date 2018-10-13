@@ -15,7 +15,7 @@ kv=`uname -r`
 
 help="
 
-mount.zram v0.10 (c) mahatma, under Anarchy license
+mount.zram v0.11 (c) mahatma, under Anarchy license
 Mount helper to mount zram (or ram/brd) devices via /etc/fstab over most simple way, stupid.
 Usage:	mount -t zram ...
 	mount.zram /dev/zram<X> <mountpoint> -o <options>
@@ -100,9 +100,12 @@ echo 0 >"$i/queue/rotational"
 [ "$3" = '-o' -o "$3" = '' ] || err "invalid option '$3'"
 o=
 w=true
+sw=false
 for i in ${4//,/ }; do
-	v="${i#*=}"
-	[ "$v" = "$i" ] || {
+	case "$i" in
+	sw)eval "$i=true";;
+	*=*)
+		v="${i#*=}"
 		x="${i%%=*}"
 		case "$x" in
 		disksize)[ -n "$disksize" ] && continue;; # /dev/ram0
@@ -125,11 +128,18 @@ for i in ${4//,/ }; do
 			v1="$(cat "$f")" && [ -n "$v1" ] && ( [ "$v1" = "$v" ] || [ "$v1" = "$(size2b "$v" 1024)" ] || [ -z "${v1##*\[$v\]*}" ] ) && continue
 			err "echo \"$v\" >$f - $e"
 		}
-	}
+	;;
+	esac
 	o="$o,$i"
 done
 [ -b "$1" ] || err " -b $1$help"
 o="${o#,}"
+
+$sw && {
+	mkswap "$1" || warn "mkswap $1"
+	swapon -o "discard,$o" "$1" || swapon -o "$o" "$1" || err "swapon -o $o $1"
+	exit 0
+} >/dev/null
 
 fs="${fs//:/ }"
 mkfs="mkfs.$fs $1"
