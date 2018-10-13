@@ -1,12 +1,15 @@
 #!/bin/bash
 
-# openmp: experimental for system-wide
+## openmp: experimental for system-wide
 omp=false
 preferred_fp=sse
 ## doubts: called "unstable performance" vs "double registers"
 ## found: (Paolo Bonzir) Yes.  It might (*might*) be better in GCC 4.4 thanks to the new register allocator, but it's unlikely that the manual page will be changed before the release.
 ## upd: bashmark poor results and extremly poor in KVM
 #preferred_fp=both
+## empty: do not link (2x-3x faster)
+code=
+#code='int main(){}'
 
 export LANG=C
 
@@ -15,14 +18,16 @@ lang=c
 filter=continue
 # gcc default defaults
 base=
-code='int main(){}'
+
+gcc=gcc
+[ -z "$code" ] && gcc+=' -c'
 
 _c(){
-	gcc $base "${@}" $ct 2>&1
+	$gcc $base "${@}" $ct 2>&1
 }
 
 _c1(){
-	echo "$code" |gcc -x $lang - -pipe $base "${@}" -o /dev/null 2>&1
+	echo "$code" |$gcc -x $lang - -pipe $base "${@}" -o /dev/null 2>&1
 }
 
 _f(){
@@ -120,7 +125,7 @@ max_unrolled(){
 conf_cpu(){
 local f0= f1= f2= f3= f4= f5= fsmall= ffast= i j i1 j1 c c0 c1 lm=false fp=387 gccv m="`uname -m`" i fsec= ind=
 _setflags flags cpucaps 'cpu family' model fpu vendor_id
-cmn=$(gcc --help=common -v -Q 2>&1)
+cmn=$($gcc --help=common -v -Q 2>&1)
 if i=$(echo "$cmn"|grep --max-count=1 "^Target: "); then
 	# for multilib transitions: use gcc target
 	i="${i#Target: }"
