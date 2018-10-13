@@ -1262,9 +1262,10 @@ _is_CF1(){
 }
 
 cflg(){
-local a=" ${CFLAGS} ${KERNEL_CFLAGS}"
-a="${a##* -${1:-march=}}"
-echo "${a%% *}"
+local a=" ${CFLAGS} ${CPPFLAGS} ${KERNEL_CFLAGS}" f="${1:-march=}" r
+r="${a##* -D__FAKE_FLAG=-$f}"
+[ "$r" = "$a" ] && r="${a##* -$f}"
+echo "${r%% *}"
 }
 
 kconfig(){
