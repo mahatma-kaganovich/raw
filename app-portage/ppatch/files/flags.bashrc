@@ -208,6 +208,9 @@ geos|readahead-list|thin-provisioning-tools|libprojectm|gtkmathview|qtfm|qtgui|q
 ruby)filterflag -funroll-loops -fweb;;
 ghostscript-gpl)filterflag -mmitigate-rop;; # ????!
 compiler-rt)filterflag -flimit-function-alignment;;
+easystroke)export CXXFLAGS="$CXXFLAGS -fno-ipa-cp-clone";export LDFLAGS="$LDFLAGS -lglib-2.0";;
+potrace)appendflag -fno-tree-slp-vectorize;;
+groff)filterflag -fisolate-erroneous-paths-attribute;;
 esac
 
 #[ "${CFLAGS//-flto}" != "$CFLAGS" ] &&
