@@ -9,7 +9,7 @@ mozconfig_annotate() {
 			[ -n "$MOZILLA_CONFIG" ] && mozconfig_annotate '$MOZILLA_CONFIG' $MOZILLA_CONFIG
 		;;&
 		--enable-pie)gcc -v 2>&1 |grep -q "\--disable-default-pie" && x='--disable-pie';;
-		--enable-linker=gold)export LDFLAGS="${LDFLAGS// -Wl,--sort-section=alignment/}";;
+		--enable-linker=gold)filter-ldflags -Wl,--sort-section=alignment -Wl,--reduce-memory-overheads;;
 		--enable-optimize=-O*)use custom-optimization && {
 			o=${CFLAGS##*-O}
 			[ "$o" = "$CFLAGS" ] || {
