@@ -144,6 +144,11 @@ quota|xinetd|samba|python) _iuse !rpc || [ -e /usr/include/rpc/rpc.h ] || {
 	export LDFLAGS="$LDFLAGS $(pkg-config libtirpc --libs)"
 }
 ;;&
+xemacs)_fLTO && {
+	ldf=' '
+	filterflag2 ldf '-Wl,*'
+	export LDFLAGS="${ldf# }"
+};;&
 # libaio breaks others
 # gtkmm too (cdrdao)
 # fuse: e2fsprogs failed only on gcc 8.2
