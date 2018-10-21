@@ -144,15 +144,10 @@ quota|xinetd|samba|python) _iuse !rpc || [ -e /usr/include/rpc/rpc.h ] || {
 	export LDFLAGS="$LDFLAGS $(pkg-config libtirpc --libs)"
 }
 ;;&
-xemacs)_fLTO && {
-	ldf=' '
-	filterflag2 ldf '-Wl,*'
-	export LDFLAGS="${ldf# }"
-};;&
 # libaio breaks others
 # gtkmm too (cdrdao)
 # fuse: e2fsprogs failed only on gcc 8.2
-mesa|mailx|fuse|wayland|privoxy|icedtea|qtwebkit|xf86-video-intel|mplayer|gtkmm|mysql|mariadb|heimdal|glibc|cvs|pulseaudio|libreoffice|ncurses|lynx)filterflag '-flto*' '-*-lto-*' -fuse-linker-plugin -fdevirtualize-at-ltrans;;&
+xemacs|mesa|mailx|fuse|wayland|privoxy|icedtea|qtwebkit|xf86-video-intel|mplayer|gtkmm|mysql|mariadb|heimdal|glibc|cvs|pulseaudio|libreoffice|ncurses|lynx)filterflag '-flto*' '-*-lto-*' -fuse-linker-plugin -fdevirtualize-at-ltrans;;&
 # works over make.lto wrapper, but wrapper wrong for some other packets
 php|numactl|alsa-lib|elfutils|dhcdrop|lksctp-tools|mysql-connector-c)filterflag '-flto*' -fdevirtualize-at-ltrans;;&
 qtcore)gccve 8.1. && filterflag '-flto*' -fdevirtualize-at-ltrans;;&
@@ -162,7 +157,7 @@ clang*)filterflag -flto-partition=none;;&
 glibc)filterflag -mfpmath=387;;&
 glibc)_isflag -fno-omit-frame-pointer && filterflag -f{,no-}omit-frame-pointer;;& # 2.23
 libaio|qtscript)_fLTO && export LDFLAGS="$LDFLAGS -fno-lto";;&
-cdrdao|gcr|ufraw|gdal|dosemu|xemacs|soxr|flac|libgcrypt)filterflag2 '' '-flto*';;&
+cdrdao|gcr|ufraw|gdal|dosemu|soxr|flac|libgcrypt)filterflag2 '' '-flto*';;&
 boost)filter86_32 '-flto*' '-*-lto-*' -fuse-linker-plugin -fdevirtualize-at-ltrans;;&
 perl|autofs|dovecot)_fLTO && export LDFLAGS="$LDFLAGS -fPIC";;&
 cmake)_fLTO && _isflag '-floop-*' '-fgraphite*' && filterflag -fipa-pta;;&
