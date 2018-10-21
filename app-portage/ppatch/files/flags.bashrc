@@ -152,7 +152,7 @@ xemacs)_fLTO && {
 # libaio breaks others
 # gtkmm too (cdrdao)
 # fuse: e2fsprogs failed only on gcc 8.2
-fuse|wayland|privoxy|icedtea|qtwebkit|xf86-video-intel|mplayer|gtkmm|mysql|mariadb|heimdal|glibc|cvs|pulseaudio|libreoffice|ncurses|lynx)filterflag '-flto*' '-*-lto-*' -fuse-linker-plugin -fdevirtualize-at-ltrans;;&
+mesa|mailx|fuse|wayland|privoxy|icedtea|qtwebkit|xf86-video-intel|mplayer|gtkmm|mysql|mariadb|heimdal|glibc|cvs|pulseaudio|libreoffice|ncurses|lynx)filterflag '-flto*' '-*-lto-*' -fuse-linker-plugin -fdevirtualize-at-ltrans;;&
 # works over make.lto wrapper, but wrapper wrong for some other packets
 php|numactl|alsa-lib|elfutils|dhcdrop|lksctp-tools|mysql-connector-c)filterflag '-flto*' -fdevirtualize-at-ltrans;;&
 qtcore)gccve 8.1. && filterflag '-flto*' -fdevirtualize-at-ltrans;;&
@@ -211,6 +211,7 @@ compiler-rt)filterflag -flimit-function-alignment;;
 easystroke)export CXXFLAGS="$CXXFLAGS -fno-ipa-cp-clone";export LDFLAGS="$LDFLAGS -lglib-2.0";;
 potrace)appendflag -fno-tree-slp-vectorize;;
 groff)filterflag -fisolate-erroneous-paths-attribute;;
+coreutils)filterflag -flto=jobserver && appendflag1 -flto;;
 esac
 
 #[ "${CFLAGS//-flto}" != "$CFLAGS" ] &&
@@ -223,7 +224,8 @@ esac
 # seamonkey unknown error on install -> precompile cache
 _iuse !system-sqlite && filterflag -Ofast -ffast-math
 
-_iuse gold && filterflag -Wl,--sort-section=alignment -Wl,--reduce-memory-overheads
+(_iuse gold || [[ "$LD" == *gold ]] || _isflag -fuse-ld=gold) &&
+	filterflag -Wl,--sort-section=alignment -Wl,--reduce-memory-overheads
 # 2do: find bad -O3 flags for seamonkey
 #_iuse custom-optimization && filterflag -Ofast -O3
 

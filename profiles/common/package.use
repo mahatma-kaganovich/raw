@@ -105,3 +105,5 @@ x11-drivers/xf86-video-intel uxa
 media-sound/pulseaudio -alsa-plugin
 # -pam
 kde-plasma/kscreenlocker -seccomp
+# unsatisfayed dependences
+x11-apps/intel-gpu-tools glib chamelium gsl
