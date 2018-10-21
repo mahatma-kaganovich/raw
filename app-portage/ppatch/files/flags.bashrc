@@ -162,7 +162,7 @@ clang*)filterflag -flto-partition=none;;&
 glibc)filterflag -mfpmath=387;;&
 glibc)_isflag -fno-omit-frame-pointer && filterflag -f{,no-}omit-frame-pointer;;& # 2.23
 libaio|qtscript)_fLTO && export LDFLAGS="$LDFLAGS -fno-lto";;&
-cdrdao|gcr|ufraw|gdal|dosemu|xemacs|soxr|flac|libgcrypt)filterflag2 '' -flto;;&
+cdrdao|gcr|ufraw|gdal|dosemu|xemacs|soxr|flac|libgcrypt)filterflag2 '' '-flto*';;&
 boost)filter86_32 '-flto*' '-*-lto-*' -fuse-linker-plugin -fdevirtualize-at-ltrans;;&
 perl|autofs|dovecot)_fLTO && export LDFLAGS="$LDFLAGS -fPIC";;&
 cmake)_fLTO && _isflag '-floop-*' '-fgraphite*' && filterflag -fipa-pta;;&
@@ -213,12 +213,6 @@ potrace)appendflag -fno-tree-slp-vectorize;;
 groff)filterflag -fisolate-erroneous-paths-attribute;;
 coreutils)filterflag -flto=jobserver && appendflag1 -flto;;
 esac
-
-#[ "${CFLAGS//-flto}" != "$CFLAGS" ] &&
-#case $CATEGORY/$PN in
-#sys-kernel/*-sources|sys-devel/gcc|dev-lang/swig|dev-lang/orc|media-plugins/live|sys-fs/mtools|dev-libs/gmp|dev-libs/ppl|app-benchmarks/bashmark|media-sound/wavpack|net-dialup/rp-l2tp|net-misc/iputils|sys-apps/dbus|sys-apps/hdparm|sys-apps/pciutils|sys-apps/sysvinit|sys-fs/dosfstools|sys-fs/squashfs-tools|sys-process/procps|media-libs/lcms|media-libs/tiff|dev-libs/libcoyotl|media-video/dirac|dev-libs/libevocosm|media-libs/libdvdread|dev-libs/libusb|dev-libs/glib|media-libs/libmp4v2|dev-libs/dbus-glib|dev-libs/libpcre|net-libs/gnutls|app-antivirus/clamav|app-shells/bash|dev-db/unixODBC|dev-libs/libcdio|media-libs/flac|sys-apps/less|sys-devel/bc|sys-libs/gpm|net-print/cups|sys-devel/libtool) filterflag -flto ;;
-#dev-libs/icu)export CFLAGS="-w -pipe -O3 -march=native -fomit-frame-pointer";export CXXFLAGS="$CFLAGS";;
-#esac
 
 # more test flags-inject.bashrc before remove
 # seamonkey unknown error on install -> precompile cache
