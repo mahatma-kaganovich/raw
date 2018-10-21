@@ -98,7 +98,7 @@ filterflag2(){
 }
 
 gccve(){
-	[[ "`LANG=C gcc -v 2>&1`" == *" version $1"* ]]
+	[[ "`LANG=C gcc -dumpversion`" == $1* ]]
 }
 
 filter86_32(){
@@ -152,10 +152,9 @@ xemacs)_fLTO && {
 # libaio breaks others
 # gtkmm too (cdrdao)
 # fuse: e2fsprogs failed only on gcc 8.2
-xemacs|mesa|mailx|fuse|wayland|privoxy|icedtea|qtwebkit|xf86-video-intel|mplayer|gtkmm|mysql|mariadb|heimdal|glibc|cvs|pulseaudio|libreoffice|ncurses|lynx)filterflag '-flto*' '-*-lto-*' -fuse-linker-plugin -fdevirtualize-at-ltrans;;&
+xemacs|mesa|fuse|wayland|privoxy|icedtea|qtwebkit|xf86-video-intel|mplayer|gtkmm|mysql|mariadb|heimdal|glibc|cvs|pulseaudio|libreoffice|ncurses|lynx)filterflag '-flto*' '-*-lto-*' -fuse-linker-plugin -fdevirtualize-at-ltrans;;&
 # works over make.lto wrapper, but wrapper wrong for some other packets
 php|numactl|alsa-lib|elfutils|dhcdrop|lksctp-tools|mysql-connector-c)filterflag '-flto*' -fdevirtualize-at-ltrans;;&
-qtcore)gccve 8.1. && filterflag '-flto*' -fdevirtualize-at-ltrans;;&
 # ilmbase -> openexr
 ilmbase|mesa)_fLTO_f -Wl,-lpthread -lpthread;;&
 clang*)filterflag -flto-partition=none;;&
@@ -212,6 +211,8 @@ easystroke)export CXXFLAGS="$CXXFLAGS -fno-ipa-cp-clone";export LDFLAGS="$LDFLAG
 potrace)appendflag -fno-tree-slp-vectorize;;
 groff)filterflag -fisolate-erroneous-paths-attribute;;
 coreutils)filterflag -flto=jobserver && appendflag1 -flto;;
+# qtcore -> qtxml
+gnustep-back-cairo|qtcore)_fLTO_f -flto-partition=none;;
 esac
 
 # more test flags-inject.bashrc before remove
