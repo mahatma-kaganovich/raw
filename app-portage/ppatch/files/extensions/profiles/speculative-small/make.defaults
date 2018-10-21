@@ -14,7 +14,7 @@ CXXFLAGS="$_FLAGS -fvisibility-inlines-hidden -fdeclone-ctor-dtor -fpermissive -
 LDFLAGS="-Wl,-O1 -Wl,--as-needed -Wl,--hash-style=gnu"
 LDFLAGS="$LDFLAGS -Wl,--no-keep-memory -Wl,--reduce-memory-overheads -Wl,--strip-debug"
 # keep one more hot make thread
-MAKEOPTS="-j2 -l0.9 -s"
+MAKEOPTS="-j2 -l0.9 -s -Onone"
 
 # trick to workaround some -march=native detections
 CPPFLAGS="-D__FAKE_FLAG=-march=native"

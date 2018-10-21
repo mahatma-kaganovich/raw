@@ -174,7 +174,7 @@ if i=`_smp1 'physical id' 'cpu cores' || _smp processor 1 || _smp 'ncpus active'
 	i=$[i+1]
 	echo "ncpu1=$i"
 	echo "load_average=$[((i-2)*10+9)/10].9"
-	echo "MAKEOPTS=\"-j\$ncpu1 -l\$load_average -s\""
+	echo "MAKEOPTS=\"-j\$ncpu1 -l\$load_average\""
 	echo "EMERGE_DEFAULT_OPTS=\"\$EMERGE_DEFAULT_OPTS --load-average=\$load_average\""
 else
 	$omp && f3+=' -fopenmp-simd'
