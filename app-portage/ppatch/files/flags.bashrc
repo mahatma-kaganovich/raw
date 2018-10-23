@@ -24,12 +24,15 @@ shift
 for v in $ff; do
     rr=
     x=
-    for p in $* ; do
-	for f in ${!v}; do
-		[[ "$f" != $p ]] && x+=" $f" || rr+=" $f"
+    for f in ${!v}; do
+	x=
+	for p in $* ; do
+		[[ "$f" == $p ]] && continue 2
 	done
-	[ "$x" != "${!v}" ] && export $v="$x"
+	x+=" $f"
     done
+    x="${x# }"
+    [ "$x" != "${!v}" ] && export $v="$x"
     [ -n "$rr" ] && r=true && echo "flags filtered $v $rr"
 done
 $r
