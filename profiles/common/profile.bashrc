@@ -2,12 +2,12 @@ unset p f
 case "$CC" in
 LLVM)
 	export CC=clang CXX=clang++ CPP='clang -E' LD=ld.gold
-	f='-with-ld=gold'
+	f='-fuse-ld=gold'
 	p=llvm
 ;;
 GNU)
 	export CC=gcc CXX=g++ CPP='gcc -E' LD=ld.bfd
-	f='-with-ld=bfd'
+	f='-fuse-ld=bfd'
 	p=gcc
 ;;
 X)
