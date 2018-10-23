@@ -1,5 +1,5 @@
 unset p f
-case "$CC" in
+case "$C" in
 LLVM)
 	export CC=clang CXX=clang++ CPP='clang -E' LD=ld.gold
 	f='-fuse-ld=gold'
@@ -17,7 +17,7 @@ X)
 esac
 [ -v p ] && for i in ar strip nm ranlib objcopy objdump; do
 	which ${p}-${i} && export ${i^^}=${p}-${i} # || unset ${i^^}
-done >/dev/null
+done >/dev/null 2>&1
 [ -v f ] && for i in CFLAGS CXXFLAGS LDFLAGS FFLAGS FCFLAGS; do
 	    export $i="${!i} $f"
 done

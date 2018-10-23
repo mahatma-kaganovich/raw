@@ -18,19 +18,24 @@ _iuse(){
 	return 1
 }
 
-filterflag(){
-local p v x r=false local f
-for p in $* ; do
-    for v in LDFLAGS CFLAGS CPPFLAGS CXXFLAGS FFLAGS FCFLAGS; do
-	x=
+filterflag1(){
+local p v x r=false local f ff="$1" rr
+shift
+for v in $ff; do
+    rr=
+    x=
+    for p in $* ; do
 	for f in ${!v}; do
-		[[ "$f" != $p ]] && x+=" $f" && r=true
+		[[ "$f" != $p ]] && x+=" $f" || rr+=" $f"
 	done
-	x="${x# }"
-	[ "$x" != "${!v}" ] && export $v="$x" && echo "flag filtered $v $p"
     done
+    [ -n "$rr" ] && export $v="${x# }" && r=true && echo "flags filtered $v $rr"
 done
 $r
+}
+
+filterflag(){
+	filterflag1 'LDFLAGS CFLAGS CPPFLAGS CXXFLAGS FFLAGS FCFLAGS' "${@}"
 }
 
 filterldflag(){
@@ -116,7 +121,11 @@ filter_cf(){
 		for i in ${!v}; do
 			echo 'int main(){}' |${!c} -x $3 - -pipe $i -o /dev/null >/dev/null 2>&1 && v1+=" $i" || ff+=" $i"
 		done
-		[ -n "$ff" ] && echo "filtered $v ${!c}$ff"
+		[ -n "$ff" ] && {
+			echo "filtered $v ${!c}$ff"
+			# -flto
+			filterflag1 LDFLAGS $ff
+		}
 		v1="${v1# }"
 		export ${vv}="$v1"
 	}
