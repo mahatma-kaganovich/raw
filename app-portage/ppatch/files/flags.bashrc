@@ -28,8 +28,9 @@ for v in $ff; do
 	for f in ${!v}; do
 		[[ "$f" != $p ]] && x+=" $f" || rr+=" $f"
 	done
+	[ "$x" != "${!v}" ] && export $v="$x"
     done
-    [ -n "$rr" ] && export $v="${x# }" && r=true && echo "flags filtered $v $rr"
+    [ -n "$rr" ] && r=true && echo "flags filtered $v $rr"
 done
 $r
 }
