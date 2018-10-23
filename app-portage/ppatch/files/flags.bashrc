@@ -19,21 +19,20 @@ _iuse(){
 }
 
 filterflag1(){
-local p v x r=false local f ff="$1" rr
+local p v x local f ff="$1" rr
 shift
 for v in $ff; do
     rr=
     x=
     for f in ${!v}; do
-	x=
 	for p in $* ; do
-		[[ "$f" == $p ]] && continue 2
+		[[ "$f" == $p ]] && rr+=" $f" && continue 2
 	done
 	x+=" $f"
     done
     x="${x# }"
     [ "$x" != "${!v}" ] && export $v="$x"
-    [ -n "$rr" ] && r=true && echo "flags filtered $v $rr"
+    [ -n "$rr" ] && echo "flags filtered $v $rr"
 done
 $r
 }
