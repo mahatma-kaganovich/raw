@@ -225,7 +225,7 @@ potrace)appendflag -fno-tree-slp-vectorize;;
 groff)filterflag -fisolate-erroneous-paths-attribute;;
 coreutils)filterflag -flto=jobserver && appendflag1 -flto;;
 # qtcore -> qtxml
-gnustep-back-cairo|qtcore)_fLTO_f -flto-partition=none;;
+glibc|gnustep-back-cairo|qtcore)_fLTO_f -flto-partition=none;;
 esac
 
 # more test flags-inject.bashrc before remove
