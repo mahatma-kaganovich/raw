@@ -10,3 +10,4 @@ Terminal=true
 Categories=FileManager;Utility;
 StartupNotify=false
 GenericName=
+Icon=system-file-manager
