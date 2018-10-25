@@ -21,14 +21,16 @@ esac
 	export $i="${!i// -flto -fuse-linker-plugin / -flto=$l -fuse-linker-plugin }"
 done
 [ -v p ] && for i in ar strip nm ranlib objcopy objdump   strings size readelf dwp; do
-	which ${p}-${i} && export ${i^^}=${p}-${i} HOST_${i^^}=${p}-${i} # || unset ${i^^}
-done >/dev/null 2>&1
-[ "${AR:-ar}" = ar ] || {
-	eval "ar(){
-		$AR \"\${@}\"
+	i2=${p}-${i}
+	which $i2 || continue
+	i1=${i^^}
+	export $i1=$i2 HOST_$i1=$i2
+	[ ${i1:-$i} = $i ] && continue
+	eval "$i(){
+		$i2 \"\${@}\"
 	}"
-	export -f ar
-}
+	export -f $i
+done >/dev/null 2>&1
 [ -v f ] && for i in  {C,CXX,CPP,LD,F,FC,_}FLAGS; do
 	export $i="${!i} $f"
 	i="HOST_$i"
