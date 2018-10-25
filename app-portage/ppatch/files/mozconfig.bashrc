@@ -1,4 +1,6 @@
-[[ "$EBUILD_PHASE $IUSE " == configure*' custom-optimization '* ]] && [[ " $IUSE " == *' custom-cflags '* ]] && {
+[[ " $IUSE " == configure*' custom-optimization '* ]] && [[ " $IUSE " == *' custom-cflags '* ]] && {
+case "$EBUILD_PHASE" in
+configure)
 mozconfig_annotate() {
 	declare reason=$1 x ; shift
 	[[ $# -gt 0 ]] || die "mozconfig_annotate missing flags for ${reason}\!"
@@ -29,12 +31,16 @@ seamonkey);;
 	filter-flags -mtls-dialect=gnu2
 ;;
 esac
+use custom-optimization && filter-flags(){ true; }
+use custom-cflags && append-cxxflags(){ true; }
+;;
+setup)
 [[ " $IUSE " == *' lto '* ]] && use lto && filter-flags '-flto*'
 filter-flags -ffat-lto-objects -flto-odr-type-merging
 (is-flagq -Ofast || is-flagq -ffast-math) && CXXFLAGS+=' -fno-fast-math'
 CXXFLAGS+=' -flifetime-dse=1 -fno-devirtualize -fno-ipa-cp-clone -fno-delete-null-pointer-checks'
 #use x86 && CXXFLAGS+=" -fno-tree-vectorize -fno-tree-loop-vectorize -fno-tree-slp-vectorize"
 export CXXFLAGS
-use custom-optimization && filter-flags(){ true; }
-use custom-cflags && append-cxxflags(){ true; }
-}
+;;
+esac
+
