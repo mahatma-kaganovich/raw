@@ -30,6 +30,11 @@ done >/dev/null 2>&1
 	export -f ar
 }
 [ -v f ] && for i in  {C,CXX,CPP,LD,F,FC,_}FLAGS; do
-	    export $i="${!i} $f"
+	export $i="${!i} $f"
+	i="HOST_$i"
+	[ -v $i ] && export $i="${!i} $f"
+done
+[ -v p ] && for i in CC CXX CPP LD; do
+	export HOST_$i="${!i}"
 done
 unset p f l i
