@@ -24,6 +24,10 @@ mozconfig_annotate() {
 		echo "ac_add_options ${x} # ${reason}" >>.mozconfig
 	done
 }
+use custom-optimization && filter-flags(){ true; }
+use custom-cflags && append-cxxflags(){ true; }
+;;
+setup)
 case "$PN" in
 thunderbird);;
 seamonkey);;
@@ -31,10 +35,6 @@ seamonkey);;
 	filter-flags -mtls-dialect=gnu2
 ;;
 esac
-use custom-optimization && filter-flags(){ true; }
-use custom-cflags && append-cxxflags(){ true; }
-;;
-setup)
 [[ " $IUSE " == *' lto '* ]] && use lto && filter-flags '-flto*'
 filter-flags -ffat-lto-objects -flto-odr-type-merging
 (is-flagq -Ofast || is-flagq -ffast-math) && CXXFLAGS+=' -fno-fast-math'
