@@ -20,14 +20,12 @@ esac
 [ -v l ] && for i in {C,CXX,CPP,LD,F,FC,_}FLAGS; do
 	export $i="${!i// -flto -fuse-linker-plugin / -flto=$l -fuse-linker-plugin }"
 done
-[ -v p ] && for i in ar strip nm ranlib objcopy objdump   strings size readelf dwp; do
-	i2=${p}-${i}
-	which $i2 || continue
+for i in ar strip nm ranlib objcopy objdump   strings size readelf dwp; do
 	i1=${i^^}
-	export $i1=$i2 HOST_$i1=$i2
-	[ ${i1:-$i} = $i ] && continue
+	[ -v p ] && i2=${p}-${i} && which $i2 && export $i1=$i2 HOST_$i1=$i2
+	[ "${!i1:-$i}" = $i ] && continue
 	eval "$i(){
-		$i2 \"\${@}\"
+		${!i1} \"\${@}\"
 	}"
 	export -f $i
 done >/dev/null 2>&1
