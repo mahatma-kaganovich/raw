@@ -25,7 +25,7 @@ done
 done >/dev/null 2>&1
 [ "${AR:-ar}" = ar ] || {
 	eval "ar(){
-		$AR
+		$AR \"\${@}\"
 	}"
 	export -f ar
 }
