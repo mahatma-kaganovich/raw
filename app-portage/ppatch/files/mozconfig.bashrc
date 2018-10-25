@@ -1,4 +1,4 @@
-[[ " $IUSE " == configure*' custom-optimization '* ]] && [[ " $IUSE " == *' custom-cflags '* ]] &&
+[[ " $IUSE " == *' custom-optimization '* ]] && [[ " $IUSE " == *' custom-cflags '* ]] &&
 case "$EBUILD_PHASE" in
 configure)
 mozconfig_annotate() {
