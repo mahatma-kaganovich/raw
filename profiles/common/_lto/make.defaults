@@ -4,6 +4,15 @@ _FLAGS="$_FLAGS -flto -fuse-linker-plugin -ffat-lto-objects -fdevirtualize-at-lt
 AR="gcc-ar"
 RANLIB="gcc-ranlib"
 NM="gcc-nm"
+
 HOST_AR="gcc-ar"
 HOST_RANLIB="gcc-ranlib"
 HOST_NM="gcc-nm"
+
+AR_FOR_TARGET="gcc-ar"
+RANLIB_FOR_TARGET="gcc-ranlib"
+NM_FOR_TARGET="gcc-nm"
+
+AR_FOR_BUILD="gcc-ar"
+RANLIB_FOR_BUILD="gcc-ranlib"
+NM_FOR_BUILD="gcc-nm"
