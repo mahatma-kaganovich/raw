@@ -23,7 +23,10 @@ done
 d="${TMPDIR}/bin"
 for i in ar strip nm ranlib objcopy objdump   strings size readelf dwp; do
 	i1=${i^^}
-	[ -v p ] && i2=${p}-${i} && which $i2 && export $i1=$i2 HOST_$i1=$i2
+	i3=HOST_$i1
+	[ -v p ] && i2=${p}-${i} && which $i2 && export $i1=$i2 $i3=$i2
+	[ -v $i1 ] && [ -n "${!i1}" ] && export MAKEOPTS="$MAKEOPTS ${i1}_FOR_TARGET="${!i1}""
+	[ -v $i3 ] && [ -n "${!i3}" ] && export MAKEOPTS="$MAKEOPTS ${i3}_FOR_BUILD="${!i3}""
 	[ "${!i1:-$i}" = $i ] && continue
 	mkdir -p "$d"
 	echo "#/bin/sh
