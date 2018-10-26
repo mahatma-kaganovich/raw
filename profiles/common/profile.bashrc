@@ -20,15 +20,21 @@ esac
 [ -v l ] && for i in {C,CXX,CPP,LD,F,FC,_}FLAGS; do
 	export $i="${!i// -flto -fuse-linker-plugin / -flto=$l -fuse-linker-plugin }"
 done
+d="${TMPDIR}/bin"
 for i in ar strip nm ranlib objcopy objdump   strings size readelf dwp; do
 	i1=${i^^}
 	[ -v p ] && i2=${p}-${i} && which $i2 && export $i1=$i2 HOST_$i1=$i2
 	[ "${!i1:-$i}" = $i ] && continue
+	mkdir -p "$d"
+	echo "#/bin/sh
+exec ${!i1} \"\${@}\"" >"$d/$i"
+	chmod 770 "$d/$i"
 	eval "$i(){
 		${!i1} \"\${@}\"
 	}"
 	export -f $i
 done >/dev/null 2>&1
+[ -e "$d" -a -n "${PATH##$d:*}" ] && export PATH="$d:$PATH"
 [ -v f ] && for i in  {C,CXX,CPP,LD,F,FC,_}FLAGS; do
 	export $i="${!i} $f"
 	i="HOST_$i"
@@ -37,4 +43,4 @@ done
 [ -v p ] && for i in CC CXX CPP LD; do
 	export HOST_$i="${!i}"
 done
-unset p f l i
+unset p f l i i1 i2
