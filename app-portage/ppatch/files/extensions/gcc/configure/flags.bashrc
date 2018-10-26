@@ -35,8 +35,8 @@ export -f setup-allowed-flags
 #export -f strip-flags
 
 gcc_do_filter_flags || die
-#gcc_do_filter_flags(){ true;}
-#export -f gcc_do_filter_flags
+gcc_do_filter_flags(){ true;}
+export -f gcc_do_filter_flags
 #CXXFLAGS="$i"
 
 # $f -> $CFLAGS -> $BOOT_FLAGS
