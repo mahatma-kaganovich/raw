@@ -2,7 +2,7 @@
 f=-O2
 if [ -n "$BOOT_CFLAGS" ]; then
 	true
-else if is-flagq -O3 || is-flagq -Ofast; then
+elif is-flagq -O3 || is-flagq -Ofast; then
 	with_build_config+=' bootstrap-O3' # ignored
 	f=-O3
 elif ! is-flagq -O2 && is-flagq -O1; then
