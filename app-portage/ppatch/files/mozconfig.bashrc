@@ -37,7 +37,11 @@ seamonkey);;
 esac
 #[[ " $IUSE " == *' lto '* ]] && use lto &&
 	filter-flags '-flto*' '*-lto-*' -fuse-linker-plugin -fdevirtualize-at-ltrans
-#filter-flags -ffat-lto-objects -flto-odr-type-merging
+[[ " $CFLAGS" == *' -flto'* ] && {
+	filter-flags -ffat-lto-objects -flto-odr-type-merging -fdevirtualize-at-ltrans
+	append-flags -flto-partition=none
+	append-ldflags -flto-partition=none
+}
 (is-flagq -Ofast || is-flagq -ffast-math) && CXXFLAGS+=' -fno-fast-math'
 CXXFLAGS+=' -flifetime-dse=1 -fno-devirtualize -fno-ipa-cp-clone -fno-delete-null-pointer-checks'
 #use x86 && CXXFLAGS+=" -fno-tree-vectorize -fno-tree-loop-vectorize -fno-tree-slp-vectorize"
