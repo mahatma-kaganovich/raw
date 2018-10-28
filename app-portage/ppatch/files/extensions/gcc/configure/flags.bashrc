@@ -1,5 +1,5 @@
 #BOOT_CFLAGS=
-ff=$(echo {CXX,LD,F,FC,GOC,LIBC,T,C}FLAGS)
+ff=$(echo {F,FC,GOC,LIBC,LIBCXX,XGCC_,T,LD,C,CXX}FLAGS)
 ff0=" $(all-flag-vars) "
 
 f=x
@@ -45,7 +45,7 @@ filter-flags -ffast-math
 # can filter or not here: custom cflags or not
 #gcc_do_filter_flags || die
 for i in $ff; do
-	[[ "$ff0" == *" $i "* ]] && [ -n "${!i}" ] || export $i="$CFLAGS"
+	[[ "$ff0" == *" $i "* ]] && [ -n "${!i}" ] || export $i="$CXXFLAGS"
 	export ${i}_FOR_TARGET="${!i}$f1"
 	export $i="${!i}$f2"
 	export STAGE_$i="${!i}"
@@ -57,8 +57,7 @@ filter-flags '-flto*' '*-lto-*'
 #gcc_do_filter_flags || die
 replace-flags '-O*' -O1
 for i in $ff; do
-	[[ "$ff0" == *" $i "* ]] && [ -n "${!i}" ] || export $i="$CFLAGS"
+	[[ "$ff0" == *" $i "* ]] && [ -n "${!i}" ] || export $i="$CXXFLAGS"
 	export ${i}_FOR_BUILD="${!i}"
 	export STAGE1_$i="${!i}"
 done
-
