@@ -8,7 +8,7 @@ for i in $CFLAGS; do
 done
 case "$f" in
 # need testing
--Os)f=-O2;;
+#-Os)f=-O2;;
 -Ofast)f=-O3;;
 x)
 	f=-O2
