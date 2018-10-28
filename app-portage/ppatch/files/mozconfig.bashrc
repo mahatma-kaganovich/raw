@@ -35,9 +35,9 @@ seamonkey);;
 	filter-flags -mtls-dialect=gnu2
 ;;
 esac
-#[[ " $IUSE " == *' lto '* ]] && use lto && filter-flags '-flto*'
+#[[ " $IUSE " == *' lto '* ]] && use lto &&
+	filter-flags '-flto*' '*-lto-*' -fuse-linker-plugin -fdevirtualize-at-ltrans
 #filter-flags -ffat-lto-objects -flto-odr-type-merging
-filter-flags '-flto*' '*-lto-*' # -fuse-linker-plugin -fdevirtualize-at-ltrans
 (is-flagq -Ofast || is-flagq -ffast-math) && CXXFLAGS+=' -fno-fast-math'
 CXXFLAGS+=' -flifetime-dse=1 -fno-devirtualize -fno-ipa-cp-clone -fno-delete-null-pointer-checks'
 #use x86 && CXXFLAGS+=" -fno-tree-vectorize -fno-tree-loop-vectorize -fno-tree-slp-vectorize"
