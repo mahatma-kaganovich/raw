@@ -37,7 +37,7 @@ seamonkey);;
 esac
 #[[ " $IUSE " == *' lto '* ]] && use lto &&
 	filter-flags '-flto*' '*-lto-*' -fuse-linker-plugin -fdevirtualize-at-ltrans
-[[ " $CFLAGS" == *' -flto'* ] && {
+[[ " $CFLAGS" == *' -flto'* ]] && {
 	filter-flags -ffat-lto-objects -flto-odr-type-merging -fdevirtualize-at-ltrans
 	append-flags -flto-partition=none
 	append-ldflags -flto-partition=none
