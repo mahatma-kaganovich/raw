@@ -27,7 +27,7 @@ mozconfig_annotate() {
 use custom-optimization && filter-flags(){ true; }
 use custom-cflags && append-cxxflags(){ true; }
 ;;
-setup)
+prepare)
 case "$PN" in
 thunderbird);;
 seamonkey);;
@@ -37,7 +37,7 @@ seamonkey);;
 esac
 #[[ " $IUSE " == *' lto '* ]] && use lto && filter-flags '-flto*'
 #filter-flags -ffat-lto-objects -flto-odr-type-merging
-filter-flags '-flto*' '*-lto-*'
+filter-flags '-flto*' '*-lto-*' # -fuse-linker-plugin -fdevirtualize-at-ltrans
 (is-flagq -Ofast || is-flagq -ffast-math) && CXXFLAGS+=' -fno-fast-math'
 CXXFLAGS+=' -flifetime-dse=1 -fno-devirtualize -fno-ipa-cp-clone -fno-delete-null-pointer-checks'
 #use x86 && CXXFLAGS+=" -fno-tree-vectorize -fno-tree-loop-vectorize -fno-tree-slp-vectorize"
