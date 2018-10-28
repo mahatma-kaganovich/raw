@@ -4,4 +4,4 @@ USE="-nls -introspection -vala -geolocation -cups -wifi -wext -wireless -frei0r 
 USE="$USE -thunar -filemanager -xcomposite -about -oxygen"
 USE="$USE -wayland -xwayland"
 # performance vs depends
-USE="$USE -openmp -opencl -vulkan"
+USE="$USE -openmp -opencl -vulkan -fortran -umfpack"
