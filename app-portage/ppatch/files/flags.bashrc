@@ -205,7 +205,7 @@ freeglut)_isflag '-floop-*' '-fgraphite*' && appendflag -fno-ipa-cp-clone;;
 # 5.1
 gccxml|xemacs|devil|vtun|irda-utils|wmmon|bbrun|diffball|ldns|rp-l2tp)appendflag -std=gnu89;;
 sessreg|ldns)export CPPFLAGS="$CPPFLAGS -P";;
-mpg123)_iuse abi_x86_32 && gccve 5. && export CFLAGS="${CFLAGS//-O3/-O2}" && filterflag -Ofast -fpeel-loops -funroll-loops;;
+mpg123)_iuse abi_x86_32 && gccve 5. && export CFLAGS="${CFLAGS//-O3/-O2}" && filterflag -Ofast -fpeel-loops -funroll-loops;;&
 klibc)[[ "$MAKEOPTS" == *'-j '* || "$MAKEOPTS" == *-j ]] && export MAKEOPTS="$MAKEOPTS -j8";;
 gmp)filterflag -floop-nest-optimize;;
 gmp) _isflag '-floop-*' && {
@@ -226,6 +226,7 @@ groff)filterflag -fisolate-erroneous-paths-attribute;;
 coreutils)filterflag -flto=jobserver && appendflag1 -flto;;
 # qtcore -> qtxml
 glibc|gnustep-back-cairo|qtcore)_fLTO_f -flto-partition=none;;
+mpg123)filterflag -floop-nest-optimize;; # distortion on sse
 esac
 
 # more test flags-inject.bashrc before remove

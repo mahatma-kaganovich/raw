@@ -107,3 +107,5 @@ media-sound/pulseaudio -alsa-plugin
 kde-plasma/kscreenlocker -seccomp
 # unsatisfayed dependences
 x11-apps/intel-gpu-tools glib chamelium gsl
+# melomania
+media-sound/mpg123 int-quality
