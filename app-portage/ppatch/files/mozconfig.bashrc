@@ -44,6 +44,8 @@ esac
 	filter-cxxflags -fprefetch-loop-arrays -maccumulate-outgoing-args
 	append-cxxflags -malign-data=abi -fno-inline-functions
 	replace-flags '-O*' -O2
+	append-flags $CFLAGS_CPU
+	append-ldflags $CFLAGS_CPU
 }
 append-cxxflags -flifetime-dse=1 -fno-devirtualize -fno-ipa-cp-clone -fno-delete-null-pointer-checks -fno-fast-math
 #use x86 && append-cxxflags -fno-tree-vectorize -fno-tree-loop-vectorize -fno-tree-slp-vectorize
