@@ -37,7 +37,7 @@ esac
 	append-flags -flto-partition=none
 	append-ldflags -flto-partition=none
 }
-[[ "${CFLAGS##*-O}" != 2* ]] && [[ "${CXXFLAGS##*-O}" == 2* ]] {
+[[ "${CFLAGS##*-O}" != 2* ]] && [[ "${CXXFLAGS##*-O}" == 2* ]] && {
 	elod "C != -O2 && CXX = -O2 - optimize size & build"
 	filter-flags '-Wl,--sort-*' -pipe
 	filter-cxxflags -floop-nest-optimize -funroll-loops '-ftree-*vectorize' '-ftree-loop-*' -freschedule-modulo-scheduled-loops
