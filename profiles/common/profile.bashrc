@@ -1,4 +1,3 @@
-echo +++++++++++++++++++++++++++ /raw/raw/profiles/common
 unset p f l
 
 # sort out annihilated flags
