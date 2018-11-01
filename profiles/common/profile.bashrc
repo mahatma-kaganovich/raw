@@ -1,3 +1,4 @@
+echo +++++++++++++++++++++++++++ /raw/raw/profiles/common
 unset p f l
 
 # sort out annihilated flags
@@ -10,18 +11,23 @@ for i in {C,CXX,CPP,LD,F,FC,_}FLAGS; do
 	for i1 in ${!i}; do
 		unset f2 f3
 		case "$i1" in
-		-[fmW]no-*)f3="${i1:0:2}${i1:5}";;
-		-[fmW]*)f3="${i1:0:2}no-${i1:2}";;
-		-O*)f2="-O[^${i1:2:1}]*";;
+		-[fmW]no-*)f2="${i1:0:2}${i1:5}";;
+		-[fmW]*)f2="${i1:0:2}no-${i1:2}";;
+#		-O*)f2="-O[^${i1:2:1}]*";f3="$f2";;
+		-*=*)
+			f3="${i2%=*}"
+			f2="$f3=${i2##*=}"
+			f3+='=*'
+		;;
 		*)false;;
-		esac && [[ "$d" == *$f2$f3* ]] && if [ -v f2 ]; then
+		esac && [[ "$d" == *${f2:=$f3}* ]] && if [ -v f3 ]; then
 			d2=' '
 			for i2 in $d; do
-				[[ "$i2" != $f2 ]] && d2+="$i2 "
+				[[ "$i2" != $f3 ]] && d2+="$i2 "
 			done
 			d="$d2"
 		else
-			d="${d// $f3 / }"
+			d="${d// $f2 / }"
 		fi
 		d+="$i1 "
 	done
