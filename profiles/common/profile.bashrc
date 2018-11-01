@@ -15,10 +15,10 @@ for i in {C,CXX,CPP,LD,F,FC,_}FLAGS; do
 		-O*)f2="-O[^${i1:2:1}]*";;
 		*)false;;
 		esac && [[ "$d" == *$f2$f3* ]] && if [ -v f2 ]; then
-			d2=
+			d2=' '
 			for i2 in $d; do
-				[[ "$i2" != $f2 ]] && d2+" $i2"
-			do
+				[[ "$i2" != $f2 ]] && d2+="$i2 "
+			done
 			d="$d2"
 		else
 			d="${d// $f3 / }"
