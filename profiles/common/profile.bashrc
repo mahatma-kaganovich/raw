@@ -9,22 +9,25 @@ for i in {C,CXX,CPP,LD,F,FC,_}FLAGS; do
 	d=' '
 	for i1 in ${!i}; do
 		unset f2 f3
+		d="${d// $i1 / }"
 		case "$i1" in
-		-[fmW]no-*)f2="${i1:0:2}${i1:5}";;
-		-[fmW]*)f2="${i1:0:2}no-${i1:2}";;
-#		-O*)f2="-O[^${i1:2:1}]*";f3="$f2";;
 		-*=*)
 			f3="${i2%=*}"
 			f2="$f3=${i2##*=}"
 			f3+='=*'
 		;;
+		-[fmW]no-*)f2="${i1:0:2}${i1:5}";;
+		-[fmW]*)f2="${i1:0:2}no-${i1:2}";;
+#		-O*)f2="-O[^${i1:2:1}]*";f3="$f2";;
 		*)false;;
-		esac && [[ "$d" == *${f2:=$f3}* ]] && if [ -v f3 ]; then
+		esac && if [ -v f3 ]; then
+		    [[ "$d" == *${f2:=$f3}* ]] && {
 			d2=' '
 			for i2 in $d; do
 				[[ "$i2" != $f3 ]] && d2+="$i2 "
 			done
 			d="$d2"
+		    }
 		else
 			d="${d// $f2 / }"
 		fi
