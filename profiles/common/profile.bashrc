@@ -1,4 +1,34 @@
 unset p f l
+
+# sort out annihilated flags
+# becouse I can;
+#           don't inspect every "flags soring" in builds;
+#           looks not dangerous;
+#           speedup parsing...
+for i in {C,CXX,CPP,LD,F,FC,_}FLAGS; do
+	d=' '
+	for i1 in ${!i}; do
+		unset f2 f3
+		case "$i1" in
+		-[fmW]no-*)f3="${i1:0:2}${i1:5}";;
+		-[fmW]*)f3="${i1:0:2}no-${i1:2}";;
+		-O*)f2="-O[^${i1:2:1}]*";;
+		*)false;;
+		esac && [[ "$d" == *$f2$f3* ]] && if [ -v f2 ]; then
+			d2=
+			for i2 in $d; do
+				[[ "$i2" != $f2 ]] && d2+" $i2"
+			do
+			d="$d2"
+		else
+			d="${d// $f3 / }"
+		fi
+		d+="$i1 "
+	done
+	d="${d% }"
+	export $i="${d# }"
+done
+
 case "$C" in
 LLVM)
 	export CC=clang CXX=clang++ CPP=clang-cpp LD=ld.gold
@@ -43,4 +73,4 @@ done
 [ -v p ] && for i in CC CXX CPP LD; do
 	export HOST_$i="${!i}"
 done
-unset p f l i i1 i2 i3 i4 d
+unset p f l i i1 i2 i3 i4 d f2 f3 d2
