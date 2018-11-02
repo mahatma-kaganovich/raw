@@ -38,17 +38,19 @@ esac
 	append-ldflags -flto-partition=none
 }
 [[ "${CFLAGS##*-O}" != 2* ]] && [[ "${CXXFLAGS##*-O}" == 2* ]] && {
-	elod "C != -O2 && CXX = -O2 - optimize size & build"
+	elog "C != -O2 && CXX = -O2 - optimize size & build"
 	filter-flags '-Wl,--sort-*' -pipe
-	filter-cxxflags -floop-nest-optimize -funroll-loops '-ftree-*vectorize' '-ftree-loop-*' -freschedule-modulo-scheduled-loops
-	filter-cxxflags -fprefetch-loop-arrays -maccumulate-outgoing-args
-	append-cxxflags -malign-data=abi -fno-inline-functions
-	replace-flags '-O*' -O2
+	[[ "$CXXFLAGS" == *-floop-nest-optimize* ]] && append-cxxflags -fno-loop-nest-optimize
+	[[ "$CXXFLAGS" == *-floop-nest-optimize* ]] && append-cxxflags -malign-data=abi
+	append-cxxflags -fno-reschedule-modulo-scheduled-loops
+	append-cxxflags -fno-unroll-loops -fno-prefetch-loop-arrays -fno-tree-vectorize
+	append-cxxflags -O2
 	append-flags $CFLAGS_CPU
 	append-ldflags $CFLAGS_CPU
 }
 append-cxxflags -flifetime-dse=1 -fno-devirtualize -fno-ipa-cp-clone -fno-delete-null-pointer-checks -fno-fast-math
 #use x86 && append-cxxflags -fno-tree-vectorize -fno-tree-loop-vectorize -fno-tree-slp-vectorize
+export CARGOFLAGS="$CARGOFLAGS --jobs 1"
 ;;
 esac
 
