@@ -12,8 +12,18 @@ mozconfig_annotate() {
 		;;&
 		--enable-pie)gcc -v 2>&1 |grep -q "\--disable-default-pie" && x='--disable-pie';;
 		--enable-linker=gold)filter-ldflags -Wl,--sort-section=alignment -Wl,--reduce-memory-overheads;;
-		--enable-optimize=-O*)use custom-optimization && o=${CFLAGS##*-O} && [ "$o" != "$CFLAGS" ] &&
-			o=${o%% *} && [ -n "$o" ] && x="--enable-optimize=-O$o" && reason=custom-optimization
+		--enable-optimize=-O*)use custom-optimization && o=${CFLAGS##*-O} && [ "$o" != "$CFLAGS" ] && o=${o%% *} && [ -n "$o" ] && {
+			reason=custom-optimization
+			if [[ "${CXXFLAGS##*-O}" == "$o"* ]]; then
+				x="--enable-optimize=-O$o"
+			else
+				x="--enable-optimize=-w"
+				o=2
+			fi
+			[ "$o" = fast ] && o=3
+			[[ "$o" == [123] ]] || o=2
+			export RUSTCFLAGS="$RUSTCFLAGS -C opt-level=$o"
+		}
 		;;
 		esac
 		echo "ac_add_options ${x} # ${reason}" >>.mozconfig
@@ -37,6 +47,8 @@ esac
 	append-flags -flto-partition=none
 	append-ldflags -flto-partition=none
 }
+export RUSTCFLAGS="$RUSTCFLAGS -C debuginfo=0"
+use custom-cflags && [[ "${CFLAGS##*-march=}" == native* ]] && export RUSTCFLAGS="$RUSTCFLAGS -C target-cpu=native"
 [[ "${CFLAGS##*-O}" != 2* ]] && [[ "${CXXFLAGS##*-O}" == 2* ]] && {
 	elog "C != -O2 && CXX = -O2 - optimize size & build"
 	filter-flags '-Wl,--sort-*' -pipe
@@ -47,6 +59,9 @@ esac
 	append-cxxflags -fno-reschedule-modulo-scheduled-loops
 	append-cxxflags -fno-unroll-loops -fno-prefetch-loop-arrays -fno-tree-vectorize
 	append-cxxflags -O2
+	# or --enable-optimize=-w
+#	replace-flags '-O*' -O2
+	filter-flags $CFLAGS_NATIVE
 	append-flags $CFLAGS_CPU
 	append-ldflags $CFLAGS_CPU
 }
@@ -55,4 +70,3 @@ append-cxxflags -flifetime-dse=1 -fno-devirtualize -fno-ipa-cp-clone -fno-delete
 export CARGOFLAGS="$CARGOFLAGS --jobs 1"
 ;;
 esac
-
