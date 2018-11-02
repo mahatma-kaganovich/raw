@@ -117,6 +117,7 @@ flag_skip(){
 
 max_unrolled(){
 	ffast+=" --param=max-unrolled-insns=$(($1-4)) -funroll-loops"
+	fsmall+=" -fno-unroll-loops"
 	# prefetching can cause code expansion. disable for low values to prefer code streaming
 	ffast+=" --param=prefetch-min-insn-to-mem-ratio=$(($1+1))" # make effect of data streaming reasonable solid, related to code streaming
 	# -fprefetch-loop-arrays default ON vs. -Os
@@ -161,8 +162,11 @@ f5+=' -fpermissive -w'
 #fsec+=' -mmitigate-rop'
 # new in gcc8 - 2test
 #fsec+=' -fstack-clash-protection'
+# mix cxxflags here to simplify. it works
 ffast+=' -malign-data=cacheline -minline-stringops-dynamically'
-fsmall+=' -malign-data=abi -fno-prefetch-loop-arrays'
+fsmall+=' -malign-data=abi -flimit-function-alignment -fno-prefetch-loop-arrays -flto-compression-level=9 -Wa,--reduce-memory-overheads -w'
+# mix cxxflags here. just work simple
+fsmall+=' -fdeclone-ctor-dtor'
 if i=`_smp1 'physical id' 'cpu cores' || _smp processor 1 || _smp 'ncpus active' 0`; then
 	if [ "$i" = 1 ]; then
 		f1+=' -smp -numa'
@@ -209,6 +213,7 @@ x86_*|i?86)
 	# gnostic - don't know how to get universal default of defaults for GCC
 	base="-mtune=generic -march=${m//_/-}"
 	ffast+=' -maccumulate-outgoing-args'
+	fsmall+=' -mno-accumulate-outgoing-args'
 ;;
 *)
 	f3+=' -maccumulate-outgoing-args' # sh?
@@ -318,8 +323,8 @@ CFLAGS_FAST=\"$ffast\"
 CFLAGS_SMALL=\"$fsmall\"
 CFLAGS_SECURE=\"$fsec\"
 _FLAGS=\"$ff\${_FLAGS}\"
-
-CXXFLAGS=\"\${CXXFLAGS}$f5\""
+_XFLAGS=\"${f5# } \${_XFLAGS}\"
+"
 }
 
 conf_cpu
