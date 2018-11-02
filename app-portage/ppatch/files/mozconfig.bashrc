@@ -40,8 +40,10 @@ esac
 [[ "${CFLAGS##*-O}" != 2* ]] && [[ "${CXXFLAGS##*-O}" == 2* ]] && {
 	elog "C != -O2 && CXX = -O2 - optimize size & build"
 	filter-flags '-Wl,--sort-*' -pipe
-	[[ "$CXXFLAGS" == *-floop-nest-optimize* ]] && append-cxxflags -fno-loop-nest-optimize
-	[[ "$CXXFLAGS" == *-floop-nest-optimize* ]] && append-cxxflags -malign-data=abi
+	case "$CXXFLAGS" in
+	*-floop-nest-optimize*)append-cxxflags -fno-loop-nest-optimize;;
+	*-malign-data=cacheline*)append-cxxflags -malign-data=abi;;
+	esac
 	append-cxxflags -fno-reschedule-modulo-scheduled-loops
 	append-cxxflags -fno-unroll-loops -fno-prefetch-loop-arrays -fno-tree-vectorize
 	append-cxxflags -O2
