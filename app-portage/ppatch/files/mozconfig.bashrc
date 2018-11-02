@@ -14,7 +14,7 @@ mozconfig_annotate() {
 		--enable-linker=gold)filter-ldflags -Wl,--sort-section=alignment -Wl,--reduce-memory-overheads;;
 		--enable-optimize=-O*)use custom-optimization && o=${CXXFLAGS##*-O} && [ "$o" != "$CXXFLAGS" ] && o=${o%% *} && [ -n "$o" ] && {
 			reason=custom-optimization
-			if [[ "${CFLAGS##*-O}" == "$o"* ]]; then
+			if [[ "${CFLAGS##*-O}" == "$o"* ]] || use !custom-cflags; then
 				x="--enable-optimize=-O$o"
 			else
 				x="--enable-optimize=-w"
@@ -31,41 +31,39 @@ mozconfig_annotate() {
 use custom-optimization && filter-flags(){ true; }
 use custom-cflags && append-cxxflags(){ true; }
 ;;
+
 prepare)
-case "$PN" in
-thunderbird);;
-seamonkey);;
-*)
-	filter-flags -mtls-dialect=gnu2
-;;
-esac
-#[[ " $IUSE " == *' lto '* ]] && use lto &&
-	filter-flags '-flto*' '*-lto-*' -fuse-linker-plugin -fdevirtualize-at-ltrans
-[[ " $CFLAGS" == *' -flto'* ]] && {
-	filter-flags -ffat-lto-objects -flto-odr-type-merging -fdevirtualize-at-ltrans
-	append-flags -flto-partition=none
-	append-ldflags -flto-partition=none
-}
-export CARGO_RUSTCFLAGS="$CARGO_RUSTCFLAGS -C debuginfo=0"
-use custom-cflags && [[ "${CFLAGS##*-march=}" == native* ]] && export CARGO_RUSTCFLAGS="$CARGO_RUSTCFLAGS -C target-cpu=native"
-[[ "${CFLAGS##*-O}" != 2* ]] && [[ "${CXXFLAGS##*-O}" == 2* ]] && {
-	elog "C != -O2 && CXX = -O2 - optimize size & build"
-	filter-flags '-Wl,--sort-*' -pipe
-	case "$CXXFLAGS" in
-	*-floop-nest-optimize*)append-cxxflags -fno-loop-nest-optimize;;
-	*-malign-data=cacheline*)append-cxxflags -malign-data=abi;;
-	esac
-	append-cxxflags -fno-reschedule-modulo-scheduled-loops
-	append-cxxflags -fno-unroll-loops -fno-prefetch-loop-arrays -fno-tree-vectorize
-	append-cxxflags -O2
-	# or --enable-optimize=-w
-#	replace-flags '-O*' -O2
-	filter-flags $CFLAGS_NATIVE
-	append-flags $CFLAGS_CPU
-	append-ldflags $CFLAGS_CPU
-}
-append-cxxflags -flifetime-dse=1 -fno-devirtualize -fno-ipa-cp-clone -fno-delete-null-pointer-checks -fno-fast-math
-#use x86 && append-cxxflags -fno-tree-vectorize -fno-tree-loop-vectorize -fno-tree-slp-vectorize
-export CARGOFLAGS="$CARGOFLAGS --jobs 1"
+	export CARGO_RUSTCFLAGS="$CARGO_RUSTCFLAGS -C debuginfo=0"
+	[[ "${CFLAGS##*-march=}" == native* ]] && export CARGO_RUSTCFLAGS="$CARGO_RUSTCFLAGS -C target-cpu=native"
+	export CARGOFLAGS="$CARGOFLAGS --jobs 1"
+	use custom-cflags && {
+		case "$PN" in
+		thunderbird);;
+		seamonkey);;
+		*)filter-flags -mtls-dialect=gnu2;;
+		esac
+		#[[ " $IUSE " == *' lto '* ]] && use lto &&
+		filter-flags '-flto*' '*-lto-*' -fuse-linker-plugin -fdevirtualize-at-ltrans
+		[[ " $CFLAGS" == *' -flto'* ]] && {
+			filter-flags -ffat-lto-objects -flto-odr-type-merging -fdevirtualize-at-ltrans
+			append-flags -flto-partition=none
+			append-ldflags -flto-partition=none
+		}
+		[[ "${CFLAGS##*-O}" != 2* ]] && [[ "${CXXFLAGS##*-O}" == 2* ]] && {
+			elog "C != -O2 && CXX = -O2 - optimize size & build"
+			filter-flags '-Wl,--sort-*' -pipe
+			append-cxxflags $CFLAGS_SMALL -fno-reschedule-modulo-scheduled-loops
+			case "$CXXFLAGS" in
+			*-floop-nest-optimize*)append-cxxflags -fno-loop-nest-optimize;;
+			esac
+			# or --enable-optimize=-w
+#			replace-flags '-O*' -O2
+			filter-flags $CFLAGS_NATIVE
+			append-flags $CFLAGS_CPU
+			append-ldflags $CFLAGS_CPU
+		}
+		append-cxxflags -flifetime-dse=1 -fno-devirtualize -fno-ipa-cp-clone -fno-delete-null-pointer-checks -fno-fast-math
+		#use x86 && append-cxxflags -fno-tree-vectorize -fno-tree-loop-vectorize -fno-tree-slp-vectorize
+	}
 ;;
 esac
