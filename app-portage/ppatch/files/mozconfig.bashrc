@@ -33,6 +33,8 @@ use custom-cflags && append-cxxflags(){ true; }
 ;;
 
 prepare)
+	[[ " $IUSE " == *' debug '* ]] && use debug ||
+	    sed -i -e '/MOZ_GECKO_PROFILER/d' $(grep -lRw MOZ_GECKO_PROFILER "$WORKDIR" --include=moz.configure)
 	export CARGO_RUSTCFLAGS="$CARGO_RUSTCFLAGS -C debuginfo=0"
 	[[ "${CFLAGS##*-march=}" == native* ]] && export CARGO_RUSTCFLAGS="$CARGO_RUSTCFLAGS -C target-cpu=native"
 	export CARGOFLAGS="$CARGOFLAGS --jobs 1"
@@ -51,11 +53,8 @@ prepare)
 		}
 		[[ "${CFLAGS##*-O}" != 2* ]] && [[ "${CXXFLAGS##*-O}" == 2* ]] && {
 			elog "C != -O2 && CXX = -O2 - optimize size & build"
-			filter-flags '-Wl,--sort-*' -pipe
+			filter-flags '-Wl,--sort-*' # -pipe
 			append-cxxflags $CFLAGS_SMALL -fno-reschedule-modulo-scheduled-loops
-			case "$CXXFLAGS" in
-			*-floop-nest-optimize*)append-cxxflags -fno-loop-nest-optimize;;
-			esac
 			# or --enable-optimize=-w
 #			replace-flags '-O*' -O2
 			filter-flags $CFLAGS_NATIVE
@@ -63,7 +62,8 @@ prepare)
 			append-ldflags $CFLAGS_CPU
 		}
 		append-cxxflags -flifetime-dse=1 -fno-devirtualize -fno-ipa-cp-clone -fno-delete-null-pointer-checks -fno-fast-math
-		#use x86 && append-cxxflags -fno-tree-vectorize -fno-tree-loop-vectorize -fno-tree-slp-vectorize
+#		use x86 && append-cxxflags -fno-tree-vectorize -fno-tree-loop-vectorize -fno-tree-slp-vectorize
+		export ALDFLAGS="${LDFLAGS}"
 	}
 ;;
 esac

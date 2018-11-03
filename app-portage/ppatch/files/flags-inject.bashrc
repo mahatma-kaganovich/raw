@@ -48,7 +48,8 @@ find "${WORKDIR}"|while read f; do case "$f" in
 	[[ $cv == 7.* ]] && inj '#if defined(__i386__)\n#pragma GCC target ("no-sse2")\n#endif'
 ;;
 # mozilla [gcc 8] ICE [x86]
-*seccomp-bpf/syscall.cc|*profiler/core/shared-libraries-linux.cc|*common/linux/file_id.cc)
+#*profiler/core/shared-libraries-linux.cc|
+*seccomp-bpf/syscall.cc|*common/linux/file_id.cc)
 	use amd64 || inj no-tree-vectorize
 ;;
 esac
