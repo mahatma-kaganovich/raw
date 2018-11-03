@@ -51,16 +51,6 @@ prepare)
 			append-flags -flto-partition=none
 			append-ldflags -flto-partition=none
 		}
-		[[ "${CFLAGS##*-O}" != 2* ]] && [[ "${CXXFLAGS##*-O}" == 2* ]] && {
-			elog "C != -O2 && CXX = -O2 - optimize size & build"
-			filter-flags '-Wl,--sort-*' # -pipe
-			append-cxxflags $CFLAGS_SMALL -fno-reschedule-modulo-scheduled-loops
-			# or --enable-optimize=-w
-#			replace-flags '-O*' -O2
-			filter-flags $CFLAGS_NATIVE
-			append-flags $CFLAGS_CPU
-			append-ldflags $CFLAGS_CPU
-		}
 		append-cxxflags -flifetime-dse=1 -fno-devirtualize -fno-ipa-cp-clone -fno-delete-null-pointer-checks -fno-fast-math
 #		use x86 && append-cxxflags -fno-tree-vectorize -fno-tree-loop-vectorize -fno-tree-slp-vectorize
 		export ALDFLAGS="${LDFLAGS}"
