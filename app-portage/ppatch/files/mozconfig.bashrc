@@ -45,12 +45,7 @@ prepare)
 		*)filter-flags -mtls-dialect=gnu2;;
 		esac
 		#[[ " $IUSE " == *' lto '* ]] && use lto &&
-		filter-flags '-flto*' '*-lto-*' -fuse-linker-plugin -fdevirtualize-at-ltrans
-		[[ " $CFLAGS" == *' -flto'* ]] && {
-			filter-flags -ffat-lto-objects -flto-odr-type-merging -fdevirtualize-at-ltrans
-			append-flags -flto-partition=none
-			append-ldflags -flto-partition=none
-		}
+		filter-flags -flto '-flto=*' -ffat-lto-objects
 		append-cxxflags -flifetime-dse=1 -fno-devirtualize -fno-ipa-cp-clone -fno-delete-null-pointer-checks -fno-fast-math
 #		use x86 && append-cxxflags -fno-tree-vectorize -fno-tree-loop-vectorize -fno-tree-slp-vectorize
 		export ALDFLAGS="${LDFLAGS}"
