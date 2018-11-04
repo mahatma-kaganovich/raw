@@ -116,7 +116,7 @@ flag_skip(){
 }
 
 max_unrolled(){
-	ffast+=" --param=max-unrolled-insns=$(($1-4)) -funroll-loops"
+	ffast+=" --param=max-unrolled-insns=$(($1-4)) -funroll-loops -fvariable-expansion-in-unroller"
 	fsmall+=" -fno-unroll-loops"
 	# prefetching can cause code expansion. disable for low values to prefer code streaming
 	ffast+=" --param=prefetch-min-insn-to-mem-ratio=$(($1+1))" # make effect of data streaming reasonable solid, related to code streaming
