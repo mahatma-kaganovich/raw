@@ -121,7 +121,7 @@ max_unrolled(){
 	# prefetching can cause code expansion. disable for low values to prefer code streaming
 	ffast+=" --param=prefetch-min-insn-to-mem-ratio=$(($1+1))" # make effect of data streaming reasonable solid, related to code streaming
 	# -fprefetch-loop-arrays default ON vs. -Os
-	ffast+=" --param=min-insn-to-prefetch-ratio=$(($1+1)) -fprefetch-loop-arrays" # gcc 6: insn_to_prefetch_ratio = (unroll_factor * ninsns) / prefetch_count;
+	ffast+=" --param=min-insn-to-prefetch-ratio=$(($1+1))" # gcc 6: insn_to_prefetch_ratio = (unroll_factor * ninsns) / prefetch_count;
 }
 
 conf_cpu(){
@@ -164,9 +164,7 @@ f5+=' -fpermissive -w'
 #fsec+=' -fstack-clash-protection'
 # mix cxxflags here to simplify. it works
 ffast+=' -malign-data=cacheline -minline-stringops-dynamically'
-fsmall+=' -malign-data=abi -flimit-function-alignment -fno-prefetch-loop-arrays -Wa,--reduce-memory-overheads -w'
-# mix cxxflags here. just work simple
-fsmall+=' -fdeclone-ctor-dtor'
+fsmall+=' -malign-data=abi -flimit-function-alignment -Wa,--reduce-memory-overheads -w'
 if i=`_smp1 'physical id' 'cpu cores' || _smp processor 1 || _smp 'ncpus active' 0`; then
 	if [ "$i" = 1 ]; then
 		f1+=' -smp -numa'
