@@ -45,7 +45,7 @@ _cmp(){
 		for i in $i; do
 			[ -z "${i##/*}" ] && continue
 			for i1 in $i0; do
-				[ "$i" = "$i1" ] && continue 2
+				[ "$i" = "$i1" ] &&  continue 2
 			done
 			echo -n " $2$i"
 		done
@@ -209,7 +209,8 @@ x86_*|i?86)
 	# i?86 looks mostly working, exclude kernel
 	f3+=$(_f -fira-loop-pressure -fira-hoist-pressure -flive-range-shrinkage -fsched-pressure -fschedule-insns -fsched-spec-load --param=sched-pressure-algorithm=2)
 	# gnostic - don't know how to get universal default of defaults for GCC
-	base="-mtune=generic -march=${m//_/-}"
+	i=${m//_/-}
+	base="-mtune=$i -march=$i"
 	ffast+=' -maccumulate-outgoing-args -mno-push-args'
 	fsmall+=' -mno-accumulate-outgoing-args -mpush-args'
 ;;
