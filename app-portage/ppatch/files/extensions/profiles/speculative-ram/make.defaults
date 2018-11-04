@@ -2,7 +2,6 @@
 # code still reasonable fast
 _FLAGS="$_FLAGS$CFLAGS_SMALL$CFLAGS_FAST$CFLAGS_NATIVE$CFLAGS_M"
 # ? -fconserve-stack
-#_FLAGS="$_FLAGS -fno-reschedule-modulo-scheduled-loops"
 
 USE="speculative -ssp nossp nopie -sanitize -vtv -pie -pic -rsync-verify"
 PORTAGE_RSYNC_OPTS="$PORTAGE_RSYNC_OPTS --exclude=/metadata/md5-cache"
