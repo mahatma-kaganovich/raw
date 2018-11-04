@@ -164,7 +164,7 @@ f5+=' -fpermissive -w'
 #fsec+=' -fstack-clash-protection'
 # mix cxxflags here to simplify. it works
 ffast+=' -malign-data=cacheline -minline-stringops-dynamically'
-fsmall+=' -malign-data=abi -flimit-function-alignment -fno-prefetch-loop-arrays -flto-compression-level=9 -Wa,--reduce-memory-overheads -w'
+fsmall+=' -malign-data=abi -flimit-function-alignment -fno-prefetch-loop-arrays -Wa,--reduce-memory-overheads -w'
 # mix cxxflags here. just work simple
 fsmall+=' -fdeclone-ctor-dtor'
 if i=`_smp1 'physical id' 'cpu cores' || _smp processor 1 || _smp 'ncpus active' 0`; then
