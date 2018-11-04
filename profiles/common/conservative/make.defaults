@@ -2,7 +2,7 @@
 
 _FLAGS="$_FLAGS -fbranch-target-load-optimize -fdelete-dead-exceptions -fstdarg-opt"
 _FLAGS="$_FLAGS -fmodulo-sched -fmodulo-sched-allow-regmoves -freschedule-modulo-scheduled-loops"
-CFLAGS_SMALL="$CFLAGS_SMALL -fno-reschedule-modulo-scheduled-loops"
+CFLAGS_SMALL=" -fno-reschedule-modulo-scheduled-loops$CFLAGS_SMALL"
 # ?
 #_FLAGS="$_FLAGS -fgcse-sm -fgcse-las"
 
