@@ -45,7 +45,7 @@ _cmp(){
 		for i in $i; do
 			[ -z "${i##/*}" ] && continue
 			for i1 in $i0; do
-				[ "$i" = "$i1" ] &&  continue 2
+				[ "$i" = "$i1" ] && continue 2
 			done
 			echo -n " $2$i"
 		done
@@ -125,7 +125,7 @@ max_unrolled(){
 }
 
 conf_cpu(){
-local f0= f1= f2= f3= f4= f5= fsmall= ffast= i j i1 j1 c c0 c1 lm=false fp=387 gccv m="`uname -m`" i fsec= ind=
+local f0= f1= f2= f3= f4= f5= f6= fsmall= ffast= i j i1 j1 c c0 c1 lm=false fp=387 gccv m="`uname -m`" i fsec= ind=
 _setflags flags cpucaps 'cpu family' model fpu vendor_id
 cmn=$($gcc --help=common -v -Q 2>&1)
 if i=$(echo "$cmn"|grep --max-count=1 "^Target: "); then
@@ -163,8 +163,9 @@ f5+=' -fpermissive -w'
 # new in gcc8 - 2test
 #fsec+=' -fstack-clash-protection'
 # mix cxxflags here to simplify. it works
-ffast+=' -malign-data=cacheline -minline-stringops-dynamically'
+ffast+=' -minline-stringops-dynamically'
 fsmall+=' -malign-data=abi -flimit-function-alignment -Wa,--reduce-memory-overheads -w'
+f6+=' -malign-data=cacheline'
 if i=`_smp1 'physical id' 'cpu cores' || _smp processor 1 || _smp 'ncpus active' 0`; then
 	if [ "$i" = 1 ]; then
 		f1+=' -smp -numa'
@@ -209,8 +210,8 @@ x86_*|i?86)
 	# i?86 looks mostly working, exclude kernel
 	f3+=$(_f -fira-loop-pressure -fira-hoist-pressure -flive-range-shrinkage -fsched-pressure -fschedule-insns -fsched-spec-load --param=sched-pressure-algorithm=2)
 	# gnostic - don't know how to get universal default of defaults for GCC
-	i=${m//_/-}
-	base="-mtune=$i -march=$i"
+	# -mtune=x86-64 deprecated
+	base="-mtune=generic -march=${m//_/-}"
 	ffast+=' -maccumulate-outgoing-args -mno-push-args'
 	fsmall+=' -mno-accumulate-outgoing-args -mpush-args'
 ;;
@@ -240,12 +241,15 @@ for i in $flags; do
 done
 f3+=" -mfpmath=$fp"
 $lm && f1+=" 64-bit-bfd" || f1+=" -64-bit-bfd"
-f3=`_f $f3`
-ffast=`_f $ffast`
-fsmall=`_f $fsmall`
-unroll=`_f $unroll`
-f5=`lang=c++ _f $f5`
-fsec=`_f $fsec`
+for i in f3 ffast fsmall unroll f5+ fsec f6; do
+	case "$i" in
+	*+)	i=${i%+}
+		[ -n "${!i}" ] && declare $i="`lang=c++ _f ${!i}`"
+	;;
+	*)[ -n "${!i}" ] && declare $i="`_f ${!i}`"
+	;;
+	esac
+done
 f1="${f1# }"
 f2="${f2# }"
 [ -n "${f1// }" ] && echo "USE=\"\$USE $f1\""
@@ -306,6 +310,9 @@ for i in $f4; do
 done
 _cmp1 "$i1" "$f4" && f4="$i1"
 
+for i in $base; do
+	[[ " $f4 " != *" ${i%=*}"[=\ ]* ]] && f4+=" $i"
+done
 
 local ff= fm=
 for i in $f3; do
@@ -315,8 +322,8 @@ for i in $f3; do
 	esac
 done
 
-echo "CFLAGS_NATIVE=\"$f0\"
-CFLAGS_CPU=\"$f4\"
+echo "CFLAGS_NATIVE=\"$f0$f6\"
+CFLAGS_CPU=\"$f4$f6\"
 CFLAGS_M=\"$fm\"
 CFLAGS_FAST=\"\$CFLAGS_FAST$ffast\"
 CFLAGS_SMALL=\"\$CFLAGS_SMALL$fsmall\"
