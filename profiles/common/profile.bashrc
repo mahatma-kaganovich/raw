@@ -8,25 +8,25 @@ unset p f l
 for i in {C,CXX,CPP,LD,F,FC,_}FLAGS; do
 	d=' '
 	for i1 in ${!i}; do
-		unset f2 f3
 		d="${d// $i1 / }"
-		case "$i1" in
-		-*=*)f3="${i1%=*}=*";;
-		-[fmW]no-*)f2="${i1:0:2}${i1:5}";;
-		-[fmW]*)f2="${i1:0:2}no-${i1:2}";;
-#		-O*)f3="-O[^${i1:2:1}]*";;
-		*)false;;
-		esac && if [ -v f3 ]; then
-		    [[ "$d" == *${f2:-$f3}* ]] && {
+		fy="${i1%=*}"
+		fn="$fy"
+		fw="$fy=*"
+		case "$fy" in
+		-[fmW]no-*)fy="${fy:0:2}${fy:5}";fw="$fy=*";;
+		-[fmW]*)fn="${fy:0:2}no-${fy:2}";;
+#		-O*)fw="-O[^${i1:2:1}]*";;
+#		*)false;;
+		done
+		[ "$fn" = "$i1" ] || d="${d// $fn / }"
+		[ "$fy" = "$i1" -o "$fy" = "$fn" ] || d="${d// $fy / }"
+		[[ "$d" == *' '$fw* ]] && {
 			d2=' '
 			for i2 in $d; do
-				[[ "$i2" != $f3 ]] && d2+="$i2 "
+				[[ "$i2" != $fw ]] && d2+="$i2 "
 			done
 			d="$d2"
-		    }
-		else
-			d="${d// $f2 / }"
-		fi
+		}
 		d+="$i1 "
 	done
 	d="${d% }"
@@ -77,4 +77,4 @@ done
 [ -v p ] && for i in CC CXX CPP LD; do
 	export HOST_$i="${!i}"
 done
-unset p f l i i1 i2 i3 i4 d f2 f3 d2
+unset p f l i i1 i2 i3 i4 d f2 f3 d2 fy fn fw
