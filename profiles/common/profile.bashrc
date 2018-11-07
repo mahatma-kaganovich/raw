@@ -17,7 +17,7 @@ for i in {C,CXX,CPP,LD,F,FC,_}FLAGS; do
 		-[fmW]*)fn="${fy:0:2}no-${fy:2}";;
 #		-O*)fw="-O[^${i1:2:1}]*";;
 #		*)false;;
-		done
+		esac
 		[ "$fn" = "$i1" ] || d="${d// $fn / }"
 		[ "$fy" = "$i1" -o "$fy" = "$fn" ] || d="${d// $fy / }"
 		[[ "$d" == *' '$fw* ]] && {
