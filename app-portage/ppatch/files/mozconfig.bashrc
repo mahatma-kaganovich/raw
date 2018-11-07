@@ -33,8 +33,9 @@ use custom-cflags && append-cxxflags(){ true; }
 ;;
 
 prepare)
+	i='MOZ_GECKO_PROFILER\|MOZ_ENABLE_PROFILER_SPS'
 	[[ " $IUSE " == *' debug '* ]] && use debug ||
-	    sed -i -e '/MOZ_GECKO_PROFILER/d' $(grep -lRw MOZ_GECKO_PROFILER "$WORKDIR" --include=moz.configure)
+	    sed -i -e "/$i/d" $(grep -lRw "$i" "$WORKDIR" --include=moz.configure)
 	export CARGO_RUSTCFLAGS="$CARGO_RUSTCFLAGS -C debuginfo=0"
 	[[ "${CFLAGS##*-march=}" == native* ]] && export CARGO_RUSTCFLAGS="$CARGO_RUSTCFLAGS -C target-cpu=native"
 	export CARGOFLAGS="$CARGOFLAGS --jobs 1"
