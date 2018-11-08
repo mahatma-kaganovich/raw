@@ -165,7 +165,7 @@ xemacs)_fLTO && {
 # gtkmm too (cdrdao)
 # fuse: e2fsprogs failed only on gcc 8.2
 # ffmpeg: amd64 - mp4 crushes
-ffmpeg|xemacs|mesa|fuse|wayland|privoxy|icedtea|qtwebkit|xf86-video-intel|mplayer|gtkmm|mysql|mariadb|heimdal|glibc|cvs|pulseaudio|libreoffice|lynx)filterflag '-flto*' '-*-lto-*' -fuse-linker-plugin -fdevirtualize-at-ltrans;;&
+ffmpeg|xemacs|mesa|fuse|wayland|privoxy|icedtea|qtwebkit|xf86-video-intel|mplayer|gtkmm|mysql|heimdal|glibc|cvs|pulseaudio|lynx)filterflag '-flto*' '-*-lto-*' -fuse-linker-plugin -fdevirtualize-at-ltrans;;&
 ncurses)_fLTO && export ac_cv_func_dlsym=no ac_cv_lib_dl_dlsym=yes;;&
 # works over make.lto wrapper, but wrapper wrong for some other packets
 php|numactl|alsa-lib|elfutils|dhcdrop|lksctp-tools|mysql-connector-c)filterflag '-flto*' -fdevirtualize-at-ltrans;;&
@@ -228,6 +228,7 @@ coreutils)filterflag -flto=jobserver && appendflag1 -flto;;
 # qtcore -> qtxml
 glibc|gnustep-back-cairo|qtcore)_fLTO_f -flto-partition=none;;
 mpg123)filterflag -floop-nest-optimize;; # distortion on sse
+mongodb)[ "$AR" = gcc-ar ] && export AR=/usr/bin/ar ;;
 esac
 
 # more test flags-inject.bashrc before remove
