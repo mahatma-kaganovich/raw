@@ -116,8 +116,9 @@ flag_skip(){
 }
 
 max_unrolled(){
-	ffast+=" --param=max-unrolled-insns=$(($1-4)) -funroll-loops -fvariable-expansion-in-unroller"
-	fsmall+=" -fno-unroll-loops"
+	ffast+=" --param=max-unrolled-insns=$(($1-4)) -fvariable-expansion-in-unroller"
+	# IMHO: -funroll-loops looks uneffective in global scope
+	#ffast+='  -funroll-loops' ; fsmall+=' -fno-unroll-loops'
 	# prefetching can cause code expansion. disable for low values to prefer code streaming
 	ffast+=" --param=prefetch-min-insn-to-mem-ratio=$(($1+1))" # make effect of data streaming reasonable solid, related to code streaming
 	# -fprefetch-loop-arrays default ON vs. -Os
