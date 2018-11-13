@@ -222,7 +222,7 @@ faad2|openssl|patch)gccve 5. && filterflag -floop-nest-optimize;;
 geos|readahead-list|thin-provisioning-tools|libprojectm|gtkmathview|qtfm|qtgui|qtwebkit)gccve 6. && export CXXFLAGS="$CXXFLAGS -std=gnu++98";;
 ruby)filterflag -funroll-loops -fweb;;
 ghostscript-gpl)filterflag -mmitigate-rop;; # ????!
-compiler-rt)filterflag -flimit-function-alignment;;
+compiler-rt)__clang=clang;filter_cf __clang CFLAGS c;filter_cf __clang CXXFLAGS c++;filter_cf __clang LDFLAGS c++;;
 easystroke)export CXXFLAGS="$CXXFLAGS -fno-ipa-cp-clone";export LDFLAGS="$LDFLAGS -lglib-2.0";;
 potrace)appendflag -fno-tree-slp-vectorize;;
 groff)filterflag -fisolate-erroneous-paths-attribute;;
