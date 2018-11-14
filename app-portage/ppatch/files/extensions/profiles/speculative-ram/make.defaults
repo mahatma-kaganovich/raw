@@ -1,6 +1,6 @@
 # low RAM. no -pipe, etc
 # code still reasonable fast
-_FLAGS="$_FLAGS$CFLAGS_SMALL$CFLAGS_FAST$CFLAGS_NATIVE$CFLAGS_M -fno-inline-functions -fno-unroll-loops"
+_FLAGS="$_FLAGS$CFLAGS_SMALL$CFLAGS_FAST$CFLAGS_NATIVE$CFLAGS_M"
 # ? -fconserve-stack
 
 USE="speculative -ssp nossp nopie -sanitize -vtv -pie -pic -rsync-verify"
