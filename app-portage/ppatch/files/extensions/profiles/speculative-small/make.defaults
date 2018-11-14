@@ -1,7 +1,6 @@
 # low RAM. no -pipe, etc
 # small vs. fast code
 
-# there are no reason to use CFLAGS_SMAL outside of -Os (I test)
 _FLAGS="$_FLAGS$CFLAGS_SMALL$CFLAGS_CPU$CFLAGS_M -Os"
 # ? -fconserve-stack
 _FLAGS="$_FLAGS -Wa,-n -Wa,-no-pad-sections -Wa,--strip-local-absolute"

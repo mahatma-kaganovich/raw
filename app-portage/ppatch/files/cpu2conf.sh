@@ -166,8 +166,6 @@ f5+=' -fpermissive -w'
 # mix cxxflags here to simplify. it works
 ffast+=' -minline-stringops-dynamically'
 fsmall+=' -malign-data=abi -flimit-function-alignment -Wa,--reduce-memory-overheads -w'
-# vs. -fno-ipa-cp-clone -fno-inline-functions - keep 1% expansion per opt
-fsmall+=' --param=ipcp-unit-growth=1 --param=inline-unit-growth=1'
 f6+=' -malign-data=cacheline'
 if i=`_smp1 'physical id' 'cpu cores' || _smp processor 1 || _smp 'ncpus active' 0`; then
 	if [ "$i" = 1 ]; then
