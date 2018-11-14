@@ -35,8 +35,8 @@ done
 
 case "$C" in
 LLVM)
-	export CC=clang CXX=clang++ CPP=clang-cpp LD=ld.gold
-	export LDFLAGS="$LDFLAGS -fuse-ld=gold"
+	export CC=clang CXX=clang++ CPP=clang-cpp LD=ld.lld
+	export LDFLAGS="$LDFLAGS -fuse-ld=lld"
 	p=llvm
 #	l=thin
 ;;

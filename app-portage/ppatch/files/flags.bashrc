@@ -239,6 +239,8 @@ _iuse !system-sqlite && filterflag -Ofast -ffast-math
 
 (_iuse gold || [[ "$LD" == *gold ]] || _isflag -fuse-ld=gold) &&
 	filterflag -Wl,--sort-section=alignment -Wl,--reduce-memory-overheads
+(_iuse clang || [[ "$LD" == *lld ]] || _isflag -fuse-ld=lld) &&
+	filterflag -Wl,--reduce-memory-overheads
 # 2do: find bad -O3 flags for seamonkey
 #_iuse custom-optimization && filterflag -Ofast -O3
 
