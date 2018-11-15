@@ -7,9 +7,7 @@ preferred_fp=sse
 ## found: (Paolo Bonzir) Yes.  It might (*might*) be better in GCC 4.4 thanks to the new register allocator, but it's unlikely that the manual page will be changed before the release.
 ## upd: bashmark poor results and extremly poor in KVM
 #preferred_fp=both
-## empty: do not link (2x-3x faster)
-code=
-#code='int main(){}'
+code='int main(){}'
 
 export LANG=C
 
@@ -18,15 +16,20 @@ lang=c
 filter=continue
 # gcc default defaults
 base=
-
 gcc=gcc
-[ -z "$code" ] && gcc+=' -c'
 
 _c(){
 	$gcc $base "${@}" $ct 2>&1
 }
 
 _c1(){
+	local gcc=$gcc
+	# speedup
+	case "$*" in
+	*-Wl*);;
+	*-Wa*)gcc+=' -c';;
+	*)gcc+=' -S';;
+	esac
 	echo "$code" |$gcc -x $lang - -pipe $base "${@}" -o /dev/null 2>&1
 }
 
