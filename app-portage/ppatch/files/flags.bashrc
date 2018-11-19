@@ -232,6 +232,7 @@ coreutils)filterflag -flto=jobserver && appendflag1 -flto;;
 glibc|gnustep-back-cairo|qtcore)_fLTO_f -flto-partition=none;;
 mpg123)filterflag -floop-nest-optimize;; # distortion on sse
 mongodb)[ "$AR" = gcc-ar ] && export AR=/usr/bin/ar ;;
+nodejs)appendflag1 -fno-fast-math;; # -> chromium
 esac
 
 # more test flags-inject.bashrc before remove
