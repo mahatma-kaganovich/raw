@@ -193,10 +193,10 @@ ceph)_isflag '-floop-*' '-fgraphite*' && { # prefer graphite vs. lto
 ;;&
 glibc)gccve 6. && appendflag -fno-tree-slp-vectorize;;&
 glibc)gccve 6. || filterflag -ftracer;;&
-glibc)filterflag -Ofast -ffast-math -fopenmp -fopenmp-simd '-*parallelize*';;&
-sqlite|postgresql*|goffice|db|protobuf|qtwebkit|qtwebengine|webkit-gtk|python|guile|chromium*|rrdtool)filterflag -Ofast -ffast-math;;&
+glibc)filterflag -fopenmp -fopenmp-simd '-*parallelize*';;&
+# nodejs -> chromium
+glibc|mpg123|nodejs|fontforge|sqlite|postgresql*|goffice|db|protobuf|qtwebkit|qtwebengine|webkit-gtk|python|guile|chromium*|rrdtool)_isflag '-[Of]fast*' && appendflag1 -fno-fast-math;;&
 chromium*)_iuse abi_x86_32 && filterflag -maccumulate-outgoing-args;;&
-fontforge)filterflag -Ofast;;
 mit-krb5|ceph)export CFLAGS="${CFLAGS//-Os/-O2}";export CXXFLAGS="${CXXFLAGS//-Os/-O2}";;
 wine)filterflag -ftree-loop-distribution -ftree-loop-distribute-patterns;;
 ncurses)_iuse profile && filterflag -fomit-frame-pointer;;
@@ -209,7 +209,7 @@ freeglut)_isflag '-floop-*' '-fgraphite*' && appendflag -fno-ipa-cp-clone;;
 # 5.1
 gccxml|xemacs|devil|vtun|irda-utils|wmmon|bbrun|diffball|ldns|rp-l2tp)appendflag -std=gnu89;;
 sessreg|ldns)export CPPFLAGS="$CPPFLAGS -P";;
-mpg123)_iuse abi_x86_32 && gccve 5. && export CFLAGS="${CFLAGS//-O3/-O2}" && filterflag -Ofast -fpeel-loops -funroll-loops;;&
+mpg123)_iuse abi_x86_32 && gccve 5. && export CFLAGS="${CFLAGS//-O3/-O2}" && filterflag -fpeel-loops -funroll-loops;;&
 klibc)[[ "$MAKEOPTS" == *'-j '* || "$MAKEOPTS" == *-j ]] && export MAKEOPTS="$MAKEOPTS -j8";;
 gmp)filterflag -floop-nest-optimize;;
 gmp) _isflag '-floop-*' && {
@@ -232,12 +232,11 @@ coreutils)filterflag -flto=jobserver && appendflag1 -flto;;
 glibc|gnustep-back-cairo|qtcore)_fLTO_f -flto-partition=none;;
 mpg123)filterflag -floop-nest-optimize;; # distortion on sse
 mongodb)[ "$AR" = gcc-ar ] && export AR=/usr/bin/ar ;;
-nodejs)appendflag1 -fno-fast-math;; # -> chromium
 esac
 
 # more test flags-inject.bashrc before remove
 # seamonkey unknown error on install -> precompile cache
-_iuse !system-sqlite && filterflag -Ofast -ffast-math
+_iuse !system-sqlite && _isflag '-[Of]fast*' && appendflag1 -fno-fast-math
 
 (_iuse gold || [[ "$LD" == *gold ]] || _isflag -fuse-ld=gold) &&
 	filterflag -Wl,--sort-section=alignment -Wl,--reduce-memory-overheads
