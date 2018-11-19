@@ -169,8 +169,9 @@ ffmpeg|xemacs|mesa|fuse|wayland|privoxy|icedtea|qtwebkit|xf86-video-intel|mplaye
 ncurses)_fLTO && export ac_cv_func_dlsym=no ac_cv_lib_dl_dlsym=yes;;&
 libreoffice|mariadb)filterflag -ffat-lto-objects;;&
 mariadb)_fLTO_f -fno-ipa-cp-clone;;&
+php)[[ "$PV" == 5.* ]] || filterflag '-flto*' -fdevirtualize-at-ltrans;;&
 # works over make.lto wrapper, but wrapper wrong for some other packets
-php|numactl|alsa-lib|elfutils|dhcdrop|lksctp-tools|mysql-connector-c)filterflag '-flto*' -fdevirtualize-at-ltrans;;&
+numactl|alsa-lib|elfutils|dhcdrop|lksctp-tools|mysql-connector-c)filterflag '-flto*' -fdevirtualize-at-ltrans;;&
 # ilmbase -> openexr
 ilmbase|mesa)_fLTO_f -Wl,-lpthread -lpthread;;&
 clang*)filterflag -flto-partition=none;;&
