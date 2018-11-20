@@ -129,7 +129,7 @@ max_unrolled(){
 }
 
 conf_cpu(){
-local f0= f1= f2= f3= f4= f5= f6= fsmall= ffast= i j i1 j1 c c0 c1 lm=false fp=387 gccv m="`uname -m`" i fsec= ind=
+local f0= f1= f2= f3= f4= f5= f6= fsmall= ffast= i j i1 j1 c c0 c1 lm=false fp=387 gccv m="`uname -m`" i fsec= ind= l2=
 _setflags flags cpucaps 'cpu family' model fpu vendor_id
 cmn=$($gcc --help=common -v -Q 2>&1)
 if i=$(echo "$cmn"|grep --max-count=1 "^Target: "); then
@@ -289,6 +289,15 @@ if c0=`_c $f0` && c=`_c $f4`; then
 		c0="$c"
 	done
 fi
+
+# this is really not "small", but related to code size too, so let's be here
+# divide upper (l2 AKA l3) cache to number of siblings
+# in theory (or my fantasy) minimize (if gcc use it) cache & bus usage.
+i="${f4##*--param=l2-cache-size=}"
+[ "$i" = "$f4" ] || {
+	l2="${i%% *}"
+	i=`_smp siblings 0 || _smp 'cpu cores' 0` && [ "$i" -gt 1 ] && l2=$[l2/i] && fsmall+="`_f --param=l2-cache-size=$l2`"
+}
 
 i1=
 c0=
