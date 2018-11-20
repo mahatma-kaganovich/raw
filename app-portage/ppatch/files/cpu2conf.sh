@@ -296,7 +296,11 @@ fi
 i="${f4##*--param=l2-cache-size=}"
 [ "$i" = "$f4" ] || {
 	l2="${i%% *}"
-	i=`_smp siblings 0 || _smp 'cpu cores' 0` && [ "$i" -gt 1 ] && l2=$[l2/i] && fsmall+="`_f --param=l2-cache-size=$l2`"
+	i=`_smp siblings 0 || _smp 'cpu cores' 0` && [ "$i" -gt 1 ] && i=$[l2/i] && {
+		i="`_f --param=l2-cache-size=$i`"
+		l2="`_f --param=l2-cache-size=$l2`"
+		[ -n "$l2" -a -n "$i" ] && fsmall+="$i" && ffast+="$l2" && f4="${f4//$l2}"
+	}
 }
 
 i1=
