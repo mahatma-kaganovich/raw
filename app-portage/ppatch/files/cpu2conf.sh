@@ -336,10 +336,10 @@ for i in $f3; do
 	esac
 done
 
-echo "CFLAGS_NATIVE=\"$f0$f6\"
-CFLAGS_CPU=\"$f4$f6\"
+echo "CFLAGS_NATIVE=\"$f0\"
+CFLAGS_CPU=\"$f4\"
 CFLAGS_M=\"$fm\"
-CFLAGS_FAST=\"\$CFLAGS_FAST$ffast\"
+CFLAGS_FAST=\"\$CFLAGS_FAST$ffast$f6\"
 CFLAGS_SMALL=\"\$CFLAGS_SMALL$fsmall\"
 CFLAGS_SECURE=\"$fsec\"
 _FLAGS=\"$ff\${_FLAGS}\"
