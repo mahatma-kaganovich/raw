@@ -123,9 +123,9 @@ max_unrolled(){
 	# IMHO: -funroll-loops looks uneffective in global scope
 	#ffast+='  -funroll-loops' ; fsmall+=' -fno-unroll-loops'
 	# prefetching can cause code expansion. disable for low values to prefer code streaming
-	ffast+=" --param=prefetch-min-insn-to-mem-ratio=$(($1+1))" # make effect of data streaming reasonable solid, related to code streaming
+#	ffast+=" --param=prefetch-min-insn-to-mem-ratio=$(($1+1))" # make effect of data streaming reasonable solid, related to code streaming
 	# -fprefetch-loop-arrays default ON vs. -Os
-	ffast+=" --param=min-insn-to-prefetch-ratio=$(($1+1))" # gcc 6: insn_to_prefetch_ratio = (unroll_factor * ninsns) / prefetch_count;
+#	ffast+=" --param=min-insn-to-prefetch-ratio=$(($1+1))" # gcc 6: insn_to_prefetch_ratio = (unroll_factor * ninsns) / prefetch_count;
 }
 
 conf_cpu(){
