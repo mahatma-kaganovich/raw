@@ -27,7 +27,7 @@ SLOT="0"
 
 IUSE="acl addc addns ads ceph client cluster cups debug dmapi fam gnutls gpg iprint json ldap
 pam python quota selinux syslog systemd test winbind afs sasl zeroconf cpu_flags_x86_aes nls
-lmdb etcd system-ldb"
+lmdb etcd system-ldb snapper"
 
 MULTILIB_WRAPPED_HEADERS=(
 	/usr/include/samba-4.0/policy.h
@@ -86,6 +86,7 @@ CDEPEND="
 		>=app-crypt/heimdal-1.5[-ssl,${MULTILIB_USEDEP}]
 	) )
 	nls? ( sys-devel/gettext )
+	snapper? ( sys-apps/dbus )
 	systemd? ( sys-apps/systemd:0= )"
 
 DEPEND="${CDEPEND}
@@ -164,6 +165,8 @@ src_prepare() {
 
 	# unbundle iso8601 unless tests are enabled
 	use test || sed -i -e '/"iso8601":/d' "${S}"/third_party/wscript || die
+
+	use snapped || sed -i -e "s:(package='dbus-1':(package='____dbus-1':" source3/wscript
 
 	# ugly hackaround for bug #592502
 	cp /usr/include/tevent_internal.h "${S}"/lib/tevent/ || die
