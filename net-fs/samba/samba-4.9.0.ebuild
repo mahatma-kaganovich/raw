@@ -186,7 +186,7 @@ automagic(){
 multilib_src_configure() {
 	local ldb=
 	# 4.9+: +use lmdb
-	use system-ldb || ldb='ldb,'
+	use !system-ldb && ldb='ldb,' && use python && ldb+='pyldb,pyldb-util,'
 	local myconf=(
 		--enable-fhs
 		--sysconfdir="${EPREFIX}/etc"
