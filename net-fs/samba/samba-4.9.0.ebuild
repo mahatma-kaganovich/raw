@@ -166,7 +166,7 @@ src_prepare() {
 	# unbundle iso8601 unless tests are enabled
 	use test || sed -i -e '/"iso8601":/d' "${S}"/third_party/wscript || die
 
-	use snapped || sed -i -e "s:(package='dbus-1':(package='____dbus-1':" source3/wscript
+	use snapper || sed -i -e "s:(package='dbus-1':(package='____dbus-1':" source3/wscript
 
 	# ugly hackaround for bug #592502
 	cp /usr/include/tevent_internal.h "${S}"/lib/tevent/ || die
