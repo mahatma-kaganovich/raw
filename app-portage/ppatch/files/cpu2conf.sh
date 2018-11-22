@@ -305,6 +305,7 @@ i="${f4##*--param=l2-cache-size=}"
 	done
 	#[ -z "$nc" ] && nc=0
 	[ "$nc" = 0 ] && for i in ${cpus//,/ }; do
+		[[ "$i" != *-* ]] && nc=$[nc+1] ||
 		for i in $(seq ${i//-/ }); do
 			nc=$[nc+1]
 		done
