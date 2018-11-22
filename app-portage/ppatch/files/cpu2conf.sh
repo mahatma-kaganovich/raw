@@ -296,7 +296,21 @@ fi
 i="${f4##*--param=l2-cache-size=}"
 [ "$i" = "$f4" ] || {
 	l2="${i%% *}"
-	i=`_smp siblings 0 || _smp 'cpu cores' 0` && [ "$i" -gt 1 ] && l2=$[l2/i] &&
+	# /proc/cpuinfo not enough: z8700 have 2x1024 l2 caches on the top
+	local nc=0 cpus=
+	for i in /sys/devices/system/cpu/cpu0/cache/index*; do
+		[ "${l2}K" = "$(< $i/size)" ] || continue
+		#nc=$(< $i/ways_of_associativity)
+		cpus=$(< $i/shared_cpu_list)
+	done
+	#[ -z "$nc" ] && nc=0
+	[ "$nc" = 0 ] && for i in ${cpus//,/ }; do
+		for i in $(seq ${i//-/ }); do
+			nc=$[nc+1]
+		done
+	done
+	[ "$nc" = 0 ] && nc=`_smp siblings 0 || _smp 'cpu cores' 0`
+	[ "$nc" -gt 1 ] && l2=$[l2/nc] &&
 		fsmall+="`_f --param=l2-cache-size=$l2`"
 }
 
