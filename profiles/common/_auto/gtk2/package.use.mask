@@ -9,7 +9,9 @@ dev-java/oracle-jdk-bin:9 -gtk2 gtk3
 dev-java/oracle-jre-bin:9 -gtk2 gtk3
 media-libs/libmediaart -gtk qt5
 media-plugins/audacious-plugins -gtk gtk3 qt5
+media-plugins/audacious-plugins -gtk qt5
 media-sound/audacious -gtk gtk3 qt5
+media-sound/audacious -gtk qt5
 net-analyzer/pinger -gtk2 gtk3
 net-misc/dhcpcd-ui -gtk gtk3
 x11-terms/mlterm -gtk2 -gtk

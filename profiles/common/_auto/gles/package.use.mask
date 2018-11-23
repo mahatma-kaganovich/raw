@@ -1,12 +1,7 @@
-dev-libs/DirectFB -gles2 -opengl
-dev-libs/efl -gles -egl
 dev-libs/efl -gles opengl
-dev-qt/qtgui:5 -gles2 -egl
-media-libs/gst-plugins-bad:1.0 -gles2 opengl
+dev-qt/qtgui -gles2 -egl
 media-libs/mesa -gles1 -egl
 media-libs/mesa -gles2 -egl
 media-plugins/gst-plugins-vaapi -gles2 -egl
-net-libs/webkit-gtk -gles2 opengl
-net-libs/webkit-gtk -gles2 -egl
 net-libs/webkit-gtk -gles2 -egl opengl
 x11-libs/cairo -gles2 opengl

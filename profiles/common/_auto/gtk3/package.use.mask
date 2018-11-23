@@ -4,7 +4,9 @@ dev-java/oracle-jdk-bin:9 -gtk3 gtk2
 dev-java/oracle-jre-bin:9 -gtk3 gtk2
 media-libs/libmediaart -gtk qt5
 media-plugins/audacious-plugins -gtk3 gtk qt5
+media-plugins/audacious-plugins -gtk qt5
 media-sound/audacious -gtk3 gtk qt5
+media-sound/audacious -gtk qt5
 net-analyzer/pinger -gtk3 gtk2
 net-misc/dhcpcd-ui -gtk3 gtk
 app-misc/tracker -gstreamer ffmpeg

@@ -1,16 +1,9 @@
-dev-libs/efl -opengl gles
-dev-libs/efl -opengl egl
-media-gfx/tachyon -opengl # mpi
-media-libs/gst-plugins-bad:1.0 -opengl gles2
-net-libs/webkit-gtk -opengl gles2
-x11-libs/cairo -opengl gles2
 app-admin/sudo -openssl gcrypt
 app-i18n/yaskkserv -gnutls libressl
-dev-db/mariadb -openssl yassl libressl
-dev-db/mysql -openssl yassl libressl
 dev-db/mysql-cluster -openssl yassl libressl
-dev-db/percona-server -openssl yassl libressl
-dev-libs/efl -gnutls -ssl
+dev-libs/librelp -openssl gnutls
+dev-libs/librelp -gnutls -ssl
+dev-libs/librelp -openssl -ssl
 dev-libs/xmlsec -gnutls -gcrypt
 dev-perl/DBD-mysql -ssl embedded
 dev-vcs/cvsync -mhash gcrypt
@@ -18,7 +11,6 @@ mail-mta/courier -gnutls libressl
 mail-mta/exim -gnutls -ssl
 mail-mta/msmtp -gnutls -ssl
 mail-mta/ssmtp -gnutls -ssl
-media-video/vlc -gnutls -gcrypt
 media-video/vlc -ssl -gcrypt
 net-analyzer/echoping -gnutls -ssl
 net-analyzer/sngrep -gnutls openssl
@@ -28,6 +20,8 @@ net-fs/s3fs -nettle -gnutls
 net-irc/iroffer-dinoex -gnutls -ssl
 net-irc/scrollz -gnutls -ssl
 net-libs/libgadu -gnutls -ssl
+net-libs/libssh -gcrypt mbedtls
+net-libs/libssh2 -gcrypt libressl mbedtls
 net-mail/mpop -gnutls -ssl
 net-misc/iputils -openssl nettle gcrypt
 net-misc/networkmanager -gnutls nss

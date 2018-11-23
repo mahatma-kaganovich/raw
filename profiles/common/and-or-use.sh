@@ -388,11 +388,14 @@ gst1="$(sl "media-[a-z]*/gst-plugins-$i" 1 "media-plugins/gstreamer$i" 1)"
 
 generate gles 'gles2 gles gles1' 'opengl' 'gles gles1 opengl egl vaapi' &
 {
+
 force='' generate common 'opengl egl' 'gles gles1 gles2' 'gles gles1 gles2 egl'
+echo -n >"$d"/_auto/common/package.use.mask
 
 x1='kernel ssl openssl gnutls nss mhash cryptopp nettle gcrypt' # enabled
 x2='libressl yassl mbedtls embedded' # drop
 force='' generate +common "$x1" "$x1" "$x2"
+
 
 x=python_single_target_python
 generate +common "${x}2_7 ${x}3_6 ${x}3_7 ${x}3_5 ${x}3_4"
