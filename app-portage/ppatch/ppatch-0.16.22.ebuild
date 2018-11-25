@@ -22,7 +22,7 @@ src_compile(){
 	}
 	{
 		case "$ARCH" in
-		amd64|x86)echo "ACCEPT_KEYWORDS=\"amd64 ~amd64 x86 ~x86\"";;
+		amd64|x86|x32)echo "ACCEPT_KEYWORDS=\"amd64 ~amd64 x86 ~x86\"";;
 		*)echo "ACCEPT_KEYWORDS=\"$ARCH ~$ARCH\"";;
 		esac
 		. "${FILESDIR}/cpu2conf.sh"
