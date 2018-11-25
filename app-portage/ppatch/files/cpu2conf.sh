@@ -129,7 +129,7 @@ max_unrolled(){
 }
 
 conf_cpu(){
-local f0= f1= f2= f3= f4= f5= f6= fsmall= ffast= i j i1 j1 c c0 c1 lm=false fp=387 gccv m="`uname -m`" i fsec= ind= l2=
+local f0= f1= f2= f3= f4= f5= f6= fsmall= ffast= i j i1 j1 c c0 c1 lm=false fp=387 gccv m="`uname -m`" i fsec= ind= l2= x32=false
 _setflags flags cpucaps 'cpu family' model fpu vendor_id
 cmn=$($gcc --help=common -v -Q 2>&1)
 if i=$(echo "$cmn"|grep --max-count=1 "^Target: "); then
@@ -142,6 +142,7 @@ if i=$(echo "$cmn"|grep --max-count=1 "^Target: "); then
 		echo "CHOST=\"$i\""
 		echo "CBUILD=\"$i\""
 	;;
+	*:x86_64-*x32)x32=true;;
 	esac
 fi
 # "thunk" may be better in some cases, but incompatible with -mcmodel=large, so be simple universal
@@ -153,7 +154,8 @@ GenuineIntel:6:78|GenuineIntel:6:94|GenuineIntel:6:85|GenuineIntel:6:142|Genuine
 ;;
 esac
 f0=`_f -m{tune,cpu,arch}=native`
-f3='-momit-leaf-frame-pointer -mtls-dialect=gnu2 -fsection-anchors'
+f3='-momit-leaf-frame-pointer -fsection-anchors'
+$x32 || f3+=' -mtls-dialect=gnu2'
 f5='-fvisibility-inlines-hidden'
 # gcc 4.9 - -fno-lifetime-dse, gcc 6.3 - around some of projects(?) - keep 6.3 only safe
 # try to forget after years of upstream fixing
