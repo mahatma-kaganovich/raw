@@ -1,4 +1,5 @@
 _FLAGS="$_FLAGS -flto -fuse-linker-plugin -ffat-lto-objects -fdevirtualize-at-ltrans"
+CFLAGS_FAST=" -flto-compression-level=1$CFLAGS_FAST"
 CFLAGS_SMALL=" -flto-compression-level=9$CFLAGS_SMALL"
 
 #LDFLAGS="$LDFLAGS $CFLAGS $_FLAGS"
