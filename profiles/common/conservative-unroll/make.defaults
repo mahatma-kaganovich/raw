@@ -1,3 +1,3 @@
-_FLAGS="$_FLAGS -funroll-loops -fvariable-expansion-in-unroller"
+_FLAGS="$_FLAGS -funroll-loops"
 # giant RAM usage, but safer code
 _FLAGS="$_FLAGS -fipa-pta"
