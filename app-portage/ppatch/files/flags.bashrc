@@ -19,7 +19,7 @@ _iuse(){
 }
 
 filterflag1(){
-local p v x local f ff="$1" rr
+local p v x local f ff="$1" rr r=false
 shift
 for v in $ff; do
     rr=
@@ -32,7 +32,7 @@ for v in $ff; do
     done
     x="${x# }"
     [ "$x" != "${!v}" ] && export $v="$x"
-    [ -n "$rr" ] && echo "flags filtered $v $rr"
+    [ -n "$rr" ] && r=true && echo "flags filtered $v $rr"
 done
 $r
 }
@@ -145,6 +145,18 @@ _fLTO_f(){
 	export LDFLAGS="$* $LDFLAGS"
 }
 
+_fnofastmath(){
+	# "simple" -fno-fast-math
+	# respect -Ofast != '-O3 -ffast-math'
+	# -mfpmath=both sometimes benefits only fast
+	# compat: with my profiles only 'isflag && append' enough
+	local b='-mfpmath=both -mfpmath=sse?387 -mfpmath=387?sse'
+	_isflag ${CFLAGS_FAST_MATH:--Ofast -ffast-math $b} && {
+		appendflag1 ${@:-${CFLAGS_NO_FAST_MATH:--fno-fast-math}}
+		filterflag $b
+	}
+}
+
 filter_cf CC CFLAGS c
 filter_cf CXX CXXFLAGS c++
 
@@ -194,14 +206,16 @@ ceph)_isflag '-floop-*' '-fgraphite*' && { # prefer graphite vs. lto
 glibc)gccve 6. && appendflag -fno-tree-slp-vectorize;;&
 glibc)gccve 6. || filterflag -ftracer;;&
 glibc)filterflag -fopenmp -fopenmp-simd '-*parallelize*';;&
+# -Ofast / -ffast-math:
 # nodejs -> chromium
-glibc|mpg123|nodejs|fontforge|sqlite|postgresql*|goffice|db|protobuf|qtwebkit|qtwebengine|webkit-gtk|python|guile|chromium*|rrdtool)_isflag '-[Of]fast*' && appendflag1 -fno-fast-math;;&
+glibc|mpg123|nodejs|fontforge|sqlite|postgresql*|goffice|db|protobuf|qtwebkit|qtwebengine|webkit-gtk|python|guile|chromium*|rrdtool)_fnofastmath;;&
+# 2check
+libX11|wget)_isflag -Os && _fnofastmath -fno-unsafe-math-optimizations -fno-signed-zeros -fno-trapping-math -fassociative-math -freciprocal-math;;&
 chromium*)_iuse abi_x86_32 && filterflag -maccumulate-outgoing-args;;&
 mit-krb5|ceph)export CFLAGS="${CFLAGS//-Os/-O2}";export CXXFLAGS="${CXXFLAGS//-Os/-O2}";;
 wine)filterflag -ftree-loop-distribution -ftree-loop-distribute-patterns;;
 ncurses)_iuse profile && filterflag -fomit-frame-pointer;;
 xf86-video-siliconmotion|vlc|xorg-server)appendflag -w;;
-libX11|wget)_isflag -Os && _isflag -Ofast -ffast-math -funsafe-math-optimizations && ! _isflag -fno-unsafe-math-optimizations && appendflag -fno-unsafe-math-optimizations -fno-signed-zeros -fno-trapping-math -fassociative-math -freciprocal-math;;
 cairo)[[ "$PV" == 1.12.16* ]] && appendflag1 -fno-lto;;
 udev|spidermonkey)filterflag -Wl,--sort-section=alignment -Wl,--reduce-memory-overheads;; # gold
 fltk)_isflag '-floop-*' '-fgraphite*' && filterflag -ftree-loop-distribution;; # -O2+
@@ -236,15 +250,12 @@ esac
 
 # more test flags-inject.bashrc before remove
 # seamonkey unknown error on install -> precompile cache
-_iuse !system-sqlite && _isflag '-[Of]fast*' && appendflag1 -fno-fast-math
+_iuse !system-sqlite && _fnofastmath
 
 (_iuse gold || [[ "$LD" == *gold ]] || _isflag -fuse-ld=gold) &&
 	filterflag -Wl,--sort-section=alignment -Wl,--reduce-memory-overheads
 (_iuse clang || [[ "$LD" == *lld ]] || _isflag -fuse-ld=lld) &&
 	filterflag -Wl,--reduce-memory-overheads
-# 2do: find bad -O3 flags for seamonkey
-#_iuse custom-optimization && filterflag -Ofast -O3
-
 
 #filter86_32 -fschedule-insns -fira-loop-pressure
 

@@ -129,7 +129,7 @@ max_unrolled(){
 }
 
 conf_cpu(){
-local f0= f1= f2= f3= f4= f5= f6= fsmall= ffast= i j i1 j1 c c0 c1 lm=false fp=387 gccv m="`uname -m`" i fsec= ind= l2= x32=false
+local f0= f1= f2= f3= f4= f5= f6= fsmall= ffast= ffm= fnm= i j i1 j1 c c0 c1 lm=false fp=387 gccv m="`uname -m`" i fsec= ind= l2= x32=false
 _setflags flags cpucaps 'cpu family' model fpu vendor_id
 cmn=$($gcc --help=common -v -Q 2>&1)
 if i=$(echo "$cmn"|grep --max-count=1 "^Target: "); then
@@ -155,6 +155,15 @@ GenuineIntel:6:78|GenuineIntel:6:94|GenuineIntel:6:85|GenuineIntel:6:142|Genuine
 esac
 f0=`_f -m{tune,cpu,arch}=native`
 f3='-momit-leaf-frame-pointer -fsection-anchors'
+# tricky! -Ofast contains more then '-O3 -ffast-math' (imho), so ones set - try to keep
+#ffm=' -Ofast'
+#fnfm=' -fno-fast-math'
+# [NO] fast math: implies - I know! but:
+#	1) vs. some overfiltering
+#	2) for filtering again
+#	3) keep all in one point
+ffm=' -Ofast -ffast-math'
+fnfm=' -O3 -Ofast -fno-fast-math'
 $x32 || f3+=' -mtls-dialect=gnu2'
 f5='-fvisibility-inlines-hidden'
 # gcc 4.9 - -fno-lifetime-dse, gcc 6.3 - around some of projects(?) - keep 6.3 only safe
@@ -245,9 +254,10 @@ for i in $flags; do
 	;;
 	esac
 done
-f3+=" -mfpmath=$fp"
+# sse|387: automated by [current] gcc, both: sense mostly for -ffast-math
+[ "$fp" = both ] && ffm+=' -mfpmath=both' && fnfm+=' -mfpmath=sse'
 $lm && f1+=" 64-bit-bfd" || f1+=" -64-bit-bfd"
-for i in f3 ffast fsmall unroll f5+ fsec f6; do
+for i in f3 ffast fsmall unroll f5+ fsec f6 ffm fnfm; do
 	case "$i" in
 	*+)	i=${i%+}
 		[ -n "${!i}" ] && declare $i="`lang=c++ _f ${!i}`"
@@ -359,6 +369,8 @@ CFLAGS_M=\"$fm\"
 CFLAGS_FAST=\"\$CFLAGS_FAST$ffast$f6\"
 CFLAGS_SMALL=\"\$CFLAGS_SMALL$fsmall\"
 CFLAGS_SECURE=\"$fsec\"
+CFLAGS_FAST_MATH=\"\$CFLAGS_FAST_MATH$ffm\"
+CFLAGS_NO_FAST_MATH=\"\$CFLAGS_NO_FAST_MATH$fnfm\"
 _FLAGS=\"$ff\${_FLAGS}\"
 _XFLAGS=\"${f5# } \${_XFLAGS}\"
 "
