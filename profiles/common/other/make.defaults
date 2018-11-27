@@ -3,6 +3,8 @@
 USE="pgo lto"
 _FLAGS="-O2 -O3 -fno-ident"
 #_FLAGS="$_FLAGS -fomit-frame-pointer"
+# giant compile RAM
+_FLAGS="$_FLAGS -fipa-pta"
 
 # vs. -fno-ipa-cp-clone -fno-inline-functions - keep 1% expansion per opt
-CFLAGS_SMALL=" --param=ipcp-unit-growth=1 --param=inline-unit-growth=1$CFLAGS_SMALL"
+CFLAGS_SMALL=" -fno-ipa-pta --param=ipcp-unit-growth=1 --param=inline-unit-growth=1$CFLAGS_SMALL"

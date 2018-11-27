@@ -1,4 +1,1 @@
 _FLAGS="$_FLAGS -floop-nest-optimize"
-
-# accurate variable tracking (memory hungry), can help to graphite
-#_FLAGS="$_FLAGS -fipa-pta"
