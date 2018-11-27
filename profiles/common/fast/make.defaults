@@ -3,7 +3,7 @@
 _FLAGS="$_FLAGS -fbranch-target-load-optimize -fdelete-dead-exceptions"
 _FLAGS="$_FLAGS -fmodulo-sched -fmodulo-sched-allow-regmoves -freschedule-modulo-scheduled-loops"
 # keep here until new reasons to split
-_FLAGS="$_FLAGS -fivopts -ftracer -fgcse-sm -fgcse-las -fvariable-expansion-in-unroller -fweb -frename-registers"
+_FLAGS="$_FLAGS -fivopts -ftracer -fgcse-sm -fgcse-las -fvariable-expansion-in-unroller -fweb"
 
 CFLAGS_SMALL=" -fno-web -fno-tracer -fno-reschedule-modulo-scheduled-loops$CFLAGS_SMALL"
 
