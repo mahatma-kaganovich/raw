@@ -1,4 +1,4 @@
-_FLAGS="$_FLAGS$CFLAGS_FAST$CFLAGS_NATIVE$CFLAGS_M -w"
+_FLAGS="$_FLAGS$CFLAGS_FAST_MATH$CFLAGS_FAST$CFLAGS_NATIVE$CFLAGS_M -w"
 USE="speculative -ssp nossp nopie -sanitize -vtv -rsync-verify"
 PORTAGE_RSYNC_OPTS="$PORTAGE_RSYNC_OPTS --exclude=/metadata/md5-cache"
 CFLAGS="$CFLAGS $_FLAGS"

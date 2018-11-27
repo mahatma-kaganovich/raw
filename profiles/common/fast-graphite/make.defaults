@@ -1,5 +1,0 @@
-# try to believe to Intel LSD feature in core2 vs unrolling
-# -funroll-loops
-_FLAGS="$_FLAGS -fweb"
-# -funroll-loops -fpeel-loops, less to x86_32
-_FLAGS="$_FLAGS -frename-registers" 
