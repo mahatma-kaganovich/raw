@@ -119,7 +119,10 @@ flag_skip(){
 }
 
 max_unrolled(){
-	ffast+=" --param=max-unrolled-insns=$(($1-4)) -fvariable-expansion-in-unroller"
+	local n=$(($1-4))
+	# default 100 80
+	# while limited *ram & fast-unroll* profiles - keep doubts
+	fsmall+=" --param=max-unrolled-insns=$n --param=max-average-unrolled-insns=$((n*10/25))"
 	# IMHO: -funroll-loops looks uneffective in global scope
 	#ffast+='  -funroll-loops' ; fsmall+=' -fno-unroll-loops'
 	# prefetching can cause code expansion. disable for low values to prefer code streaming
@@ -226,7 +229,12 @@ x86_*|i?86)
 	f3+=$(_f -fira-loop-pressure -fira-hoist-pressure -flive-range-shrinkage -fsched-pressure -fschedule-insns -fsched-spec-load --param=sched-pressure-algorithm=2)
 	# gnostic - don't know how to get universal default of defaults for GCC
 	# -mtune=x86-64 deprecated
-	base="-mtune=generic -march=${m//_/-}"
+	base=
+	case "$vendor_id" in
+	GenuineIntel)base=`_f -mtune=intel`;;
+	esac
+	[ -z "$base" ] && base='-mtune=generic'
+	base+=" -march=${m//_/-}"
 	ffast+=' -maccumulate-outgoing-args -mno-push-args'
 	fsmall+=' -mno-accumulate-outgoing-args -mpush-args'
 ;;
@@ -289,6 +297,12 @@ if c0=`_c` && c=`_c $f0`; then
 	done
 fi
 f4="${j//--param /--param=}"
+for i in $f4; do
+	case " $f4 " in
+	# no flag in kernel
+	-mshstk)fsec+"`_f -fcf-protection=full`";;
+	esac
+done
 if c0=`_c $f0` && c=`_c $f4`; then
 	j="$(_cmp '/as ' '-Wa,')"
 	[ -n "$j" ] &&

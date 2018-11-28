@@ -1,2 +1,1 @@
 _FLAGS="$_FLAGS -funroll-loops"
-CFLAGS_SMALL=" --param=max-unrolled-insns=99$CFLAGS_SMALL"
