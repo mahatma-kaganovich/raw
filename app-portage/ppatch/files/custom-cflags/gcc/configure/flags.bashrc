@@ -6,9 +6,18 @@ f=x
 for i in $CFLAGS; do
 	case "$i" in
 	-O)f="$i";;
-	# agnostic fixed defaults are dangerous
-#	-m*=*)
-	-mtune=*|-mfpmath=*)i="${i#-m}";j="${i%%=*}";export with_${j//-/_}="${i#*=}";;
+	-m*=*)
+		i="${i#-m}"
+		j="${i%%=*}"
+		j=
+		case "$j" in
+		tune|fpmath);;
+		tls-dialect)j=tls;;
+		# agnostic fixed defaults are dangerous
+		*)continue;;
+		esac
+		export with_"${j//-/_}"=""${i#*=}""
+	;;
 	esac
 done
 case "$f" in
