@@ -11,7 +11,8 @@ for i in $CFLAGS; do
 		j="${i%%=*}"
 		case "$j" in
 		tune|fpmath);;
-		tls-dialect)j=tls;;
+		# only arm?! to check sources
+		#tls-dialect)j=tls;;
 		# agnostic fixed defaults are dangerous
 		*)continue;;
 		esac
