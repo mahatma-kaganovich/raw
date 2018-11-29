@@ -4,7 +4,12 @@ ff0=" $(all-flag-vars) "
 
 f=x
 for i in $CFLAGS; do
-	[[ "$i" == -O* ]] && f="$i"
+	case "$i" in
+	-O)f="$i";;
+	# agnostic fixed defaults are dangerous
+#	-m*=*)
+	-mtune=*|-mfpmath=*)i="${i#-m}";j="${i%%=*}";export with_${j//-/_}="${i#*=}";;
+	esac
 done
 case "$f" in
 # need testing
@@ -18,6 +23,20 @@ x)
 esac
 replace-flags '-O*' $f
 [ -e "$S/config/bootstrap$f.mk" ] && with_build_config+=" bootstrap$f" # ignored?
+
+# --with-fpmath ($with_fpmath) is "sse" or "avx"
+[ "$with_fpmath" = 387 ] || {
+with_fpmath=$(echo '#if defined(__AVX__)
+#error avx
+#elif defined(__SSE2__)
+#error sse
+#endif'|$(tc-getCPP) - -o /dev/null $CFLAGS 2>&1|head -n 1)
+with_fpmath=${with_fpmath##* }
+}
+case "$with_fpmath" in
+sse|avx)export with_fpmath;;
+*)unset with_fpmath;;
+esac
 
 # static libs
 f1=
