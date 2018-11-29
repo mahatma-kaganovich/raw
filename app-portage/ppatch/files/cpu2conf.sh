@@ -364,12 +364,10 @@ done
 _cmp1 "$i1" "$f4" && f4="$i1"
 
 for i in $base2; do
-	[[ " $f4 " != *" ${i%=*}"[=\ ]* ]] || continue
-	f4+=" $i"
 	# we know better then "-mtune=native".
 	# my x7-Z8700 model 76 better perform as common "intel"
 	# (or even "silvermont" = march, but this is too specific)
-	[[ "$i" == -mtune=* ]] && f0="${f0//-mtune=native/$i}"
+	[[ " $f4 " != *" ${i%=*}"[=\ ]* ]] && f4+=" $i" && f0="${f0//-mtune=native/$i}"
 done
 
 for i in $base; do
