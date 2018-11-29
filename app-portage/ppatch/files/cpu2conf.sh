@@ -132,7 +132,7 @@ max_unrolled(){
 }
 
 conf_cpu(){
-local f0= f1= f2= f3= f4= f5= f6= fsmall= ffast= ffm= fnm= i j i1 j1 c c0 c1 lm=false fp=387 gccv m="`uname -m`" i fsec= ind= l2= x32=false
+local f0= f1= f2= f3= f4= f5= f6= fsmall= ffast= ffm= fnm= i j i1 j1 c c0 c1 lm=false fp=387 gccv m="`uname -m`" i fsec= ind= l2= x32=false base2=
 _setflags flags cpucaps 'cpu family' model fpu vendor_id
 cmn=$($gcc --help=common -v -Q 2>&1)
 if i=$(echo "$cmn"|grep --max-count=1 "^Target: "); then
@@ -229,12 +229,10 @@ x86_*|i?86)
 	f3+=$(_f -fira-loop-pressure -fira-hoist-pressure -flive-range-shrinkage -fsched-pressure -fschedule-insns -fsched-spec-load --param=sched-pressure-algorithm=2)
 	# gnostic - don't know how to get universal default of defaults for GCC
 	# -mtune=x86-64 deprecated
-	base=
 	case "$vendor_id" in
-	GenuineIntel)base=`_f -mtune=intel`;;
+	GenuineIntel)base2=`_f -mtune=intel`;;
 	esac
-	[ -z "$base" ] && base='-mtune=generic'
-	base+=" -march=${m//_/-}"
+	base="-mtune=generic -march=${m//_/-}"
 	ffast+=' -maccumulate-outgoing-args -mno-push-args'
 	fsmall+=' -mno-accumulate-outgoing-args -mpush-args'
 ;;
@@ -364,6 +362,15 @@ for i in $f4; do
 	_cmp1 "$i1" "$f4" && continue
 done
 _cmp1 "$i1" "$f4" && f4="$i1"
+
+for i in $base2; do
+	[[ " $f4 " != *" ${i%=*}"[=\ ]* ]] || continue
+	f4+=" $i"
+	# we know better then "-mtune=native".
+	# my x7-Z8700 model 76 better perform as common "intel"
+	# (or even "silvermont" = march, but this is too specific)
+	[[ "$i" == -mtune=* ]] && f0="${f0//-mtune=native/$i}"
+done
 
 for i in $base; do
 	[[ " $f4 " != *" ${i%=*}"[=\ ]* ]] && f4+=" $i"
