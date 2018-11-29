@@ -1,4 +1,4 @@
-# Copyright 1999-2017 Gentoo Foundation
+# Copyright 1999-2018 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 # $Id$
 
@@ -130,6 +130,7 @@ S="${WORKDIR}/${MY_P}"
 
 PATCHES=(
 	"${FILESDIR}/${PN}-4.5.1-compile_et_fix.patch"
+	"${FILESDIR}/${PN}-samba-4.9.2-timespec.patch"
 )
 
 #CONFDIR="${FILESDIR}/$(get_version_component_range 1-2)"
