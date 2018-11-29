@@ -9,7 +9,6 @@ for i in $CFLAGS; do
 	-m*=*)
 		i="${i#-m}"
 		j="${i%%=*}"
-		j=
 		case "$j" in
 		tune|fpmath);;
 		tls-dialect)j=tls;;
