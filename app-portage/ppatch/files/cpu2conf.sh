@@ -205,6 +205,9 @@ fi
 # 2do: patch over ssp patch to make default
 #(echo " $cmn"|grep -q 'disable-default-ssp') && f3+=' -fstack-protector-explicit'
 case "`cat /proc/cpuinfo|sed -e 's:$: :'`" in
+# core2: RTFM: says "most current", but I cannot count them
+# but IMHO all rare core2+ mostly known as "native"
+*GenuineIntel*" ssse3 "*)base2=`_f -mtune=intel`;;&
 *spectre_v2*)fsec+=" $ind";;&
 *GenuineTMx86*)f3="${f3/cacheline/abi} -fno-align-functions -fno-align-jumps -fno-align-loops -fno-align-labels -mno-align-stringops";;&
 *CentaurHauls*)preferred_fp=auto;;& # bashmark: C7 better 387, nothing about Nano
@@ -229,9 +232,6 @@ x86_*|i?86)
 	f3+=$(_f -fira-loop-pressure -fira-hoist-pressure -flive-range-shrinkage -fsched-pressure -fschedule-insns -fsched-spec-load --param=sched-pressure-algorithm=2)
 	# gnostic - don't know how to get universal default of defaults for GCC
 	# -mtune=x86-64 deprecated
-	case "$vendor_id" in
-	GenuineIntel)base2=`_f -mtune=intel`;;
-	esac
 	base="-mtune=generic -march=${m//_/-}"
 	ffast+=' -maccumulate-outgoing-args -mno-push-args'
 	fsmall+=' -mno-accumulate-outgoing-args -mpush-args'
