@@ -10,9 +10,17 @@ for i in $CFLAGS; do
 		i="${i#-m}"
 		j="${i%%=*}"
 		case "$j" in
-		tune|fpmath);;
-		# only arm?! to check sources
-		#tls-dialect)j=tls;;
+		# after some doubts: cpu & arch
+		# mostly affected some "configure" stuff, targeted configure not bad (becouse tested for this target anymore)
+		# -mtune/march=native can be slower, but this is moderated global
+		tune|fpmath|cpu|arch);;
+		# this is untested by me, but RTFM IMHO good too
+		# some other defaults can be set translated, full list: grep -o "with_[a-zA-Z0-9_]*" gcc/config.gcc |sort -u
+		abi|fpu|schedule|stack-offset);;
+		tls-dialect)
+			[[ "${CTARGET:-$CHOST}" != arm* ]] && continue
+			j=tls
+		;;
 		# agnostic fixed defaults are dangerous
 		*)continue;;
 		esac
