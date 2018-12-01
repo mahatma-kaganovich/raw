@@ -8,6 +8,7 @@ app-cdr/cdrdao gcdmaster
 dev-db/sqlite tools tcl
 app-office/libreoffice collada pdfimport
 kde-plasma/plasma-desktop legacy-systray
+media-tv/kodi -gbm -wayland
 # until figure-out test-programs
 net-wireless/bluez test-programs experimental
 net-fs/samba -addc
@@ -24,5 +25,3 @@ net-wireless/wpa_supplicant dbus
 media-fonts/infinality-ultimate-meta ms
 # airplay
 net-dns/avahi mdnsresponder-compat dbus
-# gbm
-media-tv/kodi -X -wayland
