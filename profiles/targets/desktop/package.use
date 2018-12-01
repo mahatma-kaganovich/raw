@@ -24,3 +24,5 @@ net-wireless/wpa_supplicant dbus
 media-fonts/infinality-ultimate-meta ms
 # airplay
 net-dns/avahi mdnsresponder-compat dbus
+# gbm
+media-tv/kodi -X -wayland

@@ -1,7 +1,6 @@
 app-admin/packagekit -gtk
 app-arch/gnome-autoar gtk
 app-cdr/dvdshrink -gtk
-app-crypt/eid-mw gtk
 app-crypt/gcr gtk
 app-crypt/pinentry -gtk
 app-crypt/stoken gtk

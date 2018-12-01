@@ -7,6 +7,8 @@ media-plugins/gst-plugins-vaapi opengl egl -gles2
 media-video/mpv opengl egl
 net-libs/webkit-gtk -gles2
 net-libs/webkit-gtk opengl egl -gles2
+net-libs/webkit-gtk opengl -gles2
+net-libs/webkit-gtk 
 x11-libs/cairo opengl -gles2
 app-admin/rsyslog ssl gcrypt
 app-admin/rsyslog ssl openssl gnutls gcrypt
@@ -15,26 +17,27 @@ app-crypt/codecrypt cryptopp
 app-crypt/qca ssl nss gcrypt
 app-emulation/crossover-bin ssl
 app-emulation/open-vm-tools ssl
-app-emulation/wine-any:3.17 ssl
 app-emulation/wine-any:3.18 ssl
 app-emulation/wine-any:3.19 ssl
 app-emulation/wine-any:3.20 ssl
+app-emulation/wine-any:3.21 ssl
 app-emulation/wine-any:9999 ssl
-app-emulation/wine-d3d9:3.17 ssl
 app-emulation/wine-d3d9:3.18 ssl
 app-emulation/wine-d3d9:3.19 ssl
 app-emulation/wine-d3d9:3.20 ssl
+app-emulation/wine-d3d9:3.21 ssl
 app-emulation/wine-d3d9:9999 ssl
-app-emulation/wine-staging:3.17 ssl
 app-emulation/wine-staging:3.18 ssl
 app-emulation/wine-staging:3.19 ssl
 app-emulation/wine-staging:3.20 ssl
+app-emulation/wine-staging:3.21 ssl
 app-emulation/wine-staging:9999 ssl
 app-emulation/wine-vanilla:3.0.3 ssl
-app-emulation/wine-vanilla:3.17 ssl
+app-emulation/wine-vanilla:3.0.4 ssl
 app-emulation/wine-vanilla:3.18 ssl
 app-emulation/wine-vanilla:3.19 ssl
 app-emulation/wine-vanilla:3.20 ssl
+app-emulation/wine-vanilla:3.21 ssl
 app-emulation/wine-vanilla:9999 ssl
 app-forensics/libewf ssl
 app-text/mupdf openssl
@@ -167,6 +170,7 @@ app-editors/gedit python_single_target_python3_6 python_targets_python3_6 -pytho
 app-editors/gedit-plugins python_single_target_python3_6 python_targets_python3_6 -python_single_target_python3_5 -python_single_target_python3_4
 app-editors/gvim python_single_target_python2_7 python_targets_python2_7 -python_single_target_python3_6 -python_single_target_python3_5 -python_single_target_python3_4
 app-editors/vim python_single_target_python2_7 python_targets_python2_7 -python_single_target_python3_6 -python_single_target_python3_5 -python_single_target_python3_4
+app-editors/vim python_single_target_python2_7 python_targets_python2_7 -python_single_target_python3_6 -python_single_target_python3_7 -python_single_target_python3_5 -python_single_target_python3_4
 app-emulation/libguestfs python_single_target_python2_7 python_targets_python2_7 -python_single_target_python3_5 -python_single_target_python3_4
 app-emulation/libguestfs python_single_target_python2_7 python_targets_python2_7 -python_single_target_python3_6 -python_single_target_python3_5 -python_single_target_python3_4
 app-emulation/virt-manager python_single_target_python3_6 python_targets_python3_6 -python_single_target_python3_5 -python_single_target_python3_4
@@ -268,7 +272,6 @@ dev-vcs/git-cola python_single_target_python2_7 python_targets_python2_7 -python
 games-misc/ponysay python_single_target_python3_6 python_targets_python3_6 -python_single_target_python3_5 -python_single_target_python3_4
 gnome-base/gnome-shell python_single_target_python3_6 python_targets_python3_6 -python_single_target_python3_5 -python_single_target_python3_4
 gnome-base/libglade python_single_target_python2_7 python_targets_python2_7
-gnome-extra/chrome-gnome-shell python_single_target_python2_7 python_targets_python2_7 -python_single_target_python3_5 -python_single_target_python3_4
 gnome-extra/chrome-gnome-shell python_single_target_python2_7 python_targets_python2_7 -python_single_target_python3_6 -python_single_target_python3_5 -python_single_target_python3_4
 gnome-extra/cinnamon-desktop python_single_target_python3_6 python_targets_python3_6 -python_single_target_python3_5 -python_single_target_python3_4
 gnome-extra/cinnamon-screensaver python_single_target_python3_6 python_targets_python3_6 -python_single_target_python3_5 -python_single_target_python3_4
@@ -339,6 +342,7 @@ sci-electronics/klayout python_single_target_python2_7 python_targets_python2_7 
 sci-electronics/pulseview python_single_target_python3_6 python_targets_python3_6 -python_single_target_python3_5 -python_single_target_python3_4
 sci-electronics/sigrok-cli python_single_target_python3_6 python_targets_python3_6 -python_single_target_python3_5 -python_single_target_python3_4
 sci-geosciences/qgis python_single_target_python3_6 python_targets_python3_6 -python_single_target_python3_5
+sci-libs/cantera python_single_target_python3_6 python_targets_python3_6 -python_single_target_python3_5 -python_single_target_python3_4
 sci-libs/clblas python_single_target_python2_7 python_targets_python2_7 -python_single_target_python3_6 -python_single_target_python3_5 -python_single_target_python3_4
 sci-libs/grib_api python_single_target_python2_7 python_targets_python2_7 -python_single_target_python3_4
 sci-libs/grib_api python_single_target_python2_7 python_targets_python2_7 -python_single_target_python3_6 -python_single_target_python3_5 -python_single_target_python3_4

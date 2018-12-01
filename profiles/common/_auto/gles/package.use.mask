@@ -4,4 +4,5 @@ media-libs/mesa -gles1 -egl
 media-libs/mesa -gles2 -egl
 media-plugins/gst-plugins-vaapi -gles2 -egl
 net-libs/webkit-gtk -gles2 -egl opengl
+net-libs/webkit-gtk -gles2 opengl
 x11-libs/cairo -gles2 opengl
