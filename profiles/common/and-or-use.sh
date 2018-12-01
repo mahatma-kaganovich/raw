@@ -386,8 +386,7 @@ qt5="$(sl "dev-qt/qt[a-zA-Z-]*" 5)"
 gst0="$(sl "media-[a-z]*/gst-plugins-$i" 0 "media-plugins/gstreamer$i" 0)"
 gst1="$(sl "media-[a-z]*/gst-plugins-$i" 1 "media-plugins/gstreamer$i" 1)"
 
-#generate gles 'gles2 gles gles1' 'opengl' 'gles gles1 opengl egl vaapi' &
-generate gles 'gles2 gles gles1' 'opengl' &
+generate gles 'gles2 gles gles1' 'opengl' 'gles gles1 opengl egl vaapi' &
 {
 
 force='' generate common 'opengl egl' 'gles gles1 gles2' 'gles gles1 gles2 egl'
@@ -416,3 +415,6 @@ generate +gtk2 'gstreamer010 gstreamer-0 gstreamer ffmpeg' gstreamer1 'gstreamer
 } &
 generate sdl 'sdl sdl2' '__NOsdl__' 'qt5 qt4 gtk gtk2 gtk3' &
 wait
+cd "$d"/_auto/gles || exit 1
+cat package.use.force >>package.use
+rm package.use.*
