@@ -64,6 +64,7 @@ f2=
 	filter-flags -ffat-lto-objects -flto '-flto=*'
 	f2+="$f1 -fno-fat-lto-objects"
 	f1+=' -ffat-lto-objects'
+	f2+=' -flto=jobserver' # ???
 	# bootstrap substitute own, but I still use -flto *FLAGS_FOR_TARGET
 	# outside and IMHO before (for early static libs). set system gcc-*
 	for i in AR NM RANLIB; do
