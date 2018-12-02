@@ -233,7 +233,7 @@ gmp) _isflag '-floop-*' && {
 sarg)filterflag -w;;
 criu)filterldflag;filterflag -maccumulate-outgoing-args '-flto=*';;
 ffmpeg|libav)_iuse abi_x86_32 && filterflag -fno-omit-frame-pointer;; # x86 mmx -Os
-faad2|openssl|patch)gccve 5. && filterflag -floop-nest-optimize;;
+faad2|openssl|patch)gccve 5. && filterflag -floop-nest-optimize;;&
 geos|readahead-list|thin-provisioning-tools|libprojectm|gtkmathview|qtfm|qtgui|qtwebkit)gccve 6. && export CXXFLAGS="$CXXFLAGS -std=gnu++98";;
 ruby)filterflag -funroll-loops -fweb;;
 ghostscript-gpl)filterflag -mmitigate-rop;; # ????!
@@ -246,6 +246,7 @@ coreutils)filterflag -flto=jobserver && appendflag1 -flto;;
 glibc|gnustep-back-cairo|qtcore)_fLTO_f -flto-partition=none;;
 mpg123)filterflag -floop-nest-optimize;; # distortion on sse
 mongodb)[ "$AR" = gcc-ar ] && export AR=/usr/bin/ar ;;
+openssl)filterflag -ffast-math;; # 1.1.1 make
 esac
 
 # more test flags-inject.bashrc before remove
