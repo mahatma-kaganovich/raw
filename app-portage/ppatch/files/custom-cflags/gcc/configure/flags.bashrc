@@ -60,11 +60,8 @@ f1=
 # other
 f2=
 (is-flagq -flto || is-flagq '-flto=*') && {
-	f1+=' -flto=jobserver'
 	is-flagq -fuse-linker-plugin && with_build_config+=' bootstrap-lto' && f1+=' -fuse-linker-plugin' || with_build_config+=' bootstrap-lto-noplugin'
-	replace-flags '-flto=*' -flto=jobserver
-	replace-flags -flto -flto=jobserver
-	filter-flags -ffat-lto-objects
+	filter-flags -ffat-lto-objects -flto '-flto=*'
 	f2+="$f1 -fno-fat-lto-objects"
 	f1+=' -ffat-lto-objects'
 	# bootstrap substitute own, but I still use -flto *FLAGS_FOR_TARGET
