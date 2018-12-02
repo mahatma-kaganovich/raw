@@ -5,7 +5,7 @@ addon($rc,'#',"ppatch auto",qq(_ppatch(){
 local p i PPATCH PPATCHLIST="" PPATCHDIR="\${PPATCH_ROOT:-\${PORTAGE_CONFIGROOT:-\$ROOT}}/usr/ppatch" PPATCHRC=' '
 [ -n "\$CATEGORY" -a -n "\$PN" -a "\$CATEGORY" != virtual ] && for PPATCH in \$CATEGORY/\$PN \$PN \$PROVIDE ; do\
 	PPATCH="\$PPATCHDIR/\$PPATCH/\$EBUILD_PHASE\${EBUILD_PHASE:+/}"
-	[ -e "\$PPATCH" ] && i="`readlink -f \$PPATCH`" || i="\${PPATCH//\\/\\//\\/}"
+	[ -e "\$PPATCH" ] && i="`readlink -f \$PPATCH`" || i="\${PPATCH//\\/\\///}"
 	p=""
 	for p in \$PPATCHLIST; do
 		[[ "\$p" == "\$i" ]] && break;
@@ -15,6 +15,7 @@ local p i PPATCH PPATCHLIST="" PPATCHDIR="\${PPATCH_ROOT:-\${PORTAGE_CONFIGROOT:
 	p="\$PPATCH"
 	while true; do
 		for i in "\$p"/*bashrc ; do
+			i="\${i//\\/\\///}"
 			[[ -e "\$i" ]] && [[ -n "\${PPATCHRC##* \$i *}" ]] && PPATCHRC+="\$i " && . \$i
 		done
 		i="\$p"
