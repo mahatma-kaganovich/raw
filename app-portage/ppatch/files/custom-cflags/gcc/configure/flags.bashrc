@@ -5,7 +5,7 @@ ff0=" $(all-flag-vars) "
 f=x
 for i in $CFLAGS; do
 	case "$i" in
-	-O)f="$i";;
+	-O*)f="$i";;
 	-m*=*)
 		i="${i#-m}"
 		j="${i%%=*}"
