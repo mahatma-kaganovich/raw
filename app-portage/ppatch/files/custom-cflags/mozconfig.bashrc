@@ -47,8 +47,10 @@ prepare)
 		*)filter-flags -mtls-dialect=gnu2;;
 		esac
 		#[[ " $IUSE " == *' lto '* ]] && use lto &&
-		filter-flags -flto '-flto=*' -ffat-lto-objects -mfpmath=both '-mfpmath=*387*'
-		append-cxxflags -flifetime-dse=1 -fno-devirtualize -fno-ipa-cp-clone -fno-delete-null-pointer-checks -fno-fast-math
+		filter-flags -flto '-flto=*' -ffat-lto-objects
+		replace-flags -mfpmath=both -mfpmath=sse
+		replace-flags '-mfpmath=sse*387' -mfpmath=sse
+		replace-flags '-mfpmath=387*sse' -mfpmath=sse
 #		use x86 && append-cxxflags -fno-tree-vectorize -fno-tree-loop-vectorize -fno-tree-slp-vectorize
 		export ALDFLAGS="${LDFLAGS}"
 	}
