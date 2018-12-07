@@ -1,0 +1,35 @@
+--- a/cltypes.h	1970-01-01 03:00:00.000000000 +0300
++++ b/cltypes.h	2018-12-07 05:41:27.131210350 +0300
+@@ -0,0 +1 @@
++/* around clamav-0.101.0 */
+--- a/src/skyldav/VirusScan.cc	2016-06-12 19:39:51.000000000 +0300
++++ b/src/skyldav/VirusScan.cc	2018-12-07 05:37:28.588359586 +0300
+@@ -236,6 +236,13 @@ void VirusScan::releaseEngine() {
+     pthread_mutex_unlock(&mutexEngine);
+ }
+ 
++#ifndef CL_SCAN_STDOPT
++const struct cl_scan_options options = {
++.general = CL_SCAN_GENERAL_ALLMATCHES,
++.parse = ~0
++};
++#endif
++
+ /**
+  * @brief Scans file for virus.
+  *
+@@ -244,9 +251,13 @@ void VirusScan::releaseEngine() {
+ int VirusScan::scan(const int fd) {
+     int success = SCANOK;
+     int ret;
+-    const char *virname;
++    const char *virname = NULL;
+ 
++#ifdef CL_SCAN_STDOPT
+     ret = cl_scandesc(fd, &virname, NULL, getEngine(), CL_SCAN_STDOPT);
++#else
++    ret = cl_scandesc(fd, NULL, &virname, NULL, getEngine(), &options);
++#endif
+     switch (ret) {
+         case CL_CLEAN:
+             success = SCANOK;
