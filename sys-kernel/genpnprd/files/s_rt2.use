@@ -1,4 +1,6 @@
-KERNEL_CONFIG+='HZ_1000 NR_CPUS==1;(?:RCU_NOCB_CPU|NO_HZ_FULL)(?:_ALL)? RCU_BOOST BLK_WBT_SQ'
+KERNEL_CONFIG+='HZ_1000 RCU_BOOST BLK_WBT_SQ'
+use experimental &&
+	KERNEL_CONFIG+=' NR_CPUS==1;(?:RCU_NOCB_CPU|NO_HZ_FULL)(?:_ALL)?'
 use laptop && KERNEL_CONFIG+=' HZ_300'
 use server && use !minimal2 && KERNEL_CONFIG+=' -NO_HZ_FULL'
 use server && use !desktop && KERNEL_CONFIG+=' -TASKS_RCU'
