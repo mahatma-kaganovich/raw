@@ -274,7 +274,9 @@ obconfig(){
 		-e 's:<file>menu\.xml</file>:<file>'"$m"'/ya/menu.xml</file>:' \
 		-e 's:\(<!-- Menus -->\):\1\
 <!-- "Drag" not working here -->\
-<mousebind button="Left" action="DoubleClick"><action name="ShowMenu"><menu>root-menu</menu></action></mousebind>\n:' \
+<mousebind button="Left" action="DoubleClick"><action name="ShowMenu"><menu>root-menu</menu></action></mousebind>\
+<mousebind button="Right" action="Click"><action name="ShowMenu"><menu>root-menu</menu></action></mousebind>\
+<mousebind button="Left" action="Click"><action name="execute"><execute>'"$cache"'/desk-sh $pointer</execute></action></mousebind>\n:' \
 		-e 's:</keyboard>:<!-- ya.keybind -->\
 <keybind key="C-Escape"><action name="ShowMenu"><menu>client-list-combined-menu</menu></action></keybind>\
 <keybind key="Menu"><action name="ShowMenu"><menu>root-menu</menu></action></keybind>\
