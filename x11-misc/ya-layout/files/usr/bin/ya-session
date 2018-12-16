@@ -272,7 +272,7 @@ obconfig(){
 		-e 's:<noStrut>.*</noStrut>:<noStrut>no</noStrut>:' \
 		-e 's:\(<context name="Titlebar">\):\1\n<mousebind button="Left" action="Click"><action name="ShowMenu"><menu>root-menu</menu></action></mousebind>\n<mousebind button="Middle" action="Click"><action name="ShowMenu"><menu>root-menu</menu></action></mousebind>:' \
 		-e 's:<file>menu\.xml</file>:<file>'"$m"'/ya/menu.xml</file>:' \
-		-e 's:\(<!-- Menus -->\):\1
+		-e 's:\(<!-- Menus -->\):\1\
 <!-- "Drag" not working here -->\
 <mousebind button="Left" action="DoubleClick"><action name="ShowMenu"><menu>root-menu</menu></action></mousebind>\n:' \
 		-e 's:</keyboard>:<!-- ya.keybind -->\
