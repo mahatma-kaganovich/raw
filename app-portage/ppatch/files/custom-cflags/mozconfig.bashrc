@@ -10,7 +10,7 @@ mozconfig_annotate() {
 			echo "MOZILLA_CONFIG=$MOZILLA_CONFIG"
 			[ -n "$MOZILLA_CONFIG" ] && mozconfig_annotate '$MOZILLA_CONFIG' $MOZILLA_CONFIG
 		;;&
-		--enable-pie)gcc -v 2>&1 |grep -q "\--disable-default-pie" && x='--disable-pie';;
+		--enable-pie)gcc -v 2>&1 |grep -q "\--disable-default-pie" && continue;;
 		--enable-linker=gold)filter-ldflags -Wl,--sort-section=alignment -Wl,--reduce-memory-overheads;;
 		--enable-linker=lld)filter-ldflags -Wl,--reduce-memory-overheads;;
 		--enable-optimize=-O*)use custom-optimization && o=${CXXFLAGS##*-O} && [ "$o" != "$CXXFLAGS" ] && o=${o%% *} && [ -n "$o" ] && {
