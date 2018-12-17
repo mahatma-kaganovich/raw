@@ -12,4 +12,4 @@ LDFLAGS="-Wl,-O1 -Wl,--as-needed -Wl,--hash-style=gnu -Wl,--sort-common -Wl,--so
 EMERGE_DEFAULT_OPTS="$EMERGE_DEFAULT_OPTS --backtrack=5"
 RUBY_TARGETS="-* ruby24"
 #RUBY_TARGETS="-* ruby23"
-MOZILLA_CONFIG="--jitreport-granularity=0 --disable-pie --disable-synth-speechd --disable-webspeech --disable-webspeechtestbackend" # --enable-mobile-optimize
+MOZILLA_CONFIG="--jitreport-granularity=0 --disable-synth-speechd --disable-webspeech --disable-webspeechtestbackend" # --enable-mobile-optimize
