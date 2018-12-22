@@ -2,7 +2,7 @@
 case "$EBUILD_PHASE" in
 configure)
 mozconfig_annotate() {
-	declare reason=$1 x ; shift
+	declare reason=$1 x; shift
 	[[ $# -gt 0 ]] || die "mozconfig_annotate missing flags for ${reason}\!"
 	for x in ${*}; do
 		case "$x" in
@@ -15,11 +15,17 @@ mozconfig_annotate() {
 		--enable-linker=lld)filter-ldflags -Wl,--reduce-memory-overheads;;
 		--enable-optimize=-O*)use custom-optimization && o=${CXXFLAGS##*-O} && [ "$o" != "$CXXFLAGS" ] && o=${o%% *} && [ -n "$o" ] && {
 			reason=custom-optimization
-			if [[ "${CFLAGS##*-O}" == "$o"* ]] || use !custom-cflags; then
-				x="--enable-optimize=-O$o"
+			# gcc vs clang: IMHO "-fno-fast-math -Ofast" positioning differ. force strict order anywere
+			local i ff=
+			for i in -fno-fast-math -fno-ipa-cp-clone -fno-tree-vectorize -fno-tree-loop-vectorize -fno-tree-slp-vectorize; do
+				is-flagq "$i" && ff+=" $i"
+			done
+			if ([[ "${CFLAGS##*-O}" == "$o"* ]] && [ -z "$ff" ]) || use !custom-cflags; then
+				x="-O$o"
 			else
-				x="--enable-optimize=-w"
+				x=-w
 			fi
+			x="--enable-optimize=$x"
 			[ "$o" = fast ] && o=3
 			[[ "$o" == [123] ]] || o=2
 			export CARGO_RUSTCFLAGS="-C opt-level=$o $CARGO_RUSTCFLAGS"
@@ -45,6 +51,7 @@ prepare)
 		thunderbird);;
 		seamonkey)
 			use x86 && append-cxxflags -fno-ipa-cp-clone
+			append-cxxflags -fno-fast-math
 		;;
 		*)filter-flags -mtls-dialect=gnu2;;
 		esac
