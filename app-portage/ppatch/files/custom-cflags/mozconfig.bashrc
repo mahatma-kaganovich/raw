@@ -51,10 +51,10 @@ prepare)
 		thunderbird);;
 		seamonkey)
 			use x86 && append-cxxflags -fno-ipa-cp-clone
-			append-cxxflags -fno-fast-math
 		;;
 		*)filter-flags -mtls-dialect=gnu2;;
 		esac
+		[[ "$CXXFLAGS" == *fast* ]] && append-cxxflags -fno-fast-math
 		#[[ " $IUSE " == *' lto '* ]] && use lto &&
 		filter-flags -flto '-flto=*' -ffat-lto-objects
 		replace-flags -mfpmath=both -mfpmath=sse
