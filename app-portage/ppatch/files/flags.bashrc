@@ -154,7 +154,7 @@ _fnofastmath(){
 	filterflag ${f//-Ofast} -mfpmath=both
 #	filterflag '-mfpmath=sse?387' '-mfpmath=387?sse'
 	for v in CFLAGS CPPFLAGS CXXFLAGS FFLAGS FCFLAGS LDFLAGS; do
-		[[ "${!v##*-O}" == fast* ]] && export $v=${!v//-Ofast/${CFLAGS_NO_FAST_MATH:--O3 -Ofast -fno-fast-math}}
+		[[ "${!v##*-O}" == fast* ]] && export $v="${!v//-Ofast/${CFLAGS_NO_FAST_MATH:--O3 -Ofast -fno-fast-math}}"
 	done
 }
 
