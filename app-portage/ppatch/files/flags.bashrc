@@ -210,7 +210,7 @@ glibc)gccve 6. || filterflag -ftracer;;&
 glibc)filterflag -fopenmp -fopenmp-simd '-*parallelize*';;&
 # -Ofast / -ffast-math:
 # nodejs -> chromium
-glibc|mpg123|nodejs|fontforge|sqlite|postgresql*|goffice|db|protobuf|qtwebkit|qtwebengine|webkit-gtk|python|guile|chromium*|rrdtool)_fnofastmath;;&
+groff|glibc|mpg123|nodejs|fontforge|sqlite|postgresql*|goffice|db|protobuf|qtwebkit|qtwebengine|webkit-gtk|python|guile|chromium*|rrdtool)_fnofastmath;;&
 # sometimes somewere
 #libX11|wget)_isflag -Os && _fnofastmath -fno-unsafe-math-optimizations -fno-signed-zeros -fno-trapping-math -fassociative-math -freciprocal-math;;&
 chromium*)_iuse abi_x86_32 && filterflag -maccumulate-outgoing-args;;&
