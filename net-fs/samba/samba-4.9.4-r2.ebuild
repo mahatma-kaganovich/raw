@@ -1,4 +1,4 @@
-# Copyright 1999-2018 Gentoo Authors
+# Copyright 1999-2019 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 # $Id$
 
@@ -20,7 +20,7 @@ SRC_URI="mirror://samba/${SRC_PATH}/${MY_P}.tar.gz"
 KEYWORDS="~amd64 ~arm64 ~hppa ~x86"
 
 DESCRIPTION="Samba Suite Version 4"
-HOMEPAGE="http://www.samba.org/"
+HOMEPAGE="https://www.samba.org/"
 LICENSE="GPL-3"
 
 SLOT="0"
@@ -47,6 +47,7 @@ CDEPEND="
 	dev-libs/popt[${MULTILIB_USEDEP}]
 	dev-python/subunit[${PYTHON_USEDEP},${MULTILIB_USEDEP}]
 	>=dev-util/cmocka-1.1.1[${MULTILIB_USEDEP}]
+	net-libs/libnsl:=[${MULTILIB_USEDEP}]
 	sys-apps/attr[${MULTILIB_USEDEP}]
 	system-ldb? ( sys-libs/ldb )
 	!system-ldb? ( !sys-libs/ldb )
@@ -98,6 +99,10 @@ DEPEND="${CDEPEND}
 	dev-libs/libxslt
 	net-libs/libtirpc[${MULTILIB_USEDEP}]
 	virtual/pkgconfig
+	|| (
+		net-libs/rpcsvc-proto
+		<sys-libs/glibc-2.26[rpc(+)]
+	)
 	test? (
 			>=sys-libs/nss_wrapper-1.1.3
 			>=net-dns/resolv_wrapper-1.1.4
