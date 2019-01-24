@@ -27,7 +27,7 @@ SLOT="0"
 
 IUSE="acl addc addns ads ceph client cluster cups debug dmapi fam gnutls gpg iprint json ldap
 pam python quota selinux syslog systemd test winbind afs sasl zeroconf cpu_flags_x86_aes nls
-lmdb etcd system-ldb snapper"
+lmdb etcd system-ldb snapper xfs"
 
 MULTILIB_WRAPPED_HEADERS=(
 	/usr/include/samba-4.0/policy.h
@@ -91,6 +91,7 @@ CDEPEND="
 	) )
 	nls? ( sys-devel/gettext )
 	snapper? ( sys-apps/dbus )
+	xfs? ( sys-fs/xfsprogs )
 	systemd? ( sys-apps/systemd:0= )"
 
 DEPEND="${CDEPEND}
@@ -142,15 +143,16 @@ CONFDIR="${FILESDIR}/4.9"
 
 WAF_BINARY="${S}/buildtools/bin/waf"
 
-SHAREDMODS=""
+SHAREDMODS="vfs_nfs4acl_xattr,vfs_cacheprime,vfs_fake_dfq"
 
 pkg_setup() {
 	python-single-r1_pkg_setup
 
+	use xfs && SHAREDMODS+=',vfs_prealloc'
 	if use cluster ; then
-		SHAREDMODS="idmap_rid,idmap_tdb2,idmap_ad"
+		SHAREDMODS+=",idmap_rid,idmap_tdb2,idmap_ad"
 	elif use ads ; then
-		SHAREDMODS="idmap_ad"
+		SHAREDMODS+=",idmap_ad"
 	fi
 }
 
