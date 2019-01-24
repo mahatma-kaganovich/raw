@@ -315,8 +315,9 @@ multilib_src_install() {
 	fi
 
 	local i
-	find "${D}" -type d|while read i; do
-		[[ -d "$i" ]] && [[ "$(echo "$i"/*)" == "$i/*" ]] && keepdir "${i#${D%/}}"
+	mv -aT "${D}"/{,var/}run
+	find "${D}"/var -type d|while read i; do
+		[[ -d "$i" ]] && [[ "$i" != */run ]] && [[ "$(echo "$i"/*)" == "$i/*" ]] && keepdir "${i#${D%/}}"
 	done
 }
 
