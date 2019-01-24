@@ -320,7 +320,7 @@ multilib_src_install() {
 	fi
 
 	local i
-	mv -T "${D}"/{,var/}run
+	cp -aT "${D}"/{,var/}run && rm "${D}"/run -Rf
 	find "${D}" -type d|while read i; do
 		[[ -d "$i" ]] && [[ "$i" != */run ]] && [[ "$(echo "$i"/*)" == "$i/*" ]] && keepdir "${i#${D%/}}"
 	done
