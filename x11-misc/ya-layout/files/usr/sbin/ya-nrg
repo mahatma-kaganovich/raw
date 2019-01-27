@@ -129,19 +129,46 @@ save(){
 		$echo "$f 15"
 		$f 15
 	}
-	[ -n "$cores" ] && [ "$[cores-1]" -lt "$cores" -a "$cores" -ge 0 ] && {
+	[ "$cores" = - ] && {
+	    # lookup top cache. must be 2, but xeon say 3
+	    cores=0
+	    x=
+	    for i in 0 1 2 3 4 5 6 7 8 9; do
+		[ -e /sys/devices/system/cpu/cpu0/cache/index$i/shared_cpu_list ] || break
+		x=$i
+	    done
+	    [ -n "$x" ] &&
+		i="/sys/devices/system/cpu/cpu*/cache/index$x/shared_cpu_list" &&
+		x1="$(cat $i|sort -u|wc -l)" &&
+		[ "$x1" -gt 1 ] && [ "$(cat $i|wc -l)" != "$x1" ] &&
+		cores=-$x
+	}
+	[ -n "$cores" ] && [ "$[cores-1]" -lt "$cores" ] && {
 	    echo balance >>$save
-	    save+=1
 	    sync &
 	    i=$!
+	    save+=1
+	    x=' '
 	    fchk $save || (. $save)
 	    jiff
-	    wait $i
-	    for i in /sys/devices/system/cpu/cpu*/online; do
-		[ -e "$i" ] || break
-		[ "$cores" -gt 0 ] || save1 0 "$i"
-		cores=$[cores-1]
-	    done
+	    cores=$[cores+0]
+	    if [ "$cores" -le 0 ]; then
+		x1=$(cat /sys/devices/system/cpu/cpu*/cache/index${cores#-}/shared_cpu_list|sed -e 's:[^0-9].*$::g'|sort -u)
+		wait $i
+		for i in /sys/devices/system/cpu/cpu*/online; do
+			for x in $x1; do
+				[ "$i" = "/sys/devices/system/cpu/cpu$x/online" ] && continue 2
+			done
+			save1 0 "$i"
+		done
+	    else
+		wait $i
+		for i in /sys/devices/system/cpu/cpu*/online; do
+			[ -e "$i" ] || break
+			[ "$cores" -gt 0 ] || save1 0 "$i"
+			cores=$[cores-1]
+		done
+	    fi
 	    echo jiff >>$save
 	    # single CPU must be balanced. fixme
 	    #balance
@@ -193,7 +220,13 @@ Designed for use in parallel with screen locker on laptop.
 Usage: $0 {<opt>} <cmd>
 opt is:
  light <brightness_percent>
- cores <num>
+ cores <num|-|-cache_level>
+	'cores 0' minimum cores or 'cores -' one core per top cache (L2|L3);
+	simple 1 core do save power if system mostly do nothing;
+	1 core per cache can give more saving and performance in case of
+	some concurrent workloads still affect cache/ram transition:
+	more (+1 per cache) cores ON, but less bus/RAM usage,
+	useful on splitted L2|L3 caches (NUMA, x7-Z8700 silvermont, ...).
  verbose
  force
 cmd is:
