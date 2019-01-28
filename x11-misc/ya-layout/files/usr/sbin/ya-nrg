@@ -137,7 +137,7 @@ save(){
 		fchk $save || (. $save)
 		jiff
 		wait $i
-		if [ "$cores" = -* ]; then
+		if [[ "$cores" == -* ]]; then
 			[ "$cores" = - ] && cores='-*'
 			for i in /sys/devices/system/cpu/cpu*/cache/index${cores#-}/shared_cpu_list; do
 				while [ -e "$i" ] && x=$(< "$i") && x1="${x##*[^0-9]}" && [ "$x" != "$x1" ]; do
