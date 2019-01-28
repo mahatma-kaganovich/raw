@@ -92,7 +92,7 @@ save(){
 	flock 3
 	fchk $save && return
 	$force && touch $save.lock1
-	local f i x x1
+	local f i x x1 x2
 	echo '#' >>$save
 	save1 min_power /sys/class/scsi_host/*/link_power_management_policy
 	save1 powersupersave /sys/module/pcie_aspm/parameters/policy
@@ -139,9 +139,11 @@ save(){
 		wait $i
 		if [[ "$cores" == -* ]]; then
 			[ "$cores" = - ] && cores='-*'
+			x2=
 			for i in /sys/devices/system/cpu/cpu*/cache/index${cores#-}/shared_cpu_list; do
-				while [ -e "$i" ] && x=$(< "$i") && x1="${x##*[^0-9]}" && [ "$x" != "$x1" ]; do
+				while [ -e "$i" ] && x=$(< "$i") && x1="${x##*[^0-9]}" && [ "$x" != "$x1" ] && [ "$x1" != "$x2" ]; do
 					save1 0 "/sys/devices/system/cpu/cpu$x1/online"
+					x2=$x1
 				done
 			done
 		elif [ "$[cores-1]" -lt "$cores" ]; then
