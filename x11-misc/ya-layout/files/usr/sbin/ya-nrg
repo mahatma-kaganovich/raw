@@ -129,49 +129,31 @@ save(){
 		$echo "$f 15"
 		$f 15
 	}
-	[ "$cores" = - ] && {
-	    # lookup top cache. must be 2, but xeon say 3
-	    cores=0
-	    x=
-	    for i in 0 1 2 3 4 5 6 7 8 9; do
-		[ -e /sys/devices/system/cpu/cpu0/cache/index$i/shared_cpu_list ] || break
-		x=$i
-	    done
-	    [ -n "$x" ] &&
-		i="/sys/devices/system/cpu/cpu*/cache/index$x/shared_cpu_list" &&
-		x1="$(cat $i|sort -u|wc -l)" &&
-		[ "$x1" -gt 1 ] && [ "$(cat $i|wc -l)" != "$x1" ] &&
-		cores=-$x
-	}
-	[ -n "$cores" ] && [ "$[cores-1]" -lt "$cores" ] && {
-	    echo balance >>$save
-	    sync &
-	    i=$!
-	    save+=1
-	    x=' '
-	    fchk $save || (. $save)
-	    jiff
-	    cores=$[cores+0]
-	    if [ "$cores" -le 0 ]; then
-		x1=$(cat /sys/devices/system/cpu/cpu*/cache/index${cores#-}/shared_cpu_list|sed -e 's:[^0-9].*$::g'|sort -u)
+	[ -n "$cores" ] && {
+		echo balance >>$save
+		sync &
+		i=$!
+		save+=1
+		fchk $save || (. $save)
+		jiff
 		wait $i
-		for i in /sys/devices/system/cpu/cpu*/online; do
-			for x in $x1; do
-				[ "$i" = "/sys/devices/system/cpu/cpu$x/online" ] && continue 2
+		if [ "$cores" = -* ]; then
+			[ "$cores" = - ] && cores='-*'
+			for i in /sys/devices/system/cpu/cpu*/cache/index${cores#-}/shared_cpu_list; do
+				while [ -e "$i" ] && x=$(< "$i") && x1="${x##*[^0-9]}" && [ "$x" != "$x1" ]; do
+					save1 0 "/sys/devices/system/cpu/cpu$x1/online"
+				done
 			done
-			save1 0 "$i"
-		done
-	    else
-		wait $i
-		for i in /sys/devices/system/cpu/cpu*/online; do
-			[ -e "$i" ] || break
-			[ "$cores" -gt 0 ] || save1 0 "$i"
-			cores=$[cores-1]
-		done
-	    fi
-	    echo jiff >>$save
-	    # single CPU must be balanced. fixme
-	    #balance
+		elif [ "$[cores-1]" -lt "$cores" ]; then
+			for i in /sys/devices/system/cpu/cpu*/online; do
+				[ -e "$i" ] || break
+				[ "$cores" -gt 0 ] || save1 0 "$i"
+				cores=$[cores-1]
+			done
+		fi
+		echo jiff >>$save
+		# single CPU must be balanced. fixme
+		#balance
 	}
     } 3>>$save.lock
 }
