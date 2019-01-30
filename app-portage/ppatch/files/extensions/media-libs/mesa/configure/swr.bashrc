@@ -4,7 +4,7 @@ meson(){
 #	sed -i -e 's:// assume non-Windows is always 64-bit:\&\& !defined(__i386__):' "$S"/src/gallium/drivers/swr/rasterizer/common/simdlib.hpp # || die
 
 	[[ "$*" != *Dswr-arches=* ]] && {
-		set -- "${@//Dgallium-drivers=/Dgallium-drivers=swr,}" -Dswr-arches=knl,skx,avx2,avx
+		#set -- "${@//Dgallium-drivers=/Dgallium-drivers=swr,}" -Dswr-arches=knl,skx,avx2,avx
 
 		# https://bugs.freedesktop.org/show_bug.cgi?id=109023
 		# build only actual arches while
