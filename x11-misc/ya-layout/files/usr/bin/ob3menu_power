@@ -7,7 +7,8 @@ if [ -s /run/power.save ]; then
 else
 	t=performance
 	t1=save
-	a='cores - save'
+	# keep min sockets, then min cores per max cache
+	a='sockets - cores - save'
 fi
 
 echo "<openbox_pipe_menu><separator label='power:$t'/>

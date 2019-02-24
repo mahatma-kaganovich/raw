@@ -129,7 +129,7 @@ save(){
 		$echo "$f 15"
 		$f 15
 	}
-	[ -n "$cores" ] && {
+	[ -n "$cores$sockets" ] && {
 		echo balance >>$save
 		sync &
 		i=$!
@@ -137,8 +137,24 @@ save(){
 		fchk $save || (. $save)
 		jiff
 		wait $i
+		[ -n "$sockets" ] && {
+			local on=' '
+			# unswitch unswitchable sockets
+			if [[ "$sockets" == -* ]]; then
+				[ "$sockets" = - ] && sockets=0 || sockets=${sockets#-}
+				for i in /sys/devices/system/cpu/cpu*/topology/physical_package_id; do
+					! [ -e "${i%top*}online" ] && x=$(< "$i") && [ -n "$x" ] &&  on+="$x "
+				done
+			fi
+			if [ "$[sockets-1]" -lt "$sockets" ]; then
+				for i in /sys/devices/system/cpu/cpu*/topology/physical_package_id; do
+					[ -e "$i" ] && x=$(< "$i") && echo "x='$x'" && [ "$x" -gt "$sockets" ] && [[ "$on" != *" $x "* ]] && save1 0 "${i%top*}online"
+				done
+			fi
+		}
+		[ -n "$cores" ] &&
 		if [[ "$cores" == -* ]]; then
-			[ "$cores" = - ] && cores='-*'
+			[ "$cores" = - ] && cores='*'
 			x2=
 			for i in /sys/devices/system/cpu/cpu*/cache/index${cores#-}/shared_cpu_list; do
 				while [ -e "$i" ] && x=$(< "$i") && x1="${x##*[^0-9]}" && [ "$x" != "$x1" ] && [ "$x1" != "$x2" ]; do
@@ -149,8 +165,12 @@ save(){
 		elif [ "$[cores-1]" -lt "$cores" ]; then
 			for i in /sys/devices/system/cpu/cpu*/online; do
 				[ -e "$i" ] || break
-				[ "$cores" -gt 0 ] || save1 0 "$i"
-				cores=$[cores-1]
+				if x=$(< "${i%online}/topology/core_id"); then
+					[ "$x" -ge "$cores" ] && save1 0 "$i"
+				else
+					[ "$cores" -gt 0 ] || save1 0 "$i"
+					cores=$[cores-1]
+				fi
 			done
 		fi
 		echo jiff >>$save
@@ -170,7 +190,7 @@ pw=
 
 while [ -n "$*" ]; do
 case "$1" in
-light|cores)declare $1="$2";shift;;
+light|cores|sockets)declare $1="$2";shift;;
 verbose)
 	_echo(){ echo "${@}" >&2;}
 	echo=_echo
@@ -204,6 +224,9 @@ Designed for use in parallel with screen locker on laptop.
 Usage: $0 {<opt>} <cmd>
 opt is:
  light <brightness_percent>
+ sockets <num|-|-num>
+	'sockets 0' keep minimum CPU sockets & cores or 'sockets -' off all
+	unswitchable sockets (= all cores can offline).
  cores <num|-|-cache_level>
 	'cores 0' minimum cores or 'cores -' one core per top cache (L2|L3);
 	simple 1 core do save power if system mostly do nothing;
@@ -223,6 +246,8 @@ Add to sudo:
  echo '%plugdev ALL=(ALL) NOPASSWD: /usr/sbin/ya-nrg' >/etc/sudoers.d/ya-nrg
   or
  echo 'ALL ALL=(ALL) NOPASSWD: /usr/sbin/ya-nrg' >/etc/sudoers.d/ya-nrg
+PS 'cores 0'|'cores 1'|'cores -'|'sockets -'|'sockets - cores -' - subject
+ to test power consumption per hardware & [idle] workload.
 "
 pw=
 ;;
