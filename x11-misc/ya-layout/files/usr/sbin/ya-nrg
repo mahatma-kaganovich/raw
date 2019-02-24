@@ -167,7 +167,8 @@ save(){
 				[ -e "$i" ] || break
 				if x=$(< "${i%online}/topology/core_id"); then
 					[ "$x" -ge "$cores" ] && save1 0 "$i"
-				else
+				elif ! [ -e /sys/devices/system/cpu/cpu0/topology/core_id ]; then
+					# no kernel features
 					[ "$cores" -gt 0 ] || save1 0 "$i"
 					cores=$[cores-1]
 				fi
