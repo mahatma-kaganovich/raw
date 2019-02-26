@@ -1,0 +1,11 @@
+--- a/cmake/FindIconv.cmake	2017-10-31 22:36:00.000000000 +0300
++++ b/cmake/FindIconv.cmake	2019-02-26 21:46:19.353449008 +0300
+@@ -128,8 +128,6 @@ endif()
+ 
+ if(NOT ICONV_ACCEPTS_CONST_INPUT AND NOT ICONV_ACCEPTS_NONCONST_INPUT)
+   MESSAGE(FATAL_ERROR "Unable to determine iconv() signature")
+-elseif(ICONV_ACCEPTS_CONST_INPUT AND ICONV_ACCEPTS_NONCONST_INPUT)
+-  MESSAGE(FATAL_ERROR "Unable to determine iconv() signature - both test cases passed!")
+ endif()
+ 
+ mark_as_advanced(ICONV_LIBRARY ICONV_INCLUDE_DIR)
