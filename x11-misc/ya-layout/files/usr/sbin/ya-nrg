@@ -141,7 +141,7 @@ save(){
 _cpu_off(){
 	local i x=- n="$2"
 	[ "$[n-1]" -lt "$n" ] && x='' && for i in $c*/topology/$1; do
-			[ -e "$i" ] && x=$(< "$i") && [ -n "$x" -a "$x" -gt "$n" ] && [[ "$3" != *" $x "* ]] && save1 0 "${i%top*}online"
+			[ -e "$i" ] && x=$(< "$i") && [ -n "$x" -a "$x" -ge "$n" ] && [[ "$3" != *" $x "* ]] && save1 0 "${i%top*}online"
 	done
 	[ -n "$x" ]
 }
@@ -251,7 +251,7 @@ Add to sudo:
  echo '%plugdev ALL=(ALL) NOPASSWD: /usr/sbin/ya-nrg' >/etc/sudoers.d/ya-nrg
   or
  echo 'ALL ALL=(ALL) NOPASSWD: /usr/sbin/ya-nrg' >/etc/sudoers.d/ya-nrg
-PS 'cores 0 threads 1'|'cores 1'|'cores -'|'sockets -'|'sockets - cores -'
+PS 'cores 0'|'cores 1'|'cores -'|'sockets -'|'sockets - cores -'
    - subject  to test power consumption per hardware & [idle] workload.
 "
 pw=
