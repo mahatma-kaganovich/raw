@@ -129,7 +129,7 @@ save(){
 		$echo "$f 15"
 		$f 15
 	}
-	[ -n "$cores$sockets" ] && {
+	[ -n "$cores$sockets$threads" ] && {
 		echo balance >>$save
 		sync &
 		i=$!
@@ -137,43 +137,46 @@ save(){
 		fchk $save || (. $save)
 		jiff
 		wait $i
+		c=/sys/devices/system/cpu/cpu
+_cpu_off(){
+	local i x=- n="$2"
+	[ "$[n-1]" -lt "$n" ] && x='' && for i in $c*/topology/$1; do
+			[ -e "$i" ] && x=$(< "$i") && [ -n "$x" -a "$x" -gt "$n" ] && [[ "$3" != *" $x "* ]] && save1 0 "${i%top*}online"
+	done
+	[ -n "$x" ]
+}
 		[ -n "$sockets" ] && {
 			local on=' '
 			# unswitch unswitchable sockets
 			if [[ "$sockets" == -* ]]; then
 				[ "$sockets" = - ] && sockets=0 || sockets=${sockets#-}
-				for i in /sys/devices/system/cpu/cpu*/topology/physical_package_id; do
+				for i in $c*/topology/physical_package_id; do
 					! [ -e "${i%top*}online" ] && x=$(< "$i") && [ -n "$x" ] &&  on+="$x "
 				done
 			fi
-			if [ "$[sockets-1]" -lt "$sockets" ]; then
-				for i in /sys/devices/system/cpu/cpu*/topology/physical_package_id; do
-					[ -e "$i" ] && x=$(< "$i") && echo "x='$x'" && [ "$x" -gt "$sockets" ] && [[ "$on" != *" $x "* ]] && save1 0 "${i%top*}online"
-				done
-			fi
+			_cpu_off physical_package_id "$sockets" "$on"
 		}
 		[ -n "$cores" ] &&
 		if [[ "$cores" == -* ]]; then
 			[ "$cores" = - ] && cores='*'
 			x2=
-			for i in /sys/devices/system/cpu/cpu*/cache/index${cores#-}/shared_cpu_list; do
+			for i in $c*/cache/index${cores#-}/shared_cpu_list; do
 				while [ -e "$i" ] && x=$(< "$i") && x1="${x##*[^0-9]}" && [ "$x" != "$x1" ] && [ "$x1" != "$x2" ]; do
-					save1 0 "/sys/devices/system/cpu/cpu$x1/online"
+					save1 0 "$c$x1/online"
 					x2=$x1
 				done
 			done
-		elif [ "$[cores-1]" -lt "$cores" ]; then
-			for i in /sys/devices/system/cpu/cpu*/online; do
+		elif ! _cpu_off core_id "$cores"; then
+			# no kernel features? alt
+			for i in $c*/online; do
 				[ -e "$i" ] || break
-				if x=$(< "${i%online}/topology/core_id"); then
-					[ "$x" -ge "$cores" ] && save1 0 "$i"
-				elif ! [ -e /sys/devices/system/cpu/cpu0/topology/core_id ]; then
-					# no kernel features
-					[ "$cores" -gt 0 ] || save1 0 "$i"
-					cores=$[cores-1]
-				fi
+				[ "$cores" -gt 0 ] || save1 0 "$i"
+				cores=$[cores-1]
 			done
 		fi
+		[ "$threads" = 1 ] && for i in $c*/topology/thread_siblings_list; do
+			[ -e "$i" ] && x=$(< "$i") && [[ "$i" != "$c${x%%[^0-9]*}/"* ]] && save1 0 "${i%top*}online"
+		done
 		echo jiff >>$save
 		# single CPU must be balanced. fixme
 		#balance
@@ -191,7 +194,7 @@ pw=
 
 while [ -n "$*" ]; do
 case "$1" in
-light|cores|sockets)declare $1="$2";shift;;
+light|cores|sockets|threads)declare $1="$2";shift;;
 verbose)
 	_echo(){ echo "${@}" >&2;}
 	echo=_echo
@@ -229,12 +232,13 @@ opt is:
 	'sockets 0' keep minimum CPU sockets & cores or 'sockets -' off all
 	unswitchable sockets (= all cores can offline).
  cores <num|-|-cache_level>
-	'cores 0' minimum cores or 'cores -' one core per top cache (L2|L3);
-	simple 1 core do save power if system mostly do nothing;
+	'cores 0' minimum cores or 'cores -' one core & thread per top cache
+	(L2|L3); simple 1 core do save power if system mostly do nothing;
 	1 core per cache can give more saving and performance in case of
 	some concurrent workloads still affect cache/ram transition:
 	more (+1 per cache) cores ON, but less bus/RAM usage,
 	useful on splitted L2|L3 caches (NUMA, x7-Z8700 silvermont, ...).
+ threads 1
  verbose
  force
 cmd is:
@@ -247,8 +251,8 @@ Add to sudo:
  echo '%plugdev ALL=(ALL) NOPASSWD: /usr/sbin/ya-nrg' >/etc/sudoers.d/ya-nrg
   or
  echo 'ALL ALL=(ALL) NOPASSWD: /usr/sbin/ya-nrg' >/etc/sudoers.d/ya-nrg
-PS 'cores 0'|'cores 1'|'cores -'|'sockets -'|'sockets - cores -' - subject
- to test power consumption per hardware & [idle] workload.
+PS 'cores 0 threads 1'|'cores 1'|'cores -'|'sockets -'|'sockets - cores -'
+   - subject  to test power consumption per hardware & [idle] workload.
 "
 pw=
 ;;
