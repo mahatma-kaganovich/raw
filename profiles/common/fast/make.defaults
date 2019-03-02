@@ -3,8 +3,9 @@
 _FLAGS="$_FLAGS -fbranch-target-load-optimize -fdelete-dead-exceptions"
 _FLAGS="$_FLAGS -fmodulo-sched -fmodulo-sched-allow-regmoves -freschedule-modulo-scheduled-loops"
 # keep here until new reasons to split
-_FLAGS="$_FLAGS -fivopts -ftracer -fgcse-sm -fgcse-las -fvariable-expansion-in-unroller -fweb -fipa-pta"
+_FLAGS="$_FLAGS -fivopts -ftracer -fgcse-sm -fgcse-las -fvariable-expansion-in-unroller -fweb"
+# -fipa-pta: dangerous - affect bash, break gcc build...
 
-CFLAGS_SMALL=" -fno-ipa-pta -fno-tracer -fno-reschedule-modulo-scheduled-loops$CFLAGS_SMALL"
+CFLAGS_SMALL=" -fno-tracer -fno-reschedule-modulo-scheduled-loops$CFLAGS_SMALL"
 
 LDFLAGS="-Wl,-O1 -Wl,--as-needed -Wl,--hash-style=gnu -Wl,--sort-common -Wl,--sort-section=alignment"
