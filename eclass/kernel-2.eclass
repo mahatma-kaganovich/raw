@@ -874,7 +874,7 @@ acpi_detect(){
 	# use other logic, so try to /2 only if it can do UP (n=2) and USE=-smp
 	# - to avoid complete loss of cores power (IMHO 2xSMP overhead is too small).
 	# Also using all acpi reported cores have sense for CPU plugging.
-	[[ "$CF" == *-PARAVIRT' '* ]] && [[ "$CF" == *-SCHED_SMT* ]] && $fakeHT && grep -q "^flags\s*:.*\sht\s" /proc/cpuinfo &&
+	[[ "$CF" == *-PARAVIRT' '* ]] && ! $smt && $fakeHT && grep -q "^flags\s*:.*\sht\s" /proc/cpuinfo &&
 		if [[ $n == 2 ]] && use smp; then
 			ewarn "On my opinion you have SMP with 2 CPU cores. To force UP build - say USE=-smp"
 #		elif [[ $n -gt 1 ]]; then
@@ -1282,14 +1282,13 @@ CF1 -CPU_SUP_.+ "CPU_SUP_${V:-.+}"
 _is_CF1 NUMA || _is_CF1 PARAVIRT && CF1 RCU_NOCB_CPU RCU_NOCB_CPU_ALL
 _is_CF1 -PARAVIRT && CF1 JUMP_LABEL
 
-_CF1 -SCHED_SMT -SCHED_MC
+# probably 4.14+ kernels have forced SMT x86
 if $smt && $mc; then
 	CF1 SCHED_SMT SCHED_MC
 elif $smt; then
-	CF1 'SCHED_MC;SCHED_SMT'
+	CF="~SCHED_SMT -SCHED_MC $CF SCHED_SMT;SCHED_MC"
 elif $mc; then
-	# new kernels have forced SMT
-	CF1 'SCHED_SMT==y;SCHED_MC;SCHED_SMT'
+	CF="~SCHED_SMT -SCHED_MC $CF SCHED_SMT==y;SCHED_MC;SCHED_SMT"
 #	if (use x86 || use amd64) && grep -qF 'config SCHED_SMT' "${S}"/arch/x86/Kconfig &&
 #		grep -qF 'SMT (Hyperthreading) scheduler support' "${S}"/arch/x86/Kconfig; then
 #		CF1 SCHED_SMT -SCHED_MC
