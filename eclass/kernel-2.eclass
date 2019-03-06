@@ -1007,10 +1007,11 @@ CF1 SPARC_.+_CPUFREQ US3_MC
 use xen && CF1 -HIGHMEM64G -HIGHMEM4G NOHIGHMEM X86_PAE -X86_VSMP
 # old kernels - MP first, SMT next, new - SMT always, MP next
 smt1=SMT
-smt2=MP
+smt2=MC
+smt12="SCHED_SMT;SCHED_MC"
 grep -qF 'config SCHED_SMT' "${S}"/arch/x86/Kconfig &&
 	grep -qF 'SMT (Hyperthreading) scheduler support' "${S}"/arch/x86/Kconfig &&
-	smt1=MP && smt2=SMT
+	smt1=MC && smt2=SMT && smt12=SCHED_MC
 use smp && CF1 SMP X86_BIGSMP SCHED_{$smt1,$smt2} SPARSE_IRQ CPUSETS NUMA
 # while disable knl features by default
 #use smp && $knl
@@ -1071,7 +1072,7 @@ native|:native|native:native)
 		pae)CF1 X86_PAE $m64g;;
 		mp)CF1 SMP;; # ?
 		lm)(use multitarget || use 64-bit-bfd) && CF1 64BIT;;
-		cmp_legacy)CF1 SMP SCHED_$smt1 -SCHED_$smt2;; # ???
+		cmp_legacy)CF1 SMP -SCHED_$smt2 "$smt12" ;; # ???
 		up)ewarn "Running SMP on UP. Recommended useflag '-smp' and '-SMP' in ${KERNEL_CONF}";;
 		est)freq+=" X86_ACPI_CPUFREQ";;
 		longrun)freq+=" X86_LONGRUN";;
@@ -1106,7 +1107,7 @@ native|:native|native:native)
 	[[ "${processor:=0}" -gt 0 ]] && CF1 SMP
 	[[ $((processor+1)) == "${cpu_cores:-1}" ]] && [[ "${siblings:-1}" == "${cpu_cores:-1}" ]] && CF1 -NUMA
 	# xtopology & other flags present only on SMP running anymore
-	[[ "${cpu_cores:-1}" -gt 1 ]] && CF1 SMP SCHED_$smt1
+	[[ "${cpu_cores:-1}" -gt 1 ]] && CF1 SMP "$smt12"
 	[[ "${siblings:-0}" -gt "${cpu_cores:-1}" ]] && CF1 SMP SCHED_$smt2
 #	grep -Fqs ',' /sys/devices/system/cpu/cpu*/topology/thread_siblings_list && CF1 SMP SCHED_$smt2
 	# ???
