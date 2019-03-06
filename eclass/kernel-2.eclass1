@@ -1005,15 +1005,14 @@ export VIRT=0
 CF1 -SMP -X86{BIGSMP,GENERIC} X86_{X2APIC,UP_APIC,UP_IOAPIC} -SPARSE_IRQ -CPUSETS X86_INTEL_PSTATE INTEL_RAPL INTEL_TXT -$knl
 CF1 SPARC_.+_CPUFREQ US3_MC
 use xen && CF1 -HIGHMEM64G -HIGHMEM4G NOHIGHMEM X86_PAE -X86_VSMP
-if use smp; then
-	smt=true
-	mc=true
-	CF1 SMP X86_BIGSMP SPARSE_IRQ CPUSETS NUMA
-else
-	smt=false
-	mc=false
-	CF1 -SMP
-fi
+# old kernels - MP first, SMT next, new - SMT always, MP next
+smt1=SMT
+smt2=MC
+smt12="SCHED_SMT;SCHED_MC"
+grep -qF 'config SCHED_SMT' "${S}"/arch/x86/Kconfig &&
+	grep -qF 'SMT (Hyperthreading) scheduler support' "${S}"/arch/x86/Kconfig &&
+	smt1=MC && smt2=SMT && smt12=SCHED_MC
+use smp && CF1 SMP X86_BIGSMP SCHED_{$smt1,$smt2} SPARSE_IRQ CPUSETS NUMA
 # while disable knl features by default
 #use smp && $knl
 [[ "$(cflg mtune=)" == generic ]] && CF1 X86_GENERIC
@@ -1045,9 +1044,7 @@ native|:native|native:native)
     *)
 #    x86|i386|x86_64)
 	export PNP_VENDOR=""
-	CF1 -X86_{UP_APIC,TSC,PAT,MSR,MCE,CMOV,X2APIC} -MTRR -INTEL_IDLE -KVM_INTEL -KVM_AMD -SPARSE_IRQ -CPUSETS -INTEL_TXT -$knl -INTEL_RDT_?A? X86_CPU_RESCTRL
-	smt=false
-	mc=false
+	CF1 -SCHED_{MP,$smt2} -X86_{UP_APIC,TSC,PAT,MSR,MCE,CMOV,X2APIC} -MTRR -INTEL_IDLE -KVM_INTEL -KVM_AMD -SPARSE_IRQ -CPUSETS -INTEL_TXT -$knl -INTEL_RDT_?A? X86_CPU_RESCTRL
 	# X86_FEATURE_NAMES hwp broken
 	CF1 -INTEL_TURBO_MAX_3
 	case "$srcarch" in
@@ -1067,17 +1064,15 @@ native|:native|native:native)
 		apic)CF1 X86_UP_APIC;;
 		ht)if ! ( [[ "${model_name}" == *Celeron* ]] && [[ "${model_name}" != *460* ]] && [[ "${model_name}" != *1053* ]] ) && ! grep -q SMP /proc/version; then
 			ewarn "Trying to detect hyperthreading/cores under non-SMP kernel:"
-			ewarn "SMP+MC+SMT forced, recommended to re-ebuild kernel under new kernel."
-			CF1 SMP
-			smt=true
-			mc=true
+			ewarn "SMP+$smt1+SMT forced, recommended to re-ebuild kernel under new kernel."
+			CF1 SMP SCHED_{$smt1,SMT}
 		fi;;
 		tsc|pat|msr|mce|cmov|x2apic)CF1 X86_${i^^};;
 		mtrr)CF1 ${i^^};;
 		pae)CF1 X86_PAE $m64g;;
 		mp)CF1 SMP;; # ?
 		lm)(use multitarget || use 64-bit-bfd) && CF1 64BIT;;
-		cmp_legacy)CF1 SMP;mc=true;; # ???
+		cmp_legacy)CF1 SMP -SCHED_$smt2 "$smt12" ;; # ???
 		up)ewarn "Running SMP on UP. Recommended useflag '-smp' and '-SMP' in ${KERNEL_CONF}";;
 		est)freq+=" X86_ACPI_CPUFREQ";;
 		longrun)freq+=" X86_LONGRUN";;
@@ -1112,11 +1107,11 @@ native|:native|native:native)
 	[[ "${processor:=0}" -gt 0 ]] && CF1 SMP
 	[[ $((processor+1)) == "${cpu_cores:-1}" ]] && [[ "${siblings:-1}" == "${cpu_cores:-1}" ]] && CF1 -NUMA
 	# xtopology & other flags present only on SMP running anymore
-	[[ "${cpu_cores:-1}" -gt 1 ]] && mc=true && CF1 SMP
-	[[ "${siblings:-0}" -gt "${cpu_cores:-1}" ]] && smt=true && CF1 SMP
-#	grep -Fqs ',' /sys/devices/system/cpu/cpu*/topology/thread_siblings_list && smt=true && CF1 SMP
+	[[ "${cpu_cores:-1}" -gt 1 ]] && CF1 SMP "$smt12"
+	[[ "${siblings:-0}" -gt "${cpu_cores:-1}" ]] && CF1 SMP SCHED_$smt2
+#	grep -Fqs ',' /sys/devices/system/cpu/cpu*/topology/thread_siblings_list && CF1 SMP SCHED_$smt2
 	# ???
-	[[ "$(grep "^siblings\s*:\|^cpu cores\s*:" /proc/cpuinfo|sort -u|wc -l)" -gt 2 ]] && smt=true && mc=true && CF1 SMP NUMA
+	[[ "$(grep "^siblings\s*:\|^cpu cores\s*:" /proc/cpuinfo|sort -u|wc -l)" -gt 2 ]] && CF1 SMP SCHED_{$smt1,$smt2} NUMA
 	[[ "${fpu}" != yes ]] && CF1 MATH_EMULATION
 
 	use acpi && acpi_detect
@@ -1234,12 +1229,12 @@ i486)CF1 M486 MATH_EMULATION;;
 i586|pentium)CF1 M586;;
 pentium-mmx)CF1 M586MMX;;
 i686)CF1 X86_GENERIC M686;;
-winchip-c6)CF1 MWINCHIPC6;smt=false;;
-winchip2)CF1 MWINCHIP3D;smt=false;;
-c3)CF1 MCYRIXIII;smt=false;;
-c3-2)CF1 MVIAC3_2;smt=false;V=CENTAUR;;
-geode)CF1 MGEODE_LX;smt=false;;
-k6|k6-2)CF1 MK6;smt=false;freq=X86_POWERNOW_K6;V=AMD;;
+winchip-c6)CF1 MWINCHIPC6 -SCHED_$smt2;;
+winchip2)CF1 MWINCHIP3D -SCHED_$smt2;;
+c3)CF1 MCYRIXIII -SCHED_$smt2;;
+c3-2)CF1 MVIAC3_2 -SCHED_$smt2;V=CENTAUR;;
+geode)CF1 MGEODE_LX -SCHED_$smt2;;
+k6|k6-2)CF1 MK6 -SCHED_$smt2;freq=X86_POWERNOW_K6;V=AMD;;
 # compat: pentium-m sometimes have no PAE/64G
 pentiumpro)CF1 M686;;
 pentium2)CF1 MPENTIUMII;;
@@ -1257,9 +1252,9 @@ pentium4|pentium4m|prescott|nocona)
 core2)CF1 MCORE2 $m64g;freq=X86_ACPI_CPUFREQ;;
 atom|nehalem|westmere|sandybridge|ivybridge|haswell|broadwell|bonnell|silvermont)CF1 MCORE2 M${march^^} $m64g;freq=X86_ACPI_CPUFREQ;V=INTEL;;
 knl)CF1 MCORE2 $m64g $knl;V=INTEL;;
-k6-3)CF1 MK6 $m64g;smt=false;freq=X86_POWERNOW_K6;V=AMD;;
-btver1|athlon|athlon-tbird|athlon-4|athlon-xp|athlon-mp)CF1 MK7 $m64g;smt=false;freq=X86_POWERNOW_K7;V=AMD;;
-btver*|bdver*|k8*|opteron*|athlon64*|athlon-fx|amdfam10|barcelona)CF1 MK8 $m64g;smt=false;freq="X86_POWERNOW_K8 X86_ACPI_CPUFREQ";gov=CONSERVATIVE;V=AMD;;
+k6-3)CF1 MK6 $m64g -SCHED_$smt2;freq=X86_POWERNOW_K6;V=AMD;;
+btver1|athlon|athlon-tbird|athlon-4|athlon-xp|athlon-mp)CF1 MK7 $m64g -SCHED_$smt2;freq=X86_POWERNOW_K7;V=AMD;;
+btver*|bdver*|k8*|opteron*|athlon64*|athlon-fx|amdfam10|barcelona)CF1 MK8 $m64g -SCHED_$smt2;freq="X86_POWERNOW_K8 X86_ACPI_CPUFREQ";gov=CONSERVATIVE;V=AMD;;
 *)	case "$srcarch" in
 	*)CF1 GENERIC_CPU X86_GENERIC;;
 	esac
@@ -1281,22 +1276,6 @@ CF1 -CPU_SUP_.+ "CPU_SUP_${V:-.+}"
 [ -z "$V" -o "$V" = INTEL ] && ucode "intel-ucode/??-??-??" GenuineIntel
 _is_CF1 NUMA || _is_CF1 PARAVIRT && CF1 RCU_NOCB_CPU RCU_NOCB_CPU_ALL
 _is_CF1 -PARAVIRT && CF1 JUMP_LABEL
-
-if $smt && $mc; then
-	CF1 SCHED_SMT SCHED_MC
-elif $smt; then
-	CF1 -SCHED_MC 'SCHED_SMT;SCHED_MC';
-elif $mc; then
-	# new kernels have forced SMT
-	if (use x86 || use amd64) && grep -qF 'config SCHED_SMT' "${S}"/arch/x86/Kconfig &&
-		grep -qF 'SMT (Hyperthreading) scheduler support' "${S}"/arch/x86/Kconfig; then
-		CF1 SCHED_SMT -SCHED_MC
-	fi
-	CF1 'SCHED_SMT==y;SCHED_MC;SCHED_SMT'
-#else
-#	CF1 -SCHED_SMT -SCHED_MC
-fi
-
 KERNEL_CONFIG="${CF//  / }"
 }
 
