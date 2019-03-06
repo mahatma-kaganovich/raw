@@ -1097,7 +1097,7 @@ native|:native|native:native)
 		;;
 		xtopology)fakeHT=false;;
 		hwpstate)grep -qsF X86_FEATURE_HW_PSTATE "${S}/drivers/cpufreq/powernow-k8.c" && freq+=" X86_ACPI_CPUFREQ -X86_POWERNOW_K8";;
-		hwp)CF1 -INTEL_TURBO_MAX_3;; # ?
+#		hwp)CF1 -INTEL_TURBO_MAX_3;; # ? - 1) need acpi support 2) flag broken now
 		rdt_a)CF1 INTEL_RDT_?A? X86_CPU_RESCTRL;;
 		esac
 	done
