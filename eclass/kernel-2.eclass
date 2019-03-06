@@ -1282,17 +1282,18 @@ CF1 -CPU_SUP_.+ "CPU_SUP_${V:-.+}"
 _is_CF1 NUMA || _is_CF1 PARAVIRT && CF1 RCU_NOCB_CPU RCU_NOCB_CPU_ALL
 _is_CF1 -PARAVIRT && CF1 JUMP_LABEL
 
+_CF1 -SCHED_SMT -SCHED_MC
 if $smt && $mc; then
 	CF1 SCHED_SMT SCHED_MC
 elif $smt; then
-	CF1 -SCHED_MC 'SCHED_SMT;SCHED_MC';
+	CF1 'SCHED_MC;SCHED_SMT'
 elif $mc; then
 	# new kernels have forced SMT
-	if (use x86 || use amd64) && grep -qF 'config SCHED_SMT' "${S}"/arch/x86/Kconfig &&
-		grep -qF 'SMT (Hyperthreading) scheduler support' "${S}"/arch/x86/Kconfig; then
-		CF1 SCHED_SMT -SCHED_MC
-	fi
 	CF1 'SCHED_SMT==y;SCHED_MC;SCHED_SMT'
+#	if (use x86 || use amd64) && grep -qF 'config SCHED_SMT' "${S}"/arch/x86/Kconfig &&
+#		grep -qF 'SMT (Hyperthreading) scheduler support' "${S}"/arch/x86/Kconfig; then
+#		CF1 SCHED_SMT -SCHED_MC
+#	fi
 #else
 #	CF1 -SCHED_SMT -SCHED_MC
 fi
