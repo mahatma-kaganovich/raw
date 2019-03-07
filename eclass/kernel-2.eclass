@@ -918,8 +918,8 @@ pre_embed(){
 		pci:v00008086d00007020sv*)CF1 USB_UHCI_HCD;usb=true;;
 		pci:v00001B36d00000100sv*);; # qxl
 		# PCI host bridge: all subbuses detected over PCI bridges
-		pci:*bc06sc00i*)CF1 -ISA -ISA_BUS -ISA_BUS_API -EISA -EISA_PCI_EISA -PCCARD -PCMCIA -CARDBUS -INFINIBAND;;
-		pci:*bc06sc01i*)cc+=' ISA __ISA_BUS ISA_BUS_API';; # or lpc?
+		pci:*bc06sc00i*)CF1 -ISA -ISA_BUS -ISA_.+_API -EISA -EISA_PCI_EISA -PCCARD -PCMCIA -CARDBUS -INFINIBAND;;
+		pci:*bc06sc01i*)cc+=' ISA __ISA_BUS ISA_.+_API';; # or lpc?
 		pci:*bc06sc02i*)cc+=' EISA EISA_PCI_EISA';;
 #		pci:*bc06sc03i*);; # mca
 		pci:*bc06sc05i*)cc+=' PCCARD PCMCIA';;
