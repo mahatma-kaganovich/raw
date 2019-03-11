@@ -7,6 +7,7 @@ DESCRIPTION="UniFi controller"
 HOMEPAGE="https://www.ubnt.com/download/unifi"
 case "$PVR" in
 5.8.25_rc1)v1=-34502471b9;;
+5.10.20)v1=-b06c46ec1d;;
 *)v1='';;
 esac
 #SRC_URI="http://dl.ubnt.com/unifi/"${PV%_*}"/unifi_sysvinit_all.deb -> ${PN}-${PV}.deb"
