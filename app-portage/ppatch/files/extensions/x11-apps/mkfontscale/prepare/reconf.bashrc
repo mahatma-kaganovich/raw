@@ -1,0 +1,2 @@
+cd "$S" || die
+eautoreconf

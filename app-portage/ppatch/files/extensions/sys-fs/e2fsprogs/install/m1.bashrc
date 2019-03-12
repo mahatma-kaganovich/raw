@@ -1,0 +1,1 @@
+export MAKEOPTS="$MAKEOPTS -j1"
