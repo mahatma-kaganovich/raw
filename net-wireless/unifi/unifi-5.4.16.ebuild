@@ -13,7 +13,7 @@ esac
 #SRC_URI="http://dl.ubnt.com/unifi/"${PV%_*}"/unifi_sysvinit_all.deb -> ${PN}-${PV}.deb"
 SRC_URI="https://dl.ubnt.com/unifi/"${PV%_*}"$v1/UniFi.unix.zip -> ${PN}-${PV}.zip
 	https://dl.ubnt.com/unifi/"${PV%_*}"$v1/unifi_sh_api -> unifi_sh_api-${PV}"
-SLOT="0"
+SLOT="opt"
 KEYWORDS="~amd64 ~arm"
 #RDEPEND="dev-db/mongodb virtual/jdk:1.8"
 #=dev-db/mongodb-3.4* but 3.6+WiredTiger working
