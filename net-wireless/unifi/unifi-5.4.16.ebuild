@@ -19,6 +19,7 @@ KEYWORDS="~amd64 ~arm"
 #=dev-db/mongodb-3.4* but 3.6+WiredTiger working
 RDEPEND="dev-db/mongodb
 	|| (
+		>=dev-java/icedtea-3.11.0:8
 		dev-java/icedtea:8[sunec]
 		dev-java/icedtea-bin:8
 	)"
