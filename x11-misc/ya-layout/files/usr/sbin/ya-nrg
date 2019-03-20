@@ -98,7 +98,7 @@ save(){
 	save1 powersupersave /sys/module/pcie_aspm/parameters/policy
 	save1 1 /sys/kernel/rcu_normal
 	save1 0 /sys/kernel/rcu_expedited
-	save1 1 /sys/block/*/queue/rq_affinity
+	save1 2 /sys/block/*/queue/rq_affinity
 	# must be ordered
 #	save1 passive /sys/devices/system/cpu/intel_pstate/status
 	for i in /sys/devices/system/cpu/cpu*/cpufreq; do
