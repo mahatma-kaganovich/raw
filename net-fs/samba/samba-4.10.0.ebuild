@@ -73,7 +73,7 @@ CDEPEND="
 	fam? ( virtual/fam )
 	gnutls? (
 		dev-libs/libgcrypt:0
-		>=net-libs/gnutls-1.4.0
+		>=net-libs/gnutls-3.5.6
 	)
 	gpg? ( app-crypt/gpgme )
 	json? ( dev-libs/jansson )
