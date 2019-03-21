@@ -32,6 +32,7 @@ lmdb etcd system-ldb snapper"
 MULTILIB_WRAPPED_HEADERS=(
 	/usr/include/samba-4.0/policy.h
 	/usr/include/samba-4.0/dcerpc_server.h
+#	/usr/include/pyldb.h
 )
 
 # useflag sasl control only cyrus-sasl linking, not own sasl wrapper
@@ -176,6 +177,10 @@ src_prepare() {
 		-i source4/dsdb/samdb/ldb_modules/password_hash.c \
 		|| die
 
+	# pyldb-util: check in bundled list with suffix of python target. strip suffix
+	use !system-ldb && use python &&
+	sed -i -e 's/^\(    if libname in conf.env.BUNDLED_LIBS:\)$/    import re\n    if re.sub("\\..*$", "", libname) in conf.env.BUNDLED_LIBS:\n        return True\n\1/' buildtools/wafsamba/samba_bundled.py
+
 	multilib_copy_sources
 }
 
@@ -189,8 +194,8 @@ automagic(){
 
 multilib_src_configure() {
 	local ldb=
-	# 4.9+: +use lmdb
 	use !system-ldb && ldb='ldb,' && use python && ldb+='pyldb,pyldb-util,'
+	# 2try: addc+mit --with-experimental-mit-ad-dc
 	local myconf=(
 		--enable-fhs
 		--sysconfdir="${EPREFIX}/etc"
