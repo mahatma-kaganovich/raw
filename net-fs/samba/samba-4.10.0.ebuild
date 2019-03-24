@@ -82,11 +82,6 @@ CDEPEND="
 	lmdb? ( >=dev-db/lmdb-0.9.16[${MULTILIB_USEDEP}] )
 	afs? ( net-fs/openafs )
 	sasl? ( dev-libs/cyrus-sasl )
-	experimental? || (
-		app-crypt/mit-krb5[${MULTILIB_USEDEP}]
-		!addc? ( >=app-crypt/heimdal-1.5[-ssl,${MULTILIB_USEDEP}] )
-	)
-	!experimental? ( !addc? ( app-crypt/mit-krb5[${MULTILIB_USEDEP}] ) )
 	nls? ( sys-devel/gettext )
 	snapper? ( sys-apps/dbus )
 	system-heimdal? ( >=app-crypt/heimdal-1.5[-ssl,${MULTILIB_USEDEP}] )
