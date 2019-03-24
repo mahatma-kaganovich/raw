@@ -26,7 +26,7 @@ LICENSE="GPL-3"
 SLOT="0"
 
 IUSE="acl addc addns ads ceph client cluster cups debug dmapi fam gnutls gpg iprint json ldap
-pam python quota selinux system-heimdal +system-mitkrb5 systemd test winbind afs sasl zeroconf
+pam python quota selinux syslog system-heimdal +system-mitkrb5 systemd test winbind afs sasl zeroconf
 cpu_flags_x86_aes nls lmdb etcd system-ldb snapper"
 
 MULTILIB_WRAPPED_HEADERS=(
