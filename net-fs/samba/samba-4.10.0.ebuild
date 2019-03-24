@@ -192,10 +192,11 @@ automagic(){
 }
 
 multilib_src_configure() {
-	local bundled_libs="NONE"
-	if ! use system-heimdal && ! use system-mitkrb5 ; then
-#		bundled_libs=heimdal
-		bundled_libs="heimbase,heimntlm,hdb,kdc,krb5,wind,gssapi,hcrypto,hx509,roken,asn1,com_err,NONE"
+	local bundled_libs=
+	use !system-ldb && ldb='ldb,' && use python && ldb+='pyldb,pyldb-util,'
+	if use !system-heimdal && use !system-mitkrb5 ; then
+#		bundled_libs+=heimdal,
+		bundled_libs+='heimbase,heimntlm,hdb,kdc,krb5,wind,gssapi,hcrypto,hx509,roken,asn1,com_err,'
 	fi
 
 	local myconf=(
@@ -204,7 +205,7 @@ multilib_src_configure() {
 		--localstatedir="${EPREFIX}/var"
 		--with-modulesdir="${EPREFIX}/usr/$(get_libdir)/samba"
 		--with-piddir="${EPREFIX}/run/${PN}"
-		--bundled-libraries="${bundled_libs}"
+		--bundled-libraries="${bundled_libs},NONE"
 		--builtin-libraries=NONE
 		--disable-rpath
 		--disable-rpath-install
