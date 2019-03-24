@@ -47,7 +47,7 @@ CDEPEND="
 	dev-libs/iniparser:0
 	dev-libs/popt[${MULTILIB_USEDEP}]
 	dev-python/subunit[${PYTHON_USEDEP},${MULTILIB_USEDEP}]
-	>=dev-util/cmocka-1.1.1[${MULTILIB_USEDEP}]
+	>=dev-util/cmocka-1.1.3[${MULTILIB_USEDEP}]
 	sys-apps/attr[${MULTILIB_USEDEP}]
 	system-ldb? ( sys-libs/ldb )
 	!system-ldb? ( !sys-libs/ldb )
