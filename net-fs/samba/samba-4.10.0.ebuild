@@ -193,7 +193,7 @@ automagic(){
 
 multilib_src_configure() {
 	local bundled_libs=
-	use !system-ldb && ldb='ldb,' && use python && ldb+='pyldb,pyldb-util,'
+	use !system-ldb && bundled_libs='ldb,' && use python && bundled_libs+='pyldb,pyldb-util,'
 	if use !system-heimdal && use !system-mitkrb5 ; then
 #		bundled_libs+=heimdal,
 		bundled_libs+='heimbase,heimntlm,hdb,kdc,krb5,wind,gssapi,hcrypto,hx509,roken,asn1,com_err,'
