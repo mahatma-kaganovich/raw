@@ -26,8 +26,8 @@ LICENSE="GPL-3"
 SLOT="0"
 
 IUSE="acl addc addns ads ceph client cluster cups debug dmapi fam gnutls gpg iprint json ldap
-pam python quota selinux syslog systemd test winbind afs sasl zeroconf cpu_flags_x86_aes nls
-lmdb etcd system-ldb snapper"
+pam python quota selinux system-heimdal +system-mitkrb5 systemd test winbind afs sasl zeroconf
+cpu_flags_x86_aes nls lmdb etcd system-ldb snapper"
 
 MULTILIB_WRAPPED_HEADERS=(
 	/usr/include/samba-4.0/policy.h
@@ -82,12 +82,15 @@ CDEPEND="
 	lmdb? ( >=dev-db/lmdb-0.9.16[${MULTILIB_USEDEP}] )
 	afs? ( net-fs/openafs )
 	sasl? ( dev-libs/cyrus-sasl )
-	!addc? ( || (
+	experimental? || (
 		app-crypt/mit-krb5[${MULTILIB_USEDEP}]
-		>=app-crypt/heimdal-1.5[-ssl,${MULTILIB_USEDEP}]
-	) )
+		!addc? ( >=app-crypt/heimdal-1.5[-ssl,${MULTILIB_USEDEP}] )
+	)
+	!experimental? ( !addc? ( app-crypt/mit-krb5[${MULTILIB_USEDEP}] ) )
 	nls? ( sys-devel/gettext )
 	snapper? ( sys-apps/dbus )
+	system-heimdal? ( >=app-crypt/heimdal-1.5[-ssl,${MULTILIB_USEDEP}] )
+	system-mitkrb5? ( >=app-crypt/mit-krb5-1.15.1[${MULTILIB_USEDEP}] )
 	systemd? ( sys-apps/systemd:0= )"
 
 DEPEND="${CDEPEND}
@@ -119,6 +122,7 @@ REQUIRED_USE="
 	addns? ( python )
 	ads? ( acl gnutls ldap )
 	gpg? ( addc )
+	?? ( system-heimdal system-mitkrb5 )
 	${PYTHON_REQUIRED_USE}"
 
 # the test suite is messed, it uses system-installed samba
@@ -193,17 +197,19 @@ automagic(){
 }
 
 multilib_src_configure() {
-	local ldb=
-	use !system-ldb && ldb='ldb,' && use python && ldb+='pyldb,pyldb-util,'
-	# 2try: addc+mit --with-experimental-mit-ad-dc
+	local bundled_libs="NONE"
+	if ! use system-heimdal && ! use system-mitkrb5 ; then
+#		bundled_libs=heimdal
+		bundled_libs="heimbase,heimntlm,hdb,kdc,krb5,wind,gssapi,hcrypto,hx509,roken,asn1,com_err,NONE"
+	fi
+
 	local myconf=(
 		--enable-fhs
 		--sysconfdir="${EPREFIX}/etc"
 		--localstatedir="${EPREFIX}/var"
 		--with-modulesdir="${EPREFIX}/usr/$(get_libdir)/samba"
 		--with-piddir="${EPREFIX}/run/${PN}"
-#		--bundled-libraries=$(usex addc ${ldb}heimdal ${ldb}NONE)
-		--bundled-libraries=$(usex addc heimbase,heimntlm,hdb,kdc,krb5,wind,gssapi,hcrypto,hx509,roken,asn1,com_err,${ldb}NONE ${ldb}NONE)
+		--bundled-libraries="${bundled_libs}"
 		--builtin-libraries=NONE
 		--disable-rpath
 		--disable-rpath-install
@@ -234,7 +240,7 @@ multilib_src_configure() {
 		$(multilib_native_usex python '' '--disable-python')
 		$(multilib_native_use_enable zeroconf avahi)
 		$(multilib_native_usex test '--enable-selftest' '')
-		$(use !addc && has_version app-crypt/mit-krb5 && echo --with-system-mitkrb5)
+		$(usex system-mitkrb5 "--with-system-mitkrb5 $(multilib_native_usex addc --with-experimental-mit-ad-dc '')" '')
 		$(use_enable gnutls)
 		$(use_with debug lttng)
 		$(use_with ldap)

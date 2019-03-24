@@ -12,7 +12,7 @@ dev-db/mariadb-galera tokudb extraengine sst-xtrabackup
 sys-cluster/ceph xfs nss -ssl
 net-dns/bind threads caps -idn libidn2
 app-emulation/qemu doc tls usbredir spice sasl
-net-fs/samba cluster ads addns ldap client addc acl python
+net-fs/samba cluster ads addns ldap client addc -system-heimdal -system-mitkrb5 acl python
 net-fs/cifs-utils ads creds acl
 net-dns/bind-tools gssapi -idn libidn2
 net-libs/libssh server
@@ -31,7 +31,10 @@ net-fs/nfs-utils nfsdcld nfsv41
 media-libs/libmypaint gegl
 media-gfx/inkscape cdr inkjar
 dev-libs/elfutils static-libs
-x11-base/xorg-server suid
+# default don't want pam, but elogind
+x11-base/xorg-server suid -elogind
+sys-auth/elogind pam
+sys-auth/pambase elogind
 # xterm:unicode - "luit allows xterm to support character encodings other than ISO-8859-1 and UTF-8."
 x11-terms/xterm Xaw3d -unicode
 # optimize

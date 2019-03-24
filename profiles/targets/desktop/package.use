@@ -11,7 +11,7 @@ kde-plasma/plasma-desktop legacy-systray
 media-tv/kodi -gbm -wayland
 # until figure-out test-programs
 net-wireless/bluez test-programs experimental
-net-fs/samba -addc
+net-fs/samba -addc system-mitkrb5 -cluster
 media-libs/mesa gles1 gles2 wayland
 net-wireless/gnuradio audio
 app-emulation/qemu vte gtk
