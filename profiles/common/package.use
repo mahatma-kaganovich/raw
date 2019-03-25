@@ -33,8 +33,8 @@ media-gfx/inkscape cdr inkjar
 dev-libs/elfutils static-libs
 # default don't want pam, but elogind
 x11-base/xorg-server suid -elogind
-sys-auth/elogind pam
-sys-auth/pambase elogind
+#sys-auth/elogind pam
+#sys-auth/pambase elogind
 # xterm:unicode - "luit allows xterm to support character encodings other than ISO-8859-1 and UTF-8."
 x11-terms/xterm Xaw3d -unicode
 # optimize
