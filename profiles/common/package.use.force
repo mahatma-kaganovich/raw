@@ -6,5 +6,3 @@ dev-libs/libxml2 python
 net-fs/cifs-utils acl
 net-fs/samba acl
 media-libs/libepoxy X
-sys-auth/elogind pam
-sys-auth/pambase elogind
