@@ -182,8 +182,9 @@ src_prepare() {
 automagic(){
 	local i
 	for i in "${@}"; do
-		egrep "#define.*$i.*" "${S}"/bin/default/include/config.h
-		sed -i -e "/#define.*$i.*/d" "${S}"/bin/default/include/config.h
+		# relative! - multilib
+		egrep "#define.*$i.*" bin/default/include/config.h
+		sed -i -e "/#define.*$i.*/d" bin/default/include/config.h
 	done
 }
 
