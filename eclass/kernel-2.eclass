@@ -1132,12 +1132,16 @@ native|:native|native:native)
 		ucode "intel-ucode/$(printf '%02x-%02x-%02x' ${cpu_family} ${model} ${stepping})" $vendor_id
 		case "${cpu_family}:${model}:${flags}:${model_name}" in
 		6:79:*|6:85:*)CF1 SCHED_MC_PRIO INTEL_TURBO_MAX_3;;& # broadwell-x, skylake-x
-		*Atom*)CF1 MATOM;;
 #		*)CF1 -IOSF_MBI -X86_INTEL_LPSS -X86_INTEL_MID;;&
 		5:*\ mmx\ *)CF1 M586MMX;;
 		5:*\ tsc\ *)CF1 M586TSC;;
 		15:*\ M\ *)CF1 MPENTIUM4 MPSC;: ${freq:=X86_SPEEDSTEP_ICH};;
 		15:*)CF1 MPENTIUM4 MPSC;[[ -z "$freq" ]] && freq=X86_P4_CLOCKMOD && gov='';;
+
+		6:28:*|6:38:*)CF1 MATOM MBONNELL;; # bonnell: "true atom"
+		6:*\ sse4*)CF1 MCORE2;; # ??? 2do: try to Atom'ize: -X86_INTEL_USERCOPY -X86_P6_NOP
+		6:*\ movbe\ *)CF1 MATOM MBONNELL;; # alt way - bonnell: "true atom"
+
 		6:*\ ssse3\ *)CF1 MCORE2;;
 		6:*\ sse2\ *)CF1 MPENTIUMM;;
 		6:*\ sse\ *Mobile*|6:*\ sse\ *-S\ *)CF1 MPENTIUMIII;: ${freq:=X86_SPEEDSTEP_SMI};;
@@ -1255,7 +1259,8 @@ pentium4|pentium4m|prescott|nocona)
 	freq="X86_ACPI_CPUFREQ X86_P4_CLOCKMOD"
 ;;
 core2)CF1 MCORE2 $m64g;freq=X86_ACPI_CPUFREQ;;
-atom|nehalem|westmere|sandybridge|ivybridge|haswell|broadwell|bonnell|silvermont)CF1 MCORE2 M${march^^} $m64g;freq=X86_ACPI_CPUFREQ;V=INTEL;;
+atom|bonnell)CF1 MATOM MBONNELL $m64g;freq=X86_ACPI_CPUFREQ;V=INTEL;;
+nehalem|westmere|sandybridge|ivybridge|haswell|broadwell|silvermont)CF1 MCORE2 M${march^^} $m64g;freq=X86_ACPI_CPUFREQ;V=INTEL;;
 knl)CF1 MCORE2 $m64g $knl;V=INTEL;;
 k6-3)CF1 MK6 $m64g;smt=false;freq=X86_POWERNOW_K6;V=AMD;;
 btver1|athlon|athlon-tbird|athlon-4|athlon-xp|athlon-mp)CF1 MK7 $m64g;smt=false;freq=X86_POWERNOW_K7;V=AMD;;
