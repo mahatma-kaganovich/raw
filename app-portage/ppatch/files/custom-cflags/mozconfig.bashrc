@@ -28,7 +28,8 @@ mozconfig_annotate() {
 			x="--enable-optimize=$x"
 			[ "$o" = fast ] && o=3
 			[[ "$o" == [123] ]] || o=2
-			export CARGO_RUSTCFLAGS="-C opt-level=$o $CARGO_RUSTCFLAGS"
+			export RUSTFLAGS="-C opt-level=$o $RUSTFLAGS $CARGO_RUSTCFLAGS"
+			export CARGO_RUSTCFLAGS="$RUSTFLAGS"
 		}
 		;;
 		esac
@@ -43,8 +44,8 @@ prepare)
 	i='MOZ_GECKO_PROFILER\|MOZ_ENABLE_PROFILER_SPS'
 	[[ " $IUSE " == *' debug '* ]] && use debug ||
 	    sed -i -e "/$i/d" $(grep -lRw "$i" "$WORKDIR" --include=moz.configure)
-	export CARGO_RUSTCFLAGS="-C debuginfo=0 $CARGO_RUSTCFLAGS"
-	[[ "${CFLAGS##*-march=}" == native* ]] && export CARGO_RUSTCFLAGS="$CARGO_RUSTCFLAGS -C target-cpu=native"
+	export RUSTFLAGS="-C debuginfo=0 $RUSTFLAGS"
+	[[ "${CFLAGS##*-march=}" == native* ]] && export RUSTFLAGS="$RUSTFLAGS -C target-cpu=native"
 	export CARGOFLAGS="$CARGOFLAGS --jobs 1"
 	use custom-cflags && {
 		case "$PN" in
