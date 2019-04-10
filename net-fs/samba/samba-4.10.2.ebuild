@@ -101,7 +101,7 @@ DEPEND="${CDEPEND}
 	test? (
 			>=sys-libs/nss_wrapper-1.1.3
 			>=net-dns/resolv_wrapper-1.1.4
-			>=net-libs/socket_wrapper-1.1.7
+			>=net-libs/socket_wrapper-1.1.9
 			>=sys-libs/uid_wrapper-1.2.1
 	)"	
 RDEPEND="${CDEPEND}
@@ -131,6 +131,7 @@ S="${WORKDIR}/${MY_P}"
 PATCHES=(
 	"${FILESDIR}/${PN}-4.5.1-compile_et_fix.patch"
 	"${FILESDIR}/${PN}-4.9.2-timespec.patch"
+	"${FILESDIR}/${PN}-4.10.0-disable_gnutls_build_fix.patch"
 )
 
 #CONFDIR="${FILESDIR}/$(get_version_component_range 1-2)"
