@@ -10,8 +10,8 @@ mozconfig_annotate() {
 			echo "MOZILLA_CONFIG=$MOZILLA_CONFIG"
 			[ -n "$MOZILLA_CONFIG" ] && mozconfig_annotate '$MOZILLA_CONFIG' $MOZILLA_CONFIG
 		;;&
-		--enable-release)use custom-optimization && x=${x//enable/disable};;
-		--enable-pie)gcc -v 2>&1 |grep -q "\--disable-default-pie" && continue;;
+#		--enable-release)use custom-optimization && x=${x//enable/disable};;
+		--enable-pie)use custom-cflags && (gcc -v 2>&1 |grep -q "\--disable-default-pie") && continue;;
 		--enable-linker=gold)filter-ldflags -Wl,--sort-section=alignment -Wl,--reduce-memory-overheads;;
 		--enable-linker=lld)filter-ldflags -Wl,--reduce-memory-overheads;;
 		--enable-optimize=-O*)use custom-optimization && o=${CXXFLAGS##*-O} && [ "$o" != "$CXXFLAGS" ] && o=${o%% *} && [ -n "$o" ] && {
@@ -32,12 +32,12 @@ mozconfig_annotate() {
 			export RUSTFLAGS="-Copt-level=$o $RUSTFLAGS $CARGO_RUSTCFLAGS"
 			export CARGO_RUSTCFLAGS="$RUSTFLAGS"
 			export MOZ_RUST_DEFAULT_FLAGS="$RUSTFLAGS"
-			export RUSTC_OPT_LEVEL=$o
-			[ -e Cargo.toml ] && {
-				echo "mk_add_options MOZ_RUST_DEFAULT_FLAGS=\"$RUSTFLAGS\"" >>.mozconfig
-				echo "mk_add_options RUSTFLAGS=\"$RUSTFLAGS\"" >>.mozconfig
-				sed -i -e "s:^opt-level = [0-3]$:opt-level = $o:" Cargo.toml
-			}
+#			export RUSTC_OPT_LEVEL=$o
+			#[ -e Cargo.toml ] && {
+			#	echo "mk_add_options MOZ_RUST_DEFAULT_FLAGS=\"$RUSTFLAGS\"" >>.mozconfig
+			#	echo "mk_add_options RUSTFLAGS=\"$RUSTFLAGS\"" >>.mozconfig
+			#	sed -i -e "s:^opt-level = [0-3]$:opt-level = $o:" Cargo.toml
+			#}
 		}
 		;;
 		esac
