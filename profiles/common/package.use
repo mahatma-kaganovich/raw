@@ -31,6 +31,7 @@ net-fs/nfs-utils nfsdcld nfsv41
 media-libs/libmypaint gegl
 media-gfx/inkscape cdr inkjar
 dev-libs/elfutils static-libs
+net-mail/dovecot textcat
 # default don't want pam, but elogind
 x11-base/xorg-server suid -elogind
 #sys-auth/elogind pam
