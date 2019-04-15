@@ -28,6 +28,7 @@ RDEPEND="sys-fs/mtools
 		dev-perl/Crypt-PasswdMD5
 		dev-perl/Digest-SHA1"
 DEPEND="${RDEPEND}
+	app-arch/upx-ucl
 	dev-lang/nasm
 	>=sys-boot/gnu-efi-3.0u
 	virtual/os-headers"
@@ -82,7 +83,7 @@ src_prepare() {
 	epatch_user
 }
 
-# keep variable identical everywere
+# keep variables identical everywere
 _make(){
 	# build system abuses the LDFLAGS variable to pass arguments to ld
 	unset LDFLAGS
