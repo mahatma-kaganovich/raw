@@ -197,6 +197,7 @@ cdrdao|gcr|ufraw|gdal|dosemu|soxr|flac|libgcrypt)filterflag2 '' '-flto*';;&
 boost)filter86_32 '-flto*' '-*-lto-*' -fuse-linker-plugin -fdevirtualize-at-ltrans;;&
 elogind|perl|autofs|dovecot)_fLTO && export LDFLAGS="$LDFLAGS -fPIC";;&
 cmake)_fLTO && _isflag '-floop-*' '-fgraphite*' && filterflag -fipa-pta;;&
+mjpegtools)_fLTO && filterflag -floop-nest-optimize;;&
 bash)filterflag -fipa-pta;;&
 ceph)_isflag '-floop-*' '-fgraphite*' && { # prefer graphite vs. lto
 	# handle lto <-> no-lto transition
