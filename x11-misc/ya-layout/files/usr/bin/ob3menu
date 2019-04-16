@@ -993,7 +993,7 @@ print qq(
 <menu id=").($id++).qq(" label='$set execute="${0}config"/>
 <menu id=").($id++).qq(" label='Default Applications' execute='$0$subcmd --$ma'/>
 <separator label=""/>
-<item label="Exit"><action name="Exit"/></item>);
+<item label="Exit"><action name="Exit"/></item>
 </menu>
 </openbox_pipe_menu>
 );
