@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # (c) Denis Kaganovich, Anarchy or GPLv2
-# OpenBox3 pipe menu v0.17
+# OpenBox3 pipe menu v0.18
 # ob3menu {--<command> {params}}
 # 	--slow [<path/to/rc.xml> [XxY]]
 #	--autostart {profile}
@@ -992,11 +992,8 @@ print qq(
 <separator/>
 <menu id=").($id++).qq(" label='$set execute="${0}config"/>
 <menu id=").($id++).qq(" label='Default Applications' execute='$0$subcmd --$ma'/>
-<separator label=""/>);
-print "<item label='$_->[0]'><action name='execute'><prompt>$_->[0]</prompt><execute>$_->[1]</execute></action></item>\n" for(['PowerOFF','/sbin/poweroff -i -h'],['Reboot','/sbin/reboot'],
-	#-w '/sys/power/state'?(map{["Suspend to $_","/bin/bash -c &quot;echo $_ &gt;/sys/power/state&quot;"]}split(/\s+/,_read('</sys/power/state',0))):()
-);
-print qq(<item label="Exit"><action name="Exit"/></item>
+<separator label=""/>
+<item label="Exit"><action name="Exit"/></item>);
 </menu>
 </openbox_pipe_menu>
 );

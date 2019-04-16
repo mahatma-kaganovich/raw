@@ -11,6 +11,22 @@ else
 	a='sockets - cores - save'
 fi
 
+ask(){
+	echo "<item label='$1'><action name='execute'><prompt>$1</prompt><execute>$2</execute></action></item>"
+}
+
 echo "<openbox_pipe_menu><separator label='power:$t'/>
 <item label='$t1'><action name='Execute'><execute>sudo -n /usr/sbin/ya-nrg force $a</execute></action></item>
-</openbox_pipe_menu>"
+<separator />"
+for i in 'Reboot:/sbin/reboot' 'Off:/sbin/poweroff -i -h'; do
+	f=${i#*:}
+	[ $EUID = 0 ] || {
+		x="0x$(stat -Lc '%f' ${f%% *})" && [ $[x&2112] = 2112 ] ||
+			f="sudo -n $f"
+	}
+	ask "${i%%:*}" "$f"
+done
+[ -w '/sys/power/state' ] && for i in $(< /sys/power/state); do
+	ask "Suspend to $i" "/bin/bash -c &quot;echo $i &gt;/sys/power/state&quot;"
+done
+echo "</openbox_pipe_menu>"
