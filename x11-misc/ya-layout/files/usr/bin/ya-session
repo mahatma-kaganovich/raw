@@ -550,7 +550,9 @@ xssaver(){
 		[ $s2 -lt $s1 ] && s2=$s1
 		[ $s3 != 0 -a $s3 -lt $s2 ] && s3=$s2
 	fi
-	$dpms && $xset dpms $s1 $s2 $s3 +dpms || $xset dpms $s1 $s2 $s3 -dpms
+	$dpms && $xset dpms $s1 $s2 $s3 +dpms || {
+		$b && $xset dpms 0 0 0 || $xset dpms $s1 $s2 $s3 -dpms
+	}
 	$b && $xset s on s blank s expose s $t $c || $xset s off
 #	$lock && ...
 }
