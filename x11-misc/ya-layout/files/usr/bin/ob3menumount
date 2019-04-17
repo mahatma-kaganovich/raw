@@ -15,20 +15,14 @@ xml(){
 _removable(){
 	[ "$DEVNAME" != "$d" -o -b "$d" ] || return 1
 	local x= i s
-	s="/sys/block/$DEVNAME"
-	if [ -e "$s" ]; then
-		read x <"$s/removable"
-	else
-		while i="${s%[0-9]}" && [ "$i" != "$s" -a ! -e "$s" ]; do
-			s="$i"
-		done
-		[ -e "$s/$DEVNAME/partition" ] && read x <"$s/removable"
-#		for i in "$s/$DEVNAME"; do
-#			[ -e "$i/partition" ] && s="${i%/*}" && read x <"$s/removable" && [ "$x" = 0 ] && break
-#		done
-	fi
-	read model <"$s/device/model"
-	[ "$x" = 1 ]
+	s="$(echo /sys/block/*/"$DEVNAME")"
+	[ -e "$s" ] && s="${s%/*}" || {
+		s="/sys/block/$DEVNAME"
+		[ -e "$s" ] || return 1
+	}
+	read x <"$s/removable"
+	read model <"$s/device/model" || read model <"$s/device/name"
+	return 0
 }
 
 _umnt(){
@@ -101,7 +95,8 @@ while read d m t f x; do
 	;;&
 	/etc/fstab:umount)[ "$d1" = "$d" ] || continue;;&
 	*)
-		x="${d#/dev/disk/by-} -> $m${model:+: $model}"
+		x="${d#/dev/}"
+		x="${x#disk/by-}${model:+ $model}"
 		xml
 		u="$x"
 		# prefer per-device errors 4 safe detach
