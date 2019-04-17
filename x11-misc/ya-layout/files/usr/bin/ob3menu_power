@@ -21,7 +21,8 @@ echo "<openbox_pipe_menu><separator label='power:$t'/>
 for i in 'Reboot:/sbin/reboot' 'Off:/sbin/poweroff -i -h'; do
 	f=${i#*:}
 	[ $EUID = 0 ] || {
-		x="0x$(stat -Lc '%f' ${f%% *})" && [ $[x&2112] = 2112 ] ||
+		x=${f%% *}
+		[ -x $x ] && x="0x$(stat -Lc '%f' $x)" && [ $[x&2048] != 0 ] ||
 			f="sudo -n $f"
 	}
 	ask "${i%%:*}" "$f"
