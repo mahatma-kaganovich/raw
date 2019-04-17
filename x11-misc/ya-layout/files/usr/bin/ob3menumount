@@ -14,12 +14,11 @@ xml(){
 
 _removable(){
 	[ "$DEVNAME" != "$d" -o -b "$d" ] || return 1
-	local x= i s
-	s="$(echo /sys/block/*/"$DEVNAME")"
-	[ -e "$s" ] && s="${s%/*}" || {
-		s="/sys/block/$DEVNAME"
-		[ -e "$s" ] || return 1
-	}
+	local x= i s=
+	for i in /sys/block/*/"$DEVNAME"; do
+		[ -e "$i" ] && s="${i/$DEVNAME}" && break
+	done
+	[ -z "$s" ] && s="/sys/block/$DEVNAME" && ! [ -e "$s" ] && return 1
 	read x <"$s/removable"
 	read model <"$s/device/model" || read model <"$s/device/name"
 	return 0
