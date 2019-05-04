@@ -1,4 +1,4 @@
-2018-12-25 Dzianis Kahanovich <mahatma@eu.by>
+2019-05-04 Dzianis Kahanovich <mahatma@eu.by>
 
 PR target/40171
 * config/i386/driver-i386.c (host_detect_local_cpu): Add "astune" mode (assembler mtune).
@@ -113,7 +113,7 @@ PR target/40171
  	case 0x55:
 -	  if (has_avx512vnni)
 +	  if (astune)
-+	    cpu = corei7;
++	    cpu = "corei7";
 +	  else if (has_avx512vnni)
  	    /* Cascade Lake.  */
  	    cpu = "cascadelake";
