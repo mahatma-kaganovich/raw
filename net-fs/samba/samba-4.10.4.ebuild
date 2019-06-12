@@ -25,9 +25,10 @@ LICENSE="GPL-3"
 
 SLOT="0"
 
-IUSE="acl addc addns ads ceph client cluster cups debug dmapi fam gnutls gpg iprint json ldap
-pam python quota selinux syslog system-heimdal +system-mitkrb5 systemd test winbind afs sasl zeroconf
-cpu_flags_x86_aes nls lmdb etcd system-ldb snapper"
+IUSE="acl addc addns ads ceph client cluster cups debug dmapi fam gnutls gpg
+iprint json ldap pam profiling-data python quota selinux syslog system-heimdal
++system-mitkrb5 systemd test winbind zeroconf
+afs sasl cpu_flags_x86_aes nls lmdb etcd system-ldb snapper"
 
 MULTILIB_WRAPPED_HEADERS=(
 	/usr/include/samba-4.0/policy.h
@@ -242,6 +243,7 @@ multilib_src_configure() {
 		$(use_enable gnutls)
 		$(use_with debug lttng)
 		$(use_with ldap)
+		$(use_with profiling-data)
 		$(use_with lmdb ldb-lmdb)
 	)  #'"
 	multilib_is_native_abi && myconf+=( --with-shared-modules=${SHAREDMODS} )
