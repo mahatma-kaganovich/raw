@@ -60,6 +60,6 @@ src_install(){
 #	sed -i -e 's:#000000:#3f7f7f:' -e 's:#424242:#1f3f3f:' -e 's:#444444:#3d7d7d:' -e 's:#aaaaaa:#1f3f3f:' -e 's:#888888:#0f1f1f:' "$D/$s"/img/*.xpm
 	use xpm || rm "$D/$s/img" -Rf
 	dodir "$s/examples"
-	dosym "../usr/share/$PN/xkbd-small.conf" /etc/xkbd-config.conf
+	dosym "../usr/share/$PN/xkbd-std-small.conf" /etc/xkbd-config.conf
 	mv "$D/$s"/*.xkbd "$D/$s/examples"
 }
