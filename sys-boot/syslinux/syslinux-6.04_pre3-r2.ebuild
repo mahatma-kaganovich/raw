@@ -45,7 +45,7 @@ src_prepare() {
 
 	# loose HPA support!
 	rm bios efi32 efi64 -Rf
-	epatch "${WORKDIR}"/debian/patches/{0005,0009,0016,0017,0018}-*.patch
+	epatch "${WORKDIR}"/debian/patches/{0005,0016,0017,0018}-*.patch
 	sed -i -e 's:-malign-:-falign-:' mk/*.mk
 	sed -i -e 's:$(call gcc_ok,-m64,*):-m64 -fPIC:' -e 's: -m64$: -m64 -march=x86-64:' mk/*.mk gnu-efi/Make.defaults
 
