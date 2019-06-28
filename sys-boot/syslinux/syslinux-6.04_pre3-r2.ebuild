@@ -17,7 +17,7 @@ SRC_URI_TESTING=Testing/${PV:0:4}
 [[ ${PV/_rc} != $PV ]] && SRC_URI_DIR=$SRC_URI_TESTING
 SRC_URI="https://www.zytor.com/pub/${PN}/${SRC_URI_DIR}/${P/_/-}.tar.xz
 	mirror://kernel/linux/utils/boot/${PN}/${SRC_URI_DIR}/${P/_/-}.tar.xz
-	http://deb.debian.org/debian/pool/main/s/syslinux/syslinux_6.04~git20190206.bf6db5b4+dfsg1-1~bpo9+1.debian.tar.xz"
+	http://cdn-fastly.deb.debian.org/debian/pool/main/s/syslinux/syslinux_6.04~git20190206.bf6db5b4+dfsg1-1~bpo9+2.debian.tar.xz"
 
 LICENSE="GPL-2"
 SLOT="0"
@@ -45,7 +45,7 @@ src_prepare() {
 
 	# loose HPA support!
 	rm bios efi32 efi64 -Rf
-	epatch "${WORKDIR}"/debian/patches/{0005,0016,0017,0018}-*.patch
+	epatch "${WORKDIR}"/debian/patches/{0005,0009,0016,0017,0018}-*.patch
 	sed -i -e 's:-malign-:-falign-:' mk/*.mk
 	sed -i -e 's:$(call gcc_ok,-m64,*):-m64 -fPIC:' -e 's: -m64$: -m64 -march=x86-64:' mk/*.mk gnu-efi/Make.defaults
 
