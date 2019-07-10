@@ -24,7 +24,7 @@ for i in $CFLAGS; do
 		# agnostic fixed defaults are dangerous
 		*)continue;;
 		esac
-		>[ "${CTARGET:-$CHOST}" = "$CBUILD" ] &&
+		[ "${CTARGET:-$CHOST}" = "$CBUILD" ] &&
 		export with_"${j//-/_}"=""${i#*=}""
 	;;
 	esac
@@ -51,7 +51,7 @@ with_fpmath=$(echo '#if defined(__AVX__)
 #endif'|$(tc-getCPP) - -o /dev/null $CFLAGS 2>&1|head -n 1)
 with_fpmath=${with_fpmath##* }
 }
->[ "${CTARGET:-$CHOST}" = "$CBUILD" ] &&
+[ "${CTARGET:-$CHOST}" = "$CBUILD" ] &&
 case "$with_fpmath" in
 sse|avx)export with_fpmath;;
 *)unset with_fpmath;;
