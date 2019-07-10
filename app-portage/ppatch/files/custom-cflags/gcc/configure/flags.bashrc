@@ -42,6 +42,7 @@ replace-flags '-O*' $f
 [ -e "$S/config/bootstrap$f.mk" ] && with_build_config+=" bootstrap$f" # ignored?
 
 # --with-fpmath ($with_fpmath) is "sse" or "avx"
+[ "${CTARGET:-${CHOST}}" != "$CBUILD" ] ||
 [ "$with_fpmath" = 387 ] || {
 with_fpmath=$(echo '#if defined(__AVX__)
 #error avx
