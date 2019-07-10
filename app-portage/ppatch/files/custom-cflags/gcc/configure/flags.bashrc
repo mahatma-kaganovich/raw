@@ -43,6 +43,7 @@ replace-flags '-O*' $f
 [ -e "$S/config/bootstrap$f.mk" ] && with_build_config+=" bootstrap$f" # ignored?
 
 # --with-fpmath ($with_fpmath) is "sse" or "avx"
+[ "${CTARGET:-$CHOST}" != "$CBUILD" ] ||
 [ "$with_fpmath" = 387 ] || {
 with_fpmath=$(echo '#if defined(__AVX__)
 #error avx
@@ -51,7 +52,6 @@ with_fpmath=$(echo '#if defined(__AVX__)
 #endif'|$(tc-getCPP) - -o /dev/null $CFLAGS 2>&1|head -n 1)
 with_fpmath=${with_fpmath##* }
 }
-[ "${CTARGET:-$CHOST}" = "$CBUILD" ] &&
 case "$with_fpmath" in
 sse|avx)export with_fpmath;;
 *)unset with_fpmath;;
