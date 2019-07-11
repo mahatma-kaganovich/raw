@@ -65,7 +65,7 @@ balance(){
 iwscan(){
 	local x y
 	{
-	[ -e /run/iwd.pid ] && iwctl station list|while read x y; do
+	pgrep -x iwd -F /run/iwd.pid && iwctl station list|while read x y; do
 		[ "$y" = disconnected ] && iwctl station $x scan
 	done
 	} &
