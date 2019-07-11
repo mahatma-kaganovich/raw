@@ -62,6 +62,15 @@ balance(){
 	[ "$batt" = true ] || /usr/sbin/irqbalance -o -f -t 1 &
 }
 
+iwscan(){
+	local x y
+	{
+	[ -e /run/iwd.pid ] && iwctl station list|while read x y; do
+		[ "$y" = disconnected ] && iwctl station $x scan
+	done
+	} &
+}
+
 jiff(){
 	sleep 0.1
 }
@@ -131,6 +140,7 @@ save(){
 		$echo "$f 15"
 		$f 15
 	}
+	[ -e /run/iwd.pid ] && echo iwscan >>$save
 	[ -n "$cores$sockets$threads" ] && {
 		echo balance >>$save
 		sync &
