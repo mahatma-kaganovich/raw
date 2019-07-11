@@ -22,15 +22,15 @@ onbatt(){
 	grep -sq "state:.*off-line" /proc/acpi/ac_adapter/*/state || grep -sq "AC Power.*: 0" /proc/pmu/info
 }
 
-case "$(< /sys/devices/virtual/dmi/id/uevent)" in
-*:pvrThinkPad102nd:*)
-	tpt10bat=/usr/share/ya-layout/tpt10-bat/tpt10-bat
-	[ -x $tpt10bat ] && ! grep -qs Battery /sys/class/power_supply/*/type &&
-	onbatt(){
-		$tpt10bat -1 2>&1 |grep -q "Discharging\|Unknown"
-	}
-;;
-esac
+#case "$(< /sys/devices/virtual/dmi/id/uevent)" in
+#*:pvrThinkPad102nd:*)
+#	tpt10bat=/usr/share/ya-layout/tpt10-bat/tpt10-bat
+#	[ -x $tpt10bat ] && ! grep -qs Battery /sys/class/power_supply/*/type &&
+#	onbatt(){
+#		$tpt10bat -1 2>&1 |grep -q "Discharging\|Unknown"
+#	}
+#;;
+#esac
 
 save1(){
 	[ -e "$2" ] || return 1
@@ -63,12 +63,12 @@ balance(){
 }
 
 iwscan(){
-	local x y
-	{
-	pgrep -x iwd -F /run/iwd.pid && iwctl station list|while read x y; do
-		[ "$y" = disconnected ] && iwctl station $x scan
-	done
-	} &
+	local i
+	# iwctl too wait if no iwd. pgrep
+	for i in /sys/class/net/*/wireless; do
+		i="${i%/*}"
+		[ "$(< "$i/carrier")" = 0 ] && (pgrep -x iwd && iwctl station "${i##*/}" scan) &
+	done &>/dev/null
 }
 
 jiff(){
@@ -140,7 +140,6 @@ save(){
 		$echo "$f 15"
 		$f 15
 	}
-	[ -e /run/iwd.pid ] && echo iwscan >>$save
 	[ -n "$cores$sockets$threads" ] && {
 		echo balance >>$save
 		sync &
@@ -234,6 +233,7 @@ auto|bat|batt|xss-auto)
 bat|batt)pw=$batt;;
 auto|xss-auto)$batt && pw=save || pw=restore;;
 force)force=true;;
+wifi)iwscan;;
 *)
 echo "Simple control powersave <-> default & check battery state.
 Designed for use in parallel with screen locker on laptop.
@@ -259,6 +259,7 @@ cmd is:
  auto [<onbatt_test>]
  bat|batt
  xss[-auto] [on|off|...]
+ wifi
 Add to sudo:
  echo '%plugdev ALL=(ALL) NOPASSWD: /usr/sbin/ya-nrg' >/etc/sudoers.d/ya-nrg
   or
