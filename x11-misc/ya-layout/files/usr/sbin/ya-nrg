@@ -67,7 +67,14 @@ iwscan(){
 	# iwctl too wait if no iwd. pgrep
 	for i in /sys/class/net/*/wireless; do
 		i="${i%/*}"
-		[ "$(< "$i/carrier")" = 0 ] && (pgrep -x iwd && iwctl station "${i##*/}" scan) &
+		[ "$(< "$i/carrier")" = 0 ] && {
+			i="${i##*/}"
+			if [ -S "/run/wpa_supplicant/$i" ]; then
+				wpa_cli scan &
+			else
+				(pgrep -x iwd && iwctl station "$i" scan) &
+			fi
+		}
 	done &>/dev/null
 }
 
