@@ -241,6 +241,10 @@ bat|batt)pw=$batt;;
 auto|xss-auto)$batt && pw=save || pw=restore;;
 force)force=true;;
 wifi)iwscan;;
+iwmon)
+	exec stdbuf -i0 -o0 -e0 iwmon -ny
+	exit 1
+;;
 *)
 echo "Simple control powersave <-> default & check battery state.
 Designed for use in parallel with screen locker on laptop.
@@ -267,6 +271,7 @@ cmd is:
  bat|batt
  xss[-auto] [on|off|...]
  wifi
+ iwmon
 Add to sudo:
  echo '%plugdev ALL=(ALL) NOPASSWD: /usr/sbin/ya-nrg' >/etc/sudoers.d/ya-nrg
   or
