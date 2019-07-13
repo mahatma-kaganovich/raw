@@ -1279,8 +1279,11 @@ use embed-hardware && [[ -n "$freq" ]] && CF1 -X86_POWERNOW_K8 -X86_ACPI_CPUFREQ
 CF1 -CPU_SUP_.+ "CPU_SUP_${V:-.+}"
 [ -n "$V" ] && {
 	CF1 -MICROCODE_AMD -MICROCODE_INTEL MICROCODE_$V
-	[ "$V" = INTEL ] || CF1 -X86_INTEL_PSTATE -INTEL_RAPL -IOSF_MBI '-X86_INTEL_(?:LPSS|MID|CE|QUARK)' -$knl -INTEL_TURBO_MAX_3
-	[ "$V" = AMD ] || CF1 -X86_AMD_PLATFORM_DEVICE -AMD_NUMA
+	[ "$V" = INTEL ] || CF1 -X86_INTEL_PSTATE -INTEL_RAPL -IOSF_MBI '-X86_INTEL_(?:LPSS|MID|CE|QUARK)' -$knl -INTEL_TURBO_MAX_3 '-.*_SOC_.*INTEL_.*'
+	[ "$V" = AMD ] || CF1 -X86_AMD_PLATFORM_DEVICE -AMD_NUMA '-.*_SOC_AMD_.*'
+	for i in INTEL AMD; do
+		[ "$V" = $i ] || CF1 "-(?:.+_)?SOC_(?:.+_)?${V}(?:_.+)?"
+	done
 }
 [ -z "$V" -o "$V" = AMD ] && ucode "amd-ucode/*.bin" AuthenticAMD
 [ -z "$V" -o "$V" = INTEL ] && ucode "intel-ucode/??-??-??" GenuineIntel
