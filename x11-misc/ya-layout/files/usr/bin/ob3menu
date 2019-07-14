@@ -1,8 +1,9 @@
 #!/usr/bin/perl
 # (c) Denis Kaganovich, Anarchy or GPLv2
-# OpenBox3 pipe menu v0.18
+# OpenBox3 pipe menu v0.19
 # ob3menu {--<command> {params}}
 # 	--slow [<path/to/rc.xml> [XxY]]
+#	--compact
 #	--autostart {profile}
 #	--include {menu to include}
 #	--profile {profile}
@@ -852,13 +853,19 @@ DRAW:
 NOFORK:
 	$tint2_=undef;
 	}else{
+		if (exists($P{compact})){
+			print "<menu id='$id' label='Top'>";
+			$id++;
+		}
 		print((map{
 			if($#$_==1){
 				$_->[1]=~s/([$xml_])/\&$xml_{$1};/g;
 				$_->[2]="<item label='$_->[1]'><action name='execute'><execute>$_->[1]</execute></action></item>";
 			}
 			$_->[2];
-		}@apps),'<separator/>');
+		}@apps));
+		exists($P{compact}) && print "</menu>";
+		print '<separator/>';
 	}
 nolauncher:
 }
