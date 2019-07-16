@@ -46,7 +46,7 @@ sudo -n /usr/sbin/ya-nrg iwmon & ip monitor
 	case "$x" in
 	'>'*)
 #		echo "	$x" >&2
-		$connect && conn="$ssid" && connect=false
+#		$connect && conn="$ssid" && connect=false
 		[ -v ssid -a "$ssid" = "$conn" ] && show
 		nxt
 	;;&
@@ -54,7 +54,7 @@ sudo -n /usr/sbin/ya-nrg iwmon & ip monitor
 		unset conn
 		show
 	;;
-	'> Event: Connect '*)connect=true;;
+#	'> Event: Connect '*)connect=true;;
 	'Status: 1 (0x00000001)')conn="$ssid";show;;
 	'SSID: '*)ssid="$y";;
 	WPA:|RSN:)t="$v";;
