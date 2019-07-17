@@ -94,6 +94,10 @@ _iw_list(){
 	done
 }
 
+_iw_noscan(){
+	sed -e 's:[ \t]*::g' -e 's:#.*::g' -e "/^$/d" -e 's/true/1/i' -e 's/false/0/i' </etc/iwd/main.conf | grep -q '^disable_periodic_scan=1$'
+}
+
 # iwd blacklist easy to block my phone, when I off/on ap,
 # so one-touch restart is required swiss knife
 wifi_restart(){
@@ -108,7 +112,7 @@ wifi_restart(){
 	[ -n "$on$off$off_" ] && {
 		/usr/libexec/iwd &>/dev/null &
 		# on 1 of my card iwd scan on start, on other - no
-		for i in 0.1 0.1 0.1 0.5 1 3 0; do
+		_iw_noscan && for i in 0.1 0.1 0.1 0.5 1 3 0; do
 			iwctl station wlan1 scan && break
 			sleep $i
 		done
@@ -125,7 +129,7 @@ wifi_save(){
 	# no on + no-carrier
 	[ -z "$off$off1" ] && return
 	# iwd, but autoscan (no disable_periodic_scan=true)
-	[ -n "$on$off" ] && ! (sed -e 's:[ \t]*::g' -e 's:#.*::g' -e "/^$/d" -e 's/true/1/i' -e 's/false/0/i' </etc/iwd/main.conf | grep -q '^disable_periodic_scan=1$') && return
+	[ -n "$on$off" ] && ! _iw_noscan && return
 	[ -n "$on1" ]
 	# no still on - poweroff 1shot
 	[ -z "$on$on1" ] && {
