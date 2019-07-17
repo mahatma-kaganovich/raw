@@ -62,14 +62,6 @@ balance(){
 	[ "$batt" = true ] || /usr/sbin/irqbalance -o -f -t 1 &
 }
 
-_iwonoff(){
-	local i
-	pgrep -x iwd && for i in $1; do
-		iwctl adapter "$(iwctl device "$i" show|grep Adapter|sed -e 's:.*Adapter *::')" set-property Powered "$2"
-		iwctl device "$i" set-property Powered "$2"
-	done
-}
-
 _iw_list(){
 	local i v f
 	on=
@@ -101,19 +93,24 @@ _iw_noscan(){
 # iwd blacklist easy to block my phone, when I off/on ap,
 # so one-touch restart is required swiss knife
 wifi_restart(){
-	local i on off on1 off1 off_ off_1
+	local i j x on off on1 off1 off_ off_1
 	_iw_list
 	[ -n "$on$off$off_" ] && killall -w iwd
-	[ -n "$off_$off_1" ] && {
-		rfkill unblock wlan || {
-			[ -n "$off_" ] && _iwonoff "$off_" on
-		}
-	}
+	for i in $off_$off_1; do
+		for i in /sys/class/net/"$i"/phy80211/rfkill*/soft; do
+			echo 0 >"$i"
+		done
+	done
 	[ -n "$on$off$off_" ] && {
 		/usr/libexec/iwd &>/dev/null &
 		# on 1 of my card iwd scan on start, on other - no
 		_iw_noscan && for i in 0.1 0.1 0.1 0.5 1 3 0; do
-			iwctl station wlan1 scan && break
+			x=
+			for j in $off; do
+				[ "$(< /sys/class/net/"$j"/carrier)" != 1 ] && iwctl station wlan1 scan || x+=" $j"
+			done
+			[ -z "$x" ] && exit
+			off="$x"
 			sleep $i
 		done
 		exit
@@ -124,33 +121,32 @@ wifi_restart(){
 # poweroff no-carrier (if disable_periodic_scan=false)
 # don't know how2 selective poweroff wpa_supplicant
 wifi_save(){
-	local on off on1 off1 off_ off_1
+	local i= on off on1 off1 off_ off_1
 	_iw_list
-	# no on + no-carrier
 	[ -z "$off$off1" ] && return
 	# iwd, but autoscan (no disable_periodic_scan=true)
-	[ -n "$on$off" ] && ! _iw_noscan && return
-	[ -n "$on1" ]
-	# no still on - poweroff 1shot
-	[ -z "$on$on1" ] && {
-		# wpa_supplicant: off only on battery, as no disable scan
-		[ -z "$off1" ] || [ "$batt" = true ] &&
-		    rfkill block wlan && {
-			# can not kill, but pre-kill -> faster restart
-			[ -n "$on$off" ] && killall iwd
-			return
-		}
-	}
-	# slow path: selective off
-	[ -n "$off" ] && _iwonoff "$off" off
+	[ -n "$off" ] && ! _iw_noscan && off=
+	# wpa_supplicant: off only on battery, as no disable scan
+	[ "$batt" = true ] || off1=
+	for i in $off$off1; do
+		for i in /sys/class/net/"$i"/phy80211/rfkill*/soft; do
+			echo 1 >"$i"
+		done
+	done
+	# pre-kill -> faster restart
+	[ -z "$on" -a -n "$off" ] && killall iwd
 }
 
 # rescan no-carrier
 wifi_restore(){
 	local i on off on1 off1 off_ off_1
 	_iw_list
-	# wpa_supplicant
-	[ -n "$off_1" ] && rfkill unblock wlan
+	# wpa_supplicant only
+	for i in $off_1; do
+		for i in /sys/class/net/"$i"/phy80211/rfkill*/soft; do
+			echo 0 >"$i"
+		done
+	done
 	[ -n "$off1$off_1" ] && wpa_cli scan &
 	# iwd: rfkilled/poweroff still ignored to hand restart
 	[ -n "$off" ] && pgrep -x iwd && for i in $off; do
