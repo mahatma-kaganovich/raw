@@ -41,7 +41,7 @@ $conn"
 ip ro
 $nrg iwmon & ip monitor
 }| while read x; do
-#	echo "	$x" >&2
+	echo "	$x" >&2
 	y="${x#*: }"
 	case "$x" in
 	'>'*)
@@ -53,7 +53,7 @@ $nrg iwmon & ip monitor
 	'> Event: Disconnect'*)
 		unset conn
 		show
-		[ -s /run/power.save ] || $nrg wifi-sleep
+		[ -s /run/power.save ] && $nrg wifi-sleep
 	;;
 #	'> Event: Connect '*)connect=true;;
 	'Status: 1 (0x00000001)')conn="$ssid";show;;
@@ -63,6 +63,7 @@ $nrg iwmon & ip monitor
 	'Frequency: '*)freq="${y%% *}";;
 	'> Complete: Get Scan '*)show;;
 	'default via '*' src '*)
+		echo "DEFAULT" >&1
 		src="${x##* src }"
 		src="${src%% *}"
 		show
