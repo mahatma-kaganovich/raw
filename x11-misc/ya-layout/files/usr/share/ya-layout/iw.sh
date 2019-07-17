@@ -63,7 +63,6 @@ $nrg iwmon & ip monitor
 	'Frequency: '*)freq="${y%% *}";;
 	'> Complete: Get Scan '*)show;;
 	'default via '*' src '*)
-		echo "DEFAULT" >&1
 		src="${x##* src }"
 		src="${src%% *}"
 		show

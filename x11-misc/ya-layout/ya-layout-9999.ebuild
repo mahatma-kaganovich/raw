@@ -75,7 +75,7 @@ execp_interval = 0
 execp_continuous = 2
 execp_font_color = #ffffff 100
 execp_font = sans 12
-execp_padding = 1 8
+#execp_padding = 1 8
 
 "
 		echo "
@@ -87,7 +87,7 @@ execp_interval = 0
 execp_continuous = 2
 execp_font_color = #ffffff 100
 execp_font = sans 12
-execp_padding = 1 8
+#execp_padding = 1 8
 
 "
 }|cat /etc/xdg/tint2/tint2rc - >"${D}"/etc/xdg/ya/tint2rc &&
