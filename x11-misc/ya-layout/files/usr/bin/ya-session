@@ -540,7 +540,7 @@ xssaver(){
 	case "$mode" in
 	x);;
 	# 2do: --dpms && remove dpms here?
-	lock)xkbd-onoff --sudo2 /usr/sbin/ya-nrg bat restore wifi --sudo1 /usr/sbin/ya-nrg light 20 sockets - cores - auto --boot --xss;;
+	lock)xkbd-onoff --sudo2 /usr/sbin/ya-nrg bat restore --sudo1 /usr/sbin/ya-nrg light 20 sockets - cores - auto --boot --xss;;
 	off)dpms=false;b=false;;
 	*)xset=true;lock=false;_run xscreensaver;;
 	esac
