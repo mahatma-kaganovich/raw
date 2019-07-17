@@ -41,7 +41,7 @@ $conn"
 ip ro
 $nrg iwmon & ip monitor
 }| while read x; do
-	echo "	$x" >&2
+#	echo "	$x" >&2
 	y="${x#*: }"
 	case "$x" in
 	'>'*)
