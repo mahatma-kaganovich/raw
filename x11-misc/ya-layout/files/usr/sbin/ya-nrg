@@ -62,20 +62,100 @@ balance(){
 	[ "$batt" = true ] || /usr/sbin/irqbalance -o -f -t 1 &
 }
 
-iwscan(){
+_iwonoff(){
 	local i
-	# iwctl too wait if no iwd. pgrep
+	pgrep -x iwd && for i in $1; do
+		iwctl adapter "$(iwctl device "$i" show|grep Adapter|sed -e 's:.*Adapter *::')" set-property Powered "$2"
+		iwctl device "$i" set-property Powered "$2"
+	done
+}
+
+_iw_list(){
+	local i v f
+	on=
+	on1=
+	off=
+	off1=
+	off_=
+	off_1=
 	for i in /sys/class/net/*/wireless; do
 		i="${i%/*}"
-		[ "$(< "$i/carrier")" = 0 ] && {
-			i="${i##*/}"
-			if [ -S "/run/wpa_supplicant/$i" ]; then
-				wpa_cli scan &
-			else
-				(pgrep -x iwd && iwctl station "$i" scan) &
-			fi
+		f="$i/carrier"
+		[ -r "$f" ] || continue
+		i="${i##*/}"
+		case "$(< "$f")" in
+		0)v=off;;
+		1)v=on;;
+		'')v=off_;;
+		*) continue;;
+		esac
+		[ -S "/run/wpa_supplicant/$i" ] && v+='1'
+		export $v="${!v} $i"
+	done
+}
+
+# iwd blacklist easy to block my phone, when I off/on ap,
+# so one-touch restart is required swiss knife
+wifi_restart(){
+	local on off on1 off1 off_ off_1
+	_iw_list
+	[ -n "$on$off$off_" ] && killall -w iwd
+	[ -n "$off_$off_1" ] && {
+		rfkill unblock wlan || {
+			[ -n "$off_" ] && _iwonoff "$off_" on
 		}
-	done &>/dev/null
+	}
+	[ -n "$on$off$off_" ] && /usr/libexec/iwd &>/dev/null &
+	[ -n "$off1$off_1" ] && wpa_cli scan &
+}
+
+# poweroff no-carrier (if disable_periodic_scan=false)
+# don't know how2 selective poweroff wpa_supplicant
+wifi_save(){
+	local on off on1 off1 off_ off_1
+	_iw_list
+	# no on + no-carrier
+	[ -z "$off$off1" ] && return
+	# iwd, but autoscan (no disable_periodic_scan=true)
+	[ -n "$on$off" ] && ! (sed -e 's:[ \t]*::g' -e 's:#.*::g' -e "/^$/d" -e 's/true/1/i' -e 's/false/0/i' </etc/iwd/main.conf | grep -q '^disable_periodic_scan=1$') && return
+	[ -n "$on1" ]
+	# no still on - poweroff 1shot
+	[ -z "$on$on1" ] && {
+		# wpa_supplicant: off only on battery, as no disable scan
+		[ -z "$off1" ] || [ "$batt" = true ] &&
+		    rfkill block wlan && {
+			# can not kill, but pre-kill -> faster restart
+			[ -n "$on$off" ] && killall iwd
+			return
+		}
+	}
+	# slow path: selective off
+	[ -n "$off" ] && _iwonoff "$off" off
+}
+
+# rescan no-carrier
+wifi_restore(){
+	local i on off on1 off1 off_ off_1
+	_iw_list
+	# wpa_supplicant
+	[ -n "$off_1" ] && rfkill unblock wlan
+	[ -n "$off1$off_1" ] && wpa_cli scan &
+	# iwd: rfkilled/poweroff still ignored to hand restart
+	[ -n "$off" ] && pgrep -x iwd && for i in $off; do
+		iwctl station "$i" scan &
+	done
+}
+
+# run async to screensaver (for example - if wifi disconnected [blank])
+wifi_sleep(){
+    _root
+    fchk $save.lock
+    {
+	flock 3
+	[ -s "$save" ] || {
+		wifi_save
+	}
+    } 3>>$save.lock
 }
 
 jiff(){
@@ -91,6 +171,7 @@ restore(){
 		$force || return
 		unlink $save.lock1
 	}
+    echo ===
 	local f x i s b=false
 	for s in ${save}1 $save; do
 		fchk $s || continue
@@ -98,6 +179,7 @@ restore(){
 		(. $s)
 		true >$s
 	done
+	wifi_restore
     } 3>>$save.lock
 }
 
@@ -106,6 +188,7 @@ save(){
     fchk $save.lock
     {
 	flock 3
+	wifi_save
 	fchk $save && return
 	$force && touch $save.lock1
 	local f i x x1 x2
@@ -209,6 +292,8 @@ echo=true
 cores=
 light=
 pw=
+# wifi: restart|off|auto
+wifi=
 
 while [ -n "$*" ]; do
 case "$1" in
@@ -240,7 +325,8 @@ auto|bat|batt|xss-auto)
 bat|batt)pw=$batt;;
 auto|xss-auto)$batt && pw=save || pw=restore;;
 force)force=true;;
-wifi)iwscan;;
+wifi);;
+wifi-restart|wifi-sleep)"${1//-/_}";;
 iwmon)
 	exec stdbuf -i0 -o0 -e0 iwmon -ny
 	exit 1
@@ -270,12 +356,14 @@ cmd is:
  auto [<onbatt_test>]
  bat|batt
  xss[-auto] [on|off|...]
- wifi
  iwmon
+ wifi-restart
+ wifi-sleep
 Add to sudo:
  echo '%plugdev ALL=(ALL) NOPASSWD: /usr/sbin/ya-nrg' >/etc/sudoers.d/ya-nrg
   or
  echo 'ALL ALL=(ALL) NOPASSWD: /usr/sbin/ya-nrg' >/etc/sudoers.d/ya-nrg
+To wifi power-off - add 'disable_periodic_scan=false' to /etc/iwd/main.conf.
 PS 'cores 0'|'cores 1'|'cores -'|'sockets -'|'sockets - cores -'
    - subject  to test power consumption per hardware & [idle] workload.
 "

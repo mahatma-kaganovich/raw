@@ -4,6 +4,8 @@
 # use iwmon (iwd) & ip (iproute2), but works with wpa_supplicant too
 # re-used ya-nrg for sudo one-point
 
+nrg='sudo -n /usr/sbin/ya-nrg'
+
 nxt(){
 unset ssid
 unset t
@@ -37,12 +39,10 @@ $conn"
 
 {
 ip ro
-sudo -n /usr/sbin/ya-nrg iwmon & ip monitor
+$nrg iwmon & ip monitor
 }| while read x; do
 #	echo "	$x" >&2
 	y="${x#*: }"
-	v="${x%%:*}"
-	set - $y
 	case "$x" in
 	'>'*)
 #		echo "	$x" >&2
@@ -53,13 +53,14 @@ sudo -n /usr/sbin/ya-nrg iwmon & ip monitor
 	'> Event: Disconnect'*)
 		unset conn
 		show
+		[ -s /run/power.save ] || $nrg wifi-sleep
 	;;
 #	'> Event: Connect '*)connect=true;;
 	'Status: 1 (0x00000001)')conn="$ssid";show;;
 	'SSID: '*)ssid="$y";;
-	WPA:|RSN:)t="$v";;
+	WPA:|RSN:)t="${x%:}";;
 	'Signal mBm: '*)y="000${y#-}";y="${y:(-4):2}";y="${y#0}";mBm="$y";;
-	'Frequency: '*)freq=$1;;
+	'Frequency: '*)freq="${y%% *}";;
 	'> Complete: Get Scan '*)show;;
 	'default via '*' src '*)
 		src="${x##* src }"
