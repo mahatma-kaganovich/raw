@@ -438,10 +438,11 @@ _app(){
 		a="${#a}"
 		[ $a -lt $mina ] || continue
 		mina=$a
+		minp="$p1"
 		min="$x$p1"
 		minpref="$pref"
 	done
-	x="${min%$p1}"
+	x="${min%$minp}"
 	[ -n "$al_" -a -n "$x" ] && alias "$al_"="$x" &>/dev/null && alias "$al_" >>$ENV
 }
 
@@ -452,7 +453,7 @@ _app(){
 # $YA_APP_<name> - substitution list for "name"
 # +command - in term
 app(){
-	local i v a aa min= mina pref minpref= al=
+	local i v a aa min= minp= mina pref minpref= al=
 	v="YA_PROFILE_$YA_PROFILE"
 	aa=" $YA_APP ${!v} "
 	mina=$((${#aa}+1))
