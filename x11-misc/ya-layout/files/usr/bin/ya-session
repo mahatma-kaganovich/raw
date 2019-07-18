@@ -439,11 +439,10 @@ _app(){
 		[ $a -lt $mina ] || continue
 		mina=$a
 		minp="$p1"
-		min="$x$p1"
+		min="$x"
 		minpref="$pref"
 	done
-	x="${min%$minp}"
-	[ -n "$al_" -a -n "$x" ] && alias "$al_"="$x" &>/dev/null && alias "$al_" >>$ENV
+	[ -n "$al_" -a -n "$min" ] && alias "$al_"="$min" &>/dev/null && alias "$al_" >>$ENV
 }
 
 #alias WebBrowser=/usr/bin/seamonkey-X
@@ -471,8 +470,8 @@ app(){
 		[ -z "$min" ] && return 1
 	fi
 	case "$minpref" in
-	+)app "TerminalEmulator -e $min";;
-	*)echo "$min";;
+	+)app "TerminalEmulator -e $min$minp";;
+	*)echo "$min$minp";;
 	esac
 	return
 }
