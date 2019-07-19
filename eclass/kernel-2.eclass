@@ -675,17 +675,14 @@ run_genkernel(){
 	ls "$UROOT/usr/share/genkernel/arch/$a/*busy*" >/dev/null 2>&1 || opt+=" --busybox-config=${TMPDIR}/busy-config"
 	# e2fsprogs & mdraid need more crosscompile info
 	unmcode y n
-	i="--cross-compile==${CTARGET:-${CHOST}}"
-	grep -sq arch-override= /usr/share/genkernel/gen_cmdline.sh && i="--arch-override=${a}"
+	i=
+	grep -sq arch-override= /usr/share/genkernel/gen_cmdline.sh && i="--arch-override=${a} --utils-arch=${a}"
 	ac_cv_target="${CTARGET:-${CHOST}}" ac_cv_build="${CBUILD}" ac_cv_host="${CHOST:-${CTARGET}}" \
 	CFLAGS="${KERNEL_UTILS_CFLAGS}" LDFLAGS="${KERNEL_GENKERNEL_LDFLAGS}" _run_env "${S}/genkernel" $opt\
-		--config=/etc/kernels/genkernel.conf \
+		--config=/usr/share/genpnprd/genkernel.conf \
 		--cachedir="${TMPDIR}/genkernel-cache" \
 		--tempdir="${TMPDIR}/genkernel" \
-		--logfile="${TMPDIR}/genkernel.log" \
 		$i \
-		--compress-initramfs-type=bzip2 \
-		--utils-arch=${a} --utils-cross-compile=${CTARGET:-${CHOST}}- \
 		$* ${KERNEL_GENKERNEL} || {
 			unmcode n y
 			die "genkernel failed"
