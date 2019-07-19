@@ -1,0 +1,10 @@
+--- a/gen_funcs.sh	2019-07-19 00:23:04.000000000 +0300
++++ b/gen_funcs.sh	2019-07-20 00:38:15.202133562 +0300
+@@ -1137,6 +1137,7 @@ gkbuild() {
+ 		LOGFILE="${LOGFILE}"
+ 		NOCOLOR="${NOCOLOR}"
+ 		TEMP="${TEMP}"
++		TMPDIR="${TMPDIR}"
+ 		SANDBOX_WRITE="${LOGFILE}:${TEMP}"
+ 	)
+ 
