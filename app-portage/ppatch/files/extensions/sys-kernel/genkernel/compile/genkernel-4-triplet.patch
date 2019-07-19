@@ -1,0 +1,11 @@
+--- a/gen_funcs.sh	2019-07-19 14:51:29.000000000 +0300
++++ b/gen_funcs.sh	2019-07-19 15:51:17.963030204 +0300
+@@ -221,7 +221,7 @@ is_valid_triplet() {
+ 	local triplet=${1}
+ 	local is_triplet=no
+ 
+-	if [[ "${triplet}" =~ ^[a-zA-Z0-9]{2,}-[a-zA-Z0-9]{2,}-[a-zA-Z0-9]{2,} ]]
++	if [[ "${triplet}" =~ ^[a-zA-Z0-9_]{2,}-[a-zA-Z0-9]{2,}-[a-zA-Z0-9]{2,} ]]
+ 	then
+ 		is_triplet=yes
+ 	fi
