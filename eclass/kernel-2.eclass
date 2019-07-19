@@ -676,7 +676,7 @@ run_genkernel(){
 	# e2fsprogs & mdraid need more crosscompile info
 	unmcode y n
 	i="--cross-compile==${CTARGET:-${CHOST}}"
-	(${KERNEL_GENKERNEL} --help|grep -q arch-override) && i="--arch-override=${a}"
+	grep -sq arch-override= /usr/share/genkernel/gen_cmdline.sh && i="--arch-override=${a}"
 	ac_cv_target="${CTARGET:-${CHOST}}" ac_cv_build="${CBUILD}" ac_cv_host="${CHOST:-${CTARGET}}" \
 	CFLAGS="${KERNEL_UTILS_CFLAGS}" LDFLAGS="${KERNEL_GENKERNEL_LDFLAGS}" _run_env "${S}/genkernel" $opt\
 		--config=/etc/kernels/genkernel.conf \
