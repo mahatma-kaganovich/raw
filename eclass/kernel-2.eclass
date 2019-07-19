@@ -677,13 +677,10 @@ run_genkernel(){
 	unmcode y n
 	i=
 	grep -sq arch-override= /usr/share/genkernel/gen_cmdline.sh && i="--arch-override=${a} --utils-arch=${a}"
+	TEMPDIR="$TMPDIR" \
 	ac_cv_target="${CTARGET:-${CHOST}}" ac_cv_build="${CBUILD}" ac_cv_host="${CHOST:-${CTARGET}}" \
 	CFLAGS="${KERNEL_UTILS_CFLAGS}" LDFLAGS="${KERNEL_GENKERNEL_LDFLAGS}" _run_env "${S}/genkernel" $opt\
-		--config=/usr/share/genpnprd/genkernel.conf \
-		--cachedir="${TMPDIR}/genkernel-cache" \
-		--tempdir="${TMPDIR}/genkernel" \
-		$i \
-		$* ${KERNEL_GENKERNEL} || {
+		--config=/usr/share/genpnprd/genkernel.conf $i $* ${KERNEL_GENKERNEL} || {
 			unmcode n y
 			die "genkernel failed"
 	}
