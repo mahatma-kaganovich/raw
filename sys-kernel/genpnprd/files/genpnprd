@@ -180,6 +180,9 @@ if [[ -f "$rcfile" ]]; then
 		echo " - genkernel 4 --module-prefix= workaround skipped"
 
 	ln -s busybox "$rcdir/bin/zcat" &>/dev/null
+	for i in "$rcdir"/sbin/insmod; do
+		[ -e "$i" ] || ln -s ../bin/busybox "$i"
+	done
 	if [[ -n "$OVERLAY" ]]; then
 		if $LIBLOOP; then
 			mkdir lib/root || die
