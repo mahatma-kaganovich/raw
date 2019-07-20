@@ -664,8 +664,8 @@ run_genkernel(){
 	fi
 	for i in $(use selinux && echo SELINUX=y) PAM=n STATIC=y DEBUG=n NO_DEBUG_LIB=y DMALLOC=n EFENCE=n FEATURE_MOUNT_NFS=n \
 	    FEATURE_MOUNT_CIFS=y MODPROBE_SMALL=n INSMOD=y RMMOD=y MODPROBE=y LSMOD=n FEATURE_MODPROBE_BLACKLIST=y TELNETD=y \
-	    MKFS_EXT2=n; do
-		sed -i -e "s:^.*CONFIG_${i%%=*}[= ].*\$:CONFIG_$i:" "$TMPDIR/busy-config"
+	    MKFS_EXT2=n 'FEATURE_VOLUMEID_[A-Z0-9]*=y'; do
+		sed -i -e "s:^.*\(CONFIG_${i%=*}\)[= ].*\$:\1=${i#*=}:" "$TMPDIR/busy-config"
 		grep -q "CONFIG_${i%%=*}[= ]" "$TMPDIR/busy-config" || echo "CONFIG_$i" >>"$TMPDIR/busy-config"
 	done
 	# cpio works fine without loopback, but may panish sandbox
