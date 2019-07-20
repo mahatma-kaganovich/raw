@@ -174,6 +174,8 @@ rcfile="$(readlink -f $IMAGE)"
 if [[ -f "$rcfile" ]]; then
 	( (bzip2 -dc $rcfile || gzip -dc $rcfile || xz -dc $rcfile || lzop -dc $rcfile || lz4 -dc $rcfile || cat $rcfile) | cpio -iv 2>&1 | grep '^bin/busybox$' >tmp.lst ) || die "must be [gzipped] cpio file"
 	rm tmp.lst
+	mv -T "$rcdir/var/tmp/portage/*/*/work/build/lib/modules" "$rcdir/lib/modules" ||
+		echo " - genkernel 4 --module-prefix= workaround skipped"
 	ln -s busybox "$rcdir/bin/zcat" &>/dev/null
 	if [[ -n "$OVERLAY" ]]; then
 		if $LIBLOOP; then
