@@ -58,7 +58,10 @@ prepare)
 	use custom-cflags && {
 		case "$PN" in
 		thunderbird);;
-		seamonkey)append-cxxflags -fno-ipa-cp-clone -fno-delete-null-pointer-checks;;
+		seamonkey)
+			append-cxxflags -fno-ipa-cp-clone -fno-delete-null-pointer-checks
+			replace-flags -Wl,--strip-all -Wl,--strip-debug
+		;;
 		*)filter-flags -mtls-dialect=gnu2;;
 		esac
 		[[ "$CXXFLAGS" == *fast* ]] && append-cxxflags -fno-fast-math

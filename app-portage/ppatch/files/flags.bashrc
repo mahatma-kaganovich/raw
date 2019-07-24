@@ -252,6 +252,7 @@ glibc|gnustep-back-cairo|qtcore)_fLTO_f -flto-partition=none;;
 mpg123)filterflag -floop-nest-optimize;; # distortion on sse
 mongodb)[ "$AR" = gcc-ar ] && export AR=/usr/bin/ar ;;
 openssl)filterflag -ffast-math;; # 1.1.1 make
+seamonkey)export LDFLAGS="${LDFLAGS//-Wl,--strip-all/-Wl,--strip-debug}";;
 esac
 
 # more test flags-inject.bashrc before remove
