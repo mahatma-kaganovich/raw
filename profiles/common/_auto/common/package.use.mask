@@ -1,43 +1,40 @@
 app-admin/sudo -openssl gcrypt
-app-i18n/yaskkserv -gnutls libressl
-dev-db/mysql-cluster -openssl yassl libressl
+app-crypt/tpm2-tss -gcrypt openssl
+app-crypt/tpm2-tss -openssl gcrypt
 dev-libs/librelp -openssl gnutls
-dev-libs/librelp -gnutls -ssl
-dev-libs/librelp -openssl -ssl
 dev-libs/xmlsec -gnutls -gcrypt
 dev-perl/DBD-mysql -ssl embedded
 dev-vcs/cvsync -mhash gcrypt
-mail-mta/courier -gnutls libressl
 mail-mta/exim -gnutls -ssl
-mail-mta/msmtp -gnutls -ssl
 mail-mta/ssmtp -gnutls -ssl
 media-video/vlc -ssl -gcrypt
 net-analyzer/echoping -gnutls -ssl
 net-analyzer/sngrep -gnutls openssl
 net-analyzer/sngrep -openssl gnutls
+net-dns/dnsdist -gnutls -ssl
+net-dns/getdns -gnutls -nettle
 net-fs/s3fs -openssl gnutls nss
 net-fs/s3fs -nettle -gnutls
 net-irc/iroffer-dinoex -gnutls -ssl
 net-irc/scrollz -gnutls -ssl
 net-libs/libgadu -gnutls -ssl
 net-libs/libssh -gcrypt mbedtls
-net-libs/libssh2 -gcrypt libressl mbedtls
+net-libs/libssh2 -gcrypt mbedtls
 net-mail/mpop -gnutls -ssl
-net-misc/iputils -openssl nettle gcrypt
 net-misc/networkmanager -gnutls nss
 net-misc/wget -gnutls -ssl
-net-nds/openldap -gnutls libressl
-sys-cluster/ceph -nss cryptopp
 sys-cluster/ceph -ssl nss
+sys-fs/cryptmount -openssl -gcrypt
 sys-fs/cryptsetup -kernel openssl nettle gcrypt
+sys-fs/cryptsetup -kernel openssl nettle gcrypt libressl
 www-client/uget -openssl gnutls
 www-misc/litmus -ssl gnutls
 dev-db/sqlcipher -readline libedit
 dev-lang/php:5.6 -readline libedit
-dev-lang/php:7.0 -readline libedit
 dev-lang/php:7.1 -readline libedit
 dev-lang/php:7.2 -readline libedit
 dev-lang/php:7.3 -readline libedit
+dev-lang/php:7.4 -readline libedit
 dev-libs/libpcre -readline libedit
 dev-libs/libpcre2 -readline libedit
 net-misc/chrony -readline libedit

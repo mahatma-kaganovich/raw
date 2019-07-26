@@ -1,10 +1,5 @@
-app-editors/bluefish gtk2
-app-emulation/qemu gtk2 gtk
 app-i18n/ibus 
 app-i18n/ibus-m17n gtk2 gtk
 app-i18n/ibus-unikey gtk2
-dev-java/oracle-jdk-bin:9 gtk2 -gtk3
-dev-java/oracle-jre-bin:9 gtk2 -gtk3
-media-plugins/audacious-plugins gtk -gtk3 -qt5
-media-sound/audacious gtk -gtk3 -qt5
+dev-java/oracle-jdk-bin:11 gtk2 -gtk3
 x11-terms/mlterm gtk2 gtk

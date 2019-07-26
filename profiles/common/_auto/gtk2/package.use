@@ -7,17 +7,15 @@ app-crypt/pinentry gtk
 app-crypt/stoken -gtk
 app-dicts/gwaei -gtk
 app-dicts/verbiste gtk
-app-editors/bluefish gtk2 -gtk3
 app-editors/emacs:23 gtk
 app-editors/emacs:24 gtk -gtk3
 app-editors/emacs:24 -gtk
-app-editors/emacs:25 gtk -gtk3
 app-editors/emacs:25 -gtk
-app-editors/emacs:26 gtk -gtk3
 app-editors/emacs:26 -gtk
 app-editors/emacs-vcs:26 -gtk
 app-editors/emacs-vcs:27 -gtk
 app-editors/gvim gtk
+app-editors/gvim -gtk
 app-emulation/libguestfs -gtk
 app-emulation/qemu -gtk
 app-emulation/vice gtk
@@ -31,11 +29,9 @@ app-i18n/scim-bridge gtk
 app-i18n/uim -gtk
 app-laptop/pommed gtk
 app-misc/ddccontrol gtk
-app-misc/geoclue:0 gtk
 app-misc/hachoir-metadata -gtk
 app-misc/lirc -gtk
 app-misc/razertool gtk
-app-misc/tracker -gtk
 app-misc/vifm gtk
 app-mobilephone/sobexsrv gtk
 app-office/libreoffice gtk2
@@ -50,9 +46,9 @@ dev-games/openscenegraph -gtk
 dev-java/gnu-classpath gtk
 dev-java/icedtea gtk
 dev-java/icedtea-bin gtk
-dev-lang/gnu-smalltalk gtk
 dev-libs/gjs -gtk
 dev-libs/libdbusmenu gtk
+dev-libs/libgdata -gtk
 dev-libs/libindicate -gtk
 dev-lisp/clisp gtk
 dev-ml/cairo-ocaml gtk
@@ -66,12 +62,9 @@ dev-python/pynotifier -gtk
 dev-python/sympy gtk
 dev-python/twisted-core gtk
 dev-qt/qtwidgets -gtk
-dev-ruby/metasm:9999 -gtk
 dev-util/amtterm -gtk
 dev-util/perf gtk
 dev-util/sysprof -gtk
-dev-util/trace-cmd gtk
-dev-util/trace-cmd -gtk
 games-arcade/bomns gtk
 games-arcade/crack-attack gtk
 games-arcade/xbill gtk
@@ -80,6 +73,7 @@ games-board/xboard gtk
 games-emulation/fceux -gtk
 games-emulation/snes9x -gtk
 games-fps/eduke32 gtk
+games-fps/gzdoom -gtk
 games-misc/gBhed gtk
 games-roguelike/tome gtk
 games-strategy/dopewars gtk
@@ -93,6 +87,7 @@ kde-plasma/plasma-meta -gtk
 kde-plasma/systemsettings -gtk
 media-gfx/birdfont -gtk
 media-gfx/fontforge gtk
+media-gfx/fontforge -gtk
 media-gfx/graphviz gtk
 media-gfx/sane-frontends gtk
 media-gfx/ufraw gtk
@@ -101,9 +96,8 @@ media-libs/allegro:5 gtk
 media-libs/blib gtk
 media-libs/clutter -gtk
 media-libs/clutter-gtk -gtk
-media-libs/grilo:0.2 -gtk
-media-libs/grilo:0.3 -gtk
-media-libs/gst-plugins-bad:1.0 -gtk
+media-libs/grilo -gtk
+media-libs/gst-plugins-bad -gtk
 media-libs/libcanberra gtk -gtk3
 media-libs/libextractor -gtk
 media-libs/libgpod gtk
@@ -116,17 +110,17 @@ media-libs/mlt gtk
 media-libs/opencv gtk
 media-libs/suil gtk
 media-libs/xine-lib -gtk
-media-plugins/audacious-plugins gtk
 media-plugins/calf gtk
 media-plugins/hexter gtk
 media-plugins/libvisual-plugins gtk
 media-sound/alsa-tools -gtk
 media-sound/alsaplayer gtk
-media-sound/audacious gtk
+media-sound/amsynth gtk
 media-sound/aumix gtk
 media-sound/aylet gtk
 media-sound/jalv -gtk
 media-sound/lash gtk
+media-sound/loudness-scanner gtk
 media-sound/mp3info gtk
 media-sound/muse gtk
 media-sound/pulseaudio -gtk
@@ -135,7 +129,6 @@ media-sound/timidity++ gtk
 media-tv/ivtvplayer gtk
 media-tv/nvtv gtk
 media-video/blinkensim gtk
-media-video/dcpomatic gtk
 media-video/ffmpegthumbnailer -gtk
 media-video/handbrake -gtk
 media-video/mjpegtools gtk
@@ -145,9 +138,7 @@ net-analyzer/driftnet gtk
 net-analyzer/ettercap gtk
 net-analyzer/hydra gtk
 net-analyzer/mtr gtk
-net-analyzer/nessus-core gtk
 net-analyzer/pinger gtk
-net-analyzer/w3af gtk
 net-analyzer/yersinia gtk
 net-dialup/ppp gtk
 net-dns/avahi gtk
@@ -157,19 +148,12 @@ net-im/pidgin gtk
 net-irc/hexchat gtk
 net-libs/aqbanking gtk
 net-libs/gssdp -gtk
-net-libs/libinfinity -gtk
 net-misc/dhcpcd-ui gtk
 net-misc/ipsorcery gtk
 net-misc/mico gtk
-net-misc/networkmanager-fortisslvpn -gtk
-net-misc/networkmanager-libreswan -gtk
-net-misc/networkmanager-openconnect -gtk
-net-misc/networkmanager-openvpn -gtk
-net-misc/networkmanager-pptp -gtk
-net-misc/networkmanager-sstp -gtk
-net-misc/networkmanager-vpnc -gtk
 net-misc/networkmanager-wireguard -gtk
 net-misc/olsrd gtk
+net-misc/putty gtk2
 net-misc/trackma -gtk
 net-misc/unison:2.48 gtk
 net-misc/unison:2.51 gtk
@@ -180,7 +164,13 @@ net-p2p/gtk-gnutella gtk
 net-p2p/mldonkey -gtk
 net-p2p/transmission -gtk
 net-print/gutenprint gtk
-net-voip/linphone gtk
+net-vpn/networkmanager-fortisslvpn -gtk
+net-vpn/networkmanager-libreswan -gtk
+net-vpn/networkmanager-openconnect -gtk
+net-vpn/networkmanager-openvpn -gtk
+net-vpn/networkmanager-pptp -gtk
+net-vpn/networkmanager-sstp -gtk
+net-vpn/networkmanager-vpnc -gtk
 net-wireless/spectools gtk
 sci-astronomy/celestia gtk
 sci-astronomy/predict gtk
@@ -199,7 +189,6 @@ sys-apps/sensei-raw-ctl -gtk
 sys-auth/polkit -gtk
 sys-block/fio gtk
 sys-block/libzbc -gtk
-sys-cluster/ceph gtk
 sys-devel/distcc gtk
 sys-devel/sparse gtk
 sys-fs/ecryptfs-utils gtk
@@ -226,5 +215,5 @@ x11-terms/mlterm -gtk
 x11-themes/arc-theme gtk2 -gtk3
 x11-themes/nimbus gtk
 x11-themes/qtcurve gtk
-x11-wm/afterstep gtk
 xfce-base/garcon gtk2
+app-misc/tracker-miners ffmpeg
