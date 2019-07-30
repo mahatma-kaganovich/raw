@@ -136,7 +136,7 @@ _kill_iwd(){
 # iwd blacklist easy to block my phone, when I off/on ap,
 # so one-touch restart is required swiss knife
 wifi_restart(){
-	local i
+	local i j x
 	_iw_list
 	[ -n "$on$off$off_" ] && _kill_iwd
 	for i in $off_$off_1; do
@@ -144,19 +144,30 @@ wifi_restart(){
 			echo 0 >"$i"
 		done
 	done
+	[ -n "$off1$off_1" ] && wpa_cli scan &
 	[ -n "$on$off$off_" ] && {
 		wifi_sync
 		/usr/libexec/iwd &>/dev/null &
 		# on 1 of my card iwd scan on start, on other - no
 		_iw_cfg
 		$disable_periodic_scan && iwctl version >/dev/null && {
+			# first start: wait for slow init
+			i="$on$off$off_"
+			for j in .1 .1 .5 1 0; do
+				x=
+				for i in $i; do
+					iwctl station "$i" show || x+=" $i"
+				done
+				[ -z "$x" ] && break
+				i="$x"
+				sleep $j
+			done &>/dev/null
 			_iw_list
 			for i in $off; do
 				iwctl station "$i" scan
 			done
 		}
 	}
-	[ -n "$off1$off_1" ] && wpa_cli scan &
 }
 
 # poweroff no-carrier (if disable_periodic_scan=1)
