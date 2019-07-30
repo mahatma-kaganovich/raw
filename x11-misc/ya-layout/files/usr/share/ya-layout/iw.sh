@@ -54,7 +54,7 @@ exec ip monitor
 	'> Event: Disconnect'*)
 		unset conn
 		show
-		$nrg wifi-sleep
+		$nrg wifi-sleep &
 	;;
 #	'> Event: Connect '*)connect=true;;
 	'Status: 1 (0x00000001)')conn="$ssid";show;;
