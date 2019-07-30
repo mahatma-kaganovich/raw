@@ -211,7 +211,6 @@ restore(){
 		$force || return
 		unlink $save.lock1
 	}
-    echo ===
 	local f x i s b=false
 	for s in ${save}1 $save; do
 		fchk $s || continue
