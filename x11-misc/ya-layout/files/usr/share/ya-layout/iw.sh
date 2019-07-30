@@ -18,7 +18,6 @@ unset conn
 unset src
 unset src1
 unset s1
-scan=false
 connect=false
 echo "    ?    
 "
@@ -47,7 +46,7 @@ exec ip monitor
 	case "$x" in
 	'>'*)
 #		echo "	$x" >&2
-#		$connect && conn="$ssid" && connect=false
+		$connect && conn="$ssid" && connect=false
 		[ -v ssid -a "$ssid" = "$conn" ] && show
 		nxt
 	;;&
@@ -56,8 +55,8 @@ exec ip monitor
 		show
 		$nrg wifi-sleep &
 	;;
-#	'> Event: Connect '*)connect=true;;
-	'Status: 1 (0x00000001)')conn="$ssid";show;;
+	'> Event: Connect '*)connect=true;; # no dhcp
+	'Status: 1 (0x00000001)')conn="$ssid";show;; # dhcp
 	'SSID: '*)ssid="$y";;
 	WPA:|RSN:)t="${x%:}";;
 	'Signal mBm: '*)y="000${y#-}";y="${y:(-4):2}";y="${y#0}";mBm="$y";;
