@@ -86,8 +86,19 @@ _iw_list(){
 	done
 }
 
-_iw_noscan(){
-	grep -sq '^[ 	]*disable_periodic_scan[ 	]*=[ 	]*\(1\|[tT][rR][uU][eE]\)[ 	]*$' /etc/iwd/main.conf
+_iw_cfg(){
+	local s
+	disable_periodic_scan=false
+	disable_roaming_scan=false
+	while read s; do
+#		s="${s//#*/}"
+		s="${s//[ 	]/}"
+		s="${s/[tT][rR][uU][eE]/1}"
+		case "$s" in
+			disable_periodic_scan=1|disable_roaming_scan=1)declare -g "${s%=1}"=true;;
+		esac
+	done </etc/iwd/main.conf
+	_iw_cfg(){ true;}
 }
 
 # sync runtime/permanent store
@@ -115,6 +126,7 @@ wifi_sync(){
 		}
 		touch $d/RUNTIME-OK
 	fi
+	wifi_sync(){ true;}
 }
 
 _kill_iwd(){
@@ -136,7 +148,8 @@ wifi_restart(){
 		wifi_sync
 		/usr/libexec/iwd &>/dev/null &
 		# on 1 of my card iwd scan on start, on other - no
-		_iw_noscan && for i in 0.1 0.1 0.1 0.5 1 3 0; do
+		_iw_cfg
+		$disable_periodic_scan && for i in 0.1 0.1 0.1 0.5 1 3 0; do
 			x=
 			for j in $off; do
 				[ "$(< /sys/class/net/"$j"/carrier)" != 1 ] && iwctl station "$j" scan || x+=" $j"
@@ -157,7 +170,10 @@ wifi_save(){
 	_iw_list
 	[ -z "$off$off1" ] && return
 	# iwd, but autoscan (no disable_periodic_scan=1)
-	[ -n "$off" ] && ! _iw_noscan && off=
+	[ -n "$off" ] && {
+		_iw_cfg
+		$disable_periodic_scan || off=
+	}
 	# wpa_supplicant: off only on battery, as no disable scan
 	[ "$batt" = true ] || off1=
 	for i in $off$off1; do
@@ -192,9 +208,13 @@ wifi_sleep(){
     fchk $save.lock
     {
 	flock 3
-	[ -s "$save" ] || {
+	if [ -s "$save" ]; then
 		wifi_save
-	}
+	else
+		_iw_cfg
+		$disable_roaming_scan && $disable_periodic_scan && wifi_save
+	fi
+	wifi_sync
     } 3>>$save.lock
 }
 
@@ -403,7 +423,8 @@ Add to sudo:
  echo '%plugdev ALL=(ALL) NOPASSWD: /usr/sbin/ya-nrg' >/etc/sudoers.d/ya-nrg
   or
  echo 'ALL ALL=(ALL) NOPASSWD: /usr/sbin/ya-nrg' >/etc/sudoers.d/ya-nrg
-To wifi power-off - add 'disable_periodic_scan=true' to /etc/iwd/main.conf.
+To wifi power-off - add 'disable_periodic_scan=true' (optional -
+'disable_roaming_scan=true') to /etc/iwd/main.conf.
 Avoid iwd to touch SSD: ln -s /var/lib/iwd /run/iwd, permanent /var/lib/iwd1.
 PS 'cores 0'|'cores 1'|'cores -'|'sockets -'|'sockets - cores -'
    - subject  to test power consumption per hardware & [idle] workload.
