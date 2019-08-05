@@ -14,7 +14,6 @@ app-editors/emacs:25 -gtk
 app-editors/emacs:26 -gtk
 app-editors/emacs-vcs:26 -gtk
 app-editors/emacs-vcs:27 -gtk
-app-editors/gvim gtk
 app-editors/gvim -gtk
 app-emulation/libguestfs -gtk
 app-emulation/qemu -gtk
