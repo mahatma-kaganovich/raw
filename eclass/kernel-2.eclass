@@ -656,6 +656,7 @@ unmcode(){
 }
 
 run_genkernel(){
+	use paranoid && mkdir "${TMPDIR}/genkernel-cache"
 	[[ ! -e "${TMPDIR}/genkernel-cache" ]] && cp "${UROOT}/var/cache/genkernel" "${TMPDIR}/genkernel-cache" -r
 	if use netboot; then
 		cp "$UROOT/usr/share/genkernel/netboot/busy-config" "$TMPDIR"
