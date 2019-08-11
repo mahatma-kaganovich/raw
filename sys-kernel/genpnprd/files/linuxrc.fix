@@ -8,12 +8,12 @@ _sed(){
 		return 0
 	}
 	echo "Failed sed: $*"
-	exit 1
+	return 1
 }
 
 # patch is too unsafe with modifyed scripts. use script instead
-cd "$1"
-_sed -i -e 's:^\(\. /etc/initrd\.scripts\)$:\1\n. /etc/syspnp:' init
-_sed -i -e 's:^\(/bin/busybox --install -s\)$:\1\n\npnp_init:' init
-_sed -i -e 's:^\(	good_msg .Loading modules.\)$:\1\n	syspnp:' init
-_sed -i -e 's:^\(mkdir "${CHROOT}/proc".*\)$:\1\nmod_unload:' init
+cd "$1" &&
+_sed -i -e 's:^\(\. /etc/initrd\.scripts\)$:\1\n. /etc/syspnp:' init &&
+_sed -i -e 's:^\(r*u*n* */bin/busybox --install -s\)$:\1\n\npnp_init:' init &&
+_sed -i -e 's:^\(	good_msg .Loading modules[ \.]*.\)$:\1\n	syspnp:' init &&
+_sed -i -e 's:^\(# If devtmpfs is mounted, try move it to the new root\)$:mod_unload\n\n\1:' init
