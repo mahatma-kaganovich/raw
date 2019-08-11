@@ -227,9 +227,14 @@ esac
 filter=break
 case "$m" in
 x86_*|i?86)
+	# first I think it helps to -fschedule-insns, but both slow down compile,
+	# "host" looks do nothing more, "loop" increase code size.
+	# try it first again if -fschedule-insns failed.
+	# 2be tested more.
+	#f3+=$(_f -fira-loop-pressure -fira-hoist-pressure)
 	# -fschedule-insns is working (increasing registers range)
 	# i?86 looks mostly working, exclude kernel
-	f3+=$(_f -fira-loop-pressure -fira-hoist-pressure -flive-range-shrinkage -fsched-pressure -fschedule-insns -fsched-spec-load --param=sched-pressure-algorithm=2)
+	f3+=$(_f -flive-range-shrinkage -fsched-pressure -fschedule-insns -fsched-spec-load --param=sched-pressure-algorithm=2)
 	# gnostic - don't know how to get universal default of defaults for GCC
 	# -mtune=x86-64 deprecated
 	base="-mtune=generic -march=${m//_/-}"
