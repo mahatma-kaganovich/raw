@@ -232,6 +232,8 @@ x86_*|i?86)
 	# try it first again if -fschedule-insns failed.
 	# 2be tested more.
 	#f3+=$(_f -fira-loop-pressure -fira-hoist-pressure)
+	# for -fno-move-loop-invariants: as soon in -O1...
+	f3+=$(_f -fira-loop-pressure)
 	# -fschedule-insns is working (increasing registers range)
 	# i?86 looks mostly working, exclude kernel
 	f3+=$(_f -flive-range-shrinkage -fsched-pressure -fschedule-insns -fsched-spec-load --param=sched-pressure-algorithm=2)
@@ -239,7 +241,8 @@ x86_*|i?86)
 	# -mtune=x86-64 deprecated
 	base="-mtune=generic -march=${m//_/-}"
 	ffast+=' -maccumulate-outgoing-args -mno-push-args'
-	fsmall+=' -mno-accumulate-outgoing-args -mpush-args'
+	# -fno-ira-loop-pressure unsure, variable acovea results
+	fsmall+=' -mno-accumulate-outgoing-args -mpush-args -fno-move-loop-invariants -fno-ira-loop-pressure'
 ;;
 *)
 	f3+=' -maccumulate-outgoing-args' # sh?
