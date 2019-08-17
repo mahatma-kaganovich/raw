@@ -29,7 +29,7 @@ RDEPEND="sys-fs/mtools
 		dev-perl/Crypt-PasswdMD5
 		dev-perl/Digest-SHA1"
 DEPEND="${RDEPEND}
-	app-arch/upx-ucl
+	app-arch/upx
 	dev-lang/nasm
 	>=sys-boot/gnu-efi-3.0u
 	virtual/os-headers"
