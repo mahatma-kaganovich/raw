@@ -241,8 +241,9 @@ x86_*|i?86)
 	# -mtune=x86-64 deprecated
 	base="-mtune=generic -march=${m//_/-}"
 	ffast+=' -maccumulate-outgoing-args -mno-push-args'
+	fsmall+=' -mno-accumulate-outgoing-args -mpush-args'
 	# -fno-ira-loop-pressure unsure, variable acovea results
-	fsmall+=' -mno-accumulate-outgoing-args -mpush-args -fno-move-loop-invariants -fno-ira-loop-pressure'
+	fsmall+=' -fno-move-loop-invariants -fno-ira-loop-pressure'
 ;;
 *)
 	f3+=' -maccumulate-outgoing-args' # sh?
