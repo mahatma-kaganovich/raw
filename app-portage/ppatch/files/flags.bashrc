@@ -197,7 +197,7 @@ cdrdao|gcr|ufraw|gdal|dosemu|soxr|flac|libgcrypt)filterflag2 '' '-flto*';;&
 boost)filter86_32 '-flto*' '-*-lto-*' -fuse-linker-plugin -fdevirtualize-at-ltrans;;&
 elogind|perl|autofs|dovecot)_fLTO && export LDFLAGS="$LDFLAGS -fPIC";;&
 cmake)_fLTO && _isflag '-floop-*' '-fgraphite*' && filterflag -fipa-pta;;&
-dav1d|codec2|libaom|kvazaar|freeglut|fdk-aac|libv4l|libvpx|openjpeg|opus|speex|webrtc-audio-processing|glu|libde265|tiff|fftw|lapack)_iuse abi_x86_32 && filterflag -floop-nest-optimize;;& # 9.2?
+dav1d|codec2|libaom|kvazaar|freeglut|fdk-aac|libv4l|libvpx|openjpeg|opus|speex|webrtc-audio-processing|glu|libde265|tiff|fftw|lapack|ffmpeg|imagemagick|cups-filters)_iuse abi_x86_32 && filterflag -floop-nest-optimize;;& # 9.2?
 mjpegtools)_fLTO && filterflag -floop-nest-optimize;;&
 bash)filterflag -fipa-pta;;&
 ceph)_isflag '-floop-*' '-fgraphite*' && { # prefer graphite vs. lto
