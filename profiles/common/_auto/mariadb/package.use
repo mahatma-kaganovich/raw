@@ -1,5 +1,0 @@
-app-office/libreoffice mariadb
-dev-perl/DBD-MariaDB mariadb -mysql
-dev-perl/DBD-mysql mariadb -mysql
-net-analyzer/icinga2 mariadb -mysql
-sci-misc/tango mariadb

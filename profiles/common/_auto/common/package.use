@@ -432,3 +432,8 @@ x11-misc/zim python_single_target_python3_6 python_targets_python3_6 -python_sin
 x11-terms/guake python_single_target_python3_6 python_targets_python3_6 -python_single_target_python3_5
 x11-terms/kitty python_single_target_python3_6 python_targets_python3_6 -python_single_target_python3_7
 xfce-extra/xfce4-panel-profiles python_single_target_python3_6 python_targets_python3_6 -python_single_target_python3_7 -python_single_target_python3_5
+app-office/libreoffice mariadb
+dev-perl/DBD-MariaDB mariadb -mysql
+dev-perl/DBD-mysql mariadb -mysql
+net-analyzer/icinga2 mariadb -mysql
+sci-misc/tango mariadb

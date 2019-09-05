@@ -386,9 +386,9 @@ qt5="$(sl "dev-qt/qt[a-zA-Z-]*" 5)"
 gst0="$(sl "media-[a-z]*/gst-plugins-$i" 0 "media-plugins/gstreamer$i" 0)"
 gst1="$(sl "media-[a-z]*/gst-plugins-$i" 1 "media-plugins/gstreamer$i" 1)"
 
-generate mariadb mariadb mysql mariadb &
 generate gles 'gles2 gles gles1' 'opengl' 'gles gles1 opengl egl vaapi' &
 {
+
 
 force='' generate common 'opengl egl' 'gles gles1 gles2' 'gles gles1 gles2 egl'
 echo -n >"$d"/_auto/common/package.use.mask
@@ -397,10 +397,11 @@ x1='kernel ssl openssl gnutls nss mhash cryptopp nettle gcrypt' # enabled
 x2='libressl yassl mbedtls embedded' # drop
 force='' generate +common "$x1" "$x1" "$x2"
 
-
 x=python_single_target_python
 generate +common "${x}2_7 ${x}3_6 ${x}3_7 ${x}3_5 ${x}3_4"
 sed -i -e 's:\( python_single_target_\)\(python[0-9_]*\):\1\2 python_targets_\2:' "$d/_auto/common/package.use"
+
+generate +common mariadb mysql mariadb
 
 use=false generate +common readline '' libedit
 } &
