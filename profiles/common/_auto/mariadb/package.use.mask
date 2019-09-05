@@ -1,0 +1,6 @@
+app-misc/sphinx -mariadb mysql
+dev-perl/DBD-MariaDB -mariadb mysql
+dev-perl/DBD-mysql -mariadb mysql
+dev-ruby/mysql2:0.4 -mariadb mysql
+dev-ruby/mysql2:0.5 -mariadb mysql
+media-tv/kodi -mariadb mysql

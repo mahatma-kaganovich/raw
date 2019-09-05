@@ -8,7 +8,6 @@ app-crypt/stoken -gtk
 app-dicts/gwaei -gtk
 app-dicts/verbiste gtk
 app-editors/emacs:23 gtk
-app-editors/emacs:24 gtk -gtk3
 app-editors/emacs:24 -gtk
 app-editors/emacs:25 -gtk
 app-editors/emacs:26 -gtk
@@ -47,7 +46,6 @@ dev-java/icedtea gtk
 dev-java/icedtea-bin gtk
 dev-libs/gjs -gtk
 dev-libs/libdbusmenu gtk
-dev-libs/libgdata -gtk
 dev-libs/libindicate -gtk
 dev-lisp/clisp gtk
 dev-ml/cairo-ocaml gtk
@@ -110,7 +108,6 @@ media-libs/opencv gtk
 media-libs/suil gtk
 media-libs/xine-lib -gtk
 media-plugins/calf gtk
-media-plugins/hexter gtk
 media-plugins/libvisual-plugins gtk
 media-sound/alsa-tools -gtk
 media-sound/alsaplayer gtk
@@ -196,7 +193,6 @@ sys-libs/gwenhywfar gtk
 sys-power/nvclock gtk
 sys-process/latencytop gtk
 www-client/netsurf -gtk
-www-client/opera gtk
 x11-apps/xinput_calibrator -gtk
 x11-libs/gtkmathview gtk
 x11-libs/libfm gtk
@@ -215,4 +211,6 @@ x11-themes/arc-theme gtk2 -gtk3
 x11-themes/nimbus gtk
 x11-themes/qtcurve gtk
 xfce-base/garcon gtk2
+xfce-base/libxfce4ui gtk2
+xfce-base/xfce4-panel gtk2
 app-misc/tracker-miners ffmpeg

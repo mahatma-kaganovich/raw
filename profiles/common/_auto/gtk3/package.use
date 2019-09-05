@@ -8,7 +8,6 @@ app-dicts/gwaei gtk
 app-dicts/verbiste -gtk
 app-editors/bluefish gtk3
 app-editors/emacs:23 -gtk
-app-editors/emacs:24 gtk3
 app-editors/emacs:24 gtk
 app-editors/emacs:25 gtk
 app-editors/emacs:26 gtk
@@ -29,12 +28,13 @@ app-i18n/scim-bridge -gtk
 app-i18n/uim gtk
 app-laptop/pommed -gtk
 app-misc/ddccontrol -gtk
-app-misc/hachoir-metadata gtk
+app-misc/hachoir-metadata -gtk
 app-misc/lirc gtk
 app-misc/razertool -gtk
 app-misc/vifm -gtk
 app-mobilephone/sobexsrv -gtk
 app-office/libreoffice gtk -gtk2
+app-office/libreoffice gtk
 app-text/aiksaurus -gtk
 app-text/ghostscript-gpl -gtk
 dev-ada/gnatcoll gtk
@@ -45,7 +45,6 @@ dev-games/openscenegraph gtk
 dev-java/gnu-classpath -gtk
 dev-libs/gjs gtk
 dev-libs/libdbusmenu -gtk
-dev-libs/libgdata gtk
 dev-libs/libindicate gtk
 dev-libs/libpeas gtk
 dev-libs/libreport gtk
@@ -115,7 +114,6 @@ media-libs/opencv -gtk
 media-libs/suil -gtk
 media-libs/xine-lib gtk
 media-plugins/calf -gtk
-media-plugins/hexter -gtk
 media-plugins/libvisual-plugins -gtk
 media-sound/alsa-tools -gtk
 media-sound/alsaplayer -gtk
@@ -144,7 +142,6 @@ net-analyzer/ettercap -gtk
 net-analyzer/hydra -gtk
 net-analyzer/mtr -gtk
 net-analyzer/pinger -gtk
-net-analyzer/wireshark gtk
 net-analyzer/yersinia -gtk
 net-dialup/ppp -gtk
 net-dns/avahi -gtk
@@ -202,7 +199,6 @@ sys-libs/gwenhywfar -gtk
 sys-power/nvclock -gtk
 sys-process/latencytop -gtk
 www-client/netsurf gtk
-www-client/opera -gtk
 x11-apps/xinput_calibrator gtk
 x11-libs/c++-gtk-utils:3 gtk
 x11-libs/c++-gtk-utils:0 gtk

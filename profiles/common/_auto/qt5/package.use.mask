@@ -1,5 +1,4 @@
 app-i18n/ibus -kde -gtk
-app-office/libreoffice -kde -gtk
 games-emulation/ppsspp -qt5 sdl
 media-libs/libmediaart -qt5 gtk
 sci-visualization/paraview -qt5 # offscreen
