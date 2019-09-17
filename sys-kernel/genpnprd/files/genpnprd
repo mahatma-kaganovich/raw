@@ -60,7 +60,9 @@ _modlst(){
 preserve_start(){
 	echo "Preserving unpacked /lib"
 	local m mm="$rcdir/lib/modules/${KV}"
-	$PNPONLY && source "$mm/modules.alias.sh"
+	$PNPONLY && {
+		source "$mm/modules.alias.sh" || die "Broken modules.alias.sh, check mod2sh.pl!"
+	}
 	_modlst "${@}" >>"$tmp/modules.lst"
 	for m in `cat $rcdir/etc/modflags/*`; do
 		[[ -z "`_modlst "$m"`" ]] && sed -i -e "/^$m\$/d" $rcdir/etc/modflags/*

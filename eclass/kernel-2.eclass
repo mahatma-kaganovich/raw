@@ -1743,7 +1743,7 @@ extra_firmware(){
 load_modinfo(){
 	[ -e "$TMPDIR/unmodule.tmp" ] || _unmodule .
 	[ -e "${WORKDIR}"/modules.alias.sh ] || perl "${SHARE}"/mod2sh.pl "${WORKDIR}" >&2 || die "Unable to run '${SHARE}/mod2sh.pl'"
-	. "${WORKDIR}"/modules.alias.sh
+	. "${WORKDIR}"/modules.alias.sh || die "Broken modules.alias.sh, check mod2sh.pl!"
 }
 
 detects(){
