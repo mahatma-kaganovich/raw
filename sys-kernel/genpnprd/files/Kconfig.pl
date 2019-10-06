@@ -61,7 +61,7 @@ $ENV{KERNEL_CONFIG}||='
 	SND_BT87X_OVERCLOCK  SND_HDA_RECONFIG SND_HDA_PATCH_LOADER SND_HDA_POWER_SAVE SND_HDA_INPUT_JACK
 	PSS_MIXER SC6600 SC6600_JOY
 	KSM PM_RUNTIME PCI_IOV HOTPLUG_PCI_CPCI
-	DEVTMPFS COMPACTION +POHMELFS VIA_DIRECT_PROCFS HID_WACOM_POWER_SUPPLY
+	DEVTMPFS COMPACTION VIA_DIRECT_PROCFS HID_WACOM_POWER_SUPPLY
 	HID_PICOLCD_.+ MULTICORE_RAID456
 	VGA_SWITCHEROO ACPI_APEI L2TP_V3
 	THERMAL_HWMON
@@ -94,7 +94,7 @@ $ENV{KERNEL_CONFIG}||='
 	BINFMT_SCRIPT BINFMT_MISC
 	PARAVIRT -PARAVIRT_SPINLOCKS
 	=SND_.+_INPUT(?:_.+)?
-	=PCI_IOAPIC +MICROCODE
+	=PCI_IOAPIC MICROCODE
 	NR_CPUS==!1;-SLUB_CPU_PARTIAL NR_CPUS==!1;SQUASHFS_.+_SINGLE NR_CPUS==1;SQUASHFS_DECOMP_MULTI_PERCPU
 	X86==y;-OF
 	JFFS2_CMODE_PRIORITY SQUASHFS_.+_DIRECT
@@ -323,8 +323,7 @@ sub defaults{
 sub prelogic{
 	my $s=$_[0];
 	my $i;
-	$s=~s/("(?:\\"|[^"])*")/if(exists($config{$1})){$i=$config{$1}}else{$config{$config{$1}=$i='_'.++$NV}=$1}$i/ge;
-	$s=~s/('(?:\\'|[^'])*')/if(exists($config{$1})){$i=$config{$1}}else{$config{$config{$1}=$i='_'.++$NV}=$1}$i/ge;
+	$s=~s/("(?:\\"|[^"])*"|'(?:\\'|[^'])*')/if(exists($config{$1})){$i=$config{$1}}else{$config{$config{$1}=$i='_'.++$NV}=$1}$i/ge;
 	$s=~s/\s+//g;
 	$s
 }
