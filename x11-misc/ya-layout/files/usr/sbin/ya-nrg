@@ -155,7 +155,8 @@ wifi_restart(){
 			_iw_list
 			x=
 			[ -n "$off_" ] && {
-				iwctl version || break
+				# "x" - workaround bug [0.21]
+				iwctl version x || break
 				_iw_list
 			}
 			[ -n "$on$off_" ] && {
