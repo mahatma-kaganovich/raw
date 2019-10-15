@@ -327,6 +327,12 @@ pkg_postinst() {
 	ewarn "to upgrade existing Samba 3.x releases to) and the AD domain"
 	ewarn "controller work previously known as 'samba4'."
 
+	ewarn ""
+	ewarn "To keep compatible with XP:"
+	ewarn "  client min protocol = CORE"
+	ewarn "  server min protocol = CORE"
+
+
 	elog "For further information and migration steps make sure to read "
 	elog "http://samba.org/samba/history/${P}.html "
 	elog "http://wiki.samba.org/index.php/Samba4/HOWTO "
