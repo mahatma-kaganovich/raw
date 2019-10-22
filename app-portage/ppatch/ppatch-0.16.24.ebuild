@@ -55,6 +55,7 @@ src_install(){
     dodir $r/virtual
     dosym linux-sources $r/virtual/linux-kernel
     for d in $IUSE ; do
+	d="${d#+}"
 	use "$d" || d="!$d"
 	d="${FILESDIR}/$d"
 	[[ -d "$d" ]] || continue
