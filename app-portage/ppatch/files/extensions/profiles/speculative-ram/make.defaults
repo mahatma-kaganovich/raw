@@ -6,6 +6,11 @@ _FLAGS="-g0 $_FLAGS"
 USE="speculative -ssp nossp nopie -sanitize -vtv -pie -pic -rsync-verify"
 PORTAGE_RSYNC_OPTS="$PORTAGE_RSYNC_OPTS --exclude=/metadata/md5-cache"
 
+# testing
+#USE="$USE -stackrealign"
+# 2b default for x86*?
+_FLAGS="$_FLAGS -fvect-cost-model=cheap -fsimd-cost-model=cheap"
+
 CFLAGS="$_FLAGS"
 FFLAGS="$_FLAGS"
 FCFLAGS="$_FLAGS"
