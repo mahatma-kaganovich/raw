@@ -133,12 +133,26 @@ _kill_iwd(){
 	killall -w iwd
 }
 
+# dhcpcd 8.1.1 sometimes idle 100%. control
+# todo? - on connect, but dhcp will be slower
+_stop_dhcp(){
+	local i
+	for i in "${@}"; do
+		dhcpcd "$i" -xbk
+	done
+}
+
 # iwd blacklist easy to block my phone, when I off/on ap,
 # so one-touch restart is required swiss knife
 wifi_restart(){
 	local i j x
 	_iw_list
-	[ -n "$on$off$off_" ] && _kill_iwd
+	[ -n "$on$off$off_" ] && {
+		_stop_dhcp  $on $off $off_ &
+		i=$!
+		_kill_iwd &
+		wait $! $i
+	}
 	for i in $off_$off_1; do
 		for i in /sys/class/net/"$i"/phy80211/rfkill*/soft; do
 			echo 0 >"$i"
@@ -175,6 +189,9 @@ wifi_restart(){
 			[ -z "$x$off_" ] && break
 			sleep $j
 		done >/dev/null
+		for i in $on $off $off_; do
+			dhcpcd "$i" -NbLt 0 &
+		done
 	}
 }
 
@@ -197,7 +214,10 @@ wifi_save(){
 		done
 	done
 	# pre-kill -> faster restart
-	[ -z "$on" -a -n "$off" ] && _kill_iwd && wifi_sync
+	[ -z "$on" -a -n "$off" ] && {
+		_stop_dhcp $off
+		_kill_iwd && wifi_sync
+	}
 }
 
 # rescan no-carrier
