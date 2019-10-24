@@ -17,6 +17,8 @@ nxt
 unset conn
 unset src
 unset src1
+unset dev
+unset via
 unset s1
 connect=false
 echo "    ?    
@@ -24,16 +26,17 @@ echo "    ?
 echo $'\x1b[2J-' >&2
 
 show(){
-local r
-[ -v src ] && r=+ || r=_
+local s
+[ -v src ] && s=+ || s=_
 if [ "$conn" = "$ssid" ]; then
 	cfreq=$freq
 	ct=$t
 fi
-s="${cfreq:-    }$r${ct:-   } 
+s="${cfreq:-    }$s${ct:-   } 
 $conn"
 [ "$s" != "$s1" ] && s1="$s" && echo "$s"
-[ "$src" != "$src1" ] && src1="$src" && echo $'\x1b[2J'"${src:--}" >&2
+s="$dev $src"
+[ "$s" != "$src1" ] && src1="$s" && echo $'\x1b[2J'"${s:--}" >&2
 }
 
 {
@@ -62,11 +65,19 @@ exec ip monitor
 	'Signal mBm: '*)y="000${y#-}";y="${y:(-4):2}";y="${y#0}";mBm="$y";;
 	'Frequency: '*)freq="${y%% *}";;
 	'> Complete: Get Scan '*)show;;
-	'default via '*' src '*)
-		src="${x##* src }"
-		src="${src%% *}"
+	'default via '*' dev '*)
+		i="${x##* dev }"
+		i="${i%% *}"
+		[ -e "/sys/class/net/$i/wireless" ] || continue
+		dev="$i"
+		i="${x##* via }"
+		i="${i%% *}"
+		via="$i"
+		src="$i"
+		i="${x##* src }"
+		[ "$i" = "$x" ] || src="${i%% *}"
 		show
 	;;
-	"Deleted local $src "*)unset src;show;;
+	"Deleted local $src dev $dev "*)unset src;unset dev;unset via;show;;
 	esac
 done
