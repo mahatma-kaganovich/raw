@@ -132,7 +132,7 @@ max_unrolled(){
 }
 
 conf_cpu(){
-local f0= f1= f2= f3= f4= f5= f6= fsmall= ffast= ffm= fnm= i j i1 j1 c c0 c1 lm=false fp=387 gccv m="`uname -m`" i fsec= ind= l2= x32=false base2=
+local f0= f1= f2= f3= f4= f5= f6= fsmall= ffast= ffm= fnm= fv= i j i1 j1 c c0 c1 lm=false fp=387 gccv m="`uname -m`" i fsec= ind= l2= x32=false base2=
 _setflags flags cpucaps 'cpu family' model fpu vendor_id
 cmn=$($gcc --help=common -v -Q 2>&1)
 if i=$(echo "$cmn"|grep --max-count=1 "^Target: "); then
@@ -182,7 +182,7 @@ f5+=' -fpermissive -w'
 #fsec+=' -fstack-clash-protection'
 # mix cxxflags here to simplify. it works
 ffast+=' -minline-stringops-dynamically'
-fsmall+=' -malign-data=abi -flimit-function-alignment -Wa,--reduce-memory-overheads -w'
+fsmall+=' -malign-data=abi -flimit-function-alignment -Wa,--reduce-memory-overheads -fvect-cost-model=cheap -fsimd-cost-model=cheap -w'
 f6+=' -malign-data=cacheline'
 if i=`_smp1 'physical id' 'cpu cores' || _smp processor 1 || _smp 'ncpus active' 0`; then
 	if [ "$i" = 1 ]; then
@@ -244,6 +244,11 @@ x86_*|i?86)
 	fsmall+=' -mno-accumulate-outgoing-args -mpush-args'
 	# -fno-ira-loop-pressure unsure, variable acovea results
 	fsmall+=' -fno-move-loop-invariants -fno-ira-loop-pressure'
+	# vs. -O3 -msse
+	# in many cases it also "fast", but keep default / selectable
+	fv=$(_f -fvect-cost-model=cheap -fsimd-cost-model=cheap)
+	# rare way, keep only in gcc patch
+#	[ -z "$fv" ] && fv=$(_f -mstackrealign)
 ;;
 *)
 	f3+=' -maccumulate-outgoing-args' # sh?
@@ -260,6 +265,7 @@ for i in $flags; do
 	sse|3dnowext)f1+=" $i mmxext";;
 	fma)f2+=" $i fma3";;
 	ace_en)f1+=" padlock";;
+	misalignsse)fv='';;
 	*)
 		if (grep "^$i1 " /usr/portage/profiles/use.desc ; grep "^[^ 	]*:$i " /usr/portage/profiles/use.local.desc)|grep -q 'CPU\|processor\|chip\|instruction'; then
 			f1+=" $i"
@@ -269,6 +275,10 @@ for i in $flags; do
 	;;
 	esac
 done
+[ -n "$fv" ] && case "$m" in
+i?86)f3+="$fv";;&
+*)echo "CFLAGS_x86=\"-m32$fv\"";;
+esac
 # sse|387: automated by [current] gcc, both: sense mostly for -ffast-math
 [ "$fp" = both ] && ffm+=' -mfpmath=both' && fnfm+=' -mfpmath=sse'
 $lm && f1+=" 64-bit-bfd" || f1+=" -64-bit-bfd"
