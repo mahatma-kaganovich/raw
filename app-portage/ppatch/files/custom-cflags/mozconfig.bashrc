@@ -18,7 +18,10 @@ mozconfig_annotate() {
 			reason=custom-optimization
 			# gcc vs clang: IMHO "-fno-fast-math -Ofast" positioning differ. force strict order anywere
 			local i i1= ff=
-			for i in -fno-fast-math -fno-ipa-cp-clone -fno-tree-vectorize -fno-tree-loop-vectorize -fno-tree-slp-vectorize; do
+			is-flagq -fvect-cost-model=cheap &&
+			    i='-fvect-cost-model=cheap -fsimd-cost-model=cheap' ||
+			    i='-fno-tree-vectorize -fno-tree-loop-vectorize -fno-tree-slp-vectorize'
+			for i in -fno-fast-math -fno-ipa-cp-clone $i; do
 				is-flagq "$i" && ff+=" $i"
 			done
 			if ([[ "${CFLAGS##*-O}" == "$o"* ]] && [ -z "$ff" ]) || use !custom-cflags; then
