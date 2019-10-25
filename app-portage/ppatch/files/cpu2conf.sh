@@ -276,8 +276,9 @@ for i in $flags; do
 	esac
 done
 [ -n "$fv" ] && case "$m" in
-i?86)f3+="$fv";;&
-*)echo "CFLAGS_x86=\"-m32$fv\"";;
+*)echo "CFLAGS_x86=\"-m32$fv\"";;&
+i?86);;
+*)fv='';;
 esac
 # sse|387: automated by [current] gcc, both: sense mostly for -ffast-math
 [ "$fp" = both ] && ffm+=' -mfpmath=both' && fnfm+=' -mfpmath=sse'
@@ -409,7 +410,7 @@ CFLAGS_SMALL=\"\$CFLAGS_SMALL$fsmall\"
 CFLAGS_SECURE=\"$fsec\"
 CFLAGS_FAST_MATH=\"\$CFLAGS_FAST_MATH$ffm\"
 CFLAGS_NO_FAST_MATH=\"\$CFLAGS_NO_FAST_MATH$fnfm\"
-_FLAGS=\"$ff\${_FLAGS}\"
+_FLAGS=\"$ff\${_FLAGS}$fv\"
 _XFLAGS=\"${f5# } \${_XFLAGS}\"
 "
 }
