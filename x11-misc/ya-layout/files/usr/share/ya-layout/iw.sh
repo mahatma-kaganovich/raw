@@ -17,6 +17,7 @@ nxt
 unset conn
 unset src
 unset src1
+unset src2
 unset dev
 unset via
 unset s1
@@ -37,6 +38,16 @@ $conn"
 [ "$s" != "$s1" ] && s1="$s" && echo "$s"
 s="$dev $src"
 [ "$s" != "$src1" ] && src1="$s" && echo $'\x1b[2J'"${s:--}" >&2
+}
+
+subv(){
+	i="${1#* $2 }"
+	[ "$1" = "$i" ] && return 1
+	i="${i%% *}"
+}
+
+isw(){
+	[ -e "/sys/class/net/$1/wireless" ]
 }
 
 {
@@ -66,17 +77,20 @@ exec ip monitor
 	'Frequency: '*)freq="${y%% *}";;
 	'> Complete: Get Scan '*)show;;
 	'default via '*' dev '*)
-		i="${x##* dev }"
-		i="${i%% *}"
-		[ -e "/sys/class/net/$i/wireless" ] || continue
+		subv "$x" dev && isw "$i" || continue
 		dev="$i"
-		i="${x##* via }"
-		i="${i%% *}"
+		subv "$x" via
 		via="$i"
-		src="$i"
-		i="${x##* src }"
-		[ "$i" = "$x" ] || src="${i%% *}"
+		unset src
+		[ "$dev" = "$dev2" ] && src="$src2"
+		subv "$x" src && src="$i"
 		show
+	;;
+	'local '*' dev '*)
+		subv "$x" dev && isw "$i" || continue
+		dev2="$i"
+		subv " $x" local
+		src2="$i"
 	;;
 	"Deleted local $src dev $dev "*)unset src;unset dev;unset via;show;;
 	esac
