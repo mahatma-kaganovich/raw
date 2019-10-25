@@ -134,12 +134,21 @@ _kill_iwd(){
 }
 
 # dhcpcd 8.1.1 sometimes idle 100%. control
-# todo? - on connect, but dhcp will be slower
+# todo? - on connect, but dhcp init will be slower
 _stop_dhcp(){
 	local i
 	for i in "${@}"; do
 		dhcpcd "$i" -xbqk ||
 		dhclient "$i" -r -pf /run/dhclient-"$i".pid
+	done
+}
+
+_start_dhcp(){
+	local i
+	for i in "${@}"; do
+		dhcpcd "$i" -NbqLt 0 || which dhcpcd ||
+		pgrep -x dhclient -F /run/dhclient-"$i".pid ||
+		dhclient "$i" -nw -pf /run/dhclient-"$i".pid
 	done
 }
 
@@ -163,6 +172,7 @@ wifi_restart(){
 	done
 	[ -n "$off1$off_1" ] && wpa_cli scan &
 	[ -n "$on$off$off_" ] && {
+		_start_dhcp $on $off $off_ &
 		wifi_sync
 		/usr/libexec/iwd &>/dev/null &
 		# on 1 of my card iwd scan on start, on other - no
@@ -192,14 +202,6 @@ wifi_restart(){
 			[ -z "$x$off_" ] && break
 			sleep $j
 		done >/dev/null
-		for i in $on $off $off_; do
-			if which dhcpcd; then
-				dhcpcd "$i" -NbqLt 0 &
-			elif which dhclient; then
-				pgrep -x dhclient -F /run/dhclient-"$i".pid ||
-				dhclient "$i" -nw -pf /run/dhclient-"$i".pid &
-			fi
-		done
 	}
 }
 
