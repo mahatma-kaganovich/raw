@@ -144,12 +144,22 @@ _stop_dhcp(){
 }
 
 _start_dhcp(){
-	local i
+	_iw_cfg
+	local t=$disable_periodic_scan i r=false x s
 	for i in "${@}"; do
-		dhcpcd "$i" -NbqLt 0 || which dhcpcd ||
-		pgrep -x dhclient -F /run/dhclient-"$i".pid ||
-		dhclient "$i" -nw -pf /run/dhclient-"$i".pid
+		x=
+		if which dhcpcd; then
+			$t || x='bt 0'
+			dhcpcd "$i" -NqL$x && r=true
+		elif which dhclient; then
+			$t || x=' -nw'
+			pgrep -x dhclient -F /run/dhclient-"$i".pid ||
+			dhclient "$i"$x -pf /run/dhclient-"$i".pid && r=true
+		else
+			r=true
+		fi
 	done
+	$t && ! $r && wifi_save
 }
 
 # iwd blacklist easy to block my phone, when I off/on ap,
@@ -172,11 +182,11 @@ wifi_restart(){
 	done
 	[ -n "$off1$off_1" ] && wpa_cli scan &
 	[ -n "$on$off$off_" ] && {
-		_start_dhcp $on $off $off_ &
 		wifi_sync
 		/usr/libexec/iwd &>/dev/null &
 		# on 1 of my card iwd scan on start, on other - no
 		_iw_cfg
+		_start_dhcp $on $off $off_ >/dev/null &
 		$disable_periodic_scan && for j in 0 .1 .1 .5 1 3 0; do
 			# in most cases 1 scan / exclude first power-on
 			_iw_list
