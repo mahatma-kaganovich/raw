@@ -181,7 +181,7 @@ xemacs)_fLTO && {
 # ffmpeg: amd64 - mp4 crushes
 # libbsd: mailx
 libwacom|libbsd|dcc|chromium*|webkit-gtk|ffmpeg|xemacs|fuse|wayland|privoxy|icedtea|qtwebkit|xf86-video-intel|mplayer|mysql|heimdal|glibc|cvs|pulseaudio|lynx)filterflag '-flto*' '-*-lto-*' -fuse-linker-plugin -fdevirtualize-at-ltrans;;&
-ncurses)_fLTO && export ac_cv_func_dlsym=no ac_cv_lib_dl_dlsym=yes;;&
+ncurses-compat|ncurses)_fLTO && export ac_cv_func_dlsym=no ac_cv_lib_dl_dlsym=yes;;&
 inkscape|libreoffice|mariadb|nodejs|llvm|clang)filterflag -ffat-lto-objects;;&
 mariadb)_fLTO_f -fno-ipa-cp-clone;;&
 php)[[ "$PV" == 5.* ]] || filterflag '-flto*' -fdevirtualize-at-ltrans;;&
