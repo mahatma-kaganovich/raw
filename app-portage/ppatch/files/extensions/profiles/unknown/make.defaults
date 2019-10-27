@@ -1,6 +1,10 @@
 MAKEOPTS="-j2 -s"
-_FLAGS="$_FLAGS -fvect-cost-model=cheap -fsimd-cost-model=cheap -maccumulate-outgoing-args -mtune=generic -momit-leaf-frame-pointer"
-CXXFLAGS="$CXXFLAGS $_FLAGS -fvisibility-inlines-hidden -fpermissive -w"
+USE="speculative -ssp nossp nopie -sanitize -vtv -pie -pic -rsync-verify -stackrealign"
+PORTAGE_RSYNC_OPTS="$PORTAGE_RSYNC_OPTS --exclude=/metadata/md5-cache"
+_FLAGS="$_FLAGS -fvect-cost-model=cheap -fsimd-cost-model=cheap -flimit-function-alignment -Wa,--reduce-memory-overheads"
+
 CFLAGS="$CFLAGS $_FLAGS"
 FFLAGS="$FFLAGS $_FLAGS"
 FCFLAGS="$FCFLAGS $_FLAGS"
+CXXFLAGS="$CXXFLAGS $_FLAGS -fvisibility-inlines-hidden -fpermissive -w"
+LDFLAGS="$LDFLAGS -Wl,--no-keep-memory -Wl,--reduce-memory-overheads -Wl,--strip-all"
