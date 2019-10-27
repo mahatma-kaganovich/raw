@@ -1,0 +1,6 @@
+MAKEOPTS="-j2 -s"
+_FLAGS="$_FLAGS -fvect-cost-model=cheap -fsimd-cost-model=cheap -maccumulate-outgoing-args -mtune=generic -momit-leaf-frame-pointer"
+CXXFLAGS="$CXXFLAGS $_FLAGS -fvisibility-inlines-hidden -fpermissive -w"
+CFLAGS="$CFLAGS $_FLAGS"
+FFLAGS="$FFLAGS $_FLAGS"
+FCFLAGS="$FCFLAGS $_FLAGS"
