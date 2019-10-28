@@ -23,7 +23,7 @@ sys-fs/ntfs3g -external-fuse
 x11-libs/libdrm libkms
 media-libs/mesa xa r600-llvm-compiler
 sys-fs/cryptsetup -openssl
-app-portage/layman cvs bazaar mercurial g-sorcery squashfs
+app-portage/layman cvs bazaar mercurial g-sorcery squashfs subversion
 net-firewall/ipsec-tools nat hybrid
 x11-misc/bmpanel -libev
 net-fs/nfs-utils nfsdcld nfsv41
@@ -31,6 +31,7 @@ media-libs/libmypaint gegl
 media-gfx/inkscape cdr inkjar
 dev-libs/elfutils static-libs
 net-mail/dovecot textcat
+dev-vcs/git -perl
 # default don't want pam, but elogind
 x11-base/xorg-server suid -elogind
 #sys-auth/elogind pam
