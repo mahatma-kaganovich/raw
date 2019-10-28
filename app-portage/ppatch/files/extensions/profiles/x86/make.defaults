@@ -8,4 +8,4 @@ _FLAGS="$_FLAGS -fvect-cost-model=cheap -fsimd-cost-model=cheap -maccumulate-out
 CFLAGS="$CFLAGS $_FLAGS"
 FFLAGS="$FFLAGS $_FLAGS"
 FCFLAGS="$FCFLAGS $_FLAGS"
-CXXFLAGS="$CXXFLAGS $_FLAGS -fvisibility-inlines-hidden -fpermissive -w"
+CXXFLAGS="$CXXFLAGS $_FLAGS -fdeclone-ctor-dtor -fvisibility-inlines-hidden -fpermissive -w"

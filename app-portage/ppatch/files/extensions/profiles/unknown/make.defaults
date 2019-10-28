@@ -7,5 +7,5 @@ _FLAGS="$_FLAGS -ffast-math -fno-move-loop-invariants -fvect-cost-model=cheap -f
 CFLAGS="$CFLAGS $_FLAGS"
 FFLAGS="$FFLAGS $_FLAGS"
 FCFLAGS="$FCFLAGS $_FLAGS"
-CXXFLAGS="$CXXFLAGS $_FLAGS -fvisibility-inlines-hidden -fpermissive -w"
+CXXFLAGS="$CXXFLAGS $_FLAGS -fdeclone-ctor-dtor -fvisibility-inlines-hidden -fpermissive -w"
 LDFLAGS="$LDFLAGS -Wl,--no-keep-memory -Wl,--reduce-memory-overheads -Wl,--strip-all"
