@@ -2,7 +2,7 @@ ACCEPT_KEYWORDS="$ACCEPT_KEYWORDS ~$ARCH"
 MAKEOPTS="-j2 -s"
 USE="speculative -ssp nossp nopie -sanitize -vtv -pie -pic -rsync-verify -stackrealign"
 PORTAGE_RSYNC_OPTS="$PORTAGE_RSYNC_OPTS --exclude=/metadata/md5-cache"
-_FLAGS="$_FLAGS -fno-move-loop-invariants -fvect-cost-model=cheap -fsimd-cost-model=cheap -flimit-function-alignment -Wa,--reduce-memory-overheads"
+_FLAGS="$_FLAGS -ffast-math -fno-move-loop-invariants -fvect-cost-model=cheap -fsimd-cost-model=cheap -flimit-function-alignment -Wa,--reduce-memory-overheads"
 
 CFLAGS="$CFLAGS $_FLAGS"
 FFLAGS="$FFLAGS $_FLAGS"
