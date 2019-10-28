@@ -5,6 +5,8 @@ SLOT=0
 DESCRIPTION="Simple desktop layout"
 LICENSE="*"
 IUSE="+udev libnotify minimal bluetooth wifi +jpeg +tiff svg tint2 alsa laptop +dhcp"
+# strict select
+IUSE="$IUSE opencl video_cards_i965 video_cards_r600 video_cards_radeonsi"
 DEPEND="tint2? ( x11-misc/tint2 )
 	>=x11-wm/openbox-3.5.0"
 RDEPEND=" ${DEPEND}
@@ -29,6 +31,14 @@ RDEPEND=" ${DEPEND}
 	)
 	laptop? (
 		>=x11-misc/xkbd-0.8.17
+	)
+	opencl? (
+		video_cards_i965? (
+			abi_x86_32? ( dev-libs/beignet )
+			abi_x86_64? ( !abi_x86_32? ( dev-libs/intel-neo ) )
+		)
+		video_cards_r600? ( media-libs/mesa[opencl] )
+		video_cards_radeonsi? ( media-libs/mesa[opencl] )
 	)
 	!minimal? (
 		!tint2? ( || (
