@@ -12,15 +12,18 @@ migrate_profile(){
 	[ -z "$EROOT" -o "`readlink -f "$EROOT"`" = / ] || return 1
 	local R=
 	local i p="$R/etc/portage/make.profile" pn='' pn1 ll raw pt pg pc pp='' pg='' mv=false fixed=false V=
+	local P1=/usr/portage P2=/var/lib/layman/raw P3=/var/db/repos
+	[ -e $P3/gentoo/profiles ] && P1=$P3/gentoo
+	[ -e $P3/raw/profiles ] && P2=$P3/raw
 	l=`readlink "$p"` || return 1
 	ll=`readlink -f "$p"` || return 1
-	[[ "$ll" == /usr/portage/profiles/default/linux/* ]] && {
-		V="${ll#/usr/portage/profiles/default/linux/*/}"
+	[[ "$ll" == $P1/profiles/default/linux/* ]] && {
+		V="${ll#$P1/profiles/default/linux/*/}"
 		V="${V%%/*}"
 		[[ "$V" == ??.? ]] || return 1
 	}
 	for i in '' /desktop /server /no-multilib; do
-		[ -n "$V" ] && [[ "$ll" == /usr/portage/profiles/default/linux/*/$V$i ]] || continue
+		[ -n "$V" ] && [[ "$ll" == $P1/profiles/default/linux/*/$V$i ]] || continue
 		if [ "$1" != force ]; then
 			echo "say 'force' to install"
 			return 1
@@ -29,7 +32,7 @@ migrate_profile(){
 		mv=true
 		[ "$pn" = /desktop ] || pn=server
 		raw="${FILESDIR%/*/*/*}"
-		[ -z "$raw" ] && raw=/var/lib/layman/raw
+		[ -z "$raw" ] && raw=$P2
 		pg="$raw"
 		break
 	done
