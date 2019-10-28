@@ -18,7 +18,6 @@ net-dns/bind-tools gssapi -idn libidn2
 net-libs/libssh server
 media-gfx/imagemagick corefonts lzma xml
 sys-boot/syslinux -custom-cflags
-sys-devel/llvm clang
 sys-apps/util-linux tty-helpers static-libs
 sys-fs/ntfs3g -external-fuse
 x11-libs/libdrm libkms
