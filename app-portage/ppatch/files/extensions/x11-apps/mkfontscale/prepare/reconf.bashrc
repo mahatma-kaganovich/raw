@@ -1,2 +1,2 @@
-cd "$S" || die
-eautoreconf
+#cd "$S" || die
+#eautoreconf
