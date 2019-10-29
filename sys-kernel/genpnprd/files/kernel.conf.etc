@@ -70,7 +70,7 @@ CF NET_SCH_PSP_HARDCHAIN
 #CF MCORE2
 
 # force (hybrid)
-#CF 64BIT
+#KERNEL_ARCH=x86 && CF 64BIT
 
 ## build *config
 #KERNEL_MAKE_ADD="Kconfig= menuconfig nconfig gconfig -i"
