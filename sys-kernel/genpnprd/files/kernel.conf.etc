@@ -69,8 +69,8 @@ CF NET_SCH_PSP_HARDCHAIN
 #CF MK8
 #CF MCORE2
 
-# force (hybrid)
-#KERNEL_ARCH=x86 && CF 64BIT
+# force (hybrid) 64 bit + all ABIs 
+#KERNEL_ARCH=x86 && CF 64BIT IA32_EMULATION X86_X32
 
 ## build *config
 #KERNEL_MAKE_ADD="Kconfig= menuconfig nconfig gconfig -i"

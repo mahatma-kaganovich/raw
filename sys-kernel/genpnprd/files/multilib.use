@@ -1,20 +1,19 @@
-# if no USE=multitarget - use only present ABIs
-abis="$MULTILIB_ABIS $(get_all_abis)"
-use !multilib && abis=''
-if use multitarget; then
-	use x86 && abis+=' x86'
-	use amd64 && abis+=' x86 x32 amd64'
-	# this is amd64
-#	use x32 && abis+=' x86 amd64'
-#	has x32 $abis && abis+=' x86 amd64'
-fi
-abis=" $abis "
-aa=' '
-for a1 in x86:IA32_EMULATION x32:IA32_EMULATION x32:X86_X32; do
-	a="${a1#*:} "
-	aa="${aa// -$a / }"
-	[[ -z "${aa##* $a *}" ]] && continue
-	[[ -n "${abis##* ${a1%%:*} *}" ]] && aa+='-'
-	aa+="$a "
-done
-KERNEL_CONFIG+="$aa"
+abis=
+use multilib && abis+=" $MULTILIB_ABIS $(get_all_abis)"
+use x86 && abis+=' x86'
+use amd64 && abis+=' amd64'
+#use x32 && abis+=' amd64 x86 x32'
+abis+=' '
+case "$abis" in
+*" x32 "*)a="64BIT IA32_EMULATION X86_X32";;
+*" x86 "*" amd64 "*|*" amd64 "*" x86 "*)a="64BIT IA32_EMULATION -X86_X32";;
+*" amd64 "*)
+ (use multilib || use multitarget) &&
+  a="64BIT IA32_EMULATION X86_X32" ||
+  a="64BIT -IA32_EMULATION"
+;;
+#*" x86 "*)a="-64BIT";;
+*)a='';;
+esac
+[[ "$a " == "64BIT "* ]] && use !amd64 && export KERNEL_ARCH=x86
+KERNEL_CONFIG+=" $a"
