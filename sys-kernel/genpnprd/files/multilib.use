@@ -15,5 +15,5 @@ case "$abis" in
 #*" x86 "*)a="-64BIT";;
 *)a='';;
 esac
-[[ "$a " == "64BIT IA32"* ]] && use !amd64 && export KERNEL_ARCH=x86
+[[ "$a " == "64BIT "* ]] && use !amd64 && export KERNEL_ARCH=x86
 KERNEL_CONFIG+=" $a"
