@@ -9,10 +9,12 @@ use experimental && KERNEL_CONFIG+=" +.+_NOCODEC_.+"
 KERNEL_CONFIG+=" &I2C_DESIGNWARE_PLATFORM I2C_DESIGNWARE_PLATFORM"
 
 l="(?:.+_)?(?:DESIGNWARE|DW|SOC)(?:_.+)?"
-#KERNEL_CONFIG+=" =$l"
+KERNEL_CONFIG+=" =$l"
 l="(?:.+_)?(?:DESIGNWARE|DW)(?:_.+)?"
 #KERNEL_CONFIG+=" &$l"
 
 l="(?:.+_)?(?:INTEL_MID|INTEL_CE|INTEL_QUARK|CHERRYVIEW|PMIC|PMC|BAYTRAIL)(?:_.+)?"
 KERNEL_CONFIG+=" CPU_SUP_INTEL==!y;=$l"
 #KERNEL_CONFIG+=" CPU_SUP_INTEL==!y;&$l"
+
+use laptop && [[ "$CFLAGS" != *march=native* ]] && KERNEL_CONFIG+=" -SCHED_MC -NUMA"
