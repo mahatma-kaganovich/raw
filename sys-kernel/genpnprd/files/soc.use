@@ -16,5 +16,3 @@ l="(?:.+_)?(?:DESIGNWARE|DW)(?:_.+)?"
 l="(?:.+_)?(?:INTEL_MID|INTEL_CE|INTEL_QUARK|CHERRYVIEW|PMIC|PMC|BAYTRAIL)(?:_.+)?"
 KERNEL_CONFIG+=" CPU_SUP_INTEL==!y;=$l"
 #KERNEL_CONFIG+=" CPU_SUP_INTEL==!y;&$l"
-
-use laptop && [[ "$CFLAGS" != *march=native* ]] && KERNEL_CONFIG+=" -SCHED_MC -NUMA"
