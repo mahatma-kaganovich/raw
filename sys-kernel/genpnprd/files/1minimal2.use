@@ -7,13 +7,13 @@ KERNEL_CONFIG+=" NO_HZ_FULL==y;-CPU_ISOLATION"
 KERNEL_CONFIG+=" -X86_VSYSCALL_EMULATION LEGACY_VSYSCALL_NONE -MODIFY_LDT_SYSCALL UNWINDER_GUESS -I2C_COMPAT -CRASH_DUMP -COREDUMP -VM_EVENT_COUNTERS"
 #use lxc ||
 	KERNEL_CONFIG+=" -NAMESPACES -CGROUPS"
-use fbcon || use efi || if use dri || use X; then
-	KERNEL_MODULES+=" -drivers/video +drivers/gpu"
-	use laptop || use soc && KERNEL_MODULES+=" +drivers/video/backlight"
-	KERNEL_CONFIG+=" +FB +FRAMEBUFFER_CONSOLE;FRAMEBUFFER_CONSOLE"
+if use dri || use X; then
+	KERNEL_MODULES+=" -drivers/video +drivers/gpu +drivers/video/backlight"
+	use fbcon || KERNEL_CONFIG+=" +FB +FRAMEBUFFER_CONSOLE;FRAMEBUFFER_CONSOLE"
 else
-	KERNEL_CONFIG+=" -FB"
+	use fbcon || KERNEL_CONFIG+=" -FB"
 fi
+use fbcon || KERNEL_CONFIG+=" +FB +FRAMEBUFFER_CONSOLE;FRAMEBUFFER_CONSOLE"
 use server || KERNEL_CONFIG+=" +IOSCHED_DEADLINE -IP_ADVANCED_ROUTER -TCP_CONG_ADVANCED"
 use server && KERNEL_CONFIG+=" -KEXEC -KEXEC_.+"
 #use server && ts+=" -IRQ_TIME_ACCOUNTING"
