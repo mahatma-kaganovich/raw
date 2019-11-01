@@ -7,7 +7,7 @@ KERNEL_CONFIG+=" NO_HZ_FULL==y;-CPU_ISOLATION"
 KERNEL_CONFIG+=" -X86_VSYSCALL_EMULATION LEGACY_VSYSCALL_NONE -MODIFY_LDT_SYSCALL UNWINDER_GUESS -I2C_COMPAT -CRASH_DUMP -COREDUMP -VM_EVENT_COUNTERS"
 #use lxc ||
 	KERNEL_CONFIG+=" -NAMESPACES -CGROUPS"
-use fbcon || if use dri || use X; then
+use fbcon || use efi || if use dri || use X; then
 	KERNEL_MODULES+=" -drivers/video +drivers/gpu"
 	use laptop || use soc && KERNEL_MODULES+=" +drivers/video/backlight"
 	KERNEL_CONFIG+=" +FB +FRAMEBUFFER_CONSOLE;FRAMEBUFFER_CONSOLE"
