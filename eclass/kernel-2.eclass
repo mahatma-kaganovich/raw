@@ -26,7 +26,7 @@ COMP='GZIP BZIP2'
 if [[ ${ETYPE} == sources ]]; then
 
 IUSE="${IUSE} +build-kernel custom-cflags +pnp +compressed integrated
-	netboot custom-arch embed-hardware
+	netboot custom-arch embed-hardware +blobs
 	kernel-firmware +sources pnponly lzma xz lzo lz4
 	external-firmware xen +smp kernel-tools multitarget 64-bit-bfd thin
 	lvm evms device-mapper unionfs luks gpg iscsi e2fsprogs mdadm btrfs +keymap
@@ -300,6 +300,7 @@ post_make(){
 		esac
 	done <"$TMPDIR"/modinfo.lst | sort -u >"$TMPDIR"/mod-exclude.m2y
 	sed -e 's/^.*: //' <"$TMPDIR"/mod-fw.lst | sort -u >"$TMPDIR"/fw-used1.lst
+	sed -e 's/: .*$//' <"$TMPDIR"/mod-fw.lst | sort -u >>"$TMPDIR"/mod-blob.lst
 	# add hidden firmware
 	for i in "$S" "$ROOT/lib"; do
 		find "$i/firmware/" -type f | while read f;do
@@ -310,23 +311,23 @@ post_make(){
 			echo "\"$f\""
 		done
 	done | sort -u >"$TMPDIR"/fw-all.lst
-	grep -RFlf "$TMPDIR"/fw-all.lst . --include "*.[ch]"|while read f; do
+	grep -RFlf "$TMPDIR"/fw-all.lst --include "*.[ch]"|while read f; do
 		[ -e "${f%?}o" ] || (use paranoid && ([[ "$f" == *include* ]] || [[ "$f" == *h && -n "`find "${f%/*}" -name "*.o"`" ]] ) ) && grep -Fohf "$TMPDIR"/fw-all.lst "$f"
 	done | while read f; do
-		[ -e "${f%?}ko" ] && x=3 || x=2
+		[ -e "${f%?}ko" ] && x=3 && echo "${f%?}ko" >>"$TMPDIR"/mod-blob.lst || x=2
 		x="$TMPDIR"/fw-used$x.lst
 		[[ "$f" == */* ]] && echo "$f" >>"$x" && continue
 		grep -F "/${f#?}" "$TMPDIR"/fw-all.lst || echo "$f" >>"$x"
 	done
 
-	for f in "$TMPDIR"/fw-used{2,3}.lst; do
+	for f in "$TMPDIR"/fw-used{2,3}.lst "$TMPDIR"/mod-blob.lst; do
 		touch "$f"
 		mv "$f" "$f.tmp"
 		sed -e 's:^"::' -e 's:"$::' <"$f.tmp" | sort -u >"$f"
 	done
 	sort -u "$TMPDIR"/fw-used{1,2,3}.lst >"$TMPDIR"/fw-used.lst
 
-	einfo "Copy firmware"
+	use blobs && einfo "Copy firmware"
 	while read i; do
 		if [ -e "firmware/$i" ]; then
 			m="firmware/$i"
@@ -336,6 +337,7 @@ post_make(){
 			ewarn "Required firmware not found: '$i'"
 			continue
 		fi
+		use blobs || continue
 		f="${BDIR}/lib/firmware/$i"
 		mkdir -p "${f%/*}"
 		cp "$m" "$f" || die
@@ -366,6 +368,19 @@ extra_firmware(){
 
 umake(){
 	kmake ARCH=um LDFLAGS="$(extract_flags -Wl, ${LDFLAGS})" CFLAGS="$(_filter_f CFLAGS '-flto*' '-*-lto-*' -fuse-linker-plugin)" "${@}"
+}
+
+_genpnprd(){
+	set -- \
+		--IMAGE "initrd-${REAL_KV}.img" \
+		--S "${S}" \
+		--OVERLAY "${TMPDIR}/overlay-rd" \
+		${comp:+--COMPRESS $comp} \
+		"${@}"
+	use blobs && set -- --CLEAN @"$TMPDIR"/mod-blob.lst "${@}"
+	use thin && set -- --THIN - "${@}"
+#	MAKEOPTS="$MAKEOPTS" bash -- "${SHARE}/genpnprd" "${@}" --IMAGE "${S}/initrd-${REAL_KV}.img"
+	MAKEOPTS="$MAKEOPTS" /usr/bin/genpnprd "${@}" 
 }
 
 kernel-2_src_compile() {
@@ -498,7 +513,7 @@ kernel-2_src_compile() {
 	done
 
 	if use !klibc && use !genkernel; then
-		MAKEOPTS="$MAKEOPTS" /usr/bin/genpnprd --IMAGE "initrd-${REAL_KV}.img" --S "${S}" --OVERLAY "${TMPDIR}/overlay-rd" --FILES "/bin/busybox
+		_genpnprd --FILES "/bin/busybox
 			$(use e2fsprogs && echo /sbin/blkid)
 			$(use mdadm && echo /sbin/mdadm /sbin/mdmon)
 			$(use device-mapper && echo /usr/sbin/dmraid)
@@ -525,7 +540,7 @@ kernel-2_src_compile() {
 	run_genkernel ramdisk "--kerneldir=\"${S}\" --bootdir=\"${S}\" --module-prefix=\"${BDIR}\" --no-mountboot ${p}"
 	r=`ls initramfs*-${REAL_KV}||ls "$TMPDIR"/genkernel/initramfs*` && mv "$r" "initrd-${REAL_KV}.img" || die "initramfs rename failed"
 	einfo "Preparing boot image"
-	MAKEOPTS="$MAKEOPTS" bash "${SHARE}/genpnprd" "${S}/initrd-${REAL_KV}.img" "$( (use !pnp && echo nopnp)||(use pnponly && echo pnponly)||echo pnp )" "${TMPDIR}"/overlay-rd "${S}" ${comp:+--COMPRESS $comp} $(use thin||echo --THIN -)|| die
+	_genpnprd --PNPMODE "$( (use !pnp && echo nopnp)||(use pnponly && echo pnponly)||echo pnp )" || die
 	local i="initrd-${REAL_KV}.cpio" i1="initrd-${REAL_KV}.img"
 	( use pnp || use compressed || (use integrated && use !thin) ) &&
 		gzip -dc "$i1"  >"$i" && rm "$i1"

@@ -211,6 +211,16 @@ else
 	done
 	bash "$UROOT/usr/share/genpnprd/genpkgrd" "$rcdir" "$x" "$PKGFILES" "$PACKAGES"
 	for i in $CLEAN; do
+		case "$i" in
+		"@"*)
+			while read j; do
+				j=`readlink -f "$rcdir/$j"` || continue
+				[[ "${j#$rcdir/}" == "$j" ]] && continue
+				rm "$j" -f
+			done <"${i#?}"
+			continue
+		;;
+		esac
 		i=`readlink -f "$rcdir/$i"` || continue
 		[[ "${i#$rcdir/}" == "$i" ]] && continue
 		rm "$i" -Rf
