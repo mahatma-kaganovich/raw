@@ -272,73 +272,96 @@ kernel-2_src_configure() {
 	export comp
 }
 
-_ext_firmware1(){
-	local d
-	for d in "${@}"; do
-		[ -e "$d/$f" ] && return
-	done
-	echo -n " $m: ${f#firmware/}"
-	! [ -e "$s/$f" ] && echo " $s/$f- not found" && return
-	echo
-	use external-firmware || continue
-	for d in "${@}"; do
-		if [ -n "$d" ]; then
-			mkdir -p "$d/${f%/*}"
-			cp -aT "$s/$f" "$d/$f" || die
-		else
-			x+=" ${f#firmware/}"
-		fi
-	done
-}
-
-_find_hidden_fw(){
-	local f
-	find "$s/firmware/" -type f|while read f;do
-		f="${f#$s/firmware/}"
-		case "$f" in
-		*/.*|.*|*.[ch]|*Makefile|*cmake|LICENCE*|LICENSE*|*README|WHENCE|GPL-?|GPL|*/GPL|*configure)continue;;
+post_make(){
+	local i x y m f
+	[ -s modules.builtin ] && rm $(cat modules.builtin) -f
+	# all modinfo (fast or split cmdline)
+	einfo "Preparing modules & firmware info"
+	if use paranoid; then
+		find . -name '*.ko'|while read m; do
+			modinfo "$m"
+		done >"$TMPDIR"/modinfo.lst
+	else
+		modinfo $(find . -name '*.ko'|sed -e 's:^\./::') >"$TMPDIR"/modinfo.lst
+	fi
+	# list modules without [configured] firmware and firmare to ext built
+	# keep standalone
+	while read x y; do
+		case "$x" in
+		filename:)m=${y#$S/};;
+		firmware:)
+			[ -e "firmware/$y" ] && continue
+			if use external-firmware && [ -e "/lib/firmware/$y" ]; then
+				echo "$m: $y" >>"$TMPDIR"/mod-fw.lst
+			else
+				echo "$m"
+			fi
+		;;
 		esac
-		echo "$f"
-	done >"$TMPDIR/"fw2.lst
-	grep -xvFf "$TMPDIR/"fw{1,2}.lst|sort -u|while read f; do
-		echo "\"$f\""
-		[[ "$f" == */* ]] && echo "\"${f##*/}\""
-	done >"$TMPDIR/"fw2_.lst
-	grep -RFlf "$TMPDIR/"fw2_.lst . --include "*.[ch]"|while read f; do
-		[ -e "${f%?}o" ] || (use paranoid && ([[ "$f" == *include* ]] || [[ "$f" == *h && -n "`find "${f%/*}" -name "*.o"`" ]] ) ) && grep -Fohf "$TMPDIR/"fw2_.lst "$f"
-	done | while read f; do
-		[[ "$f" == */* ]] && echo "$f" && continue
-		grep -F "/${f#?}" "$TMPDIR/"fw2_.lst || echo "$f"
-	done | sed -e 's:^"::' -e 's:"$::' | sort -u
-}
-
-ext_firmware(){
-	local m f x=
-	local s="$1"
-	shift
-	use external-firmware && echo "Copying external firmware to $*"
-	einfo "Checking modules firmware $s"
-	cd "$S"
-	rm -f "$TMPDIR/"fw.lst
-	find . -name "*.ko" |while read m; do
-		modinfo "$m"|grep "^firmware:"|sed -e 's:^.* ::'|while read f; do
-			echo "$f" >>"$TMPDIR/"fw.lst
-			f="firmware/$f"
-			m="${m##*/}"
-			_ext_firmware1 "${@}"
+	done <"$TMPDIR"/modinfo.lst | sort -u >"$TMPDIR"/mod-exclude.m2y
+	sed -e 's/^.*: //' <"$TMPDIR"/mod-fw.lst | sort -u >"$TMPDIR"/fw-used1.lst
+	# add hidden firmware
+	for i in "$S" "$ROOT/lib"; do
+		find "$i/firmware/" -type f | while read f;do
+			f="${f#$i/firmware/}"
+			case "$f" in
+			*/.*|.*|*.[ch]|*Makefile|*cmake|LICENCE*|LICENSE*|*README|WHENCE|GPL-?|GPL|*/GPL|*configure)continue;;
+			esac
+			echo "\"$f\""
 		done
+	done | sort -u >"$TMPDIR"/fw-all.lst
+	grep -RFlf "$TMPDIR"/fw-all.lst . --include "*.[ch]"|while read f; do
+		[ -e "${f%?}o" ] || (use paranoid && ([[ "$f" == *include* ]] || [[ "$f" == *h && -n "`find "${f%/*}" -name "*.o"`" ]] ) ) && grep -Fohf "$TMPDIR"/fw-all.lst "$f"
+	done | while read f; do
+		[ -e "${f%?}ko" ] && x=3 || x=2
+		x="$TMPDIR"/fw-used$x.lst
+		[[ "$f" == */* ]] && echo "$f" >>"$x" && continue
+		grep -F "/${f#?}" "$TMPDIR"/fw-all.lst || echo "$f" >>"$x"
 	done
 
-	einfo "Checking hidden firmware $s"
-	cat "$TMPDIR/"fw.lst >>"$TMPDIR/"fw1.lst
-	_find_hidden_fw >"$TMPDIR/"fw3.lst
-	m=
-	use paranoid && set "$1" "$2" ''
-	while read f; do f="firmware/$f"; _ext_firmware1 "${@}"; done <"$TMPDIR/"fw3.lst
-	# 2do: copy hidden in/ext firmware unpacked too
-	# local s="$S" f m=
-	# _find_hidden_fw |while read f; do _ext_firmware1 <dir>; done
-	_append_firmware $x
+	for f in "$TMPDIR"/fw-used{2,3}.lst; do
+		touch "$f"
+		mv "$f" "$f.tmp"
+		sed -e 's:^"::' -e 's:"$::' <"$f.tmp" | sort -u >"$f"
+	done
+	sort -u "$TMPDIR"/fw-used{1,2,3}.lst >"$TMPDIR"/fw-used.lst
+
+	einfo "Copy firmware"
+	while read i; do
+		if [ -e "firmware/$i" ]; then
+			m="firmware/$i"
+		elif use external-firmware; then
+			m="$ROOT/lib/firmware/$i"
+		else
+			ewarn "Required firmware not found: '$i'"
+			continue
+		fi
+		f="${BDIR}/lib/firmware/$i"
+		mkdir -p "${f%/*}"
+		cp "$m" "$f" || die
+	done <"$TMPDIR"/fw-used.lst
+}
+
+extra_firmware(){
+	local i e=
+	einfo "Embedding firmware"
+	{
+	    for i in $KERNEL_CONFIG_EXTRA_FIRMWARE; do
+		echo "$i"
+	    done
+	    while read x y; do
+		grep -sqFx "${x%:}" modules.builtin && echo "$y"
+	    done <"$TMPDIR"/mod-fw.lst
+	}|sort -u >"$TMPDIR"/fw-embed.lst
+	sort "$TMPDIR"/fw-used{1,2}.lst | uniq -u | grep -Fxf - "$TMPDIR"/fw-used2.lst >"$TMPDIR"/fw-embed2.lst
+	while read i; do
+		rm "${BDIR}/lib/firmware/$i" && e+=" $i" || ewarn "Required embedded firmware not found: '$i'"
+	done <"$TMPDIR"/fw-embed.lst
+	while read i; do
+		[ -e "${BDIR}/lib/firmware/$i" ] && e+=" $i" || ewarn "Possible required embedded firmware not found: '$i'"
+	done <"$TMPDIR"/fw-embed2.lst
+	export KERNEL_CONFIG_EXTRA_FIRMWARE="${e# }"
+	export KERNEL_CONFIG_EXTRA_FIRMWARE_DIR="$ROOT/lib/firmware"
 }
 
 umake(){
@@ -384,9 +407,9 @@ kernel-2_src_compile() {
 		einfo "Compiling kernel (all)"
 		kmake all ${KERNEL_MODULES_MAKEOPT}
 		grep -q "=m$" .config && [[ -z "`find . -name "*.ko" -print`" ]] && die "Modules configured, but not built"
+		post_make
 		$i || break
 		i=false
-		ext_firmware "$ROOT/lib" . "$BDIR/lib" && i=true
 		# else need repeat only if module with fw embeddeed by /etc/kernels/kernel.conf, don't care
 		cp .config .config.stage1
 		if use embed-hardware; then
@@ -737,29 +760,8 @@ _append(){
 	export $v="${!v}${!v:+ }$*"
 }
 
-_append1(){
-	local v="KERNEL_CONFIG_$1"
-	shift
-	einfo "$v+=$*"
-	local s=" ${!v} " i s0="${!v}"
-	for i in "${@}"; do
-		[ "$s" = "${s##* $i *}" ] && s+=" $i "
-	done
-	s="${s//  / }"
-	s="${s//  / }"
-	s="${s# }"
-	s="${s% }"
-	export $v="$s"
-	[ "$s" != "$s0" ]
-}
-
 _cmdline(){
 	_append CMDLINE "${@}"
-}
-
-_append_firmware(){
-	[ -z "$*" ] && return
-	_append1 EXTRA_FIRMWARE "${@}"
 }
 
 cfg_loop(){
@@ -1337,7 +1339,7 @@ kconfig(){
 		local ok=false o a
 		for o in '' '-relax'; do
 		for a in "$(arch)" ''; do
-			SRCARCH="$a" _run_env /usr/bin/perl "${SHARE}/Kconfig.pl" $o && ok=true && break
+			SRCARCH="$a" _run_env /usr/bin/perl "${SHARE}/Kconfig.pl" $o "${@}" && ok=true && break
 		done
 		$ok && break
 		done
@@ -1650,14 +1652,17 @@ echo "${aflags# }"
 
 module_reconf(){
 	local i c
-	sed -e 's:^.*/::g' -e 's:\.ko$::g'|sort -u >"${TMPDIR}/unmodule1.tmp"
-	grep -sqFxf "${TMPDIR}/unmodule1.tmp" "${TMPDIR}/unmodule.black" && return
-	while read i; do
-		grep -Rh "^\s*obj\-\$[(]CONFIG_.*\s*\+=.*\s${i//[_-]/[_-]}\.o" "${TMPDIR}"/unmodule.tmp|sed -e 's:).*$::g' -e 's:^.*(CONFIG_::'|sort -u|while read c; do
-			$1 "$c"
-			echo "$i" >>"${TMPDIR}/unmodule.$1"
+	touch "${TMPDIR}/unmodule.black"
+	touch "$TMPDIR"/mod-exclude.$1
+	grep -Fxvf "$TMPDIR"/mod-exclude.$1 | \
+		sed -e 's:^.*/::g' -e 's:\.ko$::g' | \
+		grep -Fxvf "${TMPDIR}/unmodule.black" | \
+		while read i; do
+			grep -Rh "^\s*obj\-\$[(]CONFIG_.*\s*\+=.*\s${i//[_-]/[_-]}\.o" "${TMPDIR}"/unmodule.tmp|sed -e 's:).*$::g' -e 's:^.*(CONFIG_::'|sort -u|while read c; do
+				$1 "$c"
+				echo "$i" >>"${TMPDIR}/unmodule.$1"
 		done
-	done <"${TMPDIR}/unmodule1.tmp"
+	done
 	echo ''
 }
 
@@ -1715,32 +1720,6 @@ modprobe_opt(){
 	done
 }
 
-extra_firmware(){
-	[ -e "$TMPDIR/unmodule.m2y" ] || return
-	einfo "Postprocessing external firmware"
-	local i a b c d
-	# enabling firmware fallback only ondemand by security reason
-	d="$TMPDIR/absent-firmware.lst"
-	find . -name '*.ko'|while read i; do
-		a="${i##*/}"
-		grep -qFx "${a%.ko}" "$TMPDIR/unmodule.m2y" && modinfo "$i"
-	done|grep "^firmware:"|sed -e 's:^.* ::'|while read i; do
-		[ -e "$S/firmware/$i" ] || echo "$i"
-	done >"$d"
-	[ -s "$d" ] || return
-	a=
-	b=
-	c=false
-	# 2test, but IMHO too many embedding: for b43 usually need only 1 of *
-	# but FALLBACK is deprecated
-	( use monolythe || ! grep -qF FW_LOADER_USER_HELPER_FALLBACK "$S/.config" ) && grep -qFx 'CONFIG_FIRMWARE_IN_KERNEL=y' "$S/.config" && c=true
-	while read i; do
-		$c && [ -e "$ROOT/lib/firmware/$i" ] && b+=" $i" || a+=" $i"
-	done <"$d"
-	[ -n "$a" ] && cfg_ " ##${a// /,}: FW_LOADER_USER_HELPER_FALLBACK "
-	_append_firmware $b || [ -n "$a" ]
-}
-
 load_modinfo(){
 	[ -e "$TMPDIR/unmodule.tmp" ] || _unmodule .
 	[ -e "${WORKDIR}"/modules.alias.sh ] || perl "${SHARE}"/mod2sh.pl "${WORKDIR}" >&2 || die "Unable to run '${SHARE}/mod2sh.pl'"
@@ -1752,6 +1731,7 @@ detects(){
 	load_modinfo
 	sort -u "${WORKDIR}"/modules.pnp "${TMPDIR}"/overlay-rd/etc/modflags/* >>"${WORKDIR}"/modules.pnp_
 	sort -u "${WORKDIR}"/modules.pnp0 "${SHARE}"/etc/modflags/* >>"${WORKDIR}"/modules.pnp0_
+	modinfo $(cat "$TMPDIR"//mod-exclude.m2y) | grep "^name:" | sed -e 's/^name:[ 	]*//' >>unmodule.black
 	{
 		# /sys
 		cat "${TMPDIR}/sys-modalias"
@@ -1938,7 +1918,6 @@ _paranoid_y1(){
 
 _paranoid_y(){
 local x y i j l n1 i= n= a= d=
-modinfo $(find "${S}" -name "*.ko") >"$TMPDIR/modinfo.lst"
 rm "$TMPDIR/aliased.lst" "$TMPDIR/unaliased.lst" -f
 while read x y; do
 	[ -n "$y" ] &&
@@ -1950,6 +1929,7 @@ while read x y; do
 		n=${n%.ko}
 		n=${n//-/_}
 	;;
+	name:)n="$y";;
 	alias:)a+="
 $y";;
 	depends:)
