@@ -1747,7 +1747,7 @@ detects(){
 	load_modinfo
 	sort -u "${WORKDIR}"/modules.pnp "${TMPDIR}"/overlay-rd/etc/modflags/* >>"${WORKDIR}"/modules.pnp_
 	sort -u "${WORKDIR}"/modules.pnp0 "${SHARE}"/etc/modflags/* >>"${WORKDIR}"/modules.pnp0_
-	modinfo $(cat "$TMPDIR"//mod-exclude.m2y) | grep "^name:" | sed -e 's/^name:[ 	]*//' >>unmodule.black
+	modinfo $(cat "$TMPDIR"//mod-exclude.m2y) | grep "^name:" | sed -e 's/^name:[ 	]*//' >>"$TMPDIR"/unmodule.black
 	{
 		# /sys
 		cat "${TMPDIR}/sys-modalias"
