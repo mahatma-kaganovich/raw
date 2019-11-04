@@ -377,6 +377,7 @@ _genpnprd(){
 		--S "${S}" \
 		--OVERLAY "${TMPDIR}/overlay-rd" \
 		${comp:+--COMPRESS $comp} \
+		--ARCH "$(arch)" \
 		"${@}"
 	use blobs && set -- --CLEAN @"$TMPDIR"/mod-blob_.lst "${@}"
 	use thin && set -- --THIN - "${@}"
