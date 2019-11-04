@@ -301,6 +301,7 @@ post_make(){
 	done <"$TMPDIR"/modinfo.lst | sort -u >"$TMPDIR"/mod-exclude.m2y
 	sed -e 's/^.*: //' <"$TMPDIR"/mod-fw.lst | sort -u >"$TMPDIR"/fw-used1.lst
 	sed -e 's/: .*$//' <"$TMPDIR"/mod-fw.lst | sort -u >>"$TMPDIR"/mod-blob.lst
+
 	# add hidden firmware
 	for i in "$S" "$ROOT/lib"; do
 		find "$i/firmware/" -type f | while read f;do
@@ -311,13 +312,14 @@ post_make(){
 			echo "\"$f\""
 		done
 	done | sort -u >"$TMPDIR"/fw-all.lst
-	grep -RFlf "$TMPDIR"/fw-all.lst --include "*.[ch]"|while read f; do
-		[ -e "${f%?}o" ] || (use paranoid && ([[ "$f" == *include* ]] || [[ "$f" == *h && -n "`find "${f%/*}" -name "*.o"`" ]] ) ) && grep -Fohf "$TMPDIR"/fw-all.lst "$f"
+	sort "$TMPDIR"/fw-{all,used1}.lst | uniq -u >fw-unknown.lst
+	grep -RFlf "$TMPDIR"/fw-unknown.lst --include "*.[ch]"|while read f; do
+		[ -e "${f%?}o" ] || (use paranoid && ([[ "$f" == *include* ]] || [[ "$f" == *h && -n "`find "${f%/*}" -name "*.o"`" ]] ) ) && grep -Fohf "$TMPDIR"/fw-unknown.lst "$f"
 	done | while read f; do
 		[ -e "${f%?}ko" ] && x=3 && echo "${f%?}ko" >>"$TMPDIR"/mod-blob.lst || x=2
 		x="$TMPDIR"/fw-used$x.lst
 		[[ "$f" == */* ]] && echo "$f" >>"$x" && continue
-		grep -F "/${f#?}" "$TMPDIR"/fw-all.lst || echo "$f" >>"$x"
+		grep -F "/${f#?}" "$TMPDIR"/fw-unknown.lst || echo "$f" >>"$x"
 	done
 
 	for f in "$TMPDIR"/fw-used{2,3}.lst "$TMPDIR"/mod-blob.lst; do
