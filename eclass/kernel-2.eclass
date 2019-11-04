@@ -286,6 +286,9 @@ post_make(){
 	fi
 	# list modules without [configured] firmware and firmare to ext built
 	# keep standalone
+	f="${S#$WORKDIR}"
+	f="${f#/}"
+	f="${f%/}"
 	while read x y; do
 		case "$x" in
 		filename:)m=${y#$S/};;
@@ -298,7 +301,7 @@ post_make(){
 			fi
 		;;
 		esac
-	done <"$TMPDIR"/modinfo.lst | sort -u >"$TMPDIR"/mod-exclude.m2y
+	done <"$TMPDIR"/modinfo.lst | sort -u | sed -e "s:^:$f/:" >"$TMPDIR"/mod-exclude.m2y
 	sed -e 's/^.*: //' <"$TMPDIR"/mod-fw.lst | sort -u >"$TMPDIR"/fw-used1.lst
 	sed -e 's/: .*$//' <"$TMPDIR"/mod-fw.lst | sort -u >>"$TMPDIR"/mod-blob.lst
 	# add hidden firmware
