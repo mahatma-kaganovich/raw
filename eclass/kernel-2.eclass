@@ -429,6 +429,7 @@ kernel-2_src_compile() {
 			kmake bzImage
 		fi
 		einfo "Compiling kernel (all)"
+		cp .config .config.stage$NN
 		kmake all ${KERNEL_MODULES_MAKEOPT}
 		grep -q "=m$" .config && [[ -z "`find . -name "*.ko" -print`" ]] && die "Modules configured, but not built"
 		post_make
@@ -440,7 +441,6 @@ kernel-2_src_compile() {
 		}
 		i=false
 		# else need repeat only if module with fw embeddeed by /etc/kernels/kernel.conf, don't care
-		cp .config .config.stage$NN
 		if use embed-hardware; then
 			einfo "Reconfiguring kernel with hardware detect"
 			cfg_ "###detect: $(detects|tee -a .detect-hardware)"
