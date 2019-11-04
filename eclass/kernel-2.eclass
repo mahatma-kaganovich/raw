@@ -286,9 +286,6 @@ post_make(){
 	fi
 	# list modules without [configured] firmware and firmare to ext built
 	# keep standalone
-	f="${S#$WORKDIR}"
-	f="${f#/}"
-	f="${f%/}"
 	while read x y; do
 		case "$x" in
 		filename:)m=${y#$S/};;
@@ -301,7 +298,7 @@ post_make(){
 			fi
 		;;
 		esac
-	done <"$TMPDIR"/modinfo.lst | sort -u | sed -e "s:^:$f/:" >"$TMPDIR"/mod-exclude.m2y
+	done <"$TMPDIR"/modinfo.lst | sort -u >"$TMPDIR"/mod-exclude.m2y
 	sed -e 's/^.*: //' <"$TMPDIR"/mod-fw.lst | sort -u >"$TMPDIR"/fw-used1.lst
 	sed -e 's/: .*$//' <"$TMPDIR"/mod-fw.lst | sort -u >>"$TMPDIR"/mod-blob.lst
 	# add hidden firmware
@@ -1672,9 +1669,7 @@ echo "${aflags# }"
 module_reconf(){
 	local i c
 	touch "${TMPDIR}/unmodule.black"
-	touch "$TMPDIR"/mod-exclude.$1
-	grep -Fxvf "$TMPDIR"/mod-exclude.$1 | \
-		sed -e 's:^.*/::g' -e 's:\.ko$::g' | \
+	sed -e 's:^.*/::g' -e 's:\.ko$::g' | \
 		grep -Fxvf "${TMPDIR}/unmodule.black" | \
 		while read i; do
 			grep -Rh "^\s*obj\-\$[(]CONFIG_.*\s*\+=.*\s${i//[_-]/[_-]}\.o" "${TMPDIR}"/unmodule.tmp|sed -e 's:).*$::g' -e 's:^.*(CONFIG_::'|sort -u|while read c; do
@@ -1740,8 +1735,13 @@ modprobe_opt(){
 }
 
 load_modinfo(){
+	local i
 	[ -e "$TMPDIR/unmodule.tmp" ] || _unmodule .
-	[ -e "${WORKDIR}"/modules.alias.sh ] || perl "${SHARE}"/mod2sh.pl "${WORKDIR}" >&2 || die "Unable to run '${SHARE}/mod2sh.pl'"
+	[ -e "${WORKDIR}"/modules.alias.sh ] || {
+		tar cf tmp.tar --remove-files $(cat "$TMPDIR"/mod-exclude.m2y)
+		perl "${SHARE}"/mod2sh.pl "${WORKDIR}" >&2 || die "Unable to run '${SHARE}/mod2sh.pl'"
+		tar xf tmp.tar && rm tmp.tar
+	}
 	. "${WORKDIR}"/modules.alias.sh || die "Broken modules.alias.sh, check mod2sh.pl!"
 }
 
