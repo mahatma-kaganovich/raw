@@ -365,8 +365,11 @@ extra_firmware(){
 	while read i; do
 		[ -e "${BDIR}/lib/firmware/$i" ] && e+=" $i" || ewarn "Possible required embedded firmware not found: '$i'"
 	done <"$TMPDIR"/fw-embed2.lst
-	export KERNEL_CONFIG_EXTRA_FIRMWARE="${e# }"
+	e="${e# }"
 	export KERNEL_CONFIG_EXTRA_FIRMWARE_DIR="$ROOT/lib/firmware"
+	[ "$KERNEL_CONFIG_EXTRA_FIRMWARE" = "$e" ] && return 1
+	export KERNEL_CONFIG_EXTRA_FIRMWARE="$e"
+	return 0
 }
 
 umake(){
@@ -417,7 +420,7 @@ kernel-2_src_compile() {
 		umake mrproper
 		mv "${WORKDIR}"/.config* "$S"
 	fi
-	for i in true false; do
+	for i in true false false; do
 		use paranoid && kmake clean
 		if [[ -n "${KERNEL_MODULES_MAKEOPT}" ]]; then
 			einfo "Compiling kernel (bzImage)"
@@ -427,7 +430,12 @@ kernel-2_src_compile() {
 		kmake all ${KERNEL_MODULES_MAKEOPT}
 		grep -q "=m$" .config && [[ -z "`find . -name "*.ko" -print`" ]] && die "Modules configured, but not built"
 		post_make
-		$i || break
+		$i || {
+			use external-firmware && extra_firmware || break
+			# final: embed firmware
+			kconfig
+			continue
+		}
 		i=false
 		# else need repeat only if module with fw embeddeed by /etc/kernels/kernel.conf, don't care
 		cp .config .config.stage1
@@ -441,12 +449,13 @@ kernel-2_src_compile() {
 			paranoid_y && i=true
 		fi
 		if $i; then
-			use external-firmware && extra_firmware
+#			use external-firmware && extra_firmware
 			kconfig
 			if use embed-hardware; then
 				local c="${KERNEL_CLEANUP:-arch/$(arch) drivers/dma}"
 				einfo "Applying KERNEL_CLEANUP='$c'"
 				cfg_ "###cleanup: ${KERNEL_CONFIG2} $(detects_cleanup $c)"
+				i=true
 				kconfig
 			fi
 		fi
