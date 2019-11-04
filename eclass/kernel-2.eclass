@@ -420,7 +420,9 @@ kernel-2_src_compile() {
 		umake mrproper
 		mv "${WORKDIR}"/.config* "$S"
 	fi
+	local NN=0
 	for i in true false false; do
+		NN=$[NN+1]
 		use paranoid && kmake clean
 		if [[ -n "${KERNEL_MODULES_MAKEOPT}" ]]; then
 			einfo "Compiling kernel (bzImage)"
@@ -438,7 +440,7 @@ kernel-2_src_compile() {
 		}
 		i=false
 		# else need repeat only if module with fw embeddeed by /etc/kernels/kernel.conf, don't care
-		cp .config .config.stage1
+		cp .config .config.stage$NN
 		if use embed-hardware; then
 			einfo "Reconfiguring kernel with hardware detect"
 			cfg_ "###detect: $(detects|tee -a .detect-hardware)"
