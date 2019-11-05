@@ -12,7 +12,7 @@ int main(int argc, char *argv[]){
 	lseek(f, 0, 0);
 	for (i=2; i<argc; i++) l+=strlen(argv[i]);
 	opt=malloc(l);
-	*opt='\0';
 	for (i=2; i<argc; i++){strcat(opt,argv[i]);strcat(opt," ");}
+	opt[l]='\0';
 	return (buf && opt && read(f,buf,len)==len)?init_module(buf,len,opt):1;
 }
