@@ -312,7 +312,7 @@ post_make(){
 			echo "\"$f\""
 		done
 	done | sort -u >"$TMPDIR"/fw-all.lst
-	sort "$TMPDIR"/fw-{all,used1}.lst | uniq -u >fw-unknown.lst
+	sort "$TMPDIR"/fw-{all,used1}.lst | uniq -u >"$TMPDIR"/fw-unknown.lst
 	grep -RFlf "$TMPDIR"/fw-unknown.lst --include "*.[ch]"|while read f; do
 		[ -e "${f%?}o" ] || (use paranoid && ([[ "$f" == *include* ]] || [[ "$f" == *h && -n "`find "${f%/*}" -name "*.o"`" ]] ) ) && grep -Fohf "$TMPDIR"/fw-unknown.lst "$f"
 	done | while read f; do
