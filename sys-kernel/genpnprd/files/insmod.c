@@ -8,11 +8,10 @@ int main(int argc, char *argv[]){
 	int f = open(argv[1], 0, 0), i, l = argc+1;
 	if (f<0) return 1;
 	off_t len = lseek(f, 0, 2);
-	char *buf = malloc(len), *opt;
 	lseek(f, 0, 0);
 	for (i=2; i<argc; i++) l+=strlen(argv[i]);
-	opt = malloc(l);
+	char *buf = malloc(len+l), *opt = buf+len;
 	for (i=2; i<argc; i++){strcat(opt,argv[i]);strcat(opt," ");}
 	opt[l] = '\0';
-	return (buf && opt && read(f,buf,len)==len)?init_module(buf,len,opt):1;
+	return read(f,buf,len)==len && init_module(buf,len,opt);
 }
