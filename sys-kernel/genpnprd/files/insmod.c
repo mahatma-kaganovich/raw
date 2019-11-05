@@ -13,5 +13,5 @@ int main(int argc, char *argv[]){
 	char *buf = malloc(len+l), *opt = buf+len;
 	for (i=2; i<argc; i++){strcat(opt,argv[i]);strcat(opt," ");}
 	opt[l] = '\0';
-	return read(f,buf,len)==len && init_module(buf,len,opt);
+	return read(f,buf,len)==len?init_module(buf,len,opt):1;
 }
