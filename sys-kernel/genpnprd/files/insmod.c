@@ -11,8 +11,8 @@ int main(int argc, char *argv[]){
 	char *buf = malloc(len), *opt;
 	lseek(f, 0, 0);
 	for (i=2; i<argc; i++) l+=strlen(argv[i]);
-	opt=malloc(l);
+	opt = malloc(l);
 	for (i=2; i<argc; i++){strcat(opt,argv[i]);strcat(opt," ");}
-	opt[l]='\0';
+	opt[l] = '\0';
 	return (buf && opt && read(f,buf,len)==len)?init_module(buf,len,opt):1;
 }

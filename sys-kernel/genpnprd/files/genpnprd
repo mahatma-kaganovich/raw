@@ -165,6 +165,8 @@ Examples: $0 initrd.cpio
 	exit
 }
 
+rcfile="$(readlink -f $IMAGE)"
+
 [[ -e "$tmp" ]] && rm "$tmp" -Rf
 mkdir $tmp || die
 rcdir="$tmp/rc"
@@ -172,7 +174,6 @@ rcdir="$tmp/rc"
 mkdir "$rcdir" || die
 cd "$rcdir" || die
 
-rcfile="$(readlink -f $IMAGE)"
 if [[ -f "$rcfile" ]]; then
 	( (bzip2 -dc $rcfile || gzip -dc $rcfile || xz -dc $rcfile || lzop -dc $rcfile || lz4 -dc $rcfile || cat $rcfile) | cpio -iv 2>&1 | grep '^bin/busybox$' >tmp.lst ) || die "must be [gzipped] cpio file"
 	rm tmp.lst
