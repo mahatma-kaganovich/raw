@@ -986,7 +986,7 @@ pre_embed(){
 		einfo "QEMU virtio environment + USE=custom-arch"
 		CF1 VIRTIO -HYPERV -XEN -X86_EXTENDED_PLATFORM
 		CF1 _SENSORS_.+ -SERIAL_NONSTANDARD _SERIAL_.+ -SERIAL_8250_EXTENDED -NEW_LEDS -POWER_SUPPLY -REGULATOR -THERMAL -X86_PLATFORM_DEVICES -POWER_SUPPLY -PINCTRL -INPUT_TOUCHSCREEN
-		CF1 -FW_LOADER
+		use blobs || CF1 -FW_LOADER
 		use iscsi && scsi=true && CF1 ISCSI_TARGET
 		use !embed-hardware && vscsi=true && CF1 VIRTIO_.+ .+_VIRTIO
 		# -machine ..,usb=off, but respect USE=usb while
