@@ -1,1 +1,2 @@
-drivers/gpu/drm/amd/amdgpu/*.ko
+drivers/gpu/drm/*/*/*.ko
+drivers/gpu/drm/*/*.ko
