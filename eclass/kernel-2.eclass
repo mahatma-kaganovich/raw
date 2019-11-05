@@ -360,10 +360,15 @@ extra_firmware(){
 	}|sort -u >"$TMPDIR"/fw-embed.lst
 	sort "$TMPDIR"/fw-used{1,2}.lst | uniq -u | grep -Fxf - "$TMPDIR"/fw-used2.lst >"$TMPDIR"/fw-embed2.lst
 	while read i; do
-		rm "${BDIR}/lib/firmware/$i" && e+=" $i" || ewarn "Required embedded firmware not found: '$i'"
+		rm "${BDIR}/lib/firmware/$i" &&
+		[ ! -e "firmware/$i" ] &&
+		e+=" $i" || ewarn "Required embedded firmware not found: '$i'"
 	done <"$TMPDIR"/fw-embed.lst
 	while read i; do
-		[ -e "${BDIR}/lib/firmware/$i" ] && e+=" $i" || ewarn "Possible required embedded firmware not found: '$i'"
+		[ -e "${BDIR}/lib/firmware/$i" ] &&
+		[ ! -e "firmware/$i" ] &&
+		[[ "$e " != *" $i "* ]] &&
+		e+=" $i" || ewarn "Possible required embedded firmware not found: '$i'"
 	done <"$TMPDIR"/fw-embed2.lst
 	e="${e# }"
 	export KERNEL_CONFIG_EXTRA_FIRMWARE_DIR="$ROOT/lib/firmware"
