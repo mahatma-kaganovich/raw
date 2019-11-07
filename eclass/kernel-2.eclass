@@ -1692,6 +1692,7 @@ module_reconf(){
 	local i c
 	touch "${TMPDIR}/unmodule.black"
 	sed -e 's:^.*/::g' -e 's:\.ko$::g' | \
+		sort -u | \
 		grep -Fxvf "${TMPDIR}/unmodule.black" | \
 		while read i; do
 			grep -Rh "^\s*obj\-\$[(]CONFIG_.*\s*\+=.*\s${i//[_-]/[_-]}\.o" "${TMPDIR}"/unmodule.tmp|sed -e 's:).*$::g' -e 's:^.*(CONFIG_::'|sort -u|while read c; do
