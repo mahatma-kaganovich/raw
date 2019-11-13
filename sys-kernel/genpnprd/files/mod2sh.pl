@@ -17,7 +17,7 @@ my @order=(\&order5,\&order1,\&order2,\&order3);
 
 # to load second/last
 my @reorder=(
- '/ide/|usb-storage|/oss/|/video/|/snd-pcsp|/pata_acpi|/ata_generic',
+ '/ide/|usb-storage|/oss/|/video/|/snd-pcsp|/pata_acpi|/ata_generic|/intel-hid',
 );
 
 my $noreorder='/drm/';

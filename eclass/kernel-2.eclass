@@ -299,7 +299,7 @@ post_make(){
 		;;
 		esac
 	done <"$TMPDIR"/modinfo.lst | sort -u >"$TMPDIR"/mod-exclude.m2y
-	cat "$SHARE"/modules-standalone >>"$TMPDIR"/mod-exclude.m2y
+	sed -e 's/#.*$//g' <"$SHARE"/modules-standalone >>"$TMPDIR"/mod-exclude.m2y
 	sed -e 's/^.*: //' <"$TMPDIR"/mod-fw.lst | sort -u >"$TMPDIR"/fw-used1.lst
 	sed -e 's/: .*$//' <"$TMPDIR"/mod-fw.lst | sort -u >>"$TMPDIR"/mod-blob.lst
 
@@ -389,6 +389,7 @@ _genpnprd(){
 		--OVERLAY "${TMPDIR}/overlay-rd" \
 		${comp:+--COMPRESS $comp} \
 		--ARCH "$(arch)" \
+		--MAKEOPTS "$MAKEOPTS" \
 		"${@}"
 	use blobs && set -- --CLEAN @"$TMPDIR"/mod-blob_.lst "${@}"
 	use thin && set -- --THIN - "${@}"

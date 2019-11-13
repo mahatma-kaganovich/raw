@@ -1,2 +1,8 @@
+# many of drm use platform-specific pwm and gpio to control panels
 drivers/gpu/drm/*/*/*.ko
 drivers/gpu/drm/*/*.ko
+# tested, power button
+drivers/input/misc/soc_button_array.ko
+# untested, but from KEYBOARD_GPIO too
+drivers/platform/x86/pcengines-apuv2.ko
+drivers/platform/x86/surface3_button.ko
