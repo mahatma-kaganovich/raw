@@ -1,5 +1,5 @@
 #!/bin/sh
-## pnp modules bootloader v0.19
+## pnp modules bootloader v0.20
 ## (c) Denis Kaganovich, under Anarchy license
 ## consume preprocessed /lib/modules/$KV/modules.alias
 
