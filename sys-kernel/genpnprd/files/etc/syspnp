@@ -41,6 +41,10 @@ single(){
 	return 0
 }
 
+gmsg(){
+	echo "ok $*"
+}
+
 mod(){
 	local m m1 m2
 	for m in "${@}" ; do
@@ -100,7 +104,12 @@ refresh(){
 	pid=""
 	pids=""
 
-	${cmd_fast:=false} && return 1
+	${cmd_fast:=false} && {
+		[ -e "$REAL_ROOT" ] || [ "${cmd_fast_round:=2}" -le 0 ] && return 1
+		cmd_fast_round=$((cmd_fast_round-1))
+		echo "fast$cmd_fast_round"
+		return 0
+	}
 
 	sed -e 's%^\([^ 	]*\)[	 ]*.*$%>\1<%g' </proc/modules >"${PNP_TMP}".1
 	cat `grep -ls "^DRIVER=" $(find $SYS_FIND -name uevent -print 2>/dev/null) </dev/null` </dev/null |grep "^DRIVER=\|^MODALIAS="|sed -e 's%-%_%g' -e 's%^.*=\(.*\)$%>\1<%g' >>"${PNP_TMP}".1
@@ -405,7 +414,7 @@ $p
 esac
 }"
 	etest "$p" 'modparam.sh' && echo "$p" >/etc/modparam.sh
-	$cmd_quiet && good_msg(){ return; } && QUIET=1 || QUIET=
+	$cmd_quiet && good_msg(){ return; } && gmsg(){ return; }
 }
 
 link_dir(){
@@ -671,7 +680,7 @@ findnfsmount() {
 			grep -q "[ 	]${NFSLIKE_FS:=nfs}\$" /proc/filesystems || return 1
 			for o in $o; do
 			    for unc in '' "$(echo ",unc=$NFSROOT"|sed -e 's:/:\\:g')"; do # try new cifs
-				good_msg "Attempting to mount $NFSLIKE_FS on $NFSROOT into $m -o $o"
+				gmsg "Attempting to mount $NFSLIKE_FS on $NFSROOT into $m -o $o"
 				if mount -t $NFSLIKE_FS "$NFSROOT" $m -o "$o$unc" ; then
 					# FIXME: Need to start portmap and the other rpc daemons in
 					# order to remount rw.
@@ -696,7 +705,7 @@ msg_(){
 		echo -ne "\033[0G"
 	else
 		echo -ne "\033[0G\033[0K"
-		[[ -n "$*" ]] && good_msg "$*"
+		[[ -n "$*" ]] && gmsg "$*"
 	fi
 }
 
@@ -1050,7 +1059,7 @@ syspnp(){
 	[[ ${cmd_passwd:-false} != false ]] && [[ -n /etc/passwd ]] &&
 		echo "$cmd_passwd" >/etc/passwd
 	/sbin/onbatt && onbatt=true || onbatt=false
-	good_msg "Searching pnp"
+	gmsg "Searching pnp"
 	override_modprobe
 	[[ "${SHLOADED##* modprobe }" == "${SHLOADED}" ]] && mod(){ modprobe -q -a "${@}";}
 	loadsh blkid
@@ -1101,7 +1110,7 @@ syspnp(){
 	mntnewroot
 	mount --bind $NEW_ROOT/lib/modules /lib/modules || break
 	mount --bind $NEW_ROOT/lib/firmware /lib/firmware
-	good_msg "Thin boot, pass 2"
+	gmsg "Thin boot, pass 2"
     done
 
 	MY_HWOPTS=""
@@ -1132,13 +1141,17 @@ syspnp(){
 		fi
 	fi
 
+	for i in 0.1 0.1 0.1 1; do
+		grep "^/sbin/mdev" /proc/cmdline || break
+		sleep $i
+	done
 	# genkernel
 	! ${1:-false} && [[ -n "$REAL_ROOT" ]] && [[ -n "$LOOP" ]] &&
 		mntnewroot
 
-	good_msg "Boot time: $(cat /proc/uptime)"
+	gmsg "Boot time: $(cat /proc/uptime)"
 	if [[ -n "${NOTLOADED}" ]] ; then
-		good_msg "Not loaded:$NOTLOADED"
+		gmsg "Not loaded:$NOTLOADED"
 		# try again
 		MDOLIST="$NOTLOADED"
 	fi
@@ -1173,7 +1186,7 @@ if [[ -z "$KV"  ]] && ! [[ -e /proc/version ]]; then
 NEW_ROOT="/newroot"
 CDROOT=0
 good_msg(){
-echo "$*"
+gmsg "${@}"
 }
 bad_msg(){
 echo "! $*"
