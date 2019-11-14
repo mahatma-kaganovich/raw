@@ -405,7 +405,7 @@ $p
 esac
 }"
 	etest "$p" 'modparam.sh' && echo "$p" >/etc/modparam.sh
-	$cmd_quiet && good_msg(){ return; }
+	$cmd_quiet && good_msg(){ return; } && QUIET=1 || QUIET=
 }
 
 link_dir(){
