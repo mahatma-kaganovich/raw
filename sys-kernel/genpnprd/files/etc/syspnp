@@ -1079,7 +1079,7 @@ syspnp(){
 	load_hand_made0
 	# first pass - strict bus order
 	$cmd_fast && ofast_modalias || ordered_modalias $SYS_FIND
-	CHK=single
+	$cmd_fast || CHK=single
 	etc_modalias
 
 #	refresh
