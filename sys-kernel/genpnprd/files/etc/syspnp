@@ -99,6 +99,7 @@ mod_fast(){
     mod(){
 	local m m1 m2 r p=
 	REORDER=continue
+	echo -n >/later
 	for m in "${@}"; do
 		[[ -e "/sys/module/$m" ]] && continue
 		while [ -z "${m##*-*}" ]; do
@@ -107,7 +108,6 @@ mod_fast(){
 		[[ -e "/sys/module/$m" ]] && continue
 		modalias "$m" || continue
 		r=false
-		echo -n >/later
 		for m1 in $ALIAS ; do
 			m="${m1##*/}"
 			m="${m%.ko}"
@@ -121,22 +121,23 @@ mod_fast(){
 			elif ! [[ -e "$m1" ]]; then
 				pnpass=1
 			elif $r; then
-				echo "$m1 $PARAM" >>/later
+				echo "$m $m1 $PARAM" >>/later
 			else
 				$p
 				$cmd_quiet || echo -ne "\033[0G\033[0K$LCOUNT	$m1 $PARAM"
-				insmod "$m1" $PARAM >/dev/null 2>&1 &
+				insmod "$m1" $PARAM &
 				p="wait $!"
 			fi
-		done
-		while read m1; do
-			$p
-			$cmd_quiet || echo -ne "\033[0G\033[0K$LCOUNT	$m1"
-			insmod $m1 >/dev/null 2>&1 &
-			p="wait $!"
-		done </later
-		unlink /later
+		done 2>/dev/null
 	done
+	while read m m1; do
+		[[ -e "/sys/module/$m" ]] && continue
+		$p
+		$cmd_quiet || echo -ne "\033[0G\033[0K$LCOUNT	$m1"
+		insmod $m1 &
+		p="wait $!"
+	done </later 2>/dev/null
+	unlink /later
 	$p
     }
 }
@@ -154,15 +155,15 @@ refresh(){
 	echo -ne "\033[0G\033[0K$LCOUNT"
 	local i j l
 
-	_wait
-
 	${cmd_fast:=false} && {
-		[ "$2" != r ] && return 1
+		[ "$2" = r ] || return 1
 		if [ -n "$REAL_ROOT" ]; then
 			[ -b "$REAL_ROOT" ] && return 1
-			i=$(part_ "$REAL_ROOT")
-			i=${i%% *}
-			[ -b "$i" ] && REAL_ROOT="$i" && cmd_detect_root=false && return 1
+			[ -z "${REAL_ROOT##*=*}" ] && {
+				i=$(part_ "$REAL_ROOT")
+				i=${i%% *}
+				[ -b "$i" ] && REAL_ROOT="$i" && cmd_detect_root=false && return 1
+			}
 		elif [ -n "$DETECTED_ROOTS$DETECTED_LOOPS" ]; then
 			return 1
 		fi
@@ -172,6 +173,7 @@ refresh(){
 		return 0
 	}
 
+	_wait
 	sed -e 's%^\([^ 	]*\)[	 ]*.*$%>\1<%g' </proc/modules >"${PNP_TMP}".1
 	cat `grep -ls "^DRIVER=" $(find $SYS_FIND -name uevent -print 2>/dev/null) </dev/null` </dev/null |grep "^DRIVER=\|^MODALIAS="|sed -e 's%-%_%g' -e 's%^.*=\(.*\)$%>\1<%g' >>"${PNP_TMP}".1
 	if [[ "$(cat ${PNP_TMP}.1 $checks)" == "$(cat ${PNP_TMP}.2)" ]] ; then
@@ -1128,9 +1130,11 @@ syspnp(){
 	refresh n
 	load_hand_made0
 	# first pass - strict bus order
-	$cmd_fast && ofast_modalias || ordered_modalias $SYS_FIND
-	$cmd_fast ||
-	    CHK=single
+	if $cmd_fast; then
+		ofast_modalias || ordered_modalias $SYS_FIND
+	else
+		CHK=single
+	fi
 	etc_modalias
 
 #	refresh
