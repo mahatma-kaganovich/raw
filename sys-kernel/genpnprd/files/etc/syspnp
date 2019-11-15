@@ -47,8 +47,8 @@ gmsg(){
 
 mod(){
 	local m m1 m2
-	for m in "${@}" ; do
-		while [ -z "${m##-}" ]; do
+	for m in "${@}"; do
+		while [ -z "${m##*-*}" ]; do
 			m="${m%%-*}_${m#*-}"
 		done
 		[[ -e "/sys/module/$m" ]] && continue # fast
@@ -105,7 +105,7 @@ refresh(){
 	pids=""
 
 	${cmd_fast:=false} && {
-		[ -e "$REAL_ROOT" ] || [ "${cmd_fast_round:=2}" -le 0 ] && return 1
+		[ -e "$REAL_ROOT" ] || [ "${cmd_fast_round:=1}" -le 0 ] && return 1
 		cmd_fast_round=$((cmd_fast_round-1))
 		echo "fast$cmd_fast_round"
 		return 0
@@ -1079,7 +1079,8 @@ syspnp(){
 	load_hand_made0
 	# first pass - strict bus order
 	$cmd_fast && ofast_modalias || ordered_modalias $SYS_FIND
-	$cmd_fast || CHK=single
+	$cmd_fast ||
+	    CHK=single
 	etc_modalias
 
 #	refresh
@@ -1141,10 +1142,6 @@ syspnp(){
 		fi
 	fi
 
-	for i in 0.1 0.1 0.1 1; do
-		grep "^/sbin/mdev" /proc/cmdline || break
-		sleep $i
-	done
 	# genkernel
 	! ${1:-false} && [[ -n "$REAL_ROOT" ]] && [[ -n "$LOOP" ]] &&
 		mntnewroot
