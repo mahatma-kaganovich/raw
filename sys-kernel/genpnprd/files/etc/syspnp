@@ -46,7 +46,7 @@ gmsg(){
 }
 
 mod(){
-	local m m1 m2
+	local m m1 m2 p=
 	for m in "${@}"; do
 		while [ -z "${m##*-*}" ]; do
 			m="${m%%-*}_${m#*-}"
@@ -87,7 +87,7 @@ mod(){
 				pnpass=1
 				continue
 			}
-			wait $pid
+			${pid:+wait} $pid
 			$cmd_quiet || echo -ne "\033[0G\033[0K$LCOUNT	$m1 $PARAM"
 			insmod "$m1" $PARAM >/dev/null 2>&1 &
 			pid="$!"
@@ -95,19 +95,80 @@ mod(){
 	done
 }
 
+mod_fast(){
+    mod(){
+	local m m1 m2 r p=
+	REORDER=continue
+	for m in "${@}"; do
+		[[ -e "/sys/module/$m" ]] && continue
+		while [ -z "${m##*-*}" ]; do
+			m="${m%%-*}_${m#*-}"
+		done
+		[[ -e "/sys/module/$m" ]] && continue
+		modalias "$m" || continue
+		r=false
+		echo -n >/later
+		for m1 in $ALIAS ; do
+			m="${m1##*/}"
+			m="${m%.ko}"
+			while [ -z "${m##*-*}" ]; do
+				m="${m%%-*}_${m#*-}"
+			done
+			[[ -e "/sys/module/$m" ]] && continue
+			modparam $m1
+			if [[ "$INSMOD" == "$REORDER" ]]; then
+				r=true
+			elif ! [[ -e "$m1" ]]; then
+				pnpass=1
+			elif $r; then
+				echo "$m1 $PARAM" >>/later
+			else
+				$p
+				$cmd_quiet || echo -ne "\033[0G\033[0K$LCOUNT	$m1 $PARAM"
+				insmod "$m1" $PARAM >/dev/null 2>&1 &
+				p="wait $!"
+			fi
+		done
+		while read m1; do
+			$p
+			$cmd_quiet || echo -ne "\033[0G\033[0K$LCOUNT	$m1"
+			insmod $m1 >/dev/null 2>&1 &
+			p="wait $!"
+		done </later
+		unlink /later
+	done
+	$p
+    }
+}
+
+_wait(){
+	[[ -n "$pid$pids" ]] && {
+		wait $pid $pids
+		pid=
+		pids=
+	}
+}
+
 refresh(){
 	LCOUNT="${LCOUNT}."
 	echo -ne "\033[0G\033[0K$LCOUNT"
 	local i j l
 
-	wait $pid $pids
-	pid=""
-	pids=""
+	_wait
 
 	${cmd_fast:=false} && {
-		[ -e "$REAL_ROOT" ] || [ "${cmd_fast_round:=1}" -le 0 ] && return 1
+		[ "$2" != r ] && return 1
+		if [ -n "$REAL_ROOT" ]; then
+			[ -b "$REAL_ROOT" ] && return 1
+			i=$(part_ "$REAL_ROOT")
+			i=${i%% *}
+			[ -b "$i" ] && REAL_ROOT="$i" && cmd_detect_root=false && return 1
+		elif [ -n "$DETECTED_ROOTS$DETECTED_LOOPS" ]; then
+			return 1
+		fi
+		[ "${cmd_fast_round:=3}" -le 0 ] && return 1
 		cmd_fast_round=$((cmd_fast_round-1))
-		echo "fast$cmd_fast_round"
+		echo "[$cmd_fast_round]"
 		return 0
 	}
 
@@ -440,6 +501,7 @@ link_dir(){
 pnp_init(){
 	local l
 	eval "pnp_options $(cat /proc/cmdline) $(cat /cmdline 2>/dev/null)" # parsing
+	$cmd_fast && mod_fast
 	read SAVE_HOTPLUG </proc/sys/kernel/hotplug
 	for l in /*.loopfs; do
 	if [[ -f "$l" ]]; then
@@ -492,9 +554,7 @@ cpufreq(){
 		[[ -n "$c" ]] && rmmod $c >/dev/null 2>&1
 		mod $i
 		c="$i"
-		wait $pid $pids
-		pid=""
-		pids=""
+		_wait
 		for i in `grep -ls "$c" $(find /sys/devices/system/cpu -name scaling_driver)` ; do
 			read i2 <"${i%scaling_driver}cpuinfo_transition_latency" || continue
 			[[ "$i2" -gt "${l:=${i2}}" ]] && continue
@@ -517,9 +577,7 @@ cpufreq_gov(){
 	local gov1=""
 	for i1 in $gov ; do
 		mod cpufreq_${i1}
-		wait $pid $pids
-		pid=""
-		pids=""
+		_wait
 		for i in `find /sys/devices/system/cpu -name scaling_governor` ; do
 			echo $i1 >"$i" || gov1="$gov1 $i1"
 #			[[ "$(cat "$i")" == "$i1" ]] || gov1="$gov1 $i"
@@ -541,9 +599,7 @@ empty_hwopts(){
 detect_part(){
 	grep -qF ">$*<" "${PNP_TMP}.5" && return 0
 	local l o=ro,$cmd_real_rootflags
-	wait $pid $pids
-	pid=""
-	pids=""
+	_wait
 	$cmd_quiet || echo -ne "\033[0G\033[0K$LCOUNT	Inspecting: $1"
 	mkdir /DETECT_ROOT || return 1
 	[[ -n "$3" ]] && {
@@ -698,9 +754,7 @@ findnfsmount() {
 }
 
 msg_(){
-	wait $pid $pids
-	pid=""
-	pids=""
+	_wait
 	if $cmd_quiet; then
 		echo -ne "\033[0G"
 	else
@@ -745,9 +799,7 @@ detect_fs(){
 		empty_hwopts waitscan
 		[[ -n "$cmd_scandelay" ]] && sleep "$cmd_scandelay"
 		waitscan=false
-		wait $pid $pids
-		pid=""
-		pids=""
+		_wait
 		rmmod scsi_wait_scan 2>/dev/null
 		[[ -n "$cmd_elevator" ]] && _tee "$cmd_elevator" /sys/class/block/*/queue/scheduler # embed
 		/sbin/mdev -s block
@@ -910,9 +962,7 @@ load_hand_made0(){
 	## some hand-made autoloads, stage0
 	local f=`echo $(grep "^vendor_id\|^flags" /proc/cpuinfo|sort -u)`
 	mod $MDOLIST ${cmd_elevator:+${cmd_elevator}_iosched} $(cd /etc/modflags && cat $(cat /sys/bus/acpi/devices/*/path|sed -e 's:^\\::') $f $(ls -1 /sys/module) </dev/null 2>/dev/null)
-	wait $pid
-	pid=""
-	pids=""
+	_wait
 	# frost. save your silicon (and power): autoload best cpufreq driver
 	freq=`cat $(find /sys/devices/system/cpu -name scaling_driver 2>/dev/null) </dev/null`
 	case "$f" in
@@ -1095,9 +1145,7 @@ syspnp(){
 		if [[ -n "$REORDER" ]]; then
 			REORDER=""
 			load_hand_made
-			wait $pid $pids
-			pid=""
-			pids=""
+			_wait
 		else
 			$cmd_fast || fast_modalias
 		fi
@@ -1105,7 +1153,7 @@ syspnp(){
 		$cmd_unload && refresh
 		load_misc
 		etc_modalias && ln -s /proc /etc/modalias 2>/dev/null
-		refresh n || break
+		refresh n r || break
 	done
 	[[ $pnpass != 1 ]] && break
 	mntnewroot
