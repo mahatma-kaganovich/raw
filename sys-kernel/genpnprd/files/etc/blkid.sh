@@ -129,7 +129,7 @@ for d in ${_d}; do
 	full);;
 	?*)return 1;;
 	esac
-	${_l} && i=$(echo "$i"|head -n 1) && break
+	${_l} && echo "$i"|head -n 1 && break
 	echo "$i"
 done
 return $r
