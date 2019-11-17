@@ -1,4 +1,5 @@
 #!/bin/sh
+# v2.0
 # (c) Denis Kaganovich, under Anarchy or GPLv2 license
 
 lsblk(){
@@ -25,20 +26,25 @@ b_id(){
 			x="${x#*=}"
 			y=$((i+${x%%:*}))
 			x="${x#*:}"
-			l="$l`hexdump -v -s $y -n ${x%%:*} -e '"" /1 "'"${x#*:}"'" ""' $d`\""
+			l="$l`hexdump -v -s $y -n ${x%%:*} -e "${x#*:}" $d`\""
 		done
 	}
 	for x in $t; do
 		x="$d:$l TYPE=\"$x\""
 		echo "$x"
-		echo "$x" >>$blkid_cache
+		echo "$x" >>${_c}
 	done
 }
 
 _blkid(){
-! grep -s "^$d:" ${blkid_cache:=/dev/null} &&
+local f_label='"" /1 "%s" ""'
+local f_uuid='"" 4/1 "%02x" "-" 2/1 "%02x" "-" 2/1 "%02x" "-" 2/1 "%02x" "-" 6/1 "%02x" ""'
+local f_label16='"\\" 1/2 "u%x" ""'
+! grep -s "^$d:" ${_c:=/dev/null} &&
 ! ( $blkid "$d"|grep " TYPE=" ) &&
-( [ -b "$d" ] || [ -f "$d" ] ) && for i in 0 3 4 8 24 32 54 82 510 536 1016 1024 1030 1040 1048 1080 1560 2048 4076 4086 4096 8172 8182 8192 8212 8244 9564 16364 16374 32748 32758 32768 32769 32777 65516 65526 65536 65588 65600 270336; do
+( [ -b "$d" ] || [ -f "$d" ] ) &&
+for i in 0 3 4 8 24 32 54 82 510 536 1016 1024 1030 1040 1048 1080 1560 2048 4076 4086 4096 5120 8172 8182 8192 8212 8244 9564 16364 16374 32748 32758 32768 32769 32777 65516 65526 65536 65588 65600 270336; do
+ii=`hexdump -v -s $i -n 10 -e '"'$i:'" 10/1 "%x" ""' $d`
 case "`hexdump -v -s $i -n 10 -e '"'$i:'" 10/1 "%x" ""' $d`" in
 32:4f52434c4449534b*)b_id oracleasm;;
 3:4e54465320202020*)b_id ntfs 69 "" 8;;
@@ -78,38 +84,58 @@ case "`hexdump -v -s $i -n 10 -e '"'$i:'" 10/1 "%x" ""' $d`" in
 1024:4f4346535632*|2048:4f4346535632*|4096:4f4346535632*|8192:4f4346535632*)b_id ocfs2 336 272 16 64;;
 0:4c554b53babe*)b_id crypt_LUKS 168 "" 40;;
 0:73717368*|0:68737173*)b_id squashfs;;
-536:4c564d3220303031*|24:4c564d3220303031*|1048:4c564d3220303031*|1560:4c564d3220303031*|8192:4f4346535632*)b_id lvm2pv 8 "" 32 "" "LABELONE=-24:8:%s";;
-65600:5f42485266535f4d*)b_id btrfs 203 235 16 256;;
+536:4c564d3220303031*|24:4c564d3220303031*|1048:4c564d3220303031*|1560:4c564d3220303031*|8192:4f4346535632*)b_id lvm2pv 8 "" 32 "" LABELONE=-24:8:"$f_label";;
+65600:5f42485266535f4d*)
+	b_id btrfs -32 # sb
+	b_id btrfs 219 235 16 256 UUID_SUB=203:16:"$f_uuid" # dev item
+;;
 1030:3434*)b_id nilfs2 146 226;;
-esac
+1024:1020f5f2*|5120:1020f5f2*)
+#	b_id f2fs 108
+	# unicode16 - new bash
+	echo "$(echo -e "$(b_id f2fs 108  '' '' '' LABEL=124:1024:"$f_label16")")"	#"
+;;
+esac 2>/dev/null
 done
 }
 
 blkid(){
-local r=1 blkid_cache
+local r=1 i _d= _t= _l=false _o= _c=$blkid_cache
 [ "$blkid" = "$0" ] && blkid=false
 [ -z "$blkid" ] && {
 	blkid="$(which blkid 2>/dev/null || ( [ -e /bin/blkid ] && echo /bin/blkid ) || ( [ -e /sbin/blkid ] && echo /sbin/blkid ) || echo blkid)"
 	[ -e "$blkid" ] && ( i="$(readlink $blkid)";[ "${i%busybox}" = "$i" ] ) || blkid=false
 	[ "$blkid" = "$0" ] && blkid=false
 }
-export blkid
-[ -z "$*" ] && set `lsblk` ""
 while [ -n "$*" ]; do
-local d="$1" i="" u
-shift
-case "$d" in
--t)	i=$(blkid|grep -F "${1%%=*}=\"${1#*=}\"")
+	i=$1
 	shift
-	d=""
-;;
-esac
-[ -n "$d" ] && i=`_blkid`
-[ -n "$i" ] && echo "$i" && r=0
-done 2>/dev/null
+	case "$i" in
+	-t|-o|-c)export "_${i#-}"="$1";shift;;
+	-l)export "_${i#-}"==true;;
+	-*)return 1;;
+	*)_d="${_d} $i";;
+	esac
+done
+_d=${_d:-`lsblk`}
+_d=${_d# }
+for d in ${_d}; do
+	i=`_blkid`
+	[ -n "${_t}" ] && i=$(echo "$i"|grep -F "${_t%%=*}=\"${_t#*=}\"")
+	[ -z "$i" ] && continue
+	r=0
+	case "${_o}" in
+	device)i="${i%%: *}";i="${i%:}";;
+	full);;
+	?*)return 1;;
+	esac
+	${_l} && i=$(echo "$i"|head -n 1) && break
+	echo "$i"
+done
 return $r
 }
 
+d=
 case $0 in
 *blkid*)blkid "${@}";exit $?;;
 esac
