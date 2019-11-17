@@ -112,7 +112,7 @@ while [ -n "$*" ]; do
 	shift
 	case "$i" in
 	-t|-o|-c)export "_${i#-}"="$1";shift;;
-	-l)export "_${i#-}"==true;;
+	-l)export "_${i#-}"=true;;
 	-*)return 1;;
 	*)_d="${_d} $i";;
 	esac
