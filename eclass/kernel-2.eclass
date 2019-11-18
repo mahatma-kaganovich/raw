@@ -854,8 +854,8 @@ useconfig(){
 	ewarn "If failed here after update ('not in IUSE') - do 'emerge --regen' or 'rm $(find /var/cache/edb/dep -name "$PN-$PVR")'"
 	for i in "${SHARE}"/*use; do
 		[[ "${i##*/}" == *_dep_* ]] && continue
-		i="${i##*[/:]}"
-		[[ "$i" == video_cards_* ]] || i="${i##*_}"
+		o="${i##*[/:]}"
+		[[ "$o" == video_cards_* ]] || o="${o##*_}"
 		o="${o%.*}"
 		o="${o#[0-9]}"
 		o="${o#[+~-]}"
