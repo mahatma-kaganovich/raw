@@ -77,7 +77,8 @@ PROVIDE="sources? ( virtual/linux-sources )
 
 for i in "${SHARE}"/*.{-use,use}; do
 	[[ "${i##*/}" == *_dep_* ]] && . "$i"
-	i="${i##*[/:_]}"
+	i="${i##*[/:]}"
+	[[ "$i" == video_cards_* ]] || i="${i##*_}"
 	i="${i%.use}"
 	i="${i%.-use}"
 	IUSE+=" ${i#[0-9]}"
@@ -853,7 +854,8 @@ useconfig(){
 	ewarn "If failed here after update ('not in IUSE') - do 'emerge --regen' or 'rm $(find /var/cache/edb/dep -name "$PN-$PVR")'"
 	for i in "${SHARE}"/*use; do
 		[[ "${i##*/}" == *_dep_* ]] && continue
-		o="${i##*[/:_]}"
+		i="${i##*[/:]}"
+		[[ "$i" == video_cards_* ]] || i="${i##*_}"
 		o="${o%.*}"
 		o="${o#[0-9]}"
 		o="${o#[+~-]}"
