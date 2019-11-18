@@ -330,7 +330,7 @@ post_make(){
 		rename .tmp '' "$f.tmp"
 	done
 	sort -u "$TMPDIR"/fw-used{1,2,3}.lst >"$TMPDIR"/fw-used.lst
-	sed -e "s:^:lib/modules/${REAL_KV}/kernel:" <"$TMPDIR"/mod-blob.lst >"$TMPDIR"/mod-blob_.lst
+	sed -e "s:^:lib/modules/${REAL_KV}/kernel/:" <"$TMPDIR"/mod-blob.lst >"$TMPDIR"/mod-blob_.lst
 
 	use blobs && einfo "Copy firmware"
 	while read i; do
