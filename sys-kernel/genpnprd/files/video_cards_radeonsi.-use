@@ -1,0 +1,2 @@
+KERNEL_CONFIG+="-DRM_AMDGPU_SI"
+use !video_cards_radeon && KERNEL_CONFIG+=" -DRM_RADEON -DRM_RADEON_.+"

@@ -1,0 +1,1 @@
+use !video_cards_radeon && (use !video_cards_radeonsi || use video_cards_amdgpu) && KERNEL_CONFIG+="-DRM_RADEON -DRM_RADEON_.+"
