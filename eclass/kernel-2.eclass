@@ -392,7 +392,7 @@ _genpnprd(){
 		--ARCH "$(arch)" \
 		--MAKEOPTS "$MAKEOPTS" \
 		"${@}"
-	use blobs && set -- --CLEAN @"$TMPDIR"/mod-blob_.lst "${@}"
+	use blobs || set -- --CLEAN @"$TMPDIR"/mod-blob_.lst "${@}"
 	use thin && set -- --THIN - "${@}"
 #	MAKEOPTS="$MAKEOPTS" bash -- "${SHARE}/genpnprd" "${@}" --IMAGE "${S}/initrd-${REAL_KV}.img"
 	MAKEOPTS="$MAKEOPTS" /usr/bin/genpnprd "${@}" 
