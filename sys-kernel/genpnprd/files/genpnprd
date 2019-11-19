@@ -118,6 +118,24 @@ kmake(){
 	make -C "$S" $* $MAKEOPTS || die
 }
 
+clean(){
+	for i in $CLEAN; do
+		case "$i" in
+		"@"*)
+			while read j; do
+				j=`readlink -f "$rcdir/$j"` || continue
+				[[ "${j#$rcdir/}" == "$j" ]] && continue
+				rm "$j"
+			done <"${i#?}"
+			continue
+		;;
+		esac
+		i=`readlink -f "$rcdir/$i"` || continue
+		[[ "${i#$rcdir/}" == "$i" ]] && continue
+		rm "$i" -Rf
+	done
+}
+
 IMAGE=""
 PNPMODE=""
 OVERLAY=""
@@ -178,10 +196,6 @@ if [[ -f "$rcfile" ]]; then
 	( (bzip2 -dc $rcfile || gzip -dc $rcfile || xz -dc $rcfile || lzop -dc $rcfile || lz4 -dc $rcfile || cat $rcfile) | cpio -iv 2>&1 | grep '^bin/busybox$' >tmp.lst ) || die "must be [gzipped] cpio file"
 	rm tmp.lst
 
-	mkdir -p "$rcdir"/lib/modules
-	mv "$rcdir"/var/tmp/portage/*/*/work/build/lib/modules/* -t "$rcdir"/lib/modules ||
-		echo " - genkernel 4 --module-prefix= workaround skipped"
-
 	ln -s busybox "$rcdir/bin/zcat" &>/dev/null
 	for i in "$rcdir"/sbin/insmod; do
 		[ -e "$i" ] || ln -s ../bin/busybox "$i"
@@ -211,21 +225,7 @@ else
 		x="$x $(which $i 2>/dev/null||echo "$i")"
 	done
 	bash "$UROOT/usr/share/genpnprd/genpkgrd" "$rcdir" "$x" "$PKGFILES" "$PACKAGES"
-	for i in $CLEAN; do
-		case "$i" in
-		"@"*)
-			while read j; do
-				j=`readlink -f "$rcdir/$j"` || continue
-				[[ "${j#$rcdir/}" == "$j" ]] && continue
-				rm "$j"
-			done <"${i#?}"
-			continue
-		;;
-		esac
-		i=`readlink -f "$rcdir/$i"` || continue
-		[[ "${i#$rcdir/}" == "$i" ]] && continue
-		rm "$i" -Rf
-	done
+	clean
 	for i in $MV_ROOT; do
 		mv "$rcdir/$i"/* "$rcdir"
 		rmdir "$rcdir/$i"
@@ -307,11 +307,18 @@ fi
 #fi
 
 if [[ -e "$rcdir/lib.loopfs" ]]; then
-	mkdir $tmp/loop
-	mount "$rcdir/lib.loopfs" $tmp/loop -o loop || die "$rcdir/lib.loopfs mount"
-	cp $tmp/loop/* $rcdir/lib/ -Pr
-	umount $tmp/loop
+	if unsquashfs "$rcdir/lib.loopfs"; then
+		mv squashfs-root/* $rcdir/lib/
+		rmdir squashfs-root || die
+	else
+		mkdir $tmp/loop
+		mount "$rcdir/lib.loopfs" $tmp/loop -o loop || die "$rcdir/lib.loopfs mount"
+		cp $tmp/loop/* $rcdir/lib/ -Pr
+		umount $tmp/loop
+	fi
 fi
+
+clean
 
 : ${KV:=`ls $rcdir/lib/modules`}
 
