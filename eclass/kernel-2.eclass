@@ -333,6 +333,7 @@ post_make(){
 	sed -e "s:^:lib/modules/${REAL_KV}/kernel/:" <"$TMPDIR"/mod-blob.lst >"$TMPDIR"/mod-blob_.lst
 
 	use blobs && einfo "Copy firmware"
+	mkdir -p "${BDIR}/lib/firmware"
 	while read i; do
 		if [ -e "firmware/$i" ]; then
 			m="firmware/$i"

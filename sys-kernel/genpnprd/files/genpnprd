@@ -217,7 +217,7 @@ else
 			while read j; do
 				j=`readlink -f "$rcdir/$j"` || continue
 				[[ "${j#$rcdir/}" == "$j" ]] && continue
-				rm "$j" -f
+				rm "$j"
 			done <"${i#?}"
 			continue
 		;;
