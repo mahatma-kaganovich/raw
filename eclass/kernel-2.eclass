@@ -333,7 +333,6 @@ post_make(){
 	sed -e "s:^:lib/modules/${REAL_KV}/kernel/:" <"$TMPDIR"/mod-blob.lst >"$TMPDIR"/mod-blob_.lst
 
 	use blobs && einfo "Copy firmware"
-	mkdir -p "${BDIR}/lib/firmware"
 	while read i; do
 		if [ -e "firmware/$i" ]; then
 			m="firmware/$i"
@@ -559,7 +558,7 @@ kernel-2_src_compile() {
 	done
 	if use pnp || use compressed; then
 		use monolythe || p+=" --all-ramdisk-modules"
-		[[ -e "${BDIR}/lib/firmware" ]] && p="${p} --firmware --firmware-dir=\"${BDIR}/lib/firmware\""
+		[[ -e "${BDIR}/lib/firmware" ]] && p+=" --firmware --firmware-dir=\"${BDIR}/lib/firmware\"" || p+=' --no-firmware'
 	fi
 	run_genkernel ramdisk "--kerneldir=\"${S}\" --bootdir=\"${S}\" --module-prefix=\"${BDIR}\" --no-mountboot ${p}"
 	r=`ls initramfs*-"${REAL_KV}"* || ls "$TMPDIR"/genkernel/initramfs*` && mv "$r" "initrd-${REAL_KV}.img" || die "initramfs rename failed"
