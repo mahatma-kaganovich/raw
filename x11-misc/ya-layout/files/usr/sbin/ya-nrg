@@ -48,6 +48,22 @@ save1(){
 	return 0
 }
 
+save1g(){
+	[ -e "$2" ] || return 1
+	local f y=$1 x=
+	shift
+	for f in "${@}"; do
+		read x <$f &&
+		x=${x#*'['} &&
+		x=${x%%']'*} &&
+		[ "$x" -gt "$y" ] &&
+		echo "$y" >$f &&
+		$echo "$x -> $y => $f" &&
+		echo "echo $x >$f"
+	done >>$save
+	return 0
+}
+
 fchk(){
 	[ -e $1 ] || touch $1 || die "file '$1' create error"
 	[ "$(stat $1 -c '%u:%g:%f')" = 0:0:8180 ] || die "file '$1' insecure! check & remove"
@@ -327,7 +343,7 @@ save(){
 		read x <"$i/max_brightness" &&
 #			read x1 <"$i/actual_brightness" && [ "$x1" -gt "$x" ] &&
 			x=$[x*light/100] &&
-			save1 $x "$i/brightness"
+			save1g $x "$i/brightness"
 	done
 	save1 1 /sys/devices/system/cpu/intel_pstate/no_turbo
 	save1 0 /sys/devices/system/cpu/cpufreq/boost
@@ -396,6 +412,20 @@ _cpu_off(){
 		# single CPU must be balanced. fixme
 		#balance
 	}
+	for i in /sys/class/thermal/cooling_device*; do
+	    case "$(< $i/type)" in
+		Processor)read x <$i/max_state && save1g "$x" $i/cur_state;;
+		intel_powerclamp)
+			read x <$i/max_state &&
+			[ "$x" -gt 0 ] &&
+			read x1 <$i/cur_state &&
+			[ "$x1" = -1 ] &&
+			echo "$x" >$i/cur_state &&
+			echo "echo 0 >$i/cur_state" >>$save
+		;;
+		*)continue;;
+	    esac
+	done
     } 3>>$save.lock
 }
 
