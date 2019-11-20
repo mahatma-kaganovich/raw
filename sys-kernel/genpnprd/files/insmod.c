@@ -10,9 +10,9 @@ int main(int argc, char *argv[]){
 	if (f<0) return 1;
 	off_t len = lseek(f, 0, 2);
 	lseek(f, 0, 0);
-	if (argc<3) {
+	if (argc<4) {
 		buf = malloc(len);
-		opt = argc==2 ? argv[2] : "";
+		opt = argc==3 ? argv[2] : "";
 	} else {
 		int i, l = argc+1;
 		for (i=2; i<argc; i++) l+=strlen(argv[i]);
