@@ -3,4 +3,3 @@ BTRFS="no"
 NFS="no"
 KEYMAP="no"
 source /etc/genkernel.conf
-DISKLABEL=""

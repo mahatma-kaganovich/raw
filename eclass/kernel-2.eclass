@@ -29,7 +29,7 @@ IUSE="${IUSE} +build-kernel custom-cflags +pnp +compressed integrated
 	netboot custom-arch embed-hardware +blobs
 	kernel-firmware +sources pnponly lzma xz lzo lz4
 	external-firmware xen +smp kernel-tools multitarget 64-bit-bfd thin
-	lvm evms device-mapper unionfs luks gpg iscsi e2fsprogs mdadm btrfs +keymap
+	lvm evms device-mapper unionfs luks gpg iscsi e2fsprogs mdadm btrfs +keymap blkid
 	lguest acpi klibc +genkernel monolythe update-boot uml paranoid"
 DEPEND="${DEPEND}
 	!<app-portage/ppatch-0.08-r16
@@ -50,7 +50,7 @@ DEPEND="${DEPEND}
 		)
 		!klibc? ( !genkernel? (
 			sys-apps/busybox
-			e2fsprogs? ( sys-apps/util-linux )
+			blkid? ( sys-apps/util-linux )
 			mdadm? ( sys-fs/mdadm )
 			device-mapper? ( sys-fs/dmraid )
 			lvm? ( sys-fs/lvm2 )
@@ -537,7 +537,7 @@ kernel-2_src_compile() {
 
 	if use !klibc && use !genkernel; then
 		_genpnprd --FILES "/bin/busybox
-			$(use e2fsprogs && echo /sbin/blkid)
+			$(use blkid && echo /sbin/blkid)
 			$(use mdadm && echo /sbin/mdadm /sbin/mdmon)
 			$(use device-mapper && echo /usr/sbin/dmraid)
 			$(use lvm && echo /sbin/lvm /sbin/dmsetup)
@@ -553,8 +553,11 @@ kernel-2_src_compile() {
 	einfo "Generating initrd image"
 	# nfs: required --enable-static-nss in glibc, $(pkgconfig libtirpc --libs --static) in the END of line...
 	local p=' --no-nfs'
-	for i in 'lvm lvm2' evms luks gpg iscsi 'device-mapper dmraid' unionfs 'e2fsprogs disklabel' mdadm btrfs keymap netboot 'monolythe static'; do
-		use "${i% *}" && p+=" --${i##* }" # || p+=" --no-${i##* }"
+	for i in 'lvm lvm2' evms luks gpg iscsi 'device-mapper dmraid' unionfs e2fsprogs mdadm btrfs keymap netboot 'monolythe static'; do
+		use "${i% *}" && i="${i##* }" p+=" --$i" # || p+=" --no-$i"
+	done
+	for i in 'blkid disklabel'; do
+		use "${i% *}" && i="${i##* }" p+=" --$i" || p+=" --no-$i"
 	done
 	if use pnp || use compressed; then
 		use monolythe || p+=" --all-ramdisk-modules"
