@@ -1863,6 +1863,7 @@ userspace(){
 		fi
 		tar -xaf "$KERNEL_KLIBC_SRC" -C "${KERNEL_KLIBC_DIR%/*}"
 		for i in $KERNEL_KLIBC_PATCHES; do
+			[ -e "$i" ] || continue
 			(cd "$KERNEL_KLIBC_DIR" && epatch $i) || die
 		done
 	fi
