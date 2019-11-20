@@ -41,7 +41,7 @@ DEPEND="${DEPEND}
 	build-kernel? (
 		compressed? ( sys-kernel/genpnprd )
 		kernel-firmware? ( !sys-kernel/linux-firmware )
-		klibc? ( dev-libs/klibc )
+		klibc? ( sys-kernel/klibc-sources )
 		genkernel? (
 			>=sys-kernel/genkernel-3.4.10.903
 			luks? ( sys-fs/cryptsetup )
@@ -1843,34 +1843,49 @@ LICENSE(){
 userspace(){
 	local i f t img='initramfs.lst' c='' k libdir="$(get_libdir)" mod="$BDIR/lib/modules/$REAL_KV/"
 	# klibc in progress
+	if [[ -z "$KERNEL_KLIBC_SRC" ]]; then
+		KERNEL_KLIBC_SRC=$(ls -1 "$ROOT"/usr/share/klibc/klibc-*.tar.*|tail -n 1)
+		KERNEL_KLIBC_PATCHES+=" $ROOT/usr/share/klibc/*.patch"
+	fi
 	if [[ -n "$KERNEL_KLIBC_SRC" ]]; then
 		if [[ "$KERNEL_KLIBC_SRC" == "*" ]]; then
+			# part of old code, but may be used
 			i="$(best_version dev-libs/klibc)"
 			i="${i##*/}"
 			i="${i%%-r*}"
-			KERNEL_KLIBC_SRC="$PORTDIR/distfiles/$i.tar.bz2"
+			KERNEL_KLIBC_SRC="$PORTDIR/distfiles/$i.tar.xz"
 			KERNEL_KLIBC_DIR="${KERNEL_KLIBC_DIR:-${S}/usr}/$i"
 		fi
 		if [[ -z "$KERNEL_KLIBC_DIR" ]]; then
 			i="${KERNEL_KLIBC_SRC##*/}"
-			i="${i%.tar.bz2}"
+			i="${i%.tar.*}"
 			KERNEL_KLIBC_DIR="${S}/usr/$i"
 		fi
 		tar -xaf "$KERNEL_KLIBC_SRC" -C "${KERNEL_KLIBC_DIR%/*}"
+		for i in $KERNEL_KLIBC_PATCHES; do
+			(cd "$KERNEL_KLIBC_DIR" && epatch $i) || die
+		done
 	fi
 	if [[ -n "$KERNEL_KLIBC_DIR" ]]; then
 		einfo "Making KLIBC from $KERNEL_KLIBC_SRC $KERNEL_KLIBC_DIR"
 		[[ -d "$KERNEL_KLIBC_DIR" ]] || die
 #		export CFLAGS="$CFLAGS --sysroot=${S}"
 #		export KERNEL_UTILS_CFLAGS="$KERNEL_UTILS_CFLAGS --sysroot=${S}"
-		kmake -C "$KERNEL_KLIBC_DIR" KLIBCKERNELSRC="${S}" INSTALLDIR="/usr" INSTALLROOT="${S}" all install
+		kmake -C "$KERNEL_KLIBC_DIR" KLIBCKERNELSRC="${S}"/usr INSTALLDIR=/usr INSTALLROOT="${S}" all install
 		k="usr"
 		klcc="${S}/usr/bin/klcc"
 		sed -i -e 's:^\(\$prefix = "\):\1$ENV{S}:' "$klcc"
 	else
+		die "dev-libs/klibc while not supported. use sys-kernel/klibc-sources instead"
 		[ -e "$ROOT/usr/$libdir/klibc" ] || libdir=$(echo "$ROOT"/usr/lib*/klibc|sed -e 's:^.*/usr/::g' -e 's:/.*::g')
 		k="$ROOT/usr/$libdir/klibc"
 		klcc=klcc
+		ewarn "Gentoo in-tree klibc currently unmantained & broken."
+		ewarn "Prefer to use KERNEL_KLIBC_DIR='/path/to/klibc-x.y.z.xz' or KERNEL_KLIBC_DIR='*' to build from source."
+		[ "$ROOT" = / - o -z "$ROOT" ] && "$k/bin/true" || {
+			elog "Testing working klibc..."
+			die "Installed klibc test failed: invalid (segfault) or missing."
+		}
 	fi
 
 	mkdir -p "${S}/usr/"{bin,src,etc}
