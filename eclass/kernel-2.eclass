@@ -1842,7 +1842,7 @@ LICENSE(){
 
 userspace(){
 	local kb="${S}/klibc"
-	local i f t img='$kb/initramfs.lst' c='' k libdir="$(get_libdir)" mod="$BDIR/lib/modules/$REAL_KV/"
+	local i f t img='$kb/initramfs.lst' c='' k libdir="$(get_libdir)" mod="$BDIR/lib/modules/$REAL_KV/" pref=/usr
 	mkdir -p "$kb/"{bin,src,etc}
 	# klibc in progress
 	if [[ -z "$KERNEL_KLIBC_SRC" ]]; then
@@ -1874,9 +1874,9 @@ userspace(){
 		[[ -d "$KERNEL_KLIBC_DIR" ]] || die
 #		export CFLAGS="$CFLAGS --sysroot=${S}"
 #		export KERNEL_UTILS_CFLAGS="$KERNEL_UTILS_CFLAGS --sysroot=${S}"
-		kmake -C "$KERNEL_KLIBC_DIR" KLIBCKERNELSRC="${S}"/usr INSTALLDIR=/usr INSTALLROOT="$kb" all install
-		k="klibc/usr"
-		klcc="$kb/bin/klcc"
+		kmake -C "$KERNEL_KLIBC_DIR" KLIBCKERNELSRC="${S}"/usr INSTALLDIR=$pref INSTALLROOT="$kb" all install
+		k="klibc$pref"
+		klcc="$kb$pref/bin/klcc"
 		sed -i -e 's:^\(\$prefix = "\):\1$ENV{S}:' "$klcc"
 	else
 		die "dev-libs/klibc while not supported. use sys-kernel/klibc-sources instead"
@@ -1931,7 +1931,7 @@ slink /usr/$libdir lib 0755 0 0"
 		echo "file /usr/lib/$f $i 0755 0 0"
 		echo "slink /lib/$f /usr/lib/$f 0755 0 0"
 	done
-	for i in "${BDIR}/" "$k/bin/" "usr/lib/klibc*" "-L $kb"/{,usr/}{bin,sbin,etc}/'*' "${TMPDIR}/overlay-rd/"; do
+	for i in "${BDIR}/" "$kb/$pref/bin/" "$kb/usr/lib/klibc*" "-L $kb"/{,usr/}{bin,sbin,etc}/'*' "${TMPDIR}/overlay-rd/"; do
 		f="${i##*/}"
 		find ${i%/*} ${f:+-name} "${f}" 2>/dev/null
 	done | while read i; do
@@ -1939,8 +1939,9 @@ slink /usr/$libdir lib 0755 0 0"
 		[[ -e "$i" ]] || [[ -L "$i" ]] || continue
 		f="${i#$BDIR}"
 		f="${f#$ROOT}"
+		f="${f#$kb}"
 		f="/${f#/}"
-		f="${f//\/usr\/$libdir\///usr/lib/}"
+		f="${f/\/usr\/$libdir\///usr/lib/}"
 		f="${f#/usr/lib/klibc}"
 		case "$f" in
 		*/overlay-rd/*)f="/${f##*/overlay-rd/}";;
