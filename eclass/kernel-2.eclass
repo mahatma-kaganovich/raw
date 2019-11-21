@@ -1841,7 +1841,7 @@ LICENSE(){
 }
 
 userspace(){
-	local kb ="${S}/klibc"
+	local kb="${S}/klibc"
 	local i f t img='$kb/initramfs.lst' c='' k libdir="$(get_libdir)" mod="$BDIR/lib/modules/$REAL_KV/"
 	mkdir -p "$kb/"{bin,src,etc}
 	# klibc in progress
