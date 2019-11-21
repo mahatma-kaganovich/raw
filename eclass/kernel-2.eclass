@@ -1841,7 +1841,7 @@ LICENSE(){
 }
 
 userspace(){
-	local kb="${S}/klibc"
+	local kb="$S/klibc"
 	local i f t img='$kb/initramfs.lst' c='' k libdir="$(get_libdir)" mod="$BDIR/lib/modules/$REAL_KV/" pref=/usr
 	mkdir -p "$kb/"{bin,src,etc}
 	# klibc in progress
@@ -1895,7 +1895,7 @@ userspace(){
 		einfo "Compiling $i"
 		cp "$i" "$kb/src/" || die
 		f="${i##*/}"
-		$klcc "$kb/src/$f" -shared -s -o "$kb/bin/${f%.*}" || die
+		S="$kb" $klcc "$kb/src/$f" -shared -s -o "$kb/bin/${f%.*}" || die
 	done
 	einfo "Sorting modules to new order"
 	mv "${mod}modules.alias" "$TMPDIR/" && bash "${SHARE}"/kpnp --sort "$TMPDIR/modules.alias" >"${mod}modules.alias" || die
