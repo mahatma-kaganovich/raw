@@ -1959,15 +1959,15 @@ slink /usr/$libdir lib 0755 0 0"
 			f="${f%/*}"
 		done
 	done
-	} | sort -u >$img
+	} | sort -u >"$img"
 	if use integrated; then
 		use thin || c=NONE
 	else
 		f="initrd-${REAL_KV}.cpio"
-		(cd "$kb" && "${S}"/usr/gen_init_cpio $img >"$S/$f") || die
+		(cd "$kb" && "${S}"/usr/gen_init_cpio "$img" >"$S/$f") || die
 		img="$f"
 	fi
-	initramfs $img $c
+	initramfs "$img" $c
 	mv "$TMPDIR/modules.alias" "${mod}"
 }
 
