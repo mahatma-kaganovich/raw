@@ -1931,7 +1931,7 @@ slink /usr/$libdir lib 0755 0 0"
 		echo "file /usr/lib/$f $i 0755 0 0"
 		echo "slink /lib/$f /usr/lib/$f 0755 0 0"
 	done
-	for i in "${BDIR}/" "$k/bin/" "usr/lib/klibc*" "-L $kb"/{bin,sbin,etc}/'*' "${TMPDIR}/overlay-rd/"; do
+	for i in "${BDIR}/" "$k/bin/" "usr/lib/klibc*" "-L $kb"/{,usr/}{bin,sbin,etc}/'*' "${TMPDIR}/overlay-rd/"; do
 		f="${i##*/}"
 		find ${i%/*} ${f:+-name} "${f}" 2>/dev/null
 	done | while read i; do
