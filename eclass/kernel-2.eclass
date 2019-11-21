@@ -1841,7 +1841,9 @@ LICENSE(){
 }
 
 userspace(){
-	local i f t img='initramfs.lst' c='' k libdir="$(get_libdir)" mod="$BDIR/lib/modules/$REAL_KV/"
+	local kb ="${S}/klibc"
+	local i f t img='$kb/initramfs.lst' c='' k libdir="$(get_libdir)" mod="$BDIR/lib/modules/$REAL_KV/"
+	mkdir -p "$kb/"{bin,src,etc}
 	# klibc in progress
 	if [[ -z "$KERNEL_KLIBC_SRC" ]]; then
 		KERNEL_KLIBC_SRC=$(ls -1 "$ROOT"/usr/share/klibc/klibc-*.tar.*|tail -n 1)
@@ -1854,12 +1856,12 @@ userspace(){
 			i="${i##*/}"
 			i="${i%%-r*}"
 			KERNEL_KLIBC_SRC="$PORTDIR/distfiles/$i.tar.xz"
-			KERNEL_KLIBC_DIR="${KERNEL_KLIBC_DIR:-${S}/usr}/$i"
+			KERNEL_KLIBC_DIR="${KERNEL_KLIBC_DIR:-$kb/src}/$i"
 		fi
 		if [[ -z "$KERNEL_KLIBC_DIR" ]]; then
 			i="${KERNEL_KLIBC_SRC##*/}"
 			i="${i%.tar.*}"
-			KERNEL_KLIBC_DIR="${S}/usr/$i"
+			KERNEL_KLIBC_DIR="$kb/src/$i"
 		fi
 		tar -xaf "$KERNEL_KLIBC_SRC" -C "${KERNEL_KLIBC_DIR%/*}"
 		for i in $KERNEL_KLIBC_PATCHES; do
@@ -1872,9 +1874,9 @@ userspace(){
 		[[ -d "$KERNEL_KLIBC_DIR" ]] || die
 #		export CFLAGS="$CFLAGS --sysroot=${S}"
 #		export KERNEL_UTILS_CFLAGS="$KERNEL_UTILS_CFLAGS --sysroot=${S}"
-		kmake -C "$KERNEL_KLIBC_DIR" KLIBCKERNELSRC="${S}"/usr INSTALLDIR=/usr INSTALLROOT="${S}" all install
-		k="usr"
-		klcc="${S}/usr/bin/klcc"
+		kmake -C "$KERNEL_KLIBC_DIR" KLIBCKERNELSRC="${S}"/usr INSTALLDIR=/usr INSTALLROOT="$kb/klibc" all install
+		k="klibc/usr"
+		klcc="$kb/bin/klcc"
 		sed -i -e 's:^\(\$prefix = "\):\1$ENV{S}:' "$klcc"
 	else
 		die "dev-libs/klibc while not supported. use sys-kernel/klibc-sources instead"
@@ -1889,12 +1891,11 @@ userspace(){
 		}
 	fi
 
-	mkdir -p "${S}/usr/"{bin,src,etc}
 	for i in "${SHARE}"/*.c; do
 		einfo "Compiling $i"
-		cp "$i" "${S}/usr/src/" || die
+		cp "$i" "$kb/src/" || die
 		f="${i##*/}"
-		$klcc "${S}/usr/src/$f" -shared -s -o "${S}/usr/bin/${f%.*}" || die
+		$klcc "$kb/src/$f" -shared -s -o "$kb/bin/${f%.*}" || die
 	done
 	einfo "Sorting modules to new order"
 	mv "${mod}modules.alias" "$TMPDIR/" && bash "${SHARE}"/kpnp --sort "$TMPDIR/modules.alias" >"${mod}modules.alias" || die
@@ -1910,8 +1911,8 @@ userspace(){
 		c=NONE
 	fi
 	einfo "Preparing initramfs"
-	mkdir "${S}/usr/sbin"
-	cp "${SHARE}/kpnp" "${S}/usr/sbin/init"
+	mkdir "$kb/sbin"
+	cp "${SHARE}/kpnp" "$kb/sbin/init"
 	{
 	echo "slink /init sbin/init 0755 0 0
 slink /linuxrc init 0755 0 0
@@ -1963,7 +1964,7 @@ slink /usr/$libdir lib 0755 0 0"
 		use thin || c=NONE
 	else
 		f="initrd-${REAL_KV}.cpio"
-		"${S}"/usr/gen_init_cpio $img >$f || die
+		(cd "$kb" && "${S}"/usr/gen_init_cpio $img >"$S/$f") || die
 		img="$f"
 	fi
 	initramfs $img $c
