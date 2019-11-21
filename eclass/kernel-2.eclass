@@ -1841,70 +1841,45 @@ LICENSE(){
 }
 
 userspace(){
-	local kb="$S/klibc"
-	local i f t img='$kb/initramfs.lst' c='' k libdir="$(get_libdir)" mod="$BDIR/lib/modules/$REAL_KV/" pref=/usr
+	local k="klibc" kldir="$ROOT/usr/share/klibc"
+	local i f t kb="$S/$k" img='initramfs.lst' c='' k libdir="$(get_libdir)" mod="$BDIR/lib/modules/$REAL_KV/" l sdir
 	mkdir -p "$kb/"{bin,src,etc}
-	# klibc in progress
 	if [[ -z "$KERNEL_KLIBC_SRC" ]]; then
-		KERNEL_KLIBC_SRC=$(ls -1 "$ROOT"/usr/share/klibc/klibc-*.tar.*|tail -n 1)
-		KERNEL_KLIBC_PATCHES+=" $ROOT/usr/share/klibc/*.patch"
+		einfo "Copying KLIBC sources from $kldir"
+		KERNEL_KLIBC_SRC=$(ls -1 "$kldir"/klibc-*.tar.*|tail -n 1)
+		[[ -z "$KERNEL_KLIBC_SRC" ]] && die
+		KERNEL_KLIBC_PATCHES+=" $kldir/*.patch"
 	fi
-	if [[ -n "$KERNEL_KLIBC_SRC" ]]; then
-		if [[ "$KERNEL_KLIBC_SRC" == "*" ]]; then
-			# part of old code, but may be used
-			i="$(best_version dev-libs/klibc)"
-			i="${i##*/}"
-			i="${i%%-r*}"
-			KERNEL_KLIBC_SRC="$PORTDIR/distfiles/$i.tar.xz"
-			KERNEL_KLIBC_DIR="${KERNEL_KLIBC_DIR:-$kb/src}/$i"
-		fi
-		if [[ -z "$KERNEL_KLIBC_DIR" ]]; then
-			i="${KERNEL_KLIBC_SRC##*/}"
-			i="${i%.tar.*}"
-			KERNEL_KLIBC_DIR="$kb/src/$i"
-		fi
-		tar -xaf "$KERNEL_KLIBC_SRC" -C "${KERNEL_KLIBC_DIR%/*}"
-		for i in $KERNEL_KLIBC_PATCHES; do
-			[ -e "$i" ] || continue
-			(cd "$KERNEL_KLIBC_DIR" && epatch $i) || die
-		done
-	fi
-	if [[ -n "$KERNEL_KLIBC_DIR" ]]; then
-		einfo "Making KLIBC from $KERNEL_KLIBC_SRC $KERNEL_KLIBC_DIR"
-		[[ -d "$KERNEL_KLIBC_DIR" ]] || die
-#		export CFLAGS="$CFLAGS --sysroot=${S}"
-#		export KERNEL_UTILS_CFLAGS="$KERNEL_UTILS_CFLAGS --sysroot=${S}"
-		kmake -C "$KERNEL_KLIBC_DIR" KLIBCKERNELSRC="${S}"/usr INSTALLDIR=$pref INSTALLROOT="$kb" all install
-		k="klibc$pref"
-		klcc="$kb$pref/bin/klcc"
-		sed -i -e 's:^\(\$prefix = "\):\1$ENV{S}:' "$klcc"
-	else
-		die "dev-libs/klibc while not supported. use sys-kernel/klibc-sources instead"
-		[ -e "$ROOT/usr/$libdir/klibc" ] || libdir=$(echo "$ROOT"/usr/lib*/klibc|sed -e 's:^.*/usr/::g' -e 's:/.*::g')
-		k="$ROOT/usr/$libdir/klibc"
-		klcc=klcc
-		ewarn "Gentoo in-tree klibc currently unmantained & broken."
-		ewarn "Prefer to use KERNEL_KLIBC_DIR='/path/to/klibc-x.y.z.xz' or KERNEL_KLIBC_DIR='*' to build from source."
-		[ "$ROOT" = / - o -z "$ROOT" ] && "$k/bin/true" || {
-			elog "Testing working klibc..."
-			die "Installed klibc test failed: invalid (segfault) or missing."
-		}
-	fi
-
+	einfo "Using KLIBC $KERNEL_KLIBC_SRC"
+	sdir="$kb/src/${KERNEL_KLIBC_SRC##*/}"
+	sdir="${sdir%.tar.*}"
+	tar -xaf "$KERNEL_KLIBC_SRC" -C "${sdir%/*}" && [ -d "$sdir" ] || die
+	for i in $KERNEL_KLIBC_PATCHES; do
+		[ -e "$i" ] || continue
+		(cd "$sdir" && epatch $i) || die
+	done
+	einfo "Making KLIBC"
+#	export CFLAGS="$CFLAGS --sysroot=${S}"
+#	export KERNEL_UTILS_CFLAGS="$KERNEL_UTILS_CFLAGS --sysroot=${S}"
+	kmake -C "$sdir" KLIBCKERNELSRC="${S}"/usr INSTALLDIR=/ INSTALLROOT="$kb" all install
+	klcc="$kb/usr/bin/klcc"
+	[ -e "$klcc" ] || klcc="$kb/bin/klcc"
+	sed -i -e 's%^\(\$prefix = \)"[^"]*"%\1`readlink -f $0`;$prefix=~s/(?:\\/usr)?\\/bin\\/klcc\\s*$//s%' "$klcc" || die
+	l="$k/$libdir"
+	[ -e "$l" ] || l="$k/lib"
 	for i in "${SHARE}"/*.c; do
 		einfo "Compiling $i"
 		cp "$i" "$kb/src/" || die
 		f="${i##*/}"
-		S="$kb" $klcc "$kb/src/$f" -shared -s -o "$kb/bin/${f%.*}" || die
+		$klcc "$kb/src/$f" -shared -s -o "$kb/bin/${f%.*}" || die
 	done
 	einfo "Sorting modules to new order"
 	mv "${mod}modules.alias" "$TMPDIR/" && bash "${SHARE}"/kpnp --sort "$TMPDIR/modules.alias" >"${mod}modules.alias" || die
-
 	if use compressed; then
 		einfo "Compressing lib.loopfs"
-		[[ -z "$KERNEL_KLIBC_DIR" ]] && for i in "$ROOT/$libdir/klibc"*; do
-			i="${i##*/}"
-			ln -s "/usr/lib/$i" "$BDIR/lib/$i"
+		for i in "$l"/klibc*; do
+			f="${i##*/}"
+			ln -s "/usr/lib/$f" "$BDIR/lib/$f"
 		done
 		mksquash "${BDIR}/lib" lib.loopfs -all-root
 		rm "$BDIR/lib/klibc"* -f 2>/dev/null
@@ -1925,13 +1900,12 @@ dir /sys 0755 0 0"
 	use compressed && echo "file lib.loopfs lib.loopfs 0755 0 0"
 	[[ "$libdir" != lib ]] && echo "slink /$libdir lib 0755 0 0
 slink /usr/$libdir lib 0755 0 0"
-	[[ -z "$KERNEL_KLIBC_DIR" ]] && for i in "$ROOT/$libdir/klibc"*; do
-		i="${i//\/\///}"
+	for i in "$l"/klibc*; do
 		f="${i##*/}"
-		echo "file /usr/lib/$f $i 0755 0 0"
+		echo "file /usr/lib/$f ${i//\/\///} 0755 0 0"
 		echo "slink /lib/$f /usr/lib/$f 0755 0 0"
 	done
-	for i in "${BDIR}/" "$kb/$pref/bin/" "$kb/usr/lib/klibc*" "-L $kb"/{,usr/}{bin,sbin,etc}/'*' "${TMPDIR}/overlay-rd/"; do
+	for i in "${BDIR}/" "$k/bin/" "$k/usr/lib/klibc*" "-L $k"/{,usr/}{bin,sbin,etc}/'*' "${TMPDIR}/overlay-rd/"; do
 		f="${i##*/}"
 		find ${i%/*} ${f:+-name} "${f}" 2>/dev/null
 	done | while read i; do
@@ -1939,7 +1913,7 @@ slink /usr/$libdir lib 0755 0 0"
 		[[ -e "$i" ]] || [[ -L "$i" ]] || continue
 		f="${i#$BDIR}"
 		f="${f#$ROOT}"
-		f="${f#$kb}"
+		f="${f#$k}"
 		f="/${f#/}"
 		f="${f/\/usr\/$libdir\///usr/lib/}"
 		f="${f#/usr/lib/klibc}"
@@ -1965,7 +1939,7 @@ slink /usr/$libdir lib 0755 0 0"
 		use thin || c=NONE
 	else
 		f="initrd-${REAL_KV}.cpio"
-		(cd "$kb" && "${S}"/usr/gen_init_cpio "$img" >"$S/$f") || die
+		"${S}"/usr/gen_init_cpio "$img" >$f || die
 		img="$f"
 	fi
 	initramfs "$img" $c
