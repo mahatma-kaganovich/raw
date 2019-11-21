@@ -1874,7 +1874,7 @@ userspace(){
 		[[ -d "$KERNEL_KLIBC_DIR" ]] || die
 #		export CFLAGS="$CFLAGS --sysroot=${S}"
 #		export KERNEL_UTILS_CFLAGS="$KERNEL_UTILS_CFLAGS --sysroot=${S}"
-		kmake -C "$KERNEL_KLIBC_DIR" KLIBCKERNELSRC="${S}"/usr INSTALLDIR=/usr INSTALLROOT="$kb/klibc" all install
+		kmake -C "$KERNEL_KLIBC_DIR" KLIBCKERNELSRC="${S}"/usr INSTALLDIR=/usr INSTALLROOT="$kb" all install
 		k="klibc/usr"
 		klcc="$kb/bin/klcc"
 		sed -i -e 's:^\(\$prefix = "\):\1$ENV{S}:' "$klcc"
