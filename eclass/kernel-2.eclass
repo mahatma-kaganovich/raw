@@ -554,10 +554,11 @@ kernel-2_src_compile() {
 	# nfs: required --enable-static-nss in glibc, $(pkgconfig libtirpc --libs --static) in the END of line...
 	local p=' --no-nfs'
 	for i in 'lvm lvm2' evms luks gpg iscsi 'device-mapper dmraid' unionfs e2fsprogs mdadm btrfs keymap netboot 'monolythe static'; do
-		use "${i% *}" && i="${i##* }" && p+=" --$i" # || p+=" --no-$i"
+		use "${i% *}" && p+=" --${i##* }"
 	done
 	for i in 'blkid disklabel'; do
-		use "${i% *}" && i="${i##* }" && p+=" --$i" || p+=" --no-$i"
+		use "${i% *}" && p+=' --' || p+=' --no-'
+		p+="${i##* }"
 	done
 	if use pnp || use compressed; then
 		use monolythe || p+=" --all-ramdisk-modules"
