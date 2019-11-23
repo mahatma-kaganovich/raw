@@ -9,7 +9,7 @@ EAPI="6"
 DESCRIPTION="A minimal libc subset for use with initramfs. Sources only."
 HOMEPAGE="https://www.zytor.com/mailman/listinfo/klibc/ https://www.kernel.org/pub/linux/libs/klibc/"
 SRC_URI="https://www.kernel.org/pub/linux/libs/klibc/${PV:0:3}/${P/-sources-/-}.tar.xz"
-KEYWORDS="~alpha amd64 ~arm ia64 -mips ~ppc ~ppc64 ~sparc x86"
+KEYWORDS="~alpha amd64 ~arm ~arm64 ~hppa ia64 -mips ~ppc ~ppc64 ~riscv ~s390 ~sh ~sparc x86"
 LICENSE="|| ( GPL-2 LGPL-2 )"
 SLOT="0"
 

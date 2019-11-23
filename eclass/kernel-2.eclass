@@ -1865,7 +1865,8 @@ userspace(){
 	i=$(arch)
 	[ -e "$sdir/usr/klibc/arch/$i" ] || case "$i" in
 	x86)grep -q "^CONFIG_64BIT=y\|^CONFIG_X86_64=y" .config && i=x86_64 || i=i386;;
-	*)ewarn "Kernel arch: $i, klibs has: $(cd "$sdir/usr/klibc/arch" && echo *)";;
+	riscv)grep -q '^CONFIG_ARCH_RV64I=y' .config && i=riscv64;;
+	*)ewarn "Kernel arch: $i, klibs has: $(cd "$sdir/usr/klibc/arch" && echo *)";; ## die later
 	esac
 	KERNEL_ARCH="$i" kmake -C "$sdir" KLIBCKERNELSRC="${S}"/usr INSTALLDIR=/ INSTALLROOT="$kb" all install
 	klcc="$kb/usr/bin/klcc"
