@@ -1864,7 +1864,7 @@ userspace(){
 #	export KERNEL_UTILS_CFLAGS="$KERNEL_UTILS_CFLAGS --sysroot=${S}"
 	i=$(arch)
 	case "$i:${CTARGET:-${CHOST}}" in
-	x86:i?86)i=i386;;
+	x86:i?86*)i=i386;;
 	x86:*)i=x86_64;;
 	riscv:riscv64*)i=riscv64;;
 	mips:mips64*)i=mips64;;
