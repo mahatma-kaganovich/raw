@@ -1871,7 +1871,7 @@ userspace(){
 	powerpc:powerpc64*)i=ppc64;;;;
 	powerpc:*)i=ppc32;;;;
 	esac
-	[ -e "$sdir/usr/klibc/arch/$i" ] || ewarn "Kernel arch: $i, klibs has: $(cd "$sdir/usr/klibc/arch" && echo *)"
+	[ -e "$sdir/usr/klibc/arch/$i" ] || ewarn "Kernel arch: $i, klibc has: $(cd "$sdir/usr/klibc/arch" && echo *)"
 	KERNEL_ARCH="$i" kmake -C "$sdir" KLIBCKERNELSRC="${S}"/usr INSTALLDIR=/ INSTALLROOT="$kb" all install
 	klcc="$kb/usr/bin/klcc"
 	[ -e "$klcc" ] || klcc="$kb/bin/klcc"
