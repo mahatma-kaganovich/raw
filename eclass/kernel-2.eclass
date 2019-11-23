@@ -1862,7 +1862,12 @@ userspace(){
 	einfo "Making KLIBC"
 #	export CFLAGS="$CFLAGS --sysroot=${S}"
 #	export KERNEL_UTILS_CFLAGS="$KERNEL_UTILS_CFLAGS --sysroot=${S}"
-	kmake -C "$sdir" KLIBCKERNELSRC="${S}"/usr INSTALLDIR=/ INSTALLROOT="$kb" all install
+	i=$(arch)
+	[ -e "$sdir/usr/klibc/arch/$i" ] || case "$i" in
+	x86)grep -q "^CONFIG_64BIT=y\|^CONFIG_X86_64=y" .config && i=x86_64 || i=i386;;
+	*)ewarn "Kernel arch: $i, klibs has: $(cd "$sdir/usr/klibc/arch" && echo *)";;
+	esac
+	KERNEL_ARCH="$i" kmake -C "$sdir" KLIBCKERNELSRC="${S}"/usr INSTALLDIR=/ INSTALLROOT="$kb" all install
 	klcc="$kb/usr/bin/klcc"
 	[ -e "$klcc" ] || klcc="$kb/bin/klcc"
 	sed -i -e 's%^\(\$prefix = \)"[^"]*"%\1`readlink -f $0`;$prefix=~s/(?:\\/usr)?\\/bin\\/klcc\\s*$//s%' "$klcc" || die
