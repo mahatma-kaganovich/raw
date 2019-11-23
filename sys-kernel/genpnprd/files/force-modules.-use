@@ -1,6 +1,7 @@
 # embed-hardware & force-modules -> no initrd
 KERNEL_CONFIG+="&EXT2_FS &BLK_DEV_MD &CONNECTOR RTC_CLASS"
 use fbcon && KERNEL_CONFIG+=" &FB"
+use X && use drm && KERNEL_CONFIG+=" AGP==!m;AGP DRM"
 # usb serial console vs. serial_generic?
 # USB USB_SERIAL USB_SERIAL_CONSOLE
 
