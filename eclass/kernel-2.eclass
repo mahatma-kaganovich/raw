@@ -1868,8 +1868,8 @@ userspace(){
 	x86:*)i=x86_64;;
 	riscv:riscv64*)i=riscv64;;
 	mips:mips64*)i=mips64;;
-	powerpc:powerpc64*)i=ppc64;;;;
-	powerpc:*)i=ppc32;;;;
+	powerpc:powerpc64*)i=ppc64;;
+	powerpc:*)i=ppc32;;
 	esac
 	[ -e "$sdir/usr/klibc/arch/$i" ] || ewarn "Kernel arch: $i, klibc has: $(cd "$sdir/usr/klibc/arch" && echo *)"
 	KERNEL_ARCH="$i" kmake -C "$sdir" KLIBCKERNELSRC="${S}"/usr INSTALLDIR=/ INSTALLROOT="$kb" all install
