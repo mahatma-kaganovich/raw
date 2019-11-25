@@ -157,7 +157,7 @@ GenuineIntel:6:78|GenuineIntel:6:94|GenuineIntel:6:85|GenuineIntel:6:142|Genuine
 ;;
 esac
 f0=`_f -m{tune,cpu,arch}=native`
-f3='-momit-leaf-frame-pointer -fsection-anchors'
+f3='-momit-leaf-frame-pointer -fsection-anchors -fno-asynchronous-unwind-tables'
 # tricky! -Ofast contains more then '-O3 -ffast-math' (imho), so ones set - try to keep
 #ffm=' -Ofast'
 #fnfm=' -fno-fast-math'
@@ -235,8 +235,7 @@ x86_*|i?86)
 	# for -fno-move-loop-invariants: as soon in -O1...
 	f3+=$(_f -fira-loop-pressure)
 	# -fschedule-insns is working (increasing registers range)
-	# i?86 looks mostly working, exclude kernel
-	f3+=$(_f -flive-range-shrinkage -fsched-pressure -fschedule-insns -fsched-spec-load --param=sched-pressure-algorithm=2)
+	f3+=$(_f -flive-range-shrinkage -fsched-pressure -fschedule-insns -fsched-spec-load --param=sched-pressure-algorithm=2 -fira-region=all)
 	# gnostic - don't know how to get universal default of defaults for GCC
 	# -mtune=x86-64 deprecated
 	base="-mtune=generic -march=${m//_/-}"
