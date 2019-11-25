@@ -199,7 +199,9 @@ elogind|perl|autofs|dovecot)_fLTO && export LDFLAGS="$LDFLAGS -fPIC";;&
 cmake)_fLTO && _isflag '-floop-*' '-fgraphite*' && filterflag -fipa-pta;;&
 # x86 gcc graphite ice
 gmp)filterflag -fno-move-loop-invariants;;&
-mjpegtools)_fLTO && filterflag -floop-nest-optimize;;&
+# mpg123 distortion on sse
+mjpegtools|gmp|mpg123)filterflag -floop-nest-optimize;;&
+bcrypt)_fLTO && appendflag -fno-loop-nest-optimize;;&
 bash)filterflag -fipa-pta;;&
 ceph)_isflag '-floop-*' '-fgraphite*' && { # prefer graphite vs. lto
 	# handle lto <-> no-lto transition
@@ -232,11 +234,6 @@ gccxml|xemacs|devil|vtun|irda-utils|wmmon|bbrun|diffball|ldns|rp-l2tp)appendflag
 sessreg|ldns)export CPPFLAGS="$CPPFLAGS -P";;
 mpg123)_iuse abi_x86_32 && gccve 5. && export CFLAGS="${CFLAGS//-O3/-O2}" && filterflag -fpeel-loops -funroll-loops;;&
 klibc)[[ "$MAKEOPTS" == *'-j '* || "$MAKEOPTS" == *-j ]] && export MAKEOPTS="$MAKEOPTS -j8";;
-gmp)filterflag -floop-nest-optimize;;
-gmp) _isflag '-floop-*' && {
-	filterflag -floop-unroll-and-jam
-	appendflag -fno-loop-unroll-and-jam
-};;
 sarg)filterflag -w;;
 criu)filterldflag;filterflag -maccumulate-outgoing-args '-flto=*';;
 ffmpeg|libav)_iuse abi_x86_32 && filterflag -fno-omit-frame-pointer;; # x86 mmx -Os
@@ -251,7 +248,6 @@ groff)filterflag -fisolate-erroneous-paths-attribute;;
 coreutils)filterflag -flto=jobserver && appendflag1 -flto;;
 # qtcore -> qtxml
 glibc|gnustep-back-cairo|qtcore)_fLTO_f -flto-partition=none;;
-mpg123)filterflag -floop-nest-optimize;; # distortion on sse
 mongodb)[ "$AR" = gcc-ar ] && export AR=/usr/bin/ar ;;
 openssl)filterflag -ffast-math;; # 1.1.1 make
 seamonkey|thunderbird)export LDFLAGS="${LDFLAGS//-Wl,--strip-all/-Wl,--strip-debug}";;
