@@ -157,7 +157,9 @@ GenuineIntel:6:78|GenuineIntel:6:94|GenuineIntel:6:85|GenuineIntel:6:142|Genuine
 ;;
 esac
 f0=`_f -m{tune,cpu,arch}=native`
-f3='-momit-leaf-frame-pointer -fsection-anchors -fno-asynchronous-unwind-tables'
+f3='-momit-leaf-frame-pointer -fsection-anchors'
+# wanted everywere, but breaks some packages, required filtering. keep bound
+fsmall+=' -fno-asynchronous-unwind-tables'
 # tricky! -Ofast contains more then '-O3 -ffast-math' (imho), so ones set - try to keep
 #ffm=' -Ofast'
 #fnfm=' -fno-fast-math'
