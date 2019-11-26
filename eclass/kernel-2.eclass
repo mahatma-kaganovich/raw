@@ -316,6 +316,7 @@ post_make(){
 			fi
 		;;
 		depends:)
+			[ -z "$y" ] && continue
 			y="${y//,/ }"
 			d+=" $y"
 			echo "$n1 $y " >>"$TMPDIR"/depends.lst
