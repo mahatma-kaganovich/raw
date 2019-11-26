@@ -273,8 +273,18 @@ kernel-2_src_configure() {
 	export comp
 }
 
+_sort_f(){
+	local f
+	for f in "${@}"; do
+		touch "$f"
+		sed -e 's:^"::' -e 's:"$::' <"$f" | sort -u >"$f.tmp"
+		rename .tmp '' "$f.tmp"
+	done
+
+}
+
 post_make(){
-	local i x y m f
+	local i x y m f n= d= n1=
 	[ -s modules.builtin ] && rm $(cat modules.builtin) -f
 	# all modinfo (fast or split cmdline)
 	einfo "Preparing modules & firmware info"
@@ -289,7 +299,14 @@ post_make(){
 	# keep standalone
 	while read x y; do
 		case "$x" in
-		filename:)m=${y#$S/};;
+		filename:)
+			m=${y#$S/}
+			d=
+			n=
+			n1=${y##*/}
+			n1=${n1%.ko}
+			n1=${n1//-/_}
+		;;
 		firmware:)
 			[ -e "firmware/$y" ] && continue
 			if use external-firmware && [ -e "/lib/firmware/$y" ]; then
@@ -298,6 +315,13 @@ post_make(){
 				echo "$m"
 			fi
 		;;
+		depends:)
+			y="${y//,/ }"
+			d+=" $y"
+			echo "$n1 $y " >>"$TMPDIR"/depends.lst
+		;;&
+		name:)n="$y";;&
+		depends:|name:)[ -n "$d" -a -n "$n" ] && echo "$n$d " >>"$TMPDIR"/depends.lst;;
 		esac
 	done <"$TMPDIR"/modinfo.lst | sort -u >"$TMPDIR"/mod-exclude.m2y
 	sed -e 's/#.*$//g' <"$SHARE"/modules-standalone >>"$TMPDIR"/mod-exclude.m2y
@@ -324,11 +348,7 @@ post_make(){
 		grep -F "/${f#?}" "$TMPDIR"/fw-unknown.lst || echo "$f" >>"$x"
 	done
 
-	for f in "$TMPDIR"/fw-used{2,3}.lst "$TMPDIR"/mod-blob.lst; do
-		touch "$f"
-		sed -e 's:^"::' -e 's:"$::' <"$f" | sort -u >"$f.tmp"
-		rename .tmp '' "$f.tmp"
-	done
+	_sort_f "$TMPDIR"/{fw-used{2,3},mod-blob,depends}.lst
 	sort -u "$TMPDIR"/fw-used{1,2,3}.lst >"$TMPDIR"/fw-used.lst
 	sed -e "s:^:lib/modules/${REAL_KV}/kernel/:" <"$TMPDIR"/mod-blob.lst >"$TMPDIR"/mod-blob_.lst
 
@@ -451,7 +471,7 @@ kernel-2_src_compile() {
 		# else need repeat only if module with fw embeddeed by /etc/kernels/kernel.conf, don't care
 		if use embed-hardware; then
 			einfo "Reconfiguring kernel with hardware detect"
-			cfg_ "###detect: $(detects|tee -a .detect-hardware)"
+			cfg_ "###detect: $(sort_detects $(detects)|tee -a .detect-hardware)"
 			paranoid_y
 			_cmdline "`modprobe_opt ''`"
 			i=true
@@ -1697,14 +1717,10 @@ echo "${aflags# }"
 
 module_reconf(){
 	local i c
-	touch "${TMPDIR}/unmodule.black"
-	sed -e 's:^.*/::g' -e 's:\.ko$::g' | \
-		sort -u | \
-		grep -Fxvf "${TMPDIR}/unmodule.black" | \
-		while read i; do
-			grep -Rh "^\s*obj\-\$[(]CONFIG_.*\s*\+=.*\s${i//[_-]/[_-]}\.o" "${TMPDIR}"/unmodule.tmp|sed -e 's:).*$::g' -e 's:^.*(CONFIG_::'|sort -u|while read c; do
-				$1 "$c"
-				echo "$i" >>"${TMPDIR}/unmodule.$1"
+	sed -e 's:^.*/::g' -e 's:\.ko$::g' | while read i; do
+		grep -qFx "$i" "${TMPDIR}/unmodule.$1" && continue
+		grep -Rh "^\s*obj\-\$[(]CONFIG_.*\s*\+=.*\s${i//[_-]/[_-]}\.o" "${TMPDIR}"/unmodule.tmp|sed -e 's:).*$::g' -e 's:^.*(CONFIG_::'|sort -u|while read c; do
+			$1 "$c" "$i" && echo "$i" >>"${TMPDIR}/unmodule.$1"
 		done
 	done
 	echo ''
@@ -1767,12 +1783,20 @@ modprobe_opt(){
 load_modinfo(){
 	local i
 	[ -e "$TMPDIR/unmodule.tmp" ] || _unmodule .
-	[ -e "${WORKDIR}"/modules.alias.sh ] || {
-		tar cf tmp.tar --remove-files $(cat "$TMPDIR"/mod-exclude.m2y)
+	[ -e "${WORKDIR}"/modules.alias.sh ] ||
 		perl "${SHARE}"/mod2sh.pl "${WORKDIR}" >&2 || die "Unable to run '${SHARE}/mod2sh.pl'"
-		tar xf tmp.tar && rm tmp.tar
-	}
 	. "${WORKDIR}"/modules.alias.sh || die "Broken modules.alias.sh, check mod2sh.pl!"
+}
+
+sort_detects(){
+	local i p=
+	for i in "${@}"; do
+		case "$i" in
+		+*)p+=" $i";;
+		*)echo -n " $i";;
+		esac
+	done
+	echo "$p"
 }
 
 detects(){
@@ -1780,9 +1804,19 @@ detects(){
 	load_modinfo
 	sort -u "${WORKDIR}"/modules.pnp "${TMPDIR}"/overlay-rd/etc/modflags/* >>"${WORKDIR}"/modules.pnp_
 	sort -u "${WORKDIR}"/modules.pnp0 "${SHARE}"/etc/modflags/* >>"${WORKDIR}"/modules.pnp0_
-	modinfo $(cat "$TMPDIR"//mod-exclude.m2y) | grep "^name:" | sed -e 's/^name:[ 	]*//' >>"$TMPDIR"/unmodule.black
+	local ub="$TMPDIR/unmodule.black"
+	sed -e 's:^.*/::g' -e 's:\.ko$::g' <"$TMPDIR"/mod-exclude.m2y >>"$ub"
+	sed -i -e 's:-:_:g' "$ub"
+	modinfo $(cat "$TMPDIR"/mod-exclude.m2y) | grep "^name:" | sed -e 's/^name:[ 	]*//' >>"$ub"
+	_sort_f "$TMPDIR"/unmodule.{black,m2y,m2n}
+	while true; do
+		sed -e 's:^: :' -e 's:$: :' <"$ub" | grep -Fxf - "$TMPDIR"/depends.lst | sed -e 's: .*::g' >"${ub}1"
+		cat "$ub" >>"${ub}1"
+		_sort_f "${ub}1"
+		cmp -s "${ub}"{1,} && break
+		mv "${ub}"{1,}
+	done
 	{
-		# /sys
 		cat "${TMPDIR}/sys-modalias"
 		# rootfs
 		while read a b c d; do
@@ -1805,11 +1839,17 @@ detects_cleanup(){
 
 m2y(){
 	grep -q "^CONFIG_$1=[my]$" .config || return
-	echo -n " &$1"
 	# buggy dependences only
 	case "$1" in
 	ACPI_VIDEO)m2y VIDEO_OUTPUT_CONTROL;;
 	esac
+	if grep -qFx "${2//-/_}" "${TMPDIR}/unmodule.black"; then
+		echo -n " +$1"
+		return 1
+	else
+		echo -n " &$1"
+		return 0
+	fi
 }
 
 m2n(){
