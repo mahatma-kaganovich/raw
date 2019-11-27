@@ -131,13 +131,13 @@ max_unrolled(){
 #	ffast+=" --param=min-insn-to-prefetch-ratio=$(($1+1))" # gcc 6: insn_to_prefetch_ratio = (unroll_factor * ninsns) / prefetch_count;
 }
 
-# prefetch need l1 cache = power of 2
-p2(){
+l1chk(){
+	# fixme: in tree-ssa-loop-prefetch.c warning say:
+	# "%<l1-cache-size%> parameter is not a power of two %d"
+	# - but really checked PREFETCH_BLOCK = l1-cache-line-size, so disable check
+	return 0
 	local x="$1"
-	while [ "$[x%2]" = 0 ]; do
-		x=$[x/2]
-	done
-	[ "$x" = 1 ]
+	[ "$[x&(x-1)]" = 0 ]
 }
 
 split_cache(){
@@ -379,7 +379,7 @@ fi
 # divide cache to number of min(siblings,associativity)
 # in theory (or my fantasy) minimize (if gcc use it) cache & bus usage.
 i="${f4##*--param=l1-cache-size=}"
-[ "$i" != "$f4" ] && l1=$(split_cache "${i%% *}" true p2) && fsmall+="`_f --param=l1-cache-size=$l1`"
+[ "$i" != "$f4" ] && l1=$(split_cache "${i%% *}" true l1chk) && fsmall+="`_f --param=l1-cache-size=$l1`"
 i="${f4##*--param=l2-cache-size=}"
 [ "$i" != "$f4" ] && l2=$(split_cache "${i%% *}") && fsmall+="`_f --param=l2-cache-size=$l2`"
 
