@@ -148,7 +148,7 @@ split_cache(){
 			nc=$[nc+1]
 		done
 	done
-	[ $nc = 0 ] && nc=`_smp siblings 0 || _smp 'cpu cores' 0`
+	[ $nc = 0 ] && ! $first && nc=`_smp siblings 0 || _smp 'cpu cores' 0`
 	[ ${nc:-0} -lt 1 ] && nc=1
 	[ ${na:-0} -gt 1 ] && [ $na -le $nc ] && nc=$na
 	i=$[size/nc] && echo $i && [ "$x" != "$size" ]
