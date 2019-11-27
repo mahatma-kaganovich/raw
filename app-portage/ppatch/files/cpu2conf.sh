@@ -18,19 +18,26 @@ filter=continue
 base=
 gcc=gcc
 
+_gcc(){
+	local i
+	i=$($gcc "${@}" 2>&1) || return 1
+	echo "${i// --param / --param=}"
+}
+
 _c(){
-	$gcc $base "${@}" $ct 2>&1
+	local i
+	_gcc $base "${@}" $ct
 }
 
 _c1(){
-	local gcc=$gcc
+	local gcc=$gcc i
 	# speedup
 	case "$*" in
 	*-Wl*);;
 	*-Wa*)gcc+=' -c';;
 	*)gcc+=' -S';;
 	esac
-	echo "$code" |$gcc -x $lang - -pipe $base "${@}" -o /dev/null 2>&1
+	echo "$code"|_gcc -x $lang - -pipe $base "${@}" -o /dev/null
 }
 
 _f(){
@@ -157,7 +164,7 @@ split_cache(){
 conf_cpu(){
 local f0= f1= f2= f3= f4= f5= f6= fsmall= ffast= ffm= fnm= fv= i j i1 j1 c c0 c1 lm=false fp=387 gccv m="`uname -m`" i fsec= ind= l2= x32=false base2=
 _setflags flags cpucaps 'cpu family' model fpu vendor_id
-cmn=$($gcc --help=common -v -Q 2>&1)
+cmn=$(_gcc --help=common -v -Q)
 if i=$(echo "$cmn"|grep --max-count=1 "^Target: "); then
 	# for multilib transitions: use gcc target
 	i="${i#Target: }"
@@ -338,7 +345,7 @@ if c0=`_c` && c=`_c $f0`; then
 		(echo "$c"|grep -q "^ *-m$i ") && [ -n "${i1##* -m$i *}" ] && j+=" -m$i" && i1+=" -m$i" && f0+=" -m$i"
 	done
 fi
-f4="${j//--param /--param=}"
+f4="$j"
 for i in $f4; do
 	case " $f4 " in
 	# no flag in kernel
@@ -394,14 +401,20 @@ for i in $base2; do
 	# we know better then "-mtune=native".
 	# my x7-Z8700 model 76 better perform as common "intel"
 	# (or even "silvermont" = march, but this is too specific)
-	[[ " $f4 " != *" ${i%=*}"[=\ ]* ]] && f4+=" $i" && f0="${f0//-mtune=native/$i}"
+	[[ " $f4 " != *" ${i%=*}"[=\ ]* ]] || continue
+	i="${f0//-mtune=native/$i}"
+	_cmp1 "$i" "$f0"
+	j="${j//-mtune=generic}"
+	f0=
+	for i in $i $j; do
+		f0+=" $i"
+	done
 done
 
 for i in $base; do
 	[[ " $f4 " != *" ${i%=*}"[=\ ]* ]] && f4+=" $i"
 done
 
-local ff= fm=
 for i in $f3; do
 	case "$i" in
 	-m*)fm+=" $i";;
