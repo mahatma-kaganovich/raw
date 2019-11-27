@@ -131,6 +131,46 @@ max_unrolled(){
 #	ffast+=" --param=min-insn-to-prefetch-ratio=$(($1+1))" # gcc 6: insn_to_prefetch_ratio = (unroll_factor * ninsns) / prefetch_count;
 }
 
+# prefetch need l1 cache = power of 2
+p2(){
+	local x="$1"
+	while [ "$[x%2]" = 0 ]; do
+		x=$[x/2]
+	done
+	[ "$x" = 1 ]
+}
+
+split_cache(){
+	# /proc/cpuinfo not enough: z8700 have 2x1024 l2 caches on the top
+	local size="$1" first="${2:-false}" chk="${3:-true}" i x nc=0 na= cpus=
+	# gcc numeration differ from /sys, check by size & first/last
+	for i in /sys/devices/system/cpu/cpu0/cache/index*; do
+		[ -e "$i" ] || continue
+		[ "${size}K" = "$(< $i/size)" ] || continue
+		na=$(< $i/ways_of_associativity)
+		cpus=$(< $i/shared_cpu_list)
+		$first && break
+	done
+	for i in ${cpus//,/ }; do
+		[[ "$i" != *-* ]] && nc=$[nc+1] ||
+		for i in $(seq ${i//-/ }); do
+			nc=$[nc+1]
+		done
+	done
+	[ "$nc" = 0 ] && nc=`_smp siblings 0 || _smp 'cpu cores' 0`
+	x="$size"
+	for i in $na $nc; do
+		[ "${i:-0}" != 0 ] &&
+		i=$[size/i] &&
+		[ "${i:-1}" != 1 -a "$i" != 0 ] &&
+		$chk "$i" &&
+		[ "$i" -gt "$x" -o "$x" = "$size" ] &&
+		x="$i"
+	done
+	echo "$x"
+	[ "$x" != "$size" ]
+}
+
 conf_cpu(){
 local f0= f1= f2= f3= f4= f5= f6= fsmall= ffast= ffm= fnm= fv= i j i1 j1 c c0 c1 lm=false fp=387 gccv m="`uname -m`" i fsec= ind= l2= x32=false base2=
 _setflags flags cpucaps 'cpu family' model fpu vendor_id
@@ -336,29 +376,12 @@ if c0=`_c $f0` && c=`_c $f4`; then
 fi
 
 # this is really not "small", but related to code size too, so let's be here
-# divide upper (l2 AKA l3) cache to number of siblings
+# divide cache to number of min(siblings,associativity)
 # in theory (or my fantasy) minimize (if gcc use it) cache & bus usage.
+i="${f4##*--param=l1-cache-size=}"
+[ "$i" != "$f4" ] && l1=$(split_cache "${i%% *}" true p2) && fsmall+="`_f --param=l1-cache-size=$l1`"
 i="${f4##*--param=l2-cache-size=}"
-[ "$i" = "$f4" ] || {
-	l2="${i%% *}"
-	# /proc/cpuinfo not enough: z8700 have 2x1024 l2 caches on the top
-	local nc=0 cpus=
-	for i in /sys/devices/system/cpu/cpu0/cache/index*; do
-		[ "${l2}K" = "$(< $i/size)" ] || continue
-		#nc=$(< $i/ways_of_associativity)
-		cpus=$(< $i/shared_cpu_list)
-	done
-	#[ -z "$nc" ] && nc=0
-	[ "$nc" = 0 ] && for i in ${cpus//,/ }; do
-		[[ "$i" != *-* ]] && nc=$[nc+1] ||
-		for i in $(seq ${i//-/ }); do
-			nc=$[nc+1]
-		done
-	done
-	[ "$nc" = 0 ] && nc=`_smp siblings 0 || _smp 'cpu cores' 0`
-	[ "$nc" -gt 1 ] && l2=$[l2/nc] &&
-		fsmall+="`_f --param=l2-cache-size=$l2`"
-}
+[ "$i" != "$f4" ] && l2=$(split_cache "${i%% *}") && fsmall+="`_f --param=l2-cache-size=$l2`"
 
 i1=
 c0=
