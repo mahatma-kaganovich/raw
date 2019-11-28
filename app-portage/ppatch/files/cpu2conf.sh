@@ -161,6 +161,18 @@ split_cache(){
 	i=$[size/nc] && echo $i && [ "$i" != "$size" ]
 }
 
+_replace(){
+	local f0="$1" i j f
+	for i in $2; do
+		f=
+		for j in $f0; do
+			[ "${i%=*}" = "${j%=*}" ] || f+=" $j"
+		done
+		f0="$f $i"
+	done
+	echo "$f0 "
+}
+
 conf_cpu(){
 local f0= f1= f2= f3= f4= f5= f6= fsmall= ffast= ffm= fnm= fv= i j i1 j1 c c0 c1 lm=false fp=387 gccv m="`uname -m`" i fsec= ind= l2= x32=false base2=
 _setflags flags cpucaps 'cpu family' model fpu vendor_id
@@ -402,9 +414,9 @@ for i in $base2; do
 	# my x7-Z8700 model 76 better perform as common "intel"
 	# (or even "silvermont" = march, but this is too specific)
 	[[ " $f4 " != *" ${i%=*}"[=\ ]* ]] || continue
-	i="${f0//-mtune=native/$i}"
-	_cmp1 "$i" "$f0"
-	f0=`_f $i ${j//-mtune=generic}`
+	i1=$(_replace "$f0" $i)
+	_cmp1 "$i1" "$f0"
+	f0=$(_replace "$i1 $j" $i)
 done
 
 for i in $base; do
