@@ -404,11 +404,7 @@ for i in $base2; do
 	[[ " $f4 " != *" ${i%=*}"[=\ ]* ]] || continue
 	i="${f0//-mtune=native/$i}"
 	_cmp1 "$i" "$f0"
-	j="${j//-mtune=generic}"
-	f0=
-	for i in $i $j; do
-		f0+=" $i"
-	done
+	f0=`_f $i ${j//-mtune=generic}`
 done
 
 for i in $base; do
