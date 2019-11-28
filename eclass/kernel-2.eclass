@@ -585,7 +585,7 @@ kernel-2_src_compile() {
 		use monolythe || p+=" --all-ramdisk-modules"
 		[[ -e "${BDIR}/lib/firmware" ]] && p+=" --firmware --firmware-dir=\"${BDIR}/lib/firmware\"" || p+=' --no-firmware'
 	fi
-	run_genkernel ramdisk "--kerneldir=\"${S}\" --bootdir=\"${S}\" --module-prefix=\"${BDIR}\" --no-mountboot ${p}"
+	run_genkernel ramdisk --kerneldir="${S}" --bootdir="${S}" --module-prefix="${BDIR}" --no-mountboot ${p}
 	r=`ls initramfs*-"${REAL_KV}"* || ls "$TMPDIR"/genkernel/initramfs*` && mv "$r" "initrd-${REAL_KV}.img" || die "initramfs rename failed"
 	einfo "Preparing boot image"
 	_genpnprd --PNPMODE "$( (use !pnp && echo nopnp)||(use pnponly && echo pnponly)||echo pnp )" || die
@@ -767,7 +767,7 @@ run_genkernel(){
 	TEMPDIR="$TMPDIR" \
 	ac_cv_target="${CTARGET:-${CHOST}}" ac_cv_build="${CBUILD}" ac_cv_host="${CHOST:-${CTARGET}}" \
 	CFLAGS="${KERNEL_UTILS_CFLAGS}" LDFLAGS="${KERNEL_GENKERNEL_LDFLAGS}" _run_env "${S}/genkernel" $opt\
-		--config=/usr/share/genpnprd/genkernel.conf $i $* ${KERNEL_GENKERNEL} || {
+		--config=/usr/share/genpnprd/genkernel.conf $i "${@}" ${KERNEL_GENKERNEL} || {
 			unmcode n y
 			die "genkernel failed"
 	}
