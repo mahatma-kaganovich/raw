@@ -170,7 +170,7 @@ _replace(){
 		done
 		f0="$f $i"
 	done
-	echo "$f0 "
+	echo "$f0"
 }
 
 conf_cpu(){
