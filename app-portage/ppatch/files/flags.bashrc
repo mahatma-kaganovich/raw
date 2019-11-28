@@ -181,6 +181,11 @@ xemacs)_fLTO && {
 # ffmpeg: amd64 - mp4 crushes
 # libbsd: mailx
 libwacom|libbsd|dcc|chromium*|webkit-gtk|ffmpeg|xemacs|fuse|wayland|privoxy|icedtea|qtwebkit|xf86-video-intel|mplayer|mysql|heimdal|glibc|cvs|pulseaudio|lynx)filterflag '-flto*' '-*-lto-*' -fuse-linker-plugin -fdevirtualize-at-ltrans;;&
+gcc)
+	# multi-version case
+	_iuse lto || filterflag '-flto*' '-*-lto-*' -fuse-linker-plugin -fdevirtualize-at-ltrans
+	_iuse graphite || filterflag -floop-nest-optimuze
+;;&
 ncurses-compat|ncurses)_fLTO && export ac_cv_func_dlsym=no ac_cv_lib_dl_dlsym=yes;;&
 inkscape|libreoffice|mariadb|nodejs|llvm|clang)filterflag -ffat-lto-objects;;&
 mariadb)filterflag -fno-asynchronous-unwind-tables;;&
