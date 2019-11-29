@@ -378,7 +378,15 @@ while [ "$m1" != "$mm" -o "${_cmd_rootwait}:$MOUNTED" = 'true:false' ]; do
 	echo -n "#"
 	dep
 	echo -n "+"
-	insmod $libmod/kernel/drivers/scsi/scsi_wait_scan.ko && rmmod scsi_wait_scan
+	for i in scsi_wait_scan scsi_mod; do
+		m="$libmod/kernel/drivers/scsi/$i.ko"
+		[ -e $m ] && insmod $m && [ $i = scsi_wait_scan ] && rmmod $i
+	done
+	if [ -e $libmod/kernel/drivers/scsi/scsi_wait_scan.ko ]; then
+		insmod $libmod/kernel/drivers/scsi/scsi_wait_scan.ko && rmmod scsi_wait_scan
+	elif [ -e $libmod/kernel/drivers/scsi/scsi_mod.ko ]; then
+		
+	fi
 	resume "$cmd_resume" $cmd_resume_offset 2>/dev/null
 	flags `cd /sys/module && echo *` 2>/dev/null
 	mdevs

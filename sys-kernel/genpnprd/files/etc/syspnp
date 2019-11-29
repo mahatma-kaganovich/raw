@@ -119,7 +119,8 @@ mod_fast(){
 			if [[ "$INSMOD" == "$REORDER" ]]; then
 				r=true
 			elif ! [[ -e "$m1" ]]; then
-				pnpass=1
+#				pnpass=1
+				true
 			elif $r; then
 				echo "$m $m1 $PARAM" >>/later
 			else
@@ -159,11 +160,9 @@ refresh(){
 		[ "$2" = r ] || return 1
 		if [ -n "$REAL_ROOT" ]; then
 			[ -b "$REAL_ROOT" ] && return 1
-			[ -z "${REAL_ROOT##*=*}" ] && {
-				i=$(part_ "$REAL_ROOT")
-				i=${i%% *}
+			[ -z "${REAL_ROOT##*=*}" ] && for i in $(part_ "$REAL_ROOT"); do
 				[ -b "$i" ] && REAL_ROOT="$i" && cmd_detect_root=false && return 1
-			}
+			done
 		elif [ -n "$DETECTED_ROOTS$DETECTED_LOOPS" ]; then
 			return 1
 		fi
@@ -791,18 +790,24 @@ mdadm(){
 }
 
 detect_fs(){
-	local i m="" md="$USE_MDADM" dm="$USE_DMRAID_NORMAL" t="$cmd_detect_root" lvm="$USE_LVM_NORMAL" evms="$USE_EVMS_NORMAL" mddef=true
+	local i='' m="" md="$USE_MDADM" dm="$USE_DMRAID_NORMAL" t="$cmd_detect_root" lvm="$USE_LVM_NORMAL" evms="$USE_EVMS_NORMAL" mddef=true
 	[[ -n "$NFSLIKE_FS" ]] && [[ "$REAL_ROOT" == /dev/nfs ]] && REAL_ROOT="/dev/$NFSLIKE_FS"
 	case "$t" in
 	true|false)t="";
 	esac
 	if $waitscan; then
-		[[ -e /etc/modules/waitscan ]] || mod scsi_wait_scan
+		($cmd_fast && ! [ -b "$REAL_ROOT" ]) || ! [[ -e /etc/modules/waitscan ]] &&
+		for i in scsi_wait_scan scsi_mod; do
+			[[ -e "/lib/modules/$KV/kernel/drivers/scsi/$i.ko" ]] && {
+				mod $i
+				break
+			}
+		done
 		empty_hwopts waitscan
 		[[ -n "$cmd_scandelay" ]] && sleep "$cmd_scandelay"
 		waitscan=false
 		_wait
-		rmmod scsi_wait_scan 2>/dev/null
+		[[ "$i" = scsi_wait_scan ]] && rmmod $i 2>/dev/null
 		[[ -n "$cmd_elevator" ]] && _tee "$cmd_elevator" /sys/class/block/*/queue/scheduler # embed
 		/sbin/mdev -s block
 	fi

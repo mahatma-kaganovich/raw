@@ -324,6 +324,12 @@ clean
 
 $SQUASH || squashfs_enabled && SQUASH=true
 
+i=etc/modules/waitscan
+j="lib/modules/$KV/kernel/drivers/scsi"
+grep -sqx scsi_wait_scan $i && ! [ -e "$j"/scsi_wait_scan.ko ] && {
+	[ -e "$j"/scsi_mod.ko ] && echo scsi_mod >$i || echo -n >$i
+}
+
 cd $rcdir || die
 for i in $rcdir/lib/modules/*/modules.alias; do
 	sort -u $i >$i.1 || break
