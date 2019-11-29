@@ -380,7 +380,7 @@ while [ "$m1" != "$mm" -o "${_cmd_rootwait}:$MOUNTED" = 'true:false' ]; do
 	echo -n "+"
 	for i in scsi_wait_scan scsi_mod; do
 		m="$libmod/kernel/drivers/scsi/$i.ko"
-		[ -e $m ] && insmod $m && [ $i = scsi_wait_scan ] && rmmod $i
+		[ -e $m ] && modprobe $m && [ $i = scsi_wait_scan ] && rmmod $i
 	done
 	resume "$cmd_resume" $cmd_resume_offset 2>/dev/null
 	flags `cd /sys/module && echo *` 2>/dev/null
