@@ -1989,10 +1989,11 @@ slink /usr/$libdir lib 0755 0 0"
 		/lib*/*)use compressed && continue;;
 		/usr/*)f="${f#/usr}";;
 		esac
-		if [ -f "$i" ] || [ ! -e "$i" -a -L "$i" ] ; then
-			[ -L "$i" ] &&
-			    echo "slink $f $(readlink "$i") 0755 0 0" ||
-			    echo "file $f $i 0755 0 0"
+		if [ -L "$i" ]; then
+			echo "slink $f $(readlink "$i") 0755 0 0"
+			f="${f%/*}"
+		elif [ -f "$i" ]; then
+			echo "file $f $i 0755 0 0"
 			f="${f%/*}"
 		fi
 		while [[ -n "${f#/}" ]]; do
