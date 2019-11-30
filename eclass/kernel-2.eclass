@@ -1930,11 +1930,22 @@ KLIBCOPTFLAGS += -g0 -fno-move-loop-invariants' | tee -a "$sdir"/usr/klibc/arch/
 	done
 	einfo "Sorting modules to new order"
 	mv "${mod}modules.alias" "$TMPDIR/" && bash "${SHARE}"/kpnp --sort "$TMPDIR/modules.alias" >"${mod}modules.alias" || die
+	use !blobs && [ -s "$TMPDIR/mod-blob_.lst" ] && (cd "$BDIR" && tar cf exclude.tar --remove-files $(cat "$TMPDIR/mod-blob_.lst"))
 	if use compressed; then
 		einfo "Compressing lib.loopfs"
 		for i in "$l"/klibc*; do
 			f="${i##*/}"
 			ln -s "/usr/lib/$f" "$BDIR/lib/$f"
+		done
+		for i in bin; do
+			mkdir -p "${BDIR}/lib/$i"
+			for f in "${BDIR}/$i"/*; do
+				[ -e "$f" ] &&
+				case "${f##*/}" in
+				cat|true|false|insmod|ln|losetup|ls|mkdir|mknod|mount|mv|readlink|sh|uname);;
+				*)mv "$f" "${BDIR}/lib/$i/" && ln -s "/lib/$i/${f##*/}";;
+				esac
+			done
 		done
 		mksquash "${BDIR}/lib" lib.loopfs -all-root
 		rm "$BDIR/lib/klibc"* -f 2>/dev/null
@@ -1978,8 +1989,8 @@ slink /usr/$libdir lib 0755 0 0"
 		/lib*/*)use compressed && continue;;
 		/usr/*)f="${f#/usr}";;
 		esac
-		if [[ -f "$i" ]]; then
-			[[ -L "$i" ]] &&
+		if [ -f "$i" ] || [ ! -e "$i" -a -L "$i" ] ; then
+			[ -L "$i" ] &&
 			    echo "slink $f $(readlink "$i") 0755 0 0" ||
 			    echo "file $f $i 0755 0 0"
 			f="${f%/*}"
@@ -1998,6 +2009,7 @@ slink /usr/$libdir lib 0755 0 0"
 		img="$f"
 	fi
 	initramfs "$img" $c
+	[ -e "$BDIR/exclude.tar" ] && (cd "$BDIR" && tar xf exclude.tar && rm exclude.tar)
 	mv "$TMPDIR/modules.alias" "${mod}"
 }
 

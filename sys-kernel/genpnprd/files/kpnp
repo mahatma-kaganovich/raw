@@ -1,5 +1,5 @@
 #!/bin/sh
-VERSION=0.7
+VERSION=0.8
 HELP="init for early userspace v$VERSION, (c) Denis Kaganovich, Anarchy or GPLv2 license
 
 Main goal: scan '/sys/*/uevent' for MODALIASes (without grep, sed...)
@@ -67,7 +67,7 @@ else
 	n="$1"
 	shift
 	for i in "${@}"; do
-		echo " $i" >"options/$n.${i%%=*}"
+		echo -n " $i" >"options/$n.${i%%=*}"
 	done
 	$cmd "$n"
 	$mod "$n"
@@ -178,7 +178,7 @@ for i in "${@}"; do
 		quiet|root|init|rw|ro|resume|resume_offset|nfsroot|ip|rootdelay|rootwait|rootflags|rootfstype|loop|transparent_hugepage_misc)export $xx$x="$y";;
 		esac
 	elif ! [ -e cmdline ]; then
-		[ -d options ] && echo -n " ${x#*.}$yy" >>"options/$x" || echo -n "options $m ${x#*.}$yy" >>"/etc/modprobe.d/initrd_$x.conf"
+		[ -d options ] && echo -n " ${x#*.}$yy" >"options/$x" || echo -n "options $m ${x#*.}$yy" >>"/etc/modprobe.d/initrd_$x.conf"
 	fi
 done
 #cmd_init=/sbin/init
@@ -201,12 +201,9 @@ cmd $cmdline
 echo "$cmdline" >cmdline
 }
 
-opt(){
-	echo `cat "$tmp/options/$1."* 2>/dev/null`
-}
-
 mod(){
 local l='' i m ok err=true
+[ -z "$*" ] && return
 for i in "${@}"; do
 	read i <"alias/$i" && i=" $i" && while [ -n "$i" ]; do
 		l="$l ${i##* }"
@@ -222,13 +219,17 @@ for m in $l; do
 	i="${m##*/}"
 	i="${i%%.*}"
 	[ -e "$tmp/alias/$i" ] || continue
-	CMDLINE_OPTS=`opt $i`
+	CMDLINE_OPTS=`cat "$tmp/options/$1."* 2>/dev/null`
 	$msg -n " $i"
 	if [ -e "$tmp/install/$m" ]; then
 		read i <"$tmp/install/$m"
 		eval "$i" && ok=true || err=true
+	elif insmod "$m" $CMDLINE_OPTS; then
+		ok=true
+		$rm "$tmp/alias/$i"
+#		$rm "`readlink -f "$tmp/alias/$i"`"
 	else
-		insmod "$m" $CMDLINE_OPTS && ok=true || err=true
+		err=true
 	fi
 done
 $msg
@@ -384,7 +385,7 @@ while [ "$m1" != "$mm" -o "${_cmd_rootwait}:$MOUNTED" = 'true:false' ]; do
 	echo -n "+"
 	for i in scsi_wait_scan scsi_mod; do
 		m="$libmod/kernel/drivers/scsi/$i.ko"
-		[ -e $m ] && insmod $m `opt $i` && [ $i = scsi_wait_scan ] && rmmod $i
+		[ -e $m ] && insmod $m `cat "$tmp/options/$1."* 2>/dev/null` && [ $i = scsi_wait_scan ] && rmmod $i
 	done
 	resume "$cmd_resume" $cmd_resume_offset 2>/dev/null
 	flags `cd /sys/module && echo *` 2>/dev/null
