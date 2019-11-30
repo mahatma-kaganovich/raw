@@ -319,10 +319,14 @@ post_make(){
 		depends:)
 			[ -z "$y" ] && continue
 			y="${y//,/ }"
+			y="${y//-/_}"
 			d+=" $y"
 			echo "$n1 $y " >>"$TMPDIR"/depends.lst
 		;;&
-		name:)n="$y";;&
+		name:)
+			n="${y//-/_}" #??
+			echo " $n $m" >>"$TMPDIR/names.lst"
+		;;&
 		depends:|name:)[ -n "$d" -a -n "$n" ] && echo "$n$d " >>"$TMPDIR"/depends.lst;;
 		esac
 	done <"$TMPDIR"/modinfo.lst | sort -u >"$TMPDIR"/mod-exclude.m2y
@@ -352,7 +356,7 @@ post_make(){
 		grep -F "/${f#?}" "$TMPDIR"/fw-unknown.lst || echo "$f" >>"$x"
 	done
 
-	_sort_f "$TMPDIR"/{fw-used{2,3},mod-blob{,1},depends}.lst "$TMPDIR"/mod-exclude.m2y
+	_sort_f "$TMPDIR"/{fw-used{2,3},mod-blob{,1},depends,names}.lst "$TMPDIR"/mod-exclude.m2y
 	sort -u "$TMPDIR"/fw-used{1,2,3}.lst >"$TMPDIR"/fw-used.lst
 	sort -u "$TMPDIR"/mod-blob{,1}.lst | sed -e "s:^:lib/modules/${REAL_KV}/kernel/:" >"$TMPDIR"/mod-blob_.lst
 
@@ -1803,18 +1807,34 @@ sort_detects(){
 	echo "$p"
 }
 
+# add to $1 lists modules, dependend from listed $1 & $2 modules and add names to $2
+modules_deps(){
+	local m="$1" l="$2"
+	sed -e 's:^.*/::g' -e 's:\.ko$::g' <"$m" >>"$l"
+	sed -e 's:-:_:g' "$l"
+	_sort_f "$l"
+	while true; do
+		sed -e 's:^: :' -e 's:$: :' <"$l" | grep -f - "$TMPDIR"/depends.lst | sed -e 's: .*::g' >"${l}1"
+		cat "$l" >>"${l}1"
+		_sort_f "${l}1"
+		cmp -s "${l}"{1,} && break
+		mv "${l}"{1,}
+	done
+	rm "${l}1"
+	sed -e 's:^: :' -e 's:$: :' <"$l" | grep -Ff - "$TMPDIR/names.lst" | sed -e 's:^.* $::g' >>"$m"
+	_sort_f "$m"
+}
+
 detects(){
 	local i a b c d
 	load_modinfo
 	sort -u "${WORKDIR}"/modules.pnp "${TMPDIR}"/overlay-rd/etc/modflags/* >>"${WORKDIR}"/modules.pnp_
 	sort -u "${WORKDIR}"/modules.pnp0 "${SHARE}"/etc/modflags/* >>"${WORKDIR}"/modules.pnp0_
-	local ub="$TMPDIR/unmodule.black"
-	sed -e 's:^.*/::g' -e 's:\.ko$::g' <"$TMPDIR"/mod-exclude.m2y >>"$ub"
-	sed -i -e 's:-:_:g' "$ub"
-	modinfo $(cat "$TMPDIR"/mod-exclude.m2y) | grep "^name:" | sed -e 's/^name:[ 	]*//' >>"$ub"
-	_sort_f "$TMPDIR"/unmodule.{black,m2y,m2n}
+	modules_deps "$TMPDIR"/{mod-exclude.m2y,unmodule.black}
+	modules_deps "$TMPDIR"/mod-blob_{,names}.lst
+	_sort_f "$TMPDIR"/unmodule.m2{y,n}
 	while true; do
-		sed -e 's:^: :' -e 's:$: :' <"$ub" | grep -Fxf - "$TMPDIR"/depends.lst | sed -e 's: .*::g' >"${ub}1"
+		sed -e 's:^: :' -e 's:$: :' -e 's:[-_]:[-_]:g' <"$ub" | grep -f - "$TMPDIR"/depends.lst | sed -e 's: .*::g' >"${ub}1"
 		cat "$ub" >>"${ub}1"
 		_sort_f "${ub}1"
 		cmp -s "${ub}"{1,} && break
