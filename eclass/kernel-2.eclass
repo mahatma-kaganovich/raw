@@ -1963,11 +1963,11 @@ KLIBCOPTFLAGS += -g0 -fno-move-loop-invariants' | tee -a "$sdir"/usr/klibc/arch/
 		done
 		for i in bin; do
 			mkdir -p "${BDIR}/lib/$i"
-			for f in "${BDIR}/$i"/*; do
+			for f in "$k/$i"/*; do
 				[ -e "$f" ] &&
 				case "${f##*/}" in
 				cat|true|false|insmod|ln|losetup|ls|mkdir|mknod|mount|mv|readlink|sh|uname);;
-				*)mv "$f" "${BDIR}/lib/$i/" && ln -s "/lib/$i/${f##*/}" "$f";;
+				*)cp -a "$f" "${BDIR}/lib/$i/";;
 				esac
 			done
 		done
@@ -2012,6 +2012,10 @@ slink /usr/$libdir lib 0755 0 0"
 		/usr/lib*|*/loop.ko|*/squashfs.ko);;
 		/lib*/*)use compressed && continue;;
 		/usr/*)f="${f#/usr}";;
+		/bin/*)	use compressed && case "${f#/bin/}" in
+			cat|true|false|insmod|ln|losetup|ls|mkdir|mknod|mount|mv|readlink|sh|uname);;
+			*)echo slink "$f" "/lib/$f";continue;;
+			esac
 		esac
 		if [ -L "$i" ]; then
 			echo "slink $f $(readlink "$i") 0755 0 0"
