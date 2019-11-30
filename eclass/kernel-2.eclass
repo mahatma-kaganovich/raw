@@ -1943,7 +1943,7 @@ KLIBCOPTFLAGS += -g0 -fno-move-loop-invariants' | tee -a "$sdir"/usr/klibc/arch/
 				[ -e "$f" ] &&
 				case "${f##*/}" in
 				cat|true|false|insmod|ln|losetup|ls|mkdir|mknod|mount|mv|readlink|sh|uname);;
-				*)mv "$f" "${BDIR}/lib/$i/" && ln -s "/lib/$i/${f##*/}";;
+				*)mv "$f" "${BDIR}/lib/$i/" && ln -s "/lib/$i/${f##*/}" "$f";;
 				esac
 			done
 		done
