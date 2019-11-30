@@ -1930,7 +1930,7 @@ KLIBCOPTFLAGS += -g0 -fno-move-loop-invariants' | tee -a "$sdir"/usr/klibc/arch/
 	done
 	einfo "Sorting modules to new order"
 	mv "${mod}modules.alias" "$TMPDIR/" && bash "${SHARE}"/kpnp --sort "$TMPDIR/modules.alias" >"${mod}modules.alias" || die
-	use !blobs && [ -s "$TMPDIR/mod-blob_.lst" ] && (cd "$BDIR" && tar cf exclude.tar --remove-files $(cat "$TMPDIR/mod-blob_.lst"))
+	use !blobs && [ -s "$TMPDIR/mod-blob_.lst" ] && (cd "$BDIR" && tar cf "$TMPDIR/exclude.tar" --remove-files $(cat "$TMPDIR/mod-blob_.lst"))
 	if use compressed; then
 		einfo "Compressing lib.loopfs"
 		for i in "$l"/klibc*; do
@@ -2010,7 +2010,7 @@ slink /usr/$libdir lib 0755 0 0"
 		img="$f"
 	fi
 	initramfs "$img" $c
-	[ -e "$BDIR/exclude.tar" ] && (cd "$BDIR" && tar xf exclude.tar && rm exclude.tar)
+	[ -e "$TMPDIR/exclude.tar" ] && (cd "$BDIR" && tar xf "$TMPDIR/exclude.tar" && rm "$TMPDIR/exclude.tar")
 	mv "$TMPDIR/modules.alias" "${mod}"
 }
 
