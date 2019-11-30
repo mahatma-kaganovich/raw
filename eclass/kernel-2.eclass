@@ -307,6 +307,7 @@ post_make(){
 			n1=${n1%.ko}
 			n1=${n1//-/_}
 			$(tc-getNM) "$m"|grep -q 'firmware_request\|request_firmware\|release_firmware' && echo "$m" >>"$TMPDIR"/mod-blob1.lst
+			echo " $n1 $m" >>"$TMPDIR/names.lst"
 		;;
 		firmware:)
 			[ -e "firmware/$y" ] && continue
