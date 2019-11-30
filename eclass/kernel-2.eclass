@@ -306,7 +306,7 @@ post_make(){
 			n1=${y##*/}
 			n1=${n1%.ko}
 			n1=${n1//-/_}
-			$(tc-getNM) "$m"|grep -q 'firmware_request\|request_firmware\|release_firmware' && echo "$m" >>"$TMPDIR"/mod-blob.lst
+			$(tc-getNM) "$m"|grep -q 'firmware_request\|request_firmware\|release_firmware' && echo "$m" >>"$TMPDIR"/mod-blob1.lst
 		;;
 		firmware:)
 			[ -e "firmware/$y" ] && continue
@@ -329,6 +329,8 @@ post_make(){
 	sed -e 's/#.*$//g' <"$SHARE"/modules-standalone >>"$TMPDIR"/mod-exclude.m2y
 	sed -e 's/^.*: //' <"$TMPDIR"/mod-fw.lst | sort -u >"$TMPDIR"/fw-used1.lst
 	sed -e 's/: .*$//' <"$TMPDIR"/mod-fw.lst | sort -u >>"$TMPDIR"/mod-blob.lst
+	# unknown fw to absent
+	grep -Fvxf "$TMPDIR"/mod-blob{,1}.lst | sort -u >>"$TMPDIR"/mod-exclude.m2y
 
 	# add hidden firmware
 	for i in "$S" "$ROOT/lib"; do
@@ -350,9 +352,9 @@ post_make(){
 		grep -F "/${f#?}" "$TMPDIR"/fw-unknown.lst || echo "$f" >>"$x"
 	done
 
-	_sort_f "$TMPDIR"/{fw-used{2,3},mod-blob,depends}.lst
+	_sort_f "$TMPDIR"/{fw-used{2,3},mod-blob{,1},depends}.lst "$TMPDIR"/mod-exclude.m2y
 	sort -u "$TMPDIR"/fw-used{1,2,3}.lst >"$TMPDIR"/fw-used.lst
-	sed -e "s:^:lib/modules/${REAL_KV}/kernel/:" <"$TMPDIR"/mod-blob.lst >"$TMPDIR"/mod-blob_.lst
+	sort -u "$TMPDIR"/mod-blob{,1}.lst | sed -e "s:^:lib/modules/${REAL_KV}/kernel/:" >"$TMPDIR"/mod-blob_.lst
 
 	use blobs && einfo "Copy firmware"
 	while read i; do
