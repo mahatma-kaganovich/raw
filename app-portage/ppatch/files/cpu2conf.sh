@@ -157,8 +157,17 @@ split_cache(){
 	done
 	[ $nc = 0 ] && ! $first && nc=`_smp siblings 0 || _smp 'cpu cores' 0`
 	[ ${nc:-0} -lt 1 ] && nc=1
-	[ ${na:-0} -gt 1 ] && [ $na -le $nc ] && nc=$na
-	i=$[size/nc] && echo $i && [ "$i" != "$size" ]
+	[ ${na:-0} -lt 1 ] && na=$nc
+	# split to $nc, but round to $na, !=0
+	i=$[na/nc] || {
+		echo $size
+		return 1
+	}
+	[ "$i" = 0 ] && i=1
+	i=$[(size/na)*i]
+	[ "$i" = 0 ] && i=$size
+	echo $i
+	[ "$i" != "$size" ]
 }
 
 _replace(){
