@@ -307,15 +307,16 @@ fi
 #fi
 
 if [[ -e "$rcdir/lib.loopfs" ]]; then
-	if unsquashfs "$rcdir/lib.loopfs"; then
-		mv squashfs-root/* $rcdir/lib/
-		rmdir squashfs-root || die
-	else
+	# unsquashfs broken
+#	if unsquashfs "$rcdir/lib.loopfs"; then
+#		mv squashfs-root/* $rcdir/lib/
+#		rmdir squashfs-root || die
+#	else
 		mkdir $tmp/loop
 		mount "$rcdir/lib.loopfs" $tmp/loop -o loop || die "$rcdir/lib.loopfs mount"
 		cp $tmp/loop/* $rcdir/lib/ -Pr
 		umount $tmp/loop
-	fi
+#	fi
 fi
 
 clean
