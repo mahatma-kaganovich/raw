@@ -1874,7 +1874,7 @@ mksquash(){
 		grep -q "^CONFIG_${i%:*}=y$" "$S/.config" && c+=" -Xbcj ${i#*:}" && break
 	done;;
 	esac
-	mksquashfs "${@}" $c -b 1m -no-recovery -no-exports -always-use-fragments -no-progress ${p:+-processors $p} || die "mksquashfs failed"
+	mksquashfs "${@}" $c -b 1m -all-root -no-recovery -no-exports -always-use-fragments -no-progress ${p:+-processors $p} || die "mksquashfs failed"
 }
 
 LICENSE(){
@@ -1947,7 +1947,7 @@ KLIBCOPTFLAGS += -g0 -fno-move-loop-invariants' | tee -a "$sdir"/usr/klibc/arch/
 				esac
 			done
 		done
-		mksquash "${BDIR}/lib" lib.loopfs -all-root
+		mksquash "${BDIR}/lib" lib.loopfs
 		rm "$BDIR/lib/klibc"* -f 2>/dev/null
 		c=NONE
 	fi
