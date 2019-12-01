@@ -314,7 +314,7 @@ post_make(){
 			if use external-firmware && [ -e "/lib/firmware/$y" ]; then
 				echo "$m: $y" >>"$TMPDIR"/mod-fw.lst
 			else
-				echo "$m"
+				echo "$m" >>"$TMPDIR"/mod-exclude.m2y
 			fi
 		;;
 		depends:)
@@ -330,7 +330,7 @@ post_make(){
 		;;&
 		depends:|name:)[ -n "$d" -a -n "$n" ] && echo "$n$d " >>"$TMPDIR"/depends.lst;;
 		esac
-	done <"$TMPDIR"/modinfo.lst | sort -u >"$TMPDIR"/mod-exclude.m2y
+	done <"$TMPDIR"/modinfo.lst
 	while read i; do
 		for i in ${i%%#*}; do
 			[ -e "$i" ] && echo "$i"
@@ -1815,7 +1815,7 @@ sort_detects(){
 # add to $1 lists modules, dependend from listed $1 & $2 modules and add names to $2
 modules_deps(){
 	sed -e 's:^.*/::g' -e 's:\.ko$::g' <"$1" >>"$2"
-	sed -e 's:-:_:g' "$2"
+	sed -i -e 's:-:_:g' "$2"
 	_sort_f "$2"
 	while true; do
 		sed -e 's:^: :' -e 's:$: :' <"$2" | grep -Ff - "$TMPDIR"/depends.lst | sed -e 's: .*::g' >"$2"1
