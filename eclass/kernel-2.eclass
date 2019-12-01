@@ -1814,7 +1814,7 @@ modules_deps(){
 	sed -e 's:-:_:g' "$2"
 	_sort_f "$2"
 	while true; do
-		sed -e 's:^: :' -e 's:$: :' <"$2" | grep -f - "$TMPDIR"/depends.lst | sed -e 's: .*::g' >"$2"1
+		sed -e 's:^: :' -e 's:$: :' <"$2" | grep -Ff - "$TMPDIR"/depends.lst | sed -e 's: .*::g' >"$2"1
 		cat "$2" >>"$2"1
 		_sort_f "$2"1
 		cmp -s "$2"{1,} && break
