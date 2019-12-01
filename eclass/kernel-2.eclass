@@ -331,7 +331,11 @@ post_make(){
 		depends:|name:)[ -n "$d" -a -n "$n" ] && echo "$n$d " >>"$TMPDIR"/depends.lst;;
 		esac
 	done <"$TMPDIR"/modinfo.lst | sort -u >"$TMPDIR"/mod-exclude.m2y
-	sed -e 's/#.*$//g' <"$SHARE"/modules-standalone >>"$TMPDIR"/mod-exclude.m2y
+	while read i; do
+		for i in ${i%%#*}; do
+			[ -e "$i" ] && echo "$i"
+		done
+	done <"$SHARE"/modules-standalone >>"$TMPDIR"/mod-exclude.m2y
 	sed -e 's/^.*: //' <"$TMPDIR"/mod-fw.lst | sort -u >"$TMPDIR"/fw-used1.lst
 	sed -e 's/: .*$//' <"$TMPDIR"/mod-fw.lst | sort -u >>"$TMPDIR"/mod-blob.lst
 	# unknown fw to absent
