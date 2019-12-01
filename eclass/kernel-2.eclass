@@ -1810,20 +1810,19 @@ sort_detects(){
 
 # add to $1 lists modules, dependend from listed $1 & $2 modules and add names to $2
 modules_deps(){
-	local m="$1" l="$2"
-	sed -e 's:^.*/::g' -e 's:\.ko$::g' <"$m" >>"$l"
-	sed -e 's:-:_:g' "$l"
-	_sort_f "$l"
+	sed -e 's:^.*/::g' -e 's:\.ko$::g' <"$1" >>"$2"
+	sed -e 's:-:_:g' "$2"
+	_sort_f "$2"
 	while true; do
-		sed -e 's:^: :' -e 's:$: :' <"$l" | grep -f - "$TMPDIR"/depends.lst | sed -e 's: .*::g' >"${l}1"
-		cat "$l" >>"${l}1"
-		_sort_f "${l}1"
-		cmp -s "${l}"{1,} && break
-		mv "${l}"{1,}
+		sed -e 's:^: :' -e 's:$: :' <"$2" | grep -f - "$TMPDIR"/depends.lst | sed -e 's: .*::g' >"$2"1
+		cat "$l" >>"$2"1
+		_sort_f "$2"1
+		cmp -s "$2"{1,} && break
+		mv "$2"{1,}
 	done
-	rm "${l}1"
-	sed -e 's:^: :' -e 's:$: :' <"$l" | grep -Ff - "$TMPDIR/names.lst" | sed -e 's:^.* $::g' >>"$m"
-	_sort_f "$m"
+	rm "$2"1
+	sed -e 's:^: :' -e 's:$: :' <"$2" | grep -Ff - "$TMPDIR/names.lst" | sed -e 's:^.* $::g' >>"$1"
+	_sort_f "$1"
 }
 
 detects(){
@@ -1834,13 +1833,6 @@ detects(){
 	modules_deps "$TMPDIR"/{mod-exclude.m2y,unmodule.black}
 	modules_deps "$TMPDIR"/mod-blob_{,names}.lst
 	_sort_f "$TMPDIR"/unmodule.m2{y,n}
-	while true; do
-		sed -e 's:^: :' -e 's:$: :' -e 's:[-_]:[-_]:g' <"$ub" | grep -f - "$TMPDIR"/depends.lst | sed -e 's: .*::g' >"${ub}1"
-		cat "$ub" >>"${ub}1"
-		_sort_f "${ub}1"
-		cmp -s "${ub}"{1,} && break
-		mv "${ub}"{1,}
-	done
 	{
 		cat "${TMPDIR}/sys-modalias"
 		# rootfs
