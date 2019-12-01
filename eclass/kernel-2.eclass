@@ -1821,7 +1821,7 @@ modules_deps(){
 		mv "$2"{1,}
 	done
 	rm "$2"1
-	sed -e 's:^: :' -e 's:$: :' <"$2" | grep -Ff - "$TMPDIR/names.lst" | sed -e 's:^.* $::g' >>"$1"
+	sed -e 's:^: :' -e 's:$: :' <"$2" | grep -Ff - "$TMPDIR/names.lst" | sed -e 's:^.* ::g' >>"$1"
 	_sort_f "$1"
 }
 
