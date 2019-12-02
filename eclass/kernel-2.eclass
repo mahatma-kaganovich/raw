@@ -305,7 +305,7 @@ post_make(){
 	[ -s modules.builtin ] && rm $(cat modules.builtin) -f
 	# all modinfo (fast or split cmdline)
 	einfo "Preparing modules & firmware info"
-	#echo -n|tee "$TMPDIR"/{{mod-fw,depends,names,mod-blob{,1,_}}.lst,mod-exclude.m2y}
+	#echo -n|tee "$TMPDIR"/{{mod-fw,depends,names,mod-blob{,1,_,_names}}.lst,mod-exclude.m2y,unmodule.black}
 	if use paranoid; then
 		find . -name '*.ko'|while read m; do
 			modinfo "$m"
@@ -379,7 +379,7 @@ post_make(){
 		grep -F "/${f#?}" "$TMPDIR"/fw-unknown.lst || echo "$f" >>"$x"
 	done
 
-	_sort_f "$TMPDIR"/{fw-used{2,3},mod-blob{,1},depends,names}.lst "$TMPDIR"/mod-exclude.m2y
+	_sort_f "$TMPDIR"/{fw-used{2,3},mod-blob{,1},depends,names}.lst
 	sort -u "$TMPDIR"/fw-used{1,2,3}.lst >"$TMPDIR"/fw-used.lst
 	sort -u "$TMPDIR"/mod-blob{,1}.lst | sed -e "s:^:lib/modules/${REAL_KV}/kernel/:" >"$TMPDIR"/mod-blob_.lst
 	modules_deps "$TMPDIR"/{mod-exclude.m2y,unmodule.black}
@@ -504,9 +504,9 @@ kernel-2_src_compile() {
 		# else need repeat only if module with fw embeddeed by /etc/kernels/kernel.conf, don't care
 		if use embed-hardware; then
 			einfo "Reconfiguring kernel with hardware detect"
+			_cmdline "`modprobe_opt ''`"
 			cfg_ "###detect: $(sort_detects $(detects)|tee -a .detect-hardware)"
 			paranoid_y
-			_cmdline "`modprobe_opt ''`"
 			i=true
 		else
 			paranoid_y && i=true
@@ -1811,6 +1811,7 @@ modprobe_opt(){
 		done
 #		modprobe_d install "$i" >>"${TMPDIR}/unmodule.install"
 	done
+	modules_deps "$TMPDIR"/{mod-exclude.m2y,unmodule.black}
 }
 
 load_modinfo(){
