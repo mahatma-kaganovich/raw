@@ -2011,7 +2011,7 @@ slink /usr/$libdir lib 0755 0 0"
 		/usr/*)f="${f#/usr}";;
 		/bin/*)	use compressed && case "${f#/bin/}" in
 			cat|true|false|insmod|ln|losetup|ls|mkdir|mknod|mount|mv|readlink|sh|uname);;
-			*)echo slink "$f" "/lib/$f 0755 0 0";continue;;
+			*)echo slink "$f" "/lib$f 0755 0 0";continue;;
 			esac
 		esac
 		if [ -L "$i" ]; then
