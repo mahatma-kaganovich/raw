@@ -283,11 +283,29 @@ _sort_f(){
 
 }
 
+# add to $1 lists modules, dependend from listed $1 & $2 modules and add names to $2
+modules_deps(){
+	sed -e 's:^.*/::g' -e 's:\.ko$::g' <"$1" >>"$2"
+	sed -i -e 's:-:_:g' "$2"
+	_sort_f "$2"
+	while true; do
+		sed -e 's:^: :' -e 's:$: :' <"$2" | grep -Ff - "$TMPDIR"/depends.lst | sed -e 's: .*::g' >"$2"1
+		cat "$2" >>"$2"1
+		_sort_f "$2"1
+		cmp -s "$2"{1,} && break
+		mv "$2"{1,}
+	done
+	rm "$2"1
+	sed -e 's:^: :' -e 's:$: :' <"$2" | grep -Ff - "$TMPDIR/names.lst" | sed -e 's:^.* ::g' >>"$1"
+	_sort_f "$1"
+}
+
 post_make(){
 	local i x y m f n= d= n1=
 	[ -s modules.builtin ] && rm $(cat modules.builtin) -f
 	# all modinfo (fast or split cmdline)
 	einfo "Preparing modules & firmware info"
+	#echo -n|tee "$TMPDIR"/{{mod-fw,depends,names,mod-blob{,1,_}}.lst,mod-exclude.m2y}
 	if use paranoid; then
 		find . -name '*.ko'|while read m; do
 			modinfo "$m"
@@ -364,6 +382,8 @@ post_make(){
 	_sort_f "$TMPDIR"/{fw-used{2,3},mod-blob{,1},depends,names}.lst "$TMPDIR"/mod-exclude.m2y
 	sort -u "$TMPDIR"/fw-used{1,2,3}.lst >"$TMPDIR"/fw-used.lst
 	sort -u "$TMPDIR"/mod-blob{,1}.lst | sed -e "s:^:lib/modules/${REAL_KV}/kernel/:" >"$TMPDIR"/mod-blob_.lst
+	modules_deps "$TMPDIR"/{mod-exclude.m2y,unmodule.black}
+	modules_deps "$TMPDIR"/mod-blob_{,names}.lst
 
 	use blobs && einfo "Copy firmware"
 	while read i; do
@@ -1812,30 +1832,11 @@ sort_detects(){
 	echo "$p"
 }
 
-# add to $1 lists modules, dependend from listed $1 & $2 modules and add names to $2
-modules_deps(){
-	sed -e 's:^.*/::g' -e 's:\.ko$::g' <"$1" >>"$2"
-	sed -i -e 's:-:_:g' "$2"
-	_sort_f "$2"
-	while true; do
-		sed -e 's:^: :' -e 's:$: :' <"$2" | grep -Ff - "$TMPDIR"/depends.lst | sed -e 's: .*::g' >"$2"1
-		cat "$2" >>"$2"1
-		_sort_f "$2"1
-		cmp -s "$2"{1,} && break
-		mv "$2"{1,}
-	done
-	rm "$2"1
-	sed -e 's:^: :' -e 's:$: :' <"$2" | grep -Ff - "$TMPDIR/names.lst" | sed -e 's:^.* ::g' >>"$1"
-	_sort_f "$1"
-}
-
 detects(){
 	local i a b c d
 	load_modinfo
 	sort -u "${WORKDIR}"/modules.pnp "${TMPDIR}"/overlay-rd/etc/modflags/* >>"${WORKDIR}"/modules.pnp_
 	sort -u "${WORKDIR}"/modules.pnp0 "${SHARE}"/etc/modflags/* >>"${WORKDIR}"/modules.pnp0_
-	modules_deps "$TMPDIR"/{mod-exclude.m2y,unmodule.black}
-	modules_deps "$TMPDIR"/mod-blob_{,names}.lst
 	_sort_f "$TMPDIR"/unmodule.m2{y,n}
 	{
 		cat "${TMPDIR}/sys-modalias"
