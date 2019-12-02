@@ -305,7 +305,7 @@ post_make(){
 	[ -s modules.builtin ] && rm $(cat modules.builtin) -f
 	# all modinfo (fast or split cmdline)
 	einfo "Preparing modules & firmware info"
-	#echo -n|tee "$TMPDIR"/{{mod-fw,depends,names,mod-blob{,1,_,_names}}.lst,mod-exclude.m2y,unmodule.black}
+	#echo -n|tee "$TMPDIR"/{{mod-fw,depends,names,mod-blob{,-names}}.lst,mod-exclude.m2y,unmodule.black}
 	if use paranoid; then
 		find . -name '*.ko'|while read m; do
 			modinfo "$m"
@@ -324,7 +324,7 @@ post_make(){
 			n1=${y##*/}
 			n1=${n1%.ko}
 			n1=${n1//-/_}
-			$(tc-getNM) "$m"|grep -q 'firmware_request\|request_firmware\|release_firmware' && echo "$m" >>"$TMPDIR"/mod-blob1.lst
+			$(tc-getNM) "$m"|grep -q 'firmware_request\|request_firmware\|release_firmware' && echo "$m" >>"$TMPDIR"/mod-blob.lst
 			echo " $n1 $m" >>"$TMPDIR/names.lst"
 		;;
 		firmware:)
@@ -355,9 +355,7 @@ post_make(){
 		done
 	done <"$SHARE"/modules-standalone >>"$TMPDIR"/mod-exclude.m2y
 	sed -e 's/^.*: //' <"$TMPDIR"/mod-fw.lst | sort -u >"$TMPDIR"/fw-used1.lst
-	sed -e 's/: .*$//' <"$TMPDIR"/mod-fw.lst | sort -u >>"$TMPDIR"/mod-blob.lst
-	# unknown fw to absent
-	grep -Fvxf "$TMPDIR"/mod-blob{,1}.lst | sort -u >>"$TMPDIR"/mod-exclude.m2y
+	sed -e 's/: .*$//' <"$TMPDIR"/mod-fw.lst >>"$TMPDIR"/mod-blob.lst
 
 	# add hidden firmware
 	for i in "$S" "$ROOT/lib"; do
@@ -379,11 +377,12 @@ post_make(){
 		grep -F "/${f#?}" "$TMPDIR"/fw-unknown.lst || echo "$f" >>"$x"
 	done
 
-	_sort_f "$TMPDIR"/{fw-used{2,3},mod-blob{,1},depends,names}.lst
+	_sort_f "$TMPDIR"/{fw-used{2,3},depends,names}.lst
 	sort -u "$TMPDIR"/fw-used{1,2,3}.lst >"$TMPDIR"/fw-used.lst
-	sort -u "$TMPDIR"/mod-blob{,1}.lst | sed -e "s:^:lib/modules/${REAL_KV}/kernel/:" >"$TMPDIR"/mod-blob_.lst
+	modules_deps "$TMPDIR"/mod-blob{,-names}.lst
+	cat "$TMPDIR"/mod-blob.lst >>"$TMPDIR"/mod-exclude.m2y
+	sed -e "s:^:lib/modules/${REAL_KV}/kernel/:" <"$TMPDIR"/mod-blob.lst >"$TMPDIR"/mod-blob_.lst
 	modules_deps "$TMPDIR"/{mod-exclude.m2y,unmodule.black}
-	modules_deps "$TMPDIR"/mod-blob_{,names}.lst
 
 	use blobs && einfo "Copy firmware"
 	while read i; do
@@ -448,7 +447,7 @@ _genpnprd(){
 	use blobs || set -- --CLEAN @"$TMPDIR"/mod-blob_.lst "${@}"
 	use thin && set -- --THIN - "${@}"
 #	MAKEOPTS="$MAKEOPTS" bash -- "${SHARE}/genpnprd" "${@}" --IMAGE "${S}/initrd-${REAL_KV}.img"
-	MAKEOPTS="$MAKEOPTS" /usr/bin/genpnprd "${@}" 
+	MAKEOPTS="$MAKEOPTS" /usr/bin/genpnprd "${@}"
 }
 
 kernel-2_src_compile() {
@@ -1750,9 +1749,9 @@ echo "${aflags# }"
 
 module_reconf(){
 	local i c
-	sed -e 's:^.*/::g' -e 's:\.ko$::g' | while read i; do
+	sed -e 's:^.*/::g' -e 's:\.ko$::g' -e 's:-:_:g' | while read i; do
 		grep -qFx "$i" "${TMPDIR}/unmodule.$1" && continue
-		grep -Rh "^\s*obj\-\$[(]CONFIG_.*\s*\+=.*\s${i//[_-]/[_-]}\.o" "${TMPDIR}"/unmodule.tmp|sed -e 's:).*$::g' -e 's:^.*(CONFIG_::'|sort -u|while read c; do
+		grep -Rh "^\s*obj\-\$[(]CONFIG_.*\s*\+=.*\s${i//_/[_-]}\.o" "${TMPDIR}"/unmodule.tmp|sed -e 's:).*$::g' -e 's:^.*(CONFIG_::'|sort -u|while read c; do
 			$1 "$c" "$i" && echo "$i" >>"${TMPDIR}/unmodule.$1"
 		done
 	done
@@ -1866,7 +1865,7 @@ m2y(){
 	case "$1" in
 	ACPI_VIDEO)m2y VIDEO_OUTPUT_CONTROL;;
 	esac
-	if grep -qFx "${2//-/_}" "${TMPDIR}/unmodule.black"; then
+	if grep -qFx "$2" "${TMPDIR}/unmodule.black"; then
 		echo -n " +$1"
 		return 1
 	else
