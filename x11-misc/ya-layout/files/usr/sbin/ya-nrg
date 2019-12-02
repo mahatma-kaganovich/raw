@@ -181,7 +181,7 @@ _start_dhcp(){
 # iwd blacklist easy to block my phone, when I off/on ap,
 # so one-touch restart is required swiss knife
 wifi_restart(){
-	local i j x
+	local i j x p
 	# rt: network daemons must be hot & not swappable
 	chrt -par 1 $$
 	_iw_list
@@ -200,16 +200,25 @@ wifi_restart(){
 	[ -n "$on$off$off_" ] && {
 		wifi_sync
 		/usr/libexec/iwd &>/dev/null &
+		p=$!
 		# on 1 of my card iwd scan on start, on other - no
 		_iw_cfg
 		_start_dhcp $on $off $off_ >/dev/null &
-		$disable_periodic_scan && for j in 0 .1 .1 .5 1 3 0; do
+		$disable_periodic_scan && for j in 0 .1 .1 .1 .1 .1 .1 .1 .1 .1 .1 1 3 0; do
 			# in most cases 1 scan / exclude first power-on
 			_iw_list
 			x=
 			[ -n "$off_" ] && {
 				# "x" - workaround bug [0.21]
-				iwctl version x || break
+				iwctl version x || {
+					# waiting is migrated
+					(pgrep -x iwd | grep -qx $p) || ! which pgrep || break
+					echo quit|iwctl ||
+					{
+						sleep $j
+						continue
+					}
+				}
 				_iw_list
 			}
 			[ -n "$on$off_" ] && {
