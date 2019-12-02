@@ -1940,7 +1940,8 @@ KLIBCOPTFLAGS += -g0 -fno-move-loop-invariants' | tee -a "$sdir"/usr/klibc/arch/
 	powerpc:*)i=ppc32;;
 	esac
 	[ -e "$sdir/usr/klibc/arch/$i" ] || ewarn "Kernel arch: $i, klibc has: $(cd "$sdir/usr/klibc/arch" && echo *)"
-	KERNEL_ARCH="$i" kmake -C "$sdir" KLIBCKERNELSRC="${S}"/usr INSTALLDIR=/ INSTALLROOT="$kb" all install
+	#KERNEL_ARCH="$i"
+	kmake -C "$sdir" KLIBCKERNELSRC="${S}"/usr INSTALLDIR=/ INSTALLROOT="$kb" KLIBCARCH="$i" all install
 	klcc="$kb/usr/bin/klcc"
 	[ -e "$klcc" ] || klcc="$kb/bin/klcc"
 	sed -i -e 's%^\(\$prefix = \)"[^"]*"%\1`readlink -f $0`;$prefix=~s/(?:\\/usr)?\\/bin\\/klcc\\s*$//s%' "$klcc" || die
@@ -1966,7 +1967,7 @@ KLIBCOPTFLAGS += -g0 -fno-move-loop-invariants' | tee -a "$sdir"/usr/klibc/arch/
 			for f in "$k/$i"/*; do
 				[ -e "$f" ] &&
 				case "${f##*/}" in
-				cat|true|false|insmod|ln|losetup|ls|mkdir|mknod|mount|mv|readlink|sh|uname);;
+				cat|true|false|insmod|ln|losetup|ls|mkdir|mknod|mount|mv|nuke|readlink|sh|uname);;
 				*)cp -a "$f" "${BDIR}/lib/$i/";;
 				esac
 			done
@@ -2013,7 +2014,7 @@ slink /usr/$libdir lib 0755 0 0"
 		/lib*/*)use compressed && continue;;
 		/usr/*)f="${f#/usr}";;
 		/bin/*)	use compressed && case "${f#/bin/}" in
-			cat|true|false|insmod|ln|losetup|ls|mkdir|mknod|mount|mv|readlink|sh|uname);;
+			cat|true|false|insmod|ln|losetup|ls|mkdir|mknod|mount|mv|nuke|readlink|sh|uname);;
 			*)echo slink "$f" "/lib$f 0755 0 0";continue;;
 			esac
 		esac
