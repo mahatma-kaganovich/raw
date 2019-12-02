@@ -305,7 +305,7 @@ post_make(){
 	[ -s modules.builtin ] && rm $(cat modules.builtin) -f
 	# all modinfo (fast or split cmdline)
 	einfo "Preparing modules & firmware info"
-	#echo -n|tee "$TMPDIR"/{{mod-fw,depends,names,mod-blob{,-names}}.lst,mod-exclude.m2y,unmodule.black}
+	#echo -n|tee "$TMPDIR"/{{mod-fw,depends,names,mod-blob{,1,-names}}.lst,mod-exclude.m2y,unmodule.black}
 	if use paranoid; then
 		find . -name '*.ko'|while read m; do
 			modinfo "$m"
@@ -324,7 +324,7 @@ post_make(){
 			n1=${y##*/}
 			n1=${n1%.ko}
 			n1=${n1//-/_}
-			$(tc-getNM) "$m"|grep -q 'firmware_request\|request_firmware\|release_firmware' && echo "$m" >>"$TMPDIR"/mod-blob.lst
+			$(tc-getNM) "$m"|grep -q 'firmware_request\|request_firmware\|release_firmware' && echo "$m" >>"$TMPDIR"/mod-blob1.lst
 			echo " $n1 $m" >>"$TMPDIR/names.lst"
 		;;
 		firmware:)
@@ -356,8 +356,10 @@ post_make(){
 	done <"$SHARE"/modules-standalone >>"$TMPDIR"/mod-exclude.m2y
 	sed -e 's/^.*: //' <"$TMPDIR"/mod-fw.lst | sort -u >"$TMPDIR"/fw-used1.lst
 	sed -e 's/: .*$//' <"$TMPDIR"/mod-fw.lst >>"$TMPDIR"/mod-blob.lst
+	grep -Fvxf "$TMPDIR"/mod-blob{,1}.lst >>"$TMPDIR"/mod-exclude.m2y
+	cat "$TMPDIR"/mod-blob1.lst >>"$TMPDIR"/mod-blob.lst
 
-	# add hidden firmware
+	einfo "Search hidden firmware"
 	for i in "$S" "$ROOT/lib"; do
 		find "$i/firmware/" -type f | while read f;do
 			f="${f#$i/firmware/}"
@@ -371,16 +373,17 @@ post_make(){
 	grep -RFlf "$TMPDIR"/fw-unknown.lst --include "*.[ch]"|while read f; do
 		[ -e "${f%?}o" ] || (use paranoid && ([[ "$f" == *include* ]] || [[ "$f" == *h && -n "`find "${f%/*}" -name "*.o"`" ]] ) ) && grep -Fohf "$TMPDIR"/fw-unknown.lst "$f"
 	done | while read f; do
-		[ -e "${f%?}ko" ] && x=3 && echo "${f%?}ko" >>"$TMPDIR"/mod-blob.lst || x=2
+		i="${f%?}ko"
+		[ -e "$m" ] && x=3 && (echo "$m" | tee -a "$TMPDIR"/mod-blob{,2}.lst) || x=2
 		x="$TMPDIR"/fw-used$x.lst
 		[[ "$f" == */* ]] && echo "$f" >>"$x" && continue
 		grep -F "/${f#?}" "$TMPDIR"/fw-unknown.lst || echo "$f" >>"$x"
 	done
 
+	einfo "Sort data"
 	_sort_f "$TMPDIR"/{fw-used{2,3},depends,names}.lst
 	sort -u "$TMPDIR"/fw-used{1,2,3}.lst >"$TMPDIR"/fw-used.lst
 	modules_deps "$TMPDIR"/mod-blob{,-names}.lst
-	cat "$TMPDIR"/mod-blob.lst >>"$TMPDIR"/mod-exclude.m2y
 	sed -e "s:^:lib/modules/${REAL_KV}/kernel/:" <"$TMPDIR"/mod-blob.lst >"$TMPDIR"/mod-blob_.lst
 	modules_deps "$TMPDIR"/{mod-exclude.m2y,unmodule.black}
 
