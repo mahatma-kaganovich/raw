@@ -140,7 +140,7 @@ max_unrolled(){
 
 split_cache(){
 	# /proc/cpuinfo not enough: z8700 have 2x1024 l2 caches on the top
-	local size="$1" first="${2:-false}" i nc=0 na= cpus=
+	local size="$1" first="${2:-false}" i nc=0 na= cpus= x=
 	# gcc numeration differ from /sys, check by size & first/last
 	for i in /sys/devices/system/cpu/cpu0/cache/index*; do
 		[ -e "$i" ] || continue
@@ -150,24 +150,18 @@ split_cache(){
 		$first && break
 	done
 	for i in ${cpus//,/ }; do
-		[[ "$i" != *-* ]] && nc=$[nc+1] ||
-		for i in $(seq ${i//-/ }); do
-			nc=$[nc+1]
-		done
+		nc=$[nc+${i#*-}+1-${i%-*}]
 	done
 	[ $nc = 0 ] && ! $first && nc=`_smp siblings 0 || _smp 'cpu cores' 0`
 	[ ${nc:-0} -lt 1 ] && nc=1
 	[ ${na:-0} -lt 1 ] && na=$nc
 	# split to $nc, but round to $na, !=0
-	i=$[na/nc] || {
-		echo $size
-		return 1
-	}
-	[ "$i" = 0 ] && i=1
-	i=$[(size/na)*i]
-	[ "$i" = 0 ] && i=$size
-	echo $i
-	[ "$i" != "$size" ]
+	x=$[na/nc]
+	[ "$x" = 0 ] && x=1
+	x=$[(size/na)*x]
+	[ "${x:-0}" = 0 ] && x=$size
+	echo $x
+	[ "$x" != "$size" ]
 }
 
 _replace(){
