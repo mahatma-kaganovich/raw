@@ -118,7 +118,7 @@ src_install() {
 	if use rules ; then
 		emake DESTDIR="${D}" install-full
 	else
-		emake DESTDIR="${D}" install-conf
+		emake DESTDIR="${D}" install install-conf
 	fi
 
 #	insinto "/etc/${PN}"
