@@ -214,12 +214,12 @@ kernel-2_src_configure() {
 	: ${KERNEL_UTILS_CFLAGS:="${CFLAGS}"}
 
 	# ???
-#	: ${KERNEL_GENKERNEL_LDFLAGS:="${LDFLAGS}"}
+#	: ${KERNEL_UTILS_LDFLAGS:="${LDFLAGS}"}
 	local i
-	[[ -z "$KERNEL_GENKERNEL_LDFLAGS" ]] && for i in $LDFLAGS; do
-		[[ "$i" == -Wl,* ]] && KERNEL_GENKERNEL_LDFLAGS+=" $i"
+	[[ -z "$KERNEL_UTILS_LDFLAGS" ]] && for i in $LDFLAGS; do
+		[[ "$i" == -Wl,* ]] && KERNEL_UTILS_LDFLAGS+=" $i"
 	done
-	KERNEL_GENKERNEL_LDFLAGS="$(flags_nosp "$KERNEL_GENKERNEL_LDFLAGS")"
+	KERNEL_UTILS_LDFLAGS="$(flags_nosp "$KERNEL_UTILS_LDFLAGS")"
 
 	local cflags="${KERNEL_CFLAGS}" aflags="${KERNEL_ASFLAGS}" ldflags="${KERNEL_LDFLAGS}"
 	if use custom-cflags; then
@@ -776,6 +776,7 @@ unmcode(){
 }
 
 run_genkernel(){
+	local i v c="$UROOT/usr/share/genkernel/gen_cmdline.sh"
 	use paranoid && mkdir "${TMPDIR}/genkernel-cache"
 	[[ ! -e "${TMPDIR}/genkernel-cache" ]] && cp "${UROOT}/var/cache/genkernel" "${TMPDIR}/genkernel-cache" -r
 	if use netboot; then
@@ -796,12 +797,17 @@ run_genkernel(){
 	ls "$UROOT/usr/share/genkernel/arch/$a/*busy*" >/dev/null 2>&1 || opt+=" --busybox-config=${TMPDIR}/busy-config"
 	# e2fsprogs & mdraid need more crosscompile info
 	unmcode y n
-	i=
-	grep -sq arch-override= /usr/share/genkernel/gen_cmdline.sh && i="--arch-override=${a} --utils-arch=${a}"
+	grep -sq arch-override= "$c" && set -- "${@}" --arch-override="$a" --utils-arch="$a"
+	for i in cc as ld cxx ar cpp nm objcopy objdump ranlib; do
+		grep -sq utils-$i= "$c" && set -- "${@}" --utils-$i="$(tc-get${i^^})"
+	done
+	for i in cflags ldflags cxxflags cppflags; do
+		grep -sq utils-$i= "$c" && v="KERNEL_UTILS_${i^^}" && set -- "${@}" --utils-$i="${!v}"
+	done
 	TEMPDIR="$TMPDIR" \
 	ac_cv_target="${CTARGET:-${CHOST}}" ac_cv_build="${CBUILD}" ac_cv_host="${CHOST:-${CTARGET}}" \
-	CFLAGS="${KERNEL_UTILS_CFLAGS}" LDFLAGS="${KERNEL_GENKERNEL_LDFLAGS}" _run_env "${S}/genkernel" $opt\
-		--config=/usr/share/genpnprd/genkernel.conf $i "${@}" ${KERNEL_GENKERNEL} || {
+	CFLAGS="${KERNEL_UTILS_CFLAGS}" LDFLAGS="${KERNEL_UTILS_LDFLAGS}" _run_env "${S}/genkernel" $opt\
+		--config=/usr/share/genpnprd/genkernel.conf "${@}" ${KERNEL_GENKERNEL} || {
 			unmcode n y
 			die "genkernel failed"
 	}

@@ -58,6 +58,9 @@ CF NET_SCH_PSP_HARDCHAIN
 ## for useflag "custom-arch", very experimental
 #KERNEL_CFLAGS="-march=native"
 
+## busybox, etc (size vs. system-wide)
+#KERNEL_UTILS_CFLAGS="-march=native -Os -pipe -fomit-frame-pointer -fno-asynchronous-unwind-tables -fno-move-loop-invariants"
+
 ## user-mode
 #KERNEL_ARCH="um"
 
