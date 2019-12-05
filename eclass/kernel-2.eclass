@@ -801,9 +801,10 @@ run_genkernel(){
 	for i in cc as ld cxx ar cpp nm objcopy objdump ranlib; do
 		grep -sq utils-$i= "$c" && set -- "${@}" --utils-$i="$(tc-get${i^^})"
 	done
-	for i in cflags ldflags cxxflags cppflags; do
-		grep -sq utils-$i= "$c" && v="KERNEL_UTILS_${i^^}" && set -- "${@}" --utils-$i="${!v}"
-	done
+	# genkernel bug: --param=...
+#	for i in cflags ldflags cxxflags cppflags; do
+#		grep -sq utils-$i= "$c" && v="KERNEL_UTILS_${i^^}" && set -- "${@}" --utils-$i="${!v}"
+#	done
 	TEMPDIR="$TMPDIR" \
 	ac_cv_target="${CTARGET:-${CHOST}}" ac_cv_build="${CBUILD}" ac_cv_host="${CHOST:-${CTARGET}}" \
 	CFLAGS="${KERNEL_UTILS_CFLAGS}" LDFLAGS="${KERNEL_UTILS_LDFLAGS}" _run_env "${S}/genkernel" $opt\
