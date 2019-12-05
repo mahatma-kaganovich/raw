@@ -106,7 +106,7 @@ filterflag2(){
 }
 
 gccve(){
-	[[ "`LANG=C gcc -dumpversion`" == $1* ]]
+	[[ "`LANG=C ${CC:-gcc} -dumpversion`" == $1* ]]
 }
 
 filter86_32(){
@@ -209,11 +209,13 @@ gmp)filterflag -fno-move-loop-invariants;;&
 mjpegtools|gmp|mpg123)filterflag -floop-nest-optimize;;&
 bcrypt)_fLTO && appendflag -fno-loop-nest-optimize;;&
 bash)filterflag -fipa-pta;;&
-ceph)_isflag '-floop-*' '-fgraphite*' && { # prefer graphite vs. lto
+ceph)
+#	_isflag -floop-nest-optimize && 
+	{ # prefer graphite vs. lto
 	# handle lto <-> no-lto transition
 	if filterflag '-flto*' '-*-lto-*' -fuse-linker-plugin; then
 		appendflag1 -fPIC
-	elif gcc -v 2>&1 |grep -q enable-lto; then
+	elif ${CC:-gcc} -v 2>&1 |grep -q enable-lto; then
 		appendflag1 -fno-lto
 	fi
 }
