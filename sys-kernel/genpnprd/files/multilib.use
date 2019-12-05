@@ -10,7 +10,7 @@ case "$abis" in
 *" amd64 "*)
  (use multilib || use multitarget) &&
   a="64BIT IA32_EMULATION X86_X32" ||
-  a="64BIT -IA32_EMULATION"
+  a="64BIT -IA32_EMULATION -X86_X32"
 ;;
 #*" x86 "*)a="-64BIT";;
 *)a='';;
