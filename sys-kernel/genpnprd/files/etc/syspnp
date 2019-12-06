@@ -42,7 +42,11 @@ single(){
 }
 
 gmsg(){
-	echo "ok $*"
+	echo "> $*"
+}
+
+bmsg(){
+	echo "! $*" >&2
 }
 
 mod(){
@@ -96,49 +100,29 @@ mod(){
 }
 
 mod_fast(){
+    # subst ${m//-/_} related to bb version
     mod(){
-	local m m1 m2 r p=
-	REORDER=continue
-	echo -n >/later
+	local m f= p=
 	for m in "${@}"; do
-		[[ -e "/sys/module/$m" ]] && continue
-		while [ -z "${m##*-*}" ]; do
-			m="${m%%-*}_${m#*-}"
-		done
+		m=${m//-/_}
 		[[ -e "/sys/module/$m" ]] && continue
 		modalias "$m" || continue
-		r=false
-		for m1 in $ALIAS ; do
-			m="${m1##*/}"
+		for m in $ALIAS ; do
+			[[ "$m" == "$f" ]] && continue
+			f="$m"
+			m="${m##*/}"
 			m="${m%.ko}"
-			while [ -z "${m##*-*}" ]; do
-				m="${m%%-*}_${m#*-}"
-			done
+			m=${m//-/_}
 			[[ -e "/sys/module/$m" ]] && continue
-			modparam $m1
-			if [[ "$INSMOD" == "$REORDER" ]]; then
-				r=true
-			elif ! [[ -e "$m1" ]]; then
-#				pnpass=1
-				true
-			elif $r; then
-				echo "$m $m1 $PARAM" >>/later
-			else
-				$p
-				$cmd_quiet || echo -ne "\033[0G\033[0K$LCOUNT	$m1 $PARAM"
-				insmod "$m1" $PARAM &
-				p="wait $!"
-			fi
-		done 2>/dev/null
+			modparam $f
+			$INSMOD
+			[[ -e "$f" ]] || break
+			$p
+			$cmd_quiet || echo -ne "\033[0G\033[0K$LCOUNT	$m $PARAM "
+			insmod "$f" "$PARAM" &
+			p="wait $!"
+		done
 	done
-	while read m m1; do
-		[[ -e "/sys/module/$m" ]] && continue
-		$p
-		$cmd_quiet || echo -ne "\033[0G\033[0K$LCOUNT	$m1"
-		insmod $m1 &
-		p="wait $!"
-	done </later 2>/dev/null
-	unlink /later
 	$p
     }
 }
@@ -208,7 +192,7 @@ refresh(){
 
 count(){
 	[[ "${LCOUNT#????????????????}" == "${LCOUNT}" ]] && return 0
-	bad_msg "Deadloop?"
+	bmsg "Deadloop?"
 	return 1
 }
 
@@ -724,8 +708,8 @@ findnfsmount() {
 	ip_config ::::::dhcp
 	if [[ -n "`ifconfig`" ]]; then
 		if [[ -z "$NFSROOT" ]]; then
-			bad_msg "The DHCP Server did not send a valid root-path."
-			bad_msg "Please check your DHCP setup, or provide a nfsroot=<...> parameter."
+			bmsg "The DHCP Server did not send a valid root-path."
+			bmsg "Please check your DHCP setup, or provide a nfsroot=<...> parameter."
 		else
 			local o="ro,nolock,rsize=1024,wsize=1024,$cmd_real_rootflags" m="$NEW_ROOT" unc
 			[[ "$CDROOT" != '0' ]] && m="$m/mnt/cdrom"
@@ -748,7 +732,7 @@ findnfsmount() {
 				[[ "$NFSLIKE_FS" == nfs ]] && break
 			    done
 			done
-			bad_msg "$NFSLIKE_FS Mounting failed. Is the path correct ?"
+			bmsg "$NFSLIKE_FS Mounting failed. Is the path correct ?"
 		fi
 	fi
 	return 1
@@ -1194,8 +1178,8 @@ syspnp(){
 		[[ "${cmd_loop:-true}" == true ]] && REAL_ROOT="$DETECTED_ROOT"
 		( [[ "$cmd_loop" != true ]] || [[ -z "$DETECTED_ROOTS" ]] ) && [[ -z "$REAL_ROOT" ]] && set_root_loop "$DETECTED_LOOP"
 		if [[ -z "$REAL_ROOT" ]]; then
-			[[ -n "$DETECTED_ROOTS" ]] && bad_msg "Detected possible root devices: $DETECTED_ROOTS"
-			[[ -n "$DETECTED_LOOPS" ]] && bad_msg "Detected loopbacks: $DETECTED_LOOPS"
+			[[ -n "$DETECTED_ROOTS" ]] && bmsg "Detected possible root devices: $DETECTED_ROOTS"
+			[[ -n "$DETECTED_LOOPS" ]] && bmsg "Detected loopbacks: $DETECTED_LOOPS"
 		fi
 	fi
 
@@ -1239,12 +1223,6 @@ run_shell(){
 if [[ -z "$KV"  ]] && ! [[ -e /proc/version ]]; then
 NEW_ROOT="/newroot"
 CDROOT=0
-good_msg(){
-gmsg "${@}"
-}
-bad_msg(){
-echo "! $*"
-}
 mount -t proc proc /proc
 /bin/busybox --install -s
 mount -t sysfs sys /sys
@@ -1279,7 +1257,7 @@ while true; do
 		umount /proc /sys
 		exec /sbin/switch_root -c /dev/console "$NEW_ROOT" "$cmd_real_init" "$cmd_init_opts"
 	else
-		bad_msg "failed to mount root"
+		bmsg "failed to mount root"
 		while true; do
 			cat /lib/keymaps/keymapList 2>/dev/null
 			echo -n "Enter root partition, keymap or 'shell':"
@@ -1289,7 +1267,7 @@ while true; do
 		set_root_loop "$REAL_ROOT"
 		[[ "$REAL_ROOT" == shell ]] || continue
 	fi
-	bad_msg "failed to switch root"
+	bmsg "failed to switch root"
 	run_shell
 done
 fi
