@@ -359,27 +359,6 @@ post_make(){
 	grep -Fvxf "$TMPDIR"/mod-blob{,1}.lst >>"$TMPDIR"/mod-exclude.m2y
 	cat "$TMPDIR"/mod-blob1.lst >>"$TMPDIR"/mod-blob.lst
 
-	einfo "Search hidden firmware"
-	for i in "$S" "$ROOT/lib"; do
-		find "$i/firmware/" -type f | while read f;do
-			f="${f#$i/firmware/}"
-			case "$f" in
-			*/.*|.*|*.[ch]|*Makefile|*cmake|LICENCE*|LICENSE*|*README|WHENCE|GPL-?|GPL|*/GPL|*configure)continue;;
-			esac
-			echo "\"$f\""
-		done
-	done | sort -u >"$TMPDIR"/fw-all.lst
-	sort "$TMPDIR"/fw-{all,used1}.lst | uniq -u >"$TMPDIR"/fw-unknown.lst
-	grep -RFlf "$TMPDIR"/fw-unknown.lst --include "*.[ch]"|while read f; do
-		[ -e "${f%?}o" ] || (use paranoid && ([[ "$f" == *include* ]] || [[ "$f" == *h && -n "`find "${f%/*}" -name "*.o"`" ]] ) ) && grep -Fohf "$TMPDIR"/fw-unknown.lst "$f"
-	done | while read f; do
-		i="${f%?}ko"
-		[ -e "$m" ] && x=3 && (echo "$m" | tee -a "$TMPDIR"/mod-blob{,2}.lst) || x=2
-		x="$TMPDIR"/fw-used$x.lst
-		[[ "$f" == */* ]] && echo "$f" >>"$x" && continue
-		grep -F "/${f#?}" "$TMPDIR"/fw-unknown.lst || echo "$f" >>"$x"
-	done
-
 	einfo "Sort data"
 	_sort_f "$TMPDIR"/{fw-used{2,3},depends,names}.lst
 	sort -u "$TMPDIR"/fw-used{1,2,3}.lst >"$TMPDIR"/fw-used.lst
