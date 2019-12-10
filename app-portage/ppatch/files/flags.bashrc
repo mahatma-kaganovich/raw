@@ -187,6 +187,7 @@ gcc)
 	_iuse graphite || filterflag -floop-nest-optimize
 	_iuse openmp || filterflag -fopenmp -fopenmp-simd -fopenacc -fgnu-tm
 ;;&
+gcc|glibc)filterflag -fopenmp -fopenmp-simd -fopenacc -fgnu-tm;;&
 ncurses-compat|ncurses)_fLTO && export ac_cv_func_dlsym=no ac_cv_lib_dl_dlsym=yes;;&
 inkscape|libreoffice|mariadb|nodejs|llvm|clang)filterflag -ffat-lto-objects;;&
 mariadb)filterflag -fno-asynchronous-unwind-tables;;&
