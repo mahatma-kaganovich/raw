@@ -339,6 +339,18 @@ save(){
 	save1 0 /sys/kernel/rcu_expedited
 	save1 2 /sys/block/*/queue/rq_affinity
 	save1 1 /sys/class/powercap/intel-rapl*/enabled
+	case "$(grep -c1 ^vendor_id /proc/cpuinfo)" in
+	*GenuineIntel)
+		# disable hw prefetching if equal
+		i=0
+		x1=
+		for x in `rdmsr -a 0x1a4`; do
+			[ "$x" != "${x1:=$x}" ] && i=0 && break
+			i=$[i+1]
+		done
+		[ "$i" != 0 ] && x=$[x|15] && [ "$x" != "$x1" ] && wrmsr -a 0x1a4 $x && echo "wrmsr -a 0x1a4 $x1"
+	;;
+	esac
 	# must be ordered
 #	save1 passive /sys/devices/system/cpu/intel_pstate/status
 	for i in /sys/devices/system/cpu/cpu*/cpufreq; do

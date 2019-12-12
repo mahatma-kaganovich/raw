@@ -49,6 +49,7 @@ RDEPEND=" ${DEPEND}
 		) )
 		|| ( media-gfx/imagemagick[png,jpeg?,tiff?,svg?] media-gfx/graphicsmagick[imagemagick,png,jpeg?,tiff?,svg?] )
 		x11-wm/openbox[imlib,svg?]
+		sys-apps/msr-tools
 	)"
 #	x11-apps/setxkbmap x11-apps/xkbcomp x11-apps/xrdb x11-apps/xwininfo x11-apps/xkill
 KEYWORDS="~x86 ~amd64"
