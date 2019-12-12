@@ -12,7 +12,7 @@ SRC_URI="https://www.openinfosecfoundation.org/download/${P}.tar.gz"
 LICENSE="GPL-2"
 SLOT="0"
 KEYWORDS="~amd64 ~x86"
-IUSE="+af-packet control-socket cuda debug +detection geoip hardened logrotate lua luajit nflog +nfqueue redis +rules test"
+IUSE="+af-packet control-socket cuda debug +detection geoip hardened logrotate lua luajit nflog +nfqueue redis +rules test python"
 
 DEPEND="
 	>=dev-libs/jansson-2.2
@@ -58,6 +58,7 @@ src_configure() {
 		$(use_enable af-packet) \
 		$(use_enable detection) \
 		$(use_enable nfqueue) \
+		$(use_enable python) \
 		$(use_enable test coccinelle) \
 		$(use_enable test unittests) \
 		$(use_enable control-socket unix-socket)
@@ -115,11 +116,13 @@ src_configure() {
 }
 
 src_install() {
+	local i='install install-conf'
 	if use rules ; then
-		emake DESTDIR="${D}" install-full
-	else
-		emake DESTDIR="${D}" install install-conf
+		# i=install-full
+		ewarn "rules will be installed into /usr/share/$PN/rules, download temporary broken"
+		# updater required python, but sometimes something else
 	fi
+	emake DESTDIR="${D}" $i
 
 #	insinto "/etc/${PN}"
 #	doins {classification,reference,threshold}.config suricata.yaml
