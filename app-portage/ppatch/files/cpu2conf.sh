@@ -237,7 +237,7 @@ if i=`_smp1 'physical id' 'cpu cores' || _smp processor 1 || _smp 'ncpus active'
 		$omp && f3+=' -fopenmp-simd'
 	else
 		f1+=' smp'
-		$omp && f3+=' -fopenmp'
+		$omp && f3+=' -fopenmp -fopenacc'
 	fi
 	echo "ncpu=$i"
 	i=$[i+1]
