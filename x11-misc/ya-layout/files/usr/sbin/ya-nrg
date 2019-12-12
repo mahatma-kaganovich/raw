@@ -348,7 +348,7 @@ save(){
 			[ "$x" != "${x1:=$x}" ] && i=0 && break
 			i=$[i+1]
 		done
-		[ "$i" != 0 ] && x=$[x|15] && [ "$x" != "$x1" ] && wrmsr -a 0x1a4 $x && echo "wrmsr -a 0x1a4 $x1"
+		[ "$i" != 0 ] && x=$[x|15] && [ "$x" != "$x1" ] && wrmsr -a 0x1a4 $x && echo "wrmsr -a 0x1a4 $x1" >>$save
 	;;
 	esac
 	# must be ordered
