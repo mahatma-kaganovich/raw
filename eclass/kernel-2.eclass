@@ -356,7 +356,7 @@ post_make(){
 	done <"$SHARE"/modules-standalone >>"$TMPDIR"/mod-exclude.m2y
 	sed -e 's/^.*: //' <"$TMPDIR"/mod-fw.lst | sort -u >"$TMPDIR"/fw-used1.lst
 	sed -e 's/: .*$//' <"$TMPDIR"/mod-fw.lst >>"$TMPDIR"/mod-blob.lst
-	grep -Fvxf "$TMPDIR"/mod-blob{,1}.lst >>"$TMPDIR"/mod-exclude.m2y
+	grep -Fvxf "$TMPDIR"/mod-blob{,1}.lst | grep -vxf "$SHARE"/modules-fw-ignore >>"$TMPDIR"/mod-exclude.m2y
 	cat "$TMPDIR"/mod-blob1.lst >>"$TMPDIR"/mod-blob.lst
 
 	einfo "Search hidden firmware"
@@ -383,7 +383,7 @@ post_make(){
 	_sort_f "$TMPDIR"/{fw-used{2,3},depends,names}.lst
 	sort -u "$TMPDIR"/fw-used{1,2,3}.lst >"$TMPDIR"/fw-used.lst
 	modules_deps "$TMPDIR"/mod-blob{,-names}.lst
-	sed -e "s:^:lib/modules/${REAL_KV}/kernel/:" <"$TMPDIR"/mod-blob.lst >"$TMPDIR"/mod-blob_.lst
+	sed -e "s:^:lib/modules/${REAL_KV}/kernel/:" <"$TMPDIR"/mod-blob.lst | grep -vxf "$SHARE"/modules-fw-ignore >"$TMPDIR"/mod-blob_.lst
 	modules_deps "$TMPDIR"/{mod-exclude.m2y,unmodule.black}
 
 	use blobs && einfo "Copy firmware"
