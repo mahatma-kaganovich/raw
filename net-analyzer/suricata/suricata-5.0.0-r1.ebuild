@@ -12,7 +12,7 @@ SRC_URI="https://www.openinfosecfoundation.org/download/${P}.tar.gz"
 LICENSE="GPL-2"
 SLOT="0"
 KEYWORDS="~amd64 ~x86"
-IUSE="+af-packet control-socket cuda debug +detection geoip hardened logrotate lua luajit nflog +nfqueue redis +rules test python install-full"
+IUSE="+af-packet control-socket cuda debug +detection geoip hardened logrotate lua luajit nflog +nfqueue redis test python install-full system-libhtp bpf afl"
 
 DEPEND="
 	>=dev-libs/jansson-2.2
@@ -22,7 +22,7 @@ DEPEND="
 	net-libs/libnfnetlink
 	dev-libs/nspr
 	dev-libs/nss
-	>=net-libs/libhtp-0.5.20
+	system-libhtp? ( >=net-libs/libhtp-0.5.31 )
 	net-libs/libpcap
 	sys-apps/file
 	virtual/cargo
@@ -35,6 +35,7 @@ DEPEND="
 	redis?      ( dev-libs/hiredis )
 	logrotate?      ( app-admin/logrotate )
 	sys-libs/libcap-ng
+	bpf? ( sys-devel/clang[llvm_targets_BPF] )
 "
 # #446814
 #	prelude?    ( dev-libs/libprelude )
@@ -53,75 +54,42 @@ src_prepare() {
 
 src_configure() {
 	local myeconfargs=(
-		"--localstatedir=/var/" \
-		"--enable-non-bundled-htp" \
-		$(use_enable af-packet) \
-		$(use_enable detection) \
-		$(use_enable nfqueue) \
-		$(use_enable python) \
-		$(use_enable test coccinelle) \
-		$(use_enable test unittests) \
+		--localstatedir=/var/
+		--enable-gccmarch-native=no
+		$(use_enable system-libhtp non-bundled-htp)
+		$(use_enable af-packet)
+		$(use_enable detection)
+		$(use_enable nfqueue)
+		$(use_enable python)
+		$(use_enable test coccinelle)
+		$(use_enable test unittests)
 		$(use_enable control-socket unix-socket)
+		$(use_enable cuda)
+		$(use_enable geoip)
+		$(use_enable hardened gccprotect)
+		$(use_enable nflog)
+		$(use_enable redis hiredis)
+		# $(use_enable pfring)
+		# $(use_enable prelude)
+		$(use_enable lua)
+		$(use_enable luajit)
+		$(use_enable debug)
+		$(use_enable bpf ebpf-build)
+		$(use_enable afl)
 	)
-
-	if use cuda ; then
-		myeconfargs+=( $(use_enable cuda) )
-	fi
-	if use geoip ; then
-		myeconfargs+=( $(use_enable geoip) )
-	fi
-	if use hardened ; then
-		myeconfargs+=( $(use_enable hardened gccprotect) )
-	fi
-	if use nflog ; then
-		myeconfargs+=( $(use_enable nflog) )
-	fi
-	if use redis ; then
-		myeconfargs+=( $(use_enable redis hiredis) )
-	fi
-	# not supported yet (no pfring in portage)
-# 	if use pfring ; then
-# 		myeconfargs+=( $(use_enable pfring) )
-# 	fi
-	# no libprelude in portage
-# 	if use prelude ; theng
-# 		myeconfargs+=( $(use_enable prelude) )
-# 	fi
-	if use lua ; then
-		myeconfargs+=( $(use_enable lua) )
-	fi
-	if use luajit ; then
-		myeconfargs+=( $(use_enable luajit) )
-	fi
-	if (use !lua) && (use !luajit) ; then
-		myeconfargs+=(
-			--disable-lua
-			--disable-luajit
-		)
-	fi
 
 # this should be used when pf_ring use flag support will be added
 # 	LIBS+="-lrt -lnuma"
 
-	# avoid upstream configure script trying to add -march=native to CFLAGS
-	myeconfargs+=( --enable-gccmarch-native=no )
+	use debug && export CFLAGS="-ggdb -O0"
 
-	if use debug ; then
-		myeconfargs+=( $(use_enable debug) )
-		# so we can get a backtrace according to "reporting bugs" on upstream web site
-		CFLAGS="-ggdb -O0" econf LIBS="${LIBS}" ${myeconfargs[@]}
-	else
-		econf LIBS="${LIBS}" ${myeconfargs[@]}
-	fi
+	econf LIBS="${LIBS}" ${myeconfargs[@]}
 }
 
 src_install() {
 	local i='install install-conf'
-	if use rules ; then
-		# i=install-full
-		ewarn "rules will be installed into /usr/share/$PN/rules, download temporary broken"
-		# updater required python, but sometimes something else
-	fi
+	# updater required python, but sometimes something else
+	ewarn "rules will be installed into /usr/share/$PN/rules, download temporary broken"
 	use install-full && i=install-full # experimental
 	emake DESTDIR="${D}" $i
 
