@@ -54,6 +54,7 @@ src_configure() {
 	local myeconfargs=(
 		"--localstatedir=/var/" \
 		"--enable-non-bundled-htp" \
+		--disable-rust \
 		$(use_enable af-packet) \
 		$(use_enable detection) \
 		$(use_enable nfqueue) \

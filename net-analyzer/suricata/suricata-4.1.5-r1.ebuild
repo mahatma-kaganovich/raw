@@ -12,7 +12,7 @@ SRC_URI="https://www.openinfosecfoundation.org/download/${P}.tar.gz"
 LICENSE="GPL-2"
 SLOT="0"
 KEYWORDS="~amd64 ~x86"
-IUSE="+af-packet control-socket cuda debug +detection geoip hardened logrotate lua luajit nflog +nfqueue redis test system-libhtp"
+IUSE="+af-packet control-socket cuda debug +detection geoip hardened logrotate lua luajit nflog +nfqueue redis test system-libhtp rust"
 
 DEPEND="
 	>=dev-libs/jansson-2.2
@@ -26,6 +26,7 @@ DEPEND="
 	!system-libhtp? ( sys-libs/zlib )
 	net-libs/libpcap
 	sys-apps/file
+	rust? ( virtual/cargo )
 	cuda?       ( dev-util/nvidia-cuda-toolkit )
 	geoip?      ( dev-libs/geoip )
 	lua?        ( dev-lang/lua:* )
@@ -58,6 +59,7 @@ src_configure() {
 		$(use_enable af-packet)
 		$(use_enable detection)
 		$(use_enable nfqueue)
+		$(use_enable rust)
 		$(use_enable test coccinelle)
 		$(use_enable test unittests)
 		$(use_enable control-socket unix-socket)
