@@ -184,11 +184,11 @@ libcap|libwacom|libbsd|dcc|chromium*|webkit-gtk|ffmpeg|xemacs|fuse|wayland|privo
 gcc)
 	# multi-version case
 	_iuse lto || filterflag '-flto*' '-*-lto-*' -fuse-linker-plugin -fdevirtualize-at-ltrans
-	_iuse graphite || filterflag -floop-nest-optimize
+	_iuse graphite || filterflag -floop-nest-optimize -floop-parallelize-all
 	_iuse openmp || filterflag -fopenmp -fopenmp-simd -fopenacc -fgnu-tm
 ;;&
-# 1) not build lto 2) w/o lto - moz segfault
-libX11)filterflag -fopenacc;;&
+# libX11 1) not build lto 2) w/o lto - moz segfault
+zstandard|libX11)filterflag -fopenacc;;&
 gcc|glibc)filterflag -fopenmp -fopenmp-simd -fopenacc -fgnu-tm;;&
 ncurses-compat|ncurses)_fLTO && export ac_cv_func_dlsym=no ac_cv_lib_dl_dlsym=yes;;&
 inkscape|libreoffice|mariadb|nodejs|llvm|clang)filterflag -ffat-lto-objects;;&
@@ -210,8 +210,7 @@ cmake)_fLTO && _isflag '-floop-*' '-fgraphite*' && filterflag -fipa-pta;;&
 # x86 gcc graphite ice
 gmp)filterflag -fno-move-loop-invariants;;&
 # mpg123 distortion on sse
-mjpegtools|gmp|mpg123)filterflag -floop-nest-optimize;;&
-bcrypt)_fLTO && appendflag -fno-loop-nest-optimize;;&
+mjpegtools|gmp|mpg123)filterflag -floop-nest-optimize -floop-parallelize-all;;&
 bash)filterflag -fipa-pta;;&
 ceph)
 #	_isflag -floop-nest-optimize && 
@@ -226,7 +225,7 @@ ceph)
 ;;&
 glibc)gccve 6. && appendflag -fno-tree-slp-vectorize;;&
 glibc)gccve 6. || filterflag -ftracer;;&
-glibc)filterflag -fopenmp -fopenmp-simd '-*parallelize*';;&
+glibc)filterflag -fopenmp -fopenmp-simd;;&
 # -Ofast / -ffast-math:
 # nodejs -> chromium
 coreutils|groff|glibc|mpg123|nodejs|fontforge|sqlite|postgresql*|goffice|db|protobuf|qtwebkit|qtwebengine|webkit-gtk|python|guile|chromium*|rrdtool)_fnofastmath;;&
