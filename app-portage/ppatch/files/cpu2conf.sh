@@ -420,6 +420,7 @@ for i in $base2; do
 	i1=$(_replace "$f0" $i)
 	_cmp1 "$i1" "$f0"
 	f0=$(_replace "$i1 $j" $i)
+	f4=$(_replace "$f4" $i)
 done
 
 for i in $base; do
