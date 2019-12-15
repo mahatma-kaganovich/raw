@@ -181,7 +181,7 @@ xemacs)_fLTO && {
 # ffmpeg: amd64 - mp4 crushes
 # libbsd: mailx
 libwacom|libbsd|dcc|chromium*|webkit-gtk|ffmpeg|xemacs|fuse|privoxy|icedtea|qtwebkit|xf86-video-intel|mplayer|mysql|heimdal|glibc|cvs|pulseaudio)filterflag '-flto*' '-*-lto-*' -fuse-linker-plugin -fdevirtualize-at-ltrans;;&
-libcap)_fLTO_f -flto-partition=1to1;;&
+#libcap)_fLTO_f -flto-partition=1to1;;&
 gcc)
 	# multi-version case
 	_iuse lto || filterflag '-flto*' '-*-lto-*' -fuse-linker-plugin -fdevirtualize-at-ltrans

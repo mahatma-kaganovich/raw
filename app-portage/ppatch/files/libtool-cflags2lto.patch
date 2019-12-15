@@ -1,0 +1,12 @@
+--- libtool.orig	2019-12-15 18:33:39.710000000 +0300
++++ libtool	2019-12-15 18:55:16.270000000 +0300
+@@ -8008,6 +8008,9 @@ func_mode_link ()
+ 
+       # Now actually substitute the argument into the commands.
+       if test -n "$arg"; then
++        case "$arg" in
++        -f*|-m*|--param=*|-Wa,*)test "$opt_mode" = link && echo "+++ $arg" >&2 && func_append compiler_flags " $arg";;
++	esac
+ 	func_append compile_command " $arg"
+ 	func_append finalize_command " $arg"
+       fi
