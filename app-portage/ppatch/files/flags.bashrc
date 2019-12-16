@@ -189,7 +189,7 @@ gcc)
 	_iuse openmp || filterflag -fopenmp -fopenmp-simd -fopenacc -fgnu-tm
 ;;&
 # libX11 1) not build lto 2) w/o lto - moz segfault
-zstandard|libX11)filterflag -fopenacc;;&
+zstandard|libX11|llvm|clang)filterflag -fopenacc;;&
 gcc|glibc)filterflag -fopenmp -fopenmp-simd -fopenacc -fgnu-tm '-ftree-parallelize-loops*';;&
 ncurses-compat|ncurses)_fLTO && export ac_cv_func_dlsym=no ac_cv_lib_dl_dlsym=yes;;&
 inkscape|libreoffice|mariadb|nodejs|llvm|clang)filterflag -ffat-lto-objects;;&
