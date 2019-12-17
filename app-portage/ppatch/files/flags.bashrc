@@ -212,6 +212,7 @@ cmake)_fLTO && _isflag '-floop-*' '-fgraphite*' && filterflag -fipa-pta;;&
 gmp)filterflag -fno-move-loop-invariants;;&
 # mpg123 distortion on sse
 mjpegtools|gmp|mpg123)filterflag -floop-nest-optimize -floop-parallelize-all;;&
+bcrypt)_fLTO && appendflag -fno-loop-nest-optimize;;& # x86_32
 bash)filterflag -fipa-pta;;&
 ceph)
 #	_isflag -floop-nest-optimize && 
