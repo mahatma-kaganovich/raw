@@ -51,7 +51,7 @@ src_install(){
     dosbin mount.zram
 #    dobin make.lto
     insinto $r
-    doins *.{p-patch,bashrc,sh}
+    doins *.{p-patch,bashrc,sh,patch}
     dodir $r/virtual
     dosym linux-sources $r/virtual/linux-kernel
     for d in $IUSE ; do

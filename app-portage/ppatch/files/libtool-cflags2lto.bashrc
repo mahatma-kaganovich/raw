@@ -7,9 +7,10 @@ compile)[[ " $LDFLAGS " == *\ -flto[\ =]* || " $LDFLAGS " == *\ -fuse-linker-plu
 #		find "$WORKDIR" -name ltmain.sh
 		find "$WORKDIR" -name libtool
 	}|while read i; do
-#		patch -Ni /usr/ppatch/libtool-cflags2lto.patch "$i" && elog "libtool patched: $i"
+	    patch -Ni /usr/ppatch/libtool-cflags2lto.patch "$i" && elog "libtool patched: $i" || {
 		grep -q '\-O\*|-g\*|' "$i" &&
-		sed -i -e 's/-O\*|-g\*|/-O*|-f*|-m*|*Wa,*|--param=*|-g*|/' "$i" && elog "libtool patched: $i"
+		sed -i -e 's/-O\*|-g\*|/-O*|-f*|-m*|*Wa,*|--param=*|-g*|/' "$i" && elog "libtool patched2: $i"
+	    }
 	done
 ;;
 esac
