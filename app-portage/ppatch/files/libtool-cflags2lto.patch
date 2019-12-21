@@ -6,7 +6,7 @@
        if test -n "$arg"; then
 +	case "$arg" in
 +	-fobjc-arc);;
-+	-f*|-m*|--param=*|-Wa,*)test "$opt_mode" = link && echo "+++ $arg" >&2 && func_append compiler_flags " $arg";;
++	-f*|-m*|--param=*|-Wa,*)test "$opt_mode" = link && func_append compiler_flags " $arg";;
 +	esac
  	func_append compile_command " $arg"
  	func_append finalize_command " $arg"
