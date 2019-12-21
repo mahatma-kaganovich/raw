@@ -1,5 +1,6 @@
---- libtool.orig	2019-12-15 18:33:39.710000000 +0300
-+++ libtool	2019-12-15 18:55:16.270000000 +0300
+libtool strip C flags for linker, but LTO linker recompile bytecode
+--- libtool.orig
++++ libtool
 @@ -8008,6 +8008,10 @@ func_mode_link ()
  
        # Now actually substitute the argument into the commands.
