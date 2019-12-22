@@ -1920,7 +1920,7 @@ userspace(){
 	sdir="${sdir%.tar.*}"
 	tar -xaf "$KERNEL_KLIBC_SRC" -C "${sdir%/*}" && [ -d "$sdir" ] || die
 	echo '
-KLIBCOPTFLAGS += -g0 -fno-move-loop-invariants --param=max-grow-copy-bb-insns=0' | tee -a "$sdir"/usr/klibc/arch/*/MCONFIG
+KLIBCOPTFLAGS += -g0 -fno-move-loop-invariants --param=max-grow-copy-bb-insns=1' | tee -a "$sdir"/usr/klibc/arch/*/MCONFIG
 	echo 'KLIBCOPTFLAGS += -fno-asynchronous-unwind-tables' | tee -a "$sdir"/usr/klibc/arch/{i386,ppc,arm64}*/MCONFIG
 	for i in $KERNEL_KLIBC_PATCHES; do
 		[ -e "$i" ] || continue

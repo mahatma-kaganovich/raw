@@ -2,7 +2,7 @@
 # small vs. fast code
 
 _FLAGS="$_FLAGS$CFLAGS_FAST_MATH$CFLAGS_CPU$CFLAGS_M$CFLAGS_SMALL -Os -ftree-vectorize"
-_FLAGS="$_FLAGS --param=max-grow-copy-bb-insns=0"
+_FLAGS="$_FLAGS --param=max-grow-copy-bb-insns=1"
 # ? -fconserve-stack
 _FLAGS="$_FLAGS -Wa,-n -Wa,-no-pad-sections -Wa,--strip-local-absolute"
 

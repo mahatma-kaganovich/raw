@@ -2,7 +2,7 @@
 
 USE="-vtv nopie nossp -pie -ssp"
 
-_FLAGS="$_FLAGS -O2 -Os -fconserve-stack --param=max-grow-copy-bb-insns=0"
+_FLAGS="$_FLAGS -O2 -Os -fconserve-stack --param=max-grow-copy-bb-insns=1"
 #_FLAGS="$_FLAGS -fno-omit-frame-pointer"
 # O2
 # _FLAGS="$_FLAGS -fschedule-insns2 -finline-small-functions -findirect-inlining"
