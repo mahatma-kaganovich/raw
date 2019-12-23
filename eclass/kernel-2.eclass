@@ -300,6 +300,21 @@ modules_deps(){
 	_sort_f "$1"
 }
 
+# better to do it once before install
+mod_strip(){
+	[ -z "$INSTALL_MOD_STRIP" ] && return
+	local strip="$(tc-getSTRIP)"
+	[ "$INSTALL_MOD_STRIP" = 1 ] && strip+=' --strip-debug' || strip+=" $INSTALL_MOD_STRIP"
+	strip+=" $INSTALL_MOD_STRIP"
+	if use paranoid; then
+		find . -name '*.ko'|while read m; do
+			$strip $m
+		done
+	else
+		$strip $(find . -name '*.ko'|sed -e 's:^\./::')
+	fi
+}
+
 post_make(){
 	local i x y m f n= d= n1=
 	[ -s modules.builtin ] && rm $(cat modules.builtin) -f
@@ -570,6 +585,8 @@ kernel-2_src_compile() {
     fi
 
 	cd "${S}"
+
+	use debug || mod_strip
 
 	if use sources || use klibc; then
 		einfo "Preparing kernel headers"

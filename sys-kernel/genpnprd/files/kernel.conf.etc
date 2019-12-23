@@ -81,6 +81,9 @@ CF NET_SCH_PSP_HARDCHAIN
 ## dirty fast way to respect CONFIG_CHECK
 #KERNEL_RESPECT="nouveau-drm drbd-kernel"
 
+INSTALL_MOD_STRIP="--keep-symbol=.modinfo"
+#export INSTALL_MOD_STRIP
+
 # use genkernel config, ignore all ebuild configs
 #external_kconfig(){ cat /usr/share/genkernel/defaults/kernel*config >"$S"/.config; }
 
