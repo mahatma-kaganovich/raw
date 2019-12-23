@@ -11,7 +11,7 @@ CFLAGS="$_FLAGS"
 FFLAGS="$_FLAGS"
 FCFLAGS="$_FLAGS"
 CXXFLAGS="$_FLAGS $_XFLAGS -fdeclone-ctor-dtor"
-LDFLAGS="-Wl,-O1 -Wl,--as-needed -Wl,--hash-style=gnu -Wl,--strip-all -Wl,--relax -Wl,--no-ld-generated-unwind-info -Wl,--no-eh-frame-hdr"
+LDFLAGS="-Wl,-O1 -Wl,--as-needed -Wl,--hash-style=gnu -Wl,--strip-all -Wl,--no-ld-generated-unwind-info -Wl,--no-eh-frame-hdr"
 LDFLAGS="$LDFLAGS -Wl,--no-keep-memory -Wl,--reduce-memory-overheads"
 # keep one more hot make thread
 MAKEOPTS="-j2 -l0.9 -s -Onone"
