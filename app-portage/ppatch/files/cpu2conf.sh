@@ -230,6 +230,8 @@ f5+=' -fpermissive -w'
 # mix cxxflags here to simplify. it works
 ffast+=' -minline-stringops-dynamically'
 fsmall+=' -malign-data=abi -flimit-function-alignment -Wa,--reduce-memory-overheads -fvect-cost-model=cheap -fsimd-cost-model=cheap -w'
+fsmall+=' -fno-move-loop-invariants'
+fsmall+=' --param=max-grow-copy-bb-insns=1 -fno-align-jumps'
 f6+=' -malign-data=cacheline'
 if i=`_smp1 'physical id' 'cpu cores' || _smp processor 1 || _smp 'ncpus active' 0`; then
 	if [ "$i" = 1 ]; then
@@ -289,7 +291,7 @@ x86_*|i?86)
 	ffast+=' -maccumulate-outgoing-args -mno-push-args'
 	fsmall+=' -mno-accumulate-outgoing-args -mpush-args'
 	# -fno-ira-loop-pressure unsure, variable acovea results
-	fsmall+=' -fno-move-loop-invariants -fno-ira-loop-pressure'
+	fsmall+=' -fno-ira-loop-pressure'
 	# vs. -O3 -msse
 	# in many cases it also "fast", but keep default / selectable
 	fv=$(_f -fvect-cost-model=cheap -fsimd-cost-model=cheap)
