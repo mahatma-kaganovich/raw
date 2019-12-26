@@ -4,8 +4,11 @@
 case "$EBUILD_PHASE" in
 compile)[[ " $LDFLAGS " == *\ -flto[\ =]* || " $LDFLAGS " == *\ -fuse-linker-plugin\ * ]] &&
 	{
-#		find "$WORKDIR" -name ltmain.sh
 		find "$WORKDIR" -name libtool
+		case "$PN" in
+		libtool);;
+		*)find "$WORKDIR" -name ltmain.sh;;
+		esac
 	}|while read i; do
 	    patch -Ni /usr/ppatch/libtool-cflags2lto.patch "$i" && elog "libtool patched: $i" || {
 		grep -q '\-O\*|-g\*|' "$i" &&
