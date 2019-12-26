@@ -192,8 +192,9 @@ gcc)
 # looks like unwinding not required for anymore exclude debugging / verbose exceptions
 gcc|mongodb|mongo-tools)filterflag -fno-asynchronous-unwind-tables -Wl,--no-ld-generated-unwind-info -Wl,--no-eh-frame-hdr;;&
 # libX11 1) not build lto 2) w/o lto - moz segfault
-doxygen|mongodb|zstandard|libX11|llvm|clang)filterflag -fopenacc;;&
+doxygen|mongodb|libX11|llvm|clang)filterflag -fopenacc;;&
 gcc|glibc|chromium)filterflag -fopenmp -fopenmp-simd -fopenacc -fgnu-tm '-ftree-parallelize-loops*';;&
+zstandard)export MAKEOPTS=-j1;;&
 ncurses-compat|ncurses)_fLTO && export ac_cv_func_dlsym=no ac_cv_lib_dl_dlsym=yes;;&
 inkscape|libreoffice|mariadb|nodejs|llvm|clang)filterflag -ffat-lto-objects;;&
 mariadb)filterflag -fno-asynchronous-unwind-tables;;&
