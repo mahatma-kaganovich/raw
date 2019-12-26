@@ -1,1 +1,2 @@
 media-plugins/audacious-plugins -opengl
+dev-libs/efl drm -opengl

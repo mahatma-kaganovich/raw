@@ -11,11 +11,13 @@ app-editors/emacs:23 gtk
 app-editors/emacs:24 -gtk
 app-editors/emacs:25 -gtk
 app-editors/emacs:26 -gtk
-app-editors/emacs-vcs:26 -gtk
-app-editors/emacs-vcs:27 -gtk
+app-editors/emacs:27-vcs -gtk
+app-editors/emacs:28-vcs -gtk
+app-editors/emacs-vcs -gtk
 app-editors/gvim -gtk
 app-emulation/libguestfs -gtk
 app-emulation/qemu -gtk
+app-emulation/spice-vdagent -gtk
 app-emulation/vice gtk
 app-emulation/virt-manager -gtk
 app-emulation/winetricks -gtk
@@ -35,7 +37,6 @@ app-mobilephone/sobexsrv gtk
 app-office/libreoffice gtk2
 app-text/aiksaurus gtk
 app-text/ghostscript-gpl -gtk
-dev-ada/gnatcoll -gtk
 dev-db/libiodbc gtk
 dev-db/postgis gtk
 dev-dotnet/mono-addins gtk
@@ -75,13 +76,11 @@ games-misc/gBhed gtk
 games-roguelike/tome gtk
 games-strategy/dopewars gtk
 games-strategy/freeciv gtk
-games-strategy/liquidwar6 gtk
 gnome-base/gvfs -gtk
 gnome-extra/cjs -gtk
 gnome-extra/libgda -gtk
 gnome-extra/libgsf -gtk
 kde-plasma/plasma-meta -gtk
-kde-plasma/systemsettings -gtk
 media-gfx/birdfont -gtk
 media-gfx/fontforge gtk
 media-gfx/fontforge -gtk
@@ -107,11 +106,13 @@ media-libs/mlt gtk
 media-libs/opencv gtk
 media-libs/suil gtk
 media-libs/xine-lib -gtk
+media-plugins/audacious-plugins gtk
 media-plugins/calf gtk
 media-plugins/libvisual-plugins gtk
 media-sound/alsa-tools -gtk
 media-sound/alsaplayer gtk
 media-sound/amsynth gtk
+media-sound/audacious gtk
 media-sound/aumix gtk
 media-sound/aylet gtk
 media-sound/jalv -gtk
@@ -134,6 +135,7 @@ net-analyzer/driftnet gtk
 net-analyzer/ettercap gtk
 net-analyzer/hydra gtk
 net-analyzer/mtr gtk
+net-analyzer/mtr -gtk
 net-analyzer/pinger gtk
 net-analyzer/yersinia gtk
 net-dialup/ppp gtk
@@ -142,12 +144,12 @@ net-ftp/gftp gtk
 net-im/ekg2 gtk
 net-im/pidgin gtk
 net-irc/hexchat gtk
-net-libs/aqbanking gtk
+net-libs/aqbanking -gtk
 net-libs/gssdp -gtk
 net-misc/dhcpcd-ui gtk
+net-misc/dhcpcd-ui -gtk
 net-misc/ipsorcery gtk
 net-misc/mico gtk
-net-misc/networkmanager-wireguard -gtk
 net-misc/olsrd gtk
 net-misc/putty gtk2
 net-misc/trackma -gtk
@@ -178,7 +180,6 @@ sci-mathematics/gretl -gtk
 sci-mathematics/pspp -gtk
 sci-mathematics/why3-for-spark gtk
 sci-misc/oww gtk
-sys-apps/bleachbit gtk
 sys-apps/lshw gtk
 sys-apps/pcsc-tools gtk
 sys-apps/sensei-raw-ctl -gtk
@@ -190,6 +191,7 @@ sys-devel/sparse gtk
 sys-fs/ecryptfs-utils gtk
 sys-fs/pysize gtk
 sys-libs/gwenhywfar gtk
+sys-libs/gwenhywfar -gtk
 sys-power/nvclock gtk
 sys-process/latencytop gtk
 www-client/netsurf -gtk
@@ -210,7 +212,6 @@ x11-terms/mlterm -gtk
 x11-themes/arc-theme gtk2 -gtk3
 x11-themes/nimbus gtk
 x11-themes/qtcurve gtk
-xfce-base/garcon gtk2
 xfce-base/libxfce4ui gtk2
 xfce-base/xfce4-panel gtk2
 app-misc/tracker-miners ffmpeg

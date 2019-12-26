@@ -11,12 +11,14 @@ app-editors/emacs:23 -gtk
 app-editors/emacs:24 gtk
 app-editors/emacs:25 gtk
 app-editors/emacs:26 gtk
-app-editors/emacs-vcs:26 gtk
-app-editors/emacs-vcs:27 gtk
+app-editors/emacs:27-vcs gtk
+app-editors/emacs:28-vcs gtk
+app-editors/emacs-vcs gtk
 app-editors/gvim gtk
 app-editors/mousepad gtk3
 app-emulation/libguestfs gtk
 app-emulation/qemu gtk
+app-emulation/spice-vdagent gtk
 app-emulation/virt-manager gtk
 app-emulation/winetricks gtk
 app-i18n/fcitx gtk3 -gtk2
@@ -37,7 +39,6 @@ app-office/libreoffice gtk -gtk2
 app-office/libreoffice gtk
 app-text/aiksaurus -gtk
 app-text/ghostscript-gpl -gtk
-dev-ada/gnatcoll gtk
 dev-db/libiodbc -gtk
 dev-db/postgis -gtk
 dev-embedded/gpsim -gtk
@@ -77,7 +78,6 @@ games-fps/gzdoom gtk
 games-misc/gBhed -gtk
 games-roguelike/tome -gtk
 games-strategy/dopewars -gtk
-games-strategy/liquidwar6 -gtk
 gnome-base/gvfs gtk
 gnome-extra/cjs gtk
 gnome-extra/evolution-data-server gtk
@@ -85,7 +85,6 @@ gnome-extra/libgda gtk
 gnome-extra/libgsf -gtk
 kde-apps/print-manager gtk
 kde-plasma/plasma-meta gtk
-kde-plasma/systemsettings gtk
 lxde-base/lxdm gtk3
 media-gfx/birdfont gtk
 media-gfx/fontforge -gtk
@@ -113,11 +112,13 @@ media-libs/mlt -gtk
 media-libs/opencv -gtk
 media-libs/suil -gtk
 media-libs/xine-lib gtk
+media-plugins/audacious-plugins -gtk
 media-plugins/calf -gtk
 media-plugins/libvisual-plugins -gtk
 media-sound/alsa-tools -gtk
 media-sound/alsaplayer -gtk
 media-sound/amsynth -gtk
+media-sound/audacious -gtk
 media-sound/aumix -gtk
 media-sound/aylet -gtk
 media-sound/denemo gtk3
@@ -141,18 +142,19 @@ net-analyzer/driftnet -gtk
 net-analyzer/ettercap -gtk
 net-analyzer/hydra -gtk
 net-analyzer/mtr -gtk
+net-analyzer/mtr gtk
 net-analyzer/pinger -gtk
 net-analyzer/yersinia -gtk
 net-dialup/ppp -gtk
 net-dns/avahi -gtk
 net-ftp/gftp -gtk
 net-im/ekg2 -gtk
-net-libs/aqbanking -gtk
+net-libs/aqbanking gtk
 net-libs/gssdp gtk
 net-misc/dhcpcd-ui -gtk
+net-misc/dhcpcd-ui gtk
 net-misc/ipsorcery -gtk
 net-misc/mico -gtk
-net-misc/networkmanager-wireguard gtk
 net-misc/olsrd -gtk
 net-misc/putty gtk -gtk2
 net-misc/spice-gtk gtk3
@@ -173,6 +175,7 @@ net-vpn/networkmanager-openvpn gtk
 net-vpn/networkmanager-pptp gtk
 net-vpn/networkmanager-sstp gtk
 net-vpn/networkmanager-vpnc gtk
+net-vpn/networkmanager-wireguard gtk
 net-wireless/spectools -gtk
 sci-astronomy/celestia -gtk
 sci-astronomy/predict -gtk
@@ -187,7 +190,7 @@ sci-misc/oww -gtk
 sys-apps/lshw -gtk
 sys-apps/pcsc-tools -gtk
 sys-apps/sensei-raw-ctl gtk
-sys-auth/polkit gtk
+sys-auth/polkit -gtk
 sys-block/fio -gtk
 sys-block/libzbc gtk
 sys-boot/plymouth gtk
@@ -196,6 +199,7 @@ sys-devel/sparse -gtk
 sys-fs/ecryptfs-utils -gtk
 sys-fs/pysize -gtk
 sys-libs/gwenhywfar -gtk
+sys-libs/gwenhywfar gtk
 sys-power/nvclock -gtk
 sys-process/latencytop -gtk
 www-client/netsurf gtk

@@ -188,6 +188,9 @@ gcc)
 	_iuse graphite || filterflag -floop-nest-optimize -floop-parallelize-all
 	_iuse openmp || filterflag -fopenmp -fopenmp-simd -fopenacc -fgnu-tm
 ;;&
+# while found affected only mongodb - at least no connect from UniFi (exception)
+# looks like unwinding not required for anymore exclude debugging / verbose exceptions
+gcc|mongodb|mongo-tools)filterflag -fno-asynchronous-unwind-tables -Wl,--no-ld-generated-unwind-info -Wl,--no-eh-frame-hdr;;&
 # libX11 1) not build lto 2) w/o lto - moz segfault
 doxygen|mongodb|zstandard|libX11|llvm|clang)filterflag -fopenacc;;&
 gcc|glibc)filterflag -fopenmp -fopenmp-simd -fopenacc -fgnu-tm '-ftree-parallelize-loops*';;&
