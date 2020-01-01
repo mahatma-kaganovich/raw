@@ -12,7 +12,10 @@ mozconfig_annotate() {
 		;;&
 #		--enable-release)use custom-optimization && x=${x//enable/disable};;
 		--enable-pie)use custom-cflags && (gcc -v 2>&1 |grep -q "\--disable-default-pie") && continue;;
-		--enable-linker=gold)filter-ldflags -Wl,--sort-section=alignment -Wl,--reduce-memory-overheads;;
+		--enable-linker=gold)
+			! which ld.gold && x=--enable-linker=bfd && reason='no ld.gold' ||
+			filter-ldflags -Wl,--sort-section=alignment -Wl,--reduce-memory-overheads
+		;;
 		--enable-linker=lld)filter-ldflags -Wl,--reduce-memory-overheads;;
 		--enable-optimize=-O*)use custom-optimization && o=${CXXFLAGS##*-O} && [ "$o" != "$CXXFLAGS" ] && o=${o%% *} && [ -n "$o" ] && {
 			reason=custom-optimization
