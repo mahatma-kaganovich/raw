@@ -30,7 +30,7 @@ app-i18n/scim-bridge -gtk
 app-i18n/uim gtk
 app-laptop/pommed -gtk
 app-misc/ddccontrol -gtk
-app-misc/hachoir-metadata -gtk
+app-misc/hachoir-metadata gtk
 app-misc/lirc gtk
 app-misc/razertool -gtk
 app-misc/vifm -gtk
@@ -55,7 +55,6 @@ dev-ml/camlimages -gtk
 dev-ml/ocaml-cairo -gtk
 dev-ml/ocamlgraph -gtk
 dev-ml/ocamlnet -gtk
-dev-python/ginga gtk
 dev-python/pyglet -gtk
 dev-python/pynotifier gtk
 dev-python/sympy -gtk

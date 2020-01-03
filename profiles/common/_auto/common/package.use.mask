@@ -32,7 +32,6 @@ dev-ruby/mysql2:0.4 -mariadb mysql
 dev-ruby/mysql2:0.5 -mariadb mysql
 media-tv/kodi -mariadb mysql
 dev-db/sqlcipher -readline libedit
-dev-lang/php:5.6 -readline libedit
 dev-lang/php:7.1 -readline libedit
 dev-lang/php:7.2 -readline libedit
 dev-lang/php:7.3 -readline libedit

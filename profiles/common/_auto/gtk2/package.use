@@ -54,7 +54,6 @@ dev-ml/camlimages gtk
 dev-ml/ocaml-cairo gtk
 dev-ml/ocamlgraph gtk
 dev-ml/ocamlnet gtk
-dev-python/ginga -gtk
 dev-python/pyglet gtk
 dev-python/pynotifier -gtk
 dev-python/sympy gtk
