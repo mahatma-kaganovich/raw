@@ -16,7 +16,11 @@ mozconfig_annotate() {
 			! which ld.gold && x=--enable-linker=bfd && reason='no ld.gold' ||
 			filter-ldflags -Wl,--sort-section=alignment -Wl,--reduce-memory-overheads
 		;;
-		--enable-linker=lld)filter-ldflags -Wl,--reduce-memory-overheads;;
+		--enable-linker=lld)filter-ldflags -Wl,--reduce-memory-overheads -Wl,--no-ld-generated-unwind-info;;
+		--enable-lto=*|--enable-lto)
+			filter-flags -fno-asynchronous-unwind-tables
+			filter-ldflags -Wl,--no-ld-generated-unwind-info -Wl,--no-eh-frame-hdr
+		;;
 		--enable-optimize=-O*)use custom-optimization && o=${CXXFLAGS##*-O} && [ "$o" != "$CXXFLAGS" ] && o=${o%% *} && [ -n "$o" ] && {
 			reason=custom-optimization
 			# gcc vs clang: IMHO "-fno-fast-math -Ofast" positioning differ. force strict order anywere
@@ -69,8 +73,13 @@ prepare)
 		*)filter-flags -mtls-dialect=gnu2;;
 		esac
 		[[ "$CXXFLAGS" == *fast* ]] && append-cxxflags -fno-fast-math
-		#[[ " $IUSE " == *' lto '* ]] && use lto &&
-		filter-flags -flto '-flto=*' -ffat-lto-objects
+		filter-flags -ffat-lto-objects
+		[[ " $IUSE " == *' lto '* ]] && use lto &&
+			filter-flags -flto '-flto=*'
+		is-flagq -flto || is-flagq '-flto=*' && {
+			filter-flags -fno-asynchronous-unwind-tables
+			filter-ldflags -Wl,--no-ld-generated-unwind-info -Wl,--no-eh-frame-hdr
+		}
 		replace-flags -mfpmath=both -mfpmath=sse
 		replace-flags '-mfpmath=sse*387' -mfpmath=sse
 		replace-flags '-mfpmath=387*sse' -mfpmath=sse

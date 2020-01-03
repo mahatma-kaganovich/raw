@@ -2,7 +2,7 @@
 # code still reasonable fast
 _FLAGS="$_FLAGS$CFLAGS_FAST_MATH$CFLAGS_NATIVE$CFLAGS_M$CFLAGS_SMALL$CFLAGS_FAST"
 # ? -fconserve-stack
-_FLAGS="-g0 $_FLAGS"
+#_FLAGS="-g0 $_FLAGS"
 USE="speculative -ssp nossp nopie -sanitize -vtv -pie -pic -rsync-verify"
 
 # gcc 9.2 ok

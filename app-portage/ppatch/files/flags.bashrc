@@ -122,7 +122,7 @@ filter_cf(){
 	v1="${!vv}"
 	[ -z "$v1" ] && {
 		for i in ${!v}; do
-			echo 'int main(){}' |${!c} -x $3 - -pipe $i -o /dev/null >/dev/null 2>&1 && v1+=" $i" || ff+=" $i"
+			echo 'int main(){}' |${!c} -c -x $v1 $3 - -pipe $i -o /dev/null >/dev/null 2>&1 && v1+=" $i" || ff+=" $i"
 		done
 		[ -n "$ff" ] && {
 			echo "filtered $v ${!c}$ff"
@@ -161,6 +161,10 @@ _fnofastmath(){
 
 filter_cf CC CFLAGS c
 filter_cf CXX CXXFLAGS c++
+_iuse clang && {
+	CC=clang filter_cf CC CFLAGS c
+	CXX=clang++ filter_cf CXX CXXFLAGS c++
+}
 
 case "$PN" in
 quota|xinetd|samba|python) _iuse !rpc || [ -e /usr/include/rpc/rpc.h ] || {
@@ -278,7 +282,7 @@ _iuse !system-sqlite && _fnofastmath
 (_iuse gold || [[ "$LD" == *gold ]] || _isflag -fuse-ld=gold) &&
 	filterflag -Wl,--sort-section=alignment -Wl,--reduce-memory-overheads
 (_iuse clang || [[ "$LD" == *lld ]] || _isflag -fuse-ld=lld) &&
-	filterflag -Wl,--reduce-memory-overheads
+	filterflag -Wl,--reduce-memory-overheads -Wl,--no-ld-generated-unwind-info
 
 #filter86_32 -fschedule-insns -fira-loop-pressure
 

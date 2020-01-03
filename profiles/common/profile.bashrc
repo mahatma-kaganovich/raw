@@ -13,6 +13,7 @@ for i in {C,CXX,CPP,LD,F,FC,_}FLAGS; do
 		fn="$fy"
 		fw="$fy=*"
 		case "$fy" in
+		-fuse-ld)[ -z "$LD" ] && export LD="ld.${i1#*=}";;
 		-[fmW]no-*)fy="${fy:0:2}${fy:5}";fw="$fy=*";;
 		-[fmW]*)fn="${fy:0:2}no-${fy:2}";;
 #		-O*)fw="-O[^${i1:2:1}]*";;
@@ -50,7 +51,7 @@ X)
 	p=
 ;;
 esac
-[ -z "${CC#gcc}" ] && l=$ncpu
+! ([[ " $IUSE " == *' clang '* ]] && use clang) && [ -z "${CC#gcc}" ] && l=$ncpu
 [ -v l ] && for i in {C,CXX,CPP,LD,F,FC,_}FLAGS; do
 	export $i="${!i// -flto -fuse-linker-plugin / -flto=$l -fuse-linker-plugin }"
 done
