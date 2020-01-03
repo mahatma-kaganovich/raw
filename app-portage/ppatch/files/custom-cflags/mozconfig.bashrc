@@ -74,7 +74,7 @@ prepare)
 		esac
 		[[ "$CXXFLAGS" == *fast* ]] && append-cxxflags -fno-fast-math
 		filter-flags -ffat-lto-objects
-		[[ " $IUSE " == *' lto '* ]] && use lto &&
+#		[[ " $IUSE " == *' lto '* ]] && use lto &&
 			filter-flags -flto '-flto=*'
 		is-flagq -flto || is-flagq '-flto=*' && {
 			filter-flags -fno-asynchronous-unwind-tables
