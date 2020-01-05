@@ -76,7 +76,8 @@ prepare)
 		filter-flags -ffat-lto-objects
 #		[[ " $IUSE " == *' lto '* ]] && use lto &&
 			filter-flags -flto '-flto=*'
-		is-flagq -flto || is-flagq '-flto=*' && {
+#		is-flagq -flto || is-flagq '-flto=*' && {
+		[ "$PN" = seamonkey ] || {
 			filter-flags -fno-asynchronous-unwind-tables
 			filter-ldflags -Wl,--no-ld-generated-unwind-info -Wl,--no-eh-frame-hdr
 		}
