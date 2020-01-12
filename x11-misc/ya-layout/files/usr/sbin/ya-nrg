@@ -333,6 +333,7 @@ save(){
 	local f i x x1 x2
 	echo '#' >>$save
 	save1 N /sys/module/drm_kms_helper/parameters/poll
+	save1 1 /proc/sys/kernel/sched_energy_aware
 	save1 min_power /sys/class/scsi_host/*/link_power_management_policy
 	save1 powersupersave /sys/module/pcie_aspm/parameters/policy
 	save1 1 /sys/kernel/rcu_normal
