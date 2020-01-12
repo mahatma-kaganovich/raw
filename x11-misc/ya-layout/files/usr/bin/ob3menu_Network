@@ -1026,7 +1026,7 @@ sub _run_{
 },
 'GPASSWD'=>sub{
 	my ($c,$u,@g)=@_;
-	my %chmod=( 'uucp'=>[$rfcomm,'/usr/sbin/pppd'], 'plugdev'=>['/sbin/halt']);
+	my %chmod=( 'uucp'=>[$rfcomm,'/usr/sbin/pppd'], 'plugdev'=>['/sbin/halt','/sbin/openrc-shutdown']);
 	my $r;
 	for my $g (@g){
 		exists($chmod{$g}) || next;
