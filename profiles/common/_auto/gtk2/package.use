@@ -41,7 +41,6 @@ dev-db/libiodbc gtk
 dev-db/postgis gtk
 dev-dotnet/mono-addins gtk
 dev-embedded/gpsim -gtk
-dev-games/openscenegraph -gtk
 dev-java/gnu-classpath gtk
 dev-java/icedtea gtk
 dev-java/icedtea-bin gtk
@@ -75,7 +74,6 @@ games-misc/gBhed gtk
 games-roguelike/tome gtk
 games-strategy/dopewars gtk
 games-strategy/freeciv gtk
-gnome-base/gvfs -gtk
 gnome-extra/cjs -gtk
 gnome-extra/libgda -gtk
 gnome-extra/libgsf -gtk
@@ -156,6 +154,7 @@ net-misc/unison:2.48 gtk
 net-misc/unison:2.51 gtk
 net-misc/wicd gtk
 net-misc/youtube-viewer -gtk
+net-p2p/deluge gtk
 net-p2p/deluge -gtk
 net-p2p/gtk-gnutella gtk
 net-p2p/mldonkey -gtk

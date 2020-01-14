@@ -42,7 +42,6 @@ app-text/ghostscript-gpl -gtk
 dev-db/libiodbc -gtk
 dev-db/postgis -gtk
 dev-embedded/gpsim -gtk
-dev-games/openscenegraph gtk
 dev-java/gnu-classpath -gtk
 dev-libs/gjs gtk
 dev-libs/libdbusmenu -gtk
@@ -77,7 +76,6 @@ games-fps/gzdoom gtk
 games-misc/gBhed -gtk
 games-roguelike/tome -gtk
 games-strategy/dopewars -gtk
-gnome-base/gvfs gtk
 gnome-extra/cjs gtk
 gnome-extra/evolution-data-server gtk
 gnome-extra/libgda gtk
@@ -162,6 +160,7 @@ net-misc/unison:2.48 -gtk
 net-misc/unison:2.51 -gtk
 net-misc/wicd gtk
 net-misc/youtube-viewer gtk
+net-p2p/deluge -gtk
 net-p2p/deluge gtk
 net-p2p/eiskaltdcpp gtk
 net-p2p/mldonkey gtk
