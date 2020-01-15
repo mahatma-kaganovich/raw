@@ -386,7 +386,7 @@ qt5="$(sl "dev-qt/qt[a-zA-Z-]*" 5)"
 gst0="$(sl "media-[a-z]*/gst-plugins-$i" 0 "media-plugins/gstreamer$i" 0)"
 gst1="$(sl "media-[a-z]*/gst-plugins-$i" 1 "media-plugins/gstreamer$i" 1)"
 
-generate gles 'gles2 gles gles1' 'opengl' 'gles gles1 opengl egl vaapi' &
+generate gles 'gles2 gles2-only gles gles1' 'opengl' 'gles gles1 opengl egl vaapi' &
 {
 
 

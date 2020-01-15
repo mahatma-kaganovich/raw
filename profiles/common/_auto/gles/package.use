@@ -9,10 +9,12 @@ media-plugins/gst-plugins-gtk gles2 -opengl
 media-plugins/gst-plugins-vaapi gles2 -opengl
 media-tv/kodi gles -opengl
 net-libs/webkit-gtk gles2 -opengl
+net-libs/webkit-gtk gles2-only -opengl
 sys-apps/kmscon gles2
 dev-qt/qtgui gles2 egl
 media-libs/mesa gles1
 media-libs/mesa 
 media-plugins/gst-plugins-vaapi gles2
 net-libs/webkit-gtk gles2
-x11-libs/cairo gles2 -opengl
+net-libs/webkit-gtk gles2-only
+x11-libs/cairo gles2-only -opengl

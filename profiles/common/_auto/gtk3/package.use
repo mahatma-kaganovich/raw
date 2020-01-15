@@ -50,8 +50,6 @@ dev-libs/libpeas gtk
 dev-libs/libreport gtk
 dev-lisp/clisp -gtk
 dev-ml/cairo-ocaml -gtk
-dev-ml/camlimages -gtk
-dev-ml/ocaml-cairo -gtk
 dev-ml/ocamlgraph -gtk
 dev-ml/ocamlnet -gtk
 dev-python/pyglet -gtk

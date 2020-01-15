@@ -10,7 +10,6 @@ net-libs/webkit-gtk
 net-libs/webkit-gtk -gles2
 net-libs/webkit-gtk opengl egl -gles2
 net-libs/webkit-gtk opengl egl
-x11-libs/cairo opengl -gles2
 app-admin/rsyslog ssl openssl gnutls gcrypt
 app-crypt/codecrypt cryptopp
 app-crypt/qca ssl nss gcrypt
@@ -55,7 +54,6 @@ dev-libs/poco ssl
 dev-libs/rasqal mhash
 dev-libs/xmlsec gnutls gcrypt
 dev-libs/xmlsec openssl gnutls nss gcrypt
-dev-ml/ocaml-websocket ssl
 dev-perl/DBD-mysql ssl
 dev-php/PEAR-HTTP_Request2 ssl
 dev-php/pecl-event ssl

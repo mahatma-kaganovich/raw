@@ -1,1 +1,1 @@
-USE="gles gles1 gles2"
+USE="gles gles1 gles2 gles2-only"

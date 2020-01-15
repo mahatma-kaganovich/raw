@@ -1,1 +1,2 @@
 -gles2
+-gles2-only
