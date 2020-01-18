@@ -184,9 +184,9 @@ xemacs)_fLTO && {
 # fuse: e2fsprogs failed only on gcc 8.2
 # ffmpeg: amd64 - mp4 crushes
 # libbsd: mailx
-libwacom|libbsd|dcc|chromium*|webkit-gtk|ffmpeg|xemacs|fuse|privoxy|icedtea|qtwebkit|mplayer|mysql|heimdal|glibc|cvs|pulseaudio)filterflag '-flto*' '-*-lto-*' -fuse-linker-plugin -fdevirtualize-at-ltrans;;&
+xf86-video-intel|libwacom|libbsd|dcc|chromium*|webkit-gtk|ffmpeg|xemacs|fuse|privoxy|icedtea|qtwebkit|mplayer|mysql|heimdal|glibc|cvs|pulseaudio)filterflag '-flto*' '-*-lto-*' -fuse-linker-plugin -fdevirtualize-at-ltrans;;&
 #libcap)_fLTO_f -flto-partition=1to1;;&
-dovecot|xf86-video-intel)
+dovecot)
 	filterflag -ffat-lto-objects # speedup build
 	_isflag -fuse-linker-plugin && appendflag1 -fno-use-linker-plugin
 ;;&
