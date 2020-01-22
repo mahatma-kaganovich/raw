@@ -15,16 +15,16 @@ ask(){
 	echo "<item label='$1'><action name='execute'><prompt>$1</prompt><execute>$2</execute></action></item>"
 }
 
+sgid(){
+	[ -x "$1" ] && x="0x$(stat -Lc '%f' $1)" && [ $[x&2048] != 0 ]
+}
+
 echo "<openbox_pipe_menu><separator label='power:$t'/>
 <item label='$t1'><action name='Execute'><execute>sudo -n /usr/sbin/ya-nrg force $a</execute></action></item>
 <separator />"
 for i in 'Reboot:/sbin/reboot' 'Off:/sbin/poweroff -i -h'; do
 	f=${i#*:}
-	[ $EUID = 0 ] || {
-		x=${f%% *}
-		[ -x $x ] && x="0x$(stat -Lc '%f' $x)" && [ $[x&2048] != 0 ] ||
-			f="sudo -n $f"
-	}
+	[ $EUID = 0 ] || sgid "${f%% *}" || sgid /sbin/openrc-shutdown || f="sudo -n $f"
 	ask "${i%%:*}" "$f"
 done
 [ -w '/sys/power/state' ] && for i in $(< /sys/power/state); do
