@@ -16,7 +16,7 @@ ask(){
 }
 
 orsudo(){
-	ask "$1" "bash -c &quot;$2 || sudo -n -- $2 &quot;"
+	ask "$1" "bash -c &quot;$2 || sudo -A -- $2 &quot;"
 }
 
 echo "<openbox_pipe_menu><separator label='power:$t'/>
