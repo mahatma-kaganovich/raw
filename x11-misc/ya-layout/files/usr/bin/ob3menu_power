@@ -16,14 +16,14 @@ ask(){
 }
 
 orsudo(){
-	ask "$1" "bash -c &quot;$2 || sudo -n $2 &quot;"
+	ask "$1" "bash -c &quot;$2 || sudo -n -- $2 &quot;"
 }
 
 echo "<openbox_pipe_menu><separator label='power:$t'/>
-<item label='$t1'><action name='Execute'><execute>sudo -n /usr/sbin/ya-nrg force $a</execute></action></item>
+<item label='$t1'><action name='Execute'><execute>sudo -n -- /usr/sbin/ya-nrg force $a</execute></action></item>
 <separator />"
 orsudo Reboot /sbin/reboot
-orsudo Off /sbin/poweroff
+orsudo Off '/sbin/poweroff -i -h'
 [ -w '/sys/power/state' ] && for i in $(< /sys/power/state); do
 	ask "Suspend to $i" "/bin/bash -c &quot;echo $i &gt;/sys/power/state&quot;"
 done

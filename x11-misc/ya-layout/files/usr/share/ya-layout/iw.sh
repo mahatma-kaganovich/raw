@@ -4,7 +4,7 @@
 # use iwmon (iwd) & ip (iproute2), but works with wpa_supplicant too
 # re-used ya-nrg for sudo one-point
 
-nrg='sudo -n /usr/sbin/ya-nrg'
+nrg='sudo -n -- /usr/sbin/ya-nrg'
 
 nxt(){
 unset ssid
