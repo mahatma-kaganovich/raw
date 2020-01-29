@@ -1159,7 +1159,7 @@ native|:native|native:native)
     *)
 #    x86|i386|x86_64)
 	export PNP_VENDOR=""
-	CF1 -X86_{UP_APIC,TSC,PAT,MSR,MCE,CMOV,X2APIC} -MTRR -INTEL_IDLE -KVM_INTEL -KVM_AMD -SPARSE_IRQ -CPUSETS -INTEL_TXT -$knl -INTEL_RDT_?A? X86_CPU_RESCTRL
+	CF1 -X86_{UP_APIC,TSC,PAT,MSR,MCE,CMOV,X2APIC,5LEVEL} -MTRR -INTEL_IDLE -KVM_INTEL -KVM_AMD -SPARSE_IRQ -CPUSETS -INTEL_TXT -$knl -INTEL_RDT_?A? X86_CPU_RESCTRL
 	smt=false
 	mc=false
 	# X86_FEATURE_NAMES hwp broken
@@ -1219,6 +1219,8 @@ native|:native|native:native)
 		hwpstate)grep -qsF X86_FEATURE_HW_PSTATE "${S}/drivers/cpufreq/powernow-k8.c" && freq+=" X86_ACPI_CPUFREQ -X86_POWERNOW_K8";;
 #		hwp)CF1 -INTEL_TURBO_MAX_3;; # ? - 1) need acpi support 2) flag broken now
 		rdt_a)CF1 INTEL_RDT_?A? X86_CPU_RESCTRL;;
+		# la57 may be disabled
+		gfni|la57)CF1 X86_5LEVEL;;
 		esac
 	done
 	use xen && CF1 PARAVIRT{,_GUEST} HYPERVISOR_GUEST
