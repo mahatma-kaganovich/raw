@@ -1,0 +1,43 @@
+It MUST work in gcc 10.0, but in current git options help  show nothing.
+gcc -Q -O3 -m32 -march=core2 --help=target --help=optimizers |grep 'stackrealign\|cost-model'
+
+Looks like deep unfinished options behaviour rework.
+
+--- a/gcc/config/i386/i386-options.c	2020-01-31 16:02:00.864842991 +0300
++++ b/gcc/config/i386/i386-options.c	2020-01-31 16:12:15.254905249 +0300
+@@ -2513,6 +2513,24 @@ ix86_option_override_internal (bool main
+   SET_OPTION_IF_UNSET (opts, opts_set, ix86_force_align_arg_pointer,
+ 		       STACK_REALIGN_DEFAULT);
+ 
++  /* 32-bit SSE need more align */
++  if (!opts->x_ix86_force_align_arg_pointer
++      && (opts->x_ix86_isa_flags & (OPTION_MASK_ISA_64BIT | OPTION_MASK_ISA_SSE | OPTION_MASK_ISA_SSE4A)) == OPTION_MASK_ISA_SSE
++      && (opts->x_flag_vect_cost_model != VECT_COST_MODEL_CHEAP
++      || opts->x_flag_simd_cost_model != VECT_COST_MODEL_CHEAP))
++    {
++#if 1
++      SET_OPTION_IF_UNSET (opts, opts_set, ix86_force_align_arg_pointer, 1);
++      if (!opts->x_ix86_force_align_arg_pointer)
++#endif
++	{
++	  SET_OPTION_IF_UNSET (opts, opts_set, flag_vect_cost_model,
++		       VECT_COST_MODEL_CHEAP);
++	  SET_OPTION_IF_UNSET (opts, opts_set, flag_simd_cost_model,
++		       VECT_COST_MODEL_CHEAP);
++	}
++    }
++
+   ix86_default_incoming_stack_boundary = PREFERRED_STACK_BOUNDARY;
+ 
+   /* Validate -mincoming-stack-boundary= value or default it to
+--- a/gcc/config/i386/t-i386	2020-01-31 16:02:00.893845496 +0300
++++ b/gcc/config/i386/t-i386	2020-01-31 16:03:34.307913275 +0300
+@@ -16,6 +16,8 @@
+ # along with GCC; see the file COPYING3.  If not see
+ # <http://www.gnu.org/licenses/>.
+ 
++TARGET_LIBGCC2_CFLAGS += -mno-stackrealign
++
+ OPTIONS_H_EXTRA += $(srcdir)/config/i386/stringop.def
+ TM_H += $(srcdir)/config/i386/x86-tune.def
+ PASSES_EXTRA += $(srcdir)/config/i386/i386-passes.def
