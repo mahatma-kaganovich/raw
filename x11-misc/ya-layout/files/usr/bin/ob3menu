@@ -988,7 +988,8 @@ for(sort keys %configs){
 	print "<menu id='$id' label='",$dir{$i}||"$i'"," execute='$_'/>";
 	$id++
 }
-# <item label="KeyMap >>"><action name="execute"/><execute>/usr/bin/dbus-send --system --dest=ru.gentoo.KbddService /ru/gentoo/KbddService ru.gentoo.kbdd.next_layout</execute></item>
+$i="/usr/bin/xkbswitch";
+$i="<item label='KeyMap >>'><action name='execute'><execute>$i</execute></action></item>" if (-x $i);
 print qq(
 <menu id=").($id++).qq(" label="OpenBox">
 <menu id="client-menu"/>
@@ -996,6 +997,7 @@ print qq(
 <item label="Fullscreen"><action name="ToggleFullscreen"/></item>
 <item label="Reconfigure"><action name="Reconfigure"/></item>
 <item label="Restart"><action name="Restart"/></item>
+$i
 <separator/>
 <menu id=").($id++).qq(" label='$set execute="${0}config"/>
 <menu id=").($id++).qq(" label='Default Applications' execute='$0$subcmd --$ma'/>
