@@ -578,11 +578,11 @@ tint2chk(){
 	t="/usr/bin/tint2 -c $c"
 	YA_APP_TINT2="'$t'"
 	[[ "${YA_DESKTOP,,}" == *tint2* ]] && YA_DESKTOP="$t" && desk="$t"
-	[ -s "$c" ] && return
-	[ -s $b ] && {
-		cp $b "$c"
-		return
-	}
+    if [ -s "$c" ]; then
+	true
+    elif [ -s $b ]; then
+	cp $b "$c"
+    else
 	[ -s $a ] && cp $a "$b" && cp $b "$c"
 	$minimal || [ -e "$cache/desk-sh" ] || {
 		i="$(< /etc/xdg/ya$suff/menu.xml)$(< "$obconfdir/menu.xml")"
@@ -595,6 +595,8 @@ tint2chk(){
 	[ -e "$prefapps" ] || {
 		grep -sh '^Exec=' "$HOME/.config/xfce4/panel/launcher"{*.rc,*/*.desktop}|sed -e 's:^Exec=::' -e 's:%[^ ]*$::' -e 's: *::g'|sort -u >>"$prefapps"
 	}
+    fi
+    $kbdd && grep -qw xkbdd "$c" && kbdd=false
 }
 
 _unalias(){
@@ -780,7 +782,7 @@ Launcher:
 	fi
 	[ -x /usr/bin/dbus-launch ] && _env /usr/bin/dbus-launch --sh-syntax --exit-with-session
 	for i in gtk{3,2}; do
-		for j in /usr/lib*/qt5/plugins/platformthemes/libq$i.so; do
+		for j in /usr/lib64/qt5/plugins/platformthemes/libq$i.so; do
 			[ -e "$j" ] && export QT_QPA_PLATFORMTHEME="$i" QT_STYLE_OVERRIDE="$i" && break 2
 		done
 	done
@@ -793,7 +795,7 @@ _run_dsp(){
 	[ "$YA_STARTUP" = TINT2 ] && tint2chk
 	$xinitrc || _xcat Xresources | xrdb -merge
 	xssaver
-	$kbdd && kbdd
+	$kbdd && xkbdd >/dev/null &
 	[ -n "$desk" ] && i=`_1cfg "ya$suff/wallpaper{$DSP2,$DSP,${DSP%:*},${DSP%.*},}.*"` && case "$desk" in
 	*pcmanfm*)desk+=" -w $i";;
 	esac
