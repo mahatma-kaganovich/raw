@@ -897,7 +897,7 @@ NOFORK:
 		print '<separator/>';
 	}
 nolauncher:
-if(defined($tint2_) && !($tint2_ eq '' || _write($tint2[-1],$tint2_)!=1) && !fork()){
+if ($tint2_ ne '' && _write($tint2[-1],$tint2_)==1 && !fork()){
 	close(STDOUT);
 	open STDOUT,">&2";
 	@PIDS=();
