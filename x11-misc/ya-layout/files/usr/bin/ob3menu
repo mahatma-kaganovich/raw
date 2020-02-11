@@ -11,6 +11,7 @@
 #	--launcher <~/.cache/ya/desk.+.jpg> <~/.cache/ya/desk-sh> [<geometry|,> [<wallpaper+compositor_options>]]
 #		geometry = x,y,vert?,xx,yy,spliceX,spliceY,left?,bottom?
 #	--tint2 [<config>]
+#	--tint2launcher
 #	--dock
 #	--multiserver
 #	--svg
@@ -89,6 +90,9 @@ $id=0;
 
 %noico=('svg'=>1,'xpm'=>1);
 %prefico=('svg'=>1);
+
+$defapps={};
+%mimeapps=('Default Applications'=>$defapps);
 
 for(@ARGV){
 	if($_=~s/^--//){
@@ -445,7 +449,7 @@ if(exists($P{slow})){
 if(($X && $Y) || $mapps){
 			for(split(/\s+/,$ENV{YA_APP}),split(/\s*[\r\n]+\s*/,_read('<'.$fconf.'preferred-apps'))){
 				if(substr($_,-8) eq '.desktop'){
-					$mimeapps{'Default Applications'}->{$_}=undef;
+					$defapps->{$_}=undef;
 				}else{
 					my $x=$_;
 					push(@apps,($x=~s/.*\///gs)?[$x,$_,$_]:[$_,$x="/usr/bin/$x",$_]);
@@ -465,7 +469,17 @@ if(($X && $Y) || $mapps){
 				}
 				close($F);
 			}
-			$napps=scalar(grep(/^$mimemenu\//,keys %{$mimeapps{'Default Applications'}})) if($mapps);
+			$napps=scalar(grep(/^$mimemenu\//,keys %$defapps)) if($mapps);
+			if (exists($P{tint2launcher})){
+				my %a;
+				for(grep(/\.desktop$/,keys %$defapps)){
+					my $i=$_;
+					$i=~s/^.*\///s;
+					$a{$i}=undef;
+					delete($defapps->{$_});
+				}
+				$tint2l=join("\n",'',(map{"launcher_item_app = $_"} sort keys %a),'') if(%a);
+			}
 }
 
 for $f(map{glob $_}('{/usr,~/.local}/share/applications/{,*/}*.desktop','/usr/share/ya-layout/Desktop/{,exit/}*.desktop','/etc/xdg/autostart/*.desktop','{/usr,~/.local}/share/desktop-directories/*.directory')){
@@ -545,18 +559,18 @@ N:
 		$_=[split(/;/,$_)] for($d{Categories});
 		$mimeapps{'Added Associations'}->{$ff}->{$_}=$mimeapps{'Added Associations'}->{$_}->{$ff}=1 for(split(/;/,$d{MimeType}),"$mimemenu/$ff",map{@{$CatMime{$_}}}@{$d{Categories}},$ff);
 		for my $x(keys %{$mimeapps{'Removed Associations'}->{$ff}}){
-			delete($_->{$ff}->{$x}) && delete($_->{$x}->{$ff}) for($mimeapps{'Added Associations'},$mimeapps{'Default Applications'});
-			%{$mimeapps{'Default Applications'}->{$x}} || delete($mimeapps{'Default Applications'}->{$x});
+			delete($_->{$ff}->{$x}) && delete($_->{$x}->{$ff}) for($mimeapps{'Added Associations'},$defapps);
+			%{$defapps->{$x}} || delete($defapps->{$x});
 		}
-		%{$mimeapps{'Default Applications'}->{$ff}} || delete($mimeapps{'Default Applications'}->{$ff});
+		%{$defapps->{$ff}} || delete($defapps->{$ff});
 		$d{MimeType}=[keys %{$mimeapps{'Added Associations'}->{$ff}}];
 		$d{Exec}=~s/\s+%\w$//;
 		$d{Name}.=" 	[$key{$d{Exec}}]" if(exists($key{$d{Exec}}));
 		if($mapps){
 			for(sort @{$d{MimeType}}){
-				if(!exists($mimeapps{'Default Applications'}->{$_})){
+				if(!exists($defapps->{$_})){
 					push @def,$_;
-				}elsif(!exists($mimeapps{'Default Applications'}->{$_}->{$ff})){
+				}elsif(!exists($defapps->{$_}->{$ff})){
 					push @m2,"<item label='$_'><action name='Execute'><execute>$0 --$ma + $ff $_</execute></action></item>";
 					next;
 				}
@@ -576,12 +590,12 @@ N:
 			$i="<item label='$d{Name}'$i><action name='Execute'><execute>$d{Exec}</execute>".$notify{lc($d{StartupNotify})}.'</action></item>' 
 		}
 		if(!exists($apps{$d{Exec}})){
-			goto NOAPPS if(!exists($mimeapps{'Default Applications'}->{$ff}));
-			if(!($l=exists($mimeapps{'Default Applications'}->{"$mimemenu/$ff"}))){
+			goto NOAPPS if(!exists($defapps->{$ff}));
+			if(!($l=exists($defapps->{"$mimemenu/$ff"}))){
 				push @m2,"<item label='$mimemenu/$ff'><action name='Execute'><execute>$0 --$ma + $ff $mimemenu/$ff</execute></action></item>";
 				push @apps,[$d{Exec}] if($l=exists($P{$ma}));
 			}else{
-				splice(@apps,$mimeapps{'Default Applications'}->{"$mimemenu/$ff"}->{$ff}-1,0,[$d{Exec}]);
+				splice(@apps,$defapps->{"$mimemenu/$ff"}->{$ff}-1,0,[$d{Exec}]);
 			}
 		}else{
 			$l=1
@@ -591,7 +605,7 @@ N:
 			$i.="<separator label='-'/>@m1<separator label='+'/>@m2</menu>";
 		}
 		if(@def){
-			$mimeapps{'Default Applications'}->{$_}->{$ff}=$mimeapps{'Default Applications'}->{$ff}->{$_}=1 for(@def);
+			$defapps->{$_}->{$ff}=$defapps->{$ff}->{$_}=1 for(@def);
 			_xdg_mime('+',$ff,@def);
 		}
 		substr($i,13,0)=' ☑';
@@ -638,9 +652,41 @@ if(exists($P{$ma})){
 }else{
 	print '<openbox_pipe_menu><menu id="client-list-combined-menu"/><separator/>';
 }
+if(exists($P{tint2})){
+	@tint2=@{$P{tint2}};
+	$t2v="$HOME/.config/tint2/tint2rc";
+	unshift @tint2,$vanilla?($t2v):("$fconf/tint2rc"),"/etc/xdg/$prof/tint2rc",'/etc/xdg/ya/tint2rc','/etc/xdg/tint2/tint2rc' if(!$tint2[0]);
+	for(@tint2){
+		if($_ && defined($tint2_=_read($_))){
+					$panel_items0=$panel_items=tint2get('panel_items',-1);
+			for(glob($fconf.'/tint2add-*')){
+				my ($s,$i);
+				next if(!defined($s=_read($_)));
+				$tint2_.=$s;
+				$panel_items.=$i if(($i)=$s=~/^#:([A-Z:]*)/s);
+			}
+			if(defined($tint2l)){
+				$tint2_.=$tint2l;
+				$panel_items='L'.$panel_items if (!($panel_items=~/L/));
+			}
+			tint2set('panel_items',-1,$panel_items) if($panel_items ne $panel_items0);
+			$t2d=crc32($tint2_);
+			if($_ ne $t2v){
+				my $s=int($conf{'.font.size'}*$panel_size2);
+				tint2set('panel_size',1,int($conf{'.font.size'}*$panel_size2));
+				tint2set('panel_monitor',0,$monitor,1);
+				tint2set('systray_icon_size',-1,"$s $s");
+				tint2set('task_maximum_size',-1,($s<<4)." $s");
+			}
+			last;
+		}
+	}
+}
 if(@apps){
+#if(@apps || exists($P{tint2})){
 	my $ico=$ico{'image-missing'}||$ico{'application-other'}||$ico{'application-x-executable'};
 	@apps=map{$apps{$_->[2]}||$apps{$_->[0]}||$apps{$_->[1]}||[$ico{$_->[0]}||$ico,$_->[2]]}@apps;
+}
 	if(exists($P{launcher})){
 		umask(077);
 		@crc=map{for(my $i=8;$i>0;$i--){$_=($_&1)?($_>>1)^0xedb88320:($_>>1)};$_}(0..255);
@@ -659,32 +705,6 @@ if(@apps){
 						unshift @{$P{tint2}},'' if(!index($_,"$HOME/.cache/"));
 						last;
 					}
-				}
-			}
-		}
-		if(exists($P{tint2})){
-			@tint2=@{$P{tint2}};
-			$t2v="$HOME/.config/tint2/tint2rc";
-			unshift @tint2,$vanilla?($t2v):("$fconf/tint2rc"),"/etc/xdg/$prof/tint2rc",'/etc/xdg/ya/tint2rc','/etc/xdg/tint2/tint2rc' if(!$tint2[0]);
-			for(@tint2){
-				if($_ && defined($tint2_=_read($_))){
-					$panel_items0=$panel_items=tint2get('panel_items',-1);
-					for(glob($fconf.'/tint2add-*')){
-						my ($s,$i);
-						next if(!defined($s=_read($_)));
-						$tint2_.=$s;
-						$panel_items.=$i if(($i)=$s=~/^#:([A-Z:]*)/s);
-					}
-					tint2set('panel_items',-1,$panel_items) if($panel_items ne $panel_items0);
-					$t2d=crc32($tint2_);
-					if($_ ne $t2v){
-						my $s=int($conf{'.font.size'}*$panel_size2);
-						tint2set('panel_size',1,int($conf{'.font.size'}*$panel_size2));
-						tint2set('panel_monitor',0,$monitor,1);
-						tint2set('systray_icon_size',-1,"$s $s");
-						tint2set('task_maximum_size',-1,($s<<4)." $s");
-					}
-					last;
 				}
 			}
 		}
@@ -735,11 +755,12 @@ if(@apps){
 		$vert=$sx && !$sy if($vert eq '');
 		$xx||=int($sx/$x) if($x);
 		$yy||=int($sy/$y) if($y);
-		($n||=$xx*$yy)||goto nolauncher;
+		$n||=$xx*$yy;
+#		$n||goto nolauncher;
 		$xx||=$yy?int($n/$yy)+($n%$yy!=0):$vert?1:$n;
 		$yy||=$xx?int($n/$xx)+($n%$xx!=0):$vert?$n:1;
-		$x||=int($sx/$xx);
-		$y||=int($sy/$yy);
+		$x=int($sx/$xx) if(!$x && $xx);
+		$y=int($sy/$yy) if(!$y && $yy);
 		$x||=$y;
 		$y||=$x;
 		$sx||=$x*$xx;
@@ -805,7 +826,7 @@ NOGEO:
 				tint2set('panel_margin',$_,$margin[$_]) for(0,1);
 				tint2set('panel_padding',0,$pad);
 			}
-			tint2set('panel_size',0,$sz-2);
+			tint2set('panel_size',0,$sz-2) if($sz>1);
 			if($tint2font){
 				my $f=$conf{'.font.name'}.' '.$conf{'.font.weight'}.' '.$conf{'.font.slant'}.' ';
 				$f=~s/normal //g;
@@ -859,7 +880,7 @@ DRAW:
 		);
 		exit;
 NOFORK:
-	$tint2_=undef;
+		$tint2_=undef;
 	}else{
 		if (exists($P{compact})){
 			print "<menu id='$id' label='Top'>";
@@ -876,6 +897,12 @@ NOFORK:
 		print '<separator/>';
 	}
 nolauncher:
+if(defined($tint2_) && !($tint2_ eq '' || _write($tint2[-1],$tint2_)!=1) && !fork()){
+	close(STDOUT);
+	open STDOUT,">&2";
+	@PIDS=();
+	_restart($bin.'tint2',0,'-c',$tint2[-1]);
+	exit;
 }
 for(sort{$dir{$a} cmp $dir{$b}}keys %cat1){
 	print "<menu id='$ID$id' label='$dir{$_}>",(sort @{$cat1{$_}});
