@@ -668,6 +668,14 @@ if(@apps){
 			unshift @tint2,$vanilla?($t2v):("$fconf/tint2rc"),"/etc/xdg/$prof/tint2rc",'/etc/xdg/ya/tint2rc','/etc/xdg/tint2/tint2rc' if(!$tint2[0]);
 			for(@tint2){
 				if($_ && ($tint2_=_read($_))){
+					$panel_items0=$panel_items=tint2get('panel_items',-1);
+					for(glob($fconf.'/tint2add-*')){
+						my ($s,$i);
+						next if(!($s=_read($_)));
+						$tint2_.=$s;
+						$panel_items.=$i if(($i)=$s=~/^#:([A-Z:]*)/s);
+					}
+					tint2set('panel_items',-1,$panel_items) if($panel_items ne $panel_items0);
 					$t2d=crc32($tint2_);
 					if($_ ne $t2v){
 						my $s=int($conf{'.font.size'}*$panel_size2);
