@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # (c) Denis Kaganovich, Anarchy or GPLv2
-# OpenBox3 pipe menu v0.19
+# OpenBox3 pipe menu v0.20
 # ob3menu {--<command> {params}}
 # 	--slow [<path/to/rc.xml> [XxY]]
 #	--compact
@@ -392,7 +392,7 @@ if(exists($P{slow})){
 	# wallpaper id
 	$DSP2=$X.'x'.$Y;
 	$subcmd.=" &quot;$fconf&quot;";
-	if(my $s=_read("<$fconf")){
+	if(defined(my $s=_read("<$fconf"))){
 		_tag($s,'',@$_) for(@conf);
 		$P{'slow'}=$conf{'.showIcons'} eq 'yes';
 		$s=~s/<keybind\s+key=\"(.*?)\".*?>\s*<action name=\"Execute\">.*?<command>(.*?)<\/command>/$key{$2}=$1;''/gse;
@@ -651,7 +651,7 @@ if(@apps){
 		$DSP1=$DSP;
 		$DSP1=join(',',$DSP,(map{$DSP1=~s/$_.*?$//;$DSP1}'\.','\:'),'');
 		if(!exists($P{dock}) && !exists($P{tint2}) && (my $pid=prop('_OPENBOX_PID'))){
-			if(my $c=_read("/proc/$pid/cmdline",0)){
+			if(defined(my $c=_read("/proc/$pid/cmdline",0))){
 				my @c=split(/\x0/,$c);
 				for(@c){
 					if($_=~s/(?:^|\S*\/)tint2\s+-c\s+//){
@@ -667,11 +667,11 @@ if(@apps){
 			$t2v="$HOME/.config/tint2/tint2rc";
 			unshift @tint2,$vanilla?($t2v):("$fconf/tint2rc"),"/etc/xdg/$prof/tint2rc",'/etc/xdg/ya/tint2rc','/etc/xdg/tint2/tint2rc' if(!$tint2[0]);
 			for(@tint2){
-				if($_ && ($tint2_=_read($_))){
+				if($_ && defined($tint2_=_read($_))){
 					$panel_items0=$panel_items=tint2get('panel_items',-1);
 					for(glob($fconf.'/tint2add-*')){
 						my ($s,$i);
-						next if(!($s=_read($_)));
+						next if(!defined($s=_read($_)));
 						$tint2_.=$s;
 						$panel_items.=$i if(($i)=$s=~/^#:([A-Z:]*)/s);
 					}
