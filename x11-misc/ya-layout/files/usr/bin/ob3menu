@@ -197,12 +197,20 @@ sub _write{
 	(syswrite($F,$_[1],$l) eq $l && close($F) && rename($f,$_[0])) && 1;
 }
 
+sub _fork{
+	fork() && return 1;
+	close(STDOUT);
+	open STDOUT,">&2";
+	0;
+}
+
 sub _restart{
 	# xkill don't properly close tray [on some X], so tray icons not restarting
 	# try to kill by pid first
+	my ($p,$get,@p)=@_;
+	return if(!$get && _fork());
 	my $d=quotemeta($ENV{'DISPLAY'});
 	my ($w,$chk);
-	my ($p,$get,@p)=@_;
 	my $p1="$p @p";
 	my $n=$p;
 	$n=~s/^.*\///g;
@@ -222,7 +230,7 @@ sub _restart{
 			push @PIDS,$pid if(_read($_,0)=~/(?:^|\x0)DISPLAY=$d(?:\x0|\$)/s);
 		}
 	}
-	$get && return $chk;
+	return if($get && ($chk || _fork()));
 	if(@PIDS){
 		system('kill',@PIDS);
 		while(map{-e "/proc/$_" || ()}@PIDS){sleep(1)};
@@ -723,7 +731,7 @@ if(@apps){
 			if(exists($P{dock})){
 				$p=$conf{'.dock.position'}.$conf{'.dock.direction'};
 				$x=$y=66 if(!$x && !$y);
-			}elsif($tint2_){
+			}elsif(defined($tint2_)){
 				$sz=tint2get('panel_size',1);
 				$p=tint2get('panel_position',-1);
 			}
@@ -805,7 +813,7 @@ NOGEO:
 			}
 			$m="${bin}montage -background none -geometry ${x}x$y -tile ${xx}x$yy @m $f |${bin}convert -background none -splice ${spliceX}x$spliceY $f -extent ${X}x$Y$m";
 		}
-		if($tint2_){
+		if(defined($tint2_)){
 			my $sz;
 			my @margin=(0,0);;
 			my $pad=0;
@@ -840,20 +848,9 @@ NOGEO:
 		}
 		$?=0;
 		$i=newname($img,($m||"@m").$img.$t2d)||(-e $sh ?0:2);
-		if($i || defined($tint2_)){
-			fork() && goto NOFORK;
-			close(STDOUT);
-			open STDOUT,">&2";
-			@PIDS=();
-			if (!$i) {
-				# check resolution changed by tint2 cmdline
-				# if yes - simple restart tint2 & redraw bg
-				_restart($bin.'tint2',1,'-c',$tint2[-1]) && exit;
-				$tint2_=$i=3;
-			}
-			$tint2_ && !fork() && _restart($bin.'tint2',0,'-c',$tint2[-1]);
-			$tint2_=undef;
-		}
+		$i && _fork() && goto NOFORK;
+		defined($tint2_) && _restart($bin.'tint2',$tint2_ eq '','-c',$tint2[-1]);
+		$tint2_=undef;
 		goto (nolauncher,NEWIMG,NEWSH,DRAW)[$i];
 NEWIMG:
 		unlink($sh);
@@ -897,12 +894,8 @@ NOFORK:
 		print '<separator/>';
 	}
 nolauncher:
-if ($tint2_ ne '' && _write($tint2[-1],$tint2_)==1 && !fork()){
-	close(STDOUT);
-	open STDOUT,">&2";
-	@PIDS=();
+if ($tint2_ ne '' && _write($tint2[-1],$tint2_)==1){
 	_restart($bin.'tint2',0,'-c',$tint2[-1]);
-	exit;
 }
 for(sort{$dir{$a} cmp $dir{$b}}keys %cat1){
 	print "<menu id='$ID$id' label='$dir{$_}>",(sort @{$cat1{$_}});
