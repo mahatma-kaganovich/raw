@@ -361,10 +361,18 @@ sub fontsize2{
 }
 
 sub tint2{
-	if(defined($tint2_)){
-		_restart($bin.'tint2',_write($tint2[-1],$tint2_)!=1,'-c',$tint2[-1]);
-		$tint2_=undef;
+	defined($tint2_)||return;
+	if($tint2font){
+		my $f=$conf{'.font.name'}.' '.$conf{'.font.weight'}.' '.$conf{'.font.slant'}.' ';
+		$f=~s/normal //g;
+		fontsize2('clock','time',$f);
+		fontsize2('battery','bat',$f);
+		fontsize2('execp','execp',$f);
+		$f.=int($conf{'.font.size'}*$tint2font);
+		tint2set('(?:task|tooltip)_font',-1,$f);
 	}
+	_restart($bin.'tint2',_write($tint2[-1],$tint2_)!=1,'-c',$tint2[-1]);
+	$tint2_=undef;
 }
 
 
@@ -693,15 +701,6 @@ if(exists($P{tint2})){
 				tint2set('panel_monitor',0,$monitor,1);
 				tint2set('systray_icon_size',-1,"$s $s");
 				tint2set('task_maximum_size',-1,($s<<4)." $s");
-			}
-			if($tint2font){
-				my $f=$conf{'.font.name'}.' '.$conf{'.font.weight'}.' '.$conf{'.font.slant'}.' ';
-				$f=~s/normal //g;
-				fontsize2('clock','time',$f);
-				fontsize2('battery','bat',$f);
-				fontsize2('execp','execp',$f);
-				$f.=int($conf{'.font.size'}*$tint2font);
-				tint2set('(?:task|tooltip)_font',-1,$f);
 			}
 			last;
 		}
