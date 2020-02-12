@@ -360,6 +360,14 @@ sub fontsize2{
 	tint2set($_[1],'[12]_font',-1,$_[2].($s>>1));
 }
 
+sub tint2{
+	if(defined($tint2_)){
+		_restart($bin.'tint2',_write($tint2[-1],$tint2_)!=1,'-c',$tint2[-1]);
+		$tint2_=undef;
+	}
+}
+
+
 if(exists($P{$ma})){
 	if(@{$P{$ma}}){
 		_xdg_mime(@{$P{$ma}});
@@ -844,13 +852,11 @@ NOGEO:
 				$f.=int($conf{'.font.size'}*$tint2font);
 				tint2set('(?:task|tooltip)_font',-1,$f);
 			}
-			$tint2_='' if(_write($tint2[-1],$tint2_)!=1);;
 		}
 		$?=0;
 		$i=newname($img,($m||"@m").$img.$t2d)||(-e $sh ?0:2);
 		$i && _fork() && goto NOFORK;
-		defined($tint2_) && _restart($bin.'tint2',$tint2_ eq '','-c',$tint2[-1]);
-		$tint2_=undef;
+		tint2();
 		goto (nolauncher,NEWIMG,NEWSH,DRAW)[$i];
 NEWIMG:
 		unlink($sh);
@@ -894,9 +900,7 @@ NOFORK:
 		print '<separator/>';
 	}
 nolauncher:
-if ($tint2_ ne '' && _write($tint2[-1],$tint2_)==1){
-	_restart($bin.'tint2',0,'-c',$tint2[-1]);
-}
+tint2();
 for(sort{$dir{$a} cmp $dir{$b}}keys %cat1){
 	print "<menu id='$ID$id' label='$dir{$_}>",(sort @{$cat1{$_}});
 	$id++;
