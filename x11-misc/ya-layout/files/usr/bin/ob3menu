@@ -694,6 +694,15 @@ if(exists($P{tint2})){
 				tint2set('systray_icon_size',-1,"$s $s");
 				tint2set('task_maximum_size',-1,($s<<4)." $s");
 			}
+			if($tint2font){
+				my $f=$conf{'.font.name'}.' '.$conf{'.font.weight'}.' '.$conf{'.font.slant'}.' ';
+				$f=~s/normal //g;
+				fontsize2('clock','time',$f);
+				fontsize2('battery','bat',$f);
+				fontsize2('execp','execp',$f);
+				$f.=int($conf{'.font.size'}*$tint2font);
+				tint2set('(?:task|tooltip)_font',-1,$f);
+			}
 			last;
 		}
 	}
@@ -843,15 +852,6 @@ NOGEO:
 				tint2set('panel_padding',0,$pad);
 			}
 			tint2set('panel_size',0,$sz-2) if($sz>1);
-			if($tint2font){
-				my $f=$conf{'.font.name'}.' '.$conf{'.font.weight'}.' '.$conf{'.font.slant'}.' ';
-				$f=~s/normal //g;
-				fontsize2('clock','time',$f);
-				fontsize2('battery','bat',$f);
-				fontsize2('execp','execp',$f);
-				$f.=int($conf{'.font.size'}*$tint2font);
-				tint2set('(?:task|tooltip)_font',-1,$f);
-			}
 		}
 		$?=0;
 		$i=newname($img,($m||"@m").$img.$t2d)||(-e $sh ?0:2);
