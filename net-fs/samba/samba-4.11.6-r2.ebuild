@@ -3,9 +3,9 @@
 # $Id$
 
 EAPI=6
-PYTHON_COMPAT=( python3_{4,5,6,7} )
-PYTHON_REQ_USE='threads(+),xml(+)'
 
+PYTHON_COMPAT=( python3_{6,7,8} )
+PYTHON_REQ_USE='threads(+),xml(+)'
 inherit python-single-r1 waf-utils multilib-minimal linux-info systemd
 # eutils
 
@@ -25,8 +25,8 @@ LICENSE="GPL-3"
 
 SLOT="0"
 
-IUSE="acl addc addns ads ceph client cluster cups debug dmapi fam gnutls gpg
-iprint json ldap pam profiling-data python quota selinux syslog system-heimdal
+IUSE="acl addc addns ads ceph client cluster cups debug dmapi fam gpg iprint
+json ldap pam profiling-data python quota selinux syslog system-heimdal
 +system-mitkrb5 systemd test winbind zeroconf
 afs sasl cpu_flags_x86_aes nls lmdb etcd system-ldb snapper"
 
@@ -45,18 +45,20 @@ CDEPEND="
 	dev-lang/perl:=
 	dev-libs/libaio[${MULTILIB_USEDEP}]
 	dev-libs/libbsd[${MULTILIB_USEDEP}]
+	dev-libs/libgcrypt:0
 	dev-libs/iniparser:0
 	dev-libs/popt[${MULTILIB_USEDEP}]
 	>=dev-util/cmocka-1.1.3[${MULTILIB_USEDEP}]
+	>=net-libs/gnutls-3.2.0
 	sys-apps/attr[${MULTILIB_USEDEP}]
 	system-ldb? ( sys-libs/ldb )
 	!system-ldb? ( !sys-libs/ldb )
 	sys-libs/libcap
 	sys-libs/ncurses:0=[${MULTILIB_USEDEP}]
 	sys-libs/readline:0=
-	>=sys-libs/talloc-2.1.16[python?,${PYTHON_SINGLE_USEDEP},${MULTILIB_USEDEP}]
-	>=sys-libs/tdb-1.3.18[python?,${PYTHON_SINGLE_USEDEP},${MULTILIB_USEDEP}]
-	>=sys-libs/tevent-0.9.39[python?,${PYTHON_SINGLE_USEDEP},${MULTILIB_USEDEP}]
+	>=sys-libs/talloc-2.2.0[python?,${PYTHON_SINGLE_USEDEP},${MULTILIB_USEDEP}]
+	>=sys-libs/tdb-1.4.2[python?,${PYTHON_SINGLE_USEDEP},${MULTILIB_USEDEP}]
+	>=sys-libs/tevent-0.10.0[python?,${PYTHON_SINGLE_USEDEP},${MULTILIB_USEDEP}]
 	sys-libs/zlib[${MULTILIB_USEDEP}]
 	virtual/libiconv
 	pam? ( sys-libs/pam )
@@ -75,10 +77,6 @@ CDEPEND="
 	debug? ( dev-util/lttng-ust )
 	dmapi? ( sys-apps/dmapi )
 	fam? ( virtual/fam )
-	gnutls? (
-		dev-libs/libgcrypt:0
-		>=net-libs/gnutls-3.5.6
-	)
 	gpg? ( app-crypt/gpgme )
 	json? ( dev-libs/jansson )
 	ldap? ( net-nds/openldap[${MULTILIB_USEDEP}] )
@@ -115,10 +113,10 @@ RDEPEND="${CDEPEND}
 "
 
 REQUIRED_USE="
-	addc? ( python gnutls json winbind )
+	addc? ( python json winbind )
 	test? ( python )
 	addns? ( python )
-	ads? ( acl gnutls ldap )
+	ads? ( acl ldap )
 	gpg? ( addc )
 	?? ( system-heimdal system-mitkrb5 )
 	${PYTHON_REQUIRED_USE}"
@@ -132,7 +130,6 @@ RESTRICT="test"
 S="${WORKDIR}/${MY_P}"
 
 PATCHES=(
-	"${FILESDIR}/${PN}-4.5.1-compile_et_fix.patch"
 	"${FILESDIR}/${PN}-4.9.2-timespec.patch"
 )
 
@@ -236,16 +233,18 @@ multilib_src_configure() {
 		$(multilib_native_use_with quota quotas)
 		$(multilib_native_use_with syslog)
 		$(multilib_native_use_with systemd)
+		--systemd-install-services
+		--with-systemddir="$(systemd_get_systemunitdir)"
 		$(multilib_native_use_with winbind)
 		$(multilib_native_usex python '' '--disable-python')
 		$(multilib_native_use_enable zeroconf avahi)
 		$(multilib_native_usex test '--enable-selftest' '')
 		$(usex system-mitkrb5 "--with-system-mitkrb5 $(multilib_native_usex addc --with-experimental-mit-ad-dc '')" '')
-		$(use_enable gnutls)
 		$(use_with debug lttng)
 		$(use_with ldap)
 		$(use_with profiling-data)
 		$(use_with lmdb ldb-lmdb)
+		--jobs $(makeopts_jobs)
 	)  #'"
 	multilib_is_native_abi && myconf+=( --with-shared-modules=${SHAREDMODS} )
 
@@ -312,12 +311,12 @@ multilib_src_install() {
 			doexe "${CONFDIR}/10.samba.script"
 		fi
 
-		systemd_dotmpfilesd "${FILESDIR}"/samba.conf
-		systemd_dounit "${FILESDIR}"/nmbd.service
-		systemd_dounit "${FILESDIR}"/smbd.{service,socket}
-		systemd_newunit "${FILESDIR}"/smbd_at.service 'smbd@.service'
-		systemd_dounit "${FILESDIR}"/winbindd.service
-		systemd_dounit "${FILESDIR}"/samba.service
+		use addc || rm "${D}/$(systemd_get_systemunitdir)/samba.service" || die
+
+		# Preserve functionality for old gentoo-specific unit names
+		dosym nmb.service "$(systemd_get_systemunitdir)/nmbd.service"
+		dosym smb.service "$(systemd_get_systemunitdir)/smbd.service"
+		dosym winbind.service "$(systemd_get_systemunitdir)/winbindd.service"
 	fi
 }
 
@@ -332,6 +331,12 @@ pkg_postinst() {
 	ewarn "technology parts, both a file server (that you can reasonably expect"
 	ewarn "to upgrade existing Samba 3.x releases to) and the AD domain"
 	ewarn "controller work previously known as 'samba4'."
+
+	ewarn ""
+	ewarn "To keep compatible with XP:"
+	ewarn "  client min protocol = CORE"
+	ewarn "  server min protocol = CORE"
+
 
 	elog "For further information and migration steps make sure to read "
 	elog "http://samba.org/samba/history/${P}.html "
