@@ -13,7 +13,6 @@ app-editors/emacs:25 gtk
 app-editors/emacs:26 gtk
 app-editors/emacs:27-vcs gtk
 app-editors/emacs:28-vcs gtk
-app-editors/emacs-vcs gtk
 app-editors/gvim gtk
 app-editors/mousepad gtk3
 app-emulation/libguestfs gtk
@@ -30,7 +29,7 @@ app-i18n/scim-bridge -gtk
 app-i18n/uim gtk
 app-laptop/pommed -gtk
 app-misc/ddccontrol -gtk
-app-misc/hachoir-metadata gtk
+app-misc/hachoir-metadata -gtk
 app-misc/lirc gtk
 app-misc/razertool -gtk
 app-misc/vifm -gtk
@@ -89,6 +88,7 @@ media-gfx/graphviz -gtk
 media-gfx/sane-frontends -gtk
 media-gfx/ufraw -gtk
 media-gfx/zbar -gtk
+media-gfx/zbar gtk
 media-libs/allegro:5 -gtk
 media-libs/blib -gtk
 media-libs/clutter gtk
@@ -175,7 +175,6 @@ net-vpn/networkmanager-wireguard gtk
 net-wireless/spectools -gtk
 sci-astronomy/celestia -gtk
 sci-astronomy/predict -gtk
-sci-electronics/pcb -gtk
 sci-geosciences/gpscorrelate -gtk
 sci-mathematics/alt-ergo -gtk
 sci-mathematics/coq -gtk
@@ -199,7 +198,7 @@ sys-libs/gwenhywfar gtk
 sys-power/nvclock -gtk
 sys-process/latencytop -gtk
 www-client/netsurf gtk
-x11-apps/xinput_calibrator gtk
+x11-apps/xinput_calibrator -gtk
 x11-libs/c++-gtk-utils:3 gtk
 x11-libs/c++-gtk-utils:0 gtk
 x11-libs/gtkmathview -gtk

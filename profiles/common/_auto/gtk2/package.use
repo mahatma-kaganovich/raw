@@ -13,7 +13,6 @@ app-editors/emacs:25 -gtk
 app-editors/emacs:26 -gtk
 app-editors/emacs:27-vcs -gtk
 app-editors/emacs:28-vcs -gtk
-app-editors/emacs-vcs -gtk
 app-editors/gvim -gtk
 app-emulation/libguestfs -gtk
 app-emulation/qemu -gtk
@@ -83,6 +82,7 @@ media-gfx/graphviz gtk
 media-gfx/sane-frontends gtk
 media-gfx/ufraw gtk
 media-gfx/zbar gtk
+media-gfx/zbar -gtk
 media-libs/allegro:5 gtk
 media-libs/blib gtk
 media-libs/clutter -gtk
@@ -146,13 +146,13 @@ net-misc/dhcpcd-ui -gtk
 net-misc/ipsorcery gtk
 net-misc/mico gtk
 net-misc/olsrd gtk
+net-misc/packETH gtk
 net-misc/putty gtk2
 net-misc/trackma -gtk
 net-misc/unison:2.48 gtk
 net-misc/unison:2.51 gtk
 net-misc/wicd gtk
 net-misc/youtube-viewer -gtk
-net-p2p/deluge gtk
 net-p2p/deluge -gtk
 net-p2p/gtk-gnutella gtk
 net-p2p/mldonkey -gtk
@@ -168,7 +168,6 @@ net-vpn/networkmanager-vpnc -gtk
 net-wireless/spectools gtk
 sci-astronomy/celestia gtk
 sci-astronomy/predict gtk
-sci-electronics/pcb gtk
 sci-geosciences/gpscorrelate gtk
 sci-mathematics/alt-ergo gtk
 sci-mathematics/coq gtk
