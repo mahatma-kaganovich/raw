@@ -1,5 +1,5 @@
 #!/bin/sh
-## pnp modules bootloader v0.20
+## pnp modules bootloader v0.21
 ## (c) Denis Kaganovich, under Anarchy license
 ## consume preprocessed /lib/modules/$KV/modules.alias
 
@@ -1251,11 +1251,11 @@ while true; do
 		link_dir "$LOOP_ROOT"
 		mod_unload
 		umount /proc /sys
-		exec "$cmd_real_init" "$cmd_init_opts"
+		exec "$cmd_real_init" $cmd_init_opts
 	elif [[ -d "$NEW_ROOT" ]]; then
 		mod_unload
 		umount /proc /sys
-		exec /sbin/switch_root -c /dev/console "$NEW_ROOT" "$cmd_real_init" "$cmd_init_opts"
+		exec /sbin/switch_root -c /dev/console "$NEW_ROOT" "$cmd_real_init" $cmd_init_opts
 	else
 		bmsg "failed to mount root"
 		while true; do
