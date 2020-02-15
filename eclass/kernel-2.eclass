@@ -1905,10 +1905,16 @@ m2n(){
 mksquash(){
 	local p=1 i c="${comp:+-comp $comp}"
 	for i in ${MAKEOPTS}; do
-		[[ "$i" == -j* ]] && p=$((${i#-j}-1))
+		[[ "$i" == -j* ]] && p=${i#-j}
 	done
+	p=$[p+1-1]
 	[ "${p:-0}" = 0 ] && p=1
-	[ "$p" = -1 ] && p=
+	# reduce jobs only if look like cpus|cores+1
+	[ "$p" != 1 ] && i=$(nproc) && while [ "${i:-0}" -gt 1 ]; do
+		[ $p = $[i+1] ] && p=$[p-1] && break
+		[ $p = $i ] && break
+		i=$[i>>1]
+	done
 	case "$comp" in
 	lzo)c+=' -Xcompression-level 9';;
 	lz4)c+=' -Xhc';;
