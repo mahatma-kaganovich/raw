@@ -11,7 +11,6 @@ ETYPE="sources"
 #KV_PATCH=0
 KV="" # autodetect by overlayed kernel-2.eclass
 inherit kernel-2 git-r3
-#inherit kernel-2 git-2
 #detect_version
 
 n="${PN%%-*}"

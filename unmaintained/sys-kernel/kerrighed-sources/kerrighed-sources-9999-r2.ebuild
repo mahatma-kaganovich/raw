@@ -2,7 +2,7 @@ EAPI=4
 K_SECURITY_UNSUPPORTED="1"
 ETYPE="sources"
 
-inherit kernel-2 git-2
+inherit kernel-2 git-r3
 
 EGIT_REPO_URI="git://kerrighed.git.sourceforge.net/gitroot/kerrighed/kernel"
 

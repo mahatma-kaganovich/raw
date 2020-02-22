@@ -3,7 +3,7 @@ WANT_AUTOCONF="2.1"
 
 
 hg=""
-[[ "${PV}" == 9999* ]] && hg="mercurial cvs git-2"
+[[ "${PV}" == 9999* ]] && hg="mercurial cvs git-r3"
 inherit ${hg} flag-o-matic toolchain-funcs eutils mozcoreconf-2_ mozconfig-3 makeedit multilib autotools mozextension fdo-mime java-pkg-opt-2
 #python
 
@@ -984,7 +984,7 @@ _git(){
 	EGIT_REPO_URI="$1" \
 		EGIT_PROJECT="$3" \
 		EGIT_SOURCEDIR="$2" \
-		git-2_src_unpack
+		git-r3_src_unpack
 }
 
 fi

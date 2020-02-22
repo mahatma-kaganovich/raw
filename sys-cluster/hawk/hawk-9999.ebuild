@@ -4,7 +4,7 @@
 EAPI=5
 SLOT=0
 USE_RUBY="ruby18 ruby19"
-[[ "$PV" == *999 ]] && unp="git-2"
+[[ "$PV" == *999 ]] && unp="git-r3"
 inherit flag-o-matic $unp ruby-fakegem versionator
 LICENSE="GPL-2"
 DESCRIPTION="HA Web Konsole (Hawk). A web-based GUI for managing and monitoring Pacemaker HA clusters."

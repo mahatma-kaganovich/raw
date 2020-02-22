@@ -2,7 +2,7 @@ EAPI=2
 K_SECURITY_UNSUPPORTED="1"
 ETYPE="sources"
 
-inherit kernel-2 git-2
+inherit kernel-2 git-r3
 
 EGIT_REPO_URI="git://mirrors.git.kernel.org/cluster/kerrighed/kernel"
 EGIT_BRANCH="master"
@@ -27,7 +27,7 @@ S="${WORKDIR}/kernel"
 src_unpack(){
 	mkdir "${S}"
 	cd "${S}" || die
-	git-2_src_unpack
+	git-r3_src_unpack
 	sed -i -e 's%-Werror% %' "${S}"/kerrighed/scheduler/Makefile
 	sed -i -e 's%^\(EXTRAVERSION =\)$%\1 -krg%' "${S}"/Makefile
 	filter-flags -ftracer

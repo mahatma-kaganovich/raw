@@ -13,7 +13,7 @@ if [[ "${PV}" == *.9999 ]]; then
 	EGIT_HAS_SUBMODULES=true
 fi
 
-inherit flag-o-matic eutils `[[ "${PVR}" == *9999* ]] && echo "git-2 autotools"`
+inherit flag-o-matic eutils `[[ "${PVR}" == *9999* ]] && echo "git-r3 autotools"`
 
 vv="${PV%.*}"
 PV_MAJOR="${PV%%.*}"
