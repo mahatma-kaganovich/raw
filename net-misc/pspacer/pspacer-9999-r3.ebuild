@@ -2,6 +2,8 @@
 # Distributed under the terms of the GNU General Public License v2
 
 #ESVN_REPO_URI="http://pspacer.googlecode.com/svn/branches/devel/"
+EAPI=5
+
 EGIT_REPO_URI="https://github.com/mahatma-kaganovich/pspacer.git"
 EGIT_BRANCH="devel"
 inherit eutils git-r3 raw

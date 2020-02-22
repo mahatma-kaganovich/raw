@@ -1,3 +1,4 @@
+EAPI=5
 MY_PN="smf-grey"
 DIRS="/var/run/smfs /var/${MY_PN} /var/spool/smfs"
 inherit smf git-r3
