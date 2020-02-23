@@ -4,7 +4,7 @@ inherit eutils
 SLOT=0
 DESCRIPTION="Simple desktop layout"
 LICENSE="*"
-IUSE="+udev libnotify minimal bluetooth wifi +jpeg +tiff svg tint2 alsa laptop +dhcp"
+IUSE="abi_x86_32 abi_x86_64 +udev libnotify minimal bluetooth wifi +jpeg +tiff svg tint2 alsa laptop +dhcp"
 # strict select
 IUSE="$IUSE opencl video_cards_i965 video_cards_r600 video_cards_radeonsi"
 DEPEND="tint2? ( x11-misc/tint2 )
