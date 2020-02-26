@@ -72,7 +72,7 @@ preserve_start(){
 	done
 	if [[ -n "${THIN#-}" ]]; then
 		_modlst $(find "$mm" -name "*.ko*"|grep "$THIN"|while read m; do
-				modinfo "$m"|grep -q "$THIN_INFO" && echo "$m"
+				modinfo --basedir=/dev/null "$m"|grep -q "$THIN_INFO" && echo "$m"
 			done|sed -e 's:^.*/::g' -e 's:\..*$::g') >>"$tmp/modules2.lst"
 	fi
 	cd "$rcdir" || die

@@ -59,7 +59,7 @@ sub read_deps{
 
 sub read_modinfo{
 	my ($id,$m,$i,$s,%v);
-	open FM,"modinfo `find $_[0] -name '*.ko' -print|sort`|" || return;
+	open FM,"modinfo --basedir=/dev/null `find $_[0] -name '*.ko' -print|sort`|" || return;
 	while(defined($s=<FM>)||exists($v{filename})){
 		chomp($s);
 		my ($x,$y);

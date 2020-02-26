@@ -315,6 +315,10 @@ mod_strip(){
 	fi
 }
 
+_modinfo(){
+	modinfo --basedir=/dev/null "${@}"
+}
+
 post_make(){
 	local i x y m f n= d= n1=
 	[ -s modules.builtin ] && rm $(cat modules.builtin) -f
@@ -323,10 +327,10 @@ post_make(){
 	#echo -n|tee "$TMPDIR"/{{mod-fw,depends,names,mod-blob{,1,-names}}.lst,mod-exclude.m2y,unmodule.black}
 	if use paranoid; then
 		find . -name '*.ko'|while read m; do
-			modinfo "$m"
+			_modinfo "$m"
 		done >"$TMPDIR"/modinfo.lst
 	else
-		modinfo $(find . -name '*.ko'|sed -e 's:^\./::') >"$TMPDIR"/modinfo.lst
+		_modinfo $(find . -name '*.ko'|sed -e 's:^\./::') >"$TMPDIR"/modinfo.lst
 	fi
 	# list modules without [configured] firmware and firmare to ext built
 	# keep standalone
