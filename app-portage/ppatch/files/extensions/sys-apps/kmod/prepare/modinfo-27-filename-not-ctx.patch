@@ -1,0 +1,47 @@
+After commit e7e2cb61fa9f1db3429d91ef6accff549500d268, even if real filename
+passed - modinfo show info from context (so, I got built-in info from running
+kernel, but asking for new kernel's external module). This behaviour unobvious
+and incompatible with pre-v27. Simple use fake context for filename - IMHO
+much less ugly then current results.
+
+
+Signed-off-by: Dzianis Kahanovich <mahatma@eu.by>
+
+--- a/tools/modinfo.c	2020-02-25 13:46:38.181693570 +0300
++++ b/tools/modinfo.c	2020-02-26 05:18:39.393790919 +0300
+@@ -359,7 +359,7 @@ static bool is_module_filename(const cha
+ 
+ static int do_modinfo(int argc, char *argv[])
+ {
+-	struct kmod_ctx *ctx;
++	struct kmod_ctx *ctx, *ctx0;
+ 	char dirname_buf[PATH_MAX];
+ 	const char *dirname = NULL;
+ 	const char *kversion = NULL;
+@@ -437,7 +437,8 @@ static int do_modinfo(int argc, char *ar
+ 	}
+ 
+ 	ctx = kmod_new(dirname, &null_config);
+-	if (!ctx) {
++	ctx0 = kmod_new("/dev/null", &null_config);
++	if (!ctx || !ctx0) {
+ 		ERR("kmod_new() failed!\n");
+ 		return EXIT_FAILURE;
+ 	}
+@@ -448,7 +449,7 @@ static int do_modinfo(int argc, char *ar
+ 		int r;
+ 
+ 		if (is_module_filename(name))
+-			r = modinfo_path_do(ctx, name);
++			r = modinfo_path_do(ctx0, name);
+ 		else
+ 			r = modinfo_alias_do(ctx, name);
+ 
+@@ -456,6 +457,7 @@ static int do_modinfo(int argc, char *ar
+ 			err = r;
+ 	}
+ 
++	kmod_unref(ctx0);
+ 	kmod_unref(ctx);
+ 	return err >= 0 ? EXIT_SUCCESS : EXIT_FAILURE;
+ }
