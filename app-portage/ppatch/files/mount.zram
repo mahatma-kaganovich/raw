@@ -17,7 +17,7 @@ wait='true true true true true true false'
 
 help="
 
-mount.zram v0.11 (c) mahatma, under Anarchy license
+mount.zram v0.12 (c) mahatma, under Anarchy license
 Mount helper to mount zram (or ram/brd) devices via /etc/fstab over most simple way, stupid.
 Usage:	mount -t zram ...
 	mount.zram /dev/zram<X> <mountpoint> -o <options>
