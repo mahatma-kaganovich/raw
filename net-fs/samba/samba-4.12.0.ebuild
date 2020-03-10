@@ -56,7 +56,7 @@ CDEPEND="
 	sys-libs/liburing[${MULTILIB_USEDEP}]
 	sys-libs/ncurses:0=
 	sys-libs/readline:0=
-	>=sys-libs/talloc-2.11.1[python?,${PYTHON_SINGLE_USEDEP},${MULTILIB_USEDEP}]
+	>=sys-libs/talloc-2.3.1[python?,${PYTHON_SINGLE_USEDEP},${MULTILIB_USEDEP}]
 	>=sys-libs/tdb-1.4.3[python?,${PYTHON_SINGLE_USEDEP},${MULTILIB_USEDEP}]
 	>=sys-libs/tevent-0.10.2[python?,${PYTHON_SINGLE_USEDEP},${MULTILIB_USEDEP}]
 	sys-libs/zlib[${MULTILIB_USEDEP}]
