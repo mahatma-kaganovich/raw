@@ -1,4 +1,10 @@
-[[ " $IUSE " == *' custom-optimization '* ]] && [[ " $IUSE " == *' custom-cflags '* ]] &&
+[[ " $IUSE " == *' custom-optimization '* ]] && [[ " $IUSE " == *' custom-cflags '* ]] && {
+_rust_add(){
+	local i
+	for i in RUSTFLAGS CARGO_RUSTCFLAGS MOZ_RUST_DEFAULT_FLAGS; do
+		export $i="$* ${!i}"
+	done
+}
 case "$EBUILD_PHASE" in
 configure)
 mozconfig_annotate() {
@@ -48,9 +54,7 @@ mozconfig_annotate() {
 			x="--enable-optimize=$x"
 			[ "$o" = fast ] && o=3
 			[[ "$o" == [123] ]] || o=2
-			export RUSTFLAGS="-Copt-level=$o $RUSTFLAGS $CARGO_RUSTCFLAGS"
-			export CARGO_RUSTCFLAGS="$RUSTFLAGS"
-			export MOZ_RUST_DEFAULT_FLAGS="$RUSTFLAGS"
+			_rust_add "-Copt-level=$o"
 #			export RUSTC_OPT_LEVEL=$o
 			#[ -e Cargo.toml ] && {
 			#	echo "mk_add_options MOZ_RUST_DEFAULT_FLAGS=\"$RUSTFLAGS\"" >>.mozconfig
@@ -71,8 +75,15 @@ prepare)
 	i='MOZ_GECKO_PROFILER\|MOZ_ENABLE_PROFILER_SPS'
 	[[ " $IUSE " == *' debug '* ]] && use debug ||
 	    sed -i -e "/$i/d" $(grep -lRw "$i" "$WORKDIR" --include=moz.configure)
-	export RUSTFLAGS="-Cdebuginfo=0 $RUSTFLAGS"
-	[[ "${CFLAGS##*-march=}" == native* ]] && export RUSTFLAGS="$RUSTFLAGS -Ctarget-cpu=native"
+	# unsure now
+	: ${RUSTFLAGS:=$CARGO_RUSTCFLAGS}
+	: ${CARGO_RUSTCFLAGS:=$RUSTFLAGS}
+	: ${MOZ_RUST_DEFAULT_FLAGS:=$RUSTFLAGS}
+	_rust_add -Cdebuginfo=0
+	i="${CFLAGS##*-march=}"
+	[ "$i" != "$CFLAGS" ] && i="${i%% *}" && (rustc --print target-cpus|grep -q "^ *$i ") &&
+		_rust_add -Ctarget-cpu=$i
+	# todo? - disable also "rustc --print target-features" by CFLAGS
 	export CARGOFLAGS="$CARGOFLAGS --jobs 1"
 	use custom-cflags && {
 		case "$PN" in
@@ -98,3 +109,4 @@ prepare)
 	}
 ;;
 esac
+}
