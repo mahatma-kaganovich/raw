@@ -58,8 +58,8 @@ mozconfig_annotate() {
 					strip-flags(){ true; }
 				}
 				# over stubs
-				export CFLAGS="$CFLAGS $f"
-				export CXXFLAGS="$CXXFLAGS $f1"
+				export CFLAGS="$CFLAGS$f"
+				export CXXFLAGS="$CXXFLAGS$f$f1"
 			}
 
 			[ "$o" = fast ] && o=3
