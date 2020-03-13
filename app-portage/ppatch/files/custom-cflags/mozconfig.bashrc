@@ -34,24 +34,26 @@ mozconfig_annotate() {
 			case "$o" in
 			3|fast)
 				i+=' -fno-ipa-cp-clone'
-				#test-flag-CC -fvect-cost-model=cheap &&
-				is-flagq -fvect-cost-model=cheap &&
+				test-flag-CC -fvect-cost-model=cheap &&
 					i+=' -fvect-cost-model=cheap -fsimd-cost-model=cheap' ||
 					i+=' -fno-tree-vectorize -fno-tree-loop-vectorize -fno-tree-slp-vectorize'
 			;;&
 			fast)i+=' -fno-fast-math';;
 			esac
 			for i in $i; do
-				is-flagq "$i" || ff+=" $i"
+				test-flag-CC "$i" && ff+=" $i"
 			done
-			if ([[ "${CFLAGS##*-O}" == "$o"* ]] && [ -z "$ff" ]) || use !custom-cflags; then
-				#[ "$o" = fast ] && o=3
-				x="-O$o"
-			else
-				#[ -n "$ff" ] && append-flags $ff
-				x=-w
-			fi
-			x="--enable-optimize=$x"
+
+			#[ "$o" = fast ] && o=3
+			x="--enable-optimize=-O$o"
+			[ -n "$ff" ] && {
+				use !custom-cflags && {
+					strip-flags
+					strip-flags(){ true; }
+				}
+				append-flags $ff
+			}
+
 			[ "$o" = fast ] && o=3
 			[[ "$o" == [123] ]] || o=2
 			_rust_add "-Copt-level=$o"
