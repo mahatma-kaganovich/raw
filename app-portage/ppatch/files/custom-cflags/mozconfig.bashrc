@@ -29,8 +29,8 @@ mozconfig_annotate() {
 		;;
 		--enable-optimize=-O*)use custom-optimization && o=${CXXFLAGS##*-O} && [ "$o" != "$CXXFLAGS" ] && o=${o%% *} && [ -n "$o" ] && {
 			reason=custom-optimization
-			# gcc vs clang: IMHO "-fno-fast-math -Ofast" positioning differ. force strict order anywere
 			local i= i1= f= f1=
+			use custom-cflags || replace-flags -Ofast -O3
 			case "$o" in
 			3|fast)
 				i1+=' -fno-ipa-cp-clone'
@@ -41,7 +41,10 @@ mozconfig_annotate() {
 					i+=' -fno-tree-vectorize -fno-tree-loop-vectorize -fno-tree-slp-vectorize'
 				}
 			;;&
-			fast)i1+=' -fno-fast-math';;
+			fast)
+				i1+=' -fno-fast-math'
+				use custom-cflags || o=3
+			;;
 			esac
 			for i in $i; do
 				test-flag-CC "$i" && f+=" $i"
@@ -49,11 +52,8 @@ mozconfig_annotate() {
 			for i in $i1; do
 				test-flag-CXX "$i" && f1+=" $i"
 			done
-
-			#[ "$o" = fast ] && o=3
-			x="--enable-optimize=-O$o"
 			[ -n "$f$f1" ] && {
-				use !custom-cflags && {
+				use custom-cflags || {
 					strip-flags
 					strip-flags(){ true; }
 				}
@@ -61,7 +61,9 @@ mozconfig_annotate() {
 				export CFLAGS="$CFLAGS$f"
 				export CXXFLAGS="$CXXFLAGS$f$f1"
 			}
-
+			x="-O$o"
+			[[ "${CFLAGS##*-O}" != "$o"* ]] && x=-w
+			x="--enable-optimize=$x"
 			[ "$o" = fast ] && o=3
 			[[ "$o" == [123] ]] || o=2
 			_rust_add "-Copt-level=$o"
