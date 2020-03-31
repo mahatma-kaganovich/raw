@@ -364,7 +364,7 @@ for i in $DATA/no/*; do
 		patch -p1 -std $rcdir <$i || die "Patch '$i' failed"
 	fi
 done
-[[ -n "$susp_sig" ]] && sed -i -e "s:554c53555350454e44:$susp_sig:" $DATA/etc/blkid.sh
+[[ -n "$susp_sig" ]] && sed -i -e "s:554c53555350454e44:$susp_sig:" $rcdir/etc/blkid.sh
 $PNPONLY && rm $rcdir/lib/modules/*/modules.{alias,dep,symbols,*.bin,*map,order,builtin} $rcdir/sbin/modprobe 2>/dev/null
 [[ -e $rcdir/sbin/init ]] || ln -s /etc/syspnp $rcdir/sbin/init
 if $GENKERNEL; then
