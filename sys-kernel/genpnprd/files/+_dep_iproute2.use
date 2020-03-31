@@ -1,1 +1,1 @@
-RDEPEND+=' sys-apps/iproute2'
+RDEPEND+=' iproute2? ( sys-apps/iproute2 )'

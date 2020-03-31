@@ -1,1 +1,1 @@
-RDEPEND+=" net-firewall/nftables"
+RDEPEND+=" nftables? ( net-firewall/nftables )"

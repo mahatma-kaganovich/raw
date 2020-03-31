@@ -1,1 +1,1 @@
-RDEPEND+=" net-firewall/iptables"
+RDEPEND+=" iptables? ( net-firewall/iptables )"
