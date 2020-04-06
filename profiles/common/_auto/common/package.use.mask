@@ -19,8 +19,10 @@ net-libs/libgadu -gnutls -ssl
 net-libs/libssh -gcrypt mbedtls
 net-libs/libssh2 -gcrypt mbedtls
 net-mail/mpop -gnutls -ssl
+net-misc/networkmanager -gnutls nss
 net-misc/wget -gnutls -ssl
 sys-cluster/ceph -ssl nss
+sys-cluster/ceph -openssl libressl
 sys-fs/cryptmount -openssl -gcrypt
 sys-fs/cryptsetup -kernel openssl nettle gcrypt
 www-client/uget -openssl gnutls

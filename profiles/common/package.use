@@ -117,3 +117,7 @@ media-sound/mpg123 int-quality
 sys-devel/binutils -cxx -gold
 # gles2|opengl
 dev-libs/efl -drm
+# elfutils
+sys-libs/zlib static-libs
+app-arch/bzip2 static-libs
+app-arch/xz-utils static-libs

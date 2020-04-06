@@ -28,7 +28,6 @@ app-i18n/scim-bridge gtk
 app-i18n/uim -gtk
 app-laptop/pommed gtk
 app-misc/ddccontrol gtk
-app-misc/hachoir-metadata -gtk
 app-misc/lirc -gtk
 app-misc/razertool gtk
 app-misc/vifm gtk
@@ -46,14 +45,12 @@ dev-java/icedtea-bin gtk
 dev-libs/gjs -gtk
 dev-libs/libdbusmenu gtk
 dev-libs/libindicate -gtk
+dev-libs/libreport -gtk
 dev-lisp/clisp gtk
 dev-ml/cairo-ocaml gtk
 dev-ml/ocamlgraph gtk
 dev-ml/ocamlnet gtk
 dev-python/pyglet gtk
-dev-python/pynotifier -gtk
-dev-python/sympy gtk
-dev-python/twisted-core gtk
 dev-qt/qtwidgets -gtk
 dev-util/amtterm -gtk
 dev-util/perf gtk
@@ -74,6 +71,7 @@ games-strategy/freeciv gtk
 gnome-extra/cjs -gtk
 gnome-extra/libgda -gtk
 gnome-extra/libgsf -gtk
+gnome-extra/nm-applet -gtk
 kde-plasma/plasma-meta -gtk
 media-gfx/birdfont -gtk
 media-gfx/fontforge gtk
@@ -81,7 +79,6 @@ media-gfx/fontforge -gtk
 media-gfx/graphviz gtk
 media-gfx/sane-frontends gtk
 media-gfx/ufraw gtk
-media-gfx/zbar gtk
 media-gfx/zbar -gtk
 media-libs/allegro:5 gtk
 media-libs/blib gtk
@@ -135,6 +132,7 @@ net-analyzer/pinger gtk
 net-analyzer/yersinia gtk
 net-dialup/ppp gtk
 net-dns/avahi gtk
+net-dns/avahi -gtk
 net-ftp/gftp gtk
 net-im/ekg2 gtk
 net-im/pidgin gtk
@@ -166,7 +164,6 @@ net-vpn/networkmanager-pptp -gtk
 net-vpn/networkmanager-sstp -gtk
 net-vpn/networkmanager-vpnc -gtk
 net-wireless/spectools gtk
-sci-astronomy/celestia gtk
 sci-astronomy/predict gtk
 sci-geosciences/gpscorrelate gtk
 sci-mathematics/alt-ergo gtk
@@ -191,7 +188,6 @@ sys-power/nvclock gtk
 sys-process/latencytop gtk
 www-client/netsurf -gtk
 x11-apps/xinput_calibrator -gtk
-x11-libs/gtkmathview gtk
 x11-libs/libfm gtk
 x11-libs/libyui -gtk
 x11-libs/mx gtk

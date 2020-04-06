@@ -1,6 +1,6 @@
 dev-games/ogre gles2 -opengl
 dev-libs/weston gles2
-kde-plasma/kinfocenter gles2 -opengl
+kde-plasma/kinfocenter gles2-only -opengl
 media-libs/cogl gles2 -opengl
 media-libs/gst-plugins-bad gles2 -opengl
 media-libs/gst-plugins-base gles2 -opengl
@@ -11,7 +11,7 @@ media-tv/kodi gles -opengl
 net-libs/webkit-gtk gles2 -opengl
 net-libs/webkit-gtk gles2-only -opengl
 sys-apps/kmscon gles2
-dev-qt/qtgui gles2 egl
+dev-qt/qtgui gles2-only egl
 media-libs/mesa gles1
 media-libs/mesa 
 media-plugins/gst-plugins-vaapi gles2

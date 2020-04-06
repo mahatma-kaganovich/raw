@@ -2,4 +2,5 @@ app-i18n/ibus
 app-i18n/ibus-m17n gtk2 gtk
 app-i18n/ibus-unikey gtk2
 dev-java/oracle-jdk-bin:11 gtk2 -gtk3
+net-misc/youtube-viewer gtk2 gtk
 x11-terms/mlterm gtk2 gtk
