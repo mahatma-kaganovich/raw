@@ -1,0 +1,1 @@
+! is-flagq -flto && test-flags -fno-lto && append-flags -fno-lto
