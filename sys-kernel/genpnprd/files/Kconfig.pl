@@ -143,6 +143,7 @@ $ENV{KERNEL_CONFIG2}||='?RAPIDIO RAPIDIO_DMA_ENGINE==y;?DMA_ENGINE (?:.+_)?PTP_.
 	'+'=>'m',
 	'-'=>'n (recursive)',
 	'~'=>'remove/oldconfig-default',
+	'!'=>'remove/undef',
 	'='=>'y if undefined bool',
 	'&'=>'m->y recursive embed',
 	'?'=>'n if none embedded module dependences (use after detects)',
@@ -517,14 +518,16 @@ sub conf{
 		}elsif($c eq '-'){
 			%off=();
 			cfg($_);
-		}elsif($c eq '~'){
-			exists($oldconfig{$_})?cfg($_,$oldconfig{$_}):delete($config{$_});
 		}elsif($c eq '&'){
 			if(exists($tristate_{$_})){
 				_and($_,$y,$_);
 			}else{
 				print "WARNING: \&$_ - not tristate\n";
 			}
+		}elsif($c eq '~'){
+			exists($oldconfig{$_})?cfg($_,$oldconfig{$_}):delete($config{$_});
+		}elsif($c eq '!'){
+			delete($config{$_});
 		}elsif($c eq '_'){
 			cfg($_) if($config{$_} eq 'm');
 		}elsif($c eq '?'){
