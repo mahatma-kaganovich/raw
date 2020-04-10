@@ -258,6 +258,7 @@ sub set_config{
 	}
 	my $x=join('|',keys %unset);
 	$s=~s/\n(?:# )?CONFIG_(?:$x)(?:=[^\n]*| is not set)//gs;
+	$s=~s/\n(?:# )?CONFIG_$_[= ].*//g for(keys %undef);
 	# de-randomized:
 	for(sort{$order{$a} && $order{$b} ? $order{$a}<=>$order{$b} : $order1{$a} && $order1{$b} ? $order1{$a}<=>$order1{$b} : $a cmp $b}keys %config){
 		defined(my $y=$config{$_})||next;
@@ -528,6 +529,7 @@ sub conf{
 			exists($oldconfig{$_})?cfg($_,$oldconfig{$_}):delete($config{$_});
 		}elsif($c eq '!'){
 			delete($config{$_});
+			$undef{$_}=undef;
 		}elsif($c eq '_'){
 			cfg($_) if($config{$_} eq 'm');
 		}elsif($c eq '?'){
