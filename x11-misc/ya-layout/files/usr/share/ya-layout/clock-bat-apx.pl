@@ -23,8 +23,7 @@ $md=-1;
 while(1){
 	for(glob('/sys/class/power_supply/*/uevent')){
 		exists($supp{$_})&&next;
-		my ($F,$full,$x,$i,$v,%v,$sel);
-		$i=scalar(@F);
+		my ($F,$full,$x,$i,$v,%v,$sel,$n);
 		open($F,'<',$_) || next;
 		while(defined($x=readline($F))){
 			chomp($x);
@@ -32,6 +31,13 @@ while(1){
 			$v{$x}=$v;
 		}
 		close($F);
+
+		if(!(exists($v{POWER_SUPPLY_ENERGY_FULL})||
+		    exists($v{POWER_SUPPLY_CAPACITY}))){
+			$supp{$_}=undef;
+			next;
+		}
+
 		while (($x,$v)=each %SEL){
 			$sel||=exists($v{$x}) && $v{$x} eq $v;
 		}
@@ -39,7 +45,8 @@ while(1){
 		$supp{$_}=undef;
 		$_=~s/\/uevent$//;
 
-		if(open($F,'<',"$_/energy_full")){
+		if(!defined($full=$v{POWER_SUPPLY_ENERGY_FULL})&&
+		    open($F,'<',"$_/energy_full")){
 			$full=readline($F);
 			close($F);
 			chomp($full);
@@ -51,9 +58,6 @@ while(1){
 		}else{
 			next;
 		}
-		$F[$i]=$F;
-		$NOW[$i]=
-		$FULL[$i]=$full;
 
 		$_=~s/.*\///;
 		$x=$_;
@@ -61,6 +65,10 @@ while(1){
 		for('POWER_SUPPLY_MANUFACTURER','POWER_SUPPLY_MODEL_NAME'){
 			$x.='/'.$v{$_} if(exists($v{$_}));
 		}
+		$i=scalar(@F);
+		$F[$i]=$F;
+		$NOW[$i]=
+		$FULL[$i]=$full;
 		$NAME[$i]=$x;
 		$md=-1;
 	}
@@ -71,7 +79,6 @@ while(1){
 		print STDERR "\x1b[2J",join("\n ",$d,@NAME);
 		$md=$mday;
 	}
-	$i=0;
 	my @res;
 	for(0..$#F){
 		my $now=readline($F[$_]);
