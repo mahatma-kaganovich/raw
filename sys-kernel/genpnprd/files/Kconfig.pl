@@ -197,6 +197,7 @@ sub Kcload{
 		if(my ($i)=$s=~/^\s*(?:def_tristate|def_bool|default)\s+(.+)/){
 			$i=prelogic($i) if(!($i=~s/^(.*)\s+if\s+(.*)$/prelogic($1).' if '.prelogic($2)/e));
 			$default{$v}=$i;
+			$undef{$v1}=undef if($prefer_kconfig);
 		}
 		$s=~s/^\s*(?:def_)?tristate(?:\s+\S*|$)/$tristate{$v}=1;$tristate_{$v1}=1;next/e;
 		$s=~s/^\s*(?:def_)?bool(?:\s+\S*|$)/if($c eq 'menuconfig'){$menu{$v}=1}else{$bool{$v}=1};next/e;
@@ -239,7 +240,7 @@ sub load_config{
 	open(my $F,"<$_[0]") || return;
 	while(defined(my $s=<$F>)){
 		chomp($s);
-		($s=~s/^CONFIG_([^=\s]*)=(.*)/$config{$1}=$2;$order{$_}=++$order;$vars{$1}=1;next/se) ||
+		($s=~s/^CONFIG_([^=\s]*)=(.*)/$config{$1}=$2 if(!exists($undef{$1}));$order{$_}=++$order;$vars{$1}=1;next/se) ||
 		($s=~s/^# CONFIG_([^=\s]*) is not set/$config{$1}=undef;$order{$_}=++$order;$vars{$1}=1;next/se);
 	}
 	close($F);
@@ -616,6 +617,9 @@ if($ARGV[0]=~/^-(?:help|-help|h|--h)$/){
 }elsif($ARGV[0] eq '-config'){
 	config;
 	exit;
+}elsif($ARGV[0] eq '-prefer-kconfig'){
+	$prefer_kconfig=1;
+	shift(@ARGV);
 }elsif($ARGV[0] eq '-relax'){
 	*dep=sub{ ();};
 	shift(@ARGV);
