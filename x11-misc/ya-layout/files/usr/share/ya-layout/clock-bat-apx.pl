@@ -15,42 +15,60 @@ $|=1;
 $N=shift @ARGV;
 $N||=5;
 for(@ARGV?@ARGV:('POWER_SUPPLY_PRESENT=1')){
-	$SEL{$_}=1;
+	my ($x,$v)=split(/=/,$_,2);
+	$SEL{$x}=$v;
 }
 
-for(glob('/sys/class/power_supply/*/uevent')){
-	my $F;
-	open($F,'<',$_) || next;
-	my $x;
-	while(defined($x=readline($F))){
-		chomp($x);
-		exists($SEL{$x}) && last;
-	}
-	close($F);
-	defined($x) || next;
-	$_=~s/[^\/]*$//;
-
-	open(my $F,'<',"$_/energy_full") || next;
-	my $full=readline($F);
-	close($F);
-	chomp($full);
-
-	open(my $F,'<',"$_/energy_now") || next;
-	push @F,$F;
-	push @FULL,$full;
-
-	$_=~s/.*\/(.*?)\//$1/gs;
-	$b.="$_\n";
-}
-$b.="No battery found or configured\n" if(!@F);
 $md=-1;
-@NOW=@FULL;
 while(1){
+	for(glob('/sys/class/power_supply/*/uevent')){
+		exists($supp{$_})&&next;
+		my ($F,$full,$x,$i,$v,%v,$sel);
+		$i=scalar(@F);
+		open($F,'<',$_) || next;
+		while(defined($x=readline($F))){
+			chomp($x);
+			($x,$v)=split(/=/,$x,2);
+			$v{$x}=$v;
+		}
+		close($F);
+		while (($x,$v)=each %SEL){
+			$sel||=exists($v{$x}) && $v{$x} eq $v;
+		}
+		$sel||next;
+		$supp{$_}=undef;
+		$_=~s/\/uevent$//;
+
+		if(open($F,'<',"$_/energy_full")){
+			$full=readline($F);
+			close($F);
+			chomp($full);
+		}
+
+		if(defined($full) && open($F,'<',"$_/energy_now")){
+		}elsif(open($F,'<',"$_/capacity")){
+			$full=100;
+		}else{
+			next;
+		}
+		$F[$i]=$F;
+		$NOW[$i]=
+		$FULL[$i]=$full;
+
+		$_=~s/.*\///;
+		$x=$_;
+		#$x=$v{POWER_SUPPLY_NAME};
+		for('POWER_SUPPLY_MANUFACTURER','POWER_SUPPLY_MODEL_NAME'){
+			$x.='/'.$v{$_} if(exists($v{$_}));
+		}
+		$NAME[$i]=$x;
+		$md=-1;
+	}
 	my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst)=localtime;
 	if($md!=$mday){
 #		use POSIX; $d=strftime('%A %x',$sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst);
 		$d=localtime; $d=~s/\d\d:\d\d:\d\d *//;
-		print STDERR "\x1b[2J$d\n$b";
+		print STDERR "\x1b[2J",join("\n ",$d,@NAME);
 		$md=$mday;
 	}
 	$i=0;
