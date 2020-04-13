@@ -32,7 +32,7 @@ while(1){
 		}
 		close($F);
 
-		if(!(exists($v{POWER_SUPPLY_ENERGY_FULL})||
+		if(!(defined($full=$v{POWER_SUPPLY_ENERGY_FULL})||
 		    exists($v{POWER_SUPPLY_CAPACITY}))){
 			$supp{$_}=undef;
 			next;
@@ -44,13 +44,6 @@ while(1){
 		$sel||next;
 		$supp{$_}=undef;
 		$_=~s/\/uevent$//;
-
-		if(!defined($full=$v{POWER_SUPPLY_ENERGY_FULL})&&
-		    open($F,'<',"$_/energy_full")){
-			$full=readline($F);
-			close($F);
-			chomp($full);
-		}
 
 		if(defined($full) && open($F,'<',"$_/energy_now")){
 		}elsif(open($F,'<',"$_/capacity")){
