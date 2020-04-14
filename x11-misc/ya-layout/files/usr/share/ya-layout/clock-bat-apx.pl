@@ -83,6 +83,7 @@ while(1){
 			close($x->{F});
 			if(!open($x->{F},'<',$x->{FN})){
 				delete($supp{$_});
+				$md=-1;
 				next;
 			}
 			$now=readline($x->{F});
