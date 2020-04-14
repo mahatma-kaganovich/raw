@@ -127,6 +127,7 @@ $ENV{KERNEL_CONFIG}||='
 	.+_PSTORE_DEFAULT_DISABLE
 	INPUT_PCSPKR==!y;-SND_PCSP
 	#=y: EDAC SERIAL_DEV_BUS
+	#Kconfig NUMA
 	#ubuntu,suse TASKS_RCU
 	#usb_mouse_fix HID
 	###beleave_last_binutils: X86_X32
@@ -195,9 +196,12 @@ sub Kcload{
 		$s=~s/^if\s+(.*)$/$c='if';push @if,prelogic($1);next/e;
 		$s=~s/^endif$/$c='endif';pop @if;next/e;
 		if(my ($i)=$s=~/^\s*(?:def_tristate|def_bool|default)\s+(.+)/){
-			$i=prelogic($i) if(!($i=~s/^(.*)\s+if\s+(.*)$/prelogic($1).' if '.prelogic($2)/e));
-			$default{$v}=$i;
-			$undef{$v1}=undef if($prefer_kconfig);
+			if($prefer_kconfig || ! ($i=~/(?:^[\"a-z0-9]\S*|[\! ]EXPERT)$/)){
+				$undef{$v1}=undef;
+				#print "DEF: $v1 $i\n";
+			}
+#			$i=prelogic($i) if(!($i=~s/^(.*)\s+if\s+(.*)$/prelogic($1).' if '.prelogic($2)/e));
+#			$default{$v}=$i;
 		}
 		$s=~s/^\s*(?:def_)?tristate(?:\s+\S*|$)/$tristate{$v}=1;$tristate_{$v1}=1;next/e;
 		$s=~s/^\s*(?:def_)?bool(?:\s+\S*|$)/if($c eq 'menuconfig'){$menu{$v}=1}else{$bool{$v}=1};next/e;
