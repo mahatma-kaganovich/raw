@@ -32,12 +32,18 @@ onbatt(){
 #;;
 #esac
 
+# vs.eof
+rd(){
+	unset $1
+	read $1 || [ -v $1 ]
+}
+
 save1(){
 	[ -e "$2" ] || return 1
 	local f y=$1 x=
 	shift
 	for f in "${@}"; do
-		read x <$f &&
+		rd x <$f || [ -n "$x" ] &&
 		x=${x#*'['} &&
 		x=${x%%']'*} &&
 		[ "$x" != "$y" ] &&
@@ -53,7 +59,7 @@ save1g(){
 	local f y=$1 x=
 	shift
 	for f in "${@}"; do
-		read x <$f &&
+		rd x <$f &&
 		x=${x#*'['} &&
 		x=${x%%']'*} &&
 		[ "$x" -gt "$y" ] &&
@@ -356,15 +362,15 @@ save(){
 #	save1 passive /sys/devices/system/cpu/intel_pstate/status
 	for i in /sys/devices/system/cpu/cpu*/cpufreq; do
 		save1 powersave "$i/scaling_governor"
-		read x <"$i/cpuinfo_min_freq" && {
+		    rd x <"$i/cpuinfo_min_freq" && {
 			save1 "$x" "$i/scaling_max_freq"
 			#[ "$(< "$i/scaling_cur_freq")" = "$x" ] ||  echo "$x" >"$i/scaling_cur_freq"
 		}
 	done
 	[ -n "$light" ] &&
 	    for i in /sys/class/backlight/*; do
-		read x <"$i/max_brightness" &&
-#			read x1 <"$i/actual_brightness" && [ "$x1" -gt "$x" ] &&
+		rd x <"$i/max_brightness" &&
+#			rd x1 <"$i/actual_brightness" && [ "$x1" -gt "$x" ] &&
 			x=$[x*light/100] &&
 			save1g $x "$i/brightness"
 	done
@@ -436,8 +442,8 @@ _cpu_off(){
 		#balance
 	}
 	for i in /sys/class/thermal/cooling_device*; do
-		read x <$i/max_state && [ "$x" -gt 0 ] &&
-		f="$i/cur_state" && read x1 <$f && [ "$x" -gt "$x1" ] || continue
+		rd x <$i/max_state && [ "$x" -gt 0 ] &&
+		f="$i/cur_state" && rd x1 <$f && [ "$x" -gt "$x1" ] || continue
 		case "$(< $i/type)" in
 		    Processor);;
 		    intel_powerclamp)[ "$x1" = -1 ] && x1=0 || continue;;
