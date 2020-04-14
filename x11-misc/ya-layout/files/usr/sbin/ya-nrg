@@ -43,7 +43,7 @@ save1(){
 	local f y=$1 x=
 	shift
 	for f in "${@}"; do
-		rd x <$f || [ -n "$x" ] &&
+		rd x <$f &&
 		x=${x#*'['} &&
 		x=${x%%']'*} &&
 		[ "$x" != "$y" ] &&
