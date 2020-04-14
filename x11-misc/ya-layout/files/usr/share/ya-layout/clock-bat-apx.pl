@@ -61,7 +61,7 @@ while(1){
 		$supp{$_}={
 			F=>$F,
 			FN=>$n,
-			NOW=>$full,
+#			NOW=>$full,
 			FULL=>$full,
 			NAME=>$x,
 		};
