@@ -79,7 +79,7 @@ while(1){
 	}
 	my @res;
 	for(@ss){
-		my ($x,$now,$p,$F);
+		my ($x,$now,$s,$F);
 		$x=$supp{$_};
 		$now=readline($F) if(defined($F=$x->{F}));
 		if(!defined($now)){
@@ -89,7 +89,7 @@ while(1){
 			}else{
 				$F=undef;
 				$now=$x->{NOW};
-				$p.='~';
+				$s.='~';
 			}
 			$x->{F}=$F;
 		}
@@ -106,14 +106,15 @@ while(1){
 		}
 		$x->{rate}=$r;
 		$x->{NOW}=$now;
-		$p.=int($now*100/$x->{FULL}).'%';
+		my $p=int($now*100/$x->{FULL});
+		$s.="$p%";
 		if($r>0){
 			$r=int($now/$r);
-			$p.=sprintf("-%02i:%02i",$r/60,$r%60);
+			$s.=sprintf("-%02i:%02i",$r/60,$r%60);
 		}elsif(defined($r)){
 			$x->{rate}=0;
 		}
-		push @res,$p;
+		push @res,$s;
 	};
 	print sprintf("%02i:%02i\n",$hour,$min).join(',',@res)."\n";
 	sleep($wait=60-$sec);
