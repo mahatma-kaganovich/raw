@@ -22,6 +22,7 @@ for(@ARGV?@ARGV:('POWER_SUPPLY_PRESENT=1')){
 
 $md=-1;
 while(1){
+	my $T=time();
 	for(glob('/sys/class/power_supply/*/uevent')){
 		exists($supp{$_})&&next;
 		my ($F,$full,$x,$v,%v,$sel,$n);
@@ -65,10 +66,10 @@ while(1){
 #			NOW=>$full,
 			FULL=>$full,
 			NAME=>$x,
+			T=>$T,
 		};
 		$md=-1;
 	}
-	my $T=time();
 	my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst)=localtime($T);
 	if($md!=$mday){
 		@ss=sort map{defined($supp{$_})?$_:()} keys %supp;
@@ -96,20 +97,27 @@ while(1){
 		my $d=$x->{NOW}-$now;
 		my $r;
 		my $r1=$x->{rate};
-		if($sec>30){
-			defined($r1) && last;
-		}elsif($d<=0){
-		}elsif(defined($r1)){
-			$r=($r1*($N-1)+$d)/$N;
-		}elsif($wait>10){
-			$r=$d*60/$wait;
+		my $t=$T-$x->{T};
+		if($t<0 || $d<0){
+			$x->{T}=$T;
+			$x->{NOW}=$now;
+			$x->{rate}=$r;
+		}elsif($t>50){
+			$r=$d/$t;
+			$r1=$r if(!defined($r1));
+			$r=($r1*($N-1)+$r)/$N;
+			$x->{T}=$T;
+			$x->{NOW}=$now;
+			$x->{rate}=$r;
+		}elsif(!$r1 && $t && $d){
+			# fast unprecise
+			$r=$d/$t;
+			$s.='_';
 		}
-		$x->{rate}=$r;
-		$x->{NOW}=$now;
 		my $p=int($now*100/$x->{FULL});
 		$s.="$p%";
 		if($r>0){
-			$r=int($now/$r);
+			$r=int($now/($r*60));
 			$s.=sprintf("-%02i:%02i",$r/60,$r%60);
 		}elsif(defined($r)){
 			$x->{rate}=0;
