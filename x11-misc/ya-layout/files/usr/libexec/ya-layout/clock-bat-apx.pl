@@ -106,15 +106,14 @@ while(1){
 		}
 		$x->{rate}=$r;
 		$x->{NOW}=$now;
-		$p.=int($now*100/$x->{FULL});
+		$p.=int($now*100/$x->{FULL}).'%';
 		if($r>0){
 			$r=int($now/$r);
-			push @res,sprintf("%i%%-%02i:%02i",$p,$r/60,$r%60);
-			next
+			$p.=sprintf("-%02i:%02i",$r/60,$r%60);
 		}elsif(defined($r)){
 			$x->{rate}=0;
 		}
-		push @res,"$s$p%";
+		push @res,$p;
 	};
 	print sprintf("%02i:%02i\n",$hour,$min).join(',',@res)."\n";
 	sleep($wait=60-$sec);
