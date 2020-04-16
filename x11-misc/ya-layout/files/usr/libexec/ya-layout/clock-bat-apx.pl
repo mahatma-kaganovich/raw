@@ -88,7 +88,7 @@ while(1){
 				$now=readline($F);
 			}else{
 				$F=undef;
-				$now=$x->[NOW];
+				$now=$x->{NOW};
 				$p.='~';
 			}
 			$x->{F}=$F;
