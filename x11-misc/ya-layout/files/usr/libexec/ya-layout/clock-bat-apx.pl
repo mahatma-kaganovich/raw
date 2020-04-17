@@ -109,7 +109,7 @@ while(1){
 			$x->{rate}=$r;
 		}elsif($t>50){
 			$r=$d/$t;
-			$r=($r1*($N-1)+$r)/$N if(defined($r1) && !$r);
+			$r=($r1*($N-1)+$r)/$N if(defined($r1) && $r);
 			$x->{T}=$T;
 			$x->{NOW}=$now;
 			$x->{rate}=$r;
@@ -124,7 +124,7 @@ while(1){
 		$s.="$p%";
 		if($r>0){
 			$r=int($now/($r*60));
-			$s.=sprintf("-%02i:%02i",$r/60,$r%60);
+			$s.=sprintf("-%02	i:%02i",$r/60,$r%60);
 		}
 		push @res,$s;
 	};
