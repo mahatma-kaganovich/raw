@@ -20,12 +20,21 @@ for(@ARGV?@ARGV:('POWER_SUPPLY_PRESENT=1')){
 	$SEL{$x}=$v;
 }
 
+sub rl{
+	if(defined($now=readline($F)) && seek($F,0,0)){
+		chomp($now);
+		return $F;
+	}
+	close($F);
+	$now=$F=undef;
+}
+
 $md=-1;
 while(1){
 	my $T=time();
 	for(glob('/sys/class/power_supply/*/uevent')){
 		exists($supp{$_})&&next;
-		my ($F,$full,$x,$v,%v,$sel,$n);
+		my ($full,$x,$v,%v,$sel,$n);
 		open($F,'<',$_) || next;
 		while(defined($x=readline($F))){
 			chomp($x);
@@ -60,9 +69,11 @@ while(1){
 		for('POWER_SUPPLY_MANUFACTURER','POWER_SUPPLY_MODEL_NAME'){
 			$x.='/'.$v{$_} if(exists($v{$_}));
 		}
+		rl();
 		$supp{$_}={
 			F=>$F,
 			FN=>$n,
+			NOW=>$now,
 			FULL=>$full/100,
 			NAME=>$x,
 			T=>$T,
@@ -79,15 +90,10 @@ while(1){
 	}
 	my @res;
 	for(@ss){
-		my ($x,$now,$s,$F);
+		my ($x,$s);
 		$x=$supp{$_};
-		$now=readline($F) if(defined($F=$x->{F}));
-		if(!defined($now)){
-			defined($F) && close($F);
-			if(open($F,'<',$x->{FN})){
-				$now=readline($F);
-			}else{
-				$F=undef;
+		if(!(defined($F=$x->{F}) && rl())){
+			if(!(open($F,'<',$x->{FN}) && rl())){
 				$now=$x->{NOW};
 				$s.='~';
 			}
@@ -97,13 +103,13 @@ while(1){
 		my $r;
 		my $r1=$x->{rate};
 		my $t=$T-$x->{T};
-		if($t<0 || $d<0){
+		if($t<0 || $d<0 || !$now){
 			$x->{T}=$T;
 			$x->{NOW}=$now;
 			$x->{rate}=$r;
 		}elsif($t>50){
 			$r=$d/$t;
-			$r=($r1*($N-1)+$r)/$N if(defined($r1));
+			$r=($r1*($N-1)+$r)/$N if(defined($r1) && !$r);
 			$x->{T}=$T;
 			$x->{NOW}=$now;
 			$x->{rate}=$r;
@@ -124,5 +130,6 @@ while(1){
 	};
 	print sprintf("%02i:%02i\n",$hour,$min).join(',',@res)."\n";
 	sleep($wait=60-$sec);
+#	sleep($wait=5-$sec%5);
 #	select(undef,undef,undef,$wait=60-$sec);
 }
