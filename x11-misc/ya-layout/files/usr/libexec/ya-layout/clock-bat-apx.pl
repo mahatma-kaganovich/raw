@@ -129,7 +129,7 @@ while(1){
 		$s.="$p%";
 		if($r>0){
 			$r=int($now/($r*60));
-			$s.=sprintf("-%02	i:%02i",$r/60,$r%60);
+			$s.=sprintf("-%02i:%02i",$r/60,$r%60);
 		}
 		push @res,$s;
 	};
