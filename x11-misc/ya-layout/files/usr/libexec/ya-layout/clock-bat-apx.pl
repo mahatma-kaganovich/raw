@@ -63,8 +63,7 @@ while(1){
 		$supp{$_}={
 			F=>$F,
 			FN=>$n,
-#			NOW=>$full,
-			FULL=>$full,
+			FULL=>$full/100,
 			NAME=>$x,
 			T=>$T,
 		};
@@ -104,8 +103,7 @@ while(1){
 			$x->{rate}=$r;
 		}elsif($t>50){
 			$r=$d/$t;
-			$r1=$r if(!defined($r1));
-			$r=($r1*($N-1)+$r)/$N;
+			$r=($r1*($N-1)+$r)/$N if(defined($r1));
 			$x->{T}=$T;
 			$x->{NOW}=$now;
 			$x->{rate}=$r;
@@ -113,8 +111,10 @@ while(1){
 			# fast unprecise
 			$r=$d/$t;
 			$s.='_';
+		}else{
+			$r=$r1;
 		}
-		my $p=int($now*100/$x->{FULL});
+		my $p=int($now/$x->{FULL});
 		$s.="$p%";
 		if($r>0){
 			$r=int($now/($r*60));
