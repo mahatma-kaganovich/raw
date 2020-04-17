@@ -119,8 +119,6 @@ while(1){
 		if($r>0){
 			$r=int($now/($r*60));
 			$s.=sprintf("-%02i:%02i",$r/60,$r%60);
-		}elsif(defined($r)){
-			$x->{rate}=0;
 		}
 		push @res,$s;
 	};
