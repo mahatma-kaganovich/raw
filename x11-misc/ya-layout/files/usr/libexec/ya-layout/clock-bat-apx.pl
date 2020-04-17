@@ -20,18 +20,24 @@ for(@ARGV?@ARGV:('POWER_SUPPLY_PRESENT=1')){
 	$SEL{$x}=$v;
 }
 
+sub tm{
+	($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst)=localtime($T=time());
+}
+
 sub rl{
 	if(defined($now=readline($F)) && seek($F,0,0)){
 		chomp($now);
 		return $F;
 	}
+	# failure may be slow
+	tm();
 	close($F);
 	$now=$F=undef;
 }
 
 $md=-1;
 while(1){
-	my $T=time();
+	tm();
 	for(glob('/sys/class/power_supply/*/uevent')){
 		exists($supp{$_})&&next;
 		my ($full,$x,$v,%v,$sel,$n);
@@ -80,7 +86,6 @@ while(1){
 		};
 		$md=-1;
 	}
-	my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst)=localtime($T);
 	if($md!=$mday){
 		@ss=sort map{defined($supp{$_})?$_:()} keys %supp;
 #		use POSIX; $d=strftime('%A %x',$sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst);
