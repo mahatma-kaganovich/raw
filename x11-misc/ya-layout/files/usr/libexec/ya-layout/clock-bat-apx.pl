@@ -100,12 +100,12 @@ while(1){
 		@ss=sort map{defined($supp{$_})?$_:()} keys %supp;
 #		use POSIX; $d=strftime('%A %x',$sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst);
 		$d=localtime($T); $d=~s/\d\d:\d\d:\d\d *//;
-		print STDERR "\x1b[2J",join("\n ",$d,map{$supp{$_}->{NAME}}@ss);
+		print STDERR "\x1b[2J",join("\n ",$d,map{$supp{$_}->{NAME}}@ss,$e);
 		$md=$mday;
 	}
 	my @res;
 	for(@ss){
-		my ($x,$s);
+		my ($x,$s,$r);
 		$x=$supp{$_};
 		if(!(defined($F=$x->{F}) && rl($now))){
 			if(!(open($F,'<',$x->{FN}) && rl($now))){
@@ -116,23 +116,18 @@ while(1){
 			$x->{F}=$F;
 		}
 		my $d=$x->{NOW}-$now;
-		my $r;
 		my $r1=$x->{rate};
 		my $t=$T-$x->{T};
 		if($t<0){
 			$r=$r1;
 		}elsif($d<0 || !$now){
 		}elsif($t>50){
-			$r=0;
 			if($d){
 				$r=$d/$t;
 			}elsif(defined($r1) && open($F,'<',$n) && rl($n,1) && !dis($n)){
 				$r1=undef;
 			}
-			if(defined($r1)){
-				$r1=($r1*($N-1)+$r)/$N;
-				$r=$r1 if($d || ($r1 && $x->{T1}>=$T+int($now/$r1)));
-			}
+			$r=($r1*($N-1)+$r)/$N if(defined($r1));
 		}elsif(!$r1 && $t && $d){
 			$r=$d/$t;
 			$s.='_';
@@ -148,9 +143,7 @@ skip:
 		my $p=int($now/$x->{FULL});
 		$s.="$p%";
 		if($r>0){
-			$r=$now/$r;
-			$x->{T1}=$T+int($r)+1;
-			$r=int($r/60);
+			$r=int($now/($r*60));
 			$s.=sprintf("-%02i:%02i",$r/60,$r%60);
 		}
 		push @res,$s;
