@@ -20,19 +20,23 @@ for(@ARGV?@ARGV:('POWER_SUPPLY_PRESENT=1')){
 	$SEL{$x}=$v;
 }
 
+# failure may be slow [for bluetooth], refresh sometimes
 sub tm{
 	($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst)=localtime($T=time());
 }
 
+sub dis{
+	$_[0] eq 'Discharging';
+}
+
 sub rl{
-	if(defined($now=readline($F)) && seek($F,0,0)){
-		chomp($now);
+	if(defined($_[0]=readline($F)) && ($_[1]?close($F):seek($F,0,0))){
+		chomp($_[0]);
 		return $F;
 	}
-	# failure may be slow
 	tm();
 	close($F);
-	$now=$F=undef;
+	$_[0]=$F=undef;
 }
 
 $md=-1;
@@ -40,7 +44,7 @@ while(1){
 	tm();
 	for(glob('/sys/class/power_supply/*/uevent')){
 		exists($supp{$_})&&next;
-		my ($full,$x,$v,%v,$sel,$n);
+		my ($full,$x,$v,%v,$sel,$n,$r,$st);
 		open($F,'<',$_) || next;
 		while(defined($x=readline($F))){
 			chomp($x);
@@ -69,13 +73,17 @@ while(1){
 		}else{
 			next;
 		}
+		if(defined($st=$v{POWER_SUPPLY_STATUS})){
+			$r=0 if(dis($x));
+			$st="$x/status";
+		}
 
 		$x=~s/.*\///;
 		#$x=$v{POWER_SUPPLY_NAME};
 		for('POWER_SUPPLY_MANUFACTURER','POWER_SUPPLY_MODEL_NAME'){
 			$x.='/'.$v{$_} if(exists($v{$_}));
 		}
-		rl();
+		rl($now);
 		$supp{$_}={
 			F=>$F,
 			FN=>$n,
@@ -83,6 +91,8 @@ while(1){
 			FULL=>$full/100,
 			NAME=>$x,
 			T=>$T,
+			S=>$st,
+			RATE=>$r,
 		};
 		$md=-1;
 	}
@@ -97,10 +107,11 @@ while(1){
 	for(@ss){
 		my ($x,$s);
 		$x=$supp{$_};
-		if(!(defined($F=$x->{F}) && rl())){
-			if(!(open($F,'<',$x->{FN}) && rl())){
+		if(!(defined($F=$x->{F}) && rl($now))){
+			if(!(open($F,'<',$x->{FN}) && rl($now))){
 				$now=$x->{NOW};
 				$s.='~';
+				#delete($supp{$_});next;
 			}
 			$x->{F}=$F;
 		}
@@ -108,33 +119,43 @@ while(1){
 		my $r;
 		my $r1=$x->{rate};
 		my $t=$T-$x->{T};
-		if($t<0 || $d<0 || !$now){
-			$x->{T}=$T;
-			$x->{NOW}=$now;
-			$x->{rate}=$r;
+		if($t<0){
+			$r=$r1;
+		}elsif($d<0 || !$now){
 		}elsif($t>50){
-			$r=$d/$t;
-			$r=($r1*($N-1)+$r)/$N if(defined($r1) && $r);
-			$x->{T}=$T;
-			$x->{NOW}=$now;
-			$x->{rate}=$r;
+			$r=0;
+			if($d){
+				$r=$d/$t;
+			}elsif(defined($r1) && open($F,'<',$n) && rl($n,1) && !dis($n)){
+				$r1=undef;
+			}
+			if(defined($r1)){
+				$r1=($r1*($N-1)+$r)/$N;
+				$r=$r1 if($d || ($r1 && $x->{T1}>=$T+int($now/$r1)));
+			}
 		}elsif(!$r1 && $t && $d){
-			# fast unprecise
 			$r=$d/$t;
 			$s.='_';
+			goto skip;
 		}else{
 			$r=$r1;
+			goto skip;
 		}
+		$x->{T}=$T;
+		$x->{NOW}=$now;
+		$x->{rate}=$r;
+skip:
 		my $p=int($now/$x->{FULL});
 		$s.="$p%";
 		if($r>0){
-			$r=int($now/($r*60));
+			$r=$now/$r;
+			$x->{T1}=$T+int($r)+1;
+			$r=int($r/60);
 			$s.=sprintf("-%02i:%02i",$r/60,$r%60);
 		}
 		push @res,$s;
 	};
 	print sprintf("%02i:%02i\n",$hour,$min).join(',',@res)."\n";
 	sleep($wait=60-$sec);
-#	sleep($wait=5-$sec%5);
 #	select(undef,undef,undef,$wait=60-$sec);
 }
