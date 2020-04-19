@@ -67,16 +67,15 @@ while(1){
 
 		$x=$_;
 		$x=~s/\/uevent$//;
-		if(defined($full) && !$full){
+		if(defined($full) && !($full+=0)){
 			# BT is surprizing laggy
 			for(0..2){
 				sleep(1);
-				open($F,'<',"$x/energy_full") && rl($full,1) && $full && last;
+				open($F,'<',"$x/energy_full") && rl($full,1) && ($full+=0) && last;
 			}
 			tm();
-			$full=undef if(!$full);
 		}
-		if(defined($full) && open($F,'<',$n="$x/energy_now")){
+		if($full && open($F,'<',$n="$x/energy_now")){
 		}elsif(open($F,'<',$n="$x/capacity")){
 			$full=100;
 		}else{
