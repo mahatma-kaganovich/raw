@@ -67,15 +67,7 @@ while(1){
 
 		$x=$_;
 		$x=~s/\/uevent$//;
-		if(defined($full) && !($full+=0)){
-			# BT is surprizing laggy
-			for(0..2){
-				sleep(1);
-				open($F,'<',"$x/energy_full") && rl($full,1) && ($full+=0) && last;
-			}
-			tm();
-		}
-		if($full && open($F,'<',$n="$x/energy_now")){
+		if(($full+=0) && open($F,'<',$n="$x/energy_now")){
 		}elsif(open($F,'<',$n="$x/capacity")){
 			$full=100;
 		}else{
@@ -108,7 +100,7 @@ while(1){
 		@ss=sort map{defined($supp{$_})?$_:()} keys %supp;
 #		use POSIX; $d=strftime('%A %x',$sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst);
 		$d=localtime($T); $d=~s/\d\d:\d\d:\d\d *//;
-		print STDERR "\x1b[2J",join("\n ",$d,map{$supp{$_}->{NAME}}@ss,$e);
+		print STDERR "\x1b[2J",join("\n ",$d,map{$supp{$_}->{NAME}}@ss);
 		$md=$mday;
 	}
 	my @res;
