@@ -32,7 +32,7 @@ sub dis{
 sub rl{
 	if(defined($_[0]=readline($F)) && ($_[1]?close($F):seek($F,0,0))){
 		chomp($_[0]);
-		return $F;
+		return 1;
 	}
 	tm();
 	close($F);
