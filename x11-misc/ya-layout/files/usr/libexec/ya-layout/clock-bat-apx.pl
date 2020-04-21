@@ -110,7 +110,7 @@ while(1){
 		if(!(defined($F=$x->{F}) && rl($now))){
 			if(!(open($F,'<',$x->{FN}) && rl($now))){
 				$now=$x->{NOW};
-				$s.='~';
+				$s.='^';
 				#delete($supp{$_});next;
 			}
 			$x->{F}=$F;
@@ -124,14 +124,21 @@ while(1){
 		}elsif($t>50){
 			if($d){
 				$r=$d/$t;
-			}elsif(defined($r1) && open($F,'<',$n) && rl($n,1) && !dis($n)){
-				$r1=undef;
-			}elsif($r1 && $now/60/$r1>10080){
-				# ignore >1 week (or buggy device)
-				$r1=undef;
-				$r=0;
+				if(defined($r1)){
+					$r=($r1*($N-1)+$r)/$N
+				}else{
+					$s.='~';
+				}
+			}elsif(!defined($r1)){
+				# just optimize
+				$x->{T}=$T;
+				$x->{NOW}=$now;
+				push @res,$x->{X};
+				next;
+			}elsif(!$r1 || (open($F,'<',$n) && rl($n,1) && dis($n))){
+				push @res,$x->{X};
+				next;
 			}
-			$r=($r1*($N-1)+$r)/$N if(defined($r1));
 		}elsif(!$r1 && $t && $d){
 			$r=$d/$t;
 			$s.='_';
@@ -150,7 +157,7 @@ skip:
 			$r=int($now/60/$r);
 			$s.=sprintf("-%02i:%02i",$r/60,$r%60);
 		}
-		push @res,$s;
+		push @res,$x->{X}=$s;
 	};
 	print sprintf("%02i:%02i\n",$hour,$min).join(',',@res)."\n";
 	sleep($wait=60-$sec);
