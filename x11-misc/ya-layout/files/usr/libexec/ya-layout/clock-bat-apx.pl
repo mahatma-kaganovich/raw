@@ -128,7 +128,8 @@ while(1){
 				$r1=undef;
 			}elsif($r1 && ($now/($r1*3600))>168){
 				# ignore >1 week (or buggy device)
-				$r1=0;
+				$r1=undef;
+				$r=0;
 			}
 			$r=($r1*($N-1)+$r)/$N if(defined($r1));
 		}elsif(!$r1 && $t && $d){
