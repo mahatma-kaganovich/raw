@@ -126,7 +126,7 @@ while(1){
 				$r=$d/$t;
 			}elsif(defined($r1) && open($F,'<',$n) && rl($n,1) && !dis($n)){
 				$r1=undef;
-			}elsif($r1 && ($now/60/$r1))>10080){
+			}elsif($r1 && $now/60/$r1>10080){
 				# ignore >1 week (or buggy device)
 				$r1=undef;
 				$r=0;
