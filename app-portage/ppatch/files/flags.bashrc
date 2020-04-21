@@ -200,6 +200,7 @@ gcc)
 # looks like unwinding not required for anymore exclude debugging / verbose exceptions
 # ps ceph too...
 gcc|mongodb|mongo-tools|ceph|tigervnc)filterflag -fno-asynchronous-unwind-tables -Wl,--no-ld-generated-unwind-info -Wl,--no-eh-frame-hdr;;&
+libreoffice)filterflag -Wl,--no-eh-frame-hdr;;&
 # libX11 1) not build lto 2) w/o lto - moz segfault
 doxygen|mongodb|libX11|llvm|clang)filterflag -fopenacc;;&
 gcc|glibc|chromium|texlive-core|xemacs)filterflag -fopenmp -fopenmp-simd -fopenacc -fgnu-tm '-ftree-parallelize-loops*';;&
