@@ -13,16 +13,30 @@
 $SIG{HUP}=sub{1};
 $|=1;
 
-$N=shift @ARGV;
-$N||=5;
-for(@ARGV?@ARGV:('POWER_SUPPLY_PRESENT=1')){
+$N=((shift @ARGV)||5)*60;
+%SEL=(POWER_SUPPLY_PRESENT=>1,) if(!@ARGV);
+for(@ARGV){
 	my ($x,$v)=split(/=/,$_,2);
 	$SEL{$x}=$v;
 }
 
+
 # failure may be slow [for bluetooth], refresh sometimes
 sub tm{
-	($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst)=localtime($T=time());
+	$T=time();
+	$sec=$T%60;
+	$min=int($T/60);
+	return if($min==$min1); $min1=$min;
+	$TD=localtime($T);
+	$TD=~s/(\d\d:\d\d):\d\d */$TM=$1;''/e;
+
+#	use POSIX;
+#	($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst)=localtime($T);
+#	$TM=strftime('%X',$sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst);
+#	$TM=~s/:\d\d( .*)?$/$1/;
+#	return if($mday==$mday1); $mday1=$mday;
+#	$TD=strftime('%A %x',$sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst);
+#	utf8::encode($TD);
 }
 
 sub dis{
@@ -39,7 +53,6 @@ sub rl{
 	$_[0]=$F=undef;
 }
 
-$md=-1;
 while(1){
 	tm();
 	for(glob('/sys/class/power_supply/*/uevent')){
@@ -67,9 +80,9 @@ while(1){
 
 		$x=$_;
 		$x=~s/\/uevent$//;
-		if(($full+=0) && open($F,'<',$n="$x/energy_now")){
+		if(($full/=100) && open($F,'<',$n="$x/energy_now")){
 		}elsif(open($F,'<',$n="$x/capacity")){
-			$full=100;
+			$full=1;
 		}else{
 			next;
 		}
@@ -88,64 +101,45 @@ while(1){
 			F=>$F,
 			FN=>$n,
 			NOW=>$now,
-			FULL=>$full/100,
+			FULL=>$full,
 			NAME=>$x,
 			T=>$T,
 			S=>$st,
 			RATE=>$r,
 		};
-		$md=-1;
+		$md='';
 	}
-	if($md!=$mday){
+	if($md ne $TD){
 		@ss=sort map{defined($supp{$_})?$_:()} keys %supp;
-#		use POSIX; $d=strftime('%A %x',$sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst);
-		$d=localtime($T); $d=~s/\d\d:\d\d:\d\d *//;
-		print STDERR "\x1b[2J",join("\n ",$d,map{$supp{$_}->{NAME}}@ss);
-		$md=$mday;
+		print STDERR "\x1b[2J".join("\n ",$md=$TD,map{$supp{$_}->{NAME}}@ss);
 	}
 	my @res;
 	for(@ss){
 		my ($x,$s,$r);
+		my $sp='-';
 		$x=$supp{$_};
 		if(!(defined($F=$x->{F}) && rl($now))){
 			if(!(open($F,'<',$x->{FN}) && rl($now))){
-				$now=$x->{NOW};
-				$s.='^';
 				#delete($supp{$_});next;
+				$now=$x->{NOW};
+				$s.='~';
 			}
-			$x->{F}=$F;
+			defined($x->{F}=$F)||goto skip;
 		}
 		my $d=$x->{NOW}-$now;
 		my $r1=$x->{rate};
 		my $t=$T-$x->{T};
-		if($t<0){
+		if($t<=0){
 			$r=$r1;
 		}elsif($d<0 || !$now){
-		}elsif($t>50){
-			if($d){
-				$r=$d/$t;
-				if(defined($r1)){
-					$r=($r1*($N-1)+$r)/$N
-				}else{
-					$s.='~';
-				}
-			}elsif(!defined($r1)){
-				# just optimize
-				$x->{T}=$T;
-				$x->{NOW}=$now;
-				push @res,$x->{X};
-				next;
-			}elsif(!$r1 || (open($F,'<',$n) && rl($n,1) && dis($n))){
-				push @res,$x->{X};
-				next;
+		}elsif(defined($r1)){
+			if($d || (defined(my $n=$x->{S}) && open($F,'<',$n) && rl($n,1) && dis($n))){
+				$r=$N>$t?$N:($N+$t);
+				$r=($r1*($r-$t)+$d)/$r;
 			}
-		}elsif(!$r1 && $t && $d){
+		}elsif($d){
 			$r=$d/$t;
-			$s.='_';
-			goto skip;
-		}else{
-			$r=$r1;
-			goto skip;
+			$sp='~';
 		}
 		$x->{T}=$T;
 		$x->{NOW}=$now;
@@ -153,13 +147,13 @@ while(1){
 skip:
 		my $p=int($now/$x->{FULL});
 		$s.="$p%";
-		if($r>0){
+		if($r){
 			$r=int($now/60/$r);
-			$s.=sprintf("-%02i:%02i",$r/60,$r%60);
+			$s.=$sp.sprintf("%02i:%02i",$r/60,$r%60);
 		}
-		push @res,$x->{X}=$s;
+		push @res,$s;
 	};
-	print sprintf("%02i:%02i\n",$hour,$min).join(',',@res)."\n";
+	print $TM."\n".join(',',@res)."\n";
 	sleep($wait=60-$sec);
 #	select(undef,undef,undef,$wait=60-$sec);
 }
