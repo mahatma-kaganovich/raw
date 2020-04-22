@@ -133,9 +133,16 @@ while(1){
 			$r=$r1;
 		}elsif($d<0 || !$now){
 		}elsif(defined($r1)){
-			if($d || (defined(my $n=$x->{S}) && open($F,'<',$n) && rl($n,1) && dis($n))){
-				$r=$N>$t?$N:($N+$t);
-				$r=($r1*($r-$t)+$d)/$r;
+			if($d || (defined(my $f=$x->{S}) && open($F,'<',$f) && rl($f,1) && dis($f))){
+				my $n=$x->{t};
+				$n=$N if($n<$N);
+				$n+=$t if($n<=$t);
+				$r=($r1*($n-$t)+$d)/$n;
+				if(!$d){ # or $d<2
+					#$r=$r1;
+					$sp='~';
+					goto skip;
+				}
 			}
 		}elsif($d){
 			$r=$d/$t;
@@ -144,6 +151,7 @@ while(1){
 		$x->{T}=$T;
 		$x->{NOW}=$now;
 		$x->{rate}=$r;
+		$x->{t}=$t;
 skip:
 		my $p=int($now/$x->{FULL});
 		$s.="$p%";
