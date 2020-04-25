@@ -1,3 +1,2 @@
-app-emulation/vice -sdl gtk
 games-emulation/pcsxr -sdl # alsa openal oss pulseaudio
 games-emulation/ppsspp -sdl qt5

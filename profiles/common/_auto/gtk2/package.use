@@ -1,4 +1,3 @@
-app-admin/packagekit -gtk
 app-arch/gnome-autoar -gtk
 app-cdr/dvdshrink gtk
 app-crypt/eid-mw gtk
@@ -17,7 +16,6 @@ app-editors/gvim -gtk
 app-emulation/libguestfs -gtk
 app-emulation/qemu -gtk
 app-emulation/spice-vdagent -gtk
-app-emulation/vice gtk
 app-emulation/virt-manager -gtk
 app-emulation/winetricks -gtk
 app-i18n/fcitx gtk2 -gtk3

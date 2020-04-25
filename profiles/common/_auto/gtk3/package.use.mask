@@ -1,4 +1,3 @@
-app-emulation/vice -gtk sdl
 dev-java/oracle-jdk-bin:11 -gtk3 gtk2
 media-libs/libmediaart -gtk qt5
 media-libs/opencv -gtk3 qt5

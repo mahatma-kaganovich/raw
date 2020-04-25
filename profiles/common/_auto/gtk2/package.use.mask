@@ -1,4 +1,3 @@
-app-emulation/vice -gtk sdl
 app-i18n/ibus -gtk2 -gtk
 app-i18n/ibus-m17n -gtk2 -gtk
 app-i18n/ibus-unikey -gtk2 -gtk

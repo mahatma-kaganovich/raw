@@ -1,4 +1,3 @@
-app-admin/packagekit -gtk
 app-arch/gnome-autoar gtk
 app-cdr/dvdshrink -gtk
 app-crypt/gcr gtk
