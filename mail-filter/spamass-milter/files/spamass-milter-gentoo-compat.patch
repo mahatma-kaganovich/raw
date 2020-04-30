@@ -1,0 +1,41 @@
+--- a/spamass-milter.cpp	2014-09-11 03:38:00.000000000 +0300
++++ b/spamass-milter.cpp	2020-04-30 16:47:21.440213874 +0300
+@@ -177,6 +177,7 @@ bool flag_full_email = false;		/* pass f
+ bool flag_expand = false;	/* alias/virtusertable expansion */
+ bool warnedmacro = false;	/* have we logged that we couldn't fetch a macro? */
+ bool auth = false;		/* don't scan authenticated users */
++bool auth_unreject = false;     /* invert flag_reject for auth */
+ 
+ // {{{ main()
+ 
+@@ -184,7 +185,7 @@ int
+ main(int argc, char* argv[])
+ {
+    int c, err = 0;
+-   const char *args = "afd:mMp:P:r:u:D:i:b:B:e:xS:R:C:";
++   const char *args = "IHafd:mMp:P:r:u:D:i:b:B:e:xS:R:C:";
+    char *sock = NULL;
+    bool dofork = false;
+    char *pidfilename = NULL;
+@@ -200,6 +201,10 @@ main(int argc, char* argv[])
+     /* Process command line options */
+     while ((c = getopt(argc, argv, args)) != -1) {
+         switch (c) {
++            case 'H':
++                auth_unreject = true;
++                break;
++            case 'I': // old gentoo patch
+             case 'a':
+                 auth = true;
+                 break;
+@@ -793,7 +798,10 @@ mlfi_envfrom(SMFICTX* ctx, char** envfro
+ 
+     if (auth_type) {
+       debug(D_MISC, "auth_type=%s", auth_type);
++      if (auth_unreject) flag_reject = !flag_reject;
++      else
+       return SMFIS_ACCEPT;
++      
+     }
+   }
+ 
