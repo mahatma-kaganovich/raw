@@ -58,7 +58,7 @@ while(1){
 	for(glob('/sys/class/power_supply/*/uevent')){
 		exists($supp{$_})&&next;
 		my ($full,$x,$v,%v,$sel,$n,$r,$st);
-		open($F,'<',$_) || next;
+		open($F=my $F_,'<',$_) || next;
 		while(defined($x=readline($F))){
 			chomp($x);
 			($x,$v)=split(/=/,$x,2);
@@ -80,8 +80,8 @@ while(1){
 
 		$x=$_;
 		$x=~s/\/uevent$//;
-		if(($full/=100) && open($F,'<',$n="$x/energy_now")){
-		}elsif(open($F,'<',$n="$x/capacity")){
+		if(($full/=100) && open($F=my $F_,'<',$n="$x/energy_now")){
+		}elsif(open($F=my $F_,'<',$n="$x/capacity")){
 			$full=1;
 		}else{
 			next;
@@ -119,7 +119,7 @@ while(1){
 		my $sp='-';
 		$x=$supp{$_};
 		if(!(defined($F=$x->{F}) && rl($now))){
-			if(!(open($F,'<',$x->{FN}) && rl($now))){
+			if(!(open($F=my $F_,'<',$x->{FN}) && rl($now))){
 				#delete($supp{$_});next;
 				$now=$x->{NOW};
 				$s.='~';
@@ -133,7 +133,7 @@ while(1){
 			$r=$r1;
 		}elsif($d<0 || !$now){
 		}elsif(defined($r1)){
-			if($d || (defined(my $f=$x->{S}) && open($F,'<',$f) && rl($f,1) && dis($f))){
+			if($d || (defined(my $f=$x->{S}) && open($F=my $F_,'<',$f) && rl($f,1) && dis($f))){
 				my $n=$x->{t};
 				$n=$N if($n<$N);
 				$n+=$t if($n<=$t);
