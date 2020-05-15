@@ -199,6 +199,7 @@ gcc)
 	_iuse lto || filterflag '-flto*' '-*-lto-*' -fuse-linker-plugin -fdevirtualize-at-ltrans
 	_iuse graphite || filterflag -floop-nest-optimize -floop-parallelize-all
 	_iuse openmp || filterflag -fopenmp -fopenmp-simd -fopenacc -fgnu-tm
+	filterflag --param=ipcp-unit-growth=1 && appendflag -fno-ipa-cp-clone
 ;;&
 # while found affected only mongodb - at least no connect from UniFi (exception)
 # looks like unwinding not required for anymore exclude debugging / verbose exceptions
