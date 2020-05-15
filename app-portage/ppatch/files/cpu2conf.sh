@@ -315,7 +315,7 @@ for i in $flags; do
 	ace_en)f1+=" padlock";;
 	misalignsse)fv='';;
 	*)
-		if (grep "^$i1 " /usr/portage/profiles/use.desc ; grep "^[^ 	]*:$i " /usr/portage/profiles/use.local.desc)|grep -q 'CPU\|processor\|chip\|instruction'; then
+		if (grep "^$i1 " /{usr/portage,var/db/repos/gentoo}/profiles/use.desc ; grep "^[^ 	]*:$i " /{usr/portage,var/db/repos/gentoo}/use.local.desc)|grep -q 'CPU\|processor\|chip\|instruction'; then
 			f1+=" $i"
 		else
 			f2+=" $i"
