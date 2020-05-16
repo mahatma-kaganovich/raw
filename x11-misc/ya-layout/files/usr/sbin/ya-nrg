@@ -224,6 +224,7 @@ wifi_restart(){
 		# on 1 of my card iwd scan on start, on 2 - no
 		# on 3 - iface present only after iwd start
 		local dhcp=false
+		_iw_cfg
 		for j in 0 .1 .1 .1 .1 .1 .1 .1 .1 .1 .1 1 3 0; do
 			_iw_list
 			[ -z "$on$off$off_" ] && sleep $j && continue
@@ -261,6 +262,11 @@ wifi_restart(){
 				[ -z "$x" ] && _iw_list
 			}
 			for i in $off; do
+				$force || {
+					iwctl station "$i" show|grep "Scanning[ \t]*yes\|State[ \t]*connect" && continue
+					[ "$j" = 0 ] && x+=" $i" && continue
+				}
+				echo "$i force scan" >&2
 				iwctl station "$i" scan || x+=" $i"
 			done
 			[ -z "$x$off_" ] && break
