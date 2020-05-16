@@ -92,6 +92,7 @@ _iw_list(){
 	off1=
 	off_=
 	off_1=
+	rf=
 	for i in /sys/class/net/*/wireless; do
 		i="${i%/*}"
 		f="$i/carrier"
@@ -105,6 +106,13 @@ _iw_list(){
 		esac
 		[ -S "/run/wpa_supplicant/$i" ] && v+='1'
 		declare -g $v="${!v} $i"
+	done
+	for i in /sys/class/rfkill/*/type; do
+		[ -r "$i" ] && [ "$(< "$i")" = wlan ] || continue
+		for f in /sys/class/net/*/*/rfkill*/type; do
+			[ "$i" -ef "$f" ] && continue 2
+		done
+		rf+=" ${i%/type}"
 	done
 }
 
@@ -137,7 +145,7 @@ wifi_sync(){
 			j="$d1/${i##*/}"
 			[ -e "$j" ] || unlink "$i"
 		done
-	elif [ -L /var/lib/iwd ] && [ -d $d1 ] && [ "$(readlink /var/lib/iwd)" = $d ]; then
+	elif [ -d $d1 ] && [ /var/lib/iwd -ef $d ]; then
 		[ -d $d ] || mkdir $d || return
 		cp -a $d1/*.* $d/ || {
 			[ -d $d1 ] || return
@@ -202,17 +210,31 @@ wifi_restart(){
 			echo 0 >"$i"
 		done
 	done
+	for i in $rf; do
+#		echo 1 >"$i/state"
+		echo 0 >"$i/soft"
+	done
 	[ -n "$off1$off_1" ] && wpa_cli scan &
-	[ -n "$on$off$off_" ] && {
+	[ -n "$on$off$off_$rf" ] && {
 		wifi_sync
 		/usr/libexec/iwd &>/dev/null &
 		p=$!
-		# on 1 of my card iwd scan on start, on other - no
+		# on 1 of my card iwd scan on start, on 2 - no
+		# on 3 - iface present only after iwd start
 		_iw_cfg
-		_start_dhcp $on $off $off_ >/dev/null &
-		$disable_periodic_scan && for j in 0 .1 .1 .1 .1 .1 .1 .1 .1 .1 .1 1 3 0; do
+		local dhcp=false
+		for j in 0 .1 .1 .1 .1 .1 .1 .1 .1 .1 .1 1 3 0; do
+			$dhcp || [ -z "$on$off$off_" ] || {
+				_start_dhcp $on $off $off_ >/dev/null &
+				$disable_periodic_scan || break
+				dhcp=true
+			}
 			# in most cases 1 scan / exclude first power-on
 			_iw_list
+			$disable_periodic_scan || {
+				sleep $j
+				continue
+			}
 			x=
 			[ -n "$off_" ] && {
 				# "x" - workaround bug [0.21]
