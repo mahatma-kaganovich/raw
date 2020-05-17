@@ -1,0 +1,22 @@
+--- a/configure	2015-02-15 19:14:34.000000000 +0300
++++ b/configure	2020-05-17 21:58:48.000000000 +0300
+@@ -7223,7 +7223,7 @@ int main(){nm_test_var='a';nm_test_func(
+ _LT_EOF
+ 
+   if { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_compile\""; } >&5
+-  (eval $ac_compile) 2>&5
++  (eval $ac_compile -fcommon) 2>&5
+   ac_status=$?
+   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+   test $ac_status = 0; }; then
+--- a/libltdl/configure	2015-02-15 19:15:15.000000000 +0300
++++ b/libltdl/configure	2020-05-17 21:59:05.000000000 +0300
+@@ -6109,7 +6109,7 @@ int main(){nm_test_var='a';nm_test_func(
+ _LT_EOF
+ 
+   if { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_compile\""; } >&5
+-  (eval $ac_compile) 2>&5
++  (eval $ac_compile -fcommon) 2>&5
+   ac_status=$?
+   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+   test $ac_status = 0; }; then

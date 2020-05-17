@@ -1,0 +1,5 @@
+--- libtool1	2020-05-17 21:24:43.000000000 +0300
++++ libtool	2020-05-17 21:25:16.000000000 +0300
+@@ -171 +171 @@
+-global_symbol_pipe=""
++global_symbol_pipe='sed -n -e '\''s/^.*[       ]\([ABCDGIRSTW][ABCDGIRSTW]*\)[         ][      ]*\([_A-Za-z][_A-Za-z0-9]*\)$/\1 \2 \2/p'\'' | sed '\''/ __gnu_lto/d'\'''

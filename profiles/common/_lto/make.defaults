@@ -20,3 +20,6 @@ NM_FOR_TARGET="gcc-nm"
 AR_FOR_BUILD="gcc-ar"
 RANLIB_FOR_BUILD="gcc-ranlib"
 NM_FOR_BUILD="gcc-nm"
+
+# libtool: -flto -fno-common
+lt_cv_sys_global_symbol_pipe='sed -n -e '\''s/^.*[       ]\([ABCDGIRSTW][ABCDGIRSTW]*\)[         ][      ]*\([_A-Za-z][_A-Za-z0-9]*\)$/\1 \2 \2/p'\'' | sed '\''/ __gnu_lto/d'\'''

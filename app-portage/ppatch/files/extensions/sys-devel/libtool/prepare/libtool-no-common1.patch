@@ -1,0 +1,11 @@
+--- a/m4/libtool.m4	2015-01-20 19:15:19.000000000 +0300
++++ b/m4/libtool.m4	2020-05-17 21:58:55.000000000 +0300
+@@ -4049,7 +4049,7 @@ void nm_test_func(void){}
+ int main(){nm_test_var='a';nm_test_func();return(0);}
+ _LT_EOF
+ 
+-  if AC_TRY_EVAL(ac_compile); then
++  if AC_TRY_EVAL(ac_compile -fcommon); then
+     # Now try to grab the symbols.
+     nlist=conftest.nm
+     if AC_TRY_EVAL(NM conftest.$ac_objext \| "$lt_cv_sys_global_symbol_pipe" \> $nlist) && test -s "$nlist"; then

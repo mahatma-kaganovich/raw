@@ -14,6 +14,8 @@ compile)[[ " $LDFLAGS " == *\ -flto[\ =]* || " $LDFLAGS " == *\ -fuse-linker-plu
 		grep -q '\-O\*|-g\*|' "$i" &&
 		sed -i -e 's/-O\*|-g\*|/-O*|-f*|-m*|*Wa,*|--param=*|-g*|/' "$i" && elog "libtool patched2: $i"
 	    }
+	    # if other solutions failed
+	    patch -Ni /usr/ppatch/libtool-common.patch "$i"
 	done
 ;;
 esac
