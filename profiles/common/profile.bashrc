@@ -60,7 +60,7 @@ esac
 
 ! ([[ " $IUSE " == *' clang '* ]] && use clang) && [ -z "${CC#gcc}" ] && l=$ncpu
 [ -v l ] && for i in {C,CXX,CPP,LD,F,FC,_}FLAGS; do
-	export $i="${!i// -flto -fuse-linker-plugin / -flto=$l -fuse-linker-plugin }"
+	export $i="${!i//-flto -fuse-linker-plugin/-flto=$l -fuse-linker-plugin}"
 done
 d="${TMPDIR}/bin"
 for i in ar strip nm ranlib objcopy objdump   strings size readelf dwp; do

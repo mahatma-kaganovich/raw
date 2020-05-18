@@ -1,4 +1,4 @@
-_FLAGS="$_FLAGS -flto -fuse-linker-plugin -ffat-lto-objects -fdevirtualize-at-ltrans"
+_FLAGS="-flto -fuse-linker-plugin -ffat-lto-objects -fdevirtualize-at-ltrans $_FLAGS"
 CFLAGS_FAST=" -flto-compression-level=1$CFLAGS_FAST"
 #CFLAGS_SMALL=" -fno-lto-odr-type-merging $CFLAGS_SMALL" # segfault
 CFLAGS_SMALL=" -flto-compression-level=9$CFLAGS_SMALL"
