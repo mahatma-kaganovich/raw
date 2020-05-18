@@ -121,6 +121,7 @@ filter_cf(){
 	vv="${v}_${c}"
 	v1="${!vv}"
 	[ "$v" = LDFLAGS ] || l="$LDFLAGS "
+#	echo 'int main(){}' |${!c} -x $3 $l-Werror - -w -pipe $i -o /dev/null && l+='-Werror '
 	[ -z "$v1" ] && {
 		for i in ${!v}; do
 			echo 'int main(){}' |${!c} -x $3 $l$v1 - -w -pipe $i -o /dev/null && v1+=" $i" || ff+=" $i"
@@ -160,6 +161,7 @@ _fnofastmath(){
 	done
 }
 
+_filtertst(){
 filter_cf CC LDFLAGS c
 filter_cf CC CFLAGS c
 filter_cf CXX CXXFLAGS c++
@@ -167,7 +169,11 @@ _iuse clang && {
 	CC=clang filter_cf CC CFLAGS c
 	CXX=clang++ filter_cf CXX CXXFLAGS c++
 }
+}
 
+_filtertst
+
+_test_f="$CFLAGS/$CXXFLAGS/$LDFLAGS"
 case "$PN" in
 quota|xinetd|samba|python) _iuse !rpc || [ -e /usr/include/rpc/rpc.h ] || {
 	# python - only if libnsl present (module nis)
@@ -186,7 +192,10 @@ xemacs)_fLTO && {
 # fuse: e2fsprogs failed only on gcc 8.2
 # ffmpeg: amd64 - mp4 crushes
 # libbsd: mailx
-xf86-video-intel|libwacom|libbsd|dcc|chromium*|webkit-gtk|ffmpeg|xemacs|fuse|privoxy|icedtea|openjdk|qtwebkit|mplayer|mysql|heimdal|glibc|cvs|pulseaudio)filterflag '-flto*' '-*-lto-*' -fuse-linker-plugin -fdevirtualize-at-ltrans;;&
+libwacom|libbsd|dcc|chromium*|webkit-gtk|ffmpeg|xemacs|fuse|privoxy|icedtea|openjdk|qtwebkit|mplayer|mysql|heimdal|glibc|cvs|pulseaudio)
+	${CC:-gcc} -v 2>&1|grep -q "^gcc version" &&
+		filterflag '-flto*' '-*-lto-*' -fuse-linker-plugin -fdevirtualize-at-ltrans
+;;&
 #libcap)_fLTO_f -flto-partition=1to1;;&
 #openjdk)_fLTO_f -fno-strict-aliasing -flto;;& # ulimit -n 100000
 dovecot)
@@ -216,7 +225,7 @@ ncurses-compat|ncurses)_fLTO && export ac_cv_func_dlsym=no ac_cv_lib_dl_dlsym=ye
 inkscape|libreoffice|mariadb|nodejs|llvm|clang)filterflag -ffat-lto-objects;;&
 mariadb)filterflag -fno-asynchronous-unwind-tables;;&
 mariadb)_fLTO_f -fno-ipa-cp-clone;;&
-php)[[ "$PV" == 5.* ]] || filterflag '-flto*' -fdevirtualize-at-ltrans;;&
+php)[[ "$PV" == 5.* ]] || ilterflag '-flto*' -fdevirtualize-at-ltrans;;&
 # works over make.lto wrapper, but wrapper wrong for some other packets
 numactl|alsa-lib|elfutils|dhcdrop|lksctp-tools|mysql-connector-c)filterflag '-flto*' -fdevirtualize-at-ltrans;;&
 # ilmbase -> openexr
@@ -296,7 +305,11 @@ _iuse !system-sqlite && _fnofastmath
 (_iuse clang || [[ "$LD" == *lld ]] || _isflag -fuse-ld=lld) &&
 	filterflag -Wl,--reduce-memory-overheads -Wl,--no-ld-generated-unwind-info
 
+
 #filter86_32 -fschedule-insns -fira-loop-pressure
+
+# clang too related from -flto, etc - filter twice
+[ "$_test_f" = "$CFLAGS/$CXXFLAGS/$LDFLAGS" ] || _filtertst
 
 }
 

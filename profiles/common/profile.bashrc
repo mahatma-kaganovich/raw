@@ -42,7 +42,8 @@ done
 case "$C" in
 LLVM)
 	export CC=clang CXX=clang++ CPP=clang-cpp LD=ld.lld
-	export LDFLAGS="-fuse-ld=lld $LDFLAGS"
+#	export LDFLAGS="-fuse-ld=lld $LDFLAGS"
+	f='-fuse-ld=lld'
 	p=llvm
 #	l=thin
 ;;
