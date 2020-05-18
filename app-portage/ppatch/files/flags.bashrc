@@ -18,7 +18,7 @@ _iuse(){
 	return 1
 }
 
-filterflag1(){
+filterflag_(){
 local p v x local f ff="$1" rr r=false
 shift
 for v in $ff; do
@@ -38,7 +38,11 @@ $r
 }
 
 filterflag(){
-	filterflag1 'LDFLAGS CFLAGS CPPFLAGS CXXFLAGS FFLAGS FCFLAGS' "${@}"
+	filterflag_ 'LDFLAGS CFLAGS CPPFLAGS CXXFLAGS FFLAGS FCFLAGS' "${@}"
+}
+
+filterflag1(){
+	die 'flags.bashrc renamed filterflag1 to filterflag_'
 }
 
 filterldflag(){
@@ -50,20 +54,23 @@ filterldflag(){
 	export LDFLAGS="${LDFLAGS# }"
 }
 
-appendflag(){
-	local v
-	for v in CFLAGS CPPFLAGS CXXFLAGS FFLAGS FCFLAGS; do
+appendflag_(){
+	local v ff="$1"
+	shift
+	for v in $ff; do
 		export $v="${!v} $*"
 	done
-	echo "flag appended [CF]*FLAGS $*"
+	ff="${ff//FLAGS}"
+	[[ "$ff" == *' '* ]] && ff="{${ff// /,}}"
+	echo "flag appended ${ff}FLAGS $*"
+}
+
+appendflag(){
+	appendflag_ 'CFLAGS CPPFLAGS CXXFLAGS FFLAGS FCFLAGS' "${@}"
 }
 
 appendflag1(){
-	local v
-	for v in CFLAGS CPPFLAGS CXXFLAGS FFLAGS FCFLAGS LDFLAGS; do
-		export $v="${!v} $*"
-	done
-	echo "flag appended [CFL]*FLAGS $*"
+	appendflag_ 'CFLAGS CPPFLAGS CXXFLAGS FFLAGS FCFLAGS LDFLAGS' "${@}"
 }
 
 _isflag(){
@@ -129,7 +136,7 @@ filter_cf(){
 		[ -n "$ff" ] && {
 			echo "filtered $v ${!c}$ff"
 			# -flto
-#			filterflag1 LDFLAGS $ff
+#			filterflag_ LDFLAGS $ff
 		}
 		v1="${v1# }"
 		export ${vv}="$v1"
@@ -196,6 +203,8 @@ xf86-video-intel|libwacom|libbsd|dcc|chromium*|webkit-gtk|ffmpeg|xemacs|fuse|pri
 #	${CC:-gcc} -v 2>&1|grep -q "^gcc version" &&
 		filterflag '-flto*' '-*-lto-*' -fuse-linker-plugin -fdevirtualize-at-ltrans
 ;;&
+libaio)_fLTO_f -fno-lto;;&
+qtscript)filterflag -flto '-flto=*' && appendflag_ LDFLAGS -flto;;
 gnustep-base)_fLTO_f -flto-partition=1to1;;&
 #openjdk)_fLTO_f -fno-strict-aliasing -flto;;& # ulimit -n 100000
 dovecot)
@@ -233,10 +242,9 @@ ilmbase)_fLTO_f -Wl,-lpthread -lpthread;;&
 clang*)filterflag -flto-partition=none;;&
 glibc)filterflag -mfpmath=387;;&
 glibc)_isflag -fno-omit-frame-pointer && filterflag -f{,no-}omit-frame-pointer;;& # 2.23
-libaio|qtscript)_fLTO && export LDFLAGS="$LDFLAGS -fno-lto";;&
 cdrdao|gcr|ufraw|gdal|dosemu|soxr|flac|libgcrypt)filterflag2 '' '-flto*';;&
 boost)filter86_32 '-flto*' '-*-lto-*' -fuse-linker-plugin -fdevirtualize-at-ltrans;;&
-libsodium|elogind|perl|autofs|dovecot)_fLTO && export LDFLAGS="$LDFLAGS -fPIC";;&
+libsodium|elogind|perl|autofs|dovecot)_fLTO && appendflag_ LDFLAGS -fPIC;;&
 cmake)_fLTO && _isflag '-floop-*' '-fgraphite*' && filterflag -fipa-pta;;&
 # x86 gcc graphite ice
 gmp)filterflag -fno-move-loop-invariants;;&
@@ -255,7 +263,6 @@ ceph)
 	fi
 }
 ;;&
-glibc)gccve 6. && appendflag -fno-tree-slp-vectorize;;&
 glibc)gccve 6. || filterflag -ftracer;;&
 glibc)filterflag -fopenmp -fopenmp-simd;;&
 # -Ofast / -ffast-math:
@@ -274,18 +281,15 @@ fltk)_isflag '-floop-*' '-fgraphite*' && filterflag -ftree-loop-distribution;; #
 freeglut)_isflag '-floop-*' '-fgraphite*' && appendflag -fno-ipa-cp-clone;;
 # 5.1
 gccxml|xemacs|devil|vtun|irda-utils|wmmon|bbrun|diffball|ldns|rp-l2tp)appendflag -std=gnu89;;
-sessreg|ldns)export CPPFLAGS="$CPPFLAGS -P";;
-mpg123)_iuse abi_x86_32 && gccve 5. && export CFLAGS="${CFLAGS//-O3/-O2}" && filterflag -fpeel-loops -funroll-loops;;&
+sessreg|ldns)appendflag_ CPPFLAGS -P;;
 klibc)[[ "$MAKEOPTS" == *'-j '* || "$MAKEOPTS" == *-j ]] && export MAKEOPTS="$MAKEOPTS -j8";;
 sarg)filterflag -w;;
 criu)filterldflag;filterflag -maccumulate-outgoing-args '-flto=*';;
 ffmpeg|libav)_iuse abi_x86_32 && filterflag -fno-omit-frame-pointer;; # x86 mmx -Os
-faad2|openssl|patch)gccve 5. && filterflag -floop-nest-optimize;;&
-geos|readahead-list|thin-provisioning-tools|libprojectm|gtkmathview|qtfm|qtgui|qtwebkit)gccve 6. && export CXXFLAGS="$CXXFLAGS -std=gnu++98";;
 ruby)filterflag -funroll-loops -fweb;;
 ghostscript-gpl)filterflag -mmitigate-rop;; # ????!
 compiler-rt)__clang=clang;filter_cf __clang CFLAGS c;filter_cf __clang CXXFLAGS c++;filter_cf __clang LDFLAGS c++;;
-easystroke)export CXXFLAGS="$CXXFLAGS -fno-ipa-cp-clone";export LDFLAGS="$LDFLAGS -lglib-2.0";;
+easystroke)appendflag_ CXXFLAGS -fno-ipa-cp-clone;appendflag_ LDFLAGS -lglib-2.0;;
 potrace)appendflag -fno-tree-slp-vectorize;;
 groff)filterflag -fisolate-erroneous-paths-attribute;;
 coreutils)filterflag -flto=jobserver && appendflag1 -flto;;
