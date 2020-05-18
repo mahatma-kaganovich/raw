@@ -5,12 +5,12 @@
 _iuse(){
 	local i
 	for i in $USE; do
-		[ "$i" = "$1" ] && return 0
+		[[ "$i" == "$1" ]] && return 0
 	done
 	# [sometimes] broken
 	for i in $IUSE; do
-		[ "~$i" = "$1" ] && return 0
-		if [ "$i" = "${1#!}" ]; then
+		[[ "~$i" == "$1" ]] && return 0
+		if [[ "$i" == "${1#!}" ]]; then
 			use $1
 			return $?
 		fi
@@ -196,7 +196,7 @@ xf86-video-intel|libwacom|libbsd|dcc|chromium*|webkit-gtk|ffmpeg|xemacs|fuse|pri
 #	${CC:-gcc} -v 2>&1|grep -q "^gcc version" &&
 		filterflag '-flto*' '-*-lto-*' -fuse-linker-plugin -fdevirtualize-at-ltrans
 ;;&
-#libcap)_fLTO_f -flto-partition=1to1;;&
+gnustep-base)_fLTO_f -flto-partition=1to1;;&
 #openjdk)_fLTO_f -fno-strict-aliasing -flto;;& # ulimit -n 100000
 dovecot)
 	filterflag -ffat-lto-objects # speedup build
@@ -310,6 +310,7 @@ _iuse !system-sqlite && _fnofastmath
 
 # clang too related from -flto, etc - filter twice
 [ "$_test_f" = "$CFLAGS/$CXXFLAGS/$LDFLAGS" ] || _filtertst
+[[ " $CFLAGS " == *\ -flto[\ =]* ]] && filterflag -Wa,--reduce-memory-overheads
 
 }
 

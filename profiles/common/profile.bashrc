@@ -77,10 +77,12 @@ exec ${!i1} \"\${@}\"" >"$d/$i"
 	export -f $i
 done >/dev/null 2>&1
 [ -e "$d" -a -n "${PATH##$d:*}" ] && export PATH="$d:$PATH"
-[ -v f ] && for i in  {C,CXX,CPP,LD,F,FC,_}FLAGS; do
-	export $i="$f ${!i}"
-	i="HOST_$i"
-	[ -v $i ] && export $i="$f ${!i}"
+for i in  {,HOST_}{C,CXX,CPP,LD,F,FC,_}FLAGS; do
+	[[ -v "$i" ]] || continue
+	[[ -v f ]] && export $i="$f ${!i}"
+	case " ${!i} " in
+	*\ -flto[\ =]*)export $i="${!i// -Wa,--reduce-memory-overheads}";; # warnings
+	esac
 done
 [ -v p ] && for i in CC CXX CPP LD; do
 	export HOST_$i="${!i}"
