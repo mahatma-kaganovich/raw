@@ -116,18 +116,19 @@ filter86_32(){
 }
 
 filter_cf(){
-	local i c="$1" v="$2" vv v1 ff=
+	local i c="$1" v="$2" vv v1 ff= l=
 	[ -z "${!c}" ] && return
 	vv="${v}_${c}"
 	v1="${!vv}"
+	[ "$v" = LDFLAGS ] || l="$LDFLAGS "
 	[ -z "$v1" ] && {
 		for i in ${!v}; do
-			echo 'int main(){}' |${!c} -x $3 $v1 - -w -pipe $i -o /dev/null && v1+=" $i" || ff+=" $i"
+			echo 'int main(){}' |${!c} -x $3 $l$v1 - -w -pipe $i -o /dev/null && v1+=" $i" || ff+=" $i"
 		done
 		[ -n "$ff" ] && {
 			echo "filtered $v ${!c}$ff"
 			# -flto
-			filterflag1 LDFLAGS $ff
+#			filterflag1 LDFLAGS $ff
 		}
 		v1="${v1# }"
 		export ${vv}="$v1"
@@ -159,6 +160,7 @@ _fnofastmath(){
 	done
 }
 
+filter_cf CC LDFLAGS c
 filter_cf CC CFLAGS c
 filter_cf CXX CXXFLAGS c++
 _iuse clang && {

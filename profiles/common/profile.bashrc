@@ -13,7 +13,12 @@ for i in {C,CXX,CPP,LD,F,FC,_}FLAGS; do
 		fn="$fy"
 		fw="$fy=*"
 		case "$fy" in
-		-fuse-ld)[ -z "$LD" ] && export LD="ld.${i1#*=}";;
+		-fuse-ld)
+			case "$C" in
+			LLVM|GNU)continue;;
+			esac
+			[ -z "$LD" ] && export LD="ld.${i1#*=}"
+		;;
 		-[fmW]no-*)fy="${fy:0:2}${fy:5}";fw="$fy=*";;
 		-[fmW]*)fn="${fy:0:2}no-${fy:2}";;
 #		-O*)fw="-O[^${i1:2:1}]*";;
@@ -37,7 +42,7 @@ done
 case "$C" in
 LLVM)
 	export CC=clang CXX=clang++ CPP=clang-cpp LD=ld.lld
-	export LDFLAGS="$LDFLAGS -fuse-ld=lld"
+	export LDFLAGS="-fuse-ld=lld $LDFLAGS"
 	p=llvm
 #	l=thin
 ;;
@@ -51,6 +56,7 @@ X)
 	p=
 ;;
 esac
+
 ! ([[ " $IUSE " == *' clang '* ]] && use clang) && [ -z "${CC#gcc}" ] && l=$ncpu
 [ -v l ] && for i in {C,CXX,CPP,LD,F,FC,_}FLAGS; do
 	export $i="${!i// -flto -fuse-linker-plugin / -flto=$l -fuse-linker-plugin }"
@@ -71,9 +77,9 @@ exec ${!i1} \"\${@}\"" >"$d/$i"
 done >/dev/null 2>&1
 [ -e "$d" -a -n "${PATH##$d:*}" ] && export PATH="$d:$PATH"
 [ -v f ] && for i in  {C,CXX,CPP,LD,F,FC,_}FLAGS; do
-	export $i="${!i} $f"
+	export $i="$f ${!i}"
 	i="HOST_$i"
-	[ -v $i ] && export $i="${!i} $f"
+	[ -v $i ] && export $i="$f ${!i}"
 done
 [ -v p ] && for i in CC CXX CPP LD; do
 	export HOST_$i="${!i}"
