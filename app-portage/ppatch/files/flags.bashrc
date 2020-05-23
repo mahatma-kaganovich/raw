@@ -205,7 +205,7 @@ xf86-video-intel|libwacom|libbsd|dcc|chromium*|webkit-gtk|ffmpeg|xemacs|fuse|pri
 ;;&
 libaio)_fLTO_f -fno-lto;;&
 qtscript)filterflag -flto '-flto=*' && appendflag_ LDFLAGS -flto;;
-gnustep-base)_fLTO_f -flto-partition=1to1;;&
+gnustep-base|gnustep-back-cairo)_fLTO_f -flto-partition=1to1;;&
 #openjdk)_fLTO_f -fno-strict-aliasing -flto;;& # ulimit -n 100000
 dovecot)
 	filterflag -ffat-lto-objects # speedup build
@@ -229,7 +229,7 @@ libreoffice)filterflag -Wl,--no-eh-frame-hdr;;&
 # libX11 1) not build lto 2) w/o lto - moz segfault
 doxygen|mongodb|libX11|llvm|clang)filterflag -fopenacc;;&
 gcc|glibc|chromium|texlive-core|xemacs)filterflag -fopenmp -fopenmp-simd -fopenacc -fgnu-tm '-ftree-parallelize-loops*';;&
-distcc)appendflag -fcommon;;&
+distcc|vlc|android-tools)appendflag -fcommon;;&
 zstandard)export MAKEOPTS=-j1;;&
 ncurses-compat|ncurses)_fLTO && export ac_cv_func_dlsym=no ac_cv_lib_dl_dlsym=yes;;&
 inkscape|libreoffice|mariadb|nodejs|llvm|clang)filterflag -ffat-lto-objects;;&
@@ -295,7 +295,7 @@ potrace)appendflag -fno-tree-slp-vectorize;;
 groff)filterflag -fisolate-erroneous-paths-attribute;;
 coreutils)filterflag -flto=jobserver && appendflag1 -flto;;
 # qtcore -> qtxml
-glibc|gnustep-back-cairo|qtcore)_fLTO_f -flto-partition=none;;
+glibc|_qtcore)_fLTO_f -flto-partition=none;;
 mongodb)[ "$AR" = gcc-ar ] && export AR=/usr/bin/ar ;;
 openssl)filterflag -ffast-math;; # 1.1.1 make
 seamonkey|thunderbird)export LDFLAGS="${LDFLAGS//-Wl,--strip-all/-Wl,--strip-debug}";;
