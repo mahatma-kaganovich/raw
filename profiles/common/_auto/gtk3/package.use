@@ -33,7 +33,7 @@ app-misc/lirc gtk
 app-misc/razertool -gtk
 app-misc/vifm -gtk
 app-mobilephone/sobexsrv -gtk
-app-office/libreoffice gtk -gtk2
+app-office/libreoffice gtk -gtk2 dbus
 app-office/libreoffice gtk
 app-text/aiksaurus -gtk
 app-text/ghostscript-gpl -gtk

@@ -229,7 +229,7 @@ libreoffice)filterflag -Wl,--no-eh-frame-hdr;;&
 # libX11 1) not build lto 2) w/o lto - moz segfault
 doxygen|mongodb|libX11|llvm|clang)filterflag -fopenacc;;&
 gcc|glibc|chromium|texlive-core|xemacs)filterflag -fopenmp -fopenmp-simd -fopenacc -fgnu-tm '-ftree-parallelize-loops*';;&
-distcc|vlc|android-tools)appendflag -fcommon;;&
+distcc|vlc|android-tools|sqlite)appendflag -fcommon;;&
 zstandard)export MAKEOPTS=-j1;;&
 ncurses-compat|ncurses)_fLTO && export ac_cv_func_dlsym=no ac_cv_lib_dl_dlsym=yes;;&
 inkscape|libreoffice|mariadb|nodejs|llvm|clang)filterflag -ffat-lto-objects;;&
