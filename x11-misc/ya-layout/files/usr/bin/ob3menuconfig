@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # (c) Denis Kaganovich, Anarchy or GPLv2
-# openbox config pipe menu v0.12
+# openbox config pipe menu v0.13
 # using /usr/share/openbox*/rc.xsd
 
 %xml_=('<'=>'lt','>'=>'gt',"'"=>'apos','"'=>'quot','&'=>'amp');
@@ -10,6 +10,12 @@ $bin='/usr/bin/';
 
 $allfont='MenuItem';
 $xrfont='!Font';
+
+%gtk=(
+$xrfont=>'gtk-font-name',
+'Xcursor.theme'=>'gtk-cursor-theme-name',
+'Xcursor.size'=>'gtk-cursor-theme-size',
+);
 
 my %config=(
 'config_mode'=>{
@@ -1043,7 +1049,7 @@ sub getcfg{
 }
 
 sub _gtk1{
-	return $_[0]='gtk-font-name' if($_[0] eq $xrfont);
+	return $_[0]=$gtk{$_[0]} if(exists($gtk{$_[0]}));
 	$_[0]=~s/\./-/g;
 	$_[0]='gtk-'.lc($_[0]);
 }
