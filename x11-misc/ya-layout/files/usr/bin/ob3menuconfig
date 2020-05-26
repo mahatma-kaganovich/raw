@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # (c) Denis Kaganovich, Anarchy or GPLv2
-# openbox config pipe menu v0.13
+# openbox config pipe menu v0.12
 # using /usr/share/openbox*/rc.xsd
 
 %xml_=('<'=>'lt','>'=>'gt',"'"=>'apos','"'=>'quot','&'=>'amp');
@@ -10,6 +10,7 @@ $bin='/usr/bin/';
 
 $allfont='MenuItem';
 $xrfont='!Font';
+$cursor='Xcursor.theme';
 
 %gtk=(
 $xrfont=>'gtk-font-name',
@@ -1116,7 +1117,7 @@ my %xrparam=(
 'Xft.verticallayout'=>$b,
 'Xcursor.theme'=>['default',(map{substr($_,28)}glob('/usr/share/cursors/xorg-x11/*'))],
 'Xcursor.theme_core'=>$b,
-'Xcursor.size'=>[3..32],
+'Xcursor.size'=>[3..100],
 'xscreensaver.timeout'=>$tm,
 'xscreensaver.cycle'=>$tm,
 'xscreensaver.dpmsEnabled'=>$bb,
@@ -1286,6 +1287,8 @@ if(_mparam(@_)){
 		}elsif(lc($x{'xscreensaver.mode'}) ne 'off'){
 			system($bin.'xscreensaver-command','-restart') && exec($bin.'xscreensaver');
 		}
+	}elsif($i=~/^Xcursor\./){
+		system($bin.'xsetroot','-xcf','/usr/share/cursors/xorg-x11/'.$x{'Xcursor.theme'}.'/cursors/left_ptr',$x{'Xcursor.size'}) if(exists($x{'Xcursor.theme'}) && exists($x{'Xcursor.size'}) && $x{'Xcursor.theme'} ne '' && $x{'Xcursor.size'} ne '');
 	}
 	exit;
 }
