@@ -243,7 +243,7 @@ wifi_restart(){
 		_iw_cfg
 		for j in 0 .1 .1 .1 .1 .1 .1 .1 .1 .1 .1 1 3 0; do
 			_iw_list
-			[ -z "$on$off$off_" ] && sleep $j && continue
+			[ -z "$on$off" ] && sleep $j && continue
 			$dhcp || {
 				_start_dhcp $on $off $off_ >/dev/null &
 				dhcp=true
