@@ -49,7 +49,7 @@ save1(){
 		[ "$x" != "$y" ] &&
 		echo "$y" >$f &&
 		$echo "$x -> $y => $f" &&
-		echo "echo $x >$f"
+		echo "echo '$x' >'$f'"
 	done >>$save
 	return 0
 }
@@ -65,7 +65,23 @@ save1g(){
 		[ "$x" -gt "$y" ] &&
 		echo "$y" >$f &&
 		$echo "$x -> $y => $f" &&
-		echo "echo $x >$f"
+		echo "echo '$x' >'$f'"
+	done >>$save
+	return 0
+}
+
+save1v(){
+	[ -e "$2" ] || return 1
+	local f y=$1 x=
+	shift
+	for f in "${@}"; do
+		rd x <$f &&
+		x=${x#*'['} &&
+		x=${x%%']'*} &&
+		[ "$x" != "$y" ] &&
+		echo "$y" >$f &&
+		$echo "$x -> $y => $f" &&
+		echo "[[ \"\$(< '$f')\" == '$y' ]] && echo '$x' >'$f'"
 	done >>$save
 	return 0
 }
@@ -367,6 +383,7 @@ save(){
 	$force && touch $save.lock1
 	local f i x x1 x2
 	echo '#' >>$save
+	save1v 0 /sys/class/leds/*/brightness
 	save1 N /sys/module/drm_kms_helper/parameters/poll
 	save1 1 /proc/sys/kernel/sched_energy_aware
 	save1 min_power /sys/class/scsi_host/*/link_power_management_policy
