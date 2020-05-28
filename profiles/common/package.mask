@@ -14,3 +14,5 @@ sys-apps/systemd
 =sys-firmware/intel-microcode-20171117_p20171215*
 # python 2.7
 >=dev-python/setuptools-45
+# breaks seamonkey & [old] firefox to mainstream sites
+>=dev-libs/nss-3.52
