@@ -487,6 +487,8 @@ _cpu_off(){
 		# single CPU must be balanced. fixme
 		#balance
 	}
+	# cannot restore original state on HP250G
+	false &&
 	for i in /sys/class/thermal/cooling_device*; do
 		rd x <$i/max_state && [ "$x" -gt 0 ] &&
 		f="$i/cur_state" && rd x1 <$f && [ "$x" -gt "$x1" ] || continue
