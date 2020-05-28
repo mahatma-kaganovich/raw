@@ -37,7 +37,7 @@ x11-base/xorg-server suid -elogind
 #sys-auth/elogind pam
 #sys-auth/pambase elogind
 # xterm:unicode - "luit allows xterm to support character encodings other than ISO-8859-1 and UTF-8."
-x11-terms/xterm Xaw3d -unicode
+x11-terms/xterm Xaw3d -unicode sixel
 # optimize
 sys-apps/openrc -ncurses
 # for any our app
