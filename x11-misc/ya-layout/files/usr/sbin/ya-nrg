@@ -435,6 +435,21 @@ save(){
 		$echo "$f 15"
 		$f 15
 	}
+	# cannot restore original state on HP250G
+	false &&
+	for i in /sys/class/thermal/cooling_device*; do
+		rd x <$i/max_state && [ "$x" -gt 0 ] &&
+		f="$i/cur_state" && rd x1 <$f && [ "$x" -gt "$x1" ] || continue
+		case "$(< $i/type)" in
+		    Processor);;
+		    intel_powerclamp)[ "$x1" = -1 ] && x1=0 || continue;;
+		    *)continue;;
+		esac
+		echo "$x" >$f &&
+		$echo "$x1 -> $x => $f" &&
+		echo "echo $x1 >$f" >>$save
+	done
+	###### add here, as next is cores off
 	[ -n "$cores$sockets$threads" ] && {
 		echo balance >>$save
 		sync &
@@ -487,20 +502,7 @@ _cpu_off(){
 		# single CPU must be balanced. fixme
 		#balance
 	}
-	# cannot restore original state on HP250G
-	false &&
-	for i in /sys/class/thermal/cooling_device*; do
-		rd x <$i/max_state && [ "$x" -gt 0 ] &&
-		f="$i/cur_state" && rd x1 <$f && [ "$x" -gt "$x1" ] || continue
-		case "$(< $i/type)" in
-		    Processor);;
-		    intel_powerclamp)[ "$x1" = -1 ] && x1=0 || continue;;
-		    *)continue;;
-		esac
-		echo "$x" >$f &&
-		$echo "$x1 -> $x => $f" &&
-		echo "echo $x1 >$f" >>$save
-	done
+	###### DO NOT add here
     } 3>>$save.lock
 }
 
