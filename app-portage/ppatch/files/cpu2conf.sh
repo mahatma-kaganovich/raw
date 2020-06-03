@@ -362,6 +362,9 @@ if c0=`_c` && c=`_c $f0`; then
 	}
 	i1=" $j "
 	for i in $flags $cpucaps; do
+		case "$i" in
+		mpx)continue;;
+		esac
 		(echo "$c"|grep -q "^ *-m$i ") && [ -n "${i1##* -m$i *}" ] && j+=" -m$i" && i1+=" -m$i" && f0+=" -m$i"
 	done
 fi
