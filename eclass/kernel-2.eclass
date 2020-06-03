@@ -980,7 +980,7 @@ acpi_detect(){
 	for i in $(cat /sys/bus/acpi/devices/*/path|sed -e 's:^\\::'); do
 		case "$i" in
 		*.SRAT)CF1 NUMA;;
-		_SB_.PCI*)CF1 PCI;;
+#		_SB_.PCI*)CF1 PCI;;
 		_SB_.PCCH)CF2 PCC_CPUFREQ;freq+=" PCC_CPUFREQ";;
 		_PR_.*|_SB_*.CP[0-9]*|_SB_*.SCK[0-9]*|_SB_.CPUS.C[0-9A-Z][0-9A-Z][0-9A-Z])let n=n+1;;
 		esac
