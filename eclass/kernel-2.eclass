@@ -976,7 +976,8 @@ useconfig(){
 acpi_detect(){
 	local i n=0
 	[[ -d /sys/bus/acpi ]] || return
-	CF1 -PCI -PCC_CPUFREQ -SMP -X86_BIGSMP -MAXSMP
+	CF1 -PCC_CPUFREQ -SMP -X86_BIGSMP -MAXSMP
+#	CF1 -PCI
 	for i in $(cat /sys/bus/acpi/devices/*/path|sed -e 's:^\\::'); do
 		case "$i" in
 		*.SRAT)CF1 NUMA;;
@@ -1018,6 +1019,7 @@ pre_embed(){
 		virtio:*d*v*)echo "virtio non-qemu device $s";qemu=false;;
 		esac
 		case "$s" in
+		pci:*)CF1 PCI;;&
 		pci:v00001AF4d*)CF1 VIRTIO_PCI;: ${qemu:=true};;& # required for embedding
 		# even if standard input devices still in system - enlight VM kernel or remove PV hw
 		pci:v00001AF4d*sv00001AF4*bc09sc00*)CF1 -INPUT_KEYBOARD;;
