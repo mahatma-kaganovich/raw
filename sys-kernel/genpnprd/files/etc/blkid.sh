@@ -1,5 +1,5 @@
 #!/bin/sh
-# v2.0
+# v2.1
 # (c) Denis Kaganovich, under Anarchy or GPLv2 license
 
 lsblk(){
@@ -7,7 +7,7 @@ lsblk(){
 	while read i; do
 		i="${i##* }"
 		[ -n "$i" ] && [ -e "/dev/$i" ] && {
-			[ "${i%[0-9]}" = "$i" ] && grep -q " $i[0-9]*$" /proc/partitions || echo "/dev/$i"
+			[ "${i%[0-9]}" = "$i" ] && grep -q " $i[0-9][0-9]*$" /proc/partitions || echo "/dev/$i"
 		}
 	done </proc/partitions
 }
@@ -43,7 +43,7 @@ local f_label16='"\\" 1/2 "u%x" ""'
 ! grep -s "^$d:" ${_c:=/dev/null} &&
 ! ( $blkid "$d"|grep " TYPE=" ) &&
 ( [ -b "$d" ] || [ -f "$d" ] ) &&
-for i in 0 3 4 8 24 32 54 82 510 536 1016 1024 1030 1040 1048 1080 1560 2048 4076 4086 4096 5120 8172 8182 8192 8212 8244 9564 16364 16374 32748 32758 32768 32769 32777 65516 65526 65536 65588 65600 270336; do
+for i in 0 3 4 8 24 32 54 82 510 536 1016 1024 1030 1040 1048 1080 1560 2048 4076 4086 4096 4120 5120 8172 8182 8192 8212 8244 9564 16364 16374 32748 32758 32768 32769 32777 65516 65526 65536 65588 65600 270336; do
 ii=`hexdump -v -s $i -n 10 -e '"'$i:'" 10/1 "%x" ""' $d`
 case "`hexdump -v -s $i -n 10 -e '"'$i:'" 10/1 "%x" ""' $d`" in
 32:4f52434c4449534b*)b_id oracleasm;;
@@ -56,7 +56,7 @@ case "`hexdump -v -s $i -n 10 -e '"'$i:'" 10/1 "%x" ""' $d`" in
 #	*[1-7])u=ext4;;
 #	*)continue;;
 	esac
-	b_id $u 48 64
+	b_id $u 48 '' '' '' LABEL=64:16:"$f_label"
 ;;
 8244:5265497345724673*|65588:526549734572324673*|65588:526549734572334673*|65588:5265497345724673*|8212:5265497345724673*)b_id reiserfs 32 48 16 16;;
 65536:52654973457234*)b_id reiser4 20 36 16 16;;
@@ -95,6 +95,7 @@ case "`hexdump -v -s $i -n 10 -e '"'$i:'" 10/1 "%x" ""' $d`" in
 	# unicode16 - new bash
 	echo "$(echo -e "$(b_id f2fs 108  '' '' '' LABEL=124:1024:"$f_label16")")"	#"
 ;;
+4120:c68573f64e1a45ca8265*)b_id bcache 16 '' '' '' CSET_UUID=32:16:"$f_uuid" LABEL=48:32:"$f_label" VERSION=-8:8:'"" /1 "%02x" ""';;
 esac 2>/dev/null
 done
 }
