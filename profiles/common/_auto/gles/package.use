@@ -1,5 +1,6 @@
 dev-games/ogre gles2 -opengl
 dev-libs/weston gles2
+gui-wm/wayfire gles
 kde-plasma/kinfocenter gles2-only -opengl
 media-libs/cogl gles2 -opengl
 media-libs/gst-plugins-bad gles2 -opengl

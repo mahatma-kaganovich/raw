@@ -30,7 +30,6 @@ app-misc/lirc -gtk
 app-misc/razertool gtk
 app-misc/vifm gtk
 app-mobilephone/sobexsrv gtk
-app-office/libreoffice gtk2
 app-text/aiksaurus gtk
 app-text/ghostscript-gpl -gtk
 dev-db/libiodbc gtk
@@ -69,10 +68,8 @@ games-strategy/freeciv gtk
 gnome-extra/cjs -gtk
 gnome-extra/libgda -gtk
 gnome-extra/libgsf -gtk
-gnome-extra/nm-applet -gtk
 kde-plasma/plasma-meta -gtk
 media-gfx/birdfont -gtk
-media-gfx/fontforge gtk
 media-gfx/fontforge -gtk
 media-gfx/graphviz gtk
 media-gfx/sane-frontends gtk
@@ -96,13 +93,11 @@ media-libs/mlt gtk
 media-libs/opencv gtk
 media-libs/suil gtk
 media-libs/xine-lib -gtk
-media-plugins/audacious-plugins gtk
 media-plugins/calf gtk
 media-plugins/libvisual-plugins gtk
 media-sound/alsa-tools -gtk
 media-sound/alsaplayer gtk
 media-sound/amsynth gtk
-media-sound/audacious gtk
 media-sound/aumix gtk
 media-sound/aylet gtk
 media-sound/jalv -gtk
@@ -135,7 +130,6 @@ net-ftp/gftp gtk
 net-im/ekg2 gtk
 net-im/pidgin gtk
 net-irc/hexchat gtk
-net-libs/aqbanking -gtk
 net-libs/gssdp -gtk
 net-misc/dhcpcd-ui gtk
 net-misc/dhcpcd-ui -gtk
@@ -144,10 +138,8 @@ net-misc/mico gtk
 net-misc/olsrd gtk
 net-misc/packETH gtk
 net-misc/putty gtk2
-net-misc/trackma -gtk
 net-misc/unison:2.48 gtk
 net-misc/unison:2.51 gtk
-net-misc/wicd gtk
 net-misc/youtube-viewer -gtk
 net-p2p/deluge -gtk
 net-p2p/gtk-gnutella gtk
@@ -179,8 +171,6 @@ sys-block/libzbc -gtk
 sys-devel/distcc gtk
 sys-devel/sparse gtk
 sys-fs/ecryptfs-utils gtk
-sys-fs/pysize gtk
-sys-libs/gwenhywfar gtk
 sys-libs/gwenhywfar -gtk
 sys-power/nvclock gtk
 sys-process/latencytop gtk

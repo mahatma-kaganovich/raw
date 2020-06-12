@@ -1,4 +1,3 @@
-app-crypt/tpm2-tss -gcrypt openssl
 app-crypt/tpm2-tss -openssl gcrypt
 dev-libs/librelp -openssl gnutls
 dev-libs/xmlsec -gnutls -gcrypt

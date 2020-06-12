@@ -33,7 +33,6 @@ app-misc/lirc gtk
 app-misc/razertool -gtk
 app-misc/vifm -gtk
 app-mobilephone/sobexsrv -gtk
-app-office/libreoffice gtk -gtk2 dbus
 app-office/libreoffice gtk
 app-text/aiksaurus -gtk
 app-text/ghostscript-gpl -gtk
@@ -73,12 +72,10 @@ gnome-extra/cjs gtk
 gnome-extra/evolution-data-server gtk
 gnome-extra/libgda gtk
 gnome-extra/libgsf -gtk
-gnome-extra/nm-applet gtk
 kde-apps/print-manager gtk
 kde-plasma/plasma-meta gtk
 lxde-base/lxdm gtk3
 media-gfx/birdfont gtk
-media-gfx/fontforge -gtk
 media-gfx/fontforge gtk
 media-gfx/geeqie gtk3
 media-gfx/graphviz -gtk
@@ -103,13 +100,11 @@ media-libs/mlt -gtk
 media-libs/opencv -gtk
 media-libs/suil -gtk
 media-libs/xine-lib gtk
-media-plugins/audacious-plugins -gtk
 media-plugins/calf -gtk
 media-plugins/libvisual-plugins -gtk
 media-sound/alsa-tools -gtk
 media-sound/alsaplayer -gtk
 media-sound/amsynth -gtk
-media-sound/audacious -gtk
 media-sound/aumix -gtk
 media-sound/aylet -gtk
 media-sound/jalv gtk
@@ -140,7 +135,6 @@ net-dns/avahi -gtk
 net-dns/avahi gtk
 net-ftp/gftp -gtk
 net-im/ekg2 -gtk
-net-libs/aqbanking gtk
 net-libs/gssdp gtk
 net-misc/dhcpcd-ui -gtk
 net-misc/dhcpcd-ui gtk
@@ -149,12 +143,9 @@ net-misc/mico -gtk
 net-misc/olsrd -gtk
 net-misc/putty gtk -gtk2
 net-misc/spice-gtk gtk3
-net-misc/trackma gtk
 net-misc/unison:2.48 -gtk
 net-misc/unison:2.51 -gtk
-net-misc/wicd gtk
 net-misc/youtube-viewer gtk
-net-p2p/deluge -gtk
 net-p2p/deluge gtk
 net-p2p/eiskaltdcpp gtk
 net-p2p/mldonkey gtk
@@ -187,8 +178,6 @@ sys-boot/plymouth gtk
 sys-devel/distcc -gtk
 sys-devel/sparse -gtk
 sys-fs/ecryptfs-utils -gtk
-sys-fs/pysize -gtk
-sys-libs/gwenhywfar -gtk
 sys-libs/gwenhywfar gtk
 sys-power/nvclock -gtk
 sys-process/latencytop -gtk
