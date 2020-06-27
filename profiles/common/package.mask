@@ -8,7 +8,6 @@ sys-apps/systemd
 =sys-devel/gcc-6.2*
 <dev-libs/isl-0.18
 # keep minimal 2.4
->=dev-lang/ruby-2.5
 # intel legacy
 =sys-firmware/intel-microcode-20180108*
 =sys-firmware/intel-microcode-20171117_p20171215*
