@@ -10,8 +10,7 @@ APACHE2_MODULES="$APACHE2_MODULES auth_digest proxy_http proxy access_compat rem
 LINGUAS="*"
 LDFLAGS="-Wl,-O1 -Wl,--as-needed -Wl,--hash-style=gnu -Wl,--sort-common -Wl,--sort-section=alignment"
 EMERGE_DEFAULT_OPTS="$EMERGE_DEFAULT_OPTS --backtrack=5"
-RUBY_TARGETS="-* ruby24"
-#RUBY_TARGETS="-* ruby23"
+RUBY_TARGETS="-* ruby25"
 # --enable-mobile-optimize broken in 65.0: --disable-synth-speechd --disable-webspeech --disable-webspeechtestbackend
 MOZILLA_CONFIG="--jitreport-granularity=0"
 PORTAGE_RSYNC_OPTS="$PORTAGE_RSYNC_OPTS --exclude=/metadata/md5-cache"
