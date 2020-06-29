@@ -1,0 +1,23 @@
+--- a/hw/xfree86/drivers/modesetting/drmmode_display.c	2020-06-29 21:00:12.380451397 +0300
++++ b/hw/xfree86/drivers/modesetting/drmmode_display.c	2020-06-29 21:01:49.577121718 +0300
+@@ -2503,6 +2503,8 @@ drmmode_output_get_modes(xf86OutputPtr o
+     int i;
+     DisplayModePtr Modes = NULL, Mode;
+     xf86MonPtr mon = NULL;
++    unsigned conn_mm_width = output->mm_width;
++    unsigned conn_mm_height = output->mm_height;
+ 
+     if (!koutput)
+         return NULL;
+@@ -2521,6 +2523,11 @@ drmmode_output_get_modes(xf86OutputPtr o
+     }
+     xf86OutputSetEDID(output, mon);
+ 
++    if (!output->mm_width || !output->mm_height) {
++	output->mm_width = conn_mm_width;
++	output->mm_height = conn_mm_height;
++    }
++
+     drmmode_output_attach_tile(output);
+ 
+     /* modes should already be available */
