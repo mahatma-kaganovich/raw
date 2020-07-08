@@ -20,12 +20,13 @@ HOMEPAGE="https://github.com/mahatma-kaganovich/xkbd"
 
 LICENSE="GPL-2"
 SLOT="0"
-IUSE="debug xpm minimal +multitouch +lock"
+IUSE="debug xpm minimal +multitouch +lock +evdev"
 
 RDEPEND="x11-libs/libX11
 	x11-libs/libXft
 	x11-libs/libXtst
 	x11-libs/libXScrnSaver
+	evdev? ( dev-libs/libevdev )
 	xpm? ( x11-libs/libXpm )
 	multitouch? ( x11-libs/libXi )"
 
@@ -50,6 +51,7 @@ src_configure() {
 		$(use_enable minimal) \
 		$(use_enable xpm) \
 		$(use_enable multitouch xi) \
+		$(use_enable evdev) \
 		$(use_enable debug)
 }
 
