@@ -173,6 +173,7 @@ filter_cf CC LDFLAGS c
 filter_cf CC CFLAGS c
 filter_cf CXX CXXFLAGS c++
 _iuse clang && {
+	CC=clang filter_cf CC LDFLAGS c
 	CC=clang filter_cf CC CFLAGS c
 	CXX=clang++ filter_cf CXX CXXFLAGS c++
 }
@@ -232,7 +233,7 @@ gcc|glibc|chromium|texlive-core|xemacs)filterflag -fopenmp -fopenmp-simd -fopena
 ipmitool|distcc|vlc|android-tools)appendflag -fcommon;;&
 zstandard)export MAKEOPTS=-j1;;&
 ncurses-compat|ncurses)_fLTO && export ac_cv_func_dlsym=no ac_cv_lib_dl_dlsym=yes;;&
-inkscape|libreoffice|mariadb|nodejs|llvm|clang)filterflag -ffat-lto-objects;;&
+inkscape|libreoffice|mariadb|nodejs|clang)filterflag -ffat-lto-objects;;&
 mariadb)filterflag -fno-asynchronous-unwind-tables;;&
 mariadb)_fLTO_f -fno-ipa-cp-clone;;&
 php)[[ "$PV" == 5.* ]] || ilterflag '-flto*' -fdevirtualize-at-ltrans;;&
@@ -240,7 +241,7 @@ php)[[ "$PV" == 5.* ]] || ilterflag '-flto*' -fdevirtualize-at-ltrans;;&
 numactl|alsa-lib|elfutils|dhcdrop|lksctp-tools|mysql-connector-c)filterflag '-flto*' -fdevirtualize-at-ltrans;;&
 # ilmbase -> openexr
 ilmbase)_fLTO_f -Wl,-lpthread -lpthread;;&
-clang*)filterflag -flto-partition=none;;&
+#clang*)filterflag -flto-partition=none;;&
 glibc)filterflag -mfpmath=387;;&
 glibc)_isflag -fno-omit-frame-pointer && filterflag -f{,no-}omit-frame-pointer;;& # 2.23
 cdrdao|gcr|ufraw|gdal|dosemu|soxr|flac|libgcrypt)filterflag2 '' '-flto*';;&
