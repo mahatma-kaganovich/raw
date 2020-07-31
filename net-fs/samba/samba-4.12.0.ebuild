@@ -43,12 +43,14 @@ MULTILIB_WRAPPED_HEADERS=(
 CDEPEND="
 	>=app-arch/libarchive-3.1.2[${MULTILIB_USEDEP}]
 	dev-lang/perl:=
-	dev-libs/icu[${MULTILIB_USEDEP}]
+	dev-libs/icu:=[${MULTILIB_USEDEP}]
 	dev-libs/libbsd[${MULTILIB_USEDEP}]
 	dev-libs/libtasn1[${MULTILIB_USEDEP}]
 	dev-libs/popt[${MULTILIB_USEDEP}]
 	dev-perl/Parse-Yapp
 	>=net-libs/gnutls-3.4.7
+	net-libs/libnsl:=[${MULTILIB_USEDEP}]
+	sys-libs/e2fsprogs-libs[${MULTILIB_USEDEP}]
 	  sys-apps/attr[${MULTILIB_USEDEP}]
 	system-ldb? ( sys-libs/ldb )
 	!system-ldb? ( !sys-libs/ldb )
@@ -72,7 +74,10 @@ CDEPEND="
 	")
 	ceph? ( sys-cluster/ceph )
 	etcd? ( dev-db/etcd )
-	cluster? ( !dev-db/ctdb )
+	cluster? (
+		net-libs/rpcsvc-proto
+		!dev-db/ctdb
+	)
 	cups? ( net-print/cups )
 	debug? ( dev-util/lttng-ust )
 	dmapi? ( sys-apps/dmapi )
@@ -116,7 +121,8 @@ REQUIRED_USE="
 	addc? ( python json winbind )
 	test? ( python )
 	addns? ( python )
-	ads? ( acl ldap )
+	ads? ( acl ldap winbind )
+	cluster? ( ads )
 	gpg? ( addc )
 	?? ( system-heimdal system-mitkrb5 )
 	${PYTHON_REQUIRED_USE}"
@@ -318,6 +324,20 @@ multilib_src_install() {
 		dosym smb.service "$(systemd_get_systemunitdir)/smbd.service"
 		dosym winbind.service "$(systemd_get_systemunitdir)/winbindd.service"
 	fi
+
+	if use pam && use winbind ; then
+		newpamd "${CONFDIR}/system-auth-winbind.pam" system-auth-winbind
+		# bugs #376853 and #590374
+		insinto /etc/security
+		doins examples/pam_winbind/pam_winbind.conf
+	fi
+
+	keepdir /var/cache/samba
+	keepdir /var/lib/ctdb
+	keepdir /var/lib/samba/{bind-dns,private}
+	keepdir /var/lock/samba
+	keepdir /var/log/samba
+	keepdir /var/run/samba
 }
 
 multilib_src_test() {
