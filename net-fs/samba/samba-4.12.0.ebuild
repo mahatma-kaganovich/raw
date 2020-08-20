@@ -48,7 +48,7 @@ CDEPEND="
 	dev-libs/libtasn1[${MULTILIB_USEDEP}]
 	dev-libs/popt[${MULTILIB_USEDEP}]
 	dev-perl/Parse-Yapp
-	>=net-libs/gnutls-3.4.7
+	>=net-libs/gnutls-3.4.7[${MULTILIB_USEDEP}]
 	net-libs/libnsl:=[${MULTILIB_USEDEP}]
 	sys-libs/e2fsprogs-libs[${MULTILIB_USEDEP}]
 	  sys-apps/attr[${MULTILIB_USEDEP}]
