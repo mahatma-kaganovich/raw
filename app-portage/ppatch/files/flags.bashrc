@@ -236,7 +236,7 @@ ncurses-compat|ncurses)_fLTO && export ac_cv_func_dlsym=no ac_cv_lib_dl_dlsym=ye
 inkscape|libreoffice|mariadb|nodejs|clang)filterflag -ffat-lto-objects;;&
 mariadb)filterflag -fno-asynchronous-unwind-tables;;&
 mariadb)_fLTO_f -fno-ipa-cp-clone;;&
-php)[[ "$PV" == 5.* ]] || ilterflag '-flto*' -fdevirtualize-at-ltrans;;&
+php)[[ "$PV" == 5.* ]] || filterflag '-flto*' -fdevirtualize-at-ltrans;;&
 # works over make.lto wrapper, but wrapper wrong for some other packets
 numactl|alsa-lib|elfutils|dhcdrop|lksctp-tools|mysql-connector-c)filterflag '-flto*' -fdevirtualize-at-ltrans;;&
 # ilmbase -> openexr
