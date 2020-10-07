@@ -7,8 +7,7 @@ dev-libs/cyrus-sasl berkdb
 mail-filter/opendkim berkdb
 sys-apps/iproute2 berkdb
 app-crypt/heimdal -ssl -threads
-dev-db/mariadb tokudb extraengine
-dev-db/mariadb-galera tokudb extraengine sst-xtrabackup
+dev-db/mariadb tokudb extraengine rocksdb
 sys-cluster/ceph xfs nss -ssl
 net-dns/bind threads caps -idn libidn2
 app-emulation/qemu doc tls usbredir spice sasl
