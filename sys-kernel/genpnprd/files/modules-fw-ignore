@@ -1,2 +1,2 @@
 .*/libsas\..*
-.*/.hci-pci\..*
+.*/usb/host/.*
