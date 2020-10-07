@@ -377,7 +377,7 @@ post_make(){
 	sed -e 's/: .*$//' <"$TMPDIR"/mod-fw.lst >>"$TMPDIR"/mod-blob.lst
 	grep -Fvxf "$TMPDIR"/mod-blob{,1}.lst >>"$TMPDIR"/mod-exclude1.m2y
 	grep -vxf "$SHARE"/modules-fw-ignore "$TMPDIR"/mod-exclude1.m2y >>"$TMPDIR"/mod-exclude.m2y
-	cat "$TMPDIR"/mod-blob1.lst >>"$TMPDIR"/mod-blob.lst
+	grep -vxf "$SHARE"/modules-fw-ignore "$TMPDIR"/mod-blob1.lst >>"$TMPDIR"/mod-blob.lst
 
 	einfo "Search hidden firmware"
 	for i in "$S" "$ROOT/lib"; do
