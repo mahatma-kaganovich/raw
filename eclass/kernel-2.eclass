@@ -351,7 +351,7 @@ post_make(){
 			if use external-firmware && [ -e "/lib/firmware/$y" ]; then
 				echo "$m: $y" >>"$TMPDIR"/mod-fw.lst
 			else
-				echo "$m" >>"$TMPDIR"/mod-exclude.m2y
+				echo "$m" >>"$TMPDIR"/mod-exclude1.m2y
 			fi
 		;;
 		depends:)
@@ -375,7 +375,8 @@ post_make(){
 	done <"$SHARE"/modules-standalone >>"$TMPDIR"/mod-exclude.m2y
 	sed -e 's/^.*: //' <"$TMPDIR"/mod-fw.lst | sort -u >"$TMPDIR"/fw-used1.lst
 	sed -e 's/: .*$//' <"$TMPDIR"/mod-fw.lst >>"$TMPDIR"/mod-blob.lst
-	grep -Fvxf "$TMPDIR"/mod-blob{,1}.lst | grep -vxf "$SHARE"/modules-fw-ignore >>"$TMPDIR"/mod-exclude.m2y
+	grep -Fvxf "$TMPDIR"/mod-blob{,1}.lst >>"$TMPDIR"/mod-exclude1.m2y
+	grep -vxf "$SHARE"/modules-fw-ignore "$TMPDIR"/mod-exclude1.m2y >>"$TMPDIR"/mod-exclude.m2y
 	cat "$TMPDIR"/mod-blob1.lst >>"$TMPDIR"/mod-blob.lst
 
 	einfo "Search hidden firmware"
