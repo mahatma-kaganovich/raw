@@ -642,7 +642,7 @@ kernel-2_src_compile() {
 		use monolythe || p+=" --all-ramdisk-modules"
 		[[ -e "${BDIR}/lib/firmware" ]] && p+=" --firmware --firmware-dir=\"${BDIR}/lib/firmware\"" || p+=' --no-firmware'
 	fi
-	run_genkernel ramdisk --kerneldir="${S}" --bootdir="${S}" --module-prefix="${BDIR}" --no-mountboot ${p}
+	run_genkernel ramdisk --kerneldir="${S}" --bootdir="${S}" --no-mountboot ${p}
 	r=`ls initramfs*-"${REAL_KV}"* || ls "$TMPDIR"/genkernel/initramfs*` && mv "$r" "initrd-${REAL_KV}.img" || die "initramfs rename failed"
 	einfo "Preparing boot image"
 	_genpnprd --PNPMODE "$( (use !pnp && echo nopnp)||(use pnponly && echo pnponly)||echo pnp )" || die
@@ -821,6 +821,7 @@ run_genkernel(){
 	# e2fsprogs & mdraid need more crosscompile info
 	unmcode y n
 	grep -sq arch-override= "$c" && set -- "${@}" --arch-override="$a" --utils-arch="$a"
+	grep -sq kernel-modules-prefix= "$c" && set -- "${@}" --kernel-modules-prefix="$BDIR" || set -- "${@}" --module-prefix="$BDIR"
 	TEMPDIR="$TMPDIR" \
 	ac_cv_target="${CTARGET:-${CHOST}}" ac_cv_build="${CBUILD}" ac_cv_host="${CHOST:-${CTARGET}}" \
 	CFLAGS="${KERNEL_UTILS_CFLAGS}" LDFLAGS="${KERNEL_UTILS_LDFLAGS}" _run_env "${S}/genkernel" $opt\
