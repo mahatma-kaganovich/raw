@@ -172,7 +172,7 @@ src_prepare() {
 	# unbundle iso8601 unless tests are enabled
 	use test || sed -i -e '/"iso8601":/d' "${S}"/third_party/wscript || die
 
-	use snapper || sed -i -e "s:(package='dbus-1':(package='____dbus-1':" source3/wscript
+#	use snapper || sed -i -e "s:(package='dbus-1':(package='____dbus-1':" source3/wscript
 
 	# ugly hackaround for bug #592502
 	cp /usr/include/tevent_internal.h "${S}"/lib/tevent/ || die
@@ -236,6 +236,7 @@ multilib_src_configure() {
 		$(multilib_native_use_with pam)
 		$(multilib_native_usex pam "--with-pammodulesdir=${EPREFIX}/$(get_libdir)/security" '')
 		$(multilib_native_use_with quota quotas)
+		$(multilib_native_usex snapper '' '--with-shared-modules=!vfs_snapper')
 		$(multilib_native_use_with syslog)
 		$(multilib_native_use_with systemd)
 		--systemd-install-services
