@@ -635,7 +635,7 @@ kernel-2_src_compile() {
 		use "${i% *}" && p+=" --${i##* }"
 	done
 	for i in 'blkid disklabel'; do
-		use "${i% *}" || i="no-${i##* }"
+		use "${i% *}" && i="${i##* }" || i="no-${i##* }"
 		grep -qw "\--$i" "$UROOT/usr/share/genkernel/gen_cmdline.sh" && p+=" --$i"
 	done
 	if use pnp || use compressed; then
