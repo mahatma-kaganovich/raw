@@ -14,6 +14,6 @@ _sed(){
 # patch is too unsafe with modifyed scripts. use script instead
 cd "$1" &&
 _sed -i -e 's:^\(\. /etc/initrd\.scripts\)$:\1\n. /etc/syspnp:' init &&
-_sed -i -e 's:^\(r*u*n* */bin/busybox --install -s\)$:\1\n\npnp_init:' init &&
-_sed -i -e 's:^\(	good_msg .Loading modules[ \.]*.\)$:\1\n	syspnp:' init &&
-_sed -i -e 's:^\(# If devtmpfs is mounted, try move it to the new root\)$:mod_unload\n\n\1:' init
+_sed -i -e 's:^\(r*u*n* *.*busybox --install -s\)$:\1\n\npnp_init:' init &&
+_sed -i -e 's:^\(\t*good_msg .Loading modules[ \.]*.\)$:\1\n\tsyspnp:' init &&
+_sed -i -e 's:^\(# If devtmpfs is mounted, try move it to the new root\|udevsettle\)$:mod_unload\n\n\1:' init
