@@ -1,5 +1,5 @@
 #!/bin/sh
-## pnp modules bootloader v0.21
+## pnp modules bootloader v0.22
 ## (c) Denis Kaganovich, under Anarchy license
 ## consume preprocessed /lib/modules/$KV/modules.alias
 
@@ -119,7 +119,7 @@ mod_fast(){
 			[[ -e "$f" ]] || break
 			$p
 			$cmd_quiet || echo -ne "\033[0G\033[0K$LCOUNT	$m $PARAM "
-			insmod "$f" "$PARAM" &
+			insmod "$f" ${PARAM:+"$PARAM"} &
 			p="wait $!"
 		done
 	done
