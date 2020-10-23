@@ -300,6 +300,8 @@ glibc|_qtcore)_fLTO_f -flto-partition=none;;
 mongodb)[ "$AR" = gcc-ar ] && export AR=/usr/bin/ar ;;
 openssl)filterflag -ffast-math;; # 1.1.1 make
 seamonkey|thunderbird|rsync)export LDFLAGS="${LDFLAGS//-Wl,--strip-all/-Wl,--strip-debug}";;&
+# -> postgis
+protobuf)filterflag -mtls-dialect=gnu2;;&
  # nss: gcc 10 mozilla broken ssl
 nss)_iuse abi_x86_32 && gccve '[0-9][0-9]' && appendflag -fno-tree-slp-vectorize;;&
 esac
