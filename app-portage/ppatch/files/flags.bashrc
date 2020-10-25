@@ -305,7 +305,7 @@ protobuf)filterflag -mtls-dialect=gnu2;;&
  # nss: gcc 10 mozilla broken ssl
 nss)_iuse abi_x86_32 && gccve '[0-9][0-9]' && appendflag -fno-tree-slp-vectorize;;&
 # hard to figure out
-geos)filterflag -ffast-math;appendflag -O2;;&
+geos)filterflag -ffast-math -Ofast -Wl,--no-eh-frame-hdr;;&
 esac
 
 #case "$CATEGORY" in
