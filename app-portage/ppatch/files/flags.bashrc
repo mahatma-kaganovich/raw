@@ -269,7 +269,7 @@ glibc)gccve 6. || filterflag -ftracer;;&
 glibc)filterflag -fopenmp -fopenmp-simd;;&
 # -Ofast / -ffast-math:
 # nodejs -> chromium
-postgeo|coreutils|groff|glibc|mpg123|nodejs|fontforge|sqlite|postgresql*|goffice|db|protobuf|qtwebkit|qtwebengine|webkit-gtk|python|guile|chromium*|rrdtool)_fnofastmath;;&
+coreutils|groff|glibc|mpg123|nodejs|fontforge|sqlite|postgresql*|goffice|db|protobuf|qtwebkit|qtwebengine|webkit-gtk|python|guile|chromium*|rrdtool)_fnofastmath;;&
 # sometimes somewere
 #libX11|wget)_isflag -Os && _fnofastmath -fno-unsafe-math-optimizations -fno-signed-zeros -fno-trapping-math -fassociative-math -freciprocal-math;;&
 chromium*)_iuse abi_x86_32 && filterflag -maccumulate-outgoing-args;;&
@@ -304,13 +304,15 @@ seamonkey|thunderbird|rsync)export LDFLAGS="${LDFLAGS//-Wl,--strip-all/-Wl,--str
 protobuf)filterflag -mtls-dialect=gnu2;;&
  # nss: gcc 10 mozilla broken ssl
 nss)_iuse abi_x86_32 && gccve '[0-9][0-9]' && appendflag -fno-tree-slp-vectorize;;&
+# hard to figure out
+geos)filterflag -ffast-math;appendflag -O2;;&
 esac
 
-case "$CATEGORY" in
+#case "$CATEGORY" in
 # don't want to find problems here
 #sci-libs|sci-geosciences)
-sci-*)_fnofastmath;;&
-esac
+#sci-*)_fnofastmath;;&
+#esac
 
 # more test flags-inject.bashrc before remove
 # seamonkey unknown error on install -> precompile cache
