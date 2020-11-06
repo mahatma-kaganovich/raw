@@ -134,6 +134,7 @@ $ENV{KERNEL_CONFIG}||='
 	###bugs: -TR -ECONET
 	###udev: -IDE
 	###3.14.0_nosound SND_HDA_CODEC_.+ SND_HDA_GENERIC
+	###5.9-module FW_LOADER
 	#bug_ubuntu_17.10 -SPI_INTEL_SPI_PLATFORM
 	#######
 	';

@@ -1863,6 +1863,21 @@ sort_detects(){
 	echo "$p"
 }
 
+broken_deps(){
+	local i i1 j d="$TMPDIR/depends.lst"
+	[ -s "$1" -a -s "$d" ] &&
+	while read i; do
+		grep "^$i " "$d" | while read i1 j; do
+			[[ "$i1" == "$i" ]] &&
+			for j in $j; do
+				grep -qxF "$j" "$1" && continue
+				ewarn "Embedding broken dependence: $i -> $j"
+				echo $j >>"$1"
+			done
+		done
+	done <"$1"
+}
+
 detects(){
 	local i a b c d
 	load_modinfo
@@ -1880,6 +1895,8 @@ detects(){
 		# cpu flags
 		(cd "${TMPDIR}"/overlay-rd/etc/modflags && cat $(grep "${PNP_VENDOR}^flags" /proc/cpuinfo) $(cat /sys/bus/acpi/devices/*/path|sed -e 's:^\\::') </dev/null 2>/dev/null)
 	}|modalias_reconf m2y 1
+	# embed depends Kconfig += modinfo
+	broken_deps "$TMPDIR"/unmodule.m2y
 	(cd "${TMPDIR}"/overlay-rd/etc/modflags && cat $(cat "${TMPDIR}/unmodule.m2y") </dev/null 2>/dev/null)|modalias_reconf m2y
 }
 
