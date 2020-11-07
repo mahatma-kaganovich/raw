@@ -1049,6 +1049,18 @@ pre_embed(){
 		pci:*bc06sc06i*)cc+=' NUBUS';;
 		pci:*bc06sc07i*)cc+=' PCCARD CARDBUS';;
 		pci:*bc06sc0ai*)cc+=' INFINIBAND';;
+
+		# cleanup renesas xhci if other xhci present
+		# to prevent firmware_class embedding over xhci quirk on 5.9+
+#		pci:v00001912d*sv*sd*bc0Csc03i30*);;
+		pci:v00001912d*);;
+		pci:v*d*sv*sd*bc0Csc03i30*)
+			CF1 -USB_XHCI_PCI_RENESAS
+			# just as detected
+			usb=true
+			use embed-hardware && CF1 '&USB_XHCI_PCI'
+		;;
+
 		virtio:d00000008v*)CF1 SCSI_VIRTIO BLK_DEV_SD;vscsi=true;;
 		virtio:d00000004v*)CF1 -HW_RANDOM_.+ HW_RANDOM_VIRTIO HW_RANDOM;;
 		# ...
