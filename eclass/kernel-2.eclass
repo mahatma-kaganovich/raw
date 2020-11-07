@@ -1055,7 +1055,7 @@ pre_embed(){
 #		pci:v00001912d*sv*sd*bc0Csc03i30*);;
 		pci:v00001912d*);;
 		pci:v*d*sv*sd*bc0Csc03i30*)
-			CF1 -USB_XHCI_PCI_RENESAS
+			use embed-hardware && CF1 -USB_XHCI_PCI_RENESAS
 			# just as detected
 			usb=true
 			use embed-hardware && CF1 '&USB_XHCI_PCI'
