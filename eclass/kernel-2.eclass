@@ -27,7 +27,7 @@ if [[ ${ETYPE} == sources ]]; then
 
 IUSE="${IUSE} +build-kernel custom-cflags +pnp +compressed integrated
 	netboot custom-arch embed-hardware +blobs
-	kernel-firmware +sources pnponly lzma xz lzo lz4
+	kernel-firmware +sources pnponly lzma xz lzo lz4 zstd
 	external-firmware xen +smp kernel-tools multitarget 64-bit-bfd thin
 	lvm evms device-mapper unionfs luks gpg iscsi e2fsprogs mdadm btrfs +keymap blkid
 	lguest acpi klibc +genkernel monolythe update-boot uml paranoid"
@@ -38,6 +38,7 @@ DEPEND="${DEPEND}
 	xz? ( app-arch/xz-utils )
 	lzo? ( app-arch/lzop )
 	lz4? ( app-arch/lz4 )
+	zstd? ( app-arch/zstd )
 	build-kernel? (
 		compressed? ( sys-kernel/genpnprd )
 		kernel-firmware? ( !sys-kernel/linux-firmware )
@@ -925,6 +926,8 @@ useconfig(){
 	use lzo && COMP+=' LZO'
 	use lzma && COMP+=' LZMA'
 	use lz4 && COMP+=' LZ4'
+	# lz4hc still fastest, but have memory issue (on x86_32?) and x1.5-2 size
+	use zstd && COMP+=' ZSTD'
 	use xz && COMP+=' XZ'
 	for i in $COMP; do
 		o="$i $o"
@@ -1956,7 +1959,7 @@ mksquash(){
 	done
 	case "$comp" in
 	lzo)c+=' -Xcompression-level 9';;
-	lz4)c+=' -Xhc';;
+	lz4)c+=' -Xhc -mem 700m';;
 	xz)for i in X86:x86 ARM:arm,armthumb ARM64:arm,armthumb POWERPC:powerpc SPARC:sparc IA64:ia64; do
 		grep -q "^CONFIG_${i%:*}=y$" "$S/.config" && c+=" -Xbcj ${i#*:}" && break
 	done;;
