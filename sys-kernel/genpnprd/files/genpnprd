@@ -193,8 +193,9 @@ mkdir "$rcdir" || die
 cd "$rcdir" || die
 
 if [[ -f "$rcfile" ]]; then
-	( (bzip2 -dc $rcfile || gzip -dc $rcfile || xz -dc $rcfile || lzop -dc $rcfile || lz4 -dc $rcfile || cat $rcfile) | cpio -iv 2>&1 | grep '^bin/busybox$' >tmp.lst ) || die "must be [gzipped] cpio file"
-	rm tmp.lst
+	for i in {bzip2,gzip,xz,lzop,lz4,zstd,lzma}' -dc' cat; do
+		$i $rcfile && break
+	done | cpio -iv 2>&1 | grep -q '^bin/busybox$' || die "must be [gzipped] cpio file"
 
 	ln -s busybox "$rcdir/bin/zcat" &>/dev/null
 	for i in "$rcdir"/sbin/insmod; do
@@ -422,7 +423,7 @@ while true; do
     if $SQUASH ; then
 	case "$COMPRESS" in
 	lzo)COMPRESS+=' -Xcompression-level 9';;
-	lz4)COMPRESS+=' -Xhc';;
+	lz4)COMPRESS+=' -Xhc -mem 700m';;
 	xz)
 		COMPRESS+=' -always-use-fragments'
 		for i in X86:x86 ARM:arm,armthumb ARM64:arm,armthumb POWERPC:powerpc SPARC:sparc IA64:ia64; do
