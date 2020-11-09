@@ -1650,6 +1650,8 @@ kernel-2_src_prepare(){
 	$reg && ! grep -Fq mgeneral-regs-only arch/x86/Makefile && sed -i -e 's:-mno-mmx -mno-sse$:-mgeneral-regs-only:' -e 's:-mno-sse -mno-mmx -mno-sse2 -mno-3dnow:-mgeneral-regs-only:' -e '/KBUILD_CFLAGS += .*-mno-\(avx\|80387\|fp-ret-in-387\)/d' {arch/x86,arch/x86/boot/compressed,drivers/firmware/efi/libstub}/Makefile
 #	echo "CFLAGS_mdesc.o += -Wno-error=maybe-uninitialized" >>arch/sparc/kernel/Makefile
 	chmod 770 tools/objtool/sync-check.sh
+	[[ "${CBUILD}" != "${CTARGET:-${CHOST}}" ]] || ! (echo test|zstd -zqc -22 --ultra >/dev/null) &&
+		sed -i -e 's:(ZSTD) -22 --ultra:(ZSTD) -19:' scripts/Makefile.lib
 	# pnp
 #	use paranoid && return
 	use pnp || return
