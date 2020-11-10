@@ -666,7 +666,7 @@ kernel-2_src_compile() {
 initramfs(){
 	local i c="$2"
 	[[ -z "$c" ]] && c=NONE && for i in $COMP; do
-		grep "^CONFIG_RD_$i=y" && c="$i"
+		grep -q "^CONFIG_RD_$i=y" .config && c="$i"
 	done
 	if use integrated; then
 		einfo "Integrating initramfs"
