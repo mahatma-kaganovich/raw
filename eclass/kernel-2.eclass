@@ -664,7 +664,10 @@ kernel-2_src_compile() {
 # integrated+thin = integrated thin
 # standalone "thin" image still compressed
 initramfs(){
-	local c="${2:-${COMP##* }}"
+	local i c="$2"
+	[[ -z "$c" ]] && c=NONE && for i in $COMP; do
+		grep "^CONFIG_RD_$i=y" && c="$i"
+	done
 	if use integrated; then
 		einfo "Integrating initramfs"
 		echo "CONFIG_INITRAMFS_SOURCE=\"$1\"
@@ -673,15 +676,22 @@ CONFIG_INITRAMFS_ROOT_GID=0
 CONFIG_INITRAMFS_COMPRESSION_$c=y" >>.config
 		kmake oldconfig
 		kmake bzImage
-	elif [[ "${c:-NONE}" != NONE ]]; then
-		c="${c,,} -9"
-		c="${c//lzo/lzop}"
-		c="${c//gzip/gzip -n}"
-		c="${c//xz -9/xz --check=crc32 --lzma2=dict=1MiB}"
-		${c} -c "$1" >"${1%.cpio}.img" || die
-		rm "$1"
 	else
-		[[ -e "$1" ]] && rename .cpio .img "$1"
+		c="${c,,}"
+		case "$c" in
+		none)[[ -e "$1" ]] && rename .cpio .img "$1";;
+		lzo)c+='p';;&
+		lzo|gzip|lzma|lz4|bzip2)c+=' -9';;&
+#		lz4)c+=' --best -l';;&
+#		lzma)c+=' -e';;&
+		gzip)c+=' -n';;&
+		xz)c+=' --check=crc32 --lzma2=dict=1MiB';;&
+		zstd)c+=' -19 -q';;&
+		*)
+			${c} -c "$1" >"${1%.cpio}.img" || die
+			rm "$1"
+		;;
+		esac
 	fi
 }
 
@@ -914,6 +924,10 @@ cfg_loop(){
 	$ne
 }
 
+_zstd_ok(){
+	[[ "${CBUILD}" == "${CTARGET:-${CHOST}}" ]] && use amd64 && (echo test|zstd -zqc -22 --ultra >/dev/null 2>&1)
+}
+
 useconfig(){
 	einfo "Preparing KERNEL_CONFIG"
 	local i o j
@@ -931,7 +945,7 @@ useconfig(){
 	use zstd && COMP+=' ZSTD'
 	use xz && COMP+=' XZ'
 	for i in $COMP; do
-		[ "$i" = ZSTD ] && use !amd64 && continue
+		[[ "$i" == ZSTD ]] && ! _zstd_ok && continue
 		o="$i $o"
 	done
 	o="${o% }"
