@@ -927,9 +927,11 @@ useconfig(){
 	use lzma && COMP+=' LZMA'
 	use lz4 && COMP+=' LZ4'
 	# lz4hc still fastest, but have memory issue (on x86_32?) and x1.5-2 size
-	use zstd && use amd64 && COMP+=' ZSTD'
+	# zstd kernel broken on x86 32bit
+	use zstd && COMP+=' ZSTD'
 	use xz && COMP+=' XZ'
 	for i in $COMP; do
+		[ "$i" = ZSTD ] && use !amd64 && continue
 		o="$i $o"
 	done
 	o="${o% }"
