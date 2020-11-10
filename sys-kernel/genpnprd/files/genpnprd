@@ -424,6 +424,7 @@ while true; do
 	case "$COMPRESS" in
 	lzo)COMPRESS+=' -Xcompression-level 9';;
 	lz4)COMPRESS+=' -Xhc -mem 700m';;
+	zstd)COMPRESS+=' -Xcompression-level 19';;
 	xz)
 		COMPRESS+=' -always-use-fragments'
 		for i in X86:x86 ARM:arm,armthumb ARM64:arm,armthumb POWERPC:powerpc SPARC:sparc IA64:ia64; do

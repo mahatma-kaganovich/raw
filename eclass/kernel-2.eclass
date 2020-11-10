@@ -1650,7 +1650,7 @@ kernel-2_src_prepare(){
 	$reg && ! grep -Fq mgeneral-regs-only arch/x86/Makefile && sed -i -e 's:-mno-mmx -mno-sse$:-mgeneral-regs-only:' -e 's:-mno-sse -mno-mmx -mno-sse2 -mno-3dnow:-mgeneral-regs-only:' -e '/KBUILD_CFLAGS += .*-mno-\(avx\|80387\|fp-ret-in-387\)/d' {arch/x86,arch/x86/boot/compressed,drivers/firmware/efi/libstub}/Makefile
 #	echo "CFLAGS_mdesc.o += -Wno-error=maybe-uninitialized" >>arch/sparc/kernel/Makefile
 	chmod 770 tools/objtool/sync-check.sh
-	[[ "${CBUILD}" != "${CTARGET:-${CHOST}}" ]] || ! (echo test|zstd -zqc -22 --ultra >/dev/null) &&
+	use zstd && [[ "${CBUILD}" != "${CTARGET:-${CHOST}}" ]] || ! (echo test|zstd -zqc -22 --ultra >/dev/null) &&
 		sed -i -e 's:(ZSTD) -22 --ultra:(ZSTD) -19:' scripts/Makefile.lib
 	# pnp
 #	use paranoid && return
@@ -1962,6 +1962,7 @@ mksquash(){
 	case "$comp" in
 	lzo)c+=' -Xcompression-level 9';;
 	lz4)c+=' -Xhc -mem 700m';;
+	zstd)c+=' -Xcompression-level 19';;
 	xz)for i in X86:x86 ARM:arm,armthumb ARM64:arm,armthumb POWERPC:powerpc SPARC:sparc IA64:ia64; do
 		grep -q "^CONFIG_${i%:*}=y$" "$S/.config" && c+=" -Xbcj ${i#*:}" && break
 	done;;
