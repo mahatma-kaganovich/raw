@@ -136,15 +136,16 @@ _iw_list(){
 }
 
 _iw_cfg(){
-	local s
+	local s x
 	disable_periodic_scan=false
 	disable_roaming_scan=false
+	EnableNetworkConfiguration=false
 	while read s; do
 #		s="${s//#*/}"
 		s="${s//[ 	]/}"
-		s="${s/[tT][rR][uU][eE]/1}"
+		s="${s/=[tT][rR][uU][eE]/=1}"
 		case "$s" in
-			disable_periodic_scan=1|disable_roaming_scan=1)declare -g "${s%=1}"=true;;
+			disable_periodic_scan=1|disable_roaming_scan=1|EnableNetworkConfiguration=1)declare -g "${s%=1}"=true;;
 		esac
 	done </etc/iwd/main.conf
 	_iw_cfg(){ true;}
@@ -214,13 +215,16 @@ _start_dhcp(){
 # iwd blacklist easy to block my phone, when I off/on ap,
 # so one-touch restart is required swiss knife
 wifi_restart(){
-	local i j x p
+	local i= j x p
 	# rt: network daemons must be hot & not swappable
 	chrt -par 1 $$
 	_iw_list
 	[ -n "$on$off$off_" ] && {
-		_stop_dhcp  $on $off $off_ &
-		i=$!
+		_iw_cfg
+		$EnableNetworkConfiguration || {
+			_stop_dhcp  $on $off $off_ &
+			i=$!
+		}
 		_kill_iwd &
 		wait $! $i
 	}
@@ -239,8 +243,8 @@ wifi_restart(){
 		p=$!
 		# on 1 of my card iwd scan on start, on 2 - no
 		# on 3 - iface present only after iwd start
-		local dhcp=false
 		_iw_cfg
+		local dhcp=$EnableNetworkConfiguration
 		for j in 0 .1 .1 .1 .1 .1 .1 .1 .1 .1 .1 1 3 0; do
 			_iw_list
 			[ -z "$on$off" ] && sleep $j && continue
@@ -311,7 +315,8 @@ wifi_save(){
 	done
 	# pre-kill -> faster restart
 	[ -z "$on" -a -n "$off" ] && {
-		_stop_dhcp $off
+		_iw_cfg
+		$EnableNetworkConfiguration || _stop_dhcp $off
 		_kill_iwd && wifi_sync
 	}
 }
