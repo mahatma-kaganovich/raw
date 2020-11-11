@@ -17,7 +17,7 @@ RDEPEND=" ${DEPEND}
 		net-dialup/ppp
 		net-misc/bridge-utils
 	)
-	wifi? ( net-wireless/iwd virtual/resolvconf )
+	wifi? ( net-wireless/iwd )
 	media-libs/imlib2[png,jpeg?,tiff?]
 	media-gfx/feh
 	x11-misc/slock
