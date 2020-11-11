@@ -193,9 +193,16 @@ mkdir "$rcdir" || die
 cd "$rcdir" || die
 
 if [[ -f "$rcfile" ]]; then
-	for i in {bzip2,gzip,xz,lzop,lz4,zstd,lzma}' -dc' cat; do
-		$i $rcfile && break
-	done | cpio -iv 2>&1 | grep -q '^bin/busybox$' || die "must be [gzipped] cpio file"
+	( (bzip2 -dc $rcfile ||
+		gzip -dc $rcfile ||
+		xz -dc $rcfile ||
+		lzop -dc $rcfile ||
+		lz4 -dc $rcfile ||
+		zstd -qdc $rcfile ||
+		lzma -dc $rcfile ||
+		cat $rcfile) | cpio -iv 2>&1 | grep '^bin/busybox$' >tmp.lst ) ||
+			die "must be [gzipped] cpio file"
+	rm tmp.lst
 
 	ln -s busybox "$rcdir/bin/zcat" &>/dev/null
 	for i in "$rcdir"/sbin/insmod; do
