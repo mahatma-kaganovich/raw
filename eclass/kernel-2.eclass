@@ -666,6 +666,7 @@ kernel-2_src_compile() {
 initramfs(){
 	local i c="$2"
 	[[ -z "$c" ]] && c=NONE && for i in $COMP; do
+		[[ "$i" == zstd ]] && use integrated && ! _zstd_ok && continue
 		grep -q "^CONFIG_RD_$i=y" .config && c="$i"
 	done
 	if use integrated; then
@@ -925,7 +926,8 @@ cfg_loop(){
 }
 
 _zstd_ok(){
-	[[ "${CBUILD}" == "${CTARGET:-${CHOST}}" ]] && use amd64 && (echo test|zstd -zqc -22 --ultra >/dev/null 2>&1)
+#	[[ "${CBUILD}" == "${CTARGET:-${CHOST}}" ]] && use amd64 && (echo test|zstd -zqc -22 --ultra >/dev/null 2>&1)
+	false
 }
 
 useconfig(){
