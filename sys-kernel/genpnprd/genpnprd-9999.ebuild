@@ -24,7 +24,7 @@ src_install(){
 	rename .etc '' "$D"/etc/kernels/*
 	rm -Rf `find "${D}" -name ".*"`
 	dobin ${PN}
-	dosym ../../bin/${PN} /usr/share/${PN}
+	dosym ../../bin/${PN} /usr/share/${PN}/${PN}
 	# suddenly
 	dosym _SB_.PCCH "/usr/share/$PN/etc/modflags/"'\_SB_.PCCH'
 }
