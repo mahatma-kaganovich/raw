@@ -271,6 +271,7 @@ kernel-2_src_configure() {
 	grep -q "^CONFIG_SQUASHFS=" .config && for i in $COMP; do
 		( [[ "$i" == GZIP ]] || grep -q "^CONFIG_SQUASHFS_$i=" .config ) && ( mksquashfs |& grep -q "^\s*${i,,}\s*" ) && comp="${i,,}"
 	done
+	einfo "squashfs compression: $comp"
 	export comp
 }
 
@@ -671,6 +672,7 @@ initramfs(){
 	done
 	if use integrated; then
 		einfo "Integrating initramfs"
+		einfo "Integrated image compression: $c"
 		echo "CONFIG_INITRAMFS_SOURCE=\"$1\"
 CONFIG_INITRAMFS_ROOT_UID=0
 CONFIG_INITRAMFS_ROOT_GID=0
@@ -678,6 +680,7 @@ CONFIG_INITRAMFS_COMPRESSION_$c=y" >>.config
 		kmake oldconfig
 		kmake bzImage
 	else
+		einfo "Initrd compression: $c"
 		c="${c,,}"
 		case "$c" in
 		none)[[ -e "$1" ]] && rename .cpio .img "$1";;
