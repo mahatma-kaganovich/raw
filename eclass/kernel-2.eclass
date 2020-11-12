@@ -212,6 +212,8 @@ kernel-2_src_configure() {
 	cd "${S}"
 	cpu2K
 	filter-flags '-fopenmp*' '-*parallelize*'
+	# unsure "random" miscompulations on 5.9 
+	replace-flags -malign-data=cacheline -malign-data=compat
 	: ${KERNEL_UTILS_CFLAGS:="${CFLAGS}"}
 
 	# ???
