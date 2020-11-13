@@ -6,3 +6,4 @@ dev-libs/libxml2 python
 net-fs/cifs-utils acl
 net-fs/samba acl
 media-libs/libepoxy X
+=dev-lang/lua-5.1.5-r5 readline
