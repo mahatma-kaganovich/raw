@@ -1,4 +1,5 @@
 net-wireless/iwd standalone -crda
+dev-lang/luajit lua52compat
 app-arch/zstd static-libs
 dev-lang/python sqlite
 sys-firmware/intel-microcode split-ucode monolithic
