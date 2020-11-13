@@ -8,3 +8,6 @@ net-firewall/fwknop iptables
 net-dns/avahi -utils
 net-wireless/gnuradio -audio
 dev-libs/openssl -sslv3
+dev-libs/boost nls
+app-text/aspell nls
+app-text/hunspell nls
