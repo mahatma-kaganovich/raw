@@ -200,8 +200,7 @@ xemacs)_fLTO && {
 # fuse: e2fsprogs failed only on gcc 8.2
 # ffmpeg: amd64 - mp4 crushes
 # libbsd: mailx
-# llvm, clang, libomp: gcc10/llvm11/etc
-libomp|llvm|clang|sandbox|valgrind|xf86-video-intel|libwacom|libbsd|dcc|chromium*|webkit-gtk|ffmpeg|xemacs|fuse|privoxy|icedtea|openjdk|qtwebkit|mplayer|mysql|heimdal|glibc|cvs|pulseaudio)
+sandbox|valgrind|xf86-video-intel|libwacom|libbsd|dcc|chromium*|webkit-gtk|ffmpeg|xemacs|fuse|privoxy|icedtea|openjdk|qtwebkit|mplayer|mysql|heimdal|glibc|cvs|pulseaudio)
 #	${CC:-gcc} -v 2>&1|grep -q "^gcc version" &&
 		filterflag '-flto*' '-*-lto-*' -fuse-linker-plugin -fdevirtualize-at-ltrans
 ;;&
@@ -307,6 +306,12 @@ protobuf)filterflag -mtls-dialect=gnu2;;&
 nss)_iuse abi_x86_32 && gccve '[0-9][0-9]' && appendflag -fno-tree-slp-vectorize;;&
 # hard to figure out
 geos)_fnofastmath;filterflag -ffast-math -Ofast -Wl,--no-eh-frame-hdr;;&
+esac
+
+case "$CATEGORY/$P" in
+sys-devel/llvm-11*|sys-libs/libomp-11*)
+		filterflag '-flto*' '-*-lto-*' -fuse-linker-plugin -fdevirtualize-at-ltrans
+;;
 esac
 
 #case "$CATEGORY" in
