@@ -821,6 +821,8 @@ detect_fs(){
 			dm=1
 		;;
 		/dev/*)
+			continue
+			# think again
 			[[ "$REAL_ROOT" == "$i" ]] && REAL_ROOT=/dev/nfs # compat
 			i="${i#/dev/}"
 			m="$m $i"
