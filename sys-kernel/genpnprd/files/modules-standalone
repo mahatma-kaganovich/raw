@@ -8,4 +8,4 @@ drivers/platform/x86/pcengines-apuv2.ko
 drivers/platform/x86/surface3_button.ko
 # variable compats. can get no [logitech] keyboard once
 # 2do: order. prefer usbhid, else - usbkbd, usbmouse
-drivers/hid/usbhid/*.ko
+#drivers/hid/usbhid/*.ko
