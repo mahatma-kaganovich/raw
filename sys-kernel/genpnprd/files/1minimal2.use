@@ -23,6 +23,7 @@ use laptop && use soc && {
 use fbcon || KERNEL_CONFIG+=" +FB +FRAMEBUFFER_CONSOLE;FRAMEBUFFER_CONSOLE"
 use server || KERNEL_CONFIG+=" +IOSCHED_DEADLINE -IP_ADVANCED_ROUTER -TCP_CONG_ADVANCED"
 use server && KERNEL_CONFIG+=" -KEXEC -KEXEC_.+"
+use server && use !desktop && use !laptop && KERNEL_CONFIG+=" -USB_HID USB_KBD;+USB_HID USB_MOUSE;+USB_HID"
 #use server && ts+=" -IRQ_TIME_ACCOUNTING"
 use kvm || use lxc || KERNEL_CONFIG+=" -TASKSTATS"
 use lxc || KERNEL_CONFIG+=" -TASK_XACCT"
@@ -32,10 +33,11 @@ use mdadm || use lvm || use evms || use device-mapper || KERNEL_CONFIG+=" -MD"
 #	KERNEL_CONFIG+=" -FW_LOADER -CPU_IDLE"
 	# keep ACPI_PROCESSOR (CPU_IDLE)
 	KERNEL_CONFIG+=" -FW_LOADER"
-	use usb || KERNEL_CONFIG+=" -USB"
+	use !usb && use !desktop && use !laptop && KERNEL_CONFIG+=" -HID"
 	use hibernate || KERNEL_CONFIG+=" -PM"
 	KERNEL_CONFIG+=" -PM_OPP"
 }
 use soc || use laptop || KERNEL_CONFIG+=" -X86_EXTENDED_PLATFORM -X86_INTEL_LPSS -X86_AMD_PLATFORM_DEVICE -.+_MID"
 # Intel's default
 KERNEL_CONFIG+=" NODES_SHIFT=2"
+
