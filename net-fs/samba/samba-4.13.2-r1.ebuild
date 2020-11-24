@@ -150,7 +150,7 @@ pkg_setup() {
 
 	python-single-r1_pkg_setup
 
-	SHAREDMODS="$(usex snapper '' '!')vfs_snapper"
+	SHAREDMODS="$(usex snapper '' '!')vfs_snapper,"
 	if use cluster ; then
 		SHAREDMODS+="idmap_rid,idmap_tdb2,idmap_ad"
 	elif use ads ; then
@@ -239,7 +239,6 @@ multilib_src_configure() {
 		$(multilib_native_use_with pam)
 		$(multilib_native_usex pam "--with-pammodulesdir=${EPREFIX}/$(get_libdir)/security" '')
 		$(multilib_native_use_with quota quotas)
-		$(multilib_native_usex snapper '' '--with-shared-modules=!vfs_snapper')
 		$(multilib_native_use_with syslog)
 		$(multilib_native_use_with systemd)
 		--systemd-install-services
