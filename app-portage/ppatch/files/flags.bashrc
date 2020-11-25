@@ -282,9 +282,10 @@ wine)filterflag -ftree-loop-distribution -ftree-loop-distribute-patterns;;
 ncurses)_iuse profile && filterflag -fomit-frame-pointer;;
 xf86-video-siliconmotion|vlc|xorg-server)appendflag -w;;
 cairo)[[ "$PV" == 1.12.16* ]] && appendflag1 -fno-lto;;
-spidermonkey)filterflag -Wl,--sort-section=alignment -Wl,--reduce-memory-overheads;;& # gold
-firefox)_iuse lto && filterflag -Wl,--sort-section=alignment -Wl,--reduce-memory-overheads;;& # gold
-seamonkey)filterflag -mtls-dialect=gnu2;;&
+seamonkey|firefox|thunderbird|spidermonkey)
+	_iuse lto && filterflag -Wl,--sort-section=alignment -Wl,--reduce-memory-overheads # gold
+	filterflag -mtls-dialect=gnu2
+;;&
 fltk)_isflag '-floop-*' '-fgraphite*' && filterflag -ftree-loop-distribution;; # -O2+
 freeglut)_isflag '-floop-*' '-fgraphite*' && appendflag -fno-ipa-cp-clone;;
 # 5.1
