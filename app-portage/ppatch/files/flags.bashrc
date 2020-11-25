@@ -284,7 +284,7 @@ xf86-video-siliconmotion|vlc|xorg-server)appendflag -w;;
 cairo)[[ "$PV" == 1.12.16* ]] && appendflag1 -fno-lto;;
 seamonkey|firefox|thunderbird|spidermonkey)
 	_iuse lto && filterflag -Wl,--sort-section=alignment -Wl,--reduce-memory-overheads # gold
-	filterflag -mtls-dialect=gnu2
+	filterflag -mtls-dialect=gnu2 -ffat-lto-objects
 ;;&
 fltk)_isflag '-floop-*' '-fgraphite*' && filterflag -ftree-loop-distribution;; # -O2+
 freeglut)_isflag '-floop-*' '-fgraphite*' && appendflag -fno-ipa-cp-clone;;
@@ -349,9 +349,12 @@ _flagsRUST(){
 			esac
 			a+=" -Copt-level=$i"
 	}
+	! _fLTO && ! _iuse lto && a+=" -Cembed-bitcode=no"
 	_fLTO && ! _iuse lto && {
-		a+=" -Clto"
-		! _iuse clang && [ -z "$LD" ] && export LD=ld.gold && _appendflag1 -fuse-ld=gold
+		a+=' -Cembed-bitcode=yes'
+#		a+=' -Clto'
+		a+=' -Clinker-plugin-lto=yes'
+		! _iuse clang && [ -z "$LD" ] && export LD=ld.gold && appendflag1 -fuse-ld=gold
 	}
 	[ -n "$a" ] && appendflag_ 'RUSTFLAGS CARGO_RUSTCFLAGS MOZ_RUST_DEFAULT_FLAGS' $a
 }
