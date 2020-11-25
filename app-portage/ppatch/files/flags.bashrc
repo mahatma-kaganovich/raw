@@ -327,6 +327,39 @@ esac
 #sci-*)_fnofastmath;;&
 #esac
 
+_flagsRUST(){
+	local i a='-Cdebuginfo=0'
+	i="${CFLAGS##*-march=}"
+	[[ "$i" != "$CFLAGS" ]] &&
+		[[ "$RUSTFLAGS" != *target-cpu=* ]] &&
+		i="${i%% *}" &&
+		(rustc --print target-cpus|grep -q "^ *$i ") && {
+			a+=" -Ctarget-cpu=$i"
+	}
+	i="${CFLAGS##*-O}"
+	[[ "$i" != "$CFLAGS" ]] &&
+		[[ "$RUSTFLAGS" != *opt-level=* ]] && [[ " $RUSTFLAGS " != *' -O '* ]]
+		i="${i%% *}" && {
+			case "$i" in
+			[0-2])i=$i;;
+			fast|[3-9])i=3;;
+			#s)i=z;;
+			s)i=s;;
+			*)i=2;;
+			esac
+			a+=" -Copt-level=$i"
+	}
+	fLTO && ! _iuse lto && {
+		a+=" -Clto"
+		! _iuse clang && [ -n "$LD" ] && export LD=ld.gold && _appendflag1 -fuse-ld=gold
+	}
+	[ -n "$a" ] && for i in RUSTFLAGS CARGO_RUSTCFLAGS MOZ_RUST_DEFAULT_FLAGS; do
+		export $i="$* ${!i}"
+	done
+}
+[[ "$BDEPEND" == *virtual/rust* ]] && _flagsRUST
+
+
 # more test flags-inject.bashrc before remove
 # seamonkey unknown error on install -> precompile cache
 _iuse !system-sqlite && _fnofastmath
