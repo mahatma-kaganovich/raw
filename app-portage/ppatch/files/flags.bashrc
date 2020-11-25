@@ -196,10 +196,11 @@ _flagsRUST(){
 	}
 	! _iuse lto && ! _iuse !lto && {
 		! _fLTO && a+=" -Cembed-bitcode=no" || {
-		a+=' -Cembed-bitcode=yes'
-		a+=' -Clto'
-#		a+=' -Clinker-plugin-lto=yes'
-#		! _iuse clang && [ -z "$LD" ] && export LD=ld.gold && appendflag1 -fuse-ld=gold
+			a+=' -Cembed-bitcode=yes'
+			a+=' -Clto'
+#			a+=' -Clinker-plugin-lto=yes'
+#			! _iuse clang && [ -z "$LD" ] && export LD=ld.gold && appendflag1 -fuse-ld=gold
+		}
 	}
 	[ -n "$a" ] && appendflag_ 'RUSTFLAGS CARGO_RUSTCFLAGS MOZ_RUST_DEFAULT_FLAGS' $a
 }
