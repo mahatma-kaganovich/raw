@@ -349,12 +349,12 @@ _flagsRUST(){
 			esac
 			a+=" -Copt-level=$i"
 	}
-	fLTO && ! _iuse lto && {
+	_fLTO && ! _iuse lto && {
 		a+=" -Clto"
 		! _iuse clang && [ -n "$LD" ] && export LD=ld.gold && _appendflag1 -fuse-ld=gold
 	}
 	[ -n "$a" ] && for i in RUSTFLAGS CARGO_RUSTCFLAGS MOZ_RUST_DEFAULT_FLAGS; do
-		export $i="$* ${!i}"
+		export $i="${!i} $a"
 	done
 }
 [[ "$BDEPEND" == *virtual/rust* ]] && _flagsRUST
