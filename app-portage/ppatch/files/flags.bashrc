@@ -351,7 +351,7 @@ _flagsRUST(){
 	}
 	_fLTO && ! _iuse lto && {
 		a+=" -Clto"
-		! _iuse clang && [ -n "$LD" ] && export LD=ld.gold && _appendflag1 -fuse-ld=gold
+		! _iuse clang && [ -z "$LD" ] && export LD=ld.gold && _appendflag1 -fuse-ld=gold
 	}
 	[ -n "$a" ] && for i in RUSTFLAGS CARGO_RUSTCFLAGS MOZ_RUST_DEFAULT_FLAGS; do
 		export $i="${!i} $a"
