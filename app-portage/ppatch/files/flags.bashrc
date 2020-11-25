@@ -172,19 +172,17 @@ _fnofastmath(){
 	done
 }
 
+_cc2rust(){
+	local c=" $CFLAGS "
+	local x="${c##* $1}"
+	[[ "$RUSTFLAGS" != *"$2"* ]] && [[ "$c" != "$x" ]] && x="${x%% *}" && echo "$x"
+}
+
 _flagsRUST(){
 	local i a='-Cdebuginfo=0'
-	i="${CFLAGS##*-march=}"
-	[[ "$i" != "$CFLAGS" ]] &&
-		[[ "$RUSTFLAGS" != *target-cpu=* ]] &&
-		i="${i%% *}" &&
-		(rustc --print target-cpus|grep -q "^ *$i ") && {
+	i=$(_cc2rust -march= target-cpu=) && (rustc --print target-cpus|grep -q "^ *$i ") &&
 			a+=" -Ctarget-cpu=$i"
-	}
-	i="${CFLAGS##*-O}"
-	[[ "$i" != "$CFLAGS" ]] &&
-		[[ "$RUSTFLAGS" != *opt-level=* ]] && [[ " $RUSTFLAGS " != *' -O '* ]]
-		i="${i%% *}" && {
+	[[ " $RUSTFLAGS " != *' -O '* ]] && i=$(_cc2rust -O opt-level=) && {
 			case "$i" in
 			[0-2])i=$i;;
 			fast|[3-9])i=3;;
@@ -194,6 +192,9 @@ _flagsRUST(){
 			esac
 			a+=" -Copt-level=$i"
 	}
+	# opt-level: 2 - 225, 3 - 275, s - 75, z - 25
+	i=$(_cc2rust --param=inline-unit-growth= inline-threshold=) && i=$((25*i)) && [ "$i" -gt 0 ] &&
+		a+=" -Cinline-threshold=$i"
 	! _iuse lto && ! _iuse !lto && {
 		! _fLTO && a+=" -Cembed-bitcode=no" || {
 			a+=' -Cembed-bitcode=yes'
