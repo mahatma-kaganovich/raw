@@ -216,8 +216,8 @@ _iuse clang && {
 }
 
 _filtertst
-
 [[ "$BDEPEND" == *virtual/rust* ]] && _flagsRUST
+_iuse lto && filterflag -flto '-flto=*'
 
 _test_f="$CFLAGS/$CXXFLAGS/$LDFLAGS"
 case "$PN" in
