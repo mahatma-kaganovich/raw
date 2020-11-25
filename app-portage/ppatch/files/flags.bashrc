@@ -38,7 +38,7 @@ $r
 }
 
 filterflag(){
-	filterflag_ 'LDFLAGS CFLAGS CPPFLAGS CXXFLAGS FFLAGS FCFLAGS' "${@}"
+	filterflag_ 'LDFLAGS CFLAGS CPPFLAGS CXXFLAGS FFLAGS FCFLAGS RUSTFLAGS CARGO_RUSTCFLAGS MOZ_RUST_DEFAULT_FLAGS' "${@}"
 }
 
 filterflag1(){
@@ -172,6 +172,38 @@ _fnofastmath(){
 	done
 }
 
+_flagsRUST(){
+	local i a='-Cdebuginfo=0'
+	i="${CFLAGS##*-march=}"
+	[[ "$i" != "$CFLAGS" ]] &&
+		[[ "$RUSTFLAGS" != *target-cpu=* ]] &&
+		i="${i%% *}" &&
+		(rustc --print target-cpus|grep -q "^ *$i ") && {
+			a+=" -Ctarget-cpu=$i"
+	}
+	i="${CFLAGS##*-O}"
+	[[ "$i" != "$CFLAGS" ]] &&
+		[[ "$RUSTFLAGS" != *opt-level=* ]] && [[ " $RUSTFLAGS " != *' -O '* ]]
+		i="${i%% *}" && {
+			case "$i" in
+			[0-2])i=$i;;
+			fast|[3-9])i=3;;
+			#s)i=z;;
+			s)i=s;;
+			*)i=2;;
+			esac
+			a+=" -Copt-level=$i"
+	}
+	! _iuse lto && ! _iuse !lto && {
+		! _fLTO && a+=" -Cembed-bitcode=no" || {
+		a+=' -Cembed-bitcode=yes'
+		a+=' -Clto'
+#		a+=' -Clinker-plugin-lto=yes'
+#		! _iuse clang && [ -z "$LD" ] && export LD=ld.gold && appendflag1 -fuse-ld=gold
+	}
+	[ -n "$a" ] && appendflag_ 'RUSTFLAGS CARGO_RUSTCFLAGS MOZ_RUST_DEFAULT_FLAGS' $a
+}
+
 _filtertst(){
 filter_cf CC LDFLAGS c
 filter_cf CC CFLAGS c
@@ -184,6 +216,8 @@ _iuse clang && {
 }
 
 _filtertst
+
+[[ "$BDEPEND" == *virtual/rust* ]] && _flagsRUST
 
 _test_f="$CFLAGS/$CXXFLAGS/$LDFLAGS"
 case "$PN" in
@@ -284,7 +318,7 @@ xf86-video-siliconmotion|vlc|xorg-server)appendflag -w;;
 cairo)[[ "$PV" == 1.12.16* ]] && appendflag1 -fno-lto;;
 seamonkey|firefox|thunderbird|spidermonkey)
 	_iuse lto && filterflag -Wl,--sort-section=alignment -Wl,--reduce-memory-overheads # gold
-	filterflag -mtls-dialect=gnu2 -ffat-lto-objects
+	filterflag -mtls-dialect=gnu2
 ;;&
 fltk)_isflag '-floop-*' '-fgraphite*' && filterflag -ftree-loop-distribution;; # -O2+
 freeglut)_isflag '-floop-*' '-fgraphite*' && appendflag -fno-ipa-cp-clone;;
@@ -327,38 +361,6 @@ esac
 #sci-*)_fnofastmath;;&
 #esac
 
-_flagsRUST(){
-	local i a='-Cdebuginfo=0'
-	i="${CFLAGS##*-march=}"
-	[[ "$i" != "$CFLAGS" ]] &&
-		[[ "$RUSTFLAGS" != *target-cpu=* ]] &&
-		i="${i%% *}" &&
-		(rustc --print target-cpus|grep -q "^ *$i ") && {
-			a+=" -Ctarget-cpu=$i"
-	}
-	i="${CFLAGS##*-O}"
-	[[ "$i" != "$CFLAGS" ]] &&
-		[[ "$RUSTFLAGS" != *opt-level=* ]] && [[ " $RUSTFLAGS " != *' -O '* ]]
-		i="${i%% *}" && {
-			case "$i" in
-			[0-2])i=$i;;
-			fast|[3-9])i=3;;
-			#s)i=z;;
-			s)i=s;;
-			*)i=2;;
-			esac
-			a+=" -Copt-level=$i"
-	}
-	! _fLTO && ! _iuse lto && a+=" -Cembed-bitcode=no"
-	_fLTO && ! _iuse lto && {
-		a+=' -Cembed-bitcode=yes'
-#		a+=' -Clto'
-		a+=' -Clinker-plugin-lto=yes'
-		! _iuse clang && [ -z "$LD" ] && export LD=ld.gold && appendflag1 -fuse-ld=gold
-	}
-	[ -n "$a" ] && appendflag_ 'RUSTFLAGS CARGO_RUSTCFLAGS MOZ_RUST_DEFAULT_FLAGS' $a
-}
-[[ "$BDEPEND" == *virtual/rust* ]] && _flagsRUST
 
 
 # more test flags-inject.bashrc before remove
