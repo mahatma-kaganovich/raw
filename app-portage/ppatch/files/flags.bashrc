@@ -353,9 +353,7 @@ _flagsRUST(){
 		a+=" -Clto"
 		! _iuse clang && [ -z "$LD" ] && export LD=ld.gold && _appendflag1 -fuse-ld=gold
 	}
-	[ -n "$a" ] && for i in RUSTFLAGS CARGO_RUSTCFLAGS MOZ_RUST_DEFAULT_FLAGS; do
-		export $i="${!i} $a"
-	done
+	[ -n "$a" ] && appendflag_ 'RUSTFLAGS CARGO_RUSTCFLAGS MOZ_RUST_DEFAULT_FLAGS' $a
 }
 [[ "$BDEPEND" == *virtual/rust* ]] && _flagsRUST
 
