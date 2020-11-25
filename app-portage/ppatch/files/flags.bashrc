@@ -73,6 +73,10 @@ appendflag1(){
 	appendflag_ 'CFLAGS CPPFLAGS CXXFLAGS FFLAGS FCFLAGS LDFLAGS' "${@}"
 }
 
+appendflagrust(){
+	appendflag_ 'RUSTFLAGS CARGO_RUSTCFLAGS MOZ_RUST_DEFAULT_FLAGS' "${@}"
+}
+
 _isflag(){
 	local i f v f1
 	for v in LDFLAGS CFLAGS CPPFLAGS CXXFLAGS FFLAGS FCFLAGS; do
@@ -278,7 +282,9 @@ wine)filterflag -ftree-loop-distribution -ftree-loop-distribute-patterns;;
 ncurses)_iuse profile && filterflag -fomit-frame-pointer;;
 xf86-video-siliconmotion|vlc|xorg-server)appendflag -w;;
 cairo)[[ "$PV" == 1.12.16* ]] && appendflag1 -fno-lto;;
-spidermonkey)filterflag -Wl,--sort-section=alignment -Wl,--reduce-memory-overheads;; # gold
+spidermonkey)filterflag -Wl,--sort-section=alignment -Wl,--reduce-memory-overheads;;& # gold
+firefox)_iuse lto && filterflag -Wl,--sort-section=alignment -Wl,--reduce-memory-overheads;;& # gold
+seamonkey)filterflag -mtls-dialect=gnu2;;&
 fltk)_isflag '-floop-*' '-fgraphite*' && filterflag -ftree-loop-distribution;; # -O2+
 freeglut)_isflag '-floop-*' '-fgraphite*' && appendflag -fno-ipa-cp-clone;;
 # 5.1

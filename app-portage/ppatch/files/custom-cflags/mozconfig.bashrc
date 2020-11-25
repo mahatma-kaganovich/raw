@@ -101,7 +101,7 @@ prepare)
 		case "$PN" in
 		thunderbird|seamonkey)replace-flags -Wl,--strip-all -Wl,--strip-debug;;&
 		thunderbird);;
-		seamonkey)append-cxxflags -fno-ipa-cp-clone -fno-delete-null-pointer-checks;;
+		seamonkey)append-cxxflags -fno-ipa-cp-clone -fno-delete-null-pointer-checks;;&
 		*)filter-flags -mtls-dialect=gnu2;;
 		esac
 		[[ "$CXXFLAGS" == *fast* ]] && append-cxxflags -fno-fast-math

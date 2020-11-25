@@ -14,3 +14,4 @@ RUBY_TARGETS="-* ruby25"
 # --enable-mobile-optimize broken in 65.0: --disable-synth-speechd --disable-webspeech --disable-webspeechtestbackend
 MOZILLA_CONFIG="--jitreport-granularity=0"
 PORTAGE_RSYNC_OPTS="$PORTAGE_RSYNC_OPTS --exclude=/metadata/md5-cache"
+RUSTFLAGS="$RUSTFLAGS -Cdebuginfo=0"
