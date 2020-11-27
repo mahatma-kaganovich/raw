@@ -182,15 +182,18 @@ _flagsRUST(){
 	local i a='-Cdebuginfo=0'
 	i=$(_cc2rust -march= target-cpu=) && (rustc --print target-cpus|grep -q "^ *$i ") &&
 			a+=" -Ctarget-cpu=$i"
-	[[ " $RUSTFLAGS " != *' -O '* ]] && i=$(_cc2rust -O opt-level=) && {
-			case "$i" in
-			[0-2])i=$i;;
-			fast|[3-9])i=3;;
-			#s)i=z;;
-			s)i=s;;
-			*)i=2;;
-			esac
-			a+=" -Copt-level=$i"
+#	[ -z "$RUSTC_OPT_LEVEL" ] &&
+	    [[ " $RUSTFLAGS " != *' -O '* ]] &&
+	    i=$(_cc2rust -O opt-level=) && {
+		case "$i" in
+		[0-2])i=$i;;
+		fast|[3-9])i=3;;
+		#s)i=z;;
+		s)i=s;;
+		*)i=2;;
+		esac
+		a+=" -Copt-level=$i"
+		export RUSTC_OPT_LEVEL="$i"
 	}
 	# opt-level: 2 - 225, 3 - 275, s - 75, z - 25
 	i=$(_cc2rust --param=inline-unit-growth= inline-threshold=) && i=$((25*i)) && [ "$i" -gt 0 ] &&
@@ -219,7 +222,10 @@ _iuse clang && {
 
 _filtertst
 [[ "$BDEPEND" == *virtual/rust* ]] && _flagsRUST
-_iuse lto && filterflag -flto '-flto=*' -ffat-lto-objects
+_iuse lto && {
+	filterflag -flto '-flto=*' -ffat-lto-objects
+	export LDFLAGS="$LDFLAGS $CXXFLAGS"
+}
 
 _test_f="$CFLAGS/$CXXFLAGS/$LDFLAGS"
 case "$PN" in
@@ -319,7 +325,11 @@ ncurses)_iuse profile && filterflag -fomit-frame-pointer;;
 xf86-video-siliconmotion|vlc|xorg-server)appendflag -w;;
 cairo)[[ "$PV" == 1.12.16* ]] && appendflag1 -fno-lto;;
 seamonkey|firefox|thunderbird|spidermonkey)
-	_iuse lto && filterflag -Wl,--sort-section=alignment -Wl,--reduce-memory-overheads # gold
+	_iuse lto && {
+		filterflag -Wl,--reduce-memory-overheads # gold and lld
+		! _iuse !clang && filterflag -Wl,--no-ld-generated-unwind-info # lld
+		! _iuse clang && filterflag -Wl,--sort-section=alignment # gold
+	}
 	filterflag -mtls-dialect=gnu2
 ;;&
 fltk)_isflag '-floop-*' '-fgraphite*' && filterflag -ftree-loop-distribution;; # -O2+
