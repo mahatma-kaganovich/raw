@@ -193,10 +193,11 @@ _flagsRUST(){
 		*)i=2;;
 		esac
 		a+=" -Copt-level=$i"
-		export RUSTC_OPT_LEVEL="$i"
+#		export RUSTC_OPT_LEVEL="$i"
 	}
 	# opt-level: 2 - 225, 3 - 275, s - 75, z - 25
-	i=$(_cc2rust --param=inline-unit-growth= inline-threshold=) && i=$((25*i)) && [ "$i" -gt 0 ] &&
+	# 25 - ld.gold broken
+	i=$(_cc2rust --param=inline-unit-growth= inline-threshold=) && i=$((75*i)) && [ "$i" -gt 0 ] &&
 		a+=" -Cinline-threshold=$i"
 	! _iuse lto && ! _iuse !lto && {
 		! _fLTO && a+=" -Cembed-bitcode=no" || {
@@ -221,11 +222,8 @@ _iuse clang && {
 }
 
 _filtertst
-[[ "$BDEPEND" == *virtual/rust* ]] && _flagsRUST
-_iuse lto && {
-	filterflag -flto '-flto=*' -ffat-lto-objects
-	export LDFLAGS="$LDFLAGS $CXXFLAGS"
-}
+#[[ "$BDEPEND" == *virtual/rust* ]] && _flagsRUST
+_iuse lto && filterflag -flto '-flto=*' -ffat-lto-objects
 
 _test_f="$CFLAGS/$CXXFLAGS/$LDFLAGS"
 case "$PN" in
