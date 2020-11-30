@@ -346,8 +346,7 @@ seamonkey|firefox|thunderbird|spidermonkey)
 		! _iuse clang && _filterGOLD
 	}
 #	filterflag -mtls-dialect=gnu2 # vs. elf-hack
-	_isflag -mtls-dialect=gnu2 && export MOZILLA_CONFIG="$MOZILLA_CONFIG
-ac_add_options --disable-elf-hack # -mtls-dialect=gnu2"
+	_isflag -mtls-dialect=gnu2 && export MOZILLA_CONFIG="$MOZILLA_CONFIG --disable-elf-hack"
 ;;&
 fltk)_isflag '-floop-*' '-fgraphite*' && filterflag -ftree-loop-distribution;; # -O2+
 freeglut)_isflag '-floop-*' '-fgraphite*' && appendflag -fno-ipa-cp-clone;;
@@ -411,6 +410,8 @@ _iuse !system-sqlite && _fnofastmath
 [ "$EBUILD_PHASE" = configure ] && case "$PN" in
 seamonkey|firefox|thunderbird|spidermonkey)
 	# seamonkey still not here
-	echo "$MOZILLA_CONFIG" >>"$S"/.mozconfig
+	for _i in $MOZILLA_CONFIG; do
+		"ac_add_options ${_i} # MOZILLA_CONFIG" >>"$S"/.mozconfig
+	done
 ;;
 esac
