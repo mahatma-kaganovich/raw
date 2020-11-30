@@ -18,6 +18,20 @@ _iuse(){
 	return 1
 }
 
+replace1flag_(){
+local v f x f=false
+for v in ${3:-LDFLAGS CFLAGS CPPFLAGS CXXFLAGS FFLAGS FCFLAGS RUSTFLAGS CARGO_RUSTCFLAGS MOZ_RUST_DEFAULT_FLAGS}; do
+	x=
+	for f in ${!v}; do
+		[[ "$f" == $1 ]] && f="$2"
+		x+=" $f"
+	done
+	x="${x# }"
+	[ "$x" != "${!v}" ] && r=true && export $v="$x"
+done
+$r
+}
+
 filterflag_(){
 local p v x local f ff="$1" rr r=false
 shift
@@ -167,15 +181,21 @@ _fnofastmath(){
 	[ -n "$*" ] && nf="${nf//-fno-fast-math/$*}"
 	filterflag ${f//-Ofast} -mfpmath=both
 #	filterflag '-mfpmath=sse?387' '-mfpmath=387?sse'
-	for v in CFLAGS CPPFLAGS CXXFLAGS FFLAGS FCFLAGS LDFLAGS; do
-		[[ "${!v##*-O}" == fast* ]] && export $v="${!v//-Ofast/$nf}"
-	done
+	replace1flag_ -Ofast "$nf"
 }
 
 _cc2rust(){
 	local c=" $CFLAGS "
 	local x="${c##* $1}"
 	[[ "$RUSTFLAGS" != *"$2"* ]] && [[ "$c" != "$x" ]] && x="${x%% *}" && echo "$x"
+}
+
+_filterGOLD(){
+	filterflag -Wl,--sort-section=alignment -Wl,--reduce-memory-overheads '-Cinline-threshold=*'
+}
+
+_filterLLD(){
+	filterflag -Wl,--reduce-memory-overheads -Wl,--no-ld-generated-unwind-info
 }
 
 _flagsRUST(){
@@ -186,26 +206,23 @@ _flagsRUST(){
 	    [[ " $RUSTFLAGS " != *' -O '* ]] &&
 	    i=$(_cc2rust -O opt-level=) && {
 		case "$i" in
-		[0-2])i=$i;;
+		[0-2]);;
 		fast|[3-9])i=3;;
 		#s)i=z;;
-		s)i=s;;
+		s);;
 		*)i=2;;
 		esac
 		a+=" -Copt-level=$i"
 #		export RUSTC_OPT_LEVEL="$i"
 	}
 	# opt-level: 2 - 225, 3 - 275, s - 75, z - 25
-	# 25 - ld.gold broken
-	i=$(_cc2rust --param=inline-unit-growth= inline-threshold=) && i=$((75*i)) && [ "$i" -gt 0 ] &&
+	i=$(_cc2rust --param=inline-unit-growth= inline-threshold=) && i=$((25*i)) && [ "$i" -gt 0 ] &&
 		a+=" -Cinline-threshold=$i"
-	! _iuse lto && ! _iuse !lto && {
-		! _fLTO && a+=" -Cembed-bitcode=no" || {
-			a+=' -Cembed-bitcode=yes'
-			a+=' -Clto'
-#			a+=' -Clinker-plugin-lto=yes'
-#			! _iuse clang && [ -z "$LD" ] && export LD=ld.gold && appendflag1 -fuse-ld=gold
-		}
+	! _fLTO && a+=" -Cembed-bitcode=no" || {
+		a+=' -Cembed-bitcode=yes'
+		a+=' -Clto'
+#		a+=' -Clinker-plugin-lto=yes'
+#		! _iuse clang && [ -z "$LD" ] && export LD=ld.gold && appendflag1 -fuse-ld=gold
 	}
 	[ -n "$a" ] && appendflag_ 'RUSTFLAGS CARGO_RUSTCFLAGS MOZ_RUST_DEFAULT_FLAGS' $a
 }
@@ -222,8 +239,8 @@ _iuse clang && {
 }
 
 _filtertst
-#[[ "$BDEPEND" == *virtual/rust* ]] && _flagsRUST
 _iuse lto && filterflag -flto '-flto=*' -ffat-lto-objects
+[[ "$BDEPEND" == *virtual/rust* ]] && _flagsRUST
 
 _test_f="$CFLAGS/$CXXFLAGS/$LDFLAGS"
 case "$PN" in
@@ -317,16 +334,15 @@ coreutils|groff|glibc|mpg123|nodejs|fontforge|sqlite|postgresql*|goffice|db|prot
 # sometimes somewere
 #libX11|wget)_isflag -Os && _fnofastmath -fno-unsafe-math-optimizations -fno-signed-zeros -fno-trapping-math -fassociative-math -freciprocal-math;;&
 chromium*)_iuse abi_x86_32 && filterflag -maccumulate-outgoing-args;;&
-mit-krb5|ceph)export CFLAGS="${CFLAGS//-Os/-O2}";export CXXFLAGS="${CXXFLAGS//-Os/-O2}";;
+mit-krb5|ceph)replace1flag_ -Os -O2;;&
 wine)filterflag -ftree-loop-distribution -ftree-loop-distribute-patterns;;
 ncurses)_iuse profile && filterflag -fomit-frame-pointer;;
 xf86-video-siliconmotion|vlc|xorg-server)appendflag -w;;
 cairo)[[ "$PV" == 1.12.16* ]] && appendflag1 -fno-lto;;
 seamonkey|firefox|thunderbird|spidermonkey)
 	_iuse lto && {
-		filterflag -Wl,--reduce-memory-overheads # gold and lld
-		! _iuse !clang && filterflag -Wl,--no-ld-generated-unwind-info # lld
-		! _iuse clang && filterflag -Wl,--sort-section=alignment # gold
+		! _iuse !clang && _filterLLD
+		! _iuse clang && _filterGOLD
 	}
 	filterflag -mtls-dialect=gnu2
 ;;&
@@ -350,7 +366,7 @@ coreutils)filterflag -flto=jobserver && appendflag1 -flto;;
 glibc|_qtcore)_fLTO_f -flto-partition=none;;
 mongodb)[ "$AR" = gcc-ar ] && export AR=/usr/bin/ar ;;
 openssl)filterflag -ffast-math;; # 1.1.1 make
-seamonkey|thunderbird|rsync)export LDFLAGS="${LDFLAGS//-Wl,--strip-all/-Wl,--strip-debug}";;&
+seamonkey|thunderbird|rsync)replace1flag_ -Wl,--strip-all -Wl,--strip-debug;;&
 # -> postgis
 protobuf)filterflag -mtls-dialect=gnu2;;&
  # nss: gcc 10 mozilla broken ssl
@@ -377,11 +393,8 @@ esac
 # seamonkey unknown error on install -> precompile cache
 _iuse !system-sqlite && _fnofastmath
 
-(_iuse gold || [[ "$LD" == *gold ]] || _isflag -fuse-ld=gold) &&
-	filterflag -Wl,--sort-section=alignment -Wl,--reduce-memory-overheads
-(_iuse clang || [[ "$LD" == *lld ]] || _isflag -fuse-ld=lld) &&
-	filterflag -Wl,--reduce-memory-overheads -Wl,--no-ld-generated-unwind-info
-
+(_iuse gold || [[ "$LD" == *gold ]] || _isflag -fuse-ld=gold) && _filterGOLD
+(_iuse clang || [[ "$LD" == *lld ]] || _isflag -fuse-ld=lld) && _filterLLD
 
 #filter86_32 -fschedule-insns -fira-loop-pressure
 
