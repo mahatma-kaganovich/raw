@@ -199,7 +199,7 @@ _filterLLD(){
 }
 
 _flagsRUST(){
-	_iuse custom-cflags && return
+	_iuse !custom-cflags && return
 	local i a='-Cdebuginfo=0'
 	i=$(_cc2rust -march= target-cpu=) && (rustc --print target-cpus|grep -q "^ *$i ") &&
 			a+=" -Ctarget-cpu=$i"
