@@ -199,6 +199,7 @@ _filterLLD(){
 }
 
 _flagsRUST(){
+	_iuse custom-cflags && return
 	local i a='-Cdebuginfo=0'
 	i=$(_cc2rust -march= target-cpu=) && (rustc --print target-cpus|grep -q "^ *$i ") &&
 			a+=" -Ctarget-cpu=$i"
@@ -344,7 +345,9 @@ seamonkey|firefox|thunderbird|spidermonkey)
 		! _iuse !clang && _filterLLD
 		! _iuse clang && _filterGOLD
 	}
-	filterflag -mtls-dialect=gnu2
+#	filterflag -mtls-dialect=gnu2 # vs. elf-hack
+	_isflag -mtls-dialect=gnu2 && export MOZILLA_CONFIG="$MOZILLA_CONFIG
+ac_add_options --disable-elf-hack # -mtls-dialect=gnu2"
 ;;&
 fltk)_isflag '-floop-*' '-fgraphite*' && filterflag -ftree-loop-distribution;; # -O2+
 freeglut)_isflag '-floop-*' '-fgraphite*' && appendflag -fno-ipa-cp-clone;;
@@ -404,3 +407,10 @@ _iuse !system-sqlite && _fnofastmath
 
 }
 
+
+[ "$EBUILD_PHASE" = configure ] && case "$PN" in
+seamonkey|firefox|thunderbird|spidermonkey)
+	# seamonkey still not here
+	echo "$MOZILLA_CONFIG" >>"$S"/.mozconfig
+;;
+esac
