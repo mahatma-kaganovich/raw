@@ -241,7 +241,16 @@ _iuse clang && {
 
 _filtertst
 _iuse lto && filterflag -flto '-flto=*' -ffat-lto-objects
-[[ "$BDEPEND" == *virtual/rust* ]] && _flagsRUST
+if [[ "$BDEPEND$DEPEND" == *virtual/rust* ]]; then
+	_flagsRUST
+else
+	for _i in "$S"/{,*/}{.cargo,Cargo.*}; do
+		[ -e "${_i}" ] && {
+			_flagsRUST
+			break
+		}
+	done
+fi
 
 _test_f="$CFLAGS/$CXXFLAGS/$LDFLAGS"
 case "$PN" in
@@ -341,6 +350,7 @@ ncurses)_iuse profile && filterflag -fomit-frame-pointer;;
 xf86-video-siliconmotion|vlc|xorg-server)appendflag -w;;
 cairo)[[ "$PV" == 1.12.16* ]] && appendflag1 -fno-lto;;
 seamonkey|firefox|thunderbird|spidermonkey)
+	_flagsRUST
 	_iuse lto && {
 		! _iuse !clang && _filterLLD
 		! _iuse clang && _filterGOLD
