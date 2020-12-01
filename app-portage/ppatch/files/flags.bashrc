@@ -241,19 +241,11 @@ _iuse clang && {
 
 _filtertst
 _iuse lto && filterflag -flto '-flto=*' -ffat-lto-objects
-if [[ "$BDEPEND$DEPEND" == *virtual/rust* ]]; then
-	_flagsRUST
-else
-	for _i in "$S"/{,*/}{.cargo,Cargo.*}; do
-		[ -e "${_i}" ] && {
-			_flagsRUST
-			break
-		}
-	done
-fi
+[[ "$BDEPEND" == *virtual/rust* ]] && _flagsRUST
 
 _test_f="$CFLAGS/$CXXFLAGS/$LDFLAGS"
 case "$PN" in
+seamonkey|habitat|librsvg|suricata)_flagsRUST;;& # DEPEND not visible on setup
 quota|xinetd|samba|python) _iuse !rpc || [ -e /usr/include/rpc/rpc.h ] || {
 	# python - only if libnsl present (module nis)
 	export CFLAGS="$CFLAGS $(pkg-config libtirpc --cflags-only-I)"
