@@ -19,7 +19,7 @@ _iuse(){
 }
 
 replace1flag_(){
-local v f x f=false
+local v f x vv=
 for v in ${3:-LDFLAGS CFLAGS CPPFLAGS CXXFLAGS FFLAGS FCFLAGS RUSTFLAGS CARGO_RUSTCFLAGS MOZ_RUST_DEFAULT_FLAGS}; do
 	x=
 	for f in ${!v}; do
@@ -27,9 +27,9 @@ for v in ${3:-LDFLAGS CFLAGS CPPFLAGS CXXFLAGS FFLAGS FCFLAGS RUSTFLAGS CARGO_RU
 		x+=" $f"
 	done
 	x="${x# }"
-	[ "$x" != "${!v}" ] && r=true && export $v="$x"
+	[ "$x" != "${!v}" ] && export $v="$x" && vv+=",${v%FLAGS}"
 done
-$r
+[ -n "$vv" ] && echo "flag replaced {${vv#,}}FLAGS $1 -> $2"
 }
 
 filterflag_(){
@@ -191,7 +191,9 @@ _cc2rust(){
 }
 
 _filterGOLD(){
-	filterflag -Wl,--sort-section=alignment -Wl,--reduce-memory-overheads '-Cinline-threshold=*'
+	filterflag -Wl,--sort-section=alignment -Wl,--reduce-memory-overheads # '-Cinline-threshold=*'
+	replace1flag_ '-Cinline-threshold=??' -Cinline-threshold=200
+	replace1flag_ '-Cinline-threshold=1??' -Cinline-threshold=200
 }
 
 _filterLLD(){
