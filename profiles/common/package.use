@@ -1,3 +1,4 @@
+sys-devel/clang default-lld
 net-wireless/iwd standalone -crda
 dev-lang/luajit lua52compat
 app-arch/zstd static-libs

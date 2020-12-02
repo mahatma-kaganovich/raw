@@ -235,6 +235,7 @@ filter_cf CC LDFLAGS c
 filter_cf CC CFLAGS c
 filter_cf CXX CXXFLAGS c++
 _iuse clang && {
+	_filterLLD
 	CC=clang filter_cf CC LDFLAGS c
 	CC=clang filter_cf CC CFLAGS c
 	CXX=clang++ filter_cf CXX CXXFLAGS c++
