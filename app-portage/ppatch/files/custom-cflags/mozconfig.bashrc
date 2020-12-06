@@ -33,7 +33,7 @@ mozconfig_annotate() {
 			use custom-cflags || replace-flags -Ofast -O3
 			case "$o" in
 			3|fast)
-				i1+=' -fno-ipa-cp-clone'
+				#i1+=' -fno-ipa-cp-clone'
 				#[[ ${ARCH} == x86 ]] &&
 				{
 				    test-flag-CC -fvect-cost-model=cheap &&
@@ -42,7 +42,8 @@ mozconfig_annotate() {
 				}
 			;;&
 			fast)
-				i1+=' -fno-fast-math'
+				#i1+=' -fno-fast-math'
+				i1+=' -ftrapping-math'
 				use custom-cflags || o=3
 			;;
 			esac
