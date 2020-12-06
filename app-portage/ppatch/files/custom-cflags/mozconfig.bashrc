@@ -100,10 +100,8 @@ prepare)
 	use custom-cflags && {
 		case "$PN" in
 		thunderbird|seamonkey)replace-flags -Wl,--strip-all -Wl,--strip-debug;;&
-		thunderbird);;
-		seamonkey)append-cxxflags -fno-ipa-cp-clone -fno-delete-null-pointer-checks;;&
 		esac
-		[[ "$CXXFLAGS" == *fast* ]] && append-cxxflags -fno-fast-math
+		[[ "$CXXFLAGS" == *[Of]fast* ]] && append-cxxflags -ftrapping-math # -fno-fast-math
 		filter-flags -ffat-lto-objects
 #		[[ " $IUSE " == *' lto '* ]] && use lto &&
 			filter-flags -flto '-flto=*'

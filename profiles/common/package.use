@@ -1,3 +1,4 @@
+app-antivirus/clamav metadata-analysis-api
 sys-devel/clang default-lld
 net-wireless/iwd standalone -crda
 dev-lang/luajit lua52compat
