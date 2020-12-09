@@ -353,7 +353,8 @@ seamonkey|firefox|thunderbird|spidermonkey)
 #	filterflag -mtls-dialect=gnu2 # vs. elf-hack
 	_isflag -mtls-dialect=gnu2 && export MOZILLA_CONFIG="$MOZILLA_CONFIG --disable-elf-hack"
 ;;&
-seamonkey|thunderbird)appendflag_ CXXFLAGS -ftrapping-math;;&
+#seamonkey|thunderbird)appendflag_ CXXFLAGS -ftrapping-math;;&
+seamonkey|thunderbird)appendflag_ CXXFLAGS -fno-fast-math;;&
 fltk)_isflag '-floop-*' '-fgraphite*' && filterflag -ftree-loop-distribution;; # -O2+
 freeglut)_isflag '-floop-*' '-fgraphite*' && appendflag -fno-ipa-cp-clone;;
 # 5.1

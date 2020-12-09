@@ -42,8 +42,8 @@ mozconfig_annotate() {
 				}
 			;;&
 			fast)
-				#i1+=' -fno-fast-math'
-				i1+=' -ftrapping-math'
+				i1+=' -fno-fast-math'
+				#i1+=' -ftrapping-math'
 				use custom-cflags || o=3
 			;;
 			esac
@@ -102,7 +102,7 @@ prepare)
 		case "$PN" in
 		thunderbird|seamonkey)replace-flags -Wl,--strip-all -Wl,--strip-debug;;&
 		esac
-		[[ "$CXXFLAGS" == *[Of]fast* ]] && append-cxxflags -ftrapping-math # -fno-fast-math
+		[[ "$CXXFLAGS" == *[Of]fast* ]] && append-cxxflags -fno-fast-math # -ftrapping-math
 		filter-flags -ffat-lto-objects
 #		[[ " $IUSE " == *' lto '* ]] && use lto &&
 			filter-flags -flto '-flto=*'
