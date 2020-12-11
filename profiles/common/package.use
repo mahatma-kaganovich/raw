@@ -125,3 +125,8 @@ dev-libs/efl -drm
 sys-libs/zlib static-libs
 app-arch/bzip2 static-libs
 app-arch/xz-utils static-libs
+
+# export MALLOC_MMAP_MAX_=0
+# export LD_PRELOAD=/usr/lib/libjemalloc.so
+# export LD_PRELOAD=/usr/lib/libtcmalloc_minimal.so
+>=dev-db/mariadb-10.5 -jemalloc -tcmalloc
