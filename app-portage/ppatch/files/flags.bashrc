@@ -303,8 +303,8 @@ inkscape|libreoffice|mariadb|nodejs|clang)filterflag -ffat-lto-objects;;&
 mariadb)filterflag -fno-asynchronous-unwind-tables;;&
 mariadb)_fLTO_f -fno-ipa-cp-clone;;&
 mariadb)
-	CFLAGS_NO_FAST_MATH=-O3
-	_iuse rocksdb && _fnofastmath
+#	CFLAGS_NO_FAST_MATH=-O3
+#	_iuse rocksdb && _fnofastmath
 ;;& # just paranoid
 php)[[ "$PV" == 5.* ]] || filterflag '-flto*' -fdevirtualize-at-ltrans;;&
 # works over make.lto wrapper, but wrapper wrong for some other packets
