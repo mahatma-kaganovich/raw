@@ -1,5 +1,5 @@
 
-# retain:false (ex enable_munmap=yes) bad on 64bit
+use x86 && export enable_munmap=yes
 [[ "$PV" == 4.5* ]] && export with_malloc_conf=purge:decay
 export enable_fill=no
 export enable_cache_oblivious=no
