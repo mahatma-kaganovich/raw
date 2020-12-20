@@ -323,6 +323,15 @@ _modinfo(){
 	modinfo --basedir=/dev/null "${@}"
 }
 
+__mfw(){
+	[ -e "firmware/$2" ] ||
+	if use external-firmware && [ -e "/lib/firmware/$2" ]; then
+		echo "$1: $2" >>"$TMPDIR"/mod-fw.lst
+	else
+		echo "$1" >>"$TMPDIR"/mod-exclude1.m2y
+	fi
+}
+
 post_make(){
 	local i x y m f n= d= n1=
 	[ -s modules.builtin ] && rm $(cat modules.builtin) -f
@@ -350,14 +359,7 @@ post_make(){
 			$(tc-getNM) "$m"|grep -q 'firmware_request\|request_firmware\|release_firmware' && echo "$m" >>"$TMPDIR"/mod-blob1.lst
 			echo " $n1 $m" >>"$TMPDIR/names.lst"
 		;;
-		firmware:)
-			[ -e "firmware/$y" ] && continue
-			if use external-firmware && [ -e "/lib/firmware/$y" ]; then
-				echo "$m: $y" >>"$TMPDIR"/mod-fw.lst
-			else
-				echo "$m" >>"$TMPDIR"/mod-exclude1.m2y
-			fi
-		;;
+		firmware:)__mfw "$m" "$y";;
 		depends:)
 			[ -z "$y" ] && continue
 			y="${y//,/ }"
@@ -367,6 +369,9 @@ post_make(){
 		;;&
 		name:)
 			n="${y//-/_}" #??
+			case "$n" in
+			cfg80211)__mfw "$m" regulatory.db;;
+			esac
 			echo " $n $m" >>"$TMPDIR/names.lst"
 		;;&
 		depends:|name:)[ -n "$d" -a -n "$n" ] && echo "$n$d " >>"$TMPDIR"/depends.lst;;
