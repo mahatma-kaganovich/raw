@@ -1,12 +1,22 @@
---- a/src/jemalloc_cpp.cpp	2020-12-21 11:05:33.906805209 +0300
-+++ b/src/jemalloc_cpp.cpp	2020-12-21 11:07:15.010142330 +0300
-@@ -24,6 +24,9 @@ extern "C" {
- //
- // ... but it needs to work with jemalloc namespaces.
+--- a/src/jemalloc.c	2020-12-21 13:51:52.056920174 +0300
++++ b/src/jemalloc.c	2020-12-21 13:51:05.516918431 +0300
+@@ -3596,7 +3596,8 @@ je_sdallocx(void *ptr, size_t size, int
+ 		size, flags);
  
-+#define je_sdallocx_noflags(ptr,size) if (!free_fastpath(ptr, size, true)) je_free(ptr)
-+#define je_sdallocx(ptr,size,flags) if (flags != 0 || !free_fastpath(ptr, size, true)) je_free(ptr)
-+
- void	*operator new(std::size_t size);
- void	*operator new[](std::size_t size);
- void	*operator new(std::size_t size, const std::nothrow_t &) noexcept;
+ 	if (flags !=0 || !free_fastpath(ptr, size, true)) {
+-		sdallocx_default(ptr, size, flags);
++		//sdallocx_default(ptr, size, flags);
++		je_free(ptr);
+ 	}
+ 
+ 	LOG("core.sdallocx.exit", "");
+@@ -3608,7 +3609,8 @@ je_sdallocx_noflags(void *ptr, size_t si
+ 		size);
+ 
+ 	if (!free_fastpath(ptr, size, true)) {
+-		sdallocx_default(ptr, size, 0);
++		//sdallocx_default(ptr, size, 0);
++		je_free(ptr);
+ 	}
+ 
+ 	LOG("core.sdallocx.exit", "");
