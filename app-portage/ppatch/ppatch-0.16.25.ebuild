@@ -11,7 +11,7 @@ SLOT="0"
 KEYWORDS="alpha amd64 arm hppa ia64 mips ppc ppc64 s390 sh sparc x86"
 RDEPEND="dev-lang/perl"
 DEPEND="${RDEPEND}"
-IUSE="strict global-profile apache2_modules_unixd ddns extensions mmap pam-mount-auth pch pgo tsx via-drm thinkpad10-2 speculative custom-cflags +stackrealign"
+IUSE="strict global-profile apache2_modules_unixd ddns extensions mmap pam-mount-auth pch pgo tsx via-drm thinkpad10-2 speculative custom-cflags +stackrealign uninitialized"
 PDEPEND=""
 
 src_unpack(){
