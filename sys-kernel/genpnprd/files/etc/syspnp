@@ -971,7 +971,12 @@ load_hand_made0(){
 #	UltraSPARC-IIe)return;; # ondemand & conservative kill him
 	UltraSPARC*)return;;
 	esac
-	cpufreq cpufreq "drivers/cpufreq/\|powernow\|nforce2"
+	local i=/sys/devices/system/cpu/intel_pstate/status
+	if [ -e $i ]; then
+		[[ -z "$cmd_intel_pstate" ]] && echo active >$i 2>/dev/null
+	else
+		cpufreq cpufreq "drivers/cpufreq/\|powernow\|nforce2"
+	fi
 	[[ -z "$freq" ]] && return
 	${cmd_nopowersave:-false} && return
 	if grep -vsq "powersave\|userspace\|conservative\|ondemand\|performance" /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor; then

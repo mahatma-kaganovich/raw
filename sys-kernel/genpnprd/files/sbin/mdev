@@ -241,6 +241,11 @@ fstab(){
 cpufreq(){
 	local i c g f j min max mid
 	grep -sq UltraSPARC /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor && return
+	case "$cmd_cpufreq" in
+	performance|powersave|"")
+		[[ -z "$cmd_intel_pstate" ]] && echo active >/sys/devices/system/cpu/intel_pstate/status 2>/dev/null
+	;;
+	esac
 	/sbin/onbatt && f=min || f=max
 	for c in /sys/devices/system/cpu/cpu*/cpufreq; do
 		g="$c/scaling_available_governors"
