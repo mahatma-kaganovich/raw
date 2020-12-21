@@ -1,0 +1,19 @@
+--- a/malloc/malloc.c	2020-02-01 14:52:50.000000000 +0300
++++ b/malloc/malloc.c	2020-12-21 11:27:17.536854124 +0300
+@@ -1030,8 +1030,15 @@ static void*   memalign_check(size_t ali
+ # define MAP_NORESERVE 0
+ #endif
+ 
++#ifndef MAP_UNINITIALIZED
++# include <asm-generic/mman-common.h>
++#endif
++#ifndef MAP_UNINITIALIZED
++# define MAP_UNINITIALIZED 0
++#endif
++
+ #define MMAP(addr, size, prot, flags) \
+- __mmap((addr), (size), (prot), (flags)|MAP_ANONYMOUS|MAP_PRIVATE, -1, 0)
++ __mmap((addr), (size), (prot), (flags)|MAP_ANONYMOUS|MAP_PRIVATE|MAP_UNINITIALIZED, -1, 0)
+ 
+ 
+ /*

@@ -1,0 +1,118 @@
+from git
+
+--- a/src/jemalloc_cpp.cpp	2020-12-21 11:07:15.010142330 +0300
++++ b/src/jemalloc_cpp.cpp	2020-12-21 11:11:21.333484932 +0300
+@@ -42,6 +42,20 @@ void	operator delete(void *ptr, std::siz
+ void	operator delete[](void *ptr, std::size_t size) noexcept;
+ #endif
+ 
++#if __cpp_aligned_new >= 201606
++/* C++17's over-aligned operators. */
++void<->*operator new(std::size_t size, std::align_val_t);
++void<->*operator new(std::size_t size, std::align_val_t, const std::nothrow_t &) noexcept;
++void<->*operator new[](std::size_t size, std::align_val_t);
++void<->*operator new[](std::size_t size, std::align_val_t, const std::nothrow_t &) noexcept;
++void<->operator delete(void* ptr, std::align_val_t) noexcept;
++void<->operator delete(void* ptr, std::align_val_t, const std::nothrow_t &) noexcept;
++void<->operator delete(void* ptr, std::size_t size, std::align_val_t al) noexcept;
++void<->operator delete[](void* ptr, std::align_val_t) noexcept;
++void<->operator delete[](void* ptr, std::align_val_t, const std::nothrow_t &) noexcept;
++void<->operator delete[](void* ptr, std::size_t size, std::align_val_t al) noexcept;
++#endif
++
+ JEMALLOC_NOINLINE
+ static void *
+ handleOOM(std::size_t size, bool nothrow) {
+@@ -105,6 +119,42 @@ operator new[](std::size_t size, const s
+ 	return newImpl<true>(size);
+ }
+ 
++#if __cpp_aligned_new >= 201606
++
++template <bool IsNoExcept>
++JEMALLOC_ALWAYS_INLINE
++void *
++alignedNewImpl(std::size_t size, std::align_val_t alignment) noexcept(IsNoExcept) {
++	void *ptr = je_aligned_alloc(static_cast<std::size_t>(alignment), size);
++	if (likely(ptr != nullptr)) {
++		return ptr;
++	}
++
++	return handleOOM(size, IsNoExcept);
++}
++
++void *
++operator new(std::size_t size, std::align_val_t alignment) {
++	return alignedNewImpl<false>(size, alignment);
++}
++
++void *
++operator new[](std::size_t size, std::align_val_t alignment) {
++	return alignedNewImpl<false>(size, alignment);
++}
++
++void *
++operator new(std::size_t size, std::align_val_t alignment, const std::nothrow_t &) noexcept {
++	return alignedNewImpl<true>(size, alignment);
++}
++
++void *
++operator new[](std::size_t size, std::align_val_t alignment, const std::nothrow_t &) noexcept {
++	return alignedNewImpl<true>(size, alignment);
++}
++
++#endif  // __cpp_aligned_new
++
+ void
+ operator delete(void *ptr) noexcept {
+ 	je_free(ptr);
+@@ -142,3 +192,49 @@ void operator delete[](void *ptr, std::s
+ }
+ 
+ #endif  // __cpp_sized_deallocation
++
++#if __cpp_aligned_new >= 201606
++
++JEMALLOC_ALWAYS_INLINE
++void
++alignedSizedDeleteImpl(void* ptr, std::size_t size, std::align_val_t alignment) noexcept {
++	if (config_debug) {
++		assert(((size_t)alignment & ((size_t)alignment - 1)) == 0);
++	}
++	if (unlikely(ptr == nullptr)) {
++		return;
++	}
++	je_sdallocx(ptr, size, MALLOCX_ALIGN(alignment));
++}
++
++void
++operator delete(void* ptr, std::align_val_t) noexcept {
++	je_free(ptr);
++}
++
++void
++operator delete[](void* ptr, std::align_val_t) noexcept {
++	je_free(ptr);
++}
++
++void
++operator delete(void* ptr, std::align_val_t, const std::nothrow_t&) noexcept {
++	je_free(ptr);
++}
++
++void
++operator delete[](void* ptr, std::align_val_t, const std::nothrow_t&) noexcept {
++	je_free(ptr);
++}
++
++void
++operator delete(void* ptr, std::size_t size, std::align_val_t alignment) noexcept {
++	alignedSizedDeleteImpl(ptr, size, alignment);
++}
++
++void
++operator delete[](void* ptr, std::size_t size, std::align_val_t alignment) noexcept {
++	alignedSizedDeleteImpl(ptr, size, alignment);
++}
++
++#endif  // __cpp_aligned_new
