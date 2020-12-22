@@ -1,15 +1,12 @@
 --- a/src/pages.c	2019-08-05 23:02:00.000000000 +0300
-+++ b/src/pages.c	2020-12-20 22:44:59.000000000 +0300
-@@ -15,6 +15,16 @@
++++ b/src/pages.c	2020-12-22 21:10:09.320952788 +0300
+@@ -15,6 +15,13 @@
  #endif
  #endif
  
-+#ifndef _WIN32
-+#ifndef MAP_UNINITIALIZED
++#if defined(__linux__) && !defined(MAP_UNINITIALIZED)
 +#include <asm-generic/mman-common.h>
 +#endif
-+#endif
-+
 +#ifndef MAP_UNINITIALIZED
 +#define MAP_UNINITIALIZED 0
 +#endif
@@ -17,7 +14,7 @@
  /******************************************************************************/
  /* Data. */
  
-@@ -607,7 +617,7 @@ pages_boot(void) {
+@@ -607,7 +614,7 @@ pages_boot(void) {
  	}
  
  #ifndef _WIN32
