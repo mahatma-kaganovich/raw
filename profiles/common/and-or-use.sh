@@ -398,7 +398,7 @@ x2='libressl yassl mbedtls embedded' # drop
 force='' generate +common "$x1" "$x1" "$x2"
 
 x=python_single_target_python
-generate +common "${x}3_8 ${x}3_7 ${x}3_6 ${x}2_7"
+generate +common "${x}3_8 ${x}3_9 ${x}3_6 ${x}2_7 ${x}3_7"
 sed -i -e 's:\( python_single_target_\)\(python[0-9_]*\):\1\2 python_targets_\2:' "$d/_auto/common/package.use"
 
 generate +common mariadb mysql mariadb
