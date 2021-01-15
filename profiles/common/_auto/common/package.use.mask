@@ -1,9 +1,12 @@
+app-admin/sudo -ssl gcrypt
 app-crypt/tpm2-tss -openssl gcrypt
+app-crypt/tpm2-tss -openssl mbedtls
 dev-libs/librelp -openssl gnutls
 dev-libs/xmlsec -gnutls -gcrypt
 dev-vcs/cvsync -mhash gcrypt
 mail-mta/exim -gnutls -ssl
 mail-mta/ssmtp -gnutls -ssl
+media-video/rtmpdump -gnutls libressl
 media-video/vlc -ssl -gcrypt
 net-analyzer/echoping -gnutls -ssl
 net-analyzer/sngrep -gnutls openssl
@@ -14,13 +17,14 @@ net-fs/s3fs -openssl gnutls nss
 net-fs/s3fs -nettle -gnutls
 net-irc/iroffer-dinoex -gnutls -ssl
 net-irc/scrollz -gnutls -ssl
-net-libs/libgadu -gnutls -ssl
+net-libs/libsrtp:2 -openssl nss
 net-libs/libssh -gcrypt mbedtls
 net-libs/libssh2 -gcrypt mbedtls
 net-mail/mpop -gnutls -ssl
 net-misc/networkmanager -gnutls nss
 net-misc/wget -gnutls -ssl
-sys-cluster/ceph -ssl nss
+net-proxy/privoxy -openssl mbedtls
+net-vpn/openvpn -openssl mbedtls
 sys-cluster/ceph -openssl libressl
 sys-fs/cryptmount -openssl -gcrypt
 sys-fs/cryptsetup -kernel openssl nettle gcrypt
@@ -29,13 +33,13 @@ www-misc/litmus -ssl gnutls
 app-misc/sphinx -mariadb mysql
 dev-perl/DBD-MariaDB -mariadb mysql
 dev-perl/DBD-mysql -mariadb mysql
-dev-ruby/mysql2:0.4 -mariadb mysql
-dev-ruby/mysql2:0.5 -mariadb mysql
+dev-ruby/mysql2 -mariadb mysql
 media-tv/kodi -mariadb mysql
 dev-db/sqlcipher -readline libedit
 dev-lang/php:7.2 -readline libedit
 dev-lang/php:7.3 -readline libedit
 dev-lang/php:7.4 -readline libedit
+dev-lang/php:8.0 -readline libedit
 dev-libs/libpcre -readline libedit
 dev-libs/libpcre2 -readline libedit
-net-misc/chrony -readline libedit
+net-firewall/nftables -readline libedit

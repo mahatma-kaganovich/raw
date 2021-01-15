@@ -1,2 +1,3 @@
+games-action/heroes -sdl # ggi
 games-emulation/pcsxr -sdl # alsa openal oss pulseaudio
 games-emulation/ppsspp -sdl qt5

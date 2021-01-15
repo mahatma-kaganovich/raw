@@ -1,2 +1,2 @@
 app-i18n/ibus 
-games-emulation/ppsspp -sdl
+games-emulation/ppsspp qt5 -sdl

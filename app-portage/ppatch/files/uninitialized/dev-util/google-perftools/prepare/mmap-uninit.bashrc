@@ -1,5 +1,3 @@
-#!/bin/bash
-
 sed -i -e 's:^\(#ifndef MAP_ANONYMOUS\)$:\
 #if defined(__linux__) \&\& !defined(MAP_UNINITIALIZED)\
 # include <asm-generic/mman-common.h>\

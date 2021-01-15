@@ -1,6 +1,4 @@
-dev-java/oracle-jdk-bin:11 -gtk3 gtk2
 media-libs/libmediaart -gtk qt5
 media-libs/opencv -gtk3 qt5
 net-analyzer/pinger -gtk3 gtk2
-net-misc/dhcpcd-ui -gtk3 gtk
 dev-qt/qtwebkit -gstreamer # multimedia

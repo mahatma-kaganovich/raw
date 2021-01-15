@@ -1,1 +1,2 @@
-games-emulation/ppsspp sdl
+games-action/heroes sdl
+games-emulation/ppsspp sdl -qt5

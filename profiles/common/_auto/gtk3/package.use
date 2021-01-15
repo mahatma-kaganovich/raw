@@ -1,5 +1,6 @@
 app-arch/gnome-autoar gtk
 app-cdr/dvdshrink -gtk
+app-crypt/eid-mw gtk
 app-crypt/gcr gtk
 app-crypt/pinentry -gtk
 app-crypt/stoken gtk
@@ -10,12 +11,14 @@ app-editors/emacs:23 -gtk
 app-editors/emacs:24 gtk
 app-editors/emacs:25 gtk
 app-editors/emacs:26 gtk
+app-editors/emacs:27 gtk
 app-editors/emacs:27-vcs gtk
 app-editors/emacs:28-vcs gtk
 app-editors/gvim gtk
 app-editors/mousepad gtk3
 app-emulation/libguestfs gtk
 app-emulation/qemu gtk
+app-emulation/snapd -gtk
 app-emulation/spice-vdagent gtk
 app-emulation/vice gtk
 app-emulation/virt-manager gtk
@@ -29,10 +32,10 @@ app-i18n/scim-bridge -gtk
 app-i18n/uim gtk
 app-laptop/pommed -gtk
 app-misc/ddccontrol -gtk
+app-misc/emelfm2 gtk3
 app-misc/lirc gtk
 app-misc/razertool -gtk
 app-misc/vifm -gtk
-app-mobilephone/sobexsrv -gtk
 app-office/libreoffice gtk
 app-text/aiksaurus -gtk
 app-text/ghostscript-gpl -gtk
@@ -49,7 +52,6 @@ dev-lisp/clisp -gtk
 dev-ml/cairo-ocaml -gtk
 dev-ml/ocamlgraph -gtk
 dev-ml/ocamlnet -gtk
-dev-python/pyglet -gtk
 dev-qt/qtwidgets gtk
 dev-util/amtterm gtk
 dev-util/geany gtk3
@@ -63,6 +65,7 @@ games-board/gnubg -gtk
 games-board/xboard -gtk
 games-emulation/fceux gtk
 games-emulation/snes9x gtk
+games-engines/scummvm gtk
 games-fps/eduke32 -gtk
 games-fps/gzdoom gtk
 games-misc/gBhed -gtk
@@ -75,7 +78,6 @@ gnome-extra/libgsf -gtk
 kde-apps/print-manager gtk
 kde-plasma/plasma-meta gtk
 lxde-base/lxdm gtk3
-media-gfx/birdfont gtk
 media-gfx/fontforge gtk
 media-gfx/geeqie gtk3
 media-gfx/graphviz -gtk
@@ -91,13 +93,11 @@ media-libs/gst-plugins-bad gtk
 media-libs/libcanberra gtk3
 media-libs/libchamplain gtk
 media-libs/libextractor gtk
-media-libs/libgpod gtk
 media-libs/libmediaart -gtk
 media-libs/libopenraw -gtk
 media-libs/libquicktime -gtk
 media-libs/libsixel -gtk
-media-libs/mlt -gtk
-media-libs/opencv -gtk
+media-libs/mlt gtk
 media-libs/suil -gtk
 media-libs/xine-lib gtk
 media-plugins/calf -gtk
@@ -126,17 +126,14 @@ media-video/xvattr -gtk
 net-analyzer/driftnet -gtk
 net-analyzer/ettercap -gtk
 net-analyzer/hydra -gtk
-net-analyzer/mtr -gtk
 net-analyzer/mtr gtk
-net-analyzer/pinger -gtk
 net-analyzer/yersinia -gtk
 net-dialup/ppp -gtk
-net-dns/avahi -gtk
 net-dns/avahi gtk
 net-ftp/gftp -gtk
 net-im/ekg2 -gtk
+net-im/telegram-desktop gtk
 net-libs/gssdp gtk
-net-misc/dhcpcd-ui -gtk
 net-misc/dhcpcd-ui gtk
 net-misc/ipsorcery -gtk
 net-misc/mico -gtk
@@ -148,7 +145,7 @@ net-misc/unison:2.51 -gtk
 net-misc/youtube-viewer gtk
 net-p2p/deluge gtk
 net-p2p/eiskaltdcpp gtk
-net-p2p/mldonkey gtk
+net-p2p/mldonkey -gtk
 net-p2p/transmission gtk
 net-print/gutenprint -gtk
 net-vpn/networkmanager-fortisslvpn gtk
@@ -159,7 +156,6 @@ net-vpn/networkmanager-pptp gtk
 net-vpn/networkmanager-sstp gtk
 net-vpn/networkmanager-vpnc gtk
 net-vpn/networkmanager-wireguard gtk
-net-wireless/spectools -gtk
 sci-astronomy/predict -gtk
 sci-geosciences/gpscorrelate -gtk
 sci-mathematics/alt-ergo -gtk
@@ -168,6 +164,7 @@ sci-mathematics/gretl gtk
 sci-mathematics/pspp gtk
 sci-mathematics/why3-for-spark -gtk
 sci-misc/oww -gtk
+sys-apps/flatpak gtk
 sys-apps/lshw -gtk
 sys-apps/pcsc-tools -gtk
 sys-apps/sensei-raw-ctl gtk
@@ -181,21 +178,19 @@ sys-fs/ecryptfs-utils -gtk
 sys-libs/gwenhywfar gtk
 sys-power/nvclock -gtk
 sys-process/latencytop -gtk
-www-client/netsurf gtk
-x11-apps/xinput_calibrator -gtk
+www-client/netsurf gtk -gtk2
 x11-libs/c++-gtk-utils:3 gtk
 x11-libs/c++-gtk-utils:0 gtk
 x11-libs/libfm -gtk
 x11-libs/libyui gtk
+x11-misc/grsync gtk3
 x11-misc/lightdm gtk
 x11-misc/piedock -gtk
 x11-misc/redshift gtk
-x11-misc/spacefm gtk3 -gtk2
 x11-misc/wbar -gtk
 x11-misc/xaos -gtk
 x11-misc/xdg-user-dirs gtk
 x11-misc/xlockmore -gtk
-x11-plugins/purple-plugin_pack -gtk
 x11-terms/mlterm gtk
 x11-themes/arc-theme gtk3 -gtk2
 x11-themes/nimbus -gtk

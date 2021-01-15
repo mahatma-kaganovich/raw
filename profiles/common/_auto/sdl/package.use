@@ -1,4 +1,3 @@
 app-emulation/vice sdl
-games-emulation/ppsspp sdl
 games-strategy/freeciv sdl
 net-wireless/gnuradio sdl
