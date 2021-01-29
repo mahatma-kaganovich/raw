@@ -1,26 +1,26 @@
-# Copyright 1999-2018 Gentoo Authors
+# Copyright 1999-2021 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
-# $Id$
 
-EAPI=6
+EAPI=7
 
 PYTHON_COMPAT=( python3_{6..9} )
-PYTHON_REQ_USE='threads(+),xml(+)'
+PYTHON_REQ_USE="threads(+),xml(+)"
 inherit python-single-r1 waf-utils multilib-minimal linux-info systemd pam
-# eutils
+
+DESCRIPTION="Samba Suite Version 4"
+HOMEPAGE="https://samba.org/"
 
 MY_PV="${PV/_rc/rc}"
 MY_P="${PN}-${MY_PV}"
 
-SRC_PATH="stable"
-[[ ${PV} = *_rc* ]] && SRC_PATH="rc"
+if [[ ${PV} = *_rc* ]]; then
+	SRC_URI="mirror://samba/rc/${MY_P}.tar.gz"
+else
+	SRC_URI="mirror://samba/stable/${MY_P}.tar.gz"
+	KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~ia64 ~ppc ~ppc64 ~sparc ~x86"
+fi
+S="${WORKDIR}/${MY_P}"
 
-SRC_URI="mirror://samba/${SRC_PATH}/${MY_P}.tar.gz"
-[[ ${PV} = *_rc* ]] || \
-KEYWORDS="~amd64 ~arm64 ~hppa ~x86"
-
-DESCRIPTION="Samba Suite Version 4"
-HOMEPAGE="http://www.samba.org/"
 LICENSE="GPL-3"
 
 SLOT="0"
@@ -29,6 +29,17 @@ IUSE="acl addc addns ads ceph client cluster cups debug dmapi fam gpg iprint
 json ldap pam profiling-data python quota selinux syslog system-heimdal
 +system-mitkrb5 systemd test winbind zeroconf
 afs sasl cpu_flags_x86_aes nls lmdb etcd system-ldb snapper"
+
+REQUIRED_USE="${PYTHON_REQUIRED_USE}
+	addc? ( python json winbind )
+	addns? ( python )
+	ads? ( acl ldap winbind )
+	cluster? ( ads )
+	gpg? ( addc )
+	test? ( python )
+	!ads? ( !addc )
+	?? ( system-heimdal system-mitkrb5 )
+	"
 
 MULTILIB_WRAPPED_HEADERS=(
 	/usr/include/samba-4.0/policy.h
@@ -52,15 +63,15 @@ CDEPEND="
 	net-libs/libnsl:=[${MULTILIB_USEDEP}]
 	sys-libs/e2fsprogs-libs[${MULTILIB_USEDEP}]
 	  sys-apps/attr[${MULTILIB_USEDEP}]
-	system-ldb? ( sys-libs/ldb )
+	system-ldb? ( sys-libs/ldb[ldap(+)?,${MULTILIB_USEDEP}] )
 	!system-ldb? ( !sys-libs/ldb )
 	sys-libs/libcap[${MULTILIB_USEDEP}]
-	sys-libs/liburing[${MULTILIB_USEDEP}]
+	sys-libs/liburing:=[${MULTILIB_USEDEP}]
 	sys-libs/ncurses:0=
 	sys-libs/readline:0=
-	>=sys-libs/talloc-2.3.1[python?,${PYTHON_SINGLE_USEDEP},${MULTILIB_USEDEP}]
-	>=sys-libs/tdb-1.4.3[python?,${PYTHON_SINGLE_USEDEP},${MULTILIB_USEDEP}]
-	>=sys-libs/tevent-0.10.2[python?,${PYTHON_SINGLE_USEDEP},${MULTILIB_USEDEP}]
+	>=sys-libs/talloc-2.3.1[${MULTILIB_USEDEP}]
+	>=sys-libs/tdb-1.4.3[${MULTILIB_USEDEP}]
+	>=sys-libs/tevent-0.10.2[${MULTILIB_USEDEP}]
 	sys-libs/zlib[${MULTILIB_USEDEP}]
 	virtual/libiconv
 	pam? ( sys-libs/pam )
@@ -116,16 +127,6 @@ RDEPEND="${CDEPEND}
 	client? ( net-fs/cifs-utils[ads?] )
 	selinux? ( sec-policy/selinux-samba )
 "
-
-REQUIRED_USE="
-	addc? ( python json winbind )
-	test? ( python )
-	addns? ( python )
-	ads? ( acl ldap winbind )
-	cluster? ( ads )
-	gpg? ( addc )
-	?? ( system-heimdal system-mitkrb5 )
-	${PYTHON_REQUIRED_USE}"
 
 # the test suite is messed, it uses system-installed samba
 # bits instead of what was built, tests things disabled via use
