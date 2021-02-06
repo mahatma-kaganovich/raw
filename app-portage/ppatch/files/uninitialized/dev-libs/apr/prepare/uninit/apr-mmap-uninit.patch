@@ -1,0 +1,53 @@
+--- a/memory/unix/apr_pools.c	2018-04-04 19:29:18.000000000 +0300
++++ b/memory/unix/apr_pools.c	2021-02-06 18:56:12.000000000 +0300
+@@ -46,6 +46,12 @@
+ 
+ #if APR_ALLOCATOR_USES_MMAP
+ #include <sys/mman.h>
++#if defined(__linux__) && !defined(MAP_UNINITIALIZED)
++#include <asm-generic/mman-common.h>
++#endif
++#ifndef MAP_UNINITIALIZED
++#define MAP_UNINITIALIZED 0
++#endif
+ #endif
+ 
+ #if HAVE_VALGRIND
+@@ -403,10 +409,10 @@ apr_memnode_t *allocator_alloc(apr_alloc
+      */
+ #if APR_ALLOCATOR_GUARD_PAGES
+     if ((node = mmap(NULL, size + 2 * GUARDPAGE_SIZE, PROT_NONE,
+-                     MAP_PRIVATE|MAP_ANON, -1, 0)) == MAP_FAILED)
++                     MAP_PRIVATE|MAP_ANON|MAP_UNINITIALIZED, -1, 0)) == MAP_FAILED)
+ #elif APR_ALLOCATOR_USES_MMAP
+     if ((node = mmap(NULL, size, PROT_READ|PROT_WRITE,
+-                     MAP_PRIVATE|MAP_ANON, -1, 0)) == MAP_FAILED)
++                     MAP_PRIVATE|MAP_ANON|MAP_UNINITIALIZED, -1, 0)) == MAP_FAILED)
+ #else
+     if ((node = malloc(size)) == NULL)
+ #endif
+--- a/mmap/unix/mmap.c	2006-08-03 13:55:31.000000000 +0300
++++ b/mmap/unix/mmap.c	2021-02-06 18:57:16.000000000 +0300
+@@ -40,6 +40,13 @@
+ #include <sys/mman.h>
+ #endif
+ 
++#if defined(__linux__) && !defined(MAP_UNINITIALIZED)
++#include <asm-generic/mman-common.h>
++#endif
++#ifndef MAP_UNINITIALIZED
++#define MAP_UNINITIALIZED 0
++#endif
++
+ #if APR_HAS_MMAP || defined(BEOS)
+ 
+ static apr_status_t mmap_cleanup(void *themmap)
+@@ -130,7 +137,7 @@ APR_DECLARE(apr_status_t) apr_mmap_creat
+         native_flags |= PROT_READ;
+     }
+ 
+-    mm = mmap(NULL, size, native_flags, MAP_SHARED, file->filedes, offset);
++    mm = mmap(NULL, size, native_flags, MAP_SHARED|MAP_UNINITIALIZED, file->filedes, offset);
+ 
+     if (mm == (void *)-1) {
+         /* we failed to get an mmap'd file... */
