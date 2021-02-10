@@ -1,7 +1,8 @@
 #!/bin/sh
 
 modalias(){ ALIAS=`find -name "$1.ko"`;return $?;}
-cd /lib/modules/${KV:=`uname -r||ls /lib//modules`}
+[[ -n "$KV" ]] || read KV </proc/version || KV=`ls /lib//modules`
+cd /lib/modules/$KV
 [ -e ./modules.alias.sh ] && . ./modules.alias.sh # || return 1
 modparam(){
 	PARAM="${1##*/}"

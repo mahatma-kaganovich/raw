@@ -1,5 +1,5 @@
 #!/bin/sh
-VERSION=0.8
+VERSION=0.9
 HELP="init for early userspace v$VERSION, (c) Denis Kaganovich, Anarchy or GPLv2 license
 
 Main goal: scan '/sys/*/uevent' for MODALIASes (without grep, sed...)
@@ -17,8 +17,6 @@ or \"$0 --dry-run [<dir>]\"
 
 #[ -e /dev/shm ] && : ${TMPDIR:=/dev/shm}
 tmp="${TMPDIR:-/tmp}/init_"
-KV=`uname -r||ls /lib/modules`
-libmod="/lib/modules/$KV"
 BOOT=false
 MOUNTED=false
 modprobe="$0"
@@ -35,6 +33,11 @@ msg=true
 
 _i(){
 	$rm -f "install/$1" "remove/$1"
+}
+
+KV(){
+	read KV </proc/version || KV=`uname -r||ls /lib/modules`
+	libmod="/lib/modules/$KV"
 }
 
 modprobe(){
@@ -137,6 +140,7 @@ echo always >$d/shmem_enabled
 init(){
 local i='-o nosuid,nodev,noexec' l
 mount -t proc $i proc /proc && mount -t sysfs $i sys /sys || return
+KV
 BOOT=true
 mkdir /newroot
 [ -e /bin/busybox ] && /bin/busybox --install -s
@@ -527,6 +531,7 @@ doinit=true
 case $0 in
 */kpnp)doinit=false;;
 */modprobe)
+	KV
 	A="a$$"
 	modprobe "${@}"
 	dep
@@ -535,7 +540,7 @@ case $0 in
 ;;
 esac
 
-[ -e /proc/version ] || init
+[ -e /proc/version ] && KV || init
 false && if /sbin/modprobe -aVA >/dev/null 2>&1; then
 	modprobe=/sbin/modprobe
 	$BOOT && echo /sbin/modprobe >/proc/sys/kernel/modprobe

@@ -1,5 +1,5 @@
 #!/bin/sh
-## pnp modules bootloader v0.22
+## pnp modules bootloader v0.23
 ## (c) Denis Kaganovich, under Anarchy license
 ## consume preprocessed /lib/modules/$KV/modules.alias
 
@@ -1235,13 +1235,14 @@ mount -t proc proc /proc
 mount -t sysfs sys /sys
 echo /sbin/mdev >/proc/sys/kernel/hotplug
 cd /sys
+read KV </proc/version
+export KV
 if [[ -e /dev/null ]] || /sbin/mdev -s mem; then
 	/sbin/mdev -s &
 else
 	/sbin/mdev -s
 fi
 #pids="$pids$! "
-KV=`uname -r`
 pnp_init
 early_huge
 rm /sbin/modprobe 2>/dev/null
