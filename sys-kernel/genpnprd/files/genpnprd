@@ -89,7 +89,7 @@ preserve_start(){
 	$PNPONLY || /usr/bin/perl "$UROOT/usr/share/genpnprd/mod2sh.pl" "$tmp/preserve/lib/modules/${KV}"
 	cd "$rcdir"
 	if ! $LIBLOOP; then
-		mv "$rcdir"/{etc,sys,proc} "$tmp/preserve/" || die
+		mv "$rcdir"/{etc,sys,proc,kernel,dev} "$tmp/preserve/" || die
 		find .|sort|while read m; do
 			[[ "$m" == ./* ]] || continue
 			m="${m#./}"
