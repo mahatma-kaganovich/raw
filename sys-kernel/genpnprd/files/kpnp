@@ -36,7 +36,7 @@ _i(){
 }
 
 KV(){
-	read KV </proc/version || KV=`uname -r||ls /lib/modules`
+	read KV </proc/sys/kernel/osrelease || KV=`uname -r||ls /lib/modules`
 	libmod="/lib/modules/$KV"
 }
 

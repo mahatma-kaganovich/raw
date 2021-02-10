@@ -304,7 +304,7 @@ case "$i" in
 esac
 [[ -b "$i" ]] && ( $DETECTBLK || [[ -d /etc/modalias ]] ) && [[ "`cat "/sys$DEVPATH/size" 2>/dev/null`" != 0 ]] && {
 		loadsh blkid
-		[[ -z "$KV" ]] && read KV </proc/version
+		[[ -z "$KV" ]] && read KV </proc/sys/kernel/osrelease
 		local id="`blkid $i`" d p o t x
 		modprobe $Q -a $(echo " $id"|_fs) 2>>$O
 		$new && {

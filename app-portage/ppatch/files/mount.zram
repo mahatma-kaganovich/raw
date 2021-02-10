@@ -11,7 +11,7 @@ try=
 # remount
 try1='discard dioread_nolock noblock_validity lazytime nobarrier delalloc'
 
-read kv </proc/version && [ "${kv%%.*}" -gt 3 ] || fs='ext4:-E:discard'
+read kv </proc/sys/kernel/osrelease && [ "${kv%%.*}" -gt 3 ] || fs='ext4:-E:discard'
 
 wait='true true true true true true false'
 
