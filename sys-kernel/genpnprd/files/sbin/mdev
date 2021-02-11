@@ -15,13 +15,13 @@ RW_RO_FAIL=1
 
 mdevs(){
 	local i pid
-	[[ -e "$1" ]] && for i in $*; do
+	[ -e "$1" ] && for i in $*; do
 		local DEVNAME="" MAJOR="" MINOR="" FIRMWARE="" DEVPATH="/../${i%/uevent}" DEVMODE=""
 		eval "$(sed -e 's:^\(.*\)=\([^"].*[^"]\)$:\1="\2":g' -e 's/^[^=]*$//g' <"$i")" # || echo "! $i"
 		i="${i#/sys/class/}"
 #		MODALIAS=""
 		case $ACTION in
-		*add)[[ -e "/dev/$DEVNAME" ]] || _mdev "${i%%/*}";;
+		*add)[ -e "/dev/$DEVNAME" ] || _mdev "${i%%/*}";;
 		*)_mdev "${i%%/*}";;
 		esac
 	done
@@ -29,8 +29,8 @@ mdevs(){
 
 modprobe(){
 	local i m c
-	read m </proc/sys/kernel/modprobe && [[ -x "$m" ]] || m="busybox modprobe"
-	if [[ "$2" == "-a" ]] && ! $m -V -a >/dev/null 2>&1; then
+	read m </proc/sys/kernel/modprobe && [ -x "$m" ] || m="busybox modprobe"
+	if [ "$2" = '-a' ] && ! $m -V -a >/dev/null 2>&1; then
 		shift 2
 		for i in "${@}"; do
 			$m $Q "$i"
@@ -41,16 +41,16 @@ modprobe(){
 }
 
 modmdev(){
-	[[ -z "$MODALIAS" ]] && return
-	! [[ -d /etc/modalias ]] && echo " $MODALIAS" >>/etc/modalias || {
+	[ -z "$MODALIAS" ] && return
+	! [ -d /etc/modalias ] && echo " $MODALIAS" >>/etc/modalias || {
 		loadsh modprobe
 		modprobe "${@}" $MODALIAS 2>>$O
 	}
 }
 
 loadsh(){
-	[[ "${SHLOADED##* $1 }" == "${SHLOADED}" ]] &&
-		[[ -e /etc/$1.sh ]] && . /etc/$1.sh && SHLOADED="$SHLOADED $1 "
+	[ "${SHLOADED##* $1 }" = "${SHLOADED}" ] &&
+		[ -e /etc/$1.sh ] && . /etc/$1.sh && SHLOADED="$SHLOADED $1 "
 	return $?
 }
 
@@ -63,11 +63,11 @@ _fs(){
 	for i in `grep ":.* TYPE="|sed -e 's%^/dev/\([^ ]*\):.* TYPE="swsuspend".*$%0susp:\1%' -e 's:^.* TYPE="\([^"]*\)".*$:\1:g'|sort -u`; do
 		grep -q "	$i$" /proc/filesystems && continue
 		case "$i" in
-		lvm2*)	[[ -e /dev/mapper/control ]] && continue
+		lvm2*)	[ -e /dev/mapper/control ] && continue
 			i="/md/dm-.*"
 		;;
 		# fixme:suspend2dm
-		0susp:*)[[ "${_cmd_resume}" == _ ]] && cat "/sys/class/block/${i#0susp:}/dev" >/sys/power/resume && echo "0:0" >/sys/power/resume
+		0susp:*)[ "${_cmd_resume}" = _ ] && cat "/sys/class/block/${i#0susp:}/dev" >/sys/power/resume && echo "0:0" >/sys/power/resume
 		;;
 		*)grep -q "	$i$" /proc/filesystems && continue;;
 		esac
@@ -83,9 +83,9 @@ mnt0(){
 
 mnt(){
 	local t="${t:-auto}" m=
-	[[ "$t" == auto ]] || {
+	[ "$t" = auto ] || {
 		grep -q "	$t$" /proc/filesystems || modprobe $Q -a `mods "$t"`
-		[[ -x "/sbin/mount.$t" ]] && m="/sbin/mount.$t"
+		[ -x "/sbin/mount.$t" ] && m="/sbin/mount.$t"
 	}
 	${m:-mount -t "$t"} -o "${o:-${__cmd_rw}}" "$DEVNAME" $p 2>>$O
 	return $?
@@ -104,10 +104,10 @@ lofind(){
 }
 
 try_mnt(){
-	if [[ "$p" == /newroot ]] && ! grep -sq "^/dev/[^ ]* / " /proc/mounts /etc/mtab; then
+	if [ "$p" = /newroot ] && ! grep -sq "^/dev/[^ ]* / " /proc/mounts /etc/mtab; then
 		mkdir $p 2>>$O || return 1
-		mnt && ( [[ -x $p$cmd_init ]] && fstab "$p" / || ( umount $p;false ) ) || rmdir $p
-		[[ -e $p ]]
+		mnt && ( [ -x $p$cmd_init ] && fstab "$p" / || ( umount $p;false ) ) || rmdir $p
+		[ -e $p ]
 	else
 		mnt
 	fi
@@ -115,8 +115,8 @@ try_mnt(){
 }
 
 try_mnt_loop(){
-	[[ -f "$root/$DEVNAME" ]] && {
-		[[ -e /sys/class/block/loop0 ]] || {
+	[ -f "$root/$DEVNAME" ] && {
+		[ -e /sys/class/block/loop0 ] || {
 			modprobe $Q loop 2>>$O
 			local ACTION=add
 			mdevs /sys/class/block/loop*/uevent
@@ -135,10 +135,10 @@ try_mnt_loop(){
 try_mnt_loop_wild(){
 	try_mnt_loop && return 0
 	local DEVNAME i
-	[[ -n "${DEVNAME##/dev/*}" ]] && DEVNAME="$root/$DEVNAME"
+	[ -n "${DEVNAME##/dev/*}" ] && DEVNAME="$root/$DEVNAME"
 	i="$DEVNAME"
 	for DEVNAME in $i; do
-		[[ "$DEVNAME" != "$i" ]] && ( [[ -f "$DEVNAME" ]] || [[ -b "$DEVNAME" ]] ) && try_mnt_loop && return 0
+		[ "$DEVNAME" != "$i" ] && ( [ -f "$DEVNAME" ] || [ -b "$DEVNAME" ] ) && try_mnt_loop && return 0
 	done
 	return 1
 }
@@ -147,7 +147,7 @@ _fsck(){
 	case $?:$RW_RO_FAIL in
 	[01]:*)true;;
 	[23]:*)reboot -f;;
-	16:2) [[ -n "$*" ]] && ( "${@}" || _fsck );; # ocfs2 -y
+	16:2) [ -n "$*" ] && ( "${@}" || _fsck );; # ocfs2 -y
 	8:*|16:*)$x -n "$DEVNAME";;
 	*)false;;
 	esac
@@ -157,23 +157,23 @@ _fsck(){
 _fstab(){
 	local d p t o x a root="$1"
 	while read d p t o x; do
-		[[ -n "${p##$2}" ]] || if [[ -n "$3" ]]; then
-			[[ -n "${3##$d}" ]] || return 0
-		elif [[ -z "$1" ]]; then
+		[ -n "${p##$2}" ] || if [ -n "$3" ]; then
+			[ -n "${3##$d}" ] || return 0
+		elif [ -z "$1" ]; then
 			local DEVNAME="$d"
 			try_mnt_loop_wild
-		elif [[ "$1" == / ]]; then
+		elif [ "$1" = / ]; then
 			# loop,nfs,...
 			local DEVNAME="$d"
 			try_mnt_loop
-		elif [[ -z "${DEVNAME##$d}" ]]; then
-			[[ "${__cmd_rw}" == ro ]] || [[ -w "$p" ]] || {
+		elif [ -z "${DEVNAME##$d}" ]; then
+			[ "${__cmd_rw}" = ro ] || [ -w "$p" ] || {
 				o="remount,${o:-${__cmd_rw}}"
 				while read d a t x; do
-					[[ "$d:$a" == "$DEVNAME:$p" ]] || continue
+					[ "$d:$a" = "$DEVNAME:$p" ] || continue
 					x="/sbin/fsck.$t"
-					[[ -x "$x" ]] || break
-					[[ $RW_RO_FAIL != 0 ]] && {
+					[ -x "$x" ] || break
+					[ $RW_RO_FAIL != 0 ] && {
 						umount "$p"
 						o="${o:-${__cmd_rw}}"
 					}
@@ -192,14 +192,14 @@ _fstab(){
 		/dev/md*)
 			a=
 			mdadm --examine --scan -v|while read x; do
-				if [[ "${i#ARRAY $d }" != "$x" ]]; then
+				if [ "${i#ARRAY $d }" != "$x" ]; then
 					a=1
-				elif [[ "${x#ARRAY }" != "$x" ]]; then
+				elif [ "${x#ARRAY }" != "$x" ]; then
 					a=
 				else
 					x=" $x"
 				fi
-				[[ -n "$a" ]] && echo " $x"
+				[ -n "$a" ] && echo " $x"
 			done >>/etc/mdadm.conf
 			modprobe $Q -a `grep " level=" /etc/mdadm.conf | sed -e 's:^.* level=\([^ ]*\) .*$:\1:g' | sort -u`
 			mdadm --assemble --scan || {
@@ -219,7 +219,7 @@ _fstab(){
 			}
 			blk2=true
 		;;
-		/dev/mapper*)	[[ -e /dev/mapper/control ]] || {
+		/dev/mapper*)	[ -e /dev/mapper/control ] || {
 				modprobe $Q -a $(mods "md/dm-*")
 				blk2=true
 		};;
@@ -229,7 +229,7 @@ _fstab(){
 }
 
 fstab_(){
-	[[ -n "$cmd_root" ]] && [[ "${1:-/}" == / ]] && echo " $cmd_root /newroot"
+	[ -n "$cmd_root" ] && [ "${1:-/}" = / ] && echo " $cmd_root /newroot"
 	sed -e 's:#.*$::g' -e '/^[ 	]*$/d' <$1/etc/fstab
 }
 
@@ -243,13 +243,13 @@ cpufreq(){
 	grep -sq UltraSPARC /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor && return
 	case "$cmd_cpufreq" in
 	performance|powersave|"")
-		[[ -z "$cmd_intel_pstate" ]] && echo active >/sys/devices/system/cpu/intel_pstate/status 2>/dev/null
+		[ -z "$cmd_intel_pstate" ] && echo active >/sys/devices/system/cpu/intel_pstate/status 2>/dev/null
 	;;
 	esac
 	/sbin/onbatt && f=min || f=max
 	for c in /sys/devices/system/cpu/cpu*/cpufreq; do
 		g="$c/scaling_available_governors"
-		[[ -e "$g" ]] || continue
+		[ -e "$g" ] || continue
 		i=
 		case "$f:`cat $g`$cmd_cpufreq" in
 		max*ondemand*)i=ondemand;;
@@ -258,7 +258,7 @@ cpufreq(){
 		max*perfomance*)i=perfomance;;
 		esac
 		echo "$i" >$c/scaling_governor ||
-			[[ "${_cmd_cpufreq}" == _ ]] ||
+			[ "${_cmd_cpufreq}" = _ ] ||
 			cat $c/cpuinfo_${f}_freq >$c/scaling_setspeed ||
 			cat $c/cpuinfo_${f}_freq >$c/scaling_max_freq
 	done 2>/dev/null
@@ -276,16 +276,16 @@ add)
 	new=true
 ;;
 esac
-if [[ -n "$FIRMWARE" ]] && echo 1 >/sys/$DEVPATH/loading; then
-	[[ -e /lib/firmware/$FIRMWARE ]] && cat /lib/firmware/$FIRMWARE >/sys/$DEVPATH/data && echo 0 >/sys/$DEVPATH/loading || echo -1 >/sys/$DEVPATH/loading
+if [ -n "$FIRMWARE" ] && echo 1 >/sys/$DEVPATH/loading; then
+	[ -e /lib/firmware/$FIRMWARE ] && cat /lib/firmware/$FIRMWARE >/sys/$DEVPATH/data && echo 0 >/sys/$DEVPATH/loading || echo -1 >/sys/$DEVPATH/loading
 fi
-[[ -n "$DEVNAME" ]] && {
+[ -n "$DEVNAME" ] && {
 DEVNAME="/dev/$DEVNAME"
 i="$DEVNAME"
 case "$ACTION" in
 change)
-	[[ -n "$MAJOR$MINOR" ]] && rm "$i"
-#	[[ $t == b ]] && ( sync;mount "$i" -o remount 2>>&$O )
+	[ -n "$MAJOR$MINOR" ] && rm "$i"
+#	[ $t = b ] && ( sync;mount "$i" -o remount 2>>&$O )
 ;;
 remove)
 	rm "$i"
@@ -297,21 +297,21 @@ remove)
 #online|offline|move);;
 esac
 mkdir -p "${i%/*}"
-! [[ -e "$i" ]] && mknod -m ${DEVMODE:-0600} "$i" $t "$MAJOR" "$MINOR" && new=true
+! [ -e "$i" ] && mknod -m ${DEVMODE:-0600} "$i" $t "$MAJOR" "$MINOR" && new=true
 case "$i" in
 /dev/mapper/control)vgchange -ay --ignorelockingfailure 2>>$O;;
 /dev/loop*)new=false;; # vs "fixed" umount
 esac
-[[ -b "$i" ]] && ( $DETECTBLK || [[ -d /etc/modalias ]] ) && [[ "`cat "/sys$DEVPATH/size" 2>/dev/null`" != 0 ]] && {
+[ -b "$i" ] && ( $DETECTBLK || [ -d /etc/modalias ] ) && [ "`cat "/sys$DEVPATH/size" 2>/dev/null`" != 0 ] && {
 		loadsh blkid
-		[[ -z "$KV" ]] && read KV </proc/sys/kernel/osrelease
+		[ -z "$KV" ] && read KV </proc/sys/kernel/osrelease
 		local id="`blkid $i`" d p o t x
 		modprobe $Q -a $(echo " $id"|_fs) 2>>$O
 		$new && {
 		id="$i `echo " $id"|sed -e 's/^ [^ ]*://' -e 's:\( [A-Z]*=\)\"\([^"]*\)\":\1\2\1"\2":g'`" #'
 		fstab_|while read d p t o x; do
 			for j in $id; do
-				[[ -n "${j##$d}" ]] || {
+				[ -n "${j##$d}" ] || {
 					try_mnt
 					break
 				}
@@ -324,9 +324,9 @@ esac
 
 plug(){
 	local i
-	[[ -e /etc/rdinit.d/$1 ]] && for i in `ls -1 /etc/rdinit.d/$1/`; do
+	[ -e /etc/rdinit.d/$1 ] && for i in `ls -1 /etc/rdinit.d/$1/`; do
 		i="/etc/rdinit.d/$1/$i"
-		[[ -f "$i" ]] && case "$i" in
+		[ -f "$i" ] && case "$i" in
 		*.sh). "$i";;
 		*)"$i";;
 		esac
@@ -335,9 +335,9 @@ plug(){
 
 mdev(){
 local i j x
-while [[ -n "$*" ]]; do
+while [ -n "$*" ]; do
 case "$1" in
--v|-vs)Q=$1;O=/dev/stderr;[[ -e $O ]]||O=/dev/console;;
+-v|-vs)Q=$1;O=/dev/stderr;[ -e $O ]||O=/dev/console;;
 -q|-qs)Q=$1;O=/dev/null;;
 -b)DETECTBLK=true;;
 -m|-i|-M)
@@ -347,7 +347,7 @@ case "$1" in
 	-M)modprobe $Q -a  $(cd /etc/modflags && cat $(cat /sys/bus/acpi/devices/*/path|sed -e 's:^\\::') $(grep "^vendor_id\|^flags" /proc/cpuinfo|sort -u) $(ls -1 /sys/module) </dev/null 2>/dev/null) 2>>$O;;
 	-m)modprobe $Q -a `ls -1 $C/*. 2>/dev/null|sed -e 's:.*/\(.*\).:\1:'` `echo ""|grep -sh "^MODALIAS=" $(grep -sL "^DRIVER=" $(find /sys -name uevent|sort))|sed -e 's:^MODALIAS=::g' -e 's:[ -]:_:g'|uniq` 2>>$O;;
 	esac
-	while ! ( [[ "$1" == "-i" ]] && ln -s /sys $i 2>/dev/null ) && [[ -f $i ]] && mv $i ${i}_ ; do
+	while ! ( [ "$1" = "-i" ] && ln -s /sys $i 2>/dev/null ) && [ -f $i ] && mv $i ${i}_ ; do
 		modprobe $Q -a `cat ${i}_` 2>>$O
 		rm ${i}_
 	done
@@ -358,7 +358,7 @@ case "$1" in
 ;;
 -s|-S)
 	local ACTION
-	[[ "$1" == "-S" ]] && ACTION=_change || ACTION=_add
+	[ "$1" = "-S" ] && ACTION=_change || ACTION=_add
 	shift
 	for i in "${@:-"*"}"; do
 		case "$i" in
@@ -392,7 +392,7 @@ case "$1" in
 	mdev -M
 	plug load0
 	i="-"
-	while ! ( [[ $1 == -fastinit ]] && [[ -e /newroot ]] ) && j=`cat /proc/modules` && [[ "$i" != "$j" ]]; do
+	while ! ( [ $1 = -fastinit ] && [ -e /newroot ] ) && j=`cat /proc/modules` && [ "$i" != "$j" ]; do
 		echo -n .
 		mdev -m -w -s block misc
 		while $blk2; do
@@ -400,13 +400,13 @@ case "$1" in
 			mdev -s misc block
 		done
 		plug load
-		[[ -n "${_cmd_rootwait}" ]] && sleep "${_cmd_rootwait}"
+		[ -n "${_cmd_rootwait}" ] && sleep "${_cmd_rootwait}"
 		REORDER=
 		i="$j"
 	done
 	modprobe $Q -a $(cd /etc/modflags && cat $(ls -1 /sys/module) </dev/null 2>/dev/null) 2>>$O
 	plug load1
-	[[ -e /newroot ]] || {
+	[ -e /newroot ] || {
 		fstab / /newroot
 		while $blk2; do
 			blk2=false
@@ -421,7 +421,7 @@ case "$1" in
 	cat /proc/uptime
 	while true; do
 	cd /newroot && {
-		! [[ -w /newroot ]] && [[ "${_cmd_fsck}" ==  _ ]] && {
+		! [ -w /newroot ] && [ "${_cmd_fsck}" =  _ ] && {
 			/sbin/fsck -C0 -T -p /newroot
 			case $? in
 			0|1)mount /newroot -o remount,rw;;
@@ -438,7 +438,7 @@ case "$1" in
 	}
 	ln -s $0 /sbin/hotplug
 	mdev -m -s "*" -i
-	[[ "${__cmd_rootwait}" == "_" ]] || break
+	[ "${__cmd_rootwait}" = _ ] || break
 	sleep 1
 	done
 	shift
@@ -471,8 +471,8 @@ cmd(){
 	local x y
 	read x </proc/cmdline
 	[ -e /cmdline ] && x="$x $(cat /cmdline)"
-	[[ -e $C/cmdline ]] && read y <$C/cmdline && [[ "$x" != "$y" ]] && rm "$C" -Rf
-	[[ -e $C/cmd ]] && . $C/cmd || {
+	[ -e $C/cmdline ] && read y <$C/cmdline && [ "$x" != "$y" ] && rm "$C" -Rf
+	[ -e $C/cmd ] && . $C/cmd || {
 	mkdir -p $C # /etc/modules/ /etc/modprobe.d/
 	xargs -n1 </proc/cmdline >$C/cmdline_
 	cp /proc/cmdline $C/cmdline
@@ -492,11 +492,11 @@ cmd(){
 	export|grep " [_]*cmd_" >$C/cmd
 #	rm -Rf /etc/modules/* # genkernel
 	for x in $C/*.*; do
-		[[ -e "$x" ]] && read y <"$x" && [[ -n "$y" ]] || continue
+		[ -e "$x" ] && read y <"$x" && [ -n "$y" ] || continue
 		x="${x#$C/}"
 		x="${x%%.*}"
-		[[ -w /etc/modules/ ]] && echo -ne " $y" >>"/etc/modules/$x"
-		[[ -w /etc/modprobe.d/ ]] && echo "options $x $y" >>/etc/modprobe.d/cmdline.conf
+		[ -w /etc/modules/ ] && echo -ne " $y" >>"/etc/modules/$x"
+		[ -w /etc/modprobe.d/ ] && echo "options $x $y" >>/etc/modprobe.d/cmdline.conf
 	done
 	}
 }

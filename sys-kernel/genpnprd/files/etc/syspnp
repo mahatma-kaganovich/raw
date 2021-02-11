@@ -3,7 +3,7 @@
 ## (c) Denis Kaganovich, under Anarchy license
 ## consume preprocessed /lib/modules/$KV/modules.alias
 
-[[ -z "$TMPDIR" ]] && [[ -e /temp ]] && TMPDIR="/temp"
+[ -z "$TMPDIR" ] && [ -e /temp ] && TMPDIR="/temp"
 
 ## millisecons
 #SYS_FIND="/sys"
@@ -30,7 +30,7 @@ _tee(){
 	local s="$1" i r=1
 	shift
 	for i in "${@}"; do
-		[[ -e "$i" ]] && echo "$s" >"$i" && r=0
+		[ -e "$i" ] && echo "$s" >"$i" && r=0
 	done 2>/dev/null
 	return $r
 }
@@ -55,7 +55,7 @@ mod(){
 		while [ -z "${m##*-*}" ]; do
 			m="${m%%-*}_${m#*-}"
 		done
-		[[ -e "/sys/module/$m" ]] && continue # fast
+		[ -e "/sys/module/$m" ] && continue # fast
 		$CHK "$m" 0 || continue
 		modalias "$m" || {
 			echo ">$m<" >>"${PNP_TMP}".4
@@ -68,7 +68,7 @@ mod(){
 			for m1 in $ALIAS ; do
 				modparam $m1
 				$INSMOD
-				[[ -e "$m1" ]] &&
+				[ -e "$m1" ] &&
 				m2="$m2 insmod "$m1" $PARAM ;" ||
 				pnpass=1
 			done
@@ -84,10 +84,10 @@ mod(){
 		esac
 		for m1 in $ALIAS ; do
 #			m="${m1##*/}"
-#			[[ -e "/sys/module/${m%.ko}" ]] && continue
+#			[ -e "/sys/module/${m%.ko}" ] && continue
 			modparam $m1
 			$INSMOD
-			[[ -e "$m1" ]] || {
+			[ -e "$m1" ] || {
 				pnpass=1
 				continue
 			}
@@ -105,18 +105,18 @@ mod_fast(){
 	local m f= p=
 	for m in "${@}"; do
 		m=${m//-/_}
-		[[ -e "/sys/module/$m" ]] && continue
+		[ -e "/sys/module/$m" ] && continue
 		modalias "$m" || continue
 		for m in $ALIAS ; do
-			[[ "$m" == "$f" ]] && continue
+			[ "$m" = "$f" ] && continue
 			f="$m"
 			m="${m##*/}"
 			m="${m%.ko}"
 			m=${m//-/_}
-			[[ -e "/sys/module/$m" ]] && continue
+			[ -e "/sys/module/$m" ] && continue
 			modparam $f
 			$INSMOD
-			[[ -e "$f" ]] || break
+			[ -e "$f" ] || break
 			$p
 			$cmd_quiet || echo -ne "\033[0G\033[0K$LCOUNT	$m $PARAM "
 			insmod "$f" ${PARAM:+"$PARAM"} &
@@ -128,7 +128,7 @@ mod_fast(){
 }
 
 _wait(){
-	[[ -n "$pid$pids" ]] && {
+	[ -n "$pid$pids" ] && {
 		wait $pid $pids
 		pid=
 		pids=
@@ -159,39 +159,39 @@ refresh(){
 	_wait
 	sed -e 's%^\([^ 	]*\)[	 ]*.*$%>\1<%g' </proc/modules >"${PNP_TMP}".1
 	cat `grep -ls "^DRIVER=" $(find $SYS_FIND -name uevent -print 2>/dev/null) </dev/null` </dev/null |grep "^DRIVER=\|^MODALIAS="|sed -e 's%-%_%g' -e 's%^.*=\(.*\)$%>\1<%g' >>"${PNP_TMP}".1
-	if [[ "$(cat ${PNP_TMP}.1 $checks)" == "$(cat ${PNP_TMP}.2)" ]] ; then
+	if [ "$(cat ${PNP_TMP}.1 $checks)" = "$(cat ${PNP_TMP}.2)" ] ; then
 		cat "${PNP_TMP}".3 "${PNP_TMP}".4 >"${PNP_TMP}".0
 		if grep -q "[/]sbin/mdev" /proc/*/cmdline; then
 			REFRESH_SAME=''
-			[[ "$1" == "n" ]] && REFRESH_SAME=1
+			[ "$1" = "n" ] && REFRESH_SAME=1
 			return 0
 		fi
-		[[ "$REFRESH_SAME$1" == "n" ]] || return 1
+		[ "$REFRESH_SAME$1" = "n" ] || return 1
 		return 0
 	fi
 	sort -u "${PNP_TMP}".1 >"${PNP_TMP}".0
 	if ! $cmd_quiet ; then
 		echo -ne "\033[0G\033[0K${BOLD}   ::${NORMAL}Loaded:"
 		for i in $(sort -m ${PNP_TMP}.0 ${PNP_TMP}.3 | uniq -u) ; do
-			[[ "$1" == "n" ]] && echo "$i" >>/nopnp.lst
+			[ "$1" = "n" ] && echo "$i" >>/nopnp.lst
 			i="${i#>}"
 			i="${i%<}"
-			[[ -e "/sys/module/$i" ]] && echo -ne " $i"
+			[ -e "/sys/module/$i" ] && echo -ne " $i"
 		done
 		echo ""
-	elif $cmd_unload && [[ "$1" == "n" ]] ; then
+	elif $cmd_unload && [ "$1" = "n" ] ; then
 		sort -m ${PNP_TMP}.0 ${PNP_TMP}.3 | uniq -u >>/nopnp.lst
 	fi
 	cat "${PNP_TMP}".1 $checks >"${PNP_TMP}".2
 	cp "${PNP_TMP}".0 "${PNP_TMP}".3
 	cat "${PNP_TMP}".4 >>"${PNP_TMP}".0
 	REFRESH_SAME=''
-	[[ "$1" == "n" ]] && REFRESH_SAME=1
+	[ "$1" = "n" ] && REFRESH_SAME=1
 	return 0
 }
 
 count(){
-	[[ "${LCOUNT#????????????????}" == "${LCOUNT}" ]] && return 0
+	[ "${LCOUNT#????????????????}" = "${LCOUNT}" ] && return 0
 	bmsg "Deadloop?"
 	return 1
 }
@@ -212,7 +212,7 @@ mnt_loop(){
 
 root_fsck_rw(){
 	# -w not working here
-#	[[ -w "$1" ]] && return
+#	[ -w "$1" ] && return
 	local b
 	b="$(grep "^[^ ]* $1 .* ro," /proc/mounts)" || return
 	b="${b%% *}"
@@ -236,7 +236,7 @@ upcase(){
 }
 
 part_(){
-	[[ -b "$1" ]] && echo "$*" && return
+	[ -b "$1" ] && echo "$*" && return
 	( blkid $1 || blkid -t "$1" ) | sed -e 's:^.* TYPE="swap".*$::g' -e 's/:.*$//g'
 }
 
@@ -317,20 +317,20 @@ mod_unload(){
 	else
 		root_fsck_rw "$NEW_ROOT"
 	fi
-	[[ "${cmd_rootoverlay:-false}" != false ]] && zram_overlay $(echo "$cmd_rootoverlay"|sed -e 's/:/ /g')
+	[ "${cmd_rootoverlay:-false}" != false ] && zram_overlay $(echo "$cmd_rootoverlay"|sed -e 's/:/ /g')
 	if grep -q "^[^ ]* $NEW_ROOT squashfs" /proc/mounts; then
 		echo -ne "(squashfs)"
 		mkdir -p /etc/mnt
 		cp -a $NEW_ROOT/mnt/* /etc/mnt
 		mount -t ramfs none $NEW_ROOT/mnt -o rw,noatime,nodiratime && cp -a /etc/mnt/* $NEW_ROOT/mnt
-		[[ -e /etc/resolv.conf ]] && {
+		[ -e /etc/resolv.conf ] && {
 			sort -u /etc/resolv.conf >$r/etc/resolv.conf
 			h="${NFSROOT:-$REAL_ROOT}"
 			x="${h##//}"
 			x="${x%%[:/]*}"
 			read y </proc/sys/kernel/domainname
 			y="${y#(none)}"
-			[[ -n "$y" ]] && [[ "$x" != "$h" ]] && {
+			[ -n "$y" ] && [ "$x" != "$h" ] && {
 				echo "(server=$x domain=$y)"
 				sed -i \
 				-e "s:dc1\.domain\.local:$x:g" \
@@ -347,20 +347,20 @@ mod_unload(){
 		}
 		# /mnt/ram/ram.lst: <dir>[/] [<mode>]
 		while read x y; do
-			if [[ -z "$y" ]]; then
+			if [ -z "$y" ]; then
 				mkdir -p $r${x%/*}
 				cp -a $NEW_ROOT$x $r$x
 			else
 				mkdir -p $r$x
 				chmod $y $r$x
 			fi
-			[[ -n "${x##*/}" ]] && mount --bind $r$x $NEW_ROOT$x
+			[ -n "${x##*/}" ] && mount --bind $r$x $NEW_ROOT$x
 		done <$r/ram.lst
 	fi
-	if [[ -L $i/kernel ]] && i=`ls $l.*fs 2>/dev/null` && [[ -f "$i" ]]; then
+	if [ -L $i/kernel ] && i=`ls $l.*fs 2>/dev/null` && [ -f "$i" ]; then
 		echo -ne "(mount $i)"
 		mnt_loop /dev/loop3 "$i" $l
-	elif ! [[ -e $i ]] ; then
+	elif ! [ -e $i ] ; then
 		if ${cmd_autoinstall:-false} ; then
 			echo -ne "(Installing /lib/modules/$KV)"
 			mount -o remount,rw ${NEW_ROOT} &&
@@ -370,19 +370,19 @@ mod_unload(){
 		fi
 	fi
 #	for i in /rd /lib; do
-#		[[ -d "$i" ]] && umount $i && break
+#		[ -d "$i" ] && umount $i && break
 #	done
 	umount /lib/modules /lib/firmware /rd /lib 2>/dev/null
 	losetup -d /dev/loop1 >/dev/null 2>&1
 	l=""
-	$cmd_unload && [[ -n "$REAL_ROOT" ]] && [[ -e "/nopnp.lst" ]] || return
+	$cmd_unload && [ -n "$REAL_ROOT" ] && [ -e "/nopnp.lst" ] || return
 	echo -n "(removing unlocked modules"
 	while read i; do
 		i="${i#>}"
 		l="${i%<} $l"
 	done </nopnp.lst
 	i="$(cat /proc/modules)"
-	while [[ "$i" != "$m" ]]; do
+	while [ "$i" != "$m" ]; do
 		m="$i"
 		echo -n "."
 		rmmod $l >/dev/null 2>&1
@@ -447,10 +447,10 @@ pnp_options(){
 		p="$p*/$m.ko)PARAM='$i"
 		v="$m"
 	done
-	[[ -n "$v" ]] && p="$p'$x"
+	[ -n "$v" ] && p="$p'$x"
 #	rm "$d" -Rf
 	$cmd_nofb && p="*/fb.ko|*/drm_kms_helper.ko)INSMOD=continue$x$p"
-	[[ -n "$cmd_noload" ]] && p="*/$(echo "${cmd_noload#,}"|sed -e 's/,/.ko|*\//g').ko)INSMOD=continue$x$p"
+	[ -n "$cmd_noload" ] && p="*/$(echo "${cmd_noload#,}"|sed -e 's/,/.ko|*\//g').ko)INSMOD=continue$x$p"
 	p="modparam(){
 INSMOD=
 case \"\$1\" in
@@ -467,10 +467,10 @@ link_dir(){
 	local i
 	for i in "$1"/*; do
 		i="${i#$1}"
-		if [[ -L "$1$i" ]] && ( [[ -L "$2$i" ]] || ! [[ -e "$2$i" ]] ) ; then
+		if [ -L "$1$i" ] && ( [ -L "$2$i" ] || ! [ -e "$2$i" ] ) ; then
 			cp "$1$i" "$2$i" -a
-		elif [[ -d "$2$i" ]]; then
-			if [[ -L "$2$i" ]]; then
+		elif [ -d "$2$i" ]; then
+			if [ -L "$2$i" ]; then
 				local d="$(readlink "$2$i")"
 				rm "$2$i"
 				mkdir "$2$i"
@@ -478,7 +478,7 @@ link_dir(){
 			fi
 			link_dir "$1$i" "$2$i"
 		# bb 1.33.0 BUG!
-		#elif [[ "$i" != "/*" ]]; then
+		#elif [ "$i" != "/*" ]; then
 		elif [ "$i" != '/*' ]; then
 			ln -sf "$1$i" "$2$i"
 		fi
@@ -491,7 +491,7 @@ pnp_init(){
 	$cmd_fast && mod_fast
 	read SAVE_HOTPLUG </proc/sys/kernel/hotplug
 	for l in /*.loopfs; do
-	if [[ -f "$l" ]]; then
+	if [ -f "$l" ]; then
 		for i in `find /lib -name "*.ko"` ; do
 			insmod $i
 		done
@@ -501,10 +501,10 @@ pnp_init(){
 		break
 	fi
 	done
-	[[ -d /rd ]] && link_dir /rd
-	[[ -d /lib/root ]] && link_dir /lib/root
+	[ -d /rd ] && link_dir /rd
+	[ -d /lib/root ] && link_dir /lib/root
 
-	[[ -e /lib/modules/$KV/modules.dep ]] && return
+	[ -e /lib/modules/$KV/modules.dep ] && return
 	# pnponly
 	rm /sbin/modprobe
 }
@@ -525,7 +525,7 @@ post_modparam(){
 override_modprobe(){
 loadsh modprobe || return
 local f="/sbin/modprobe"
-[[ -e $f ]] && ! ( grep -q "bug #197730" $f && rm /sbin/modprobe ) && return
+[ -e $f ] && ! ( grep -q "bug #197730" $f && rm /sbin/modprobe ) && return
 ln -s /etc/modprobe.sh $f
 echo $f >/proc/sys/kernel/modprobe
 }
@@ -535,18 +535,18 @@ wild(){
 }
 
 cpufreq(){
-	[[ -n "$freq" ]] && return
+	[ -n "$freq" ] && return
 	local l="" CHK=true c="" ok=""
 	for i in $(wild $@) ; do
-		[[ -n "$c" ]] && rmmod $c >/dev/null 2>&1
+		[ -n "$c" ] && rmmod $c >/dev/null 2>&1
 		mod $i
 		c="$i"
 		_wait
 		for i in `grep -ls "$c" $(find /sys/devices/system/cpu -name scaling_driver)` ; do
 			read i2 <"${i%scaling_driver}cpuinfo_transition_latency" || continue
-			[[ "$i2" -gt "${l:=${i2}}" ]] && continue
-			if [[ "$i2" == "$l" ]] ; then
-				[[ "${freq#*${c} }" == "$freq" ]] && freq="$freq$c "
+			[ "$i2" -gt "${l:=${i2}}" ] && continue
+			if [ "$i2" = "$l" ] ; then
+				[ "${freq#*${c} }" = "$freq" ] && freq="$freq$c "
 			else
 				freq=" $c "
 				l="$i2"
@@ -555,9 +555,9 @@ cpufreq(){
 			break
 		done 2>/dev/null </dev/null
 	done
-	[[ -z "$ok" ]] && return
-	[[ "$ok" != "$c" ]] && rmmod $c >/dev/null 2>&1
-	[[ "$freq" != "$c" ]] && mod $freq
+	[ -z "$ok" ] && return
+	[ "$ok" != "$c" ] && rmmod $c >/dev/null 2>&1
+	[ "$freq" != "$c" ] && mod $freq
 }
 
 cpufreq_gov(){
@@ -567,16 +567,16 @@ cpufreq_gov(){
 		_wait
 		for i in `find /sys/devices/system/cpu -name scaling_governor` ; do
 			echo $i1 >"$i" || gov1="$gov1 $i1"
-#			[[ "$(cat "$i")" == "$i1" ]] || gov1="$gov1 $i"
+#			[ "$(cat "$i")" = "$i1" ] || gov1="$gov1 $i"
 		done 2>/dev/null
 		rmmod cpufreq_${i1} >/dev/null 2>&1
-		[[ -z "$gov1" ]] && break
+		[ -z "$gov1" ] && break
 	done
 }
 
 empty_hwopts(){
 	local i
-	[[ -e /etc/modules ]] && for i in $* ; do
+	[ -e /etc/modules ] && for i in $* ; do
 		 echo -ne "" >/etc/modules/$i
 	done
 }
@@ -589,7 +589,7 @@ detect_part(){
 	_wait
 	$cmd_quiet || echo -ne "\033[0G\033[0K$LCOUNT	Inspecting: $1"
 	mkdir /DETECT_ROOT || return 1
-	[[ -n "$3" ]] && {
+	[ -n "$3" ] && {
 		o="$o,nolock,rsize=1024,wsize=1024"
 		case "$3:$1" in
 		cifs:*|auto://*)o="$o,user=,guest -t cifs";;
@@ -602,8 +602,8 @@ detect_part(){
 		return 1
 	}
 	echo ">$*<" >>"${PNP_TMP}.5"
-	[[ "${2:-false}" != false ]] && for l in $( {
-		if [[ "$2" == true ]]; then
+	[ "${2:-false}" != false ] && for l in $( {
+		if [ "$2" = true ]; then
 			fstype ${LOOPS_}
 		else
 			fstype /DETECT_ROOT/$2
@@ -618,20 +618,20 @@ detect_part(){
 		esac
 		mod $l # loop
 	done
-	[[ -e "/DETECT_ROOT/$cmd_real_init" ]] && grep -sq "^$1[ 	]*/[ 	]" /DETECT_ROOT/etc/mtab && DETECTED_ROOTS="$DETECTED_ROOTS $1"
-#	[[ -e "/DETECT_ROOT/$cmd_real_init" ]] && DETECTED_ROOTS="$DETECTED_ROOTS $1"
+	[ -e "/DETECT_ROOT/$cmd_real_init" ] && grep -sq "^$1[ 	]*/[ 	]" /DETECT_ROOT/etc/mtab && DETECTED_ROOTS="$DETECTED_ROOTS $1"
+#	[ -e "/DETECT_ROOT/$cmd_real_init" ] && DETECTED_ROOTS="$DETECTED_ROOTS $1"
 	umount /DETECT_ROOT >/dev/null 2>&1
 	rmdir /DETECT_ROOT
 }
 
 detect_root(){
 	local i d="${cmd_detect_root:-false}" l="$cmd_loop" fs
-	[[ "$d" == true ]] && d=""
-	if [[ "$d" != false ]]; then
+	[ "$d" = true ] && d=""
+	if [ "$d" != false ]; then
 		# if real_root & loop hard-defined - don't probe other loops
-		[[ -n "$REAL_ROOT" ]] && [[ "${l:-true}" != true ]] && l=false
+		[ -n "$REAL_ROOT" ] && [ "${l:-true}" != true ] && l=false
 		# if real_root & loop hard-defined - probe all loops
-#		[[ -n "$REAL_ROOT" ]] && [[ "${l:-true}" != true ]] && l=true
+#		[ -n "$REAL_ROOT" ] && [ "${l:-true}" != true ] && l=true
 		for i in `part_ "$d"`; do
 			case "$i" in
 			/dev/loop1) ;;
@@ -639,10 +639,10 @@ detect_root(){
 			esac
 		done
 	fi
-	if [[ -n "$REAL_ROOT" ]] && [[ "${cmd_loop:-false}" != false ]]; then
+	if [ -n "$REAL_ROOT" ] && [ "${cmd_loop:-false}" != false ]; then
 		detect_part "$(part_ "$REAL_ROOT")" "$cmd_loop"
 	fi
-	[[ -n "$NFSROOT" ]] && [[ -n "`ifconfig`" ]] && {
+	[ -n "$NFSROOT" ] && [ -n "`ifconfig`" ] && {
 		detect_part "$NFSROOT" "$cmd_loop" "${NFSLIKE_FS:-auto}"
 	}
 }
@@ -650,10 +650,10 @@ detect_root(){
 # autoconfig works only with built-in card?
 ip_config(){
 local ip dev s d h
-[[ -n "`ifconfig`" ]] && {
-	[[ -z "$NFSROOT" ]] && {
+[ -n "`ifconfig`" ] && {
+	[ -z "$NFSROOT" ] && {
 		NFSROOT="$(dhcp_get rootserver):$(dhcp_get rootpath)"
-		[[ "$NFSROOT" == : ]] && NFSROOT=
+		[ "$NFSROOT" = : ] && NFSROOT=
 	}
 	return
 }
@@ -671,15 +671,15 @@ for ip in "${@}"; do
 		[ -e /rootpath ] && NFSROOT=`cat /rootpath`
 	;;
 	esac
-	[[ -n "$1$4" ]] && ifconfig $dev $1 ${4:+netmask $4}
+	[ -n "$1$4" ] && ifconfig $dev $1 ${4:+netmask $4}
 	i="${5%%.*}"
-	[[ -n "$i" ]] && echo "$i" >/proc/sys/kernel/hostname
-	[[ "$i" != "$5" ]] && d="${5#*.}"
-	[[ -n "$d" ]] && for d in $d; do
+	[ -n "$i" ] && echo "$i" >/proc/sys/kernel/hostname
+	[ "$i" != "$5" ] && d="${5#*.}"
+	[ -n "$d" ] && for d in $d; do
 		echo "search $d" >>/etc/resolv.conf
 		echo "$d" >/proc/sys/kernel/domainname
 	done
-	[[ -n "$3" ]] && route add default gw $3 dev $dev
+	[ -n "$3" ] && route add default gw $3 dev $dev
 	case "$NFSLIKE_FS" in
 	cifs)i="//$2/";;
 	*)i="$2:";;
@@ -688,13 +688,13 @@ for ip in "${@}"; do
 	break
     done
 done
-[[ ${cmd_telnetd:-false} != false ]] && [[ -n "`ifconfig`" ]] && telnetd ${cmd_telnetd#true}
+[ ${cmd_telnetd:-false} != false ] && [ -n "`ifconfig`" ] && telnetd ${cmd_telnetd#true}
 }
 
 dhcp_get(){
 	local i r=''
 	for i in `busybox dmesg | grep rootserver | sed -e "s/,/ /g"`; do
-		if [[ "`echo $i | sed -e "s/=/ /g" | cut -d " " -f 1`" == "$1" ]]; then
+		if [ "`echo $i | sed -e "s/=/ /g" | cut -d " " -f 1`" = "$1" ]; then
 			r="`echo "$i" | sed -e "s/=/ /g" | cut -d " " -f 2`"
 			# FIXME: first value will be more balanced, but last - actual in longrun
 			break
@@ -705,16 +705,16 @@ dhcp_get(){
 
 # modifyed genkernel's function to support other network filesystems (/dev/<filsystem>)
 findnfsmount() {
-	( [[ -z "$NFSLIKE_FS" ]] && [[ -n "$NFSROOT" ]] ) ||
+	( [ -z "$NFSLIKE_FS" ] && [ -n "$NFSROOT" ] ) ||
 	    grep -q "[ 	]${NFSLIKE_FS:=nfs}\$" /proc/filesystems || return 1
 	ip_config ::::::dhcp
-	if [[ -n "`ifconfig`" ]]; then
-		if [[ -z "$NFSROOT" ]]; then
+	if [ -n "`ifconfig`" ]; then
+		if [ -z "$NFSROOT" ]; then
 			bmsg "The DHCP Server did not send a valid root-path."
 			bmsg "Please check your DHCP setup, or provide a nfsroot=<...> parameter."
 		else
 			local o="ro,nolock,rsize=1024,wsize=1024,$cmd_real_rootflags" m="$NEW_ROOT" unc
-			[[ "$CDROOT" != '0' ]] && m="$m/mnt/cdrom"
+			[ "$CDROOT" != '0' ] && m="$m/mnt/cdrom"
 			case "$NFSLIKE_FS:$NFSROOT" in
 			cifs:*|://*)o="$o,user=,guest,serverino";NFSLIKE_FS=cifs;;
 			:*|nfs:*)NFSLIKE_FS=nfs;;
@@ -731,7 +731,7 @@ findnfsmount() {
 					REAL_ROOTFLAGS="$o"
 					return 0
 				fi
-				[[ "$NFSLIKE_FS" == nfs ]] && break
+				[ "$NFSLIKE_FS" = nfs ] && break
 			    done
 			done
 			bmsg "$NFSLIKE_FS Mounting failed. Is the path correct ?"
@@ -746,7 +746,7 @@ msg_(){
 		echo -ne "\033[0G"
 	else
 		echo -ne "\033[0G\033[0K"
-		[[ -n "$*" ]] && gmsg "$*"
+		[ -n "$*" ] && gmsg "$*"
 	fi
 }
 
@@ -756,9 +756,9 @@ fstype(){
 
 resume(){
 	local i
-	[[ -e /sys/power/resume ]] || return
-	[[ -n "$*" ]] && for i in "${@}"; do
-		[[ "$i" == true ]] && {
+	[ -e /sys/power/resume ] || return
+	[ -n "$*" ] && for i in "${@}"; do
+		[ "$i" = true ] && {
 			cat $(grep -l "[1-9]" /sys/class/block/*/size|grep -v /loop|sed -e 's:size$:dev:') >/sys/power/resume
 			continue
 		}
@@ -777,35 +777,35 @@ mdadm(){
 
 detect_fs(){
 	local i='' m="" md="$USE_MDADM" dm="$USE_DMRAID_NORMAL" t="$cmd_detect_root" lvm="$USE_LVM_NORMAL" evms="$USE_EVMS_NORMAL" mddef=true
-	[[ -n "$NFSLIKE_FS" ]] && [[ "$REAL_ROOT" == /dev/nfs ]] && REAL_ROOT="/dev/$NFSLIKE_FS"
+	[ -n "$NFSLIKE_FS" ] && [ "$REAL_ROOT" = /dev/nfs ] && REAL_ROOT="/dev/$NFSLIKE_FS"
 	case "$t" in
 	true|false)t="";
 	esac
 	if $waitscan; then
-		($cmd_fast && ! [ -b "$REAL_ROOT" ]) || ! [[ -e /etc/modules/waitscan ]] &&
+		($cmd_fast && ! [ -b "$REAL_ROOT" ]) || ! [ -e /etc/modules/waitscan ] &&
 		for i in scsi_wait_scan scsi_mod; do
-			[[ -e "/lib/modules/$KV/kernel/drivers/scsi/$i.ko" ]] && {
+			[ -e "/lib/modules/$KV/kernel/drivers/scsi/$i.ko" ] && {
 				mod $i
 				break
 			}
 		done
 		empty_hwopts waitscan
-		[[ -n "$cmd_scandelay" ]] && sleep "$cmd_scandelay"
+		[ -n "$cmd_scandelay" ] && sleep "$cmd_scandelay"
 		waitscan=false
 		_wait
-		[[ "$i" = scsi_wait_scan ]] && rmmod $i 2>/dev/null
-		[[ -n "$cmd_elevator" ]] && _tee "$cmd_elevator" /sys/class/block/*/queue/scheduler # embed
+		[ "$i" = scsi_wait_scan ] && rmmod $i 2>/dev/null
+		[ -n "$cmd_elevator" ] && _tee "$cmd_elevator" /sys/class/block/*/queue/scheduler # embed
 		/sbin/mdev -s block
 	fi
 	resume "$cmd_resume"
 	# dmraid/lvm/evms unsure
 	for i in $( {
 			fstype $t
-			[[ -n "$REAL_ROOT" ]] && ( [[ -n "$t" ]] || ! [[ -b "$REAL_ROOT" ]] ) && [[ "$REAL_ROOT" != "$t" ]] && fstype $REAL_ROOT
+			[ -n "$REAL_ROOT" ] && ( [ -n "$t" ] || ! [ -b "$REAL_ROOT" ] ) && [ "$REAL_ROOT" != "$t" ] && fstype $REAL_ROOT
 	    } 2>/dev/null | sed -e 's%^\(/dev/[^ ]*\):.* TYPE="swsuspend".*$%0susp:\1%' -e 's:^.* TYPE="\([^"]*\)".*$:\1:g'| sort -u ); do
 		case $i in
 		/dev/md*)
-			[[ -x /sbin/mdadm ]] || mknod "$i" b 9 "${i#/dev/md}"
+			[ -x /sbin/mdadm ] || mknod "$i" b 9 "${i#/dev/md}"
 			md=1
 		;;
 		linux_raid_member|mdraid) md=1 ;; # use right blkid
@@ -825,21 +825,21 @@ detect_fs(){
 		/dev/*)
 			continue
 			# think again
-			[[ "$REAL_ROOT" == "$i" ]] && REAL_ROOT=/dev/nfs # compat
+			[ "$REAL_ROOT" = "$i" ] && REAL_ROOT=/dev/nfs # compat
 			i="${i#/dev/}"
 			m="$m $i"
 			NFSLIKE_FS="$i"
 		;;
 		swap) ;;
-		0susp:*)[[ -z "$cmd_resume" ]] && resume "${i#0susp:}";;
+		0susp:*)[ -z "$cmd_resume" ] && resume "${i#0susp:}";;
 		*) m="$m $(wild "/$i/") $i" ;;
 		esac
 	done
-	[[ -n "$dm" ]] && m="$m dm-mod"
+	[ -n "$dm" ] && m="$m dm-mod"
 	# FIXME: IMHO it will be loaded after dmraid failure
-#	[[ -n "$dm" ]] && m=$m $(wild "/md/dm-\|raid_class")"
+#	[ -n "$dm" ] && m=$m $(wild "/md/dm-\|raid_class")"
 	mod $(for i in $m;do echo "$i";done|sort -u)
-	if [[ -n "$evms" ]]; then
+	if [ -n "$evms" ]; then
 		msg_ "Activating EVMS"
 		if evms_activate ; then
 			USE_EVMS_NORMAL_=""
@@ -848,7 +848,7 @@ detect_fs(){
 			USE_LVM_NORMAL_=""
 		fi
 	fi
-	if [[ -n "$lvm" ]]; then
+	if [ -n "$lvm" ]; then
 		msg_ "Activating LVM"
 		if vgscan --ignorelockingfailure --mknodes 2>/dev/null ; then
 			sleep 2
@@ -862,7 +862,7 @@ detect_fs(){
 	for i in $cmd_md ; do
 		set `echo "$i"|sed -e 's:,: :g'` ""
 		i="$1$2$3$4"
-		if [[ -n "$5" ]] && [[ "${i##*/dev/}" == "$i" ]]; then
+		if [ -n "$5" ] && [ "${i##*/dev/}" = "$i" ]; then
 			mod "raid$2"
 			i="$1 --level=$2 --chunk=$3"
 			shift 4
@@ -871,23 +871,23 @@ detect_fs(){
 			mod $(wild "/md/raid")
 			i="$1"
 			shift
-			[[ "${i#d}" != "$i" ]] && i="${i#d} --run"
+			[ "${i#d}" != "$i" ] && i="${i#d} --run"
 			i="--assemble /dev/md$i"
 		fi
 		msg_
 		mdadm $i --raid-devices=$# $*
 	done
-	if [[ -n "$md$dm" ]]; then
+	if [ -n "$md$dm" ]; then
 		# maybe dm wrong here, but try
-		if [[ -e '/etc/mdadm.conf' ]]; then
+		if [ -e '/etc/mdadm.conf' ]; then
 			mod `( grep " level=" /etc/mdadm.conf || ( mdadm --examine --scan -v|grep " level=" ) ) | sed -e 's:^.* level=\([^ ]*\) .*$:\1:g' | sort -u`
 		else
 			mddef=false
-			[[ -n "$t" ]] && echo "DEVICE $t" >/etc/mdadm.conf
+			[ -n "$t" ] && echo "DEVICE $t" >/etc/mdadm.conf
 			# filter all extra info around bug with journal=spares
 			mdadm --examine --scan|grep '^ARRAY' >/etc/mdadm.conf.all
 			mod `grep " level=" /etc/mdadm.conf.all | sed -e 's:^.* level=\([^ ]*\) .*$:\1:g' | sort -u`
-			if [[ "$cmd_detect_root" != true ]] && [[ -n "$USE_MDADM" ]]; then
+			if [ "$cmd_detect_root" != true ] && [ -n "$USE_MDADM" ]; then
 				# do not assemble other raids
 				while read i; do
 					[ "${i#ARRAY $REAL_ROOT }" = "$i" -a "${i#ARRAY $cmd_detect_root }" = "$i" ] || echo "$i"
@@ -895,7 +895,7 @@ detect_fs(){
 			fi
 			[ -s /etc/mdadm.conf ] || cp /etc/mdadm.conf.all /etc/mdadm.conf
 		fi
-		if ! $cmd_noraid && ( [[ -n "$md" ]] || grep -q ARRAY /etc/mdadm.conf ); then
+		if ! $cmd_noraid && ( [ -n "$md" ] || grep -q ARRAY /etc/mdadm.conf ); then
 			msg_
 			case "$cmd_domdadm" in
 			async)
@@ -907,7 +907,7 @@ detect_fs(){
 			?*)
 				[ "$cmd_domdadm" = true ] && cmd_domdadm=--scan
 				mdadm --assemble $cmd_domdadm ||
-				    ( mod $(wild "/md/") ; ( mdadm --assemble $cmd_domdadm || ( [[ -n "$cmd_part$REAL_ROOT" ]] && mdstart $cmd_part $REAL_ROOT ) || raidautorun $REAL_ROOT ) ) &&
+				    ( mod $(wild "/md/") ; ( mdadm --assemble $cmd_domdadm || ( [ -n "$cmd_part$REAL_ROOT" ] && mdstart $cmd_part $REAL_ROOT ) || raidautorun $REAL_ROOT ) ) &&
 				    USE_MDADM_=""
 			;;
 			*)mdadm --assemble $REAL_ROOT && USE_MDADM_="";;
@@ -915,7 +915,7 @@ detect_fs(){
 		fi
 		$mddef || rm /etc/mdadm.conf
 	fi
-	if [[ -n "$dm" ]]; then
+	if [ -n "$dm" ]; then
 		mod $(dmraid -r --sep " " -cf,r,t $t 2>/dev/null)
 		if ! $cmd_noraid; then
 			msg_ "Activating Device-Mapper RAID(s)"
@@ -934,7 +934,7 @@ detect_fs(){
 gentoo_compat_hwopts(){
 	local i i1
 	for i1 in ${MY_HWOPTS} ; do
-		if [[ -e "/etc/modules/$i1" ]] ; then
+		if [ -e "/etc/modules/$i1" ] ; then
 			for i in `cat /etc/modules/$i1` ; do
 				grep -q "^$i\$" "modules.pnp" || mod "$i"
 			done
@@ -946,11 +946,11 @@ gentoo_compat_hwopts(){
 
 load_hand_made(){
 	## some hand-made autoloads
-#	$cmd_nofb || [[ -z "$(cat /proc/fb 2>/dev/null)" ]] || mod fbcon
+#	$cmd_nofb || [ -z "$(cat /proc/fb 2>/dev/null)" ] || mod fbcon
 	mod $(cd /etc/modflags && cat $(ls -1 /sys/module) </dev/null 2>/dev/null)
 	grep -sq yeah /proc/sys/net/ipv4/tcp_available_congestion_control &&
 		echo yeah >/proc/sys/net/ipv4/tcp_congestion_control
-	[[ -e /dev/freefall ]] && [[ -x /bin/hpfall ]] && /bin/hpfall /dev/sda
+	[ -e /dev/freefall ] && [ -x /bin/hpfall ] && /bin/hpfall /dev/sda
 }
 
 load_hand_made0(){
@@ -962,7 +962,7 @@ load_hand_made0(){
 	freq=`cat $(find /sys/devices/system/cpu -name scaling_driver 2>/dev/null) </dev/null`
 	case "$f" in
 	*\ lm\ *AuthenticAMD*)
-		[[ -e /lib/firmware/amd-ucode/microcode_amd.bin ]] && mod microcode
+		[ -e /lib/firmware/amd-ucode/microcode_amd.bin ] && mod microcode
 		cpufreq powernow-k8
 		: ${gov:=conservative ondemand}
 	;;
@@ -975,15 +975,15 @@ load_hand_made0(){
 	esac
 	local i=/sys/devices/system/cpu/intel_pstate/status
 	if [ -e $i ]; then
-		[[ -z "$cmd_intel_pstate" ]] && echo active >$i 2>/dev/null
+		[ -z "$cmd_intel_pstate" ] && echo active >$i 2>/dev/null
 	else
 		cpufreq cpufreq "drivers/cpufreq/\|powernow\|nforce2"
 	fi
-	[[ -z "$freq" ]] && return
+	[ -z "$freq" ] && return
 	${cmd_nopowersave:-false} && return
 	if grep -vsq "powersave\|userspace\|conservative\|ondemand\|performance" /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor; then
 		gov=
-	elif [[ -z "$gov" ]]; then
+	elif [ -z "$gov" ]; then
 		$onbatt && gov="conservative ondemand powersave" || gov="ondemand conservative performance"
 	fi
 	cpufreq_gov
@@ -998,15 +998,15 @@ load_hand_made0(){
 load_misc(){
 	# do: loadall[=...] or process MY_HWOPTS
 	for i in $cmd_loadall ; do
-		[[ "$i" == 'true' ]] && i=''
+		[ "$i" = 'true' ] && i=''
 		i1="${i%%:*}"
 		i2="${i#*:}"
-		[[ -z "$i1" ]] && i1=".*"
+		[ -z "$i1" ] && i1=".*"
 		# default: exclude slow probe, fatal to unload, etc
-		[[ "$i2" == "$i" ]] && i2='/tcrypt.ko\|/paride/\|/media/\|/sound/\|/microcode\.\|/isdn/\|/net/\|/video/'
+		[ "$i2" = "$i" ] && i2='/tcrypt.ko\|/paride/\|/media/\|/sound/\|/microcode\.\|/isdn/\|/net/\|/video/'
 		mod $(wild "$i1" "$i2")
 	done
-	[[ -z "$cmd_loadall" ]] && [[ "$NODETECT" != '1' ]] && gentoo_compat_hwopts # deprecated
+	[ -z "$cmd_loadall" ] && [ "$NODETECT" != '1' ] && gentoo_compat_hwopts # deprecated
 	ip_config $cmd_ip
 	detect_fs
 }
@@ -1021,13 +1021,13 @@ set_root_loop(){
 # vs. "find" optimization [dis]order
 ordered_modalias(){
 	local i
-	if [[ -e "$1/modalias" ]]; then
+	if [ -e "$1/modalias" ]; then
 		! grep -sq "^DRIVER=." "$1/uevent" && mod "`cat "$1/modalias"`"
-#	elif [[ -e "$1/uevent" ]]; then
+#	elif [ -e "$1/uevent" ]; then
 #		i=`grep -s "^MODALIAS=" "$1/uevent"` && mod "${i#MODALIAS=}"
 	fi
 	for i in "$1"/* ; do
-		[[ -d "$i" ]] && [[ ! -L "$i" ]] && ordered_modalias "$i"
+		[ -d "$i" ] && [ ! -L "$i" ] && ordered_modalias "$i"
 	done
 }
 
@@ -1041,31 +1041,31 @@ ofast_modalias(){
 }
 
 etc_modalias(){
-	[[ -f /etc/modalias ]] && mv /etc/modalias /etc/modalias_ || return 1
+	[ -f /etc/modalias ] && mv /etc/modalias /etc/modalias_ || return 1
 	mod `cat /etc/modalias_`
 	rm /etc/modalias_
 	return $pnpass
 }
 
 loadsh(){
-	[[ "${SHLOADED##* $1 }" == "${SHLOADED}" ]] &&
-		[[ -e /etc/$1.sh ]] && . /etc/$1.sh && SHLOADED="$SHLOADED $1 "
+	[ "${SHLOADED##* $1 }" = "${SHLOADED}" ] &&
+		[ -e /etc/$1.sh ] && . /etc/$1.sh && SHLOADED="$SHLOADED $1 "
 }
 
 mntnewroot(){
 	if mkdir "$NEW_ROOT" 2>/dev/null ; then
-		if [[ -z "$NFSLIKE_FS" ]] || ! findnfsmount; then
+		if [ -z "$NFSLIKE_FS" ] || ! findnfsmount; then
 			mount -t "${cmd_rootfstype:-auto}" -o ro,$cmd_real_rootflags "$REAL_ROOT" "$NEW_ROOT" || rmdir "$NEW_ROOT"
 		fi
-		[[ "$NEW_ROOT" == /dev/nfs ]] && [[ -e /newroot ]] && NEW_ROOT="/newroot"
-		if [[ -e "$NEW_ROOT" ]] && [[ -n "$LOOP" ]]; then
+		[ "$NEW_ROOT" = /dev/nfs ] && [ -e /newroot ] && NEW_ROOT="/newroot"
+		if [ -e "$NEW_ROOT" ] && [ -n "$LOOP" ]; then
 			LOOP_ROOT=
 #			LOOP_ROOT="$NEW_ROOT"
 			for i in mnt/livecd; do
-				[[ -d $NEW_ROOT/$i ]] && LOOP_ROOT="$NEW_ROOT/$i" && break
+				[ -d $NEW_ROOT/$i ] && LOOP_ROOT="$NEW_ROOT/$i" && break
 			done
-			[[ -z "$LOOP_ROOT" ]] && mkdir ${LOOP_ROOT:=/newroot.loop}
-			if ! ( [[ -d "$LOOP_ROOT" ]] && mnt_loop /dev/loop0 "/newroot/$LOOP" "$LOOP_ROOT" && [[ -e "$LOOP_ROOT$cmd_real_init" ]] ) ; then
+			[ -z "$LOOP_ROOT" ] && mkdir ${LOOP_ROOT:=/newroot.loop}
+			if ! ( [ -d "$LOOP_ROOT" ] && mnt_loop /dev/loop0 "/newroot/$LOOP" "$LOOP_ROOT" && [ -e "$LOOP_ROOT$cmd_real_init" ] ) ; then
 				umount "$LOOP_ROOT"
 				losetup -d /dev/loop0
 				rmdir "$LOOP_ROOT"
@@ -1073,14 +1073,14 @@ mntnewroot(){
 				rmdir "$NEW_ROOT"
 				LOOP_ROOT=""
 			fi
-			if [[ "$LOOP_ROOT" != "$NEW_ROOT" ]] && [[ -n "${LOOP_ROOT##$NEW_ROOT/*}" ]] && [[ -e "$LOOP_ROOT" ]] && mount --move $NEW_ROOT $LOOP_ROOT/boot; then
+			if [ "$LOOP_ROOT" != "$NEW_ROOT" ] && [ -n "${LOOP_ROOT##$NEW_ROOT/*}" ] && [ -e "$LOOP_ROOT" ] && mount --move $NEW_ROOT $LOOP_ROOT/boot; then
 				mount --move $LOOP_ROOT $NEW_ROOT
 				rmdir $LOOP_ROOT && LOOP_ROOT="$NEW_ROOT"
 			fi
 		fi
 		cp /proc/mounts /etc/mtab
 		# around genkernel
-		[[ -d "$NEW_ROOT" ]] && {
+		[ -d "$NEW_ROOT" ] && {
 			REAL_ROOTFLAGS="$REAL_ROOTFLAGS,remount"
 			if grep -q "^/dev/loop0 $NEW_ROOT " /proc/mounts; then
 				LOOP=
@@ -1098,7 +1098,7 @@ syspnp(){
 	early_huge
 	# +some compats
 	local PNP_TMP="${TMPDIR}/pnp.found" NOTLOADED="" CHK=single i i1 i2 gov="" freq="" pid="" LCOUNT="" REORDER=break USE_MDADM_="${USE_MDADM:=$cmd_domdadm}" USE_DMRAID_NORMAL_="${USE_DMRAID_NORMAL:=$cmd_dodmraid}" USE_EVMS_NORMAL_="${USE_EVMS_NORMAL:=$cmd_doevms}" USE_LVM_NORMAL_="${USE_LVM_NORMAL:=$cmd_dolvm}" LOOPS_="" REFRESH_SAME waitscan=true checks=""
-	[[ "${USE_DMRAID_NORMAL:-true}" != true ]] && DMRAID_OPTS="$USE_DMRAID_NORMAL"
+	[ "${USE_DMRAID_NORMAL:-true}" != true ] && DMRAID_OPTS="$USE_DMRAID_NORMAL"
 	: ${REAL_ROOT:=$cmd_real_root}
 	: ${LOOP:=$cmd_loop}
 	: ${LOOPTYPE:=$cmd_loop_type}
@@ -1106,15 +1106,15 @@ syspnp(){
 	for i in ${LOOPS:-"/*"}; do
 		LOOPS_="${LOOPS_} /DETECT_ROOT$i"
 	done
-	[[ ${cmd_passwd:-false} != false ]] && [[ -n /etc/passwd ]] &&
+	[ ${cmd_passwd:-false} != false ] && [ -n /etc/passwd ] &&
 		echo "$cmd_passwd" >/etc/passwd
 	/sbin/onbatt && onbatt=true || onbatt=false
 	gmsg "Searching pnp"
 	override_modprobe
-	[[ "${SHLOADED##* modprobe }" == "${SHLOADED}" ]] && mod(){ modprobe -q -a "${@}";}
+	[ "${SHLOADED##* modprobe }" = "${SHLOADED}" ] && mod(){ modprobe -q -a "${@}";}
 	loadsh blkid
 	empty_hwopts firewire net pata pcmcia sata scsi usb   ataraid dmraid evms lvm mdadm fs
-	[[ -z "$ISCSI_INITIATORNAME$ISCSI_TARGET$ISCSI_ADDRESS" ]] && empty_hwopts iscsi
+	[ -z "$ISCSI_INITIATORNAME$ISCSI_TARGET$ISCSI_ADDRESS" ] && empty_hwopts iscsi
 	post_modparam
     $cmd_fast && [ ! -e "/lib/modules/$KV/modules.alias.sh" ] ||
     for pnpass in 0 0; do
@@ -1144,7 +1144,7 @@ syspnp(){
 	REFRESH_SAME=1
 	checks="$checks /proc/partitions"
 	while count ; do
-		if [[ -n "$REORDER" ]]; then
+		if [ -n "$REORDER" ]; then
 			REORDER=""
 			load_hand_made
 			_wait
@@ -1157,7 +1157,7 @@ syspnp(){
 		etc_modalias && ln -s /proc /etc/modalias 2>/dev/null
 		refresh n r || break
 	done
-	[[ $pnpass != 1 ]] && break
+	[ $pnpass != 1 ] && break
 	mntnewroot
 	mount --bind $NEW_ROOT/lib/modules /lib/modules || break
 	mount --bind $NEW_ROOT/lib/firmware /lib/firmware
@@ -1179,25 +1179,25 @@ syspnp(){
 	echo "$j modules"
 
 	# assign detected root/loop
-	if [[ -z "$REAL_ROOT" ]]; then
+	if [ -z "$REAL_ROOT" ]; then
 		DETECTED_ROOTS="${DETECTED_ROOTS# }"
 		DETECTED_LOOPS="${DETECTED_LOOPS# }"
-		[[ "${DETECTED_ROOTS#* }" == "$DETECTED_ROOTS" ]] && DETECTED_ROOT="$DETECTED_ROOTS"
-		[[ "${DETECTED_LOOPS#* }" == "$DETECTED_LOOPS" ]] && DETECTED_LOOP="$DETECTED_LOOPS"
-		[[ "${cmd_loop:-true}" == true ]] && REAL_ROOT="$DETECTED_ROOT"
-		( [[ "$cmd_loop" != true ]] || [[ -z "$DETECTED_ROOTS" ]] ) && [[ -z "$REAL_ROOT" ]] && set_root_loop "$DETECTED_LOOP"
-		if [[ -z "$REAL_ROOT" ]]; then
-			[[ -n "$DETECTED_ROOTS" ]] && bmsg "Detected possible root devices: $DETECTED_ROOTS"
-			[[ -n "$DETECTED_LOOPS" ]] && bmsg "Detected loopbacks: $DETECTED_LOOPS"
+		[ "${DETECTED_ROOTS#* }" = "$DETECTED_ROOTS" ] && DETECTED_ROOT="$DETECTED_ROOTS"
+		[ "${DETECTED_LOOPS#* }" = "$DETECTED_LOOPS" ] && DETECTED_LOOP="$DETECTED_LOOPS"
+		[ "${cmd_loop:-true}" = true ] && REAL_ROOT="$DETECTED_ROOT"
+		( [ "$cmd_loop" != true ] || [ -z "$DETECTED_ROOTS" ] ) && [ -z "$REAL_ROOT" ] && set_root_loop "$DETECTED_LOOP"
+		if [ -z "$REAL_ROOT" ]; then
+			[ -n "$DETECTED_ROOTS" ] && bmsg "Detected possible root devices: $DETECTED_ROOTS"
+			[ -n "$DETECTED_LOOPS" ] && bmsg "Detected loopbacks: $DETECTED_LOOPS"
 		fi
 	fi
 
 	# genkernel
-	! ${1:-false} && [[ -n "$REAL_ROOT" ]] && [[ -n "$LOOP" ]] &&
+	! ${1:-false} && [ -n "$REAL_ROOT" ] && [ -n "$LOOP" ] &&
 		mntnewroot
 
 	gmsg "Boot time: $(cat /proc/uptime)"
-	if [[ -n "${NOTLOADED}" ]] ; then
+	if [ -n "${NOTLOADED}" ] ; then
 		gmsg "Not loaded:$NOTLOADED"
 		# try again
 		MDOLIST="$NOTLOADED"
@@ -1207,8 +1207,8 @@ syspnp(){
 }
 
 vkb(){
-#	if [[ -n "$cmd_vkb_touchscreen" ]] || grep "^B: ABS=........" /proc/bus/input/devices ; then
-	if [[ -n "$cmd_vkb_touchscreen" ]]; then
+#	if [ -n "$cmd_vkb_touchscreen" ] || grep "^B: ABS=........" /proc/bus/input/devices ; then
+	if [ -n "$cmd_vkb_touchscreen" ]; then
 		# to debug
 		/sbin/vkb
 	elif [ "$1" = 1 -o -z "$SHELL" ]; then
@@ -1221,15 +1221,15 @@ vkb(){
 }
 
 run_shell(){
-	[[ -z "$SHELL" ]] && for SHELL in /bin/ash /bin/bash /bin/sh; do
-		[[ -e "$SHELL" ]] && break
+	[ -z "$SHELL" ] && for SHELL in /bin/ash /bin/bash /bin/sh; do
+		[ -e "$SHELL" ] && break
 	done
 	export SHELL
 	vkb
 }
 
 # minimalistic. debug
-if [[ -z "$KV"  ]] && ! [[ -e /proc/version ]]; then
+if [ -z "$KV"  ] && ! [ -e /proc/version ]; then
 NEW_ROOT="/newroot"
 CDROOT=0
 mount -t proc proc /proc
@@ -1239,7 +1239,7 @@ echo /sbin/mdev >/proc/sys/kernel/hotplug
 cd /sys
 read KV </proc/sys/kernel/osrelease||KV=`uname -r`
 export KV
-if [[ -e /dev/null ]] || /sbin/mdev -s mem; then
+if [ -e /dev/null ] || /sbin/mdev -s mem; then
 	/sbin/mdev -s &
 else
 	/sbin/mdev -s
@@ -1252,9 +1252,9 @@ override_modprobe
 syspnp true
 cd /
 while true; do
-	[[ -n "$REAL_ROOT" ]] && mntnewroot
-	if [[ -n "$LOOP_ROOT" ]] && [[ -d "$LOOP_ROOT" ]] &&
-	    [[ "$LOOP_ROOT" != "$NEW_ROOT" ]]; then
+	[ -n "$REAL_ROOT" ] && mntnewroot
+	if [ -n "$LOOP_ROOT" ] && [ -d "$LOOP_ROOT" ] &&
+	    [ "$LOOP_ROOT" != "$NEW_ROOT" ]; then
 		mkdir /rd 2>/dev/null
 		( mnt_loop /dev/loop1 /lib.loopfs /rd && link_dir /rd /lib ) ||
 		( mnt_loop /dev/loop1 /rd.loopfs /rd && link_dir /rd )
@@ -1262,7 +1262,7 @@ while true; do
 		mod_unload
 		umount /proc /sys
 		exec "$cmd_real_init" $cmd_init_opts
-	elif [[ -d "$NEW_ROOT" ]]; then
+	elif [ -d "$NEW_ROOT" ]; then
 		mod_unload
 		umount /proc /sys
 		exec /sbin/switch_root -c /dev/console "$NEW_ROOT" "$cmd_real_init" $cmd_init_opts
@@ -1275,7 +1275,7 @@ while true; do
 			loadkmap <"/lib/keymaps/$REAL_ROOT.map" 2>/dev/null || break
 		done
 		set_root_loop "$REAL_ROOT"
-		[[ "$REAL_ROOT" == shell ]] || continue
+		[ "$REAL_ROOT" = shell ] || continue
 	fi
 	bmsg "failed to switch root"
 	run_shell

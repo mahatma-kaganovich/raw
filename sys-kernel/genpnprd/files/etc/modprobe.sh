@@ -1,7 +1,7 @@
 #!/bin/sh
 
 modalias(){ ALIAS=`find -name "$1.ko"`;return $?;}
-[[ -n "$KV" ]] || read KV </proc/sys/kernel/osrelease || KV=`uname -r||ls /lib/modules`
+[ -n "$KV" ] || read KV </proc/sys/kernel/osrelease || KV=`uname -r||ls /lib/modules`
 cd /lib/modules/$KV
 [ -e ./modules.alias.sh ] && . ./modules.alias.sh # || return 1
 modparam(){
@@ -21,7 +21,7 @@ while true; do
 case "$1" in
 --)shift;break;;
 -*)	i="$1"
-	while [[ -n "$i" ]]; do
+	while [ -n "$i" ]; do
 		i="${i#?}"
 		case "$i" in
 		a*)a=true;;
@@ -44,7 +44,7 @@ shift
 	for m in $m; do
 	[ -e "$c$m" ] || {
 		modalias "$m" && for i in $ALIAS ; do
-			[[ -e "$c$i" ]] && continue
+			[ -e "$c$i" ] && continue
 			modparam $i
 			$INSMOD
 			insmod $i $PARAM || { r=1;continue;}

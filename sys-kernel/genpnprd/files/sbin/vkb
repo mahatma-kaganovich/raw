@@ -65,7 +65,7 @@ loadkmap(){
 	for t in `hexdump -v -s 7 -n 256 -e '"" 1/1 "%x " ""' $1`; do
 		let i=i+1
 		m=""
-		if [[ "$t" == 1 ]]; then
+		if [ "$t" = 1 ]; then
 			let p=p+256
 			m="`hexdump -v -s $p -n 256 -e '"" 2/1 "%02x:" " "' $1`"
 		fi
@@ -94,10 +94,10 @@ drawkbd(){
 	local t=$1 key c b=0 xx i=0 x=1 y=1 k bb=0 kk=''
 	eval "set $KMAP"
 	shift $T
-	while [[ -z "$1" ]]; do
-		[[ $T == $TT ]] && let TT=TT+1
+	while [ -z "$1" ]; do
+		[ $T = $TT ] && let TT=TT+1
 		let T=T+1
-		if [[ $T == 256 ]]; then
+		if [ $T = 256 ]; then
 			T=0
 			eval "set $KMAP"
 		else
@@ -105,8 +105,8 @@ drawkbd(){
 		fi
 	done
 	for key in $1; do
-		if [[ -n "$kmapfile" ]]; then
-			[[ "${kk#*$key}" == "$kk" ]] || continue
+		if [ -n "$kmapfile" ]; then
+			[ "${kk#*$key}" = "$kk" ] || continue
 			kk="$kk $key"
 		fi
 		k='   '
@@ -127,26 +127,26 @@ drawkbd(){
 		*) k=" \x${key%%:*} " ;;
 		esac
 		let i=i+1
-		if [[ "$b" != 1 ]]; then
+		if [ "$b" != 1 ]; then
 			s="$s\033[47;30m"
 			b=1
 		else
 			s="$s\033[0;37m"
 			b=0
 		fi
-		if [[ $x == $XX ]] && [[ $y == $YY ]]; then
+		if [ $x = $XX ] && [ $y = $YY ]; then
 			s="$s\033[45;30m"
 			KEY="$key"
 		fi
 		let xx=x*3-2
 		s="$s\033[$y;${xx}f$k"
 		let x=x+1
-		if [[ $x -gt $WIDTH ]]; then
+		if [ $x -gt $WIDTH ]; then
 			let xx=x*3-2
 			s="$s\033[$y;${xx}f\033[0;37m\033[0K"
 			x=1
 			let y=y+1
-			[[ $y -gt 4 ]] && break
+			[ $y -gt 4 ] && break
 			let bb=1-bb
 			b="$bb"
 		fi
@@ -164,7 +164,7 @@ run(){
 }
 
 dokey(){
-	[[ -n "$1" ]] && case "$1" in
+	[ -n "$1" ] && case "$1" in
 	00:07:) let T=1-T ;; # shift
 	7f:00:) LINE="${LINE%?}" ;; # back
 	02:07:) ;; # ctrl
@@ -190,19 +190,19 @@ dokey(){
 
 fin(){
 	killall hexdump >/dev/null 2>&1
-	[[ -n "$1" ]] && killall vkb >/dev/null 2>&1
+	[ -n "$1" ] && killall vkb >/dev/null 2>&1
 }
 
 _d(){
 	w2d 0x$x11 0x$x12
 	d="$RES"
-	[[ "${d#??????????}" == "$d" ]] || let d=d-4294967296
+	[ "${d#??????????}" = "$d" ] || let d=d-4294967296
 }
 
 vkb(){
-[[ -n "$kmapfile" ]] && loadkmap "$kmapfile"
+[ -n "$kmapfile" ] && loadkmap "$kmapfile"
 local x0 x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 x11 x12 d=" ." tty=`tty` buf=12 i
-while [[ $buf != 0 ]]; do
+while [ $buf != 0 ]; do
 	d="$d $d"
 	let buf=buf-1
 done
@@ -232,7 +232,7 @@ read d <$tty && {
 } | while read x0 x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 x11 x12; do
 	case "$x9$x0$x10" in
 	0+0)
-		if [[ $x8 != 8 ]]; then
+		if [ $x8 != 8 ]; then
 			drawkbd
 			dokey "$KEY"
 		fi
@@ -242,9 +242,9 @@ read d <$tty && {
 		i=0x$x9
 		let d=0x$x8/16%2 && let i=i-256
 		let X=X+i*relAccX
-		if [[ $X -gt $X1 ]]; then
+		if [ $X -gt $X1 ]; then
 			X=$X1
-		elif [[ $X -lt $X0 ]]; then
+		elif [ $X -lt $X0 ]; then
 			X=$X0
 		fi
 		let XX=X-X0+resX
@@ -252,9 +252,9 @@ read d <$tty && {
 		i=0x$x10
 		let d=0x$x8/32%2 && let i=i-256
 		let Y=Y-i*relAccY
-		if [[ $Y -gt $Y1 ]]; then
+		if [ $Y -gt $Y1 ]; then
 			Y=$Y1
-		elif [[ $Y -lt $Y0 ]]; then
+		elif [ $Y -lt $Y0 ]; then
 			Y=$Y0
 		fi
 		let YY=Y-Y0+resY
@@ -262,9 +262,9 @@ read d <$tty && {
 	;;
 	2:0)	_d
 		let X=d*relAccX+X
-		if [[ $X -gt $X1 ]]; then
+		if [ $X -gt $X1 ]; then
 			X=$X1
-		elif [[ $X -lt $X0 ]]; then
+		elif [ $X -lt $X0 ]; then
 			X=$X0
 		fi
 		let XX=X-X0+resX
@@ -272,9 +272,9 @@ read d <$tty && {
 	;;
 	2:1)	_d
 		let Y=d*relAccY+Y
-		if [[ $Y -gt $Y1 ]]; then
+		if [ $Y -gt $Y1 ]; then
 			Y=$Y1
-		elif [[ $Y -lt $X0 ]]; then
+		elif [ $Y -lt $X0 ]; then
 			Y=$Y0
 		fi
 		let YY=Y-Y0+resY
@@ -298,8 +298,8 @@ read d <$tty && {
 	;;
 #	3:18|1:*) _d
 	3:18)	_d
-		[[ $d == 1 ]] || continue
-		if [[ $d == 1 ]]; then
+		[ $d = 1 ] || continue
+		if [ $d = 1 ]; then
 			drawkbd
 			dokey "$KEY"
 			continue
@@ -328,9 +328,9 @@ find_abs_pressure(){
 		?*) ;;
 		*)
 			# 58=pressure
-			if [[ -n "$a" ]] ; then
+			if [ -n "$a" ] ; then
 				for i in $h; do
-					[[ "${i#event}" != "$i" ]] && echo "/dev/input/$i"
+					[ "${i#event}" != "$i" ] && echo "/dev/input/$i"
 				done
 			fi
 			h=""
@@ -352,13 +352,13 @@ _vkb(){
 local dev="${*:-$cmd_vkb_touchscreen}"
 : ${dev:=`find_abs_pressure`}
 : ${dev:=/dev/input/mice}
-[[ -e "$dev" ]] || return 0
+[ -e "$dev" ] || return 0
 ( vkb $dev && return $? ) | ${SHELL:-_read}
 return $?
 }
 
 p=""
-while [[ -n "$*" ]]; do
+while [ -n "$*" ]; do
 	case "$1" in
 	-p)shift;PROMPT="$1";;
 	*)p="$p $1";;
