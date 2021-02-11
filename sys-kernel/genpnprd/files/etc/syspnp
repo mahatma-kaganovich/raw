@@ -477,7 +477,9 @@ link_dir(){
 				link_dir "$d" "$2$i"
 			fi
 			link_dir "$1$i" "$2$i"
-		elif [[ "$i" != "/*" ]]; then
+		# bb 1.33.0 BUG!
+		#elif [[ "$i" != "/*" ]]; then
+		elif [ "$i" != '/*' ]; then
 			ln -sf "$1$i" "$2$i"
 		fi
 	done
