@@ -4,3 +4,4 @@
 =x11-misc/ya-layout-9999
 # use mail-filter/smf-grey++ instead
 mail-filter/smf-grey+tym
+=sys-apps/busybox-1.33.0
