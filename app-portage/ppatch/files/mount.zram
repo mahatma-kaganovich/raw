@@ -1,4 +1,4 @@
-#!/bin/ash
+#!/bin/sh
 # tested with busybox ash
 
 fs='ext4:-q:-O:sparse_super2:-O:^has_journal:-O:dir_index:-O:^project:-O:^quota:-E:discard:-E:num_backup_sb=0:-b:4096'
