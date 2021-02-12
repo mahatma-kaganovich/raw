@@ -151,11 +151,11 @@ pkg_setup() {
 
 	python-single-r1_pkg_setup
 
-	SHAREDMODS="$(usex snapper '' '!')vfs_snapper,"
+	SHAREDMODS="$(usex snapper '' '!')vfs_snapper"
 	if use cluster ; then
-		SHAREDMODS+="idmap_rid,idmap_tdb2,idmap_ad"
+		SHAREDMODS+=",idmap_rid,idmap_tdb2,idmap_ad"
 	elif use ads ; then
-		SHAREDMODS+="idmap_ad"
+		SHAREDMODS+=",idmap_ad"
 	fi
 }
 
