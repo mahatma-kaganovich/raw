@@ -1,0 +1,16 @@
+--- a/shared/source/os_interface/linux/drm_memory_manager.cpp	2021-02-12 03:03:21.000000000 +0300
++++ b/shared/source/os_interface/linux/drm_memory_manager.cpp	2021-02-12 03:02:47.000000000 +0300
+@@ -73,7 +73,13 @@ void DrmMemoryManager::initialize(gemClo
+             bo = allocUserptr(reinterpret_cast<uintptr_t>(memoryForPinBBs[rootDeviceIndex]), MemoryConstants::pageSize, 0, rootDeviceIndex);
+             if (bo) {
+                 if (isLimitedRange(rootDeviceIndex)) {
++#ifndef _AMD64_
++                    size_t sz = bo->size;
++                    bo->gpuAddress = acquireGpuRange(sz, false, rootDeviceIndex, false);
++                    bo->size = sz;
++#else
+                     bo->gpuAddress = acquireGpuRange(bo->size, false, rootDeviceIndex, false);
++#endif
+                 }
+             } else {
+                 alignedFreeWrapper(memoryForPinBBs[rootDeviceIndex]);
