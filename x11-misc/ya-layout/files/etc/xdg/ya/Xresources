@@ -18,6 +18,7 @@ XTerm.*.scrollBar: true
 XTerm.*.rightScrollBar: true
 XTerm.*.locale: UTF-8
 !XTerm*menuLocale:
-XTerm.*.titleModes: 15
+XTerm.*.titleModes: 14
+!XTerm.*.allowC1Printable: true
 XTerm.*.localeFilter: /usr/bin/luit
 *font: -misc-fixed-medium-r-normal-*-10-*-*-*-*-*-*-*
