@@ -22,7 +22,11 @@ use laptop && use soc && {
 }
 use fbcon || KERNEL_CONFIG+=" +FB +FRAMEBUFFER_CONSOLE;FRAMEBUFFER_CONSOLE"
 use server || KERNEL_CONFIG+=" +IOSCHED_DEADLINE -IP_ADVANCED_ROUTER -TCP_CONG_ADVANCED"
-use server && KERNEL_CONFIG+=" -KEXEC -KEXEC_.+"
+
+#use server && KERNEL_CONFIG+=" -KEXEC -KEXEC_.+"
+#use speculative &&
+    KERNEL_CONFIG+=" -CRASH_CORE"
+
 use server && use !desktop && use !laptop && KERNEL_CONFIG+=" -USB_HID USB_KBD;+USB_HID USB_MOUSE;+USB_HID"
 #use server && ts+=" -IRQ_TIME_ACCOUNTING"
 use kvm || use lxc || KERNEL_CONFIG+=" -TASKSTATS"
