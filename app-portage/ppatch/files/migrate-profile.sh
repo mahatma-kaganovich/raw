@@ -50,7 +50,7 @@ migrate_profile(){
 	pt="$raw/targets/${pn#*/}"
 	[ -n "$pg" ] || read pg <"$raw/${pn%%/*}/parent" || return 1
 	pp="$R/usr/ppatch/profiles/native"
-	pc="$raw/common/unroll2"
+	pc="$raw/common/fast"
 	[ -z "$raw" -o -z "$pn" -o -z "$pg" ] && return 1
 	[ -e "$pt" -a -e "$pg" -a -e "$pc" -a -e "$pp" ] || return 1
 	echo "current profile \"$pn\" $pn1 target=$pt"
