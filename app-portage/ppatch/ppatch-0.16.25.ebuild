@@ -70,6 +70,7 @@ src_install(){
 		fi
 	done
     done
+    use speculative && sed -i -e 's:profiles/native:profiles/speculative:' "$D/$r/migrate-profile.sh"
     insinto $r/profiles
     doins "${WORKDIR}/"{make.defaults,package.*}
 }
