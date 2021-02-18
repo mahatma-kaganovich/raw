@@ -15,3 +15,6 @@ RUBY_TARGETS="-* ruby27"
 MOZILLA_CONFIG="--jitreport-granularity=0"
 PORTAGE_RSYNC_OPTS="$PORTAGE_RSYNC_OPTS --exclude=/metadata/md5-cache"
 RUSTFLAGS="$RUSTFLAGS -Cdebuginfo=0"
+
+LANG=C
+LC_MESSAGES=C
