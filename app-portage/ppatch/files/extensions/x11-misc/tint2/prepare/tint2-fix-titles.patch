@@ -8,7 +8,7 @@ In my case "export HOSTNAME" was required.
 	root ->always from "/"
 
 --- a/src/taskbar/task.c	2019-07-15 09:15:40.000000000 +0300
-+++ b/src/taskbar/task.c	2021-02-20 23:46:17.098697926 +0300
++++ b/src/taskbar/task.c	2021-02-21 00:27:10.602123285 +0300
 @@ -260,16 +260,17 @@ gboolean task_update_title(Task *task)
      if (!panel->g_task.has_text && !panel->g_task.tooltip_enabled && taskbar_sort_method != TASKBAR_SORT_TITLE)
          return FALSE;
@@ -33,7 +33,7 @@ In my case "export HOSTNAME" was required.
          title = strdup(name);
      } else {
          title = strdup("Untitled");
-@@ -282,10 +283,74 @@ gboolean task_update_title(Task *task)
+@@ -282,10 +283,82 @@ gboolean task_update_title(Task *task)
          if (strcmp(task->title, title) == 0) {
              free(title);
              return FALSE;
@@ -41,6 +41,8 @@ In my case "export HOSTNAME" was required.
 +    }
 +//  if (...) goto nofix;
 +
++    // to keep "~/"
++//#define FORCE_HOME_CHR
 +    static char *user = NULL, *hostname = NULL, *home = NULL;
 +    static int s1 = 0, s2 = 0, s3 = 0;
 +    char ch = 0, ch1 = ':', *title2 = title;
@@ -66,10 +68,16 @@ In my case "export HOSTNAME" was required.
 +        if (s2 && strncmp(title2,hostname,s2 + 1) == ch1) {
 +            title2 += s2 + 1;
 +            if (ch1 == ']' && *title2 == ':') title2++;
-+            if (ch == '~' && s3 && (strncmp(title2,home,s3 + 1) ? : '/') == '/') {
-+                title2 += s3;
++            int l;
++            if (ch == '~' && (
++#ifndef FORCE_HOME_CHR
++			(title2[0] == '~' && title2[l = 1] == '/') ||
++#endif
++			(s3 && (strncmp(title2,home,(l = s3) + 1) ? : '/') == '/')
++			)) {
++                title2 += l;
 +                ch = 0;
-+#if 1
++#ifndef FORCE_HOME_CHR
 +                if (*title2 == '/') title2++;
 +#endif
 +                if (*title2 == '/' || !*title2) *(--title2) = '~';
