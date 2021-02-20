@@ -427,7 +427,8 @@ save(){
 	done
 	save1 1 /sys/devices/system/cpu/intel_pstate/no_turbo
 	save1 0 /sys/devices/system/cpu/cpufreq/boost
-	save1 power /sys/devices/system/cpu/cpu*/cpufreq/energy_performance_preference || {
+	save1 power /sys/devices/system/cpu/cpu*/cpufreq/energy_performance_preference ||
+	    save1 15 /sys/devices/system/cpu/cpu*/power/energy_perf_bias || {
 		f=x86_energy_perf_policy
 		$f -r|while read i; do
 			x="${i%%:*}"
