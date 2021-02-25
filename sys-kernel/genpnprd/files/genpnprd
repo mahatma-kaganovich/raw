@@ -12,6 +12,7 @@ UROOT=""
 home="`pwd`"
 PNPONLY=false
 GENKERNEL=true
+STATIC=false
 LIBLOOP=true
 MAKEOPTS="-j2 -s"
 
@@ -230,8 +231,11 @@ else
 	ln -s "etc/syspnp" "$rcdir/init"
 	x=""
 	for i in $FILES; do
-		x="$x $(which $i 2>/dev/null||echo "$i")"
-	done
+		[ "$STATIC" = true ] && j=$(which $i.static) ||
+			j=$(which $i) &&
+			i="$j"
+		x="$x $i"
+	done 2>/dev/null
 	bash "$UROOT/usr/share/genpnprd/genpkgrd" "$rcdir" "$x" "$PKGFILES" "$PACKAGES"
 	clean
 	for i in $MV_ROOT; do
@@ -242,6 +246,12 @@ else
 		ln -s busybox "$rcdir/bin/$i" &>/dev/null
 	done
 	[[ -e "$rcdir/bin/sh" ]] && ln -s sh "$rcdir/bin/ash" &>/dev/null
+	[ "$STATIC" = true ] && {
+		find /sbin -name "*.static"|while read i; do
+			j="${i##*/}"
+			[ -d "$j" ] || ln -s "$j" "${i%.static}"
+		done
+	}
 	if [[ -n "$OVERLAY" ]] && [[ -e "$OVERLAY/lib/modules" ]]; then
 		echo "Using '$OVERLAY/lib/modules'"
 	elif [[ -z "$S" ]]; then

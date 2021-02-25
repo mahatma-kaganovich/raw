@@ -621,7 +621,7 @@ kernel-2_src_compile() {
 	done
 
 	if use !klibc && use !genkernel; then
-		_genpnprd --IMAGE "initrd-${REAL_KV}.cpio" --FILES "/bin/busybox
+		_genpnprd --IMAGE "initrd-${REAL_KV}.cpio" --STATIC true --FILES "/bin/busybox
 			$(use blkid && echo /sbin/blkid)
 			$(use mdadm && echo /sbin/mdadm /sbin/mdmon)
 			$(use device-mapper && echo /usr/sbin/dmraid)
@@ -630,6 +630,7 @@ kernel-2_src_compile() {
 			$(use luks && echo /bin/cryptsetup)
 			$(use gpg && echo /sbin/gpg)
 			$(use iscsi && echo /usr/sbin/iscsistart)
+			$(use btrfs && echo /sbin/btrfs /sbin/btrfsck)
 		" &&
 		mv initrd-"${REAL_KV}".{cpio,img} ||
 		die "genpnprd failed"

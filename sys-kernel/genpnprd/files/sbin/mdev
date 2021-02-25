@@ -17,12 +17,13 @@ mdevs(){
 	local i pid
 	[ -e "$1" ] && for i in $*; do
 		local DEVNAME="" MAJOR="" MINOR="" FIRMWARE="" DEVPATH="/../${i%/uevent}" DEVMODE=""
-		eval "$(sed -e 's:^\(.*\)=\([^"].*[^"]\)$:\1="\2":g' -e 's/^[^=]*$//g' <"$i")" # || echo "! $i"
+		eval "$(sed -e 's:^\(.*\)=\([^"].*[^"]\)$:\1="\2":g' -e 's/^[^=]*$//' <"$i")" # || echo "! $i"
 		i="${i#/sys/class/}"
+		i="${i%%/*}"
 #		MODALIAS=""
 		case $ACTION in
-		*add)[ -e "/dev/$DEVNAME" ] || _mdev "${i%%/*}";;
-		*)_mdev "${i%%/*}";;
+		*add)[ -e "/dev/$DEVNAME" ] || _mdev "$i";;
+		*)_mdev "$i";;
 		esac
 	done
 }
@@ -367,7 +368,7 @@ case "$1" in
 		*)mdevs /sys/class/$i/*/uevent;;
 		esac
 	done
-	return
+	return 0
 ;;
 -a)
 	local blk2=true
@@ -459,7 +460,7 @@ Options:
 -[fast]init	initrc (+/etc/rdinit.d/{init,load0,load,load1,root})
 init cmdline: kernel doc + "fsck" (fsck+rw)
 Example: mdev -s "*" -m'
-return
+return 1
 ;;
 *)_mdev $1;;
 esac

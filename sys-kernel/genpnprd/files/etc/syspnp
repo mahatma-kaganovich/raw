@@ -1,5 +1,5 @@
 #!/bin/sh
-## pnp modules bootloader v0.23
+## pnp modules bootloader v0.24
 ## (c) Denis Kaganovich, under Anarchy license
 ## consume preprocessed /lib/modules/$KV/modules.alias
 
@@ -16,7 +16,7 @@ onbatt=false
 
 etest(){
 local x
-x=`(eval "$1" >/dev/null) 2>&1` && [ -z "$x" ] && return 0
+x=`(eval "$1") 2>&1` && [ -z "$x" ] && return 0
 echo -n "Internal script error in:
 $p
 
@@ -402,6 +402,8 @@ echo always >$d/shmem_enabled
 }
 
 pnp_options(){
+	eval "set -- `cat /proc/cmdline` `[ -e /cmdline ]&&cat /cmdline`"
+	pnp_options(){ return;}
 	PARALLEL=0
 	cmd_nofb=false
 	cmd_nopnp=false
@@ -487,7 +489,7 @@ link_dir(){
 
 pnp_init(){
 	local l
-	eval "pnp_options $(cat /proc/cmdline) $(cat /cmdline 2>/dev/null)" # parsing
+	pnp_options
 	$cmd_fast && mod_fast
 	read SAVE_HOTPLUG </proc/sys/kernel/hotplug
 	for l in /*.loopfs; do
@@ -775,6 +777,20 @@ mdadm(){
 	/sbin/mdadm "${@}"
 }
 
+_settle(){
+	[ -e /sbin/udevadm ] && udevadm settle --timeout=${cmd_udev_timeout:-${GK_UDEV_TIMEOUT:-120}}
+}
+
+_udevd(){
+	[ "$cmd_noudev" != true -a -e /sbin/udevd ] || return 1
+	echo '' >/proc/sys/kernel/hotplug
+	[ -f /etc/udev/hwdb.bin ] || udevadm hwdb --update
+	udevd --resolve-names=never --daemon || return 1
+	udevadm trigger --action=add
+	_settle
+	return 0
+}
+
 detect_fs(){
 	local i='' m="" md="$USE_MDADM" dm="$USE_DMRAID_NORMAL" t="$cmd_detect_root" lvm="$USE_LVM_NORMAL" evms="$USE_EVMS_NORMAL" mddef=true
 	[ -n "$NFSLIKE_FS" ] && [ "$REAL_ROOT" = /dev/nfs ] && REAL_ROOT="/dev/$NFSLIKE_FS"
@@ -926,6 +942,11 @@ detect_fs(){
 			} && USE_DMRAID_NORMAL_=""
 		fi
 	fi
+	case "$cmd_dobtrfs" in
+	true)btrfs device scan;;
+	?*)btrfs device scan $cmd_dobtrfs;;
+	esac
+	_settle
 	resume "$cmd_resume"
 	detect_root
 	return 0
@@ -1235,15 +1256,20 @@ CDROOT=0
 mount -t proc proc /proc
 /bin/busybox --install -s
 mount -t sysfs sys /sys
-echo /sbin/mdev >/proc/sys/kernel/hotplug
+pnp_options
 cd /sys
 read KV </proc/sys/kernel/osrelease||KV=`uname -r`
 export KV
-if [ -e /dev/null ] || /sbin/mdev -s mem; then
-	/sbin/mdev -s &
-else
-	/sbin/mdev -s
-fi
+[ -f /dev/null ] && rm /dev/null && echo REMOVING PLAIN FILE /dev/null
+_udevd || {
+	_settle(){ return;}
+	echo /sbin/mdev >/proc/sys/kernel/hotplug
+	if /sbin/mdev -s mem block; then
+		/sbin/mdev -s &
+	else
+		/sbin/mdev -s
+	fi
+}
 #pids="$pids$! "
 pnp_init
 early_huge
