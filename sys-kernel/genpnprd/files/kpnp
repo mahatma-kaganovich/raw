@@ -434,6 +434,7 @@ if $BOOT; then
 		rootfs:/);;
 		*:/newroot*)echo " $p $d $i";;
 		/dev/loop*)umount $p&&losetup -d $d;;
+		*:/dev)mount --move $p /newroot/$p;;
 		*)umount $p 2>/dev/null;;
 		esac
 	done

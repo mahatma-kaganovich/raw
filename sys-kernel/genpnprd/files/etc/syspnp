@@ -1249,6 +1249,13 @@ run_shell(){
 	vkb
 }
 
+_initnext(){
+	mod_unload
+	mount --move /dev "$NEW_ROOT"/dev
+	umount /proc /sys
+	exec "${@}"
+}
+
 # minimalistic. debug
 if [ -z "$KV"  ] && ! [ -e /proc/version ]; then
 NEW_ROOT="/newroot"
@@ -1256,15 +1263,17 @@ CDROOT=0
 mount -t proc proc /proc
 /bin/busybox --install -s
 mount -t sysfs sys /sys
+mount -t devtmpfs -o exec,nosuid,mode=0755,size=10M dev /dev && devfs=true || devfs=false
 pnp_options
 cd /sys
 read KV </proc/sys/kernel/osrelease||KV=`uname -r`
 export KV
-[ -f /dev/null ] && rm /dev/null && echo REMOVING PLAIN FILE /dev/null
 _udevd || {
 	_settle(){ return;}
-	echo /sbin/mdev >/proc/sys/kernel/hotplug || _settle(){ /sbin/mdev -s block;}
-	if /sbin/mdev -s mem block; then
+	echo /sbin/mdev >/proc/sys/kernel/hotplug || {
+		$devfs || _settle(){ /sbin/mdev -s block;}
+	}
+	$devfs || if /sbin/mdev -s mem block; then
 		/sbin/mdev -s &
 	else
 		/sbin/mdev -s
@@ -1272,6 +1281,7 @@ _udevd || {
 }
 #pids="$pids$! "
 pnp_init
+SAVE_HOTPLUG=
 early_huge
 rm /sbin/modprobe 2>/dev/null
 override_modprobe
@@ -1285,13 +1295,9 @@ while true; do
 		( mnt_loop /dev/loop1 /lib.loopfs /rd && link_dir /rd /lib ) ||
 		( mnt_loop /dev/loop1 /rd.loopfs /rd && link_dir /rd )
 		link_dir "$LOOP_ROOT"
-		mod_unload
-		umount /proc /sys
-		exec "$cmd_real_init" $cmd_init_opts
+		_initnext "$cmd_real_init" $cmd_init_opts
 	elif [ -d "$NEW_ROOT" ]; then
-		mod_unload
-		umount /proc /sys
-		exec /sbin/switch_root -c /dev/console "$NEW_ROOT" "$cmd_real_init" $cmd_init_opts
+		_initnext /sbin/switch_root -c /dev/console "$NEW_ROOT" "$cmd_real_init" $cmd_init_opts
 	else
 		bmsg "failed to mount root"
 		while true; do

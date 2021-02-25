@@ -429,6 +429,7 @@ case "$1" in
 			2|3)sync;echo b >/proc/sysrq-trigger;;
 			esac
 		}
+		mount --move /dev /newroot/dev 2>/dev/null
 		umount `grep -vh "^[^ ]* /newroot[/ ]\|^[^ ]* / " /proc/mounts /etc/mtab|sed -e 's:^[^ ]* \([^ ]*\) .*$:\1:'|sort -u`
 		for i in /dev/loop*; do
 			losetup -d "$i"

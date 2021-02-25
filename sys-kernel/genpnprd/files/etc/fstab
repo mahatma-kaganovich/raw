@@ -1,7 +1,9 @@
 #/dev/ram0	/	ext2	defaults	0 0
 proc		/proc	proc	defaults	0 0
 sysfs		/sys	sysfs	defaults	0 0
+dev		/dev	devtmpfs exec,nosuid,mode=0755,size=10M 0 0
 /lib.loopfs	/lib	squashfs	loop,ro	0 0
 /root.loopfs	/root	squashfs	loop,ro	0 0
+/rd.loopfs	/rd	squashfs	loop,ro	0 0
 #/dev/*		/newroot	auto	ro	0 0
 
