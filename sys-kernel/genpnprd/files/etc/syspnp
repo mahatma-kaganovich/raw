@@ -1263,7 +1263,7 @@ export KV
 [ -f /dev/null ] && rm /dev/null && echo REMOVING PLAIN FILE /dev/null
 _udevd || {
 	_settle(){ return;}
-	echo /sbin/mdev >/proc/sys/kernel/hotplug
+	echo /sbin/mdev >/proc/sys/kernel/hotplug || _settle(){ /sbin/mdev -s block;}
 	if /sbin/mdev -s mem block; then
 		/sbin/mdev -s &
 	else
