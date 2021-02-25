@@ -247,7 +247,7 @@ else
 	done
 	[[ -e "$rcdir/bin/sh" ]] && ln -s sh "$rcdir/bin/ash" &>/dev/null
 	[ "$STATIC" = true ] && {
-		find /sbin -name "*.static"|while read i; do
+		find "$rcdir" -name "*.static"|while read i; do
 			j="${i##*/}"
 			[ -d "$j" ] || ln -s "$j" "${i%.static}"
 		done
