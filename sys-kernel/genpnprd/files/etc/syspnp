@@ -1275,18 +1275,28 @@ vkb(){
 }
 
 run_dropbear(){
-	/usr/sbin/dropbear -FER
+	[ -e /usr/sbin/dropbear ] || return
+	mkdir -P /var/run
+	[ -z "$cmd_ip" ] && ip_config +
+	/usr/sbin/dropbear -R "${@}"
+	[ -z "$cmd_ip" -a "$1" != -FE ] && killall udhcpc && sleep 3
 }
 
 run_shell(){
 	case "$cmd_dosshd" in
-	shell|true)run_dropbear;return;;
+	shell)run_dropbear -FE;return;;
+	+)run_dropbear;;
 	esac
 	[ -z "$SHELL" ] && for SHELL in /bin/ash /bin/bash /bin/sh; do
 		[ -e "$SHELL" ] && break
 	done
 	export SHELL
 	vkb
+	[ -e /var/run/dropbear.pid ] && {
+		killall dropbear
+		[ -z "$cmd_ip" ] && killall udhcpc
+		sleep 3
+	}
 }
 
 _initnext(){
@@ -1327,7 +1337,7 @@ rm /sbin/modprobe 2>/dev/null
 override_modprobe
 syspnp true
 cd /
-[ "$cmd_dosshd" = true ] && run_dropbear
+[ "$cmd_dosshd" = true ] && run_dropbear -FE
 while true; do
 	[ -n "$REAL_ROOT" ] && mntnewroot
 	if [ -n "$LOOP_ROOT" ] && [ -d "$LOOP_ROOT" ] &&
