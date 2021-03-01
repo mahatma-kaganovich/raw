@@ -25,11 +25,13 @@ COMP='GZIP BZIP2'
 
 if [[ ${ETYPE} == sources ]]; then
 
+# things like bcache, btrfs, xfs works without special inclusion,
+# but disaster recovering is good
 IUSE="${IUSE} +build-kernel custom-cflags +pnp +compressed integrated
 	netboot custom-arch embed-hardware +blobs
 	kernel-firmware +sources pnponly lzma xz lzo lz4 zstd
 	external-firmware xen +smp kernel-tools multitarget 64-bit-bfd thin
-	lvm evms device-mapper unionfs luks gpg iscsi e2fsprogs mdadm btrfs +keymap blkid
+	lvm device-mapper unionfs luks gpg iscsi e2fsprogs mdadm btrfs bcache dropbear xfs +keymap blkid
 	lguest acpi klibc +genkernel monolythe update-boot uml paranoid"
 DEPEND="${DEPEND}
 	!<app-portage/ppatch-0.08-r16
@@ -45,9 +47,6 @@ DEPEND="${DEPEND}
 		klibc? ( sys-kernel/klibc-sources )
 		genkernel? (
 			>=sys-kernel/genkernel-3.4.10.903
-			luks? ( sys-fs/cryptsetup )
-			evms? ( sys-fs/evms )
-			btrfs? ( sys-fs/btrfs-progs )
 		)
 		!klibc? ( !genkernel? (
 			sys-apps/busybox
@@ -59,7 +58,10 @@ DEPEND="${DEPEND}
 			iscsi? ( sys-block/open-iscsi )
 			gpg? ( app-crypt/gnupg )
 			luks? ( sys-fs/cryptsetup )
-			evms? ( sys-fs/evms )
+			btrfs? ( sys-fs/btrfs-progs )
+			bcache? ( sys-fs/bcache-tools )
+			xfs? ( sys-fs/xfsprogs )
+			dropbear? ( net-misc/dropbear )
 		) )
 	) "
 
@@ -630,7 +632,10 @@ kernel-2_src_compile() {
 			$(use luks && echo /bin/cryptsetup)
 			$(use gpg && echo /sbin/gpg)
 			$(use iscsi && echo /usr/sbin/iscsistart)
-			$(use btrfs && echo /sbin/btrfs /sbin/btrfsck)
+			$(use btrfs && echo /sbin/btrfs /sbin/btrfsck /sbin/mkfs.btrfs)
+			$(use bcache && echo /sbin/bcache)
+			$(use xfs && echo /sbin/xfs_repair /sbin/mkfs.xfs)
+			$(use dropbear && echo /usr/sbin/dropbear)
 		" &&
 		mv initrd-"${REAL_KV}".{cpio,img} ||
 		die "genpnprd failed"
@@ -641,7 +646,11 @@ kernel-2_src_compile() {
 	einfo "Generating initrd image"
 	# nfs: required --enable-static-nss in glibc, $(pkgconfig libtirpc --libs --static) in the END of line...
 	local p=' --no-nfs'
-	for i in 'lvm lvm2' evms luks gpg iscsi 'device-mapper dmraid' unionfs e2fsprogs mdadm btrfs keymap netboot 'monolythe static'; do
+	for i in 'lvm lvm2' luks gpg iscsi 'device-mapper dmraid' unionfs e2fsprogs mdadm btrfs keymap netboot 'monolythe static' 'dropbear ssh'; do
+		use "${i% *}" && p+=" --${i##* }"
+	done
+	for i in bcache 'xfs xfsprogs'; do
+		grep -qF "	--${i##* }	" /usr/share/genkernel/gen_cmdline.sh &&
 		use "${i% *}" && p+=" --${i##* }"
 	done
 	for i in 'blkid disklabel'; do

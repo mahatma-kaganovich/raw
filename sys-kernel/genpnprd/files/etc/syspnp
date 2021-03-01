@@ -1,5 +1,5 @@
 #!/bin/sh
-## pnp modules bootloader v0.24
+## pnp modules bootloader v0.25
 ## (c) Denis Kaganovich, under Anarchy license
 ## consume preprocessed /lib/modules/$KV/modules.alias
 
@@ -649,6 +649,17 @@ detect_root(){
 	}
 }
 
+_ifaces(){
+	local i
+	for i in /sys/class/net/*; do
+		i=${i##*/}
+		case "$i" in
+		lo|nlmon);;
+		*)echo "$i";;
+		esac
+	done
+}
+
 # autoconfig works only with built-in card?
 ip_config(){
 local ip dev s d h
@@ -661,19 +672,39 @@ local ip dev s d h
 }
 for ip in "${@}"; do
     msg_ "Configuring IP $ip"
-    eval "set `echo "'$ip'"|sed -e "s/:/' '/g"` ''"
-    for dev in ${6:-$(ls -1 /sys/class/net/ 2>/dev/null|grep -v "^lo$")}; do
+    case "$1" in
+    # forever everywere
+    +)	for i in $(_ifaces); do
+		udhcpc -i $i -V genpnprd -f -A 5 >/dev/null 2>&1 &
+	done
+	return
+    ;;
+    # to success round-robin
+    \*)	while true; do
+		for i in $(_ifaces); do
+			udhcpc -i $i -V genpnprd -vnq -t 1 -T 1 && return
+		done
+	done
+    ;;
+    esac
+    eval "set -- `echo "'$ip'"|sed -e "s/:/' '/g"` ''"
+    for dev in ${6:-$(_ifaces)}; do
 	d=
 	case "$7" in
 	on|any|dhcp)
 		mod af_packet
 		msg_
-		busybox udhcpc -i $dev -n -T 15 -q || continue
+		busybox udhcpc -i $dev -V genpnprd -n -T 15 -q || continue
 		d=`grep -s "^domain " /etc/resolv.conf|sed -e 's:^domain ::'`
 		[ -e /rootpath ] && NFSROOT=`cat /rootpath`
 	;;
 	esac
-	[ -n "$1$4" ] && ifconfig $dev $1 ${4:+netmask $4}
+	[ -n "$1$4" ] && if [ -z "$4" ]; then
+		ip addr add dev $dev $1 brd + || continue
+		ip link set $dev up
+	else
+		ifconfig $dev $1 netmask $4 up || continue
+	fi
 	i="${5%%.*}"
 	[ -n "$i" ] && echo "$i" >/proc/sys/kernel/hostname
 	[ "$i" != "$5" ] && d="${5#*.}"
@@ -1214,8 +1245,10 @@ syspnp(){
 	fi
 
 	# genkernel
-	! ${1:-false} && [ -n "$REAL_ROOT" ] && [ -n "$LOOP" ] &&
-		mntnewroot
+	[ "$1" != true -a -n "$REAL_ROOT" ] && {
+		[ -n "$GK_ROOTFS_DETECTED_STATEFILE" -a -b "$REAL_ROOT" -a "$cmd_fast" = true ] && echo "$REAL_ROOT" >$GK_ROOTFS_DETECTED_STATEFILE
+		[ -n "$LOOP" ] && mntnewroot
+	}
 
 	gmsg "Boot time: $(cat /proc/uptime)"
 	if [ -n "${NOTLOADED}" ] ; then
@@ -1241,7 +1274,14 @@ vkb(){
 	fi
 }
 
+run_dropbear(){
+	/usr/sbin/dropbear -FER
+}
+
 run_shell(){
+	case "$cmd_dosshd" in
+	shell|true)run_dropbear;return;;
+	esac
 	[ -z "$SHELL" ] && for SHELL in /bin/ash /bin/bash /bin/sh; do
 		[ -e "$SHELL" ] && break
 	done
@@ -1287,6 +1327,7 @@ rm /sbin/modprobe 2>/dev/null
 override_modprobe
 syspnp true
 cd /
+[ "$cmd_dosshd" = true ] && run_dropbear
 while true; do
 	[ -n "$REAL_ROOT" ] && mntnewroot
 	if [ -n "$LOOP_ROOT" ] && [ -d "$LOOP_ROOT" ] &&
