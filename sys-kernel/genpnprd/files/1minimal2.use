@@ -31,7 +31,7 @@ use server && use !desktop && use !laptop && KERNEL_CONFIG+=" -USB_HID USB_KBD;+
 #use server && ts+=" -IRQ_TIME_ACCOUNTING"
 use kvm || use lxc || KERNEL_CONFIG+=" -TASKSTATS"
 use lxc || KERNEL_CONFIG+=" -TASK_XACCT"
-use mdadm || use lvm || use evms || use device-mapper || KERNEL_CONFIG+=" -MD"
+use mdadm || use lvm || use device-mapper || KERNEL_CONFIG+=" -MD"
 [ "$VIRT" = 2 ] && {
 	# next remove some USB drivers and ACPI_HOTPLUG, may be useful under QEMU
 #	KERNEL_CONFIG+=" -FW_LOADER -CPU_IDLE"

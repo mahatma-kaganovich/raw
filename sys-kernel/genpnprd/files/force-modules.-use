@@ -8,8 +8,8 @@ use fbcon && KERNEL_CONFIG+=" &FB"
 KERNEL_CONFIG+=" &UNIX &PACKET &SQUASHFS &BLK_DEV_LOOP"
 
 if use embed-hardware; then
- (use mdadm || use evms) && KERNEL_CONFIG+=" BLK_DEV_MD MD_.+"
- (use device-mapper || use evms || use lvm) && KERNEL_CONFIG+=" BLK_DEV_DM DM_.+"
+ use mdadm && KERNEL_CONFIG+=" BLK_DEV_MD MD_.+"
+ (use device-mapper || use lvm) && KERNEL_CONFIG+=" BLK_DEV_DM DM_.+"
  use iscsi && KERNEL_CONFIG+=" ISCSI_TCP"
  use luks && KERNEL_CONFIG+=" BLK_DEV_DM DM_CRYPT CRYPTO_CBC CRYPTO_AES(?:X86_64|586)? CRYPTO_SHA256"
 else
