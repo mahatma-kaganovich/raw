@@ -1,1 +1,1 @@
-RDEPEND+=" wifi? ( crda? ( net-wireless/crda ) ) "
+RDEPEND+=" wifi? ( net-wireless/wireless-regdb crda? ( net-wireless/crda ) ) "

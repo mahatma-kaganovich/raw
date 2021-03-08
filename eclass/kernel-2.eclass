@@ -906,6 +906,13 @@ _cfg_use_(){
 	done
 }
 
+rd_add(){
+	local i
+	for i in "${@}"; do
+		[[ " $KERNEL_IMAGE_FILES " != " $i " ]] && KERNEL_IMAGE_FILES+=" $i"
+	done
+}
+
 _append(){
 	local v="KERNEL_CONFIG_$1"
 	shift

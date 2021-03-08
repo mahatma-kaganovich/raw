@@ -60,7 +60,7 @@ _modlst(){
 
 preserve_start(){
 	echo "Preserving unpacked /lib"
-	local m mm="$rcdir/lib/modules/${KV}"
+	local m mm="$rcdir/lib/modules/${KV}" d
 	$PNPONLY && {
 		source "$mm/modules.alias.sh" || die "Broken modules.alias.sh, check mod2sh.pl!"
 	}
@@ -91,6 +91,13 @@ preserve_start(){
 	cd "$rcdir"
 	if ! $LIBLOOP; then
 		mv "$rcdir"/{etc,sys,proc,kernel,dev} "$tmp/preserve/" || die
+		for m in lib/firmware/regulatory.db; do
+			[ -e "$rcdir"/$m ] || continue
+			d="$tmp/preserve/${m%/*}"
+			mkdir -p "$d"
+			mv "$rcdir"/$m "$d/"
+			
+		done
 		find .|sort|while read m; do
 			[[ "$m" == ./* ]] || continue
 			m="${m#./}"
