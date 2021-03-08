@@ -91,7 +91,7 @@ preserve_start(){
 	cd "$rcdir"
 	if ! $LIBLOOP; then
 		mv "$rcdir"/{etc,sys,proc,kernel,dev} "$tmp/preserve/" || die
-		for m in lib/firmware/regulatory.db; do
+		for m in $(grep -qx CONFIG_CFG80211=y "$S"/.config && echo lib/firmware/regulatory.db) do
 			[ -e "$rcdir"/$m ] || continue
 			d="$tmp/preserve/${m%/*}"
 			mkdir -p "$d"
