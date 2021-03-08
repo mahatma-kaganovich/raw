@@ -389,6 +389,7 @@ protobuf)filterflag -mtls-dialect=gnu2;;&
 nss)_iuse abi_x86_32 && gccve '[0-9][0-9]' && appendflag -fno-tree-slp-vectorize;;&
 # hard to figure out
 geos)_fnofastmath;filterflag -ffast-math -Ofast -Wl,--no-eh-frame-hdr;;&
+dav1d)_fLTO_f -fPIC;;&
 esac
 
 case "$CATEGORY/$P" in
