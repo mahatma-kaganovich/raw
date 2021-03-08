@@ -266,11 +266,14 @@ xemacs)_fLTO && {
 # fuse: e2fsprogs failed only on gcc 8.2
 # ffmpeg: amd64 - mp4 crushes
 # libbsd: mailx
-sandbox|valgrind|xf86-video-intel|libwacom|libbsd|dcc|chromium*|webkit-gtk|ffmpeg|xemacs|fuse|privoxy|icedtea|openjdk|qtwebkit|mplayer|mysql|heimdal|glibc|cvs|pulseaudio)
+gnutls|sandbox|valgrind|xf86-video-intel|libwacom|libbsd|dcc|chromium*|webkit-gtk|ffmpeg|xemacs|fuse|privoxy|icedtea|openjdk|qtwebkit|mplayer|mysql|heimdal|glibc|cvs|pulseaudio)
 #	${CC:-gcc} -v 2>&1|grep -q "^gcc version" &&
 		filterflag '-flto*' '-*-lto-*' -fuse-linker-plugin -fdevirtualize-at-ltrans
 ;;&
 libaio)_fLTO_f -fno-lto;;&
+inkscape|libreoffice|mariadb|nodejs|clang|gnutls|gtk+|libvpx|mesa|busybox)
+	_iuse !static-libs && filterflag -ffat-lto-objects
+;;&
 qtscript)filterflag -flto '-flto=*' && appendflag_ LDFLAGS -flto;;
 gnustep-base|gnustep-back-cairo)_fLTO_f -flto-partition=1to1;;&
 #openjdk)_fLTO_f -fno-strict-aliasing -flto;;& # ulimit -n 100000
@@ -299,7 +302,6 @@ gcc|glibc|chromium|texlive-core|xemacs)filterflag -fopenmp -fopenmp-simd -fopena
 ipmitool|distcc|vlc|android-tools)appendflag -fcommon;;&
 zstandard)export MAKEOPTS=-j1;;&
 ncurses-compat|ncurses)_fLTO && export ac_cv_func_dlsym=no ac_cv_lib_dl_dlsym=yes;;&
-inkscape|libreoffice|mariadb|nodejs|clang)filterflag -ffat-lto-objects;;&
 mariadb)filterflag -fno-asynchronous-unwind-tables;;&
 mariadb)_fLTO_f -fno-ipa-cp-clone;;&
 mariadb)
