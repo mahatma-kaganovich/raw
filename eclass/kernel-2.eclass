@@ -2124,6 +2124,7 @@ slink /usr/$libdir lib 0755 0 0"
 		f="${f#/usr/lib/klibc}"
 		case "$f" in
 		*/overlay-rd/*)f="/${f##*/overlay-rd/}";;
+		/lib/firmware/regulatory.*)grep -qx CONFIG_CFG80211=y "$S"/.config || continue;;
 		/usr/lib*|*/loop.ko|*/squashfs.ko);;
 		/lib*/*)use compressed && continue;;
 		/usr/*)f="${f#/usr}";;
