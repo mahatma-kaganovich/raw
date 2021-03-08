@@ -910,7 +910,7 @@ rd_add(){
 	local i r="${TMPDIR}/overlay-rd/"
 	for i in "${@}"; do
 #		[ -e "$r$i" ] || cp --parents "$r" "$r"
-		[ -e "$r$i" ] || bash "${SHARE}/genpkgrd" "$r" "" "$r"
+		[ -e "$r$i" ] || bash "${SHARE}/genpkgrd" "$r" "" "$i"
 	done
 }
 
