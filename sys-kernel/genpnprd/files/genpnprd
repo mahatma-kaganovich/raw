@@ -79,6 +79,7 @@ preserve_start(){
 	cd "$rcdir" || die
 	mkdir "$tmp/preserve" || die
 	cd "lib/modules/$KV"
+	grep -qx CONFIG_CFG80211=y "$S"/.config && preserve+=' /lib/firmware/regulatory.db'
 	echo "$preserve" >"$tmp/preserve.lst"
 	for m in `cat $tmp/modules.lst` ; do
 		m="${m%:}"
@@ -91,13 +92,6 @@ preserve_start(){
 	cd "$rcdir"
 	if ! $LIBLOOP; then
 		mv "$rcdir"/{etc,sys,proc,kernel,dev} "$tmp/preserve/" || die
-		for m in $(grep -qx CONFIG_CFG80211=y "$S"/.config && echo lib/firmware/regulatory.db) do
-			[ -e "$rcdir"/$m ] || continue
-			d="$tmp/preserve/${m%/*}"
-			mkdir -p "$d"
-			mv "$rcdir"/$m "$d/"
-			
-		done
 		find .|sort|while read m; do
 			[[ "$m" == ./* ]] || continue
 			m="${m#./}"
