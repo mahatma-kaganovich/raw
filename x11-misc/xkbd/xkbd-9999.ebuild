@@ -31,7 +31,7 @@ RDEPEND="x11-libs/libX11
 	multitouch? ( x11-libs/libXi )"
 
 DEPEND="${RDEPEND}
-	x11-base/xorg-proto"
+	x11-base/xorg-proto:="
 
 RDEPEND="${RDEPEND}
 	sys-process/procps
