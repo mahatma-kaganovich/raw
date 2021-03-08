@@ -907,9 +907,10 @@ _cfg_use_(){
 }
 
 rd_add(){
-	local i
+	local i r="${TMPDIR}/overlay-rd/"
 	for i in "${@}"; do
-		[[ " $KERNEL_IMAGE_FILES " != " $i " ]] && KERNEL_IMAGE_FILES+=" $i"
+#		[ -e "$r$i" ] || cp --parents "$r" "$r"
+		[ -e "$r$i" ] || bash "${SHARE}/genpkgrd" "$r" "" "$r"
 	done
 }
 
