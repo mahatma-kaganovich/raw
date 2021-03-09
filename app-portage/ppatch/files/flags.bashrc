@@ -272,7 +272,7 @@ gnutls|sandbox|valgrind|xf86-video-intel|libwacom|libbsd|dcc|chromium*|webkit-gt
 ;;&
 libaio)_fLTO_f -fno-lto;;&
 inkscape|libreoffice|mariadb|nodejs|clang|gnutls|gtk+|libvpx|mesa|busybox)
-	_iuse !static-libs && filterflag -ffat-lto-objects
+	_iuse static-libs || filterflag -ffat-lto-objects
 ;;&
 qtscript)filterflag -flto '-flto=*' && appendflag_ LDFLAGS -flto;;
 gnustep-base|gnustep-back-cairo)_fLTO_f -flto-partition=1to1;;&
