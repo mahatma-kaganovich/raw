@@ -5,4 +5,4 @@ grep -q request_firmware_nowait "$S"/net/wireless/reg.c &&
 
 # disable verification, keep db loadable for upgrade
 KERNEL_CONFIG+=" CFG80211_CERTIFICATION_ONUS -CFG80211_REQUIRE_SIGNED_REGDB -CFG80211_USE_KERNEL_REGDB_KEYS"
-rd_add /lib/firmware/regulatory.db
+use blobs || rd_add /lib/firmware/regulatory.db
