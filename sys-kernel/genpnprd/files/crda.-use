@@ -1,8 +1,8 @@
 KERNEL_CONFIG+="-CFG80211_CRDA_SUPPORT"
+# disable verification, keep db loadable for upgrade
 
 use speculative && use minimal2 &&
-grep -q request_firmware_nowait "$S"/net/wireless/reg.c &&
-
-# disable verification, keep db loadable for upgrade
-KERNEL_CONFIG+=" CFG80211_CERTIFICATION_ONUS -CFG80211_REQUIRE_SIGNED_REGDB -CFG80211_USE_KERNEL_REGDB_KEYS"
-use blobs || rd_add /lib/firmware/regulatory.db
+    grep -q request_firmware_nowait "$S"/net/wireless/reg.c && {
+	KERNEL_CONFIG+=" CFG80211_CERTIFICATION_ONUS -CFG80211_REQUIRE_SIGNED_REGDB -CFG80211_USE_KERNEL_REGDB_KEYS"
+	use blobs || rd_add /lib/firmware/regulatory.db
+}
