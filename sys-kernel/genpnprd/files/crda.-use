@@ -8,4 +8,3 @@ use wifi && if use speculative && use minimal2; then
 else
 	use blobs || rd_add /lib/firmware/regulatory.db{,.p7s}
 fi
-}
