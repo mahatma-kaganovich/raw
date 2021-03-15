@@ -1,3 +1,4 @@
+#!/bin/bash
 # (c) Denis Kaganovich, under Anarchy license
 # tint2 execp for wifi monitor
 # use iwmon (iwd) & ip (iproute2), but works with wpa_supplicant too
@@ -9,27 +10,26 @@ nrg='sudo -n -- /usr/sbin/ya-nrg'
 # but routes add errors are dirty
 ipmon=false
 
+# next connect
 nxt(){
-unset ssid
-unset t
-unset mBm
-unset freq
+unset ssid t mBm freq "${@}"
 }
 
-nxt
-unset conn
-unset src
-unset src1
-unset src2
-unset src3
-unset dev
-unset dev2
-unset dev3
-unset via
-unset s1
-unset freq1
+# next preconnect state
+nxt1(){
+	preconnect=${1:-false}
+	preconnect2=${2:-$preconnect}
+	${3:-$preconnect2} || nxt freq1 t1 ssid1
+	$preconnect || $preconnect2 || {
+		nxt conn cfreq ct
+		[ -v ssid1 ] && conn=$ssid1
+		show
+	}
+}
+
+unset src src1 src2 src3 dev dev2 dev3 via s1
 connect=false
-preconnect=false
+nxt1
 echo "    ?    
 "
 echo $'\x1b[2J-' >&2
@@ -58,9 +58,12 @@ local s=_
 	subv2 "$c" ' Connected network ' && conn=$i &&
 		[ -z "$cfreq" ] && subv2 "$c" ' Frequency ' && cfreq=$i
 }
-if [ "$conn" = "$ssid" ]; then
-	cfreq=$freq
-	ct=$t
+[ -v conn ] && if [ "$conn" = "$ssid" ]; then
+	cfreq=${freq:-$freq1}
+	ct=${t1:-$t}
+elif [ "$conn" = "$ssid1" ]; then
+	cfreq=$freq1
+	ct=$t1
 fi
 s="${cfreq:-    }$s${ct:-   } 
 $conn"
@@ -92,13 +95,16 @@ fi
 	y="${x#*: }"
 	case "$x" in
 	'>'*)
-#		echo "	$x" >&2
-		$connect && conn="$ssid" && connect=false
-		[ -v ssid -a "$ssid" = "$conn" ] && show
+		if $connect; then
+			connect=false
+			conn="${ssid:-$ssid1}"
+			[ -v conn ] && show
+		elif [ -v conn -a "${ssid:-$ssid1}" = "$conn" ]; then
+			show
+		fi
 		nxt
 	;;&
 	[\<\>]*)
-		preconnect=false
 		[ -v RTNL ] && {
 			! [ -v dev3 ] && [ -v ifindex ] && for i in /sys/class/net/*/ifindex; do
 				[ "$(< $i)" = "$ifindex" ] && i=${i%/*} && dev3=${i##*/} && break
@@ -114,26 +120,33 @@ fi
 		}
 		unset RTNL src3 dev3 ifindex via
 	;;&
-	'> Event: Disconnect'*)
-		unset conn
-		show
-		$nrg wifi-sleep &
+	'> Event: Disconnect'*)nxt1;$nrg wifi-sleep;;
+	'> Event: Connect '*)connect=true;; # no dhcp
+	'Status: '*)
+		case "$y" in
+		'1 (0x00000001)'*)! $preconnect2 && conn="${ssid:-$ssid1}" && show;;& # dhcp?
+		*)$preconnect2 || continue;;&
+		Success\ *)nxt1 false false true;;
+		*)nxt1;;
+		esac
 	;;
-	'> Event: Connect '*)
-		connect=true
-		[ -v freq1 ] && {
-			[ -v freq ] || freq=$freq1
-			unset freq1
+	'SSID: '*)ssid="$y";
+		[[ "$ssid" == 'len '[0-9] ]] && {
+			i=${ssid#len }
+			i=${i%% *}
+			i=$[0-i]
+			[ "$i" != 0 ] && read ssid && ssid=${ssid:$i} || unset ssid
 		}
-	;; # no dhcp
-	'Status: 1 (0x00000001)')conn="$ssid";show;; # dhcp
-	'SSID: '*)ssid="$y";;
-	WPA:|RSN:)t="${x%:}";;
+		$preconnect && ssid1=$ssid
+	;;
+	WPA:*|RSN:*)t="${x%:}";;
 	'Signal mBm: '*)y="000${y#-}";y="${y:(-4):2}";y="${y#0}";mBm="$y";;
 	'Frequency: '*)freq="${y%% *}";;
+	'WPA Versions: '*)$preconnect && t1="WPA${y%% *}";;
 	'Wiphy Frequency: '*)$preconnect && freq1="${y%% *}";;
 	'> Complete: Get Scan '*)show;;
-	'< Request: Connect '*)preconnect=true;unset freq1;;
+	'< Request: Connect '*)nxt1 true false;;
+	'> Response: Connect '*)nxt1 $preconnect;;
 	'default via '*' dev '*)
 		subv "$x" dev && isw "$i" || continue
 		dev="$i"
