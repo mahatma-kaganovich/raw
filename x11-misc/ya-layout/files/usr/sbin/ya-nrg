@@ -555,7 +555,7 @@ force)force=true;;
 wifi);;
 wifi-restart|wifi-sleep|wifi-sync)"${1//-/_}";;
 iwmon)
-	exec stdbuf -i0 -o0 -e0 iwmon -nys --noies
+	exec stdbuf -i0 -o0 -e0 iwmon -ys --noies
 	exit 1
 ;;
 *)
