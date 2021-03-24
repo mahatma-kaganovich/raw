@@ -5,5 +5,5 @@ use experimental &&
 use experimental &&
 	_cmdline threadirqs
 use desktop && KERNEL_CONFIG+=" HZ_300" || KERNEL_CONFIG+=" HZ_250"
-#KERNEL_CONFIG+=" =RCU_BOOST"
+KERNEL_CONFIG+=" =RCU_BOOST"
 

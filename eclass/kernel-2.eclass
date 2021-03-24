@@ -1476,7 +1476,7 @@ CF1 "CPU_SUP_${V:-.+}"
 }
 [ -z "$V" -o "$V" = AMD ] && ucode "amd-ucode/*.bin" AuthenticAMD
 [ -z "$V" -o "$V" = INTEL ] && ucode "intel-ucode/??-??-??" GenuineIntel
-_is_CF1 NUMA || _is_CF1 PARAVIRT && CF1 RCU_NOCB_CPU # ??
+#_is_CF1 NUMA || _is_CF1 PARAVIRT && CF1 RCU_NOCB_CPU # ??
 _is_CF1 -PARAVIRT && CF1 JUMP_LABEL
 
 # probably 4.14+ kernels have forced SMT x86
