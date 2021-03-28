@@ -1,9 +1,9 @@
 KERNEL_CONFIG+="TREE_PREEMPT_RCU SMP==!y;TINY_PREEMPT_RCU PREEMPT_RT_FULL;PREEMPT_RT;PREEMPT =IRQ_TIME_ACCOUNTING HIGH_RES_TIMERS -SLUB_CPU_PARTIAL"
 KERNEL_CONFIG+=" RCU_EXPERT"
-use experimental &&
-	KERNEL_CONFIG+=" NR_CPUS==1;RCU_NOCB_CPU"
-use experimental &&
-	_cmdline threadirqs
+#KERNEL_CONFIG+=" +RCU_SCALE_TEST +RCU_REF_SCALE_TEST"
+# rmmod rcuscale ; modprobe rcuscale verbose=0 kfree_alloc_num=10000 kfree_loops=10000 kfree_rcu_test=1
+KERNEL_CONFIG+=" RCU_NOCB_CPU"
+_cmdline threadirqs
 use desktop && KERNEL_CONFIG+=" HZ_300" || KERNEL_CONFIG+=" HZ_250"
 KERNEL_CONFIG+=" =RCU_BOOST"
-
+KERNEL_CONFIG+=" TASKS_TRACE_RCU_READ_MB"
