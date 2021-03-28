@@ -1,6 +1,5 @@
 if use jit; then
-	ERNEL_CONFIG+='BPF_JIT_ALWAYS_ON'
+	KERNEL_CONFIG+='BPF_JIT_ALWAYS_ON'
 else
 	KERNEL_CONFIG+='-BPF_.+ -.+_BPF'
-	[ -e /usr/include/linux/bpf.h ] && ewarn "Selected USE='-bpf -jit' - bad idea! Wait for surprises ('bad checksum' from dhcpd, etc)"
 fi
