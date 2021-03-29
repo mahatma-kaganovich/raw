@@ -1689,7 +1689,7 @@ kernel-2_src_prepare(){
 	if (use multitarget || use 64-bit-bfd) && test_cc -S -m64 $i && ! test_cc -S -m64 2>/dev/null; then
 		einfo "-m64 arch fix"
 		sed -i -e "s/ -mcmodel=small/ -mcmodel=small -m64$i/" arch/x86/boot/compressed/Makefile drivers/firmware/efi/libstub/Makefile
-		sed -i -e "s/\(KBUILD_AFLAGS += -m64\)$/\1$i/" arch/x86/Makefile*
+		sed -i -e "s/\(KBUILD_[AC]FLAGS += -m64\)$/\1$i/" arch/x86/Makefile*
 		sed -i -e "s/^\(CC_OPTION_CFLAGS .*\)$/\1$i/" scripts/Kbuild.include
 		touch "$TMPDIR/_cross"
 	fi
