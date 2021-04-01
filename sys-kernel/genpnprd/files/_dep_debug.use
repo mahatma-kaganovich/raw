@@ -1,0 +1,2 @@
+# IKHEADERS
+DEPEND+=" debug? ( app-arch/cpio ) "
