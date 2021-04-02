@@ -42,6 +42,7 @@ DEPEND="${DEPEND}
 	lz4? ( app-arch/lz4 )
 	zstd? ( app-arch/zstd )
 	build-kernel? (
+		app-arch/cpio
 		compressed? ( sys-kernel/genpnprd )
 		kernel-firmware? ( !sys-kernel/linux-firmware )
 		klibc? ( sys-kernel/klibc-sources )
