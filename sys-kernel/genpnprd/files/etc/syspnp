@@ -823,35 +823,42 @@ _udevd(){
 	return 0
 }
 
-detect_fs(){
-	local i='' m="" md="$USE_MDADM" dm="$USE_DMRAID_NORMAL" t="$cmd_detect_root" lvm="$USE_LVM_NORMAL" evms="$USE_EVMS_NORMAL" mddef=true sm=/sys/module/scsi_mod/parameters sms=
-	[ -n "$NFSLIKE_FS" ] && [ "$REAL_ROOT" = /dev/nfs ] && REAL_ROOT="/dev/$NFSLIKE_FS"
-	case "$t" in
-	true|false)t="";
-	esac
-	if $waitscan; then
-		($cmd_fast && ! [ -b "$REAL_ROOT" ]) || ! [ -e /etc/modules/waitscan ] && {
-		    for i in scsi_wait_scan scsi_mod; do
+_waitscan(){
+    $waitscan || return
+    waitscan=false
+    $cmd_fast && [ -b "$REAL_ROOT" ] || {
+	local i= sm=/sys/module/scsi_mod/parameters sms=
+	[ -e /etc/modules/waitscan ] || {
+		for i in scsi_wait_scan scsi_mod; do
 			[ -e "/lib/modules/$KV/kernel/drivers/scsi/$i.ko" ] && {
 				mod $i
 				break
 			}
-		    done
-		    [ -e $sm ] && {
-			read sms <$sm/scan && [ "$sms" = async ] && echo sync >$sm/scan
-			_tee '- - -' /sys/class/scsi_host/host*/scan
-			#_tee 1 /sys/class/scsi_device/*/device/rescan
-			#_tee 1 /sys/class/scsi_disk/*/device/rescan
-			[ "$sms" = async ] && echo async >$sm/scan
-		    }
-		}
-		empty_hwopts waitscan
-		[ -n "$cmd_scandelay" ] && sleep "$cmd_scandelay"
-		_wait
-		[ "$i" = scsi_wait_scan ] && rmmod $i 2>/dev/null
-		[ -n "$cmd_elevator" ] && _tee "$cmd_elevator" /sys/class/block/*/queue/scheduler # embed
-		/sbin/mdev -s block
-	fi
+		done
+	}
+	[ -e $sm ] && {
+		read sms <$sm/scan && [ "$sms" = async ] && echo sync >$sm/scan
+		_tee '- - -' /sys/class/scsi_host/host*/scan
+		#_tee 1 /sys/class/scsi_device/*/device/rescan
+		#_tee 1 /sys/class/scsi_disk/*/device/rescan
+		[ "$sms" = async ] && echo async >$sm/scan
+	}
+	empty_hwopts waitscan
+	[ -n "$cmd_scandelay" ] && sleep "$cmd_scandelay"
+	_wait
+	[ "$i" = scsi_wait_scan ] && rmmod $i 2>/dev/null
+	/sbin/mdev -s block
+    }
+    [ -n "$cmd_elevator" ] && _tee "$cmd_elevator" /sys/class/block/*/queue/scheduler # embed
+}
+
+detect_fs(){
+	local i='' m="" md="$USE_MDADM" dm="$USE_DMRAID_NORMAL" t="$cmd_detect_root" lvm="$USE_LVM_NORMAL" evms="$USE_EVMS_NORMAL" mddef=tru
+	[ -n "$NFSLIKE_FS" ] && [ "$REAL_ROOT" = /dev/nfs ] && REAL_ROOT="/dev/$NFSLIKE_FS"
+	case "$t" in
+	true|false)t="";
+	esac
+	_waitscan
 	resume "$cmd_resume"
 	# dmraid/lvm/evms unsure
 	for i in $( {
@@ -988,7 +995,6 @@ detect_fs(){
 	_settle
 	resume "$cmd_resume"
 	detect_root
-	waitscan=false
 	return 0
 }
 
