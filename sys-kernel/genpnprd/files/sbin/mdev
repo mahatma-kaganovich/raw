@@ -354,6 +354,9 @@ case "$1" in
 	done
 ;;
 -w)	modprobe $Q scsi_wait_scan
+	for i in /sys/class/scsi_host/host*/scan; do
+		[ -e "$i" ] && echo '- - -' >"$i"
+	done
 	rmmod scsi_wait_scan
 	rm /cache.modprobe/scsi_wait_scan -f
 ;;

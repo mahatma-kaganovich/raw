@@ -1,5 +1,5 @@
 #!/bin/sh
-VERSION=0.9
+VERSION=0.10
 HELP="init for early userspace v$VERSION, (c) Denis Kaganovich, Anarchy or GPLv2 license
 
 Main goal: scan '/sys/*/uevent' for MODALIASes (without grep, sed...)
@@ -373,6 +373,7 @@ own(){
 
 modaliases(){
 local i mm="`cat /proc/modules`" m1='-' fs m d p n='/newroot'
+local sm=/sys/module/scsi_mod/parameters sms= smf=
 mkdir -p "$tmp/sys/class/*/*/uevent" "$tmp/options"
 cd $tmp||exit 1
 echo -n '^'
@@ -391,6 +392,13 @@ while [ "$m1" != "$mm" -o "${_cmd_rootwait}:$MOUNTED" = 'true:false' ]; do
 		m="$libmod/kernel/drivers/scsi/$i.ko"
 		[ -e $m ] && insmod $m "`cat "$tmp/options/$1."* 2>/dev/null`" && [ $i = scsi_wait_scan ] && rmmod $i
 	done
+	[ -e $sm ] && {
+		read sms <$sm/scan && [ "$sms" = async ] && echo sync >$sm/scan
+		_tee '- - -' /sys/class/scsi_host/host*/scan
+		#_tee 1 /sys/class/scsi_device/*/device/rescan
+		#_tee 1 /sys/class/scsi_disk/*/device/rescan
+		[ "$sms" = async ] && echo async >$sm/scan
+	}
 	resume "$cmd_resume" $cmd_resume_offset 2>/dev/null
 	flags `cd /sys/module && echo *` 2>/dev/null
 	mdevs
@@ -407,9 +415,13 @@ while [ "$m1" != "$mm" -o "${_cmd_rootwait}:$MOUNTED" = 'true:false' ]; do
 			fs "$i" "$cmd_loop"
 		done
 	fi
-	$MOUNTED && ${_cmd_fast:-false} && break
 	m1="$mm"
 	mm="`cat /proc/modules`"
+	if $MOUNTED; then
+		${_cmd_fast:-false} && break
+	elif [ "$m1" = "$m" ]; then
+		read smf <$sm/default_dev_flags && [ "$smf" = 0 ] && echo 0x240 >$sm/default_dev_flags && m1="$m1+" echo 'try scsi_mod.default_dev_flags=0x240'
+	fi
 done
 echo ''
 if $BOOT; then

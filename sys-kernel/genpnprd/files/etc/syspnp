@@ -1,5 +1,5 @@
 #!/bin/sh
-## pnp modules bootloader v0.25
+## pnp modules bootloader v0.26
 ## (c) Denis Kaganovich, under Anarchy license
 ## consume preprocessed /lib/modules/$KV/modules.alias
 
@@ -823,22 +823,29 @@ _udevd(){
 }
 
 detect_fs(){
-	local i='' m="" md="$USE_MDADM" dm="$USE_DMRAID_NORMAL" t="$cmd_detect_root" lvm="$USE_LVM_NORMAL" evms="$USE_EVMS_NORMAL" mddef=true
+	local i='' m="" md="$USE_MDADM" dm="$USE_DMRAID_NORMAL" t="$cmd_detect_root" lvm="$USE_LVM_NORMAL" evms="$USE_EVMS_NORMAL" mddef=true sm=/sys/module/scsi_mod/parameters sms= smf=
 	[ -n "$NFSLIKE_FS" ] && [ "$REAL_ROOT" = /dev/nfs ] && REAL_ROOT="/dev/$NFSLIKE_FS"
 	case "$t" in
 	true|false)t="";
 	esac
 	if $waitscan; then
-		($cmd_fast && ! [ -b "$REAL_ROOT" ]) || ! [ -e /etc/modules/waitscan ] &&
-		for i in scsi_wait_scan scsi_mod; do
+		($cmd_fast && ! [ -b "$REAL_ROOT" ]) || ! [ -e /etc/modules/waitscan ] && {
+		    for i in scsi_wait_scan scsi_mod; do
 			[ -e "/lib/modules/$KV/kernel/drivers/scsi/$i.ko" ] && {
 				mod $i
 				break
 			}
-		done
+		    done
+		    [ -e $sm ] && {
+			read sms <$sm/scan && [ "$sms" = async ] && echo sync >$sm/scan
+			_tee '- - -' /sys/class/scsi_host/host*/scan
+			#_tee 1 /sys/class/scsi_device/*/device/rescan
+			#_tee 1 /sys/class/scsi_disk/*/device/rescan
+			[ "$sms" = async ] && echo async >$sm/scan
+		    }
+		}
 		empty_hwopts waitscan
 		[ -n "$cmd_scandelay" ] && sleep "$cmd_scandelay"
-		waitscan=false
 		_wait
 		[ "$i" = scsi_wait_scan ] && rmmod $i 2>/dev/null
 		[ -n "$cmd_elevator" ] && _tee "$cmd_elevator" /sys/class/block/*/queue/scheduler # embed
@@ -980,6 +987,11 @@ detect_fs(){
 	_settle
 	resume "$cmd_resume"
 	detect_root
+	if $waitscan; then
+		waitscan=false
+		# try sparse & >7 LUNs
+		! [ -b "$REAL_ROOT" ] && read smf <$sm/default_dev_flags && [ "$smf" = 0 ] && echo 0x240 >$sm/default_dev_flags && waitscan=true && bmsg 'try scsi_mod.default_dev_flags=0x240'
+	fi
 	return 0
 }
 

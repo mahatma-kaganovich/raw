@@ -2,3 +2,7 @@ KERNEL_CONFIG+="RCU_EXPERT RCU_FAST_NO_HZ APM_DO_ENABLE APM_CPU_IDLE APM_DISPLAY
 use embed-hardware && KERNEL_CONFIG+=" CPU_FREQ_GOV_CONSERVATIVE"
 
 KERNEL_CONFIG+=" TOUCHSCREEN_DMI"
+
+# 3 is distro-default (fedora, etc), but more device-dependend, do:
+# echo 3 >/sys/module/ahci/parameters/mobile_lpm_policy
+KERNEL_CONFIG+=" SATA_MOBILE_LPM_POLICY=2"
