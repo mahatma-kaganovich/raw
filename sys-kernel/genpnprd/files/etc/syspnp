@@ -853,7 +853,7 @@ _waitscan(){
 }
 
 detect_fs(){
-	local i='' m="" md="$USE_MDADM" dm="$USE_DMRAID_NORMAL" t="$cmd_detect_root" lvm="$USE_LVM_NORMAL" evms="$USE_EVMS_NORMAL" mddef=tru
+	local i='' m="" md="$USE_MDADM" dm="$USE_DMRAID_NORMAL" t="$cmd_detect_root" lvm="$USE_LVM_NORMAL" evms="$USE_EVMS_NORMAL" mddef=true
 	[ -n "$NFSLIKE_FS" ] && [ "$REAL_ROOT" = /dev/nfs ] && REAL_ROOT="/dev/$NFSLIKE_FS"
 	case "$t" in
 	true|false)t="";
