@@ -13,6 +13,7 @@ export blkid_cache="/etc/blkid.sh.cache"
 
 pids=""
 onbatt=false
+TRYOPT=0
 
 etest(){
 local x
@@ -823,7 +824,7 @@ _udevd(){
 }
 
 detect_fs(){
-	local i='' m="" md="$USE_MDADM" dm="$USE_DMRAID_NORMAL" t="$cmd_detect_root" lvm="$USE_LVM_NORMAL" evms="$USE_EVMS_NORMAL" mddef=true sm=/sys/module/scsi_mod/parameters sms= smf=
+	local i='' m="" md="$USE_MDADM" dm="$USE_DMRAID_NORMAL" t="$cmd_detect_root" lvm="$USE_LVM_NORMAL" evms="$USE_EVMS_NORMAL" mddef=true sm=/sys/module/scsi_mod/parameters sms=
 	[ -n "$NFSLIKE_FS" ] && [ "$REAL_ROOT" = /dev/nfs ] && REAL_ROOT="/dev/$NFSLIKE_FS"
 	case "$t" in
 	true|false)t="";
@@ -987,12 +988,19 @@ detect_fs(){
 	_settle
 	resume "$cmd_resume"
 	detect_root
-	if $waitscan; then
-		waitscan=false
-		# try sparse & >7 LUNs
-		! [ -b "$REAL_ROOT" ] && read smf <$sm/default_dev_flags && [ "$smf" = 0 ] && echo 0x240 >$sm/default_dev_flags && waitscan=true && bmsg 'try scsi_mod.default_dev_flags=0x240'
-	fi
+	waitscan=false
 	return 0
+}
+
+tryopt(){
+	[ -n "$DETECTED_ROOTS$DETECTED_LOOPS" ] && return 1
+	[ -n "$REAL_ROOT" -a -e "$REAL_ROOT" ] && return 1
+	TRYOPT=$((TRYOPT+1))
+	local sm=/sys/module/scsi_mod/parameters smf=
+	case "$TRYOPT" in
+	1)read smf <$sm/default_dev_flags && [ "$smf" = 0 ] && echo 0x240 >$sm/default_dev_flags && waitscan=true && bmsg 'try scsi_mod.default_dev_flags=0x240' && return 0;;
+	esac
+	return 1
 }
 
 gentoo_compat_hwopts(){
@@ -1219,7 +1227,7 @@ syspnp(){
 		$cmd_unload && refresh
 		load_misc
 		etc_modalias && ln -s /proc /etc/modalias 2>/dev/null
-		refresh n r || break
+		refresh n r || tryopt || break
 	done
 	[ $pnpass != 1 ] && break
 	mntnewroot
