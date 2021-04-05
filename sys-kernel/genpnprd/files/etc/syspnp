@@ -1,5 +1,5 @@
 #!/bin/sh
-## pnp modules bootloader v0.26
+## pnp modules bootloader v0.27
 ## (c) Denis Kaganovich, under Anarchy license
 ## consume preprocessed /lib/modules/$KV/modules.alias
 
@@ -809,8 +809,33 @@ mdadm(){
 	/sbin/mdadm "${@}"
 }
 
+_wait4(){
+	[ -e "$1" ] && return 0
+	local i=${GK_UDEV_TIMEOUT:-120}
+	echo -n "WAIT for $1 $i.." >&2
+	sleep .1
+	while [ "$i" gt 0 -a ! -e "$1" ]; do
+		sleep 1
+		i=$((i-1))
+	done
+	echo "$i" >&2
+	[ -e "$1" ]
+}
+
+_settle1(){
+	local i
+	for i in /sys/class/block/*; do
+		i="/dev/${i##*/}"
+		[ -e "$i" -o "$i" = '/dev/*' ] || {
+			"${@}"
+			_wait4 "$i" || return 1
+		}
+	done
+	return 0
+}
+
 _settle(){
-	[ -e /sbin/udevadm ] && udevadm settle --timeout=${cmd_udev_timeout:-${GK_UDEV_TIMEOUT:-120}}
+	[ -e /sbin/udevadm ] && udevadm settle --timeout=${cmd_udev_timeout:-${GK_UDEV_TIMEOUT:-120}} || _settle1
 }
 
 _udevd(){
@@ -822,6 +847,7 @@ _udevd(){
 	_settle
 	return 0
 }
+
 
 _waitscan(){
     $waitscan || return
@@ -836,18 +862,11 @@ _waitscan(){
 			}
 		done
 	}
-	[ -e $sm ] && {
-		read sms <$sm/scan && [ "$sms" = async ] && echo sync >$sm/scan
-		_tee '- - -' /sys/class/scsi_host/host*/scan
-		#_tee 1 /sys/class/scsi_device/*/device/rescan
-		#_tee 1 /sys/class/scsi_disk/*/device/rescan
-		[ "$sms" = async ] && echo async >$sm/scan
-	}
 	empty_hwopts waitscan
 	[ -n "$cmd_scandelay" ] && sleep "$cmd_scandelay"
 	_wait
 	[ "$i" = scsi_wait_scan ] && rmmod $i 2>/dev/null
-	/sbin/mdev -s block
+	_settle
     }
     [ -n "$cmd_elevator" ] && _tee "$cmd_elevator" /sys/class/block/*/queue/scheduler # embed
 }
@@ -1001,11 +1020,21 @@ detect_fs(){
 tryopt(){
 	[ -n "$DETECTED_ROOTS$DETECTED_LOOPS" ] && return 1
 	[ -n "$REAL_ROOT" -a -e "$REAL_ROOT" ] && return 1
-	TRYOPT=$((TRYOPT+1))
-	local sm=/sys/module/scsi_mod/parameters smf=
-	case "$TRYOPT" in
-	1)read smf <$sm/default_dev_flags && [ "$smf" = 0 ] && echo 0x240 >$sm/default_dev_flags && waitscan=true && bmsg 'try scsi_mod.default_dev_flags=0x240' && return 0;;
-	esac
+	local sm=/sys/module/scsi_mod/parameters smf= sms= ok=false
+	while TRYOPT=$((TRYOPT+1)); do
+		case "$TRYOPT" in
+		1|3)
+			read sms <$sm/scan && [ "$sms" = async ] && echo sync >$sm/scan
+			_tee '- - -' /sys/class/scsi_host/host*/scan && ok=true && bmsg "SCSI rescan" 
+			#_tee 1 /sys/class/scsi_device/*/device/rescan
+			#_tee 1 /sys/class/scsi_disk/*/device/rescan
+			[ "$sms" = async ] && echo async >$sm/scan
+			$ok && waitscan=true && return 0
+		;;
+		2)read smf <$sm/default_dev_flags && [ "$smf" = 0 ] && echo 0x240 >$sm/default_dev_flags && waitscan=true && bmsg 'try scsi_mod.default_dev_flags=0x240' && return 0;;
+		*)return 1;;
+		esac
+	done
 	return 1
 }
 
@@ -1345,9 +1374,9 @@ cd /sys
 read KV </proc/sys/kernel/osrelease||KV=`uname -r`
 export KV
 _udevd || {
-	_settle(){ return;}
+	_settle(){ _settle1;}
 	echo /sbin/mdev >/proc/sys/kernel/hotplug || {
-		$devfs || _settle(){ /sbin/mdev -s block;}
+		$devfs || _settle(){ _settle1 /sbin/mdev -s block;}
 	}
 	$devfs || if /sbin/mdev -s mem block; then
 		/sbin/mdev -s &

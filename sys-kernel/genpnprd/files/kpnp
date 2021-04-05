@@ -371,9 +371,17 @@ own(){
 	done </proc/cpuinfo`
 }
 
+_tee(){
+	local s="$1" i r=1
+	shift
+	for i in "${@}"; do
+		[ -e "$i" ] && echo "$s" >"$i" && r=0
+	done 2>/dev/null
+	return $r
+}
+
 modaliases(){
-local i mm="`cat /proc/modules`" m1='-' fs m d p n='/newroot'
-local sm=/sys/module/scsi_mod/parameters sms= smf=
+local i mm="`cat /proc/modules`" m1='-' fs m d p n='/newroot' sm=/sys/module/scsi_mod/parameters sms= smf= cnt=
 mkdir -p "$tmp/sys/class/*/*/uevent" "$tmp/options"
 cd $tmp||exit 1
 echo -n '^'
@@ -392,13 +400,6 @@ while [ "$m1" != "$mm" -o "${_cmd_rootwait}:$MOUNTED" = 'true:false' ]; do
 		m="$libmod/kernel/drivers/scsi/$i.ko"
 		[ -e $m ] && insmod $m "`cat "$tmp/options/$1."* 2>/dev/null`" && [ $i = scsi_wait_scan ] && rmmod $i
 	done
-	[ -e $sm ] && {
-		read sms <$sm/scan && [ "$sms" = async ] && echo sync >$sm/scan
-		_tee '- - -' /sys/class/scsi_host/host*/scan
-		#_tee 1 /sys/class/scsi_device/*/device/rescan
-		#_tee 1 /sys/class/scsi_disk/*/device/rescan
-		[ "$sms" = async ] && echo async >$sm/scan
-	}
 	resume "$cmd_resume" $cmd_resume_offset 2>/dev/null
 	flags `cd /sys/module && echo *` 2>/dev/null
 	mdevs
@@ -419,8 +420,21 @@ while [ "$m1" != "$mm" -o "${_cmd_rootwait}:$MOUNTED" = 'true:false' ]; do
 	mm="`cat /proc/modules`"
 	if $MOUNTED; then
 		${_cmd_fast:-false} && break
-	elif [ "$m1" = "$m" ]; then
-		read smf <$sm/default_dev_flags && [ "$smf" = 0 ] && echo 0x240 >$sm/default_dev_flags && m1="$m1+" echo 'try scsi_mod.default_dev_flags=0x240'
+	else
+		while [ "$m1" = "$m" ]; do
+			cnt=".$cnt"
+			case "$cnt" in
+			..)read smf <$sm/default_dev_flags && [ "$smf" = 0 ] && echo 0x240 >$sm/default_dev_flags && m1="$m1+" && echo 'try scsi_mod.default_dev_flags=0x240';;
+			.|...)
+				read sms <$sm/scan && [ "$sms" = async ] && echo sync >$sm/scan
+				_tee '- - -' /sys/class/scsi_host/host*/scan && m1="$m1+"
+				#_tee 1 /sys/class/scsi_device/*/device/rescan && m1="$m1+"
+				#_tee 1 /sys/class/scsi_disk/*/device/rescan && m1="$m1+"
+				[ "$sms" = async ] && echo async >$sm/scan
+			;;
+			*)break;;
+			esac
+		done
 	fi
 done
 echo ''
