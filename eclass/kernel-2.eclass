@@ -337,10 +337,11 @@ __mfw(){
 
 post_make(){
 	local i x y m f n= d= n1=
+	i="$TMPDIR/modules.builtin1"
+	unlink "$i"
 	[ -s modules.builtin ] && {
-		i="$TMPDIR/modules.builtin1"
 		cp -a modules.builtin "$i"
-		grep -sqv "^kernel/" "$i" || sed -i -e 's:^^kernel/::' "$i"
+		grep -sqv "^kernel/" "$i" || sed -i -e 's:^kernel/::' "$i"
 		rm $(cat "$i") -f
 	}
 	# all modinfo (fast or split cmdline)
