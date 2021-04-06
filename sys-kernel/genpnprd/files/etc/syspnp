@@ -309,10 +309,17 @@ zram_overlay(){
     return 1
 }
 
+_hotplug(){
+	local h=/proc/sys/kernel/hotplug
+	[ -e $h ] && ( [ -v SAVE_HOTPLUG ] || read SAVE_HOTPLUG <$h ) && ( [ "$1" = - ] || echo "$1" >$h ) && return 0
+	_hotplug(){ return 1;}
+	return 1
+}
+
 mod_unload(){
 	local h i="$NEW_ROOT/lib/modules/$KV" l="$NEW_ROOT/usr/src/linux-$KV" m="" x y yy r=$NEW_ROOT/mnt/ram
 	cd /
-	echo "$SAVE_HOTPLUG" >/proc/sys/kernel/hotplug
+	_hotplug "$SAVE_HOTPLUG"
 	${cmd_fsck:-false} && if grep -q "^[^ ]* $NEW_ROOT squashfs" /proc/mounts; then
 		root_fsck_rw "$NEW_ROOT/boot"
 	else
@@ -492,7 +499,7 @@ pnp_init(){
 	local l
 	pnp_options
 	$cmd_fast && mod_fast
-	read SAVE_HOTPLUG </proc/sys/kernel/hotplug
+	_hotplug -
 	for l in /*.loopfs; do
 	if [ -f "$l" ]; then
 		for i in `find /lib -name "*.ko"` ; do
@@ -840,7 +847,7 @@ _settle(){
 
 _udevd(){
 	[ "$cmd_noudev" != true -a -e /sbin/udevd ] || return 1
-	echo '' >/proc/sys/kernel/hotplug
+	_hotplug ''
 	[ -f /etc/udev/hwdb.bin ] || udevadm hwdb --update
 	udevd --resolve-names=never --daemon || return 1
 	udevadm trigger --action=add
@@ -1375,9 +1382,11 @@ read KV </proc/sys/kernel/osrelease||KV=`uname -r`
 export KV
 _udevd || {
 	_settle(){ _settle1;}
-	echo /sbin/mdev >/proc/sys/kernel/hotplug || {
-		$devfs || _settle(){ _settle1 /sbin/mdev -s block;}
-	}
+	_hotplug /sbin/mdev || $devfs || if $fast; then
+		_settle(){ _settle1 /sbin/mdev -s block;}
+	else
+		_settle(){ mdev -s;}
+	fi
 	$devfs || if /sbin/mdev -s mem block; then
 		/sbin/mdev -s &
 	else
