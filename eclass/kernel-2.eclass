@@ -398,8 +398,8 @@ post_make(){
 			case "$f" in
 			*/.*|.*|*.[ch]|*Makefile|*cmake|LICENCE*|LICENSE*|*README|WHENCE|GPL-?|GPL|*/GPL|*configure)continue;;
 			esac
+			echo "\"$f\""
 		done
-		echo "\"$f\""
 	done | sort -u >"$TMPDIR"/fw-all.lst
 	sort "$TMPDIR"/fw-{all,used1}.lst | uniq -u >"$TMPDIR"/fw-unknown.lst
 	sed -e 's:^:":' -e 's:$:":' <"$TMPDIR"/fw-unknown.lst|grep -RFlf - --include "*.[ch]"|while read f; do
