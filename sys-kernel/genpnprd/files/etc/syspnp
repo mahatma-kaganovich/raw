@@ -9,7 +9,7 @@
 #SYS_FIND=/sys
 SYS_FIND=/sys/devices
 uFIND="find $SYS_FIND -xdev -name uevent"
-SAVE_HOTPLUG=
+SAVE_HOTPLUG=-
 
 export blkid_cache=/etc/blkid.sh.cache
 
