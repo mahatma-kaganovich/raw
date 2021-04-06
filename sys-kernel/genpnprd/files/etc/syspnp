@@ -3,15 +3,17 @@
 ## (c) Denis Kaganovich, under Anarchy license
 ## consume preprocessed /lib/modules/$KV/modules.alias
 
-[ -z "$TMPDIR" ] && [ -e /temp ] && TMPDIR="/temp"
+[ -z "$TMPDIR" ] && [ -e /temp ] && TMPDIR=/temp
 
 ## millisecons
-#SYS_FIND="/sys"
+#SYS_FIND=/sys
 SYS_FIND=/sys/devices
+uFIND="find $SYS_FIND -xdev -name uevent"
+SAVE_HOTPLUG=
 
-export blkid_cache="/etc/blkid.sh.cache"
+export blkid_cache=/etc/blkid.sh.cache
 
-pids=""
+pids=
 onbatt=false
 TRYOPT=0
 
@@ -65,7 +67,7 @@ mod(){
 		case $PARALLEL in
 		no|0) ;;
 		2)
-			m2=""
+			m2=
 			for m1 in $ALIAS ; do
 				modparam $m1
 				$INSMOD
@@ -80,7 +82,7 @@ mod(){
 		;;
 		*)
 			pids="$pids$pid "
-			pid=""
+			pid=
 		;;
 		esac
 		for m1 in $ALIAS ; do
@@ -136,6 +138,16 @@ _wait(){
 	}
 }
 
+_re(){
+	local i=122
+	if [ "${i//2/3}" = 133 ]; then
+		_re(){ echo "${1//$2/$3}";}
+	else
+		_re(){ echo "$1"|sed -e "s/$2/$3/g";}
+	fi
+	_re "${@}"
+}
+
 refresh(){
 	LCOUNT="${LCOUNT}."
 	echo -ne "\033[0G\033[0K$LCOUNT"
@@ -159,35 +171,35 @@ refresh(){
 
 	_wait
 	sed -e 's%^\([^ 	]*\)[	 ]*.*$%>\1<%g' </proc/modules >"${PNP_TMP}".1
-	cat `grep -ls "^DRIVER=" $(find $SYS_FIND -name uevent -print 2>/dev/null) </dev/null` </dev/null |grep "^DRIVER=\|^MODALIAS="|sed -e 's%-%_%g' -e 's%^.*=\(.*\)$%>\1<%g' >>"${PNP_TMP}".1
+	{ cat -- `grep -ls '^DRIVER=' $($uFIND)`|grep "^DRIVER=\|^MODALIAS="|sed -e 's%-%_%g' -e 's%^.*=\(.*\)$%>\1<%g' >>"${PNP_TMP}".1;} </dev/null
 	if [ "$(cat ${PNP_TMP}.1 $checks)" = "$(cat ${PNP_TMP}.2)" ] ; then
 		cat "${PNP_TMP}".3 "${PNP_TMP}".4 >"${PNP_TMP}".0
 		if grep -q "[/]sbin/mdev" /proc/*/cmdline; then
 			REFRESH_SAME=''
-			[ "$1" = "n" ] && REFRESH_SAME=1
+			[ "$1" = n ] && REFRESH_SAME=1
 			return 0
 		fi
-		[ "$REFRESH_SAME$1" = "n" ] || return 1
+		[ "$REFRESH_SAME$1" = n ] || return 1
 		return 0
 	fi
 	sort -u "${PNP_TMP}".1 >"${PNP_TMP}".0
 	if ! $cmd_quiet ; then
 		echo -ne "\033[0G\033[0K${BOLD}   ::${NORMAL}Loaded:"
 		for i in $(sort -m ${PNP_TMP}.0 ${PNP_TMP}.3 | uniq -u) ; do
-			[ "$1" = "n" ] && echo "$i" >>/nopnp.lst
+			[ "$1" = n ] && echo "$i" >>/nopnp.lst
 			i="${i#>}"
 			i="${i%<}"
 			[ -e "/sys/module/$i" ] && echo -ne " $i"
 		done
-		echo ""
-	elif $cmd_unload && [ "$1" = "n" ] ; then
+		echo ''
+	elif $cmd_unload && [ "$1" = n ] ; then
 		sort -m ${PNP_TMP}.0 ${PNP_TMP}.3 | uniq -u >>/nopnp.lst
 	fi
 	cat "${PNP_TMP}".1 $checks >"${PNP_TMP}".2
 	cp "${PNP_TMP}".0 "${PNP_TMP}".3
 	cat "${PNP_TMP}".4 >>"${PNP_TMP}".0
-	REFRESH_SAME=''
-	[ "$1" = "n" ] && REFRESH_SAME=1
+	REFRESH_SAME=
+	[ "$1" = n ] && REFRESH_SAME=1
 	return 0
 }
 
@@ -311,7 +323,7 @@ zram_overlay(){
 
 _hotplug(){
 	local h=/proc/sys/kernel/hotplug
-	[ -e $h ] && ( [ -v SAVE_HOTPLUG ] || read SAVE_HOTPLUG <$h ) && ( [ "$1" = - ] || echo "$1" >$h ) && return 0
+	[ -e $h ] && ( [ "$SAVE_HOTPLUG" != - ] || read SAVE_HOTPLUG <$h ) && ( [ "$1" = - ] || echo "$1" >$h ) && return 0
 	_hotplug(){ return 1;}
 	return 1
 }
@@ -325,9 +337,9 @@ mod_unload(){
 	else
 		root_fsck_rw "$NEW_ROOT"
 	fi
-	[ "${cmd_rootoverlay:-false}" != false ] && zram_overlay $(echo "$cmd_rootoverlay"|sed -e 's/:/ /g')
+	[ "${cmd_rootoverlay:-false}" != false ] && zram_overlay $(_re "$cmd_rootoverlay" : ' ')
 	if grep -q "^[^ ]* $NEW_ROOT squashfs" /proc/mounts; then
-		echo -ne "(squashfs)"
+		echo -ne '(squashfs)'
 		mkdir -p /etc/mnt
 		cp -a $NEW_ROOT/mnt/* /etc/mnt
 		mount -t ramfs none $NEW_ROOT/mnt -o rw,noatime,nodiratime && cp -a /etc/mnt/* $NEW_ROOT/mnt
@@ -382,7 +394,7 @@ mod_unload(){
 #	done
 	umount /lib/modules /lib/firmware /rd /lib 2>/dev/null
 	losetup -d /dev/loop1 >/dev/null 2>&1
-	l=""
+	l=
 	$cmd_unload && [ -n "$REAL_ROOT" ] && [ -e "/nopnp.lst" ] || return
 	echo -n "(removing unlocked modules"
 	while read i; do
@@ -392,11 +404,11 @@ mod_unload(){
 	i="$(cat /proc/modules)"
 	while [ "$i" != "$m" ]; do
 		m="$i"
-		echo -n "."
+		echo -n .
 		rmmod $l >/dev/null 2>&1
 		i="$(cat /proc/modules)"
 	done
-	echo -n ")"
+	echo -n ')'
 }
 
 early_huge(){
@@ -460,7 +472,7 @@ pnp_options(){
 	[ -n "$v" ] && p="$p'$x"
 #	rm "$d" -Rf
 	$cmd_nofb && p="*/fb.ko|*/drm_kms_helper.ko)INSMOD=continue$x$p"
-	[ -n "$cmd_noload" ] && p="*/$(echo "${cmd_noload#,}"|sed -e 's/,/.ko|*\//g').ko)INSMOD=continue$x$p"
+	[ -n "$cmd_noload" ] && p="*/$(_re "${cmd_noload#,}" , '.ko|*/').ko)INSMOD=continue$x$p"
 	p="modparam(){
 INSMOD=
 case \"\$1\" in
@@ -534,25 +546,25 @@ post_modparam(){
 
 override_modprobe(){
 loadsh modprobe || return
-local f="/sbin/modprobe"
-[ -e $f ] && ! ( grep -q "bug #197730" $f && rm /sbin/modprobe ) && return
+local f=/sbin/modprobe
+[ -e $f ] && ! ( grep -q "bug #197730" $f && rm $f ) && return
 ln -s /etc/modprobe.sh $f
 echo $f >/proc/sys/kernel/modprobe
 }
 
 wild(){
-	grep "$1" <modules.other|grep -v "${2:-x--}"|sed -e 's:.*/::g' -e 's/\...$//g'
+	grep -e "$1" <modules.other|grep -ve "${2:-x--}"|sed -e 's:.*/::g' -e 's/\...$//g'
 }
 
 cpufreq(){
 	[ -n "$freq" ] && return
-	local l="" CHK=true c="" ok=""
+	local l= CHK=true c= ok=
 	for i in $(wild $@) ; do
 		[ -n "$c" ] && rmmod $c >/dev/null 2>&1
 		mod $i
 		c="$i"
 		_wait
-		for i in `grep -ls "$c" $(find /sys/devices/system/cpu -name scaling_driver)` ; do
+		for i in `grep -lse "$c" $(find /sys/devices/system/cpu -name scaling_driver)` ; do
 			read i2 <"${i%scaling_driver}cpuinfo_transition_latency" || continue
 			[ "$i2" -gt "${l:=${i2}}" ] && continue
 			if [ "$i2" = "$l" ] ; then
@@ -571,7 +583,7 @@ cpufreq(){
 }
 
 cpufreq_gov(){
-	local gov1=""
+	local gov1=
 	for i1 in $gov ; do
 		mod cpufreq_${i1}
 		_wait
@@ -587,7 +599,7 @@ cpufreq_gov(){
 empty_hwopts(){
 	local i
 	[ -e /etc/modules ] && for i in $* ; do
-		 echo -ne "" >/etc/modules/$i
+		 echo -ne '' >/etc/modules/$i
 	done
 }
 
@@ -636,7 +648,7 @@ detect_part(){
 
 detect_root(){
 	local i d="${cmd_detect_root:-false}" l="$cmd_loop" fs
-	[ "$d" = true ] && d=""
+	[ "$d" = true ] && d=
 	if [ "$d" != false ]; then
 		# if real_root & loop hard-defined - don't probe other loops
 		[ -n "$REAL_ROOT" ] && [ "${l:-true}" != true ] && l=false
@@ -695,7 +707,7 @@ for ip in "${@}"; do
 	done
     ;;
     esac
-    eval "set -- `echo "'$ip'"|sed -e "s/:/' '/g"` ''"
+    eval "set -- $(_re "'$ip'" : "' '") ''"
     for dev in ${6:-$(_ifaces)}; do
 	d=
 	case "$7" in
@@ -703,7 +715,7 @@ for ip in "${@}"; do
 		mod af_packet
 		msg_
 		busybox udhcpc -i $dev -V genpnprd -n -T 15 -q || continue
-		d=`grep -s "^domain " /etc/resolv.conf|sed -e 's:^domain ::'`
+		d=`grep -s '^domain ' /etc/resolv.conf` && d="${d#domain }"
 		[ -e /rootpath ] && NFSROOT=`cat /rootpath`
 	;;
 	esac
@@ -734,9 +746,9 @@ done
 
 dhcp_get(){
 	local i r=''
-	for i in `busybox dmesg | grep rootserver | sed -e "s/,/ /g"`; do
-		if [ "`echo $i | sed -e "s/=/ /g" | cut -d " " -f 1`" = "$1" ]; then
-			r="`echo "$i" | sed -e "s/=/ /g" | cut -d " " -f 2`"
+	for i in `busybox dmesg | grep rootserver | sed -e 's/,/ /g'`; do
+		if [ "`_re "$i" = ' '|cut -d ' ' -f 1`" = "$1" ]; then
+			r="`_re "$i" = ' '| cut -d ' ' -f 2`"
 			# FIXME: first value will be more balanced, but last - actual in longrun
 			break
 		fi
@@ -755,7 +767,7 @@ findnfsmount() {
 			bmsg "Please check your DHCP setup, or provide a nfsroot=<...> parameter."
 		else
 			local o="ro,nolock,rsize=1024,wsize=1024,$cmd_real_rootflags" m="$NEW_ROOT" unc
-			[ "$CDROOT" != '0' ] && m="$m/mnt/cdrom"
+			[ "$CDROOT" != 0 ] && m="$m/mnt/cdrom"
 			case "$NFSLIKE_FS:$NFSROOT" in
 			cifs:*|://*)o="$o,user=,guest,serverino";NFSLIKE_FS=cifs;;
 			:*|nfs:*)NFSLIKE_FS=nfs;;
@@ -768,7 +780,7 @@ findnfsmount() {
 				if mount -t $NFSLIKE_FS "$NFSROOT" $m -o "$o$unc" ; then
 					# FIXME: Need to start portmap and the other rpc daemons in
 					# order to remount rw.
-					REAL_ROOT="/dev/nfs"
+					REAL_ROOT=/dev/nfs
 					REAL_ROOTFLAGS="$o"
 					return 0
 				fi
@@ -792,7 +804,7 @@ msg_(){
 }
 
 fstype(){
-	blkid "${@}" 2>/dev/null || blkid -t "${@}" 2>/dev/null || echo "${@}"
+	{ blkid "${@}" || blkid -t "${@}" || echo "${@}";} 2>/dev/null
 }
 
 resume(){
@@ -800,15 +812,15 @@ resume(){
 	[ -e /sys/power/resume ] || return
 	[ -n "$*" ] && for i in "${@}"; do
 		[ "$i" = true ] && {
-			cat $(grep -l "[1-9]" /sys/class/block/*/size|grep -v /loop|sed -e 's:size$:dev:') >/sys/power/resume
+			cat -- $(grep -l "[1-9]" /sys/class/block/*/size|grep -v /loop|sed -e 's:size$:dev:') >/sys/power/resume
 			continue
 		}
 		i="${i#/dev/}"
 		for i in "/sys/class/block/$i/" `grep -ls "^DEVNAME=$i$" /sys/class/block/*/uevent`; do
-			cat "${i%uevent}dev" >/sys/power/resume
+			cat -- "${i%uevent}dev" >/sys/power/resume
 		done
 	done 2>/dev/null </dev/null
-	echo "0:0" >/sys/power/resume 2>/dev/null
+	echo '0:0' >/sys/power/resume 2>/dev/null
 }
 
 mdadm(){
@@ -821,7 +833,7 @@ _wait4(){
 	local i=${GK_UDEV_TIMEOUT:-120}
 	echo -n "WAIT for $1 $i.." >&2
 	sleep .1
-	while [ "$i" gt 0 -a ! -e "$1" ]; do
+	while [ "$i" -gt 0 -a ! -e "$1" ]; do
 		sleep 1
 		i=$((i-1))
 	done
@@ -879,10 +891,10 @@ _waitscan(){
 }
 
 detect_fs(){
-	local i='' m="" md="$USE_MDADM" dm="$USE_DMRAID_NORMAL" t="$cmd_detect_root" lvm="$USE_LVM_NORMAL" evms="$USE_EVMS_NORMAL" mddef=true
+	local i= m= md="$USE_MDADM" dm="$USE_DMRAID_NORMAL" t="$cmd_detect_root" lvm="$USE_LVM_NORMAL" evms="$USE_EVMS_NORMAL" mddef=true
 	[ -n "$NFSLIKE_FS" ] && [ "$REAL_ROOT" = /dev/nfs ] && REAL_ROOT="/dev/$NFSLIKE_FS"
 	case "$t" in
-	true|false)t="";
+	true|false)t='';;
 	esac
 	_waitscan
 	resume "$cmd_resume"
@@ -930,25 +942,25 @@ detect_fs(){
 	if [ -n "$evms" ]; then
 		msg_ "Activating EVMS"
 		if evms_activate ; then
-			USE_EVMS_NORMAL_=""
-			lvm=""
-			USE_LVM_NORMAL=""
-			USE_LVM_NORMAL_=""
+			USE_EVMS_NORMAL_=
+			lvm=
+			USE_LVM_NORMAL=
+			USE_LVM_NORMAL_=
 		fi
 	fi
 	if [ -n "$lvm" ]; then
 		msg_ "Activating LVM"
-		if vgscan --ignorelockingfailure --mknodes 2>/dev/null ; then
+		if vgscan --ignorelockingfailure --mknodes; then
 			sleep 2
-			vgchange -ay --ignorelockingfailure 2>/dev/null
-			USE_LVM_NORMAL_=""
-			evms=""
-			USE_EVMS_NORMAL=""
-			USE_EVMS_NORMAL_=""
-		fi
+			vgchange -ay --ignorelockingfailure
+			USE_LVM_NORMAL_=
+			evms=
+			USE_EVMS_NORMAL=
+			USE_EVMS_NORMAL_=
+		fi 2>/dev/null
 	fi
 	for i in $cmd_md ; do
-		set `echo "$i"|sed -e 's:,: :g'` ""
+		set -- `_re "$i" , ' '` ""
 		i="$1$2$3$4"
 		if [ -n "$5" ] && [ "${i##*/dev/}" = "$i" ]; then
 			mod "raid$2"
@@ -968,13 +980,13 @@ detect_fs(){
 	if [ -n "$md$dm" ]; then
 		# maybe dm wrong here, but try
 		if [ -e '/etc/mdadm.conf' ]; then
-			mod `( grep " level=" /etc/mdadm.conf || ( mdadm --examine --scan -v|grep " level=" ) ) | sed -e 's:^.* level=\([^ ]*\) .*$:\1:g' | sort -u`
+			mod `( grep ' level=' /etc/mdadm.conf || ( mdadm --examine --scan -v|grep ' level=' ) ) | sed -e 's:^.* level=\([^ ]*\) .*$:\1:g' | sort -u`
 		else
 			mddef=false
 			[ -n "$t" ] && echo "DEVICE $t" >/etc/mdadm.conf
 			# filter all extra info around bug with journal=spares
 			mdadm --examine --scan|grep '^ARRAY' >/etc/mdadm.conf.all
-			mod `grep " level=" /etc/mdadm.conf.all | sed -e 's:^.* level=\([^ ]*\) .*$:\1:g' | sort -u`
+			mod `grep ' level=' /etc/mdadm.conf.all | sed -e 's:^.* level=\([^ ]*\) .*$:\1:g' | sort -u`
 			if [ "$cmd_detect_root" != true ] && [ -n "$USE_MDADM" ]; then
 				# do not assemble other raids
 				while read i; do
@@ -987,18 +999,18 @@ detect_fs(){
 			msg_
 			case "$cmd_domdadm" in
 			async)
-				mod $(wild "/md/")
+				mod $(wild /md/)
 				mdadm --assemble --scan &
-				USE_MDADM_=""
+				USE_MDADM_=
 				sleep 5
 			;;
 			?*)
 				[ "$cmd_domdadm" = true ] && cmd_domdadm=--scan
 				mdadm --assemble $cmd_domdadm ||
-				    ( mod $(wild "/md/") ; ( mdadm --assemble $cmd_domdadm || ( [ -n "$cmd_part$REAL_ROOT" ] && mdstart $cmd_part $REAL_ROOT ) || raidautorun $REAL_ROOT ) ) &&
-				    USE_MDADM_=""
+				    ( mod $(wild /md/) ; ( mdadm --assemble $cmd_domdadm || ( [ -n "$cmd_part$REAL_ROOT" ] && mdstart $cmd_part $REAL_ROOT ) || raidautorun $REAL_ROOT ) ) &&
+				    USE_MDADM_=
 			;;
-			*)mdadm --assemble $REAL_ROOT && USE_MDADM_="";;
+			*)mdadm --assemble $REAL_ROOT && USE_MDADM_='';;
 			esac
 		fi
 		$mddef || rm /etc/mdadm.conf
@@ -1006,12 +1018,12 @@ detect_fs(){
 	if [ -n "$dm" ]; then
 		mod $(dmraid -r --sep " " -cf,r,t $t 2>/dev/null)
 		if ! $cmd_noraid; then
-			msg_ "Activating Device-Mapper RAID(s)"
+			msg_ 'Activating Device-Mapper RAID(s)'
 			dmraid -ay ${DMRAID_OPTS} || {
 				mod $(wild "/md/\|raid")
 				msg_
 				dmraid -ay ${DMRAID_OPTS}
-			} && USE_DMRAID_NORMAL_=""
+			} && USE_DMRAID_NORMAL_=
 		fi
 	fi
 	case "$cmd_dobtrfs" in
@@ -1027,18 +1039,17 @@ detect_fs(){
 tryopt(){
 	[ -n "$DETECTED_ROOTS$DETECTED_LOOPS" ] && return 1
 	[ -n "$REAL_ROOT" -a -e "$REAL_ROOT" ] && return 1
-	local sm=/sys/module/scsi_mod/parameters smf= sms= ok=false
+	local x sm=/sys/module/scsi_mod/parameters smf= sms= ok=false
 	while TRYOPT=$((TRYOPT+1)); do
 		case "$TRYOPT" in
-		1|3)
+		1|3|4|5|6)
 			read sms <$sm/scan && [ "$sms" = async ] && echo sync >$sm/scan
-			_tee '- - -' /sys/class/scsi_host/host*/scan && ok=true && bmsg "SCSI rescan" 
-			#_tee 1 /sys/class/scsi_device/*/device/rescan
-			#_tee 1 /sys/class/scsi_disk/*/device/rescan
+			[ "$TRYOPT" -lt 4 -o "$TRYOPT" = 6 ] && _tee '- - -' /sys/class/scsi_host/host*/scan && ok=true && bmsg 'SCSI rescan'
+			[ "$TRYOPT" -gt 3 ] && tee 1 $(find /sys -name rescan) && ok=true && bmsg 'devices rescan'
 			[ "$sms" = async ] && echo async >$sm/scan
 			$ok && waitscan=true && return 0
 		;;
-		2)read smf <$sm/default_dev_flags && [ "$smf" = 0 ] && echo 0x240 >$sm/default_dev_flags && waitscan=true && bmsg 'try scsi_mod.default_dev_flags=0x240' && return 0;;
+		2)read smf <$sm/default_dev_flags && x=$((smf|0x240)) && [ "$smf" != "$x" ] && x=$((smf|0x240)) && [ "$smf" = 0 ] && echo 0x240 >$sm/default_dev_flags && waitscan=true && bmsg "try scsi_mod.default_dev_flags=$x ($smf | 0x240)" && return 0;;
 		*)return 1;;
 		esac
 	done
@@ -1048,8 +1059,9 @@ tryopt(){
 gentoo_compat_hwopts(){
 	local i i1
 	for i1 in ${MY_HWOPTS} ; do
-		if [ -e "/etc/modules/$i1" ] ; then
-			for i in `cat /etc/modules/$i1` ; do
+		i="/etc/modules/$i1"
+		if [ -e "$i" ]; then
+			for i in `cat "$i"` ; do
 				grep -q "^$i\$" "modules.pnp" || mod "$i"
 			done
 		else
@@ -1061,7 +1073,7 @@ gentoo_compat_hwopts(){
 load_hand_made(){
 	## some hand-made autoloads
 #	$cmd_nofb || [ -z "$(cat /proc/fb 2>/dev/null)" ] || mod fbcon
-	mod $(cd /etc/modflags && cat $(ls -1 /sys/module) </dev/null 2>/dev/null)
+	mod $(cd /etc/modflags && cat -- $(ls -1 /sys/module) </dev/null 2>/dev/null)
 	grep -sq yeah /proc/sys/net/ipv4/tcp_available_congestion_control &&
 		echo yeah >/proc/sys/net/ipv4/tcp_congestion_control
 	[ -e /dev/freefall ] && [ -x /bin/hpfall ] && /bin/hpfall /dev/sda
@@ -1070,10 +1082,10 @@ load_hand_made(){
 load_hand_made0(){
 	## some hand-made autoloads, stage0
 	local f=`echo $(grep "^vendor_id\|^flags" /proc/cpuinfo|sort -u)`
-	mod $MDOLIST ${cmd_elevator:+${cmd_elevator}_iosched} $(cd /etc/modflags && cat $(cat /sys/bus/acpi/devices/*/path|sed -e 's:^\\::') $f $(ls -1 /sys/module) </dev/null 2>/dev/null)
+	mod $MDOLIST ${cmd_elevator:+${cmd_elevator}_iosched} $(cd /etc/modflags && cat -- $(cat /sys/bus/acpi/devices/*/path|sed -e 's:^\\::') $f $(ls -1 /sys/module) </dev/null 2>/dev/null)
 	_wait
 	# frost. save your silicon (and power): autoload best cpufreq driver
-	freq=`cat $(find /sys/devices/system/cpu -name scaling_driver 2>/dev/null) </dev/null`
+	freq=`cat -- $(find /sys/devices/system/cpu -name scaling_driver 2>/dev/null) </dev/null`
 	case "$f" in
 	*\ lm\ *AuthenticAMD*)
 		[ -e /lib/firmware/amd-ucode/microcode_amd.bin ] && mod microcode
@@ -1098,7 +1110,7 @@ load_hand_made0(){
 	if grep -vsq "powersave\|userspace\|conservative\|ondemand\|performance" /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor; then
 		gov=
 	elif [ -z "$gov" ]; then
-		$onbatt && gov="conservative ondemand powersave" || gov="ondemand conservative performance"
+		$onbatt && gov='conservative ondemand powersave' || gov='ondemand conservative performance'
 	fi
 	cpufreq_gov
 	rmmod freq_table >/dev/null 2>&1
@@ -1112,21 +1124,21 @@ load_hand_made0(){
 load_misc(){
 	# do: loadall[=...] or process MY_HWOPTS
 	for i in $cmd_loadall ; do
-		[ "$i" = 'true' ] && i=''
+		[ "$i" = true ] && i=
 		i1="${i%%:*}"
 		i2="${i#*:}"
-		[ -z "$i1" ] && i1=".*"
+		[ -z "$i1" ] && i1='.*'
 		# default: exclude slow probe, fatal to unload, etc
 		[ "$i2" = "$i" ] && i2='/tcrypt.ko\|/paride/\|/media/\|/sound/\|/microcode\.\|/isdn/\|/net/\|/video/'
 		mod $(wild "$i1" "$i2")
 	done
-	[ -z "$cmd_loadall" ] && [ "$NODETECT" != '1' ] && gentoo_compat_hwopts # deprecated
+	[ -z "$cmd_loadall" ] && [ "$NODETECT" != 1 ] && gentoo_compat_hwopts # deprecated
 	ip_config $cmd_ip
 	detect_fs
 }
 
 set_root_loop(){
-	set 1 `echo "$1"|sed -e 's/:/ /g'`
+	set -- 1 `_re "$1" : ' '`
 	REAL_ROOT="$2"
 	LOOP="$3"
 	LOOPTYPE="$4"
@@ -1136,9 +1148,9 @@ set_root_loop(){
 ordered_modalias(){
 	local i
 	if [ -e "$1/modalias" ]; then
-		! grep -sq "^DRIVER=." "$1/uevent" && mod "`cat "$1/modalias"`"
+		! grep -sq '^DRIVER=.' "$1/uevent" && mod "`cat -- "$1/modalias"`"
 #	elif [ -e "$1/uevent" ]; then
-#		i=`grep -s "^MODALIAS=" "$1/uevent"` && mod "${i#MODALIAS=}"
+#		i=`grep -s '^MODALIAS=' "$1/uevent"` && mod "${i#MODALIAS=}"
 	fi
 	for i in "$1"/* ; do
 		[ -d "$i" ] && [ ! -L "$i" ] && ordered_modalias "$i"
@@ -1147,11 +1159,11 @@ ordered_modalias(){
 
 fast_modalias(){
 	# ssb (b43) have no modalias
-	mod $MDOLIST `grep -sh "^MODALIAS=" $(find $SYS_FIND -name uevent -print) </dev/null|sed -e 's:^MODALIAS=::g' -e 's:[ -]:_:g'|sort -u`
+	mod $MDOLIST `grep -sh '^MODALIAS=' $($uFIND) </dev/null|sed -e 's:^MODALIAS=::g' -e 's:[ -]:_:g'|sort -u`
 }
 
 ofast_modalias(){
-	mod `grep -sh "^MODALIAS=" $(find $SYS_FIND -name uevent -print|sort) </dev/null|sed -e 's:^MODALIAS=::g' -e 's:[ -]:_:g'|uniq`
+	mod `grep -sh '^MODALIAS=' $($uFIND|sort) </dev/null|sed -e 's:^MODALIAS=::g' -e 's:[ -]:_:g'|uniq`
 }
 
 etc_modalias(){
@@ -1185,7 +1197,7 @@ mntnewroot(){
 				rmdir "$LOOP_ROOT"
 				umount "$NEW_ROOT"
 				rmdir "$NEW_ROOT"
-				LOOP_ROOT=""
+				LOOP_ROOT=
 			fi
 			if [ "$LOOP_ROOT" != "$NEW_ROOT" ] && [ -n "${LOOP_ROOT##$NEW_ROOT/*}" ] && [ -e "$LOOP_ROOT" ] && mount --move $NEW_ROOT $LOOP_ROOT/boot; then
 				mount --move $LOOP_ROOT $NEW_ROOT
@@ -1200,7 +1212,7 @@ mntnewroot(){
 				LOOP=
 				LOOPTYPE=
 				REAL_ROOT=/dev/loop0
-				REAL_ROOTFLAGS="loop,remount,ro"
+				REAL_ROOTFLAGS=loop,remount,ro
 			fi
 		}
 	fi
@@ -1211,8 +1223,8 @@ syspnp(){
 	$cmd_nopnp && return
 	early_huge
 	# +some compats
-	local PNP_TMP="${TMPDIR}/pnp.found" NOTLOADED="" CHK=single i i1 i2 gov="" freq="" pid="" LCOUNT="" REORDER=break USE_MDADM_="${USE_MDADM:=$cmd_domdadm}" USE_DMRAID_NORMAL_="${USE_DMRAID_NORMAL:=$cmd_dodmraid}" USE_EVMS_NORMAL_="${USE_EVMS_NORMAL:=$cmd_doevms}" USE_LVM_NORMAL_="${USE_LVM_NORMAL:=$cmd_dolvm}" LOOPS_="" REFRESH_SAME waitscan=true checks=""
-	[ "${USE_DMRAID_NORMAL:-true}" != true ] && DMRAID_OPTS="$USE_DMRAID_NORMAL"
+	local PNP_TMP="${TMPDIR}/pnp.found" NOTLOADED="" CHK=single i i1 i2 gov= freq= pid= LCOUNT= REORDER=break USE_MDADM_="${USE_MDADM:=$cmd_domdadm}" USE_DMRAID_NORMAL_="${USE_DMRAID_NORMAL:=$cmd_dodmraid}" USE_EVMS_NORMAL_="${USE_EVMS_NORMAL:=$cmd_doevms}" USE_LVM_NORMAL_="${USE_LVM_NORMAL:=$cmd_dolvm}" LOOPS_= REFRESH_SAME waitscan=true checks=
+	[ "${USE_DMRAID_NORMAL:-true}" = true ] || DMRAID_OPTS="$USE_DMRAID_NORMAL"
 	: ${REAL_ROOT:=$cmd_real_root}
 	: ${LOOP:=$cmd_loop}
 	: ${LOOPTYPE:=$cmd_loop_type}
@@ -1223,7 +1235,7 @@ syspnp(){
 	[ ${cmd_passwd:-false} != false ] && [ -n /etc/passwd ] &&
 		echo "$cmd_passwd" >/etc/passwd
 	/sbin/onbatt && onbatt=true || onbatt=false
-	gmsg "Searching pnp"
+	gmsg 'Searching pnp'
 	override_modprobe
 	[ "${SHLOADED##* modprobe }" = "${SHLOADED}" ] && mod(){ modprobe -q -a "${@}";}
 	loadsh blkid
@@ -1233,7 +1245,7 @@ syspnp(){
     $cmd_fast && [ ! -e "/lib/modules/$KV/modules.alias.sh" ] ||
     for pnpass in 0 0; do
 	for i in 0 1 2 3 4 5; do
-		echo -ne "" >"${PNP_TMP}.$i"
+		echo -ne '' >"${PNP_TMP}.$i"
 	done
 	REORDER=break
 	REFRESH_SAME=
@@ -1259,7 +1271,7 @@ syspnp(){
 	checks="$checks /proc/partitions"
 	while count ; do
 		if [ -n "$REORDER" ]; then
-			REORDER=""
+			REORDER=
 			load_hand_made
 			_wait
 		else
@@ -1275,11 +1287,11 @@ syspnp(){
 	mntnewroot
 	mount --bind $NEW_ROOT/lib/modules /lib/modules || break
 	mount --bind $NEW_ROOT/lib/firmware /lib/firmware
-	gmsg "Thin boot, pass 2"
+	gmsg 'Thin boot, pass 2'
     done
 
-	MY_HWOPTS=""
-	MDOLIST=""
+	MY_HWOPTS=
+	MDOLIST=
 	USE_MDADM="${USE_MDADM_}"
 	USE_DMRAID_NORMAL="${USE_DMRAID_NORMAL_}"
 	USE_LVM_NORMAL="${USE_LVM_NORMAL_}"
@@ -1414,13 +1426,13 @@ while true; do
 	elif [ -d "$NEW_ROOT" ]; then
 		_initnext /sbin/switch_root -c /dev/console "$NEW_ROOT" "$cmd_real_init" $cmd_init_opts
 	else
-		bmsg "failed to mount root"
+		bmsg 'failed to mount root'
 		while true; do
-			cat /lib/keymaps/keymapList 2>/dev/null
-			echo -n "Enter root partition, keymap or 'shell':"
-			REAL_ROOT=`SHELL="" vkb`
-			loadkmap <"/lib/keymaps/$REAL_ROOT.map" 2>/dev/null || break
-		done
+			cat /lib/keymaps/keymapList
+			echo -n 'Enter root partition, keymap or "shell":'
+			REAL_ROOT=`SHELL='' vkb`
+			loadkmap <"/lib/keymaps/$REAL_ROOT.map" || break
+		done 2>/dev/null
 		set_root_loop "$REAL_ROOT"
 		[ "$REAL_ROOT" = shell ] || continue
 	fi
