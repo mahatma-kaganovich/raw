@@ -214,6 +214,7 @@ kernel-2_src_configure() {
 	kconfig_init
 	cd "${S}"
 	cpu2K
+	use integrated || use thin && cfg_ '###integrated|thin:' FW_LOADER_COMPRESS
 	filter-flags '-fopenmp*' '-*parallelize*'
 	# unsure "random" miscompulations on 5.9 
 	replace-flags -malign-data=cacheline -malign-data=compat
@@ -449,6 +450,8 @@ extra_firmware(){
 	    for i in $KERNEL_CONFIG_EXTRA_FIRMWARE; do
 		echo "$i"
 	    done
+	    # keep compressed firmware in userspace
+	    grep -qx CONFIG_FW_LOADER_COMPRESS=y "$S/.config" ||
 	    while read x y; do
 		grep -sqFx "${x%:}" "$TMPDIR/modules.builtin1" && echo "$y"
 	    done <"$TMPDIR"/mod-fw.lst
@@ -2095,6 +2098,12 @@ KLIBCOPTFLAGS += -fno-move-loop-invariants --param=max-grow-copy-bb-insns=1 -fco
 				esac
 			done
 		done
+		grep -qx CONFIG_FW_LOADER_COMPRESS=y "$S/.config" && mv "${BDIR}"/{lib/firmware,} && {
+			ln -s ../firmware "${BDIR}"/lib/firmware
+			find "$BDIR"/firmware/ -type f|while read i; do
+				[[ "$i" == *.xz ]] || xz -z --check=crc32 --lzma2=dict=1MiB "$i"
+			done
+		}
 		mksquash "${BDIR}/lib" lib.loopfs
 		rm "$BDIR/lib/klibc"* -f 2>/dev/null
 		c=NONE
@@ -2112,6 +2121,7 @@ dir /proc 0755 0 0
 dir /sys 0755 0 0"
 	[[ -e "$k/bin/sh" ]] || echo "slink /bin/sh sh.shared 0755 0 0"
 	use compressed && echo "file lib.loopfs lib.loopfs 0755 0 0"
+	[[ -e "${BDIR}"/firmware ]] && echo 'slink /lib/firmware ../firmware 0755 0 0'
 	[[ "$libdir" != lib ]] && echo "slink /$libdir lib 0755 0 0
 slink /usr/$libdir lib 0755 0 0"
 	for i in "$l"/klibc*; do
