@@ -337,7 +337,12 @@ __mfw(){
 
 post_make(){
 	local i x y m f n= d= n1=
-	[ -s modules.builtin ] && rm $(cat modules.builtin) -f
+	[ -s modules.builtin ] && {
+		i="$TMPDIR/modules.builtin1"
+		cp -a modules.builtin "$i"
+		grep -sqv "^kernel/" "$i" || sed -i -e 's:^^kernel/::' "$i"
+		rm $(cat "$i") -f
+	}
 	# all modinfo (fast or split cmdline)
 	einfo "Preparing modules & firmware info"
 	#echo -n|tee "$TMPDIR"/{{mod-fw,depends,names,mod-blob{,1,-names}}.lst,mod-exclude.m2y,unmodule.black}
@@ -444,7 +449,7 @@ extra_firmware(){
 		echo "$i"
 	    done
 	    while read x y; do
-		grep -sqFx "${x%:}" modules.builtin && echo "$y"
+		grep -sqFx "${x%:}" "$TMPDIR/modules.builtin1" && echo "$y"
 	    done <"$TMPDIR"/mod-fw.lst
 	}|sort -u >"$TMPDIR"/fw-embed.lst
 	sort "$TMPDIR"/fw-used{1,2}.lst | uniq -u | grep -Fxf - "$TMPDIR"/fw-used2.lst >"$TMPDIR"/fw-embed2.lst
