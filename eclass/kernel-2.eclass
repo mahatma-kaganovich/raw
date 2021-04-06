@@ -634,6 +634,8 @@ kernel-2_src_compile() {
 	done
 
 	if use !klibc && use !genkernel; then
+		mkdir -p "${TMPDIR}/overlay-rd/lib"
+		cp -an "$BDIR/lib/firmware" "${TMPDIR}/overlay-rd/lib"
 		_genpnprd --IMAGE "initrd-${REAL_KV}.cpio" --STATIC true --FILES "/bin/busybox
 			$(use blkid && echo /sbin/blkid)
 			$(use mdadm && echo /sbin/mdadm /sbin/mdmon)
