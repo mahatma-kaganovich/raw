@@ -1,0 +1,12 @@
+after rebuild libltdl (with new toolchain?) lt_dlopen is not loaded
+--- a/src/daemon/ltdl-bind-now.c	2018-07-13 22:05:13.000000000 +0300
++++ b/src/daemon/ltdl-bind-now.c	2021-04-11 01:18:58.000000000 +0300
+@@ -122,7 +122,7 @@ void pa_ltdl_init(void) {
+     if (bindnow_loader)
+         return;
+ 
+-    if (!(dlopen_loader = lt_dlloader_find((char*) "lt_dlopen"))) {
++    if (!(dlopen_loader = lt_dlloader_find((char*) "lt_dlopen") ? : lt_dlloader_find((char*) "lt_preopen"))) {
+         pa_log_warn(_("Failed to find original lt_dlopen loader."));
+         return;
+     }
