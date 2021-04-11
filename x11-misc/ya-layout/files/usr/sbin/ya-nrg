@@ -242,6 +242,7 @@ wifi_restart(){
 		}
 		_kill_iwd &
 		wait $! $i
+		_iw_list
 	}
 	for i in $off_$off_1; do
 		for i in /sys/class/net/"$i"/phy80211/rfkill*/$rff; do
