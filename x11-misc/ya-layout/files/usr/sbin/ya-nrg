@@ -131,6 +131,7 @@ _iw_list(){
 		i="${i%/*}"
 		f="$i/carrier"
 		[ -r "$f" ] || continue
+		[ -n "$phy" ] && [[ "$(readlink -f "$i/phy80211")" != *"/$phy" ]] && continue
 		i="${i##*/}"
 		case "$(< "$f")" in
 		0)v=off;;
@@ -541,6 +542,7 @@ pw=
 wifi=
 lockpid=
 lockflag=
+phy=
 
 while [ -n "$*" ]; do
 case "$1" in
@@ -574,11 +576,17 @@ auto|xss-auto)$batt && pw=save || pw=restore;;
 force)force=true;;
 wifi);;
 #wifi-sleep)lockflag=-n;;&
-wifi-restart)[ -e $Lwifi ] && unlink $Lwifi;;&
-wifi-restart|wifi-sleep|wifi-sync)
+wifi-restart|wifi-restart-1)[ -e $Lwifi ] && unlink $Lwifi;;&
+wifi-restart|wifi-restart-1|wifi-sleep|wifi-sync)
 	altlock $Lwifi 60 "$lockflag"
 	${1//-/_}
 	altunlock
+;;
+wifi-first)
+	phy=$(cd /sys/class/ieee80211 && echo phy*) && phy=${phy%%/*} || phy=
+;;
+wifi-last)
+	phy=$(cd /sys/class/ieee80211 && echo phy*) && phy=${phy##* } || phy=
 ;;
 iwmon)
 	exec stdbuf -i0 -o0 -e0 iwmon -ys --noies
@@ -603,6 +611,8 @@ opt is:
  threads 1
  verbose
  force
+ wifi-first
+ wifi-last
 cmd is:
  powersave|save|power|low
  performance|perf|restore|high
