@@ -1,6 +1,7 @@
 #!/bin/bash
 
 save=/run/power.save
+Lwifi=/run/wifi.lock
 
 die(){
 	echo "$0: $*. Aborting..."
@@ -90,6 +91,20 @@ fchk(){
 	[ -e $1 ] || touch $1 || die "file '$1' create error"
 	[ "$(stat $1 -c '%u:%g:%f')" = 0:0:8180 ] || die "file '$1' insecure! check & remove"
 	[ -s $1 ]
+}
+
+altlock(){
+	fchk $1
+	{
+		flock $3 1 || die "$1 busy"
+		sleep $2 &
+		lockpid=$!
+	} >>$1
+	return 0
+}
+
+altunlock(){
+	[ -n "$lockpid" ] && kill $lockpid
 }
 
 _root(){
@@ -523,6 +538,8 @@ light=
 pw=
 # wifi: restart|off|auto
 wifi=
+lockpid=
+lockflag=
 
 while [ -n "$*" ]; do
 case "$1" in
@@ -555,7 +572,13 @@ bat|batt)pw=$batt;;
 auto|xss-auto)$batt && pw=save || pw=restore;;
 force)force=true;;
 wifi);;
-wifi-restart|wifi-sleep|wifi-sync)"${1//-/_}";;
+wifi-sleep)lockflag=-n;;&
+wifi-restart)[ -e $Lwifi ] && unlink $Lwifi;;&
+wifi-restart|wifi-sleep|wifi-sync)
+	altlock $Lwifi 60 "$lockflag"
+	${1//-/_}
+	altunlock
+;;
 iwmon)
 	exec stdbuf -i0 -o0 -e0 iwmon -ys --noies
 	exit 1
