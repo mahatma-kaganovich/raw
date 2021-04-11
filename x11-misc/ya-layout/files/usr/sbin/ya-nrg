@@ -572,7 +572,7 @@ bat|batt)pw=$batt;;
 auto|xss-auto)$batt && pw=save || pw=restore;;
 force)force=true;;
 wifi);;
-wifi-sleep)lockflag=-n;;&
+#wifi-sleep)lockflag=-n;;&
 wifi-restart)[ -e $Lwifi ] && unlink $Lwifi;;&
 wifi-restart|wifi-sleep|wifi-sync)
 	altlock $Lwifi 60 "$lockflag"
