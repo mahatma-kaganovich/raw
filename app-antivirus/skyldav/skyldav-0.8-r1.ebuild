@@ -1,9 +1,9 @@
 # Copyright 1999-2017 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
 
-EAPI=5
+EAPI=7
 
-inherit flag-o-matic linux-info linux-mod autotools-utils readme.gentoo-r1 systemd
+inherit autotools flag-o-matic linux-info linux-mod readme.gentoo-r1 systemd
 
 DESCRIPTION="Skyld AV: on-access scanning daemon for ClamAV using fanotify"
 HOMEPAGE="http://xypron.github.io/skyldav/"
@@ -43,8 +43,6 @@ DEPEND="${RDEPEND}
 	sys-devel/autoconf-archive"
 
 ## autotools-utils.eclass settings
-AUTOTOOLS_AUTORECONF="1"
-AUTOTOOLS_IN_SOURCE_BUILD="1"
 DOCS=( AUTHORS NEWS README )
 PATCHES=(
 	"${FILESDIR}/${PN}-examples.patch"
@@ -75,15 +73,21 @@ pkg_setup() {
 	fi
 }
 
+src_prepare(){
+	default
+	eautoreconf
+}
+
 src_configure() {
 	local myeconfargs=(
 		$(use_with libnotify notification)
 	)
-	autotools-utils_src_configure
+	econf ${myeconfargs[@]}
 }
 
 src_install() {
-	autotools-utils_src_install
+	default
+	einstalldocs
 
 	## install systemd service or OpenRC init scripts
 	if use systemd; then
