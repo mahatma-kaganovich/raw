@@ -177,7 +177,7 @@ _replace(){
 }
 
 conf_cpu(){
-local f0= f1= f2= f3= f4= f5= f6= fsmall= ffast= ffm= fnm= fv= i j i1 j1 c c0 c1 lm=false fp=387 gccv m="`uname -m`" i fsec= ind= l2= x32=false base2=
+local f0= f1= f2= f3= f4= f5= f6= fsmall= ffast= ffm= fnm= fv= i j i1 j1 c c0 c1 lm=false fp=387 gccv m="`uname -m`" i fsec= ind= l2= x32=false base2= a=
 _setflags flags cpucaps 'cpu family' model fpu vendor_id
 cmn=$(_gcc --help=common -v -Q)
 if i=$(echo "$cmn"|grep --max-count=1 "^Target: "); then
@@ -201,7 +201,39 @@ GenuineIntel:6:78|GenuineIntel:6:94|GenuineIntel:6:85|GenuineIntel:6:142|Genuine
 	ind+=' -mfunction-return=thunk-inline'
 ;;
 esac
-f0=`_f -m{tune,cpu,arch}=native`
+case "$vendor_id" in
+GenuineIntel)
+	case "$cpu_family:  $flags  " in
+	6:*\ avx5124vnniw\ *|6:*\ avx512er\ *)a=k1om;;
+	6:*\ sse4_2\ *)a=corei7;;
+	6:*\ ssse3\ *)a=core2;;
+	6:*)a=core;;
+	15:*\ lm\ *)a=nocona;;
+	15:*)a=pentium4;;
+	5:*)a=i586;;
+	4:*)a=i486;;
+	esac
+;;
+AuthenticAMD|HygonGenuine)
+	case "$cpu_family:  $flags  " in
+	22:*\ movbe\ *)a=btver2;;
+	*\ vaes\ *)a=znver3;;
+	*\ clvb\ *)a=znver2;;
+	*\ clzero\ *)a=znver1;;
+	*\ avx2\ *)a=bdver4;;
+	*\ xsaveopt\ *)a=bdver3;;
+	*\ bmi\ *)a=bdver2;;
+	*\ xop\ *)a=bdver1;;
+	*\ sse4a\ *\ ssse3\ *|*\ ssse3\ *\ sse4a\ *)a=btver1;;
+	*\ sse4a\ *)a=amdfam10;;
+	*\ sse2\ *)a=k8;;
+	6:*\ 3dnow*)a=athlon;;
+	*\ 3dnow*)a=k6_2;;
+	*\ mmx\ *)a=k6;;
+	esac
+;;
+esac
+f0=`_f -m{tune,cpu,arch}=native ${a:+-Wa,-mtune=$a}`
 f3='-momit-leaf-frame-pointer -fsection-anchors'
 # wanted everywere, but breaks some packages, required filtering. keep bound
 fsmall+=' -fno-asynchronous-unwind-tables'
