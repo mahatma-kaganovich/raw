@@ -25,8 +25,8 @@ LICENSE="GPL-3"
 
 SLOT="0"
 
-IUSE="acl addc addns ads ceph client cluster cups debug dmapi fam gpg iprint
-json ldap pam profiling-data python quota selinux syslog system-heimdal
+IUSE="acl addc addns ads ceph client cluster cups debug dmapi fam glusterfs gpg iprint
+json ldap ntvfs pam profiling-data python quota +regedit selinux spotlight syslog system-heimdal
 +system-mitkrb5 systemd test winbind zeroconf
 afs sasl cpu_flags_x86_aes nls lmdb etcd system-ldb snapper"
 
@@ -36,6 +36,8 @@ REQUIRED_USE="${PYTHON_REQUIRED_USE}
 	ads? ( acl ldap winbind )
 	cluster? ( ads )
 	gpg? ( addc )
+	ntvfs? ( addc )
+	spotlight? ( json )
 	test? ( python )
 	!ads? ( !addc )
 	?? ( system-heimdal system-mitkrb5 )
@@ -87,6 +89,7 @@ CDEPEND="
 			dev-python/dnspython:=[\${PYTHON_MULTI_USEDEP}]
 		)
 	")
+	!alpha? ( !sparc? ( sys-libs/libunwind:= ) )
 	ceph? ( sys-cluster/ceph )
 	etcd? ( dev-db/etcd )
 	cluster? (
@@ -120,6 +123,7 @@ DEPEND="${CDEPEND}
 		net-libs/rpcsvc-proto
 		<sys-libs/glibc-2.26[rpc(+)]
 	)
+	spotlight? ( dev-libs/glib )
 	test? (
 			>=sys-libs/nss_wrapper-1.1.3
 			>=net-dns/resolv_wrapper-1.1.4
@@ -225,7 +229,7 @@ multilib_src_configure() {
 		--disable-rpath-install
 		--nopyc
 		--nopyo
-		 --without-ntvfs-fileserver
+		--without-winexe
 		$(multilib_native_usex cpu_flags_x86_aes --accel-aes=intelaesni '')
 		$(use_with nls gettext)
 		$(multilib_native_use_with afs fake-kaserver)
@@ -238,12 +242,16 @@ multilib_src_configure() {
 		$(multilib_native_use_enable cups)
 		$(multilib_native_use_with dmapi)
 		$(multilib_native_use_with fam)
+		$(multilib_native_use_enable glusterfs)
 		$(multilib_native_use_with gpg gpgme)
 		$(multilib_native_use_with json)
 		$(multilib_native_use_enable iprint)
+		$(multilib_native_use_with ntvfs ntvfs-fileserver)
 		$(multilib_native_use_with pam)
 		$(multilib_native_usex pam "--with-pammodulesdir=${EPREFIX}/$(get_libdir)/security" '')
 		$(multilib_native_use_with quota quotas)
+		$(multilib_native_use_with regedit)
+		$(multilib_native_use_enable spotlight)
 		$(multilib_native_use_with syslog)
 		$(multilib_native_use_with systemd)
 		--systemd-install-services
@@ -257,8 +265,10 @@ multilib_src_configure() {
 		$(use_with ldap)
 		$(use_with profiling-data)
 		$(use_with lmdb ldb-lmdb)
-		--jobs $(makeopts_jobs)
-	)  #'"
+		# bug #683148
+		--jobs 1
+#		--jobs $(makeopts_jobs)
+	)
 	multilib_is_native_abi && myconf+=( --with-shared-modules=${SHAREDMODS} )
 
 	# multilib_is_native_abi &&
