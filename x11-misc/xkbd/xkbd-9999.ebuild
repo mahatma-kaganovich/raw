@@ -26,6 +26,7 @@ RDEPEND="x11-libs/libX11
 	x11-libs/libXft
 	x11-libs/libXtst
 	x11-libs/libXScrnSaver
+	x11-libs/libXext
 	evdev? ( dev-libs/libevdev )
 	xpm? ( x11-libs/libXpm )
 	multitouch? ( x11-libs/libXi )"
