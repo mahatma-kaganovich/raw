@@ -578,9 +578,9 @@ wifi);;
 #wifi-sleep)lockflag=-n;;&
 wifi-restart|wifi-restart-1)[ -e $Lwifi ] && unlink $Lwifi;;&
 wifi-restart|wifi-restart-1|wifi-sleep|wifi-sync)
-	altlock $Lwifi 60 "$lockflag"
+#	altlock $Lwifi 60 "$lockflag"
 	${1//-/_}
-	altunlock
+#	altunlock
 ;;
 wifi-first)
 	phy=$(cd /sys/class/ieee80211 && echo phy*) && phy=${phy%%/*} || phy=
