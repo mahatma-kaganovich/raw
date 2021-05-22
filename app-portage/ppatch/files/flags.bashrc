@@ -274,7 +274,6 @@ libaio)_fLTO_f -fno-lto;;&
 inkscape|libreoffice|mariadb|nodejs|clang|gnutls|gtk+|libvpx|mesa|busybox|ffmpeg)
 	_iuse static-libs || filterflag -ffat-lto-objects
 ;;&
-ffmpeg)_fLTO_f -flto-partition=one;;&
 qtscript)filterflag -flto '-flto=*' && appendflag_ LDFLAGS -flto;;
 gnustep-base|gnustep-back-cairo)_fLTO_f -flto-partition=1to1;;&
 #openjdk)_fLTO_f -fno-strict-aliasing -flto;;& # ulimit -n 100000
