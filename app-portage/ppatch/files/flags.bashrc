@@ -264,16 +264,17 @@ xemacs)_fLTO && {
 # libaio breaks others
 # gtkmm too (cdrdao)
 # fuse: e2fsprogs failed only on gcc 8.2
-# ffmpeg: amd64 - mp4 crushes
+# ffmpeg: amd64 - mp4 crushes / now OK
 # libbsd: mailx
-gnutls|sandbox|valgrind|xf86-video-intel|libwacom|libbsd|dcc|chromium*|webkit-gtk|ffmpeg|xemacs|fuse|privoxy|icedtea|openjdk|qtwebkit|mplayer|mysql|heimdal|glibc|cvs)
+gnutls|sandbox|valgrind|xf86-video-intel|libwacom|libbsd|dcc|chromium*|webkit-gtk|xemacs|fuse|privoxy|icedtea|openjdk|qtwebkit|mplayer|mysql|heimdal|glibc|cvs)
 #	${CC:-gcc} -v 2>&1|grep -q "^gcc version" &&
 		filterflag '-flto*' '-*-lto-*' -fuse-linker-plugin -fdevirtualize-at-ltrans
 ;;&
 libaio)_fLTO_f -fno-lto;;&
-inkscape|libreoffice|mariadb|nodejs|clang|gnutls|gtk+|libvpx|mesa|busybox)
+inkscape|libreoffice|mariadb|nodejs|clang|gnutls|gtk+|libvpx|mesa|busybox|ffmpeg)
 	_iuse static-libs || filterflag -ffat-lto-objects
 ;;&
+ffmpeg)_fLTO_f -flto-partition=one;;&
 qtscript)filterflag -flto '-flto=*' && appendflag_ LDFLAGS -flto;;
 gnustep-base|gnustep-back-cairo)_fLTO_f -flto-partition=1to1;;&
 #openjdk)_fLTO_f -fno-strict-aliasing -flto;;& # ulimit -n 100000
