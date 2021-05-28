@@ -1706,7 +1706,13 @@ kernel-2_src_prepare(){
 		sed -i -e "s/^\(CC_OPTION_CFLAGS .*\)$/\1$i/" scripts/Kbuild.include
 		touch "$TMPDIR/_cross"
 	fi
-	use x86 && sed -i -e 's:^\(KBUILD_USER.*(filter .*KBUILD_CFLAGS.*\)$:\1 -m32:' Makefile # USERMODE_DRIVER
+
+	# USERMODE_DRIVER
+	local u=
+	use x86 && u=-m32
+	use amd64 && [ "$ABI" = x32 ] && u=-mx32
+	[ -n "$u" ] && sed -i -e 's:^\(KBUILD_USER.*(filter .*KBUILD_CFLAGS.*\)$:\1 '"$u:" Makefile
+
 	$reg && ! grep -Fq mgeneral-regs-only arch/x86/Makefile && sed -i -e 's:-mno-mmx -mno-sse$:-mgeneral-regs-only:' -e 's:-mno-sse -mno-mmx -mno-sse2 -mno-3dnow:-mgeneral-regs-only:' -e '/KBUILD_CFLAGS += .*-mno-\(avx\|80387\|fp-ret-in-387\)/d' {arch/x86,arch/x86/boot/compressed,drivers/firmware/efi/libstub}/Makefile
 #	echo "CFLAGS_mdesc.o += -Wno-error=maybe-uninitialized" >>arch/sparc/kernel/Makefile
 	chmod 770 tools/objtool/sync-check.sh
