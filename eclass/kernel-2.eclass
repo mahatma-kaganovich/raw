@@ -3,6 +3,7 @@
 inherit flag-o-matic global-compat
 [[ "${PV}" == 9999* ]] && KV_FULL="${PV}"
 # really newer work without, but check-robots want it
+[ -v PORTDIR ] || PORTDIR=${PORTAGE_ECLASS_LOCATIONS[-1]}
 [ -e "${PORTDIR}/eclass/kernel-2.eclass" ] && source "${PORTDIR}/eclass/kernel-2.eclass"
 EXPORT_FUNCTIONS src_configure src_prepare pkg_prerm
 
@@ -1019,7 +1020,7 @@ useconfig(){
 		if [[ "$i" != /* ]]; then
 			[[ "$i" == */* ]] && i="$i/*.ebuild" || i="*/$i/$i-*.ebuild"
 			o=
-			for j in $PORTDIR $PORTDIR_OVERLAY; do
+			for j in $PORTDIR $PORTDIR_OVERLAY "${PORTAGE_ECLASS_LOCATIONS[@]}"; do
 				o+=" $j/$i"
 			done
 			i="$o"

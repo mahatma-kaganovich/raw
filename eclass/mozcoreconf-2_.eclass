@@ -1,3 +1,4 @@
+[ -v PORTDIR ] || PORTDIR=${PORTAGE_ECLASS_LOCATIONS[-1]}
 [ -e "${PORTDIR}/eclass/mozcoreconf-2.eclass" ] && source "${PORTDIR}/eclass/mozcoreconf-2.eclass"
 
 mozconfig_init() {
