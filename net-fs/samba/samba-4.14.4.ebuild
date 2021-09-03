@@ -3,9 +3,9 @@
 
 EAPI=7
 
-PYTHON_COMPAT=( python3_{6..9} )
+PYTHON_COMPAT=( python3_{8..9} )
 PYTHON_REQ_USE="threads(+),xml(+)"
-inherit python-single-r1 waf-utils multilib-minimal linux-info systemd pam
+inherit python-single-r1 waf-utils multilib-minimal linux-info systemd pam tmpfiles
 
 DESCRIPTION="Samba Suite Version 4"
 HOMEPAGE="https://samba.org/"
@@ -17,7 +17,7 @@ if [[ ${PV} = *_rc* ]]; then
 	SRC_URI="mirror://samba/rc/${MY_P}.tar.gz"
 else
 	SRC_URI="mirror://samba/stable/${MY_P}.tar.gz"
-	KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~ia64 ~ppc ~ppc64 ~sparc ~x86"
+	KEYWORDS="~alpha ~amd64 ~arm ~arm64 ~hppa ~ia64 ~ppc ~ppc64 ~riscv ~sparc ~x86"
 fi
 S="${WORKDIR}/${MY_P}"
 
@@ -327,6 +327,7 @@ multilib_src_install() {
 		# Install init script and conf.d file
 		newinitd "${CONFDIR}/samba4.initd-r1" samba
 		#newconfd "${CONFDIR}/samba4.confd" samba
+		dotmpfiles "${FILESDIR}"/samba.conf
 
 		if use cluster; then
 			newinitd "${CONFDIR}/ctdb.initd" ctdb
@@ -364,6 +365,7 @@ multilib_src_test() {
 }
 
 pkg_postinst() {
+	tmpfiles_process samba.conf
 	ewarn "Be aware the this release contains the best of all of Samba's"
 	ewarn "technology parts, both a file server (that you can reasonably expect"
 	ewarn "to upgrade existing Samba 3.x releases to) and the AD domain"
