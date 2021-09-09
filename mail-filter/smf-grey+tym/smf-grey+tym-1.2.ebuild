@@ -1,3 +1,4 @@
+EAPI=5
 MY_P="smf-grey-2.0.0+tym${PV}"
 MY_PN="smf-grey"
 DIRS="/var/run/smfs /var/${MY_PN} /var/spool/smfs"

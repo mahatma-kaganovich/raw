@@ -1,3 +1,4 @@
+EAPI=5
 inherit smf
 DESCRIPTION="Sendmail SPF milter"
 DEPEND="${DEPEND}

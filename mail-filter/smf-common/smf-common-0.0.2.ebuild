@@ -1,3 +1,4 @@
+EAPI=5
 inherit raw
 SLOT="0"
 SRC_URI=""
