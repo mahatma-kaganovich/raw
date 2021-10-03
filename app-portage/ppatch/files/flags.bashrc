@@ -242,6 +242,7 @@ _iuse clang && {
 }
 }
 
+_iuse clang || [[ "$CC$CXX" == *clang* ]] && filterflag '-Wa,-mtune=*'
 _filtertst
 _iuse lto && filterflag -flto '-flto=*' -ffat-lto-objects
 [[ "$BDEPEND" == *virtual/rust* ]] && _flagsRUST
@@ -266,7 +267,7 @@ xemacs)_fLTO && {
 # fuse: e2fsprogs failed only on gcc 8.2
 # ffmpeg: amd64 - mp4 crushes / now OK
 # libbsd: mailx
-gnutls|sandbox|valgrind|xf86-video-intel|libwacom|libbsd|dcc|chromium*|webkit-gtk|xemacs|fuse|privoxy|icedtea|openjdk|qtwebkit|mplayer|mysql|heimdal|glibc|cvs)
+llvm|gnutls|sandbox|valgrind|xf86-video-intel|libwacom|libbsd|dcc|chromium*|webkit-gtk|xemacs|fuse|privoxy|icedtea|openjdk|qtwebkit|mplayer|mysql|heimdal|glibc|cvs)
 #	${CC:-gcc} -v 2>&1|grep -q "^gcc version" &&
 		filterflag '-flto*' '-*-lto-*' -fuse-linker-plugin -fdevirtualize-at-ltrans
 ;;&
