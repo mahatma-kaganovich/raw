@@ -7,8 +7,8 @@ In my case "export HOSTNAME" was required.
 	$USER -> path never starting from "/" (else - "~:/...")
 	root ->always from "/"
 
---- a/src/taskbar/task.c	2019-07-15 09:15:40.000000000 +0300
-+++ b/src/taskbar/task.c	2021-02-21 00:27:10.602123285 +0300
+--- a/src/taskbar/task.c
++++ b/src/taskbar/task.c
 @@ -260,16 +260,17 @@ gboolean task_update_title(Task *task)
      if (!panel->g_task.has_text && !panel->g_task.tooltip_enabled && taskbar_sort_method != TASKBAR_SORT_TITLE)
          return FALSE;
@@ -47,10 +47,10 @@ In my case "export HOSTNAME" was required.
 +    static int s1 = 0, s2 = 0, s3 = 0;
 +    char ch = 0, ch1 = ':', *title2 = title;
 +    if (!home) {
-+        home = "";
 +        if ((user = getenv("USER"))) s1 = strlen(user);
 +        if ((hostname = getenv("HOSTNAME"))) s2 = strlen(hostname);
 +        if ((home = getenv("HOME"))) s3 = strlen(home);
++        else home = "";
 +    }
 +    if (!strncmp(title2,"mc ",3)) title2 += 3;
 +    if (*title2 == '['){
