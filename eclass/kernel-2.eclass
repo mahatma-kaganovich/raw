@@ -1353,6 +1353,18 @@ native|:native|native:native)
 		*)CF1 GENERIC_CPU X86_GENERIC;;
 		esac
 		if [[ "$cpu_family" == 6 ]]; then
+
+			# detect MID. may be omitted most exotic series
+			[[ "$model_name" != *Z[0-9]* ]] && CF1 -X86_INTEL_MID
+			CF1 '-(?:.+_)?(?:MRFLD|MERRIFIELD)(?:_.+)?' '-(?:.+_)?(?:MFLD|MEDFIELD)(?:_.+)?'
+			case "${model}" in
+			38)CF1 X86_INTEL_MID;; # Silverthorne, Lincroft
+			39|54|53)CF1 X86_INTEL_MID '(?:.+_)?(?:MFLD|MEDFIELD)(?:_.+)?';; # Penwell/Cedarview/Cloverview = Medfield
+			74)CF1 X86_INTEL_MID '(?:.+_)?(?:MRFLD|MERRIFIELD)(?:_.+)?';; # Merriefield
+			90|60)CF1 X86_INTEL_MID;; # Moorefield
+			60)CF1 X86_INTEL_MID;; # TANGIER
+			esac
+
 			[[ "$model" -gt 25 ]] && CF1 INTEL_IDLE
 			# 42 or 45, but+
 			if [[ "$model" -lt 42 ]]; then

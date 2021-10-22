@@ -1,0 +1,15 @@
+HPET broken on some platforms.
+Also reported more latency.
+Add possibility to completely disable HPET code on X86_64.
+
+--- a/arch/x86/Kconfig
++++ b/arch/x86/Kconfig
+@@ -865,7 +865,7 @@
+ 
+ config HPET_TIMER
+ 	def_bool X86_64
+-	prompt "HPET Timer Support" if X86
++	prompt "HPET Timer Support" if X86_32
+ 	---help---
+ 	  Use the IA-PC HPET (High Precision Event Timer) to manage
+ 	  time in preference to the PIT and RTC, if a HPET is

@@ -1,0 +1,3 @@
+KERNEL_CONFIG+="-HPET -HPET_TIMER"
+# if patch vs. HPET_TIMER not applied, disable some more
+KERNEL_CONFIG+=" -HPET_MMAP_DEFAULT"
