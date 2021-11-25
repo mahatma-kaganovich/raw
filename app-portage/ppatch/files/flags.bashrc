@@ -275,6 +275,8 @@ libaio)_fLTO_f -fno-lto;;&
 inkscape|libreoffice|mariadb|nodejs|clang|gnutls|gtk+|libvpx|mesa|busybox|ffmpeg)
 	_iuse static-libs || filterflag -ffat-lto-objects
 ;;&
+# developers choice. be safe
+mesa)_iuse cpu_flags_x86_sse2 && filterflag '-mfpmath=*';;&
 ffmpeg)_fLTO && if use amd64; then
 		export CFLAGS_x86="$CFLAGS_x86 -fno-lto"
 	elif use x86; then
