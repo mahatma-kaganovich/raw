@@ -9,3 +9,5 @@ drivers/platform/x86/surface3_button.ko
 # variable compats. can get no [logitech] keyboard once
 # 2do: order. prefer usbhid, else - usbkbd, usbmouse
 #drivers/hid/usbhid/*.ko
+# possible resources conflict. prefer concurrents
+drivers/pinctrl/intel/pinctrl-cherryview.ko
