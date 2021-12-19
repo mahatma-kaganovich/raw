@@ -2,7 +2,9 @@
 KERNEL_CONFIG+=" -NOUVEAU_LEGACY_CTX_SUPPORT -X86_ACPI_CPUFREQ_CPB"
 #KERNEL_CONFIG+=" -VIRTIO_PCI_LEGACY"
 #KERNEL_CONFIG+=" -SCSI_PROC_FS"
+KERNEL_CONFIG+=" -CFG80211_WEXT -WIRELESS_EXT -WEXT_CORE"
 
 # +tdfx/3dfx/voodoo3/banshee +sis +savage
 use !video_cards_r128 && use !video_cards_i810 && use !video_cards_mga && use !video_cards_via &&
     KERNEL_CONFIG+=" -DRM_LEGACY"
+
