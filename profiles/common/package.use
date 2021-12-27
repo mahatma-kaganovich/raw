@@ -125,6 +125,9 @@ dev-libs/efl -drm
 sys-libs/zlib static-libs
 app-arch/bzip2 static-libs
 app-arch/xz-utils static-libs
+# sys-apps/util-linux[su,python] -> pam vs. sys-apps/shadow, sys-apps/util-linux[python] req4 catalyst
+sys-apps/util-linux -su
+sys-apps/shadow su
 
 # export MALLOC_MMAP_MAX_=0
 # export LD_PRELOAD=/usr/lib/libjemalloc.so
