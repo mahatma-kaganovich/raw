@@ -128,6 +128,10 @@ app-arch/xz-utils static-libs
 # sys-apps/util-linux[su,python] -> pam vs. sys-apps/shadow, sys-apps/util-linux[python] req4 catalyst
 sys-apps/util-linux -su
 sys-apps/shadow su
+# busybox[static], etc
+sys-libs/libxcrypt static-libs
+# initrd bug-free, shell failover
+sys-apps/busybox static
 
 # export MALLOC_MMAP_MAX_=0
 # export LD_PRELOAD=/usr/lib/libjemalloc.so
