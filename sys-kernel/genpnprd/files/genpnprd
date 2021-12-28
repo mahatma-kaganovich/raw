@@ -113,10 +113,12 @@ preserve_end(){
 	# gentoo no-multilib: /lib + /lib64; my: /lib + symlink. respect all
 	cp -a "$tmp"/preserve/lib* "$rcdir/" ||
 	for i in "$tmp"/preserve/lib*; do
-		[ -L "$i" ] || ! [ -d "$i" ] && continue
 		d="$rcdir/${i##*/}"
-		mkdir -p "$d"
-		mv "$i"/* "$d/" -f || die "error mv $i/* $d/"
+		[ -L "$d" ] && rm "$d"
+		mv "$i" "$rcdir/" -f ||
+		mv "$i"/* "$d/" -f ||
+		cp -a "$i" "$rcdir/" ||
+		die "error append $i to $rcdir"
 	done
 	rm "$tmp/preserve" -Rf
 }
