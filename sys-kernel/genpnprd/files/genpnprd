@@ -109,7 +109,14 @@ preserve_start(){
 }
 
 preserve_end(){
-	mv "$tmp/preserve/lib"/* "$rcdir/lib/" -f
+	local i d
+	# gentoo no-multilib: /lib + /lib64; my: /lib + symlink. respect all
+	for i in "$tmp"/preserve/lib*; do
+		[ -L "$i" ] || ! [ -d "$i" ] && continue
+		d="$rcdir/${i##*/}"
+		mkdir -p "$d"
+		mv "$i"/* "$d/" -f || die "error mv $i/* $d/"
+	done
 	rm "$tmp/preserve" -Rf
 }
 
