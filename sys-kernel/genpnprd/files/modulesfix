@@ -1,6 +1,6 @@
 #!/bin/bash
 ## (c) Denis Kaganovich
-## v5.7
+## v5.8
 
 : ${TMPDIR:=/tmp}
 
@@ -98,12 +98,13 @@ done|while read i h bus n m; do
 		}
 	fi
 	bus="${bus%%_*}"
-#	case "$bus:$ii" in
-#	*/neo1973_wm8753.c)
-#		echo "SKIPPED: $bus: $ii"
-#		continue
-#	;;
-#	esac
+	case "$bus:$ii" in
+	#*/neo1973_wm8753.c)
+	*/pci-epf-ntb.c)
+		echo "SKIPPED: $bus: $ii"
+		continue
+	;;
+	esac
 	local BU
 	case "$bus" in
 	sdio)BU=MMC;;
