@@ -129,6 +129,7 @@ app-arch/xz-utils static-libs
 sys-apps/util-linux -su
 sys-apps/shadow su
 # busybox[static], etc
+virtual/libcrypt static-libs
 sys-libs/libxcrypt static-libs
 # initrd bug-free, shell failover
 sys-apps/busybox static
