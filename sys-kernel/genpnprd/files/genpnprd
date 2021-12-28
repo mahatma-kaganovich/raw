@@ -111,6 +111,7 @@ preserve_start(){
 preserve_end(){
 	local i d
 	# gentoo no-multilib: /lib + /lib64; my: /lib + symlink. respect all
+	cp -a "$tmp"/preserve/lib* "$rcdir/" ||
 	for i in "$tmp"/preserve/lib*; do
 		[ -L "$i" ] || ! [ -d "$i" ] && continue
 		d="$rcdir/${i##*/}"
