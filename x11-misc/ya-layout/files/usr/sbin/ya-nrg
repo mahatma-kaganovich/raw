@@ -5,6 +5,7 @@ Lwifi=/run/wifi.lock
 
 die(){
 	echo "$0: $*. Aborting..."
+	caller
 	exit 1
 }
 

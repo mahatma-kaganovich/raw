@@ -152,6 +152,7 @@ pid_ok(){
 
 err(){
 	echo "ERROR: ${@}"
+	caller
 	_exit
 	exit 1
 }

@@ -39,7 +39,8 @@ tmp="$TMPDIR/genpnprd.$$"
 
 die(){
 	echo "Error $*"
-	rm "$tmp" -Rf
+	caller
+#	rm "$tmp" -Rf
 	exit 1
 }
 

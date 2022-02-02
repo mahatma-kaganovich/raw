@@ -46,8 +46,11 @@ Examples of /etc/fstab:
 "
 
 err(){
+	{
 	echo "
-ERROR $0: $1" >&2
+ERROR $0: $1" 
+	caller
+	} >&2
 	exit ${2:-1}
 }
 
