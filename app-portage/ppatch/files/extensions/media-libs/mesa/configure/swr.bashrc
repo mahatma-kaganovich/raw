@@ -1,3 +1,4 @@
+[[ "$IUSE" == *gallium* ]] &&
 [[ ${ABI} == amd64 ]] && use gallium && use llvm &&
 meson(){
 	rm -f "$S/src/gallium/drivers/swr/rasterizer/jitter/gen_builder.hpp"

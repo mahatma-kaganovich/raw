@@ -1,2 +1,1 @@
-use !video_cards_i915 && use !video_cards_i965 && use !video_cards_intel && use !video_cards_iris && KERNEL_CONFIG+=-DRM_I915
-use !video_cards_intel && KERNEL_CONFIG+=" -DRM_GMA500"
+video_cards_intel.-use

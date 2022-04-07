@@ -1,1 +1,6 @@
-video_cards_i915.-use
+use !video_cards_i915 && use !video_cards_i965 && use !video_cards_intel && use !video_cards_iris && {
+	KERNEL_CONFIG+=-DRM_I915
+	use !systemd && use !lxc && use !video_cards_radeonsi && KERNEL_CONFIG+=" -KCMP -CHECKPOINT_RESTORE"
+}
+use !video_cards_intel && KERNEL_CONFIG+=" -DRM_GMA500"
+# new behaviour: only video_cards_intel
