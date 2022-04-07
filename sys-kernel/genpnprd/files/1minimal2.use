@@ -45,3 +45,5 @@ use mdadm || use lvm || use device-mapper || KERNEL_CONFIG+=" -MD"
 use soc || use laptop || KERNEL_CONFIG+=" -X86_EXTENDED_PLATFORM -X86_INTEL_LPSS -X86_AMD_PLATFORM_DEVICE -.+_MID -USB_OTG"
 # Intel's default
 KERNEL_CONFIG+=" NODES_SHIFT=2"
+
+use !X && use !dri && use !systemd && use !lxc && KERNEL_CONFIG+=" -KCMP"

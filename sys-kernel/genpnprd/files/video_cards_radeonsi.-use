@@ -1,4 +1,4 @@
 use !video_cards_radeonsi && use !video_cards_r600 && {
 	KERNEL_CONFIG+="-DRM_AMDGPU_SI"
-	use !systemd && use !lxc && use !video_cards_intel && KERNEL_CONFIG+=" -KCMP -CHECKPOINT_RESTORE"
+	use !systemd && use !lxc && use !video_cards_intel && KERNEL_CONFIG+=" -CHECKPOINT_RESTORE"
 }
