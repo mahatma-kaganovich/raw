@@ -10,3 +10,7 @@ use server || KERNEL_CONFIG+=' -SLUB_CPU_PARTIAL'
 # anymore, it increase from-idle state, so affect mostly unstable workloads
 use rt || KERNEL_CONFIG+=' RCU_EXPERT RCU_FAST_NO_HZ'
 KERNEL_CONFIG+=' =IRQ_TIME_ACCOUNTING'
+use rt || {
+	KERNEL_CONFIG+=' HAVE_STATIC_CALL_INLINE==!y;HAVE_PREEMPT_DYNAMIC==!y;PREEMPT_RT==y;PREEMPT PREEMPT_DYNAMIC'
+	ewarn "USE=rt2 new behaviour: PREEMPT with cmdline preempt=none/voluntary/full"
+}

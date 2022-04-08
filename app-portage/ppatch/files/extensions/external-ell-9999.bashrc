@@ -1,6 +1,8 @@
 
 # force dev-libs/ell-9999 true external
 
+# [temporary] disabled
+false &&
 [ "$EBUILD_PHASE" = prepare ] &&
 [ "${CBUILD:-${CHOST}}" = "${CHOST}" ] &&
 ([ -e "$S/ell/useful.h" -o -e "$WORKDIR/ell/ell/useful.h" ] || grep -sqw EXTERNAL_ELL "$S"/Makefile* || grep -sqw enable_external_ell "$S"/configure*) &&
