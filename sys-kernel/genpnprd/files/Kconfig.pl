@@ -74,7 +74,7 @@ $ENV{KERNEL_CONFIG}||='
 	IP_VS_IPV6 DCB MAC80211_MESH MAC80211_RC_PID =MAC80211_RC_MINSTREL_.+
 	DEVTMPFS_MOUNT PARPORT_PC_SUPERIO BLK_DEV_XIP
 	-NFS_USE_LEGACY_DNS =NFSD_.+ ##-CIFS_.+2 -CIFS_STATS2
-	=(?:JOYSTICK|USB|ISDN|JFFS2|MOUSE|RTC|SQUASHFS|ROMFS|BT|DSCC4|ATM|HISAX|GPIO|A11Y|SPI|BCMA|RT2800USB|HOTPLUG_PCI|CIFS|NFS|NFC|OF|POWER_RESET|THERMAL_GOV|PCIE|PWM|EDAC|TCG|SENSORS)_.+
+	=(?:JOYSTICK|USB|ISDN|JFFS2|MOUSE|RTC|SQUASHFS|ROMFS|BT|DSCC4|ATM|HISAX|GPIO|A11Y|SPI|BCMA|RT2800USB|HOTPLUG_PCI|CIFS|NFS|NFC|OF|POWER_RESET|THERMAL_GOV|PCIE|PWM|EDAC|TCG|SENSORS|TOUCHSCREEN|RMI4)_.+
 	-USB_OTG_DISABLE_EXTERNAL_HUB
 	#vs.alt_usbkbd_usbmouse USB_HID
 	=MEDIA_.+_SUPPORT =MEDIA_CONTROLLER =VIDEO_.+_RC
@@ -157,6 +157,7 @@ $ENV{KERNEL_CONFIG2}||='?RAPIDIO RAPIDIO_DMA_ENGINE==y;?DMA_ENGINE (?:.+_)?PTP_.
 	'&'=>'m->y recursive embed',
 	'?'=>'n if none embedded module dependences (use after detects)',
 	'_'=>'m->n',
+	'*'=>'n->m',
 	'#'=>'#',
 );
 
@@ -303,6 +304,10 @@ sub modules{
 			cfg($i,'m');
 		}elsif($c eq '-'){
 			cfg($i,$defconfig{$i});
+		}elsif($c eq '_'){
+			cfg($i,$defconfig{$i}) if($config{$_} eq 'm');
+		}elsif($c eq '*'){
+			cfg($i,'m') if($config{$_} eq '' || $config{$_} eq 'n');
 		}elsif($c ne '=' || !defined($config{$_})){
 			cfg($i,$defconfig{$i}?$defconfig{$i}:'m')
 		}
@@ -545,6 +550,8 @@ sub conf{
 			$undef{$_}=undef;
 		}elsif($c eq '_'){
 			cfg($_) if($config{$_} eq 'm');
+		}elsif($c eq '*'){
+			cfg($_,'m') if(exists($tristate_{$_}) && ($config{$_} eq '' || $config{$_} eq 'n'));
 		}elsif($c eq '?'){
 			%off=();
 			depcfg($_);

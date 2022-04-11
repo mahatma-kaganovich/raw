@@ -10,7 +10,7 @@ KERNEL_CONFIG+=" -X86_VSYSCALL_EMULATION LEGACY_VSYSCALL_NONE -MODIFY_LDT_SYSCAL
 #use lxc ||
 	KERNEL_CONFIG+=" -NAMESPACES -CGROUPS"
 if use dri || use X; then
-	KERNEL_MODULES+=" -drivers/video +drivers/gpu +drivers/video/backlight"
+	KERNEL_MODULES+=" _drivers/video *drivers/gpu *drivers/video/backlight"
 	use fbcon || KERNEL_CONFIG+=" +FB +FRAMEBUFFER_CONSOLE;FRAMEBUFFER_CONSOLE"
 else
 	use fbcon || KERNEL_CONFIG+=" -FB"
