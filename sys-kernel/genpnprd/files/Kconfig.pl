@@ -307,7 +307,7 @@ sub modules{
 		}elsif($c eq '_'){
 			cfg($i,$defconfig{$i}) if($config{$i} eq 'm');
 		}elsif($c eq '*'){
-			cfg($i,'m') if($config{$i} eq '' || $config{$i});
+			cfg($i,'m') if($config{$i} eq '');
 		}elsif($c ne '=' || !defined($config{$_})){
 			cfg($i,$defconfig{$i}?$defconfig{$i}:'m')
 		}
