@@ -305,9 +305,9 @@ sub modules{
 		}elsif($c eq '-'){
 			cfg($i,$defconfig{$i});
 		}elsif($c eq '_'){
-			cfg($i,$defconfig{$i}) if($config{$_} eq 'm');
+			cfg($i,$defconfig{$i}) if($config{$i} eq 'm');
 		}elsif($c eq '*'){
-			cfg($i,'m') if($config{$_} eq '' || $config{$_} eq 'n');
+			cfg($i,'m') if($config{$i} eq '' || $config{$i});
 		}elsif($c ne '=' || !defined($config{$_})){
 			cfg($i,$defconfig{$i}?$defconfig{$i}:'m')
 		}
@@ -551,7 +551,7 @@ sub conf{
 		}elsif($c eq '_'){
 			cfg($_) if($config{$_} eq 'm');
 		}elsif($c eq '*'){
-			cfg($_,'m') if(exists($tristate_{$_}) && ($config{$_} eq '' || $config{$_} eq 'n'));
+			cfg($_,'m') if(exists($tristate_{$_}) && $config{$_} eq '');
 		}elsif($c eq '?'){
 			%off=();
 			depcfg($_);
