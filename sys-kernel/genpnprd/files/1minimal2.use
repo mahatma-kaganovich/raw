@@ -12,8 +12,10 @@ KERNEL_CONFIG+=" -X86_VSYSCALL_EMULATION LEGACY_VSYSCALL_NONE -MODIFY_LDT_SYSCAL
 if use dri || use X; then
 	KERNEL_MODULES+=" _drivers/video *drivers/gpu *drivers/video/backlight"
 	use fbcon || use efi || KERNEL_CONFIG+=" +FB"
-else
-	use fbcon || use efi || KERNEL_CONFIG+=" -FB"
+elif use !fbcon && use !efi; then
+	KERNEL_CONFIG+=" -FB"
+elif use !fbcon; then
+	KERNEL_MODULES+=" _drivers/video"
 fi
 # IMHO: SCHED_MC required mostly for i7-i9 and for HT
 use laptop && use soc && {
