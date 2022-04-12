@@ -1,2 +1,9 @@
 cfg_use efi EFI
-use efi && KERNEL_CONFIG+=' &FAT_FS &VFAT_FS &NLS_CODEPAGE_437 &NLS_ISO8859_1'
+use efi && {
+	KERNEL_CONFIG+=' &FAT_FS &VFAT_FS &NLS_CODEPAGE_437 &NLS_ISO8859_1'
+	use fbcon || {
+		KERNEL_CONFIG+=' +FB DRM==y;FB DRM==!y;DRM_SIMPLEDRM;FB'
+		KERNEL_MODULES+=' _drivers/video'
+	}
+}
+
