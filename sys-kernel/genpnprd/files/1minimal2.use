@@ -17,6 +17,7 @@ elif use !fbcon && use !efi; then
 elif use !fbcon; then
 	KERNEL_MODULES+=" _drivers/video"
 fi
+use efi && KERNEL_CONFIG+=" DRM_SIMPLEDRM==y;FB"
 # IMHO: SCHED_MC required mostly for i7-i9 and for HT
 use laptop && use soc && {
 	[[ "$CFLAGS" != *march=native* ]] && KERNEL_CONFIG+=" SCHED_SMT==!y;-SCHED_MC -NUMA"

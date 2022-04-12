@@ -4,7 +4,7 @@ use efi && {
 
 	# embed DRM_SIMPLEDRM if X and no video cards confugured
 	ii=video_cards_none
-	(use X || use drm) && for ii in $IUSE efi do
+	(use X || use drm) && for ii in $IUSE efi; do
 		[[ "$ii" == video_cards_* ]] && use "$ii" && break
 	done
 	[[ "$ii" == video_cards_* ]] ||
