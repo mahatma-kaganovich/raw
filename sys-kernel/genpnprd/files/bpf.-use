@@ -3,3 +3,4 @@ if use jit; then
 else
 	KERNEL_CONFIG+='-BPF_.+ -.+_BPF'
 fi
+KERNEL_CONFIG+=' -BPF_SYSCALL'
