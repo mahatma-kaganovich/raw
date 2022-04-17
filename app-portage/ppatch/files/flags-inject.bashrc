@@ -27,17 +27,17 @@ find "${WORKDIR}"|while read f; do case "$f" in
 	[[ "$IUSE" == *system-sqlite* ]] && inj no-fast-math fast
 ;;
 *libttf/cmap.c|*/netxen_nic_hw.c|*/qlcnic_hw.c|*/gf100.c|*src/css.c|*/*/Frontend/CompilerInvocation.cpp)
-	inj no-schedule-insns -fschedule-insns
+	[[ $cv == 7.* ]] && inj no-schedule-insns -fschedule-insns
 ;;
 # gcc 7?
 *vp8/encoder/encodemv.c|*v8/src/code-stub-assembler.cc)
-	inj '#if defined(__i386__)\n#pragma GCC optimize ("no-schedule-insns")\n#endif' -fschedule-insns
+	[[ $cv == 7.* ]] && inj '#if defined(__i386__)\n#pragma GCC optimize ("no-schedule-insns")\n#endif' -fschedule-insns
 ;;
 */getopt.c|*Objects/obmalloc.c|*libopenjpeg/tcd.c|*/nellymoser.c|*/libfreerdp/codec/nsc_encode.c|*/r819xU_cmdpkt.c|*/sharedbook.c|*/openjp2/dwt.c)
-	inj 'no-loop-nest-optimize no-graphite-identity' -floop-
+	[[ $cv == 7.* ]] && inj 'no-loop-nest-optimize no-graphite-identity' -floop-
 ;;
 *src/cmspack.c|*libdw/dwarf_frame_register.c|*libmp3lame/quantize.c|*libtwolame/twolame.c|*src/secaudit.c)
-	inj '#if defined(__i386__)\n#pragma GCC optimize ("no-loop-nest-optimize")\n#pragma GCC optimize ("no-graphite-identity")\n#endif' -floop-
+	[[ $cv == 7.* ]] && inj '#if defined(__i386__)\n#pragma GCC optimize ("no-loop-nest-optimize")\n#pragma GCC optimize ("no-graphite-identity")\n#endif' -floop-
 ;;
 # gcc 7 ICE
 *src/osd/ECBackend.cc|*src/osd/OSD.cc|*src/osd/Watch.cc)
@@ -50,7 +50,8 @@ find "${WORKDIR}"|while read f; do case "$f" in
 # mozilla,chromuim [gcc 8] ICE [x86]
 #*profiler/core/shared-libraries-linux.cc|
 *seccomp-bpf/syscall.cc|*common/linux/file_id.cc|bits/vector.tcc)
-	use amd64 || inj no-tree-vectorize
+	# ??
+	[[ $cv == [89].* ]] && use amd64 || inj no-tree-vectorize
 ;;
 esac
 done
