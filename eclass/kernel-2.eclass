@@ -1767,7 +1767,11 @@ kernel-2_pkg_setup() {
 	_saved_pkg_setup
 	# hardened protected
 	{
-		cat `find /sys -mount -name modalias`
+		# some of modalias'es have no \n
+		echo '
+' >CRtmp
+		cat $(find /sys -mount -name modalias|sed -e 's:$: CRtmp:')
+		unlink CRtmp
 		grep -sh "^MODALIAS=" $(find /sys -mount -name uevent)|sed -e 's:^MODALIAS=::'
 	} >"${TMPDIR}/sys-modalias"
 

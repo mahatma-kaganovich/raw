@@ -111,7 +111,8 @@ modp(){
 
 sys_modalias(){
 	local i x
-	if [ -e "$1/uevent" ] && i=`cat "$1/uevent"`; then
+	if [ -e "$1/uevent" ] && i="
+`cat "$1/uevent"`"; then
 		i="
 $i"
 		x="${i#*
