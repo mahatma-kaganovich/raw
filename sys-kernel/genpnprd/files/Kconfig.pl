@@ -160,7 +160,7 @@ $ENV{KERNEL_CONFIG2}||='?RAPIDIO RAPIDIO_DMA_ENGINE==y;?DMA_ENGINE (?:.+_)?PTP_.
 	'='=>'y if undefined bool',
 	'&'=>'m->y recursive embed',
 	'?'=>'n if none embedded module dependences (use after detects)',
-	'_'=>'m->n',
+	'_'=>'m->n (KERNEL_DEFAULTS,KERNEL_MODULES)',
 	'*'=>'n->m',
 	'#'=>'#',
 );
@@ -552,9 +552,9 @@ sub conf{
 		}elsif($c eq '!'){
 			delete($config{$_});
 			$undef{$_}=undef;
-		}elsif($c eq '_'){
-			print "WARNING: '_' prefix: - _$_\n";
-			cfg($_) if($config{$_} eq 'm');
+#		}elsif($c eq '_'){
+#			print "WARNING: '_' prefix: - _$_\n";
+#			cfg($_) if($config{$_} eq 'm');
 		}elsif($c eq '*'){
 			cfg($_,'m') if(exists($tristate_{$_}) && $config{$_} eq '');
 		}elsif($c eq '?'){
@@ -618,6 +618,7 @@ sub Kconfig{
 	defaults($_) for(split(/\s+/,$ENV{KERNEL_DEFAULTS}));
 	modules($_) for(split(/\s+/,$ENV{KERNEL_MODULES}));
 	print "Applying config: $ENV{KERNEL_CONFIG}\n";
+	delete($cc{'_'});
 	conf($_) for(split(/\s+/,$ENV{KERNEL_CONFIG}));
 	for(sort grep(/^KERNEL_CONFIG_/,keys %ENV)){
 		my $x=$ENV{$_};
