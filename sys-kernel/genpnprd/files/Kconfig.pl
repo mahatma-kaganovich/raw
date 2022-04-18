@@ -160,7 +160,7 @@ $ENV{KERNEL_CONFIG2}||='?RAPIDIO RAPIDIO_DMA_ENGINE==y;?DMA_ENGINE (?:.+_)?PTP_.
 	'='=>'y if undefined bool',
 	'&'=>'m->y recursive embed',
 	'?'=>'n if none embedded module dependences (use after detects)',
-	'%'=>'%from%to%...'
+	'%'=>'%from%to%...',
 	'#'=>'#',
 );
 
@@ -294,7 +294,7 @@ sub spl{
 	my $c=substr($d,0,1);
 	if(exists($cc{$c})){
 		if($c eq '%'){
-			if(!($d=~/^\%(.*?)\%(.*?)\%/$from=$1;$to=$2;''/se)){
+			if(!($d=~s/^\%(.*?)\%(.*?)\% /$from=$1;$to=$2;''/se)){
 				$c='x';
 			}
 		}else{
