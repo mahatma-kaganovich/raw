@@ -61,7 +61,7 @@ CDEPEND="
 	dev-perl/Parse-Yapp
 	>=net-libs/gnutls-3.4.7[${MULTILIB_USEDEP}]
 	net-libs/libnsl:=[${MULTILIB_USEDEP}]
-	sys-libs/e2fsprogs-libs[${MULTILIB_USEDEP}]
+	|| ( >=sys-fs/e2fsprogs-1.46.4-r51[${MULTILIB_USEDEP}] sys-libs/e2fsprogs-libs[${MULTILIB_USEDEP}] )
 	  sys-apps/attr[${MULTILIB_USEDEP}]
 	system-ldb? ( sys-libs/ldb[ldap(+)?,${MULTILIB_USEDEP}] )
 	!system-ldb? ( !sys-libs/ldb )
@@ -77,10 +77,10 @@ CDEPEND="
 	pam? ( sys-libs/pam )
 	acl? ( virtual/acl )
 	$(python_gen_cond_dep "
-		dev-python/subunit[\${PYTHON_MULTI_USEDEP},${MULTILIB_USEDEP}]
+		dev-python/subunit[\${PYTHON_USEDEP},${MULTILIB_USEDEP}]
 		addns? (
 			net-dns/bind-tools[gssapi]
-			dev-python/dnspython:=[\${PYTHON_MULTI_USEDEP}]
+			dev-python/dnspython:=[\${PYTHON_USEDEP}]
 		)
 	")
 	ceph? ( sys-cluster/ceph )
