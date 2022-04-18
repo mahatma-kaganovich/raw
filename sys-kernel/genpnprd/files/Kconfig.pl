@@ -160,8 +160,7 @@ $ENV{KERNEL_CONFIG2}||='?RAPIDIO RAPIDIO_DMA_ENGINE==y;?DMA_ENGINE (?:.+_)?PTP_.
 	'='=>'y if undefined bool',
 	'&'=>'m->y recursive embed',
 	'?'=>'n if none embedded module dependences (use after detects)',
-	'_'=>'m->n (KERNEL_DEFAULTS,KERNEL_MODULES)',
-	'*'=>'n->m',
+	'%'=>'%from%to%...'
 	'#'=>'#',
 );
 
@@ -293,7 +292,15 @@ sub set_config{
 sub spl{
 	my $d=$_[0];
 	my $c=substr($d,0,1);
-	substr($d,0,1)='' if(exists($cc{$c}));
+	if(exists($cc{$c})){
+		if($c eq '%'){
+			if(!($d=~/^\%(.*?)\%(.*?)\%/$from=$1;$to=$2;''/se)){
+				$c='x';
+			}
+		}else{
+			substr($d,0,1)=''
+		}
+	}
 	($c,$d)
 }
 
@@ -308,10 +315,8 @@ sub modules{
 			cfg($i,'m');
 		}elsif($c eq '-'){
 			cfg($i,$defconfig{$i});
-		}elsif($c eq '_'){
-			cfg($i,$defconfig{$i}) if($config{$i} eq 'm');
-		}elsif($c eq '*'){
-			cfg($i,'m') if($config{$i} eq '');
+		}elsif($c eq '%'){
+			cfg($i,$to) if($config{$i} eq $from);
 		}elsif($c ne '=' || !defined($config{$_})){
 			cfg($i,$defconfig{$i}?$defconfig{$i}:'m')
 		}
@@ -552,11 +557,8 @@ sub conf{
 		}elsif($c eq '!'){
 			delete($config{$_});
 			$undef{$_}=undef;
-#		}elsif($c eq '_'){
-#			print "WARNING: '_' prefix: - _$_\n";
-#			cfg($_) if($config{$_} eq 'm');
-		}elsif($c eq '*'){
-			cfg($_,'m') if(exists($tristate_{$_}) && $config{$_} eq '');
+		}elsif($c eq '%'){
+			cfg($_,$to) if($config{$_} eq $from && ($to ne 'm' || exists($tristate_{$_})));
 		}elsif($c eq '?'){
 			%off=();
 			depcfg($_);
@@ -618,7 +620,6 @@ sub Kconfig{
 	defaults($_) for(split(/\s+/,$ENV{KERNEL_DEFAULTS}));
 	modules($_) for(split(/\s+/,$ENV{KERNEL_MODULES}));
 	print "Applying config: $ENV{KERNEL_CONFIG}\n";
-	delete($cc{'_'});
 	conf($_) for(split(/\s+/,$ENV{KERNEL_CONFIG}));
 	for(sort grep(/^KERNEL_CONFIG_/,keys %ENV)){
 		my $x=$ENV{$_};

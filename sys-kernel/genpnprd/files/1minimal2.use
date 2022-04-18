@@ -10,12 +10,12 @@ KERNEL_CONFIG+=" -X86_VSYSCALL_EMULATION LEGACY_VSYSCALL_NONE -MODIFY_LDT_SYSCAL
 #use lxc ||
 	KERNEL_CONFIG+=" -NAMESPACES -CGROUPS"
 if use dri || use X; then
-	KERNEL_MODULES+=" _drivers/video *drivers/gpu *drivers/video/backlight"
+	KERNEL_MODULES+=' %m%%drivers/video %%m%drivers/gpu %%m%drivers/video/backlight'
 	use fbcon || use efi || KERNEL_CONFIG+=" +FB"
 elif use !fbcon && use !efi; then
 	KERNEL_CONFIG+=" -FB"
 elif use !fbcon; then
-	KERNEL_MODULES+=" _drivers/video"
+	KERNEL_MODULES+=' %m%%drivers/video'
 fi
 use efi && KERNEL_CONFIG+=" DRM_SIMPLEDRM==y;FB DRM_SIMPLEDRM==y;FB_SIMPLE"
 # IMHO: SCHED_MC required mostly for i7-i9 and for HT
