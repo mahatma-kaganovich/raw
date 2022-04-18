@@ -553,6 +553,7 @@ sub conf{
 			delete($config{$_});
 			$undef{$_}=undef;
 		}elsif($c eq '_'){
+			print "WARNING: '_' prefix: - _$_\n";
 			cfg($_) if($config{$_} eq 'm');
 		}elsif($c eq '*'){
 			cfg($_,'m') if(exists($tristate_{$_}) && $config{$_} eq '');

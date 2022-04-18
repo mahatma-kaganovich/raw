@@ -1094,7 +1094,7 @@ pre_embed(){
 		virtio:d00000001v*)CF1 VIRTIO_NET -ETHERNET -PHYLIB -FDDI -ATM;;
 		virtio:d00000002v*)CF1 VIRTIO_BLK;vblk=true;;
 		pci:v00008086d00007010sv*sd*bc*sc*i*)cc1+=' ATA_PIIX';ata=true;;
-		pci:v00008086d000025ABsv*sd*bc*sc*i*)CF1 _/drivers/watchdog/.+ I6300ESB_WDT;;
+		pci:v00008086d000025ABsv*sd*bc*sc*i*)CF1 '#'_/drivers/watchdog/.+ I6300ESB_WDT;;
 		pci:*bc02sc00i*)echo "ethernet $s";cc+=' ETHERNET +PHYLIB';;
 		pci:*bc02sc02i*)echo "FDDI $s";cc+=' +FDDI';;
 		pci:*bc02sc03i*)echo "ATM $s";cc+=' +ATM';;
@@ -1105,7 +1105,7 @@ pre_embed(){
 		pci:v00001B36d00000100sv*);; # qxl
 		# PCI host bridge: all subbuses detected over PCI bridges
 		pci:*bc06sc00i*)CF1 -ISA -ISA_BUS -ISA_.+_API -EISA -EISA_PCI_EISA -PCCARD -PCMCIA -CARDBUS -INFINIBAND;;
-		pci:*bc06sc01i*)cc+=' ISA __ISA_BUS ISA_.+_API';; # or lpc?
+		pci:*bc06sc01i*)cc+=' ISA '#'__ISA_BUS ISA_.+_API';; # or lpc?
 		pci:*bc06sc02i*)cc+=' EISA EISA_PCI_EISA';;
 #		pci:*bc06sc03i*);; # mca
 		pci:*bc06sc05i*)cc+=' PCCARD PCMCIA';;
@@ -1148,7 +1148,7 @@ pre_embed(){
 		use xen && [[ " $CF " != *' -XEN '* ]] && continue # xen have virtio too + unknown 2me others
 		einfo "QEMU virtio environment + USE=custom-arch"
 		CF1 VIRTIO -HYPERV -XEN -X86_EXTENDED_PLATFORM
-		CF1 _SENSORS_.+ -SERIAL_NONSTANDARD _SERIAL_.+ -SERIAL_8250_EXTENDED -NEW_LEDS -POWER_SUPPLY -REGULATOR -THERMAL -X86_PLATFORM_DEVICES -POWER_SUPPLY -PINCTRL -INPUT_TOUCHSCREEN
+		CF1 '#'_SENSORS_.+ -SERIAL_NONSTANDARD '#'_SERIAL_.+ -SERIAL_8250_EXTENDED -NEW_LEDS -POWER_SUPPLY -REGULATOR -THERMAL -X86_PLATFORM_DEVICES -POWER_SUPPLY -PINCTRL -INPUT_TOUCHSCREEN
 		use blobs || CF1 -FW_LOADER
 		use iscsi && scsi=true && CF1 ISCSI_TARGET
 		use !embed-hardware && vscsi=true && CF1 VIRTIO_.+ .+_VIRTIO
