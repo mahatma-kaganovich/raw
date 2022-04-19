@@ -1,5 +1,5 @@
 # normal -O3 + respect old stage3 gcc
 
-USE="pgo lto"
+USE="pgo"
 _FLAGS="-O2 -O3 -fno-ident"
 #_FLAGS="$_FLAGS -fomit-frame-pointer"
