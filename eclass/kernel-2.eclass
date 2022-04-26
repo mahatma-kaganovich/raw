@@ -256,6 +256,10 @@ kernel-2_src_configure() {
 
 		aflags="$cflags" # at least now
 		ldflags="$(flags_nosp "$(extract_flags -Wl, ${LDFLAGS}) ${ldflags}")" #"
+	else
+		# only KBUILD_USER*FLAGS, but starting from 5.15 wrong
+		# USE=custom-cflags still unstripped
+		strip-flags
 	fi
 	use unionfs && KERNEL_UTILS_CFLAGS+=" -std=gnu89"
 	cfg_ '###CFLAGS:'
