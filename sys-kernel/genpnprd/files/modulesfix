@@ -1,6 +1,6 @@
 #!/bin/bash
 ## (c) Denis Kaganovich
-## v5.8
+## v5.9
 
 : ${TMPDIR:=/tmp}
 
@@ -100,7 +100,8 @@ done|while read i h bus n m; do
 	bus="${bus%%_*}"
 	case "$bus:$ii" in
 	#*/neo1973_wm8753.c)
-	*/pci-epf-ntb.c)
+	#*/pci/endpoint/functions/*) # ??
+	*/pci-epf-ntb.c|*-test.c)
 		echo "SKIPPED: $bus: $ii"
 		continue
 	;;
