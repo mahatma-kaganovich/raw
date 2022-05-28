@@ -1227,7 +1227,7 @@ syspnp(){
 	# +some compats
 	local PNP_TMP="${TMPDIR}/pnp.found" NOTLOADED="" CHK=single i i1 i2 gov= freq= pid= LCOUNT= REORDER=break USE_MDADM_="${USE_MDADM:=$cmd_domdadm}" USE_DMRAID_NORMAL_="${USE_DMRAID_NORMAL:=$cmd_dodmraid}" USE_EVMS_NORMAL_="${USE_EVMS_NORMAL:=$cmd_doevms}" USE_LVM_NORMAL_="${USE_LVM_NORMAL:=$cmd_dolvm}" LOOPS_= REFRESH_SAME waitscan=true checks=
 	[ "${USE_DMRAID_NORMAL:-true}" = true ] || DMRAID_OPTS="$USE_DMRAID_NORMAL"
-	[ "${cmd_detect_root:-false}:${cmd_real_root:-false}" = false:false -a -n "$cmd_root" ] && cmd_real_root="$cmd_root"
+	[ "${cmd_detect_root:-false}:${cmd_real_root:-false}:${cmd_rootoverlay:-false}" = false:false:false -a -n "$cmd_root" ] && cmd_real_root="$cmd_root"
 	: ${REAL_ROOT:=$cmd_real_root}
 	: ${LOOP:=$cmd_loop}
 	: ${LOOPTYPE:=$cmd_loop_type}
