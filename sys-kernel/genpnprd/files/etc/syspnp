@@ -155,7 +155,9 @@ refresh(){
 
 	${cmd_fast:=false} && {
 		[ "$2" = r ] || return 1
+		[ -n "$save_REAL_ROOT" ] && REAL_ROOT="$save_REAL_ROOT"
 		if [ -n "$REAL_ROOT" ]; then
+			save_REAL_ROOT="$REAL_ROOT"
 			[ -b "$REAL_ROOT" ] && return 1
 			[ -z "${REAL_ROOT##*=*}" ] && for i in $(part_ "$REAL_ROOT"); do
 				[ -b "$i" ] && REAL_ROOT="$i" && cmd_detect_root=false && return 1
@@ -250,7 +252,7 @@ upcase(){
 
 part_(){
 	[ -b "$1" ] && echo "$*" && return
-	( blkid $1 || blkid -t "$1" ) | sed -e 's:^.* TYPE="swap".*$::g' -e 's/:.*$//g'
+	( blkid $1 || blkid -t "$1" ) | sed -e 's:^.* TYPE="swap".*$::g' -e 's/:.*$//g'|sort -u
 }
 
 # rootoverlay=/boot to overlay RW real_root
