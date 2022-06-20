@@ -11,4 +11,4 @@ dev-libs/openssl -sslv3
 dev-libs/boost nls
 app-text/aspell nls
 app-text/hunspell nls
-sys-process/cronie -anacron
+sys-process/cronie -anacron -inotify

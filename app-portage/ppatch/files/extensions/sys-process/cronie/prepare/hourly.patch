@@ -1,0 +1,11 @@
+--- a/contrib/dailyjobs	2022-06-20 08:46:55.000000000 +0300
++++ b/contrib/dailyjobs	2022-06-20 08:52:27.587750564 +0300
+@@ -4,6 +4,8 @@ PATH=/sbin:/bin:/usr/sbin:/usr/bin
+ MAILTO=root
+ 
+ # run-parts
++59 * * * * root [ ! -f /etc/cron.hourly/0anacron ] && run-parts /etc/cron.hourly
+ 02 4 * * * root [ ! -f /etc/cron.hourly/0anacron ] && run-parts /etc/cron.daily
+ 22 4 * * 0 root [ ! -f /etc/cron.hourly/0anacron ] && run-parts /etc/cron.weekly
+ 42 4 1 * * root [ ! -f /etc/cron.hourly/0anacron ] && run-parts /etc/cron.monthly
++
