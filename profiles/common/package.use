@@ -36,6 +36,7 @@ media-gfx/inkscape cdr inkjar
 dev-libs/elfutils static-libs
 net-mail/dovecot textcat
 dev-vcs/git -perl
+dev-vcs/subversion -perl -extras
 # default don't want pam, but elogind
 x11-base/xorg-server suid -elogind
 #sys-auth/elogind pam
