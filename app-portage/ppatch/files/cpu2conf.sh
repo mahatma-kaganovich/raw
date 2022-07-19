@@ -261,7 +261,7 @@ f5+=' -fpermissive -w'
 #fsec+=' -fstack-clash-protection'
 # mix cxxflags here to simplify. it works
 ffast+=' -minline-stringops-dynamically'
-fsmall+=' -malign-data=abi -flimit-function-alignment -Wa,--reduce-memory-overheads -fvect-cost-model=cheap -fsimd-cost-model=cheap -w'
+fsmall+=' -malign-data=abi -flimit-function-alignment -Wa,--reduce-memory-overheads -fvect-cost-model=cheap -fvect-cost-model=very-cheap -fsimd-cost-model=cheap -fsimd-cost-model=very-cheap -w'
 fsmall+=' -fno-move-loop-invariants'
 fsmall+=' --param=max-grow-copy-bb-insns=1 -fno-align-jumps'
 # vs. -fno-ipa-cp-clone -fno-inline-functions - keep 1% expansion per opt
@@ -474,10 +474,10 @@ for i in $f3; do
 	esac
 done
 
-echo "CFLAGS_NATIVE=\"$f0\"
-CFLAGS_CPU=\"$f4\"
+echo "CFLAGS_NATIVE=\"$f0$fv\"
+CFLAGS_CPU=\"$f4$fv\"
 CFLAGS_M=\"$fm\"
-CFLAGS_FAST=\"\$CFLAGS_FAST$ffast$f6$fv\"
+CFLAGS_FAST=\"\$CFLAGS_FAST$ffast$f6\"
 CFLAGS_SMALL=\"\$CFLAGS_SMALL$fsmall\"
 CFLAGS_SECURE=\"$fsec\"
 CFLAGS_FAST_MATH=\"\$CFLAGS_FAST_MATH$ffm\"

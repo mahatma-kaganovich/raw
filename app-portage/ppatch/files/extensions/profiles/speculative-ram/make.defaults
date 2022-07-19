@@ -8,7 +8,7 @@ USE="speculative -ssp nossp nopie -sanitize -vtv -pie -pic -rsync-verify"
 # gcc 9.2 ok
 USE="$USE -stackrealign"
 # 2b default for x86*?
-_FLAGS="$_FLAGS -fvect-cost-model=cheap -fsimd-cost-model=cheap"
+_FLAGS="-fvect-cost-model=cheap -fsimd-cost-model=cheap $_FLAGS"
 
 CFLAGS="$_FLAGS"
 FFLAGS="$_FLAGS"
