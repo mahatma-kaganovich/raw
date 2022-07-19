@@ -329,7 +329,8 @@ x86_*|i?86)
 	fsmall+=' -fno-ira-loop-pressure'
 	# vs. -O3 -msse
 	# in many cases it also "fast", but keep default / selectable
-	_c -Q -O3 --help=optimizers | grep -sq 'fvect-cost-model=.*dynamic$' && fv=$(_f -fvect-cost-model=cheap -fsimd-cost-model=cheap)
+	_c -Q -O3 --help=optimizers | grep -sq 'fvect-cost-model=.*dynamic$' && fv+=$(_f -fvect-cost-model=cheap)
+	_c -Q -O3 --help=optimizers | grep -sq 'fsimd-cost-model=.*unlimited$' && fv+=$(_f -fsimd-cost-model=cheap)
 	# rare way, keep only in gcc patch
 #	[ -z "$fv" ] && fv=$(_f -mstackrealign)
 ;;
