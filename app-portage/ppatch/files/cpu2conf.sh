@@ -195,6 +195,7 @@ if i=$(echo "$cmn"|grep --max-count=1 "^Target: "); then
 fi
 # "thunk" may be better in some cases, but incompatible with -mcmodel=large, so be simple universal
 ind+=' -mindirect-branch=thunk-inline -mindirect-branch-register'
+ind+=' -mharden-sls=all -mindirect-branch-cs-prefix'
 case "$vendor_id:$cpu_family:$model" in
 GenuineIntel:6:78|GenuineIntel:6:94|GenuineIntel:6:85|GenuineIntel:6:142|GenuineIntel:6:158)
 	# fixme: skylake/kabylake, nobody else?
@@ -260,6 +261,7 @@ f5+=' -fpermissive -w'
 # new in gcc8 - 2test
 #fsec+=' -fstack-clash-protection'
 # mix cxxflags here to simplify. it works
+fsec+='  -ftrivial-auto-var-init=zero'
 ffast+=' -minline-stringops-dynamically'
 fsmall+=' -malign-data=abi -flimit-function-alignment -Wa,--reduce-memory-overheads -fvect-cost-model=cheap -fvect-cost-model=very-cheap -fsimd-cost-model=cheap -fsimd-cost-model=very-cheap -w'
 fsmall+=' -fno-move-loop-invariants'

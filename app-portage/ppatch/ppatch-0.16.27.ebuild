@@ -11,7 +11,7 @@ SLOT="0"
 KEYWORDS="alpha amd64 arm hppa ia64 mips ppc ppc64 s390 sh sparc x86"
 RDEPEND="dev-lang/perl"
 DEPEND="${RDEPEND}"
-IUSE="strict global-profile apache2_modules_unixd ddns extensions mmap pam-mount-auth pch pgo tsx via-drm thinkpad10-2 speculative custom-cflags +stackrealign uninitialized connlimit-timeout"
+IUSE="strict ld_preload global-profile apache2_modules_unixd ddns extensions mmap pam-mount-auth pch pgo tsx via-drm thinkpad10-2 speculative custom-cflags +stackrealign uninitialized connlimit-timeout"
 PDEPEND=""
 
 src_unpack(){
@@ -29,6 +29,11 @@ src_compile(){
 		*)echo "ACCEPT_KEYWORDS=\"$ARCH ~$ARCH\"";;
 		esac
 		. "${FILESDIR}/cpu2conf.sh"
+		use ld_preload && echo '
+# gcc 12 -Ofast
+CFLAGS_FAST_MATH="$CFLAGS_FAST_MATH -fsemantic-interposition"
+CFLAGS_NO_FAST_MATH="$CFLAGS_NO_FAST_MATH -fsemantic-interposition"
+'
 	} >"${WORKDIR}/make.defaults"
 	# "media-fonts/*" atom works only in /etc/portage/package.use
 	# so simple enum all fonts to exclude from system-wide USE=-nls

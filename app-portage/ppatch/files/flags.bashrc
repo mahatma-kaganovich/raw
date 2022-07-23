@@ -316,6 +316,7 @@ mariadb)_fLTO_f -fno-ipa-cp-clone;;&
 mariadb)
 #	CFLAGS_NO_FAST_MATH=-O3
 #	_iuse rocksdb && _fnofastmath
+	_iuse jemalloc && replace1flag_ -Ofast '-Ofast -fsemantic-interposition'
 ;;& # just paranoid
 php)[[ "$PV" == 5.* ]] || filterflag '-flto*' -fdevirtualize-at-ltrans;;&
 # works over make.lto wrapper, but wrapper wrong for some other packets
