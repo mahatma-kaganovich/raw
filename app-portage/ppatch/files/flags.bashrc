@@ -267,7 +267,7 @@ xemacs)_fLTO && {
 # fuse: e2fsprogs failed only on gcc 8.2
 # ffmpeg: amd64 - mp4 crushes / now OK
 # libbsd: mailx
-llvm|gnutls|sandbox|valgrind|xf86-video-intel|libwacom|libbsd|dcc|chromium*|webkit-gtk|xemacs|fuse|privoxy|icedtea|openjdk|qtwebkit|mplayer|mysql|heimdal|glibc|cvs)
+mupdf|llvm|gnutls|sandbox|valgrind|xf86-video-intel|libwacom|libbsd|dcc|chromium*|webkit-gtk|xemacs|fuse|privoxy|icedtea|openjdk|qtwebkit|mplayer|mysql|heimdal|glibc|cvs)
 #	${CC:-gcc} -v 2>&1|grep -q "^gcc version" &&
 		filterflag '-flto*' '-*-lto-*' -fuse-linker-plugin -fdevirtualize-at-ltrans
 ;;&
@@ -305,6 +305,8 @@ gcc)
 # ps ceph too...
 gcc|mongodb|mongo-tools|ceph|tigervnc)filterflag -fno-asynchronous-unwind-tables -Wl,--no-ld-generated-unwind-info -Wl,--no-eh-frame-hdr;;&
 libreoffice)filterflag -Wl,--no-eh-frame-hdr;;&
+squid)filterflag -Wl,--no-ld-generated-unwind-info -Wl,--no-eh-frame-hdr;;&
+gst-plugins-bad)filterflag -fopenmp;;&
 # libX11 1) not build lto 2) w/o lto - moz segfault
 doxygen|mongodb|libX11|llvm|clang)filterflag -fopenacc;;&
 gcc|glibc|chromium|texlive-core|xemacs)filterflag -fopenmp -fopenmp-simd -fopenacc -fgnu-tm '-ftree-parallelize-loops*';;&
