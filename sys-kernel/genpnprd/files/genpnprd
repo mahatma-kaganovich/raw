@@ -91,7 +91,11 @@ preserve_start(){
 		echo "/lib/modules/$KV/${m#*/lib/modules/$KV/}" >>"$tmp/preserve.lst"
 		$PNPONLY || ( [[ -e "$mm/modules.dep" ]] && grep "^$m:" "$mm/modules.dep" >>"$tmp/_modules.dep" )
 	done
-	ROOT="$UROOT" bash "$UROOT/usr/share/genpnprd/genpkgrd" "$tmp/preserve" "$(cat "$tmp/preserve.lst")" >/dev/null
+	local i
+	# think more...
+	for i in "$rcdir" "$UROOT"; do
+		ROOT="$i" bash "$UROOT/usr/share/genpnprd/genpkgrd" "$tmp/preserve" "$(cat "$tmp/preserve.lst")" >/dev/null
+	done
 	mv "$tmp/_modules.dep" "$tmp/preserve/lib/modules/${KV}/modules.dep" 2>/dev/null
 	$PNPONLY || /usr/bin/perl "$UROOT/usr/share/genpnprd/mod2sh.pl" "$tmp/preserve/lib/modules/${KV}"
 	cd "$rcdir"

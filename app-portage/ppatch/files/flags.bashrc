@@ -354,7 +354,7 @@ glibc)filterflag -fopenmp -fopenmp-simd;;&
 # -Ofast / -ffast-math:
 # nodejs -> chromium
 duktape|coreutils|groff|glibc|mpg123|nodejs|fontforge|sqlite|postgresql*|goffice|db|protobuf|qtwebkit|qtwebengine|webkit-gtk|python|guile|chromium*|rrdtool)_fnofastmath;;&
-netsurf)_iuse duktape && _fnofastmath;;&
+netsurf)_iuse duktape || _iuse javascript && _fnofastmath;;&
 # sometimes somewere
 #libX11|wget)_isflag -Os && _fnofastmath -fno-unsafe-math-optimizations -fno-signed-zeros -fno-trapping-math -fassociative-math -freciprocal-math;;&
 chromium*)_iuse abi_x86_32 && filterflag -maccumulate-outgoing-args;;&
