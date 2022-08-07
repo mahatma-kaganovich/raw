@@ -83,7 +83,10 @@ preserve_start(){
 	if grep -qx CONFIG_FW_LOADER_COMPRESS=y "$S/.config" && mv "$rcdir/lib/firmware" "$tmp/preserve/"; then
 		ln -s ../firmware "$rcdir"/lib/firmware
 	elif grep -qx CONFIG_CFG80211=y "$S"/.config; then
-		preserve+=' /lib/firmware/regulatory.db /lib/firmware/regulatory.db.p7s'
+		grep -qx CONFIG_CFG80211_CERTIFICATION_ONUS=y "$S"/.config &&
+			preserve+=' /lib/firmware/regulatory.db' &&
+			! grep -qx '# CONFIG_CFG80211_REQUIRE_SIGNED_REGDB is not set' "$S"/.config &&
+			preserve+=' /lib/firmware/regulatory.db.p7s'
 	fi
 	echo "$preserve" >"$tmp/preserve.lst"
 	for m in `cat $tmp/modules.lst` ; do
@@ -109,6 +112,8 @@ preserve_start(){
 #				[[ -f "$m" ]] || continue
 				[[ -L "$m" ]] && cp "$m" "$tmp/preserve" --parents -a
 			fi
+			### UNSURE about possibility async direct fw loa
+			[[ "$m" == lib/firmware/* ]] && continue
 			[[ -e "$tmp/preserve/$m" ]] && rm "$m" 2>/dev/null
 		done
 	fi
