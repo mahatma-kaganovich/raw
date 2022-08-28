@@ -1,0 +1,39 @@
+--- a/spamass-milter.cpp	2022-08-28 13:48:58.626165688 +0300
++++ b/spamass-milter.cpp	2022-08-28 14:01:04.931388542 +0300
+@@ -185,6 +185,7 @@ bool flag_full_email = false;		/* pass f
+ bool flag_expand = false;	/* alias/virtusertable expansion */
+ bool warnedmacro = false;	/* have we logged that we couldn't fetch a macro? */
+ bool auth = false;		/* don't scan authenticated users */
++bool auth_unreject = false;	/* invert flag_reject for auth */
+ bool alwaystag = false;
+ 
+ // {{{ main()
+@@ -193,7 +194,7 @@ int
+ main(int argc, char* argv[])
+ {
+    int c, err = 0;
+-   const char *args = "aAfd:mMp:P:r:l:u:D:i:b:B:e:xS:R:c:C:g:T:";
++   const char *args = "IHaAfd:mMp:P:r:l:u:D:i:b:B:e:xS:R:c:C:g:T:";
+    char *sock = NULL;
+    char *group = NULL;
+    bool dofork = false;
+@@ -210,6 +211,10 @@ main(int argc, char* argv[])
+     /* Process command line options */
+     while ((c = getopt(argc, argv, args)) != -1) {
+         switch (c) {
++            case 'H':
++                auth_unreject = true;
++                break;
++            case 'I': // old gentoo patch
+             case 'a':
+                 auth = true;
+                 break;
+@@ -878,6 +883,8 @@ mlfi_envfrom(SMFICTX* ctx, char** envfro
+     const char *auth_type = smfi_getsymval(ctx,
+         const_cast<char *>("{auth_type}"));
+ 
++    if (auth_unreject && auth_type) flag_reject = !flag_reject;
++    else
+     if (auth_type) {
+       debug(D_MISC, "auth_type=%s", auth_type);
+       sctx->onlytag=true;

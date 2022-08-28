@@ -3,13 +3,14 @@
 
 EAPI=6
 
-inherit eutils user
+inherit eutils user autotools git-r3
 
 IUSE=""
 
 DESCRIPTION="A milter for SpamAssassin"
 HOMEPAGE="https://savannah.nongnu.org/projects/spamass-milt/"
-SRC_URI="https://savannah.nongnu.org/download/spamass-milt/${P}.tar.gz"
+#SRC_URI="https://savannah.nongnu.org/download/spamass-milt/${P}.tar.gz"
+EGIT_REPO_URI="https://github.com/andybalholm/spamass-milter.git"
 
 LICENSE="GPL-2"
 SLOT="0"
@@ -25,8 +26,11 @@ pkg_setup() {
 }
 
 src_prepare() {
-	epatch "${FILESDIR}"/${PN}-{git,compat}.patch
+	epatch "${FILESDIR}"/${PN}-compat.patch
 	default
+	./autogen.sh
+#	elibtoolize
+#	eautoreconf
 }
 
 src_install() {
