@@ -25,7 +25,7 @@ pkg_setup() {
 }
 
 src_prepare() {
-	epatch "${FILESDIR}"/${PN}-gentoo-compat.patch
+	epatch "${FILESDIR}"/${PN}-git.patch
 	eapply_user
 }
 
