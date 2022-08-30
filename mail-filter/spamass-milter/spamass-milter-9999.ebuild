@@ -26,7 +26,7 @@ pkg_setup() {
 }
 
 src_prepare() {
-	epatch "${FILESDIR}"/${PN}-compat.patch
+	epatch "${FILESDIR}"/${PN}-quarantine.patch
 	default
 	./autogen.sh
 #	elibtoolize
