@@ -25,7 +25,7 @@ pkg_setup() {
 }
 
 src_prepare() {
-	epatch "${FILESDIR}"/${PN}-{git,compat}.patch
+	epatch "${FILESDIR}"/${PN}-{git,quarantine}.patch
 	default
 }
 

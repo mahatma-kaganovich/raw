@@ -25,7 +25,7 @@ pkg_setup() {
 }
 
 src_prepare() {
-	epatch "${FILESDIR}"/${PN}-quarantine.patch
+	epatch "${FILESDIR}"/${PN}-gentoo-compat.patch
 	default
 }
 
