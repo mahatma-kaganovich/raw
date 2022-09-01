@@ -1,5 +1,14 @@
---- spamass-milter.cpp.orig	2022-08-30 19:15:00.197907467 +0300
-+++ spamass-milter.cpp	2022-08-30 19:26:01.659180278 +0300
+--- a/spamass-milter.cpp	2022-08-31 03:37:24.995770049 +0300
++++ b/spamass-milter.cpp	2022-09-01 08:00:56.474818413 +0300
+@@ -138,7 +138,7 @@ struct smfiDesc smfilter =
+   {
+     FilterName, // filter name
+     SMFI_VERSION,   // version code -- leave untouched
+-    SMFIF_ADDHDRS|SMFIF_CHGHDRS|SMFIF_CHGBODY,  // flags
++    SMFIF_ADDHDRS|SMFIF_CHGHDRS|SMFIF_CHGBODY|SMFIF_QUARANTINE,  // flags
+     mlfi_connect, // info filter callback
+     mlfi_helo, // HELO filter callback
+     mlfi_envfrom, // envelope sender filter callback
 @@ -181,6 +181,7 @@ char **spamc_argv;
  bool flag_bucket = false;
  bool flag_bucket_only = false;
@@ -35,13 +44,23 @@
        cout << "   -- spamc args: pass the remaining flags to spamc." << endl;
  
        exit(EX_USAGE);
-@@ -881,6 +886,9 @@ mlfi_envfrom(SMFICTX* ctx, char** envfro
+@@ -502,6 +507,11 @@ int
+ assassinate(SMFICTX* ctx, SpamAssassin* assassin)
+ {
+   struct context *sctx = (struct context*)smfi_getpriv(ctx);
++  if(quarantine && sctx->onlytag) {
++	// todo: resolve concurrence with clamav-milter
++	smfi_quarantine(ctx, FilterName);
++	if(!alwaystag) return SMFIS_CONTINUE;
++  }
+   // find end of header (eol in last line of header)
+   // and beginning of body
+   string::size_type eoh1 = assassin->d().find("\n\n");
+@@ -881,6 +891,7 @@ mlfi_envfrom(SMFICTX* ctx, char** envfro
      if (auth_type) {
        debug(D_MISC, "auth_type=%s", auth_type);
        sctx->onlytag=true;
-+      if(quarantine){
-+        smfi_quarantine(ctx, FilterName);
-+      }
++      if(!quarantine)
        if(!alwaystag){
          debug(D_FUNC, "mlfi_envfrom: auth exit ignore");
          return SMFIS_ACCEPT;
