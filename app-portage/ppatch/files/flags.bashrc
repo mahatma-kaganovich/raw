@@ -219,14 +219,19 @@ _flagsRUST(){
 #		export RUSTC_OPT_LEVEL="$i"
 	}
 	# opt-level: 2 - 225, 3 - 275, s - 75, z - 25
-	i=$(_cc2rust --param=inline-unit-growth= inline-threshold=) && i=$((25*i)) && [ "$i" -gt 0 ] &&
+	i=$(_cc2rust --param=inline-unit-growth= inline-threshold=) && {
+	    # 0 not tested
+	    [ "$i" = 0 ] && i=1
+	    i=$((25*i)) && [ "$i" -gt 0 ] &&
 		a+=" -Cinline-threshold=$i"
+	}
 #	! _fLTO && a+=" -Cembed-bitcode=no" || {
 #		a+=' -Cembed-bitcode=yes'
 #		a+=' -Clto'
 #		a+=' -Clinker-plugin-lto=yes'
 #		! _iuse clang && [ -z "$LD" ] && export LD=ld.gold && appendflag1 -fuse-ld=gold
 #	}
+
 	[ -n "$a" ] && appendflag_ 'RUSTFLAGS CARGO_RUSTCFLAGS MOZ_RUST_DEFAULT_FLAGS' $a
 }
 
