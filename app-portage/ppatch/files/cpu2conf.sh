@@ -269,10 +269,10 @@ fsmall+=' --param=max-grow-copy-bb-insns=1 -fno-align-jumps'
 # vs. -fno-ipa-cp-clone -fno-inline-functions
 # +max(orig_overall_size,ipa-cp-large-unit-insns)*ipa-cp-unit-growth/100+1
 # ipcp (<10) or ipa-cp (10+)
-fsmall+=" --param=ipcp-unit-growth=0 --param=ipa-cp-unit-growth=0"
+fsmall+=" --param=ipa-cp-large-unit-insns=0 --param=ipcp-unit-growth=0 --param=ipa-cp-unit-growth=0"
 # vs. -fno-inline-functions
 # max(max_insns,large-unit-insns)*(100+inline-unit-growth)/100)
-fsmall+="  --param=inline-unit-growth=0"
+fsmall+=" --param=large-unit-insns=0 --param=inline-unit-growth=0"
 f6+=' -malign-data=cacheline'
 if i=`_smp1 'physical id' 'cpu cores' || _smp processor 1 || _smp 'ncpus active' 0`; then
 	if [ "$i" = 1 ]; then
