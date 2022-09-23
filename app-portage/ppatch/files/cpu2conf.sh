@@ -266,14 +266,12 @@ ffast+=' -minline-stringops-dynamically'
 fsmall+=' -malign-data=abi -flimit-function-alignment -Wa,--reduce-memory-overheads -fvect-cost-model=cheap -fvect-cost-model=very-cheap -fsimd-cost-model=cheap -fsimd-cost-model=very-cheap -w'
 fsmall+=' -fno-move-loop-invariants'
 fsmall+=' --param=max-grow-copy-bb-insns=1 -fno-align-jumps'
-# vs. -fno-ipa-cp-clone -fno-inline-functions - keep 1% expansion per opt
-# max(orig_overall_size,ipa-cp-large-unit-insns)*ipa-cp-unit-growth/100+1
+# vs. -fno-ipa-cp-clone -fno-inline-functions
+# +max(orig_overall_size,ipa-cp-large-unit-insns)*ipa-cp-unit-growth/100+1
 # ipcp (<10) or ipa-cp (10+)
-# looks like 0 == -fno-ipa-cp-clone (gcc bug?)
-fsmall+=" --param=ipcp-unit-growth=1 --param=ipa-cp-unit-growth=1"
+fsmall+=" --param=ipcp-unit-growth=0 --param=ipa-cp-unit-growth=0"
 # vs. -fno-inline-functions
 # max(max_insns,large-unit-insns)*(100+inline-unit-growth)/100)
-# 0 near "same size"
 fsmall+="  --param=inline-unit-growth=0"
 f6+=' -malign-data=cacheline'
 if i=`_smp1 'physical id' 'cpu cores' || _smp processor 1 || _smp 'ncpus active' 0`; then
