@@ -142,3 +142,6 @@ sys-apps/busybox static
 
 # [e]udev, but sometimes no effect
 sys-apps/systemd-utils -udev
+
+# perf
+app-text/poppler boost
