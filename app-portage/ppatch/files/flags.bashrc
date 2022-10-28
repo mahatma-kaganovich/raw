@@ -331,7 +331,7 @@ numactl|alsa-lib|elfutils|dhcdrop|lksctp-tools|mysql-connector-c)filterflag '-fl
 # ilmbase -> openexr
 ilmbase)_fLTO_f -Wl,-lpthread -lpthread;;&
 #clang*)filterflag -flto-partition=none;;&
-glibc)filterflag -mfpmath=387;;&
+glibc)filterflag -mfpmath=387 -Wl,--no-keep-memory;;&
 glibc)_isflag -fno-omit-frame-pointer && filterflag -f{,no-}omit-frame-pointer;;& # 2.23
 cdrdao|gcr|ufraw|_gdal|dosemu|soxr|flac|libgcrypt)filterflag2 '' '-flto*';;&
 boost)filter86_32 '-flto*' '-*-lto-*' -fuse-linker-plugin -fdevirtualize-at-ltrans;;&
