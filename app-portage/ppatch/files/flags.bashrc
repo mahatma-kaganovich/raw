@@ -304,10 +304,9 @@ gcc)
 	_iuse graphite || filterflag -floop-nest-optimize -floop-parallelize-all
 	_iuse openmp || filterflag -fopenmp -fopenmp-simd -fopenacc -fgnu-tm
 	filterflag '--param=ipcp-unit-growth=*' && appendflag -fno-ipa-cp-clone
-	# ?
-	filterflag '--param=ipa-cp-unit-growth=*' && appendflag -fno-ipa-cp-clone
+	#filterflag '--param=ipa-cp-unit-growth=*' && appendflag -fno-ipa-cp-clone
 	# 12 (11?) cmake
-	#filterflag '--param=large-unit-insns=*'
+	filterflag --param=large-unit-insns=0
 ;;&
 # while found affected only mongodb - at least no connect from UniFi (exception)
 # looks like unwinding not required for anymore exclude debugging / verbose exceptions
