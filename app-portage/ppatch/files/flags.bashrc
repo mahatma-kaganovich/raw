@@ -359,7 +359,7 @@ ceph)
 ;;&
 glibc)gccve 6. || filterflag -ftracer;;&
 glibc)filterflag -fopenmp -fopenmp-simd;;&
-glibc)_isflag -Ofast && appendflag -fsemantic-interposition;;&
+glibc)filterflag -fno-semantic-interposition;_isflag -Ofast && appendflag -fsemantic-interposition;;&
 # -Ofast / -ffast-math:
 # nodejs -> chromium
 duktape|coreutils|groff|glibc|mpg123|nodejs|fontforge|sqlite|postgresql*|goffice|db|protobuf|qtwebkit|qtwebengine|webkit-gtk|python|guile|chromium*|rrdtool)_fnofastmath;;&
