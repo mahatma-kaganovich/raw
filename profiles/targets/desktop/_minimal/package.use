@@ -3,3 +3,4 @@ www-client/seamonkey minimal -roaming
 net-fs/samba -addc system-mitkrb5 -ads -gnutls -python -ldap -addns
 net-nds/openldap -perl -gnutls -ssl -crypt -experimental
 #xfce-base/thunar dbus
+media-libs/libplacebo -shaderc glslang
