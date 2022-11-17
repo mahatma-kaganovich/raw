@@ -53,6 +53,11 @@ find "${WORKDIR}"|while read f; do case "$f" in
 	# ??
 	[[ $cv == [89].* ]] && use amd64 || inj no-tree-vectorize
 ;;
+# gcc 12: -fno-trapping-math --param={ipa-cp,inline}-unit-growth=0
+*/minilua.c)
+#	inj trapping-math fast
+	inj no-fast-math fast
+;;
 esac
 done
 
