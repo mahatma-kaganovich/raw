@@ -312,7 +312,11 @@ gcc)
 # looks like unwinding not required for anymore exclude debugging / verbose exceptions
 # ps ceph too...
 gcc|mongodb|mongo-tools|ceph|tigervnc)filterflag -fno-asynchronous-unwind-tables -Wl,--no-ld-generated-unwind-info -Wl,--no-eh-frame-hdr;;&
-libreoffice)filterflag -Wl,--no-eh-frame-hdr;;&
+libreoffice)
+	filterflag -Wl,--no-eh-frame-hdr
+	# gcc 12 x86_64?
+	replace1flag_ --param=inline-unit-growth=0 --param=inline-unit-growth=1
+;;&
 squid)filterflag -Wl,--no-ld-generated-unwind-info -Wl,--no-eh-frame-hdr;;&
 gst-plugins-bad)filterflag -fopenmp;;&
 # libX11 1) not build lto 2) w/o lto - moz segfault
