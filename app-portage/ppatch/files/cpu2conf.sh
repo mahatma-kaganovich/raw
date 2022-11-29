@@ -356,6 +356,7 @@ for i in $flags; do
 	fma)f2+=" $i fma3";;
 	ace_en)f1+=" padlock";;
 	misalignsse)fv='';;
+	pclmulqdq)f1+=' pclmul';;&
 	*)
 		if (grep -s "^$i1 " /{usr/portage,var/db/repos/gentoo}/profiles/use.desc ; grep -s "^[^ 	]*:$i " /{usr/portage,var/db/repos/gentoo}/use.local.desc)|grep -q 'CPU\|processor\|chip\|instruction'; then
 			f1+=" $i"
