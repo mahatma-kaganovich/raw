@@ -316,6 +316,7 @@ libreoffice)
 	filterflag -Wl,--no-eh-frame-hdr
 	# gcc 12 x86_64?
 	replace1flag_ --param=inline-unit-growth=0 --param=inline-unit-growth=1
+	filterflag '--param=allow-store-data-races=*'
 ;;&
 squid)filterflag -Wl,--no-ld-generated-unwind-info -Wl,--no-eh-frame-hdr;;&
 gst-plugins-bad)filterflag -fopenmp;;&
