@@ -1,0 +1,35 @@
+Fork [at least] libclamunrar to avoid kill whole clamd
+by library exception and exploit.
+
+Signed-off-by: Dzianis Kahanovich <mahatma@eu.by>
+
+--- a/libclamav/scanners.c	2023-02-26 15:19:35.752642573 +0300
++++ b/libclamav/scanners.c	2023-02-26 15:53:02.068477088 +0300
+@@ -4204,6 +4204,18 @@ done:
+     return halt_scan;
+ }
+ 
++#if 1
++#define SCANFORK(ret, cli) { \
++    pid_t pid = fork(); \
++    int pid_stat; \
++    if (pid == 0) exit((cli)); \
++    /* fatal error -> exploit -> CL_VIRUS */ \
++    else ret = (pid == -1) ? CL_EUNPACK : (waitpid(pid,&pid_stat,0) > 0 && WIFEXITED(pid_stat)) ? WEXITSTATUS(pid_stat): CL_VIRUS; \
++  }
++#else
++#define SCANFORK(ret, cli) ret = (cli)
++#endif
++
+ cl_error_t cli_magic_scan(cli_ctx *ctx, cli_file_t type)
+ {
+     cl_error_t ret = CL_CLEAN;
+@@ -4540,7 +4552,7 @@ cl_error_t cli_magic_scan(cli_ctx *ctx,
+ 
+         case CL_TYPE_RAR:
+             if (have_rar && SCAN_PARSE_ARCHIVE && (DCONF_ARCH & ARCH_CONF_RAR))
+-                ret = cli_scanrar(ctx);
++                SCANFORK(ret,cli_scanrar(ctx));
+             break;
+ 
+         case CL_TYPE_EGG:
