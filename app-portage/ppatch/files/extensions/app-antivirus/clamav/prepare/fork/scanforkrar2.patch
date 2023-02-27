@@ -4,8 +4,8 @@ by library exception and exploit.
 Signed-off-by: Dzianis Kahanovich <mahatma@eu.by>
 
 --- a/libclamav/scanners.c	2023-02-26 15:19:35.752642573 +0300
-+++ b/libclamav/scanners.c	2023-02-27 06:09:51.931496894 +0300
-@@ -187,6 +187,17 @@ done:
++++ b/libclamav/scanners.c	2023-02-27 06:28:42.421813992 +0300
+@@ -187,6 +187,18 @@ done:
      return status;
  }
  
@@ -16,6 +16,7 @@ Signed-off-by: Dzianis Kahanovich <mahatma@eu.by>
 +    if (pid == 0) exit((cli)); \
 +    /* fatal error -> exploit -> CL_VIRUS */ \
 +    else ret = (pid == -1) ? CL_EUNPACK : (waitpid(pid,&pid_stat,0) > 0 && WIFEXITED(pid_stat)) ? WEXITSTATUS(pid_stat): CL_VIRUS; \
++ }
 +#else
 +#define SCANFORK(ret, cli) ret = (cli)
 +#endif
@@ -23,7 +24,7 @@ Signed-off-by: Dzianis Kahanovich <mahatma@eu.by>
  /**
   * @brief  Scan the metadata using cli_matchmeta()
   *
-@@ -3540,7 +3551,7 @@ static cl_error_t scanraw(cli_ctx *ctx,
+@@ -3540,7 +3552,7 @@ static cl_error_t scanraw(cli_ctx *ctx,
                                      break;
                                  }
  
@@ -32,7 +33,7 @@ Signed-off-by: Dzianis Kahanovich <mahatma@eu.by>
  
                                  (void)cli_recursion_stack_pop(ctx);
                              }
-@@ -4540,7 +4551,7 @@ cl_error_t cli_magic_scan(cli_ctx *ctx,
+@@ -4540,7 +4552,7 @@ cl_error_t cli_magic_scan(cli_ctx *ctx,
  
          case CL_TYPE_RAR:
              if (have_rar && SCAN_PARSE_ARCHIVE && (DCONF_ARCH & ARCH_CONF_RAR))
