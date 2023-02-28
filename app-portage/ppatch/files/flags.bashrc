@@ -417,6 +417,7 @@ nss)_iuse abi_x86_32 && gccve '[0-9][0-9]' && appendflag -fno-tree-slp-vectorize
 geos)_fnofastmath;filterflag -ffast-math -Ofast -Wl,--no-eh-frame-hdr;;&
 dav1d)_fLTO_f -fPIC;;&
 pixman)_iuse abi_x86_32 && replace1flag_ -mfpmath=both -mfpmath=sse;;&
+clamav)filterflag -Wl,--no-eh-frame-hdr;;&
 esac
 
 case "$CATEGORY/$P" in
