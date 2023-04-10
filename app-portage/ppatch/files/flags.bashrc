@@ -326,7 +326,7 @@ gcc|glibc|chromium|texlive-core|xemacs)filterflag -fopenmp -fopenmp-simd -fopena
 ipmitool|distcc|vlc|android-tools)appendflag -fcommon;;&
 zstandard)export MAKEOPTS=-j1;;&
 ncurses-compat|ncurses)_fLTO && export ac_cv_func_dlsym=no ac_cv_lib_dl_dlsym=yes;;&
-mariadb)filterflag -fno-asynchronous-unwind-tables;;&
+mariadb*)filterflag -fno-asynchronous-unwind-tables;;&
 mariadb)_fLTO_f -fno-ipa-cp-clone;;&
 mariadb)
 #	CFLAGS_NO_FAST_MATH=-O3
