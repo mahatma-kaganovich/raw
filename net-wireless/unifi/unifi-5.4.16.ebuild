@@ -1,7 +1,7 @@
 # Copyright 1999-2018 Gentoo Authors
 # Distributed under the terms of the GNU General Public License v2
 
-EAPI="5"
+EAPI="6"
 inherit eutils
 DESCRIPTION="UniFi controller"
 HOMEPAGE="https://www.ubnt.com/download/unifi"
@@ -38,6 +38,7 @@ src_unpack() {
 }
 
 src_prepare(){
+	default
 	local n="$S/lib/native"
 	if use amd64; then
 		rm "$n/Linux/armhf" -Rf
