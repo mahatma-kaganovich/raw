@@ -1,4 +1,5 @@
-inherit eutils user
+inherit eutils
+#user
 
 MY_PN=${MY_PN:=${PN}}
 MY_P=${MY_P:=${P}}

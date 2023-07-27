@@ -1328,7 +1328,7 @@ native|:native|native:native)
 	if [[ -n "${CF##* -NUMA *}" ]]; then
 		CF1 SPARSE_IRQ CPUSETS
 		# use SLAB for NUMA, but with low/middle number of CPUs
-		[[ -n "${CF##* MAXSMP *}" ]] && CF1 'MAXSMP==y;=SLAB' 'MAXSMP=!y;=SLOB'
+		#[[ -n "${CF##* MAXSMP *}" ]] && CF1 'MAXSMP==y;=SLAB' 'MAXSMP=!y;=SLUB'
 	fi
 
 	case "${vendor_id}" in
