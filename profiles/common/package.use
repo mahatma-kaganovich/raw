@@ -140,8 +140,7 @@ sys-apps/busybox static
 # export LD_PRELOAD=/usr/lib/libtcmalloc_minimal.so
 >=dev-db/mariadb-10.5 -jemalloc -tcmalloc
 
-# [e]udev, but sometimes no effect
-sys-apps/systemd-utils -udev
+#sys-apps/systemd-utils udev
 
 # perf
 app-text/poppler boost
