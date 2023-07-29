@@ -14,4 +14,3 @@ sys-apps/systemd
 
 # udev 251 vs. eudev
 >=virtual/libudev-251
->=sys-apps/systemd-utils-251

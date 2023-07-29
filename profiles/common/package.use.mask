@@ -14,3 +14,6 @@ sys-devel/binutils nls
 sys-devel/bison nls
 sys-devel/gcc nls
 sys-devel/gettext nls
+
+# vs. libeudev 251  https://github.com/eudev-project/eudev/issues/249
+sys-apps/systemd-utils udev
