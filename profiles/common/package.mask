@@ -14,4 +14,6 @@ sys-apps/systemd
 
 # udev 251 vs. eudev
 #>=virtual/libudev-251
-#>=dev-libs//libgudev-238
+#>=dev-libs/libgudev-238
+=dev-libs/libgudev-238
+=dev-libs/libgudev-238-r1
