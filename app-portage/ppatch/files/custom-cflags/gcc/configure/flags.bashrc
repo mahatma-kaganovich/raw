@@ -76,7 +76,7 @@ f2=
 }
 [[ " $IUSE " == *' mpx '* ]] && use mpx && with_build_config+=' bootstrap-mpx'
 [ -n with_build_config ] && export with_build_config="${with_build_config# }"
-filter-flags -ffast-math
+filter-flags -ffast-math -fvisibility-inlines-hidden
 [[ "$PV" == [567].* ]] && filter-flags -fmodulo-sched
 
 # can filter or not here: custom cflags or not

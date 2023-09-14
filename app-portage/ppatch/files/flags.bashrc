@@ -307,6 +307,8 @@ gcc)
 	#filterflag '--param=ipa-cp-unit-growth=*' && appendflag -fno-ipa-cp-clone
 	# 12 (11?) cmake
 	filterflag --param=large-unit-insns=0
+	# 13 ninja, etc
+	filterflag -fvisibility-inlines-hidden
 ;;&
 # while found affected only mongodb - at least no connect from UniFi (exception)
 # looks like unwinding not required for anymore exclude debugging / verbose exceptions
