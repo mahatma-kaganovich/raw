@@ -1070,11 +1070,15 @@ acpi_detect(){
 		elif [[ $n == 2 ]]; then # try UP
 			let n=n/2
 		fi
-	[[ $n == 0 ]] && die "ACPI CPU enumeration wrong. Say 'USE=-acpi'"
+	[[ $n == 0 ]] && {
+		ewarn "ACPI CPU enumeration wrong. Possible 'USE=-acpi'"
+		return 1
+	}
 	[[ $n -gt 1 ]] && CF1 SMP
 	[[ $n -gt 8 ]] && CF1 X86_BIGSMP
 	[[ $n -gt 512 ]] && CF1 MAXSMP
 	CF1 NR_CPUS=$n
+	return 0
 }
 
 pre_embed(){
