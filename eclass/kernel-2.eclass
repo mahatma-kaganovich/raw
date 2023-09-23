@@ -1205,7 +1205,7 @@ for i in $cpuinfo; do
 done
 export PNP_VENDOR="^vendor_id\|"
 export VIRT=0
-CF1 -SMP -X86{BIGSMP,GENERIC} X86_{X2APIC,UP_APIC,UP_IOAPIC} -SPARSE_IRQ -CPUSETS X86_INTEL_PSTATE INTEL_RAPL INTEL_TXT -$knl
+CF1 -SMP -X86{BIGSMP,GENERIC} X86_{X2APIC,UP_APIC,UP_IOAPIC} -SPARSE_IRQ -CPUSETS X86_INTEL_PSTATE X86_AMD_PSTATE INTEL_RAPL INTEL_TXT -$knl
 CF1 SPARC_.+_CPUFREQ US3_MC
 use xen && CF1 -HIGHMEM64G -HIGHMEM4G NOHIGHMEM X86_PAE -X86_VSMP
 if use smp; then
@@ -1498,10 +1498,10 @@ CF1 "CPU_SUP_${V:-.+}"
 [ -n "$V" ] && {
 	CF1 -MICROCODE_AMD -MICROCODE_INTEL
 	CF1 "&MICROCODE_$V" MICROCODE_$V
-	[ "$V" = INTEL ] || CF1 -X86_INTEL_PSTATE -INTEL_RAPL -IOSF_MBI '-X86_INTEL_(?:LPSS|MID|CE|QUARK)' -$knl -INTEL_TURBO_MAX_3 '-.*_SOC_.*INTEL_.*'
+	[ "$V" = INTEL ] || CF1 -INTEL_RAPL -IOSF_MBI '-X86_INTEL_(?:LPSS|MID|CE|QUARK)' -$knl -INTEL_TURBO_MAX_3 '-.*_SOC_.*INTEL_.*'
 	[ "$V" = AMD ] || CF1 -X86_AMD_PLATFORM_DEVICE -AMD_NUMA '-.*_SOC_AMD_.*'
 	for i in INTEL AMD; do
-		[ "$V" = $i ] || CF1 "-(?:.+_)?SOC_(?:.+_)?${i}(?:_.+)?" -${i}_IOMMU
+		[ "$V" = $i ] || CF1 "-(?:.+_)?SOC_(?:.+_)?${i}(?:_.+)?" -${i}_IOMMU -X86_${i}_PSTATE
 	done
 }
 [ -z "$V" -o "$V" = AMD ] && ucode "amd-ucode/*.bin" AuthenticAMD
