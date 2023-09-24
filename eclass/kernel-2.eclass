@@ -1046,18 +1046,25 @@ acpi_detect(){
 	local i n=0
 	[[ -d /sys/bus/acpi ]] || return
 	CF1 -PCC_CPUFREQ
+#	CF1 -NUMA
 #	CF1 -PCI
 	for i in $(cat /sys/bus/acpi/devices/*/path|sed -e 's:^\\::'); do
 		case "$i" in
 		*.SRAT)CF1 NUMA;;
 #		_SB_.PCI*)CF1 PCI;;
 		_SB_.PCCH)CF2 PCC_CPUFREQ;freq+=" PCC_CPUFREQ";;
+		# oid & ugly. keep while
 		_PR_.*|_SB_*.CP[0-9]*|_SB_*.SCK[0-9]*|_SB_.CPUS.C[0-9A-Z][0-9A-Z][0-9A-Z])let n=n+1;;
 		esac
 	done
-	[ "$n" = 0 ] && for i in /sys/bus/acpi/devices/LNXCPU:*/; do
-		[ -e "$i" ] && n=n+1
-	done
+
+	# also can use ACPI_TYPE_PROCESSOR 0x0C if know where to find
+	i=$(grep '^acpi:LNXCPU:$\|^acpi:ACPI0007:$' /sys/bus/acpi/devices/*/modalias|wc -l)
+	[ "${i:-0}" -gt 0 ] && n="$i"
+
+	i=$(grep '^acpi:ACPI0004:$' /sys/bus/acpi/devices/*/modalias|wc -l)
+	[ "${i:-0}" -gt 1 ] && CF1 NUMA
+
 	[[ $n == 0 ]] && {
 		ewarn "ACPI CPU enumeration wrong. Possible 'USE=-acpi'"
 		return 1
