@@ -1045,7 +1045,7 @@ useconfig(){
 acpi_detect(){
 	local i n=0
 	[[ -d /sys/bus/acpi ]] || return
-	CF1 -PCC_CPUFREQ -SMP -X86_BIGSMP -MAXSMP
+	CF1 -PCC_CPUFREQ
 #	CF1 -PCI
 	for i in $(cat /sys/bus/acpi/devices/*/path|sed -e 's:^\\::'); do
 		case "$i" in
@@ -1058,6 +1058,11 @@ acpi_detect(){
 	[ "$n" = 0 ] && for i in /sys/bus/acpi/devices/LNXCPU:*/; do
 		[ -e "$i" ] && n=n+1
 	done
+	[[ $n == 0 ]] && {
+		ewarn "ACPI CPU enumeration wrong. Possible 'USE=-acpi'"
+		return 1
+	}
+	CF1 -SMP -X86_BIGSMP -MAXSMP
 	# On some of bare metal + ht flag without true HT, acpi reports double CPUs number.
 	# Dividing to 2 can reduce SMP tables or even make code UP, but many of modern CPUs|MBs
 	# use other logic, so try to /2 only if it can do UP (n=2) and USE=-smp
@@ -1070,10 +1075,6 @@ acpi_detect(){
 		elif [[ $n == 2 ]]; then # try UP
 			let n=n/2
 		fi
-	[[ $n == 0 ]] && {
-		ewarn "ACPI CPU enumeration wrong. Possible 'USE=-acpi'"
-		return 1
-	}
 	[[ $n -gt 1 ]] && CF1 SMP
 	[[ $n -gt 8 ]] && CF1 X86_BIGSMP
 	[[ $n -gt 512 ]] && CF1 MAXSMP
