@@ -1399,7 +1399,7 @@ native|:native|native:native)
 		local amf=
 		[ "$cpu_family" -ge 21 ] && amf="{,_fam$(printf '%02x' ${cpu_family}})h"
 		ucode "amd-ucode/microcode_amd${amf}.bin" $vendor_id
-		CF1 -X86_AMD_PLATFORM_DEVICE -PAGE_TABLE_ISOLATION
+		CF1 -PAGE_TABLE_ISOLATION
 		case "${cpu_family}:${model}:${flags}:${model_name}" in
 		4:[3789]:*)CF1 M486;;
 		4:*\ mmx\ *)CF1 M586MMX;;
@@ -1413,7 +1413,6 @@ native|:native|native:native)
 			gov='CONSERVATIVE,SCHEDUTIL}'
 		;;
 		*Geode*)CF1 GEODE_LX;;
-		*)CF1 X86_AMD_PLATFORM_DEVICE;;& # latest models
 		*)CF1 GENERIC_CPU X86_GENERIC;;
 		esac
 	;;
@@ -1515,7 +1514,7 @@ CF1 "CPU_SUP_${V:-.+}"
 	CF1 -MICROCODE_AMD -MICROCODE_INTEL
 	CF1 "&MICROCODE_$V" MICROCODE_$V
 	[ "$V" = INTEL ] || CF1 -INTEL_RAPL -IOSF_MBI '-X86_INTEL_(?:LPSS|MID|CE|QUARK)' -$knl -INTEL_TURBO_MAX_3 '-.*_SOC_.*INTEL_.*'
-	[ "$V" = AMD ] || CF1 -X86_AMD_PLATFORM_DEVICE -AMD_NUMA '-.*_SOC_AMD_.*'
+	[ "$V" = AMD ] || CF1 -{GART,AMD}_IOMMU -X86_AMD_PLATFORM_DEVICE -AMD_NUMA '-.*_SOC_AMD_.*'
 	for i in INTEL AMD; do
 		[ "$V" = $i ] || CF1 "-(?:.+_)?SOC_(?:.+_)?${i}(?:_.+)?" -${i}_IOMMU -X86_${i}_PSTATE
 	done
