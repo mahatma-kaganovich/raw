@@ -45,7 +45,7 @@ use mdadm || use lvm || use device-mapper || KERNEL_CONFIG+=" -MD"
 	use hibernate || KERNEL_CONFIG+=" -PM"
 	KERNEL_CONFIG+=" -PM_OPP"
 }
-use soc || use laptop || KERNEL_CONFIG+=" -X86_EXTENDED_PLATFORM -X86_INTEL_LPSS -X86_AMD_PLATFORM_DEVICE -.+_MID -USB_OTG"
+use soc || use laptop || KERNEL_CONFIG+=" -X86_EXTENDED_PLATFORM -X86_INTEL_LPSS -.+_MID -USB_OTG"
 # Intel's default
 KERNEL_CONFIG+=" NODES_SHIFT=2"
 

@@ -1407,7 +1407,11 @@ native|:native|native:native)
 		4:*)CF1 M586;;
 		5:*)CF1 MK6;freq=X86_POWERNOW_K6;;
 		6:*)CF1 MK7;freq="X86_POWERNOW_K7 X86_CPUFREQ_NFORCE2";;
-		7:*|*\ k8\ *|*\ lm\ *)CF1 MK8;freq="X86_POWERNOW_K8 X86_ACPI_CPUFREQ $freq";gov=CONSERVATIVE;;
+		7:*|*\ k8\ *|*\ lm\ *)
+			CF1 MK8
+			freq="X86_POWERNOW_K8 X86_ACPI_CPUFREQ $freq"
+			gov='CONSERVATIVE,SCHEDUTIL}'
+		;;
 		*Geode*)CF1 GEODE_LX;;
 		*)CF1 X86_AMD_PLATFORM_DEVICE;;& # latest models
 		*)CF1 GENERIC_CPU X86_GENERIC;;
@@ -1493,7 +1497,7 @@ nehalem|westmere|sandybridge|ivybridge|haswell|broadwell|silvermont)CF1 MCORE2 M
 knl)CF1 MCORE2 $m64g $knl;V=INTEL;;
 k6-3)CF1 MK6 $m64g;smt=false;freq=X86_POWERNOW_K6;V=AMD;;
 btver1|athlon|athlon-tbird|athlon-4|athlon-xp|athlon-mp)CF1 MK7 $m64g;smt=false;freq=X86_POWERNOW_K7;V=AMD;;
-btver*|bdver*|k8*|opteron*|athlon64*|athlon-fx|amdfam10|barcelona)CF1 MK8 $m64g;smt=false;freq="X86_POWERNOW_K8 X86_ACPI_CPUFREQ";gov=CONSERVATIVE;V=AMD;;
+btver*|bdver*|k8*|opteron*|athlon64*|athlon-fx|amdfam10|barcelona)CF1 MK8 $m64g;smt=false;freq="X86_POWERNOW_K8 X86_ACPI_CPUFREQ";gov='CONSERVATIVE,SCHEDUTIL}';V=AMD;;
 *)	case "$srcarch" in
 	*)CF1 GENERIC_CPU X86_GENERIC;;
 	esac
@@ -1504,7 +1508,7 @@ case "${CTARGET:-${CHOST}}:$CF" in
 esac
 use lguest && CF1 -HIGHMEM64G
 use acpi && use embed-hardware && acpi_detect
-use embed-hardware && [[ -n "$freq" ]] && CF1 -X86_POWERNOW_K8 -X86_ACPI_CPUFREQ $freq CPU_FREQ_GOV_${gov} CPU_FREQ_DEFAULT_GOV_${gov}
+use embed-hardware && [[ -n "$freq" ]] && eval "CF1 -X86_POWERNOW_K8 -X86_ACPI_CPUFREQ $freq CPU_FREQ_GOV_${gov} CPU_FREQ_DEFAULT_GOV_${gov}"
 CF1 -CPU_SUP_.+
 CF1 "CPU_SUP_${V:-.+}"
 [ -n "$V" ] && {

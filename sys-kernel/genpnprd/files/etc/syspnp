@@ -1091,8 +1091,10 @@ load_hand_made0(){
 	case "$f" in
 	*\ lm\ *AuthenticAMD*)
 		[ -e /lib/firmware/amd-ucode/microcode_amd.bin ] && mod microcode
+		cpufreq amd_pstate
+		echo passive >/sys/devices/system/cpu/amd_pstate/status
 		cpufreq powernow-k8
-		: ${gov:=conservative ondemand}
+		: ${gov:=schedutil conservative ondemand}
 	;;
 	*AuthenticAMD*)
 		cpufreq cpufreq-nforce2
@@ -1109,10 +1111,10 @@ load_hand_made0(){
 	fi
 	[ -z "$freq" ] && return
 	${cmd_nopowersave:-false} && return
-	if grep -vsq "powersave\|userspace\|conservative\|ondemand\|performance" /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor; then
+	if grep -vsq "schedutil\|powersave\|userspace\|conservative\|ondemand\|performance" /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor; then
 		gov=
 	elif [ -z "$gov" ]; then
-		$onbatt && gov='conservative ondemand powersave' || gov='ondemand conservative performance'
+		$onbatt && gov='conservative schedutil ondemand powersave' || gov='ondemand conservative performance'
 	fi
 	cpufreq_gov
 	rmmod freq_table >/dev/null 2>&1
