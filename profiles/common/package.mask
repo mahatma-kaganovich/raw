@@ -12,8 +12,3 @@ sys-apps/systemd
 =sys-firmware/intel-microcode-20180108*
 =sys-firmware/intel-microcode-20171117_p20171215*
 
-# udev 251 vs. eudev
-#>=virtual/libudev-251
-#>=dev-libs/libgudev-238
-=dev-libs/libgudev-238
-=dev-libs/libgudev-238-r1
