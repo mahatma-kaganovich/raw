@@ -596,7 +596,7 @@ sub arch{
 }
 
 sub Kconfig{
-	our (%tristate,%bool,%select,%menu,%yes,%no,%config,%oldconfig,%defconfig,%off,%unset,%vars,@if,$NV,%tristate_)=();
+	our (%tristate,%bool,%select,%menu,%yes,%no,%config,%oldconfig,%defconfig,%off,%unset,%vars,@if,$NV,%tristate_,%dep_)=();
 	%config=('y'=>'y','m'=>'m','n'=>'',''=>'',
 		"'y'"=>'y',"'m'"=>'m',"'n'"=>'n',
 		'"y"'=>'y','"m"'=>'m','"n"'=>'m',
