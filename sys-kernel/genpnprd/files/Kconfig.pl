@@ -166,7 +166,8 @@ $ENV{KERNEL_CONFIG2}||='?RAPIDIO RAPIDIO_DMA_ENGINE==y;?DMA_ENGINE (?:.+_)?PTP_.
 	'!'=>'remove/undef',
 	'='=>'y if undefined bool',
 	'&'=>'m->y recursive embed',
-	'?'=>'n if none embedded module dependences (use after detects)',
+#	'?'=>'n if none embedded module dependences (use after detects)',
+	'?'=>'n if none "y" dependences (use after detects)',
 	'%'=>'%from%to%...',
 	'#'=>'#',
 );
@@ -222,8 +223,8 @@ sub Kcload{
 #			$i=prelogic($i) if(!($i=~s/^(.*)\s+if\s+(.*)$/prelogic($1).' if '.prelogic($2)/e));
 #			$default{$v}=$i;
 		}
-		$s=~s/^\s*(?:def_)?tristate(?:\s+\S*|$)/$tristate{$v}=1;$tristate_{$v1}=1;next/e;
-		$s=~s/^\s*(?:def_)?bool(?:\s+\S*|$)/if($c eq 'menuconfig'){$menu{$v}=1}else{$bool{$v}=1};next/e;
+		$s=~s/^\s*(?:def_)?tristate(?:\s+\S*|$)/$tristate{$v}=$tristate_{$v1}=$dep_{$v1}=1;next/e;
+		$s=~s/^\s*(?:def_)?bool(?:\s+\S*|$)/$dep_{$v1}=1;if($c eq 'menuconfig'){$menu{$v}=1}else{$bool{$v}=1};next/e;
 		$s=~s/^\s*select\s+(.*)$/push @{$select{preif($1)}},$v;next/e;
 		$s=~s/^\s*depends\s+on\s+(.*)$/push @{$depends{$v}},prelogic($1);next/e;
 		$s=~s/(?:If\s+(?:[a-z\s]*\s)?(?:unsure|doubts?)(?:\s+about\s+this)?,\s+s|S)ay\s+\'?([YN])\'?(?:\s+here)?\./${$1 eq 'Y'?'yes':'no'}{$v}=1;next/e;
@@ -430,7 +431,7 @@ sub depcfg{
 		if($i eq $_[0]){
 			$config{$i} || next;
 		# no y->n tristate
-		}elsif($c{$i} ne 'y' || $config{$i} || !exists($tristate_{$i})){ 
+		}elsif($c{$i} ne 'y' || $config{$i} || !exists($dep_{$i})){ 
 			next;
 		}
 		$e.=" $i=$c{$i}->$config{$i}";
