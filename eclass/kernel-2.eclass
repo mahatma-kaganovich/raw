@@ -1514,7 +1514,7 @@ CF1 "CPU_SUP_${V:-.+}"
 	CF1 -MICROCODE_AMD -MICROCODE_INTEL
 	CF1 "&MICROCODE_$V" MICROCODE_$V
 	[ "$V" = INTEL ] || CF1 -INTEL_RAPL -IOSF_MBI '-X86_INTEL_(?:LPSS|MID|CE|QUARK)' -$knl -INTEL_TURBO_MAX_3 '-.*_SOC_.*INTEL_.*'
-	[ "$V" = AMD ] || CF1 -{GART,AMD}_IOMMU -X86_AMD_PLATFORM_DEVICE -AMD_NUMA '-.*_SOC_AMD_.*'
+	[ "$V" = AMD ] || CF1 -{GART,AMD}_IOMMU -X86_AMD_PLATFORM_DEVICE -PINCTRL_AMD -AMD_NUMA '-.*_SOC_AMD_.*'
 	for i in INTEL AMD; do
 		[ "$V" = $i ] || CF1 "-(?:.+_)?SOC_(?:.+_)?${i}(?:_.+)?" -${i}_IOMMU -X86_${i}_PSTATE
 	done
