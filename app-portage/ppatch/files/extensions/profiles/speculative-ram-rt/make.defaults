@@ -1,6 +1,6 @@
 # conserver RAM (& cache) for code, not compiuler
 
-_FLAGS="$_FLAGS -pipe"
+_FLAGS="-pipe $_FLAGS"
 CFLAGS="$CFLAGS -pipe"
 FFLAGS="$FFLAGS -pipe"
 FCFLAGS="$FCFLAGS -pipe"

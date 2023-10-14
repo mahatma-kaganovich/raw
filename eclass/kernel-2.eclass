@@ -1043,7 +1043,7 @@ useconfig(){
 
 # experemental
 acpi_detect(){
-	local i n=0
+	local i n=0 n1=0 n2=0
 	[[ -d /sys/bus/acpi ]] || return
 	CF1 -PCC_CPUFREQ
 #	CF1 -NUMA
@@ -1058,12 +1058,20 @@ acpi_detect(){
 		esac
 	done
 
-	# also can use ACPI_TYPE_PROCESSOR 0x0C if know where to find
-	i=$(grep '^acpi:LNXCPU:$\|^acpi:ACPI0007:$' /sys/bus/acpi/devices/*/modalias|wc -l)
-	[ "${i:-0}" -gt 0 ] && n="$i"
-
-	i=$(grep '^acpi:ACPI0004:$' /sys/bus/acpi/devices/*/modalias|wc -l)
-	[ "${i:-0}" -gt 1 ] && CF1 NUMA
+	CF1 -ACPI_HOTPLUG_MEMORY -ACPI_CONTAINER
+	for i in /sys/bus/acpi/devices/*/modalias; do
+		read i <"$i" || continue
+		i="${i#acpi:}"
+		i="${i%%:*}"
+		case "$i" in
+		PNP0C80)CF1 ACPI_HOTPLUG_MEMORY;;
+		ACPI0004|PNP0A05|PNP0A06)CF1 ACPI_CONTAINER;;
+		# also can use ACPI_TYPE_PROCESSOR 0x0C if know where to find
+		LNXCPU|ACPI0007)let n1=n1+1;;
+		ACPI0004)let n2=n2+1;;
+	done
+	[ "$n1" -gt 0 ] && n="$n1"
+	[ "$n2" -gt 1 ] && CF1 NUMA
 
 	[[ $n == 0 ]] && {
 		ewarn "ACPI CPU enumeration wrong. Possible 'USE=-acpi'"
