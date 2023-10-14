@@ -1069,6 +1069,7 @@ acpi_detect(){
 		# also can use ACPI_TYPE_PROCESSOR 0x0C if know where to find
 		LNXCPU|ACPI0007)let n1=n1+1;;
 		ACPI0004)let n2=n2+1;;
+		esac
 	done
 	[ "$n1" -gt 0 ] && n="$n1"
 	[ "$n2" -gt 1 ] && CF1 NUMA
