@@ -1,18 +1,3 @@
 # low RAM. no -pipe, etc
-# code still reasonable fast
-_FLAGS="$_FLAGS$CFLAGS_FAST_MATH$CFLAGS_NATIVE$CFLAGS_M$CFLAGS_SMALL$CFLAGS_FAST"
-# ? -fconserve-stack
-#_FLAGS="-g0 $_FLAGS"
-USE="speculative -ssp nossp nopie -sanitize -vtv -pie -pic -rsync-verify"
 
-# gcc 9.2 ok
-USE="$USE -stackrealign"
-# 2b default for x86*?
-_FLAGS="-fvect-cost-model=cheap -fsimd-cost-model=cheap $_FLAGS"
-
-CFLAGS="$_FLAGS"
-FFLAGS="$_FLAGS"
-FCFLAGS="$_FLAGS"
-CXXFLAGS="$_FLAGS $_XFLAGS -fdeclone-ctor-dtor"
-LDFLAGS="$LDFLAGS -Wl,--no-keep-memory -Wl,--reduce-memory-overheads -Wl,--strip-all -Wl,--no-ld-generated-unwind-info -Wl,--no-eh-frame-hdr"
-MAKEOPTS="-j$ncpu -s -Onone"
+LDFLAGS="$LDFLAGS -Wl,--no-keep-memory -Wl,--reduce-memory-overheads"
