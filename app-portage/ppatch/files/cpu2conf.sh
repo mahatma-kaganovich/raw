@@ -177,7 +177,7 @@ _replace(){
 }
 
 conf_cpu(){
-local f0= f1= f2= f3= f4= f5= f6= fsmall= ffast= ffm= fnm= fv= i j i1 j1 c c0 c1 lm=false fp=387 gccv m="`uname -m`" i fsec= ind= l2= x32=false base2= a=
+local f0= f1= f2= f3= f4= f5= f6= ff= fsmall= ffast= ffm= fnm= fv= i j i1 j1 c c0 c1 lm=false fp=387 gccv m="`uname -m`" i fsec= ind= l2= x32=false base2= a=
 _setflags flags cpucaps 'cpu family' model fpu vendor_id
 cmn=$(_gcc --help=common -v -Q)
 if i=$(echo "$cmn"|grep --max-count=1 "^Target: "); then
@@ -234,6 +234,8 @@ AuthenticAMD|HygonGenuine)
 	esac
 ;;
 esac
+fsmall+=' --param=max-grow-copy-bb-insns=1 -fno-align-jumps'
+ffast+=' -fdiagnostics-column-unit=byte'
 f0=`_f -m{tune,cpu,arch}=native ${a:+-Wa,-mtune=$a}`
 f3='-momit-leaf-frame-pointer -fsection-anchors'
 # wanted everywere, but breaks some packages, required filtering. keep bound
@@ -265,7 +267,7 @@ fsec+='  -ftrivial-auto-var-init=zero'
 ffast+=' -minline-stringops-dynamically'
 fsmall+=' -malign-data=abi -flimit-function-alignment -Wa,--reduce-memory-overheads -fvect-cost-model=cheap -fvect-cost-model=very-cheap -fsimd-cost-model=cheap -fsimd-cost-model=very-cheap -w'
 fsmall+=' -fno-move-loop-invariants'
-fsmall+=' --param=max-grow-copy-bb-insns=1 -fno-align-jumps'
+fsmall+=' -fno-show-column'
 # vs. -fno-ipa-cp-clone -fno-inline-functions
 # +max(orig_overall_size,ipa-cp-large-unit-insns)*ipa-cp-unit-growth/100+1
 # ipcp (<10) or ipa-cp (10+)
