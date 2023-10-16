@@ -333,10 +333,6 @@ x86_*|i?86)
 	base="-mtune=generic -march=${m//_/-}"
 	ffast+=' -maccumulate-outgoing-args -mno-push-args'
 	fsmall+=' -mno-accumulate-outgoing-args -mpush-args'
-	# -fno-ira-loop-pressure unsure, variable acovea results
-	#fsmall+=' -fno-ira-loop-pressure'
-	fsmall+=' -fira-region=one'
-	ffast+=' -fira-region=all'
 	# vs. -O3 -msse
 	# in many cases it also "fast", but keep default / selectable
 	_c -Q -O3 --help=optimizers | grep -sq 'fvect-cost-model=.*dynamic$' && fv+=$(_f -fvect-cost-model=cheap)

@@ -392,7 +392,8 @@ seamonkey|firefox|thunderbird|spidermonkey)
 	}
 #	filterflag -mtls-dialect=gnu2 # vs. elf-hack
 	_isflag -mtls-dialect=gnu2 && export MOZILLA_CONFIG="$MOZILLA_CONFIG --disable-elf-hack"
-	_isflag -Ofast -ffast-math && appendflag -fno-fast-math
+	_fnofastmath;filterflag -Ofast -ffast-math
+	#appendflag -fexcess-precision=standard -fno-allow-store-data-races -fno-cx-limited-range
 ;;&
 #seamonkey|thunderbird)appendflag_ CXXFLAGS -ftrapping-math;;&
 seamonkey|thunderbird)appendflag_ CXXFLAGS -fno-fast-math;;&
