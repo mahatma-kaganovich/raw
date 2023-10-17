@@ -48,10 +48,11 @@ save1(){
 		rd x <$f &&
 		x=${x#*'['} &&
 		x=${x%%']'*} &&
-		[[ "$x" != "$y" ]] &&
+		[[ "$x" != "$y" ]] && {
 		echo "$y" >$f &&
 		$echo "$x -> $y => $f" &&
-		echo "echo '$x' >'$f'"
+		echo "echo '$x' >'$f'" || echo "error $x -> $y => $f" >&2
+		}
 	done >>$save
 	return 0
 }
@@ -396,6 +397,25 @@ restore(){
     } 3>>$save.lock
 }
 
+_avail() {
+	[ -e "$1" ] && {
+		local x= i
+		read x <"$1"
+		x=" ${x//[\[\]]/ } "
+		shift
+		for i in "${@}"; do
+			[[ "$x" == *" $i "* ]] &&
+			    echo "$i" &&
+			    return 0
+		done
+	}
+	return 1
+}
+
+_avail1(){
+	[[ -e "$1" && " $(< "$1") " == *" $2 "* ]]
+}
+
 save(){
     _root
     fchk $save.lock
@@ -404,7 +424,7 @@ save(){
 	wifi_save
 	fchk $save && return
 	$force && touch $save.lock1
-	local f i x x1 x2
+	local f i x x1 x2 j ps=
 	echo '#' >>$save
 	save1v 0 /sys/class/leds/*/brightness
 	save1 N /sys/module/drm_kms_helper/parameters/poll
@@ -430,15 +450,43 @@ save(){
 		[ "$i" != 0 ] && x=$[x|15] && [ "$x" != "$x1" ] && wrmsr -a 0x1a4 $x && echo "wrmsr -a 0x1a4 $x1" >>$save
 	;;
 	esac
+
+	local act1=active act2=passive
+	$active && act1=passive && act2=active
 	# must be ordered
-#	save1 passive /sys/devices/system/cpu/intel_pstate/status
+#	for i in /sys/devices/system/cpu/{intel,amd}_pstate/status; do
+	for i in /sys/devices/system/cpu/*_pstate/status; do
+		[[ -e "$i" ]] &&
+		    rd x <"$i" &&
+		    [[ "$x" == $act1 ]] || continue
+		ps+="echo $x >'$i'
+"
+		for j in /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor; do
+			rd x <"$j" &&
+			ps+="echo '$x' >'$j'
+"
+		done
+		$echo "$act1 -> $act2 => $i"
+		echo $act2 >"$i"
+	done
 	for i in /sys/devices/system/cpu/cpu*/cpufreq; do
-		save1 powersave "$i/scaling_governor"
-		    rd x <"$i/cpuinfo_min_freq" && {
+		save1 $(_avail1 "$i/scaling_available_governors" userspace || echo powersave) "$i/scaling_governor"
+		rd x <"$i/cpuinfo_min_freq" && {
 			save1 "$x" "$i/scaling_max_freq"
 			#[ "$(< "$i/scaling_cur_freq")" = "$x" ] ||  echo "$x" >"$i/scaling_cur_freq"
 		}
 	done
+	save1 0 /sys/devices/system/cpu/cpufreq/boost
+	save1 power /sys/devices/system/cpu/cpu*/cpufreq/energy_performance_preference
+	save1 15 /sys/devices/system/cpu/cpu*/power/energy_perf_bias
+	i=/sys/devices/system/cpu/intel_pstate
+	[ -e $i ] && {
+		save1 1 $i/no_turbo
+		! $active && 
+		rd x <$i/min_perf && save1 "$x" $i/max_perf_pct
+	}
+	echo "$ps" >>$save; ps=
+
 	[ -n "$light" ] &&
 	    for i in /sys/class/backlight/*; do
 		rd x <"$i/max_brightness" &&
@@ -446,22 +494,7 @@ save(){
 			x=$[x*light/100] &&
 			save1g $x "$i/brightness"
 	done
-	save1 1 /sys/devices/system/cpu/intel_pstate/no_turbo
-	save1 0 /sys/devices/system/cpu/cpufreq/boost
-	save1 power /sys/devices/system/cpu/cpu*/cpufreq/energy_performance_preference ||
-	    save1 15 /sys/devices/system/cpu/cpu*/power/energy_perf_bias || {
-		f=x86_energy_perf_policy
-		$f -r|while read i; do
-			x="${i%%:*}"
-			x="${x#cpu}"
-			[ "$x" = "$[x]" ] || continue
-			i="${i##* }"
-			echo "$f -c $x $[i]" >>$save
-#			$f -c $x 15
-		done
-		$echo "$f 15"
-		$f 15
-	}
+
 	# cannot restore original state on HP250G
 	false &&
 	for i in /sys/class/thermal/cooling_device*; do
@@ -545,6 +578,7 @@ wifi=
 lockpid=
 lockflag=
 phy=
+active=false
 
 while [ -n "$*" ]; do
 case "$1" in
@@ -594,6 +628,8 @@ iwmon)
 	exec stdbuf -i0 -o0 -e0 iwmon -ys --noies
 	exit 1
 ;;
+active)active=true;;
+passive)active=false;;
 *)
 echo "Simple control powersave <-> default & check battery state.
 Designed for use in parallel with screen locker on laptop.
@@ -615,6 +651,7 @@ opt is:
  force
  wifi-first
  wifi-last
+ active|passive - powersave on *_pstate, default passive
 cmd is:
  powersave|save|power|low
  performance|perf|restore|high
