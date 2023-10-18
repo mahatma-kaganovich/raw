@@ -42,51 +42,51 @@ rd(){
 
 save1(){
 	[[ -e "$2" ]] || return 1
-	local f y=$1 x=
+	local f y=$1 x= r=1
 	shift
 	for f in "${@}"; do
 		rd x <$f &&
 		x=${x#*'['} &&
 		x=${x%%']'*} &&
 		[[ "$x" != "$y" ]] && {
-		echo "$y" >$f &&
+		echo "$y" >$f && r=0 &&
 		$echo "$x -> $y => $f" &&
 		echo "echo '$x' >'$f'" || echo "error $x -> $y => $f" >&2
 		}
 	done >>$save
-	return 0
+	return $r
 }
 
 save1g(){
 	[[ -e "$2" ]] || return 1
-	local f y=$1 x=
+	local f y=$1 x= r=1
 	shift
 	for f in "${@}"; do
 		rd x <$f &&
 		x=${x#*'['} &&
 		x=${x%%']'*} &&
 		[[ "$x" -gt "$y" ]] &&
-		echo "$y" >$f &&
+		echo "$y" >$f && r=0 &&
 		$echo "$x -> $y => $f" &&
 		echo "echo '$x' >'$f'"
 	done >>$save
-	return 0
+	return $r
 }
 
 save1v(){
 	[[ -e "$2" ]] || return 1
-	local f y=$1 x=
+	local f y=$1 x= r=1
 	shift
 	for f in "${@}"; do
 		rd x <$f &&
 		x=${x#*'['} &&
 		x=${x%%']'*} &&
 		[[ "$x" != "$y" ]] &&
-		echo "$y" >$f &&
+		echo "$y" >$f && r=0 &&
 		$echo "$x -> $y => $f" &&
 		echo "[[ \"\$(< '$f')\" == '$y' ]] && echo '$x' >'$f'"
 	done >>$save
-	return 0
+	return $r
 }
 
 fchk(){
@@ -412,10 +412,6 @@ _avail() {
 	return 1
 }
 
-_avail1(){
-	[[ -e "$1" && " $(< "$1") " == *" $2 "* ]] && echo "$2"
-}
-
 save(){
     _root
     fchk $save.lock
@@ -470,7 +466,8 @@ save(){
 		echo $act2 >"$i"
 	done
 	for i in /sys/devices/system/cpu/cpu*/cpufreq; do
-		save1 $(_avail1 "$i/scaling_available_governors" userspace || echo powersave) "$i/scaling_governor"
+		save1 userspace "$i/scaling_governor" ||
+		save1 powersave "$i/scaling_governor"
 		rd x <"$i/cpuinfo_min_freq" && {
 			save1 "$x" "$i/scaling_max_freq"
 			#[ "$(< "$i/scaling_cur_freq")" = "$x" ] ||  echo "$x" >"$i/scaling_cur_freq"
