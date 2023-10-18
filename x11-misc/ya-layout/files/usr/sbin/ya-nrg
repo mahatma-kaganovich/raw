@@ -114,7 +114,9 @@ _root(){
 }
 
 balance(){
-	[ "$batt" = true ] || /usr/sbin/irqbalance -o -f -t 1 &
+	# can stuck
+#	[ "$batt" = true ] || /usr/sbin/irqbalance -o -f -t 1 &
+	true
 }
 
 rf_blk='echo 1';rf_unblk='echo 0';rff=soft
