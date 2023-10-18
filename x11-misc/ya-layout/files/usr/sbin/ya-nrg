@@ -468,6 +468,7 @@ save(){
 		echo $act2 >"$i"
 	done
 	for i in /sys/devices/system/cpu/cpu*/cpufreq; do
+		! $active &&
 		save1 userspace "$i/scaling_governor" ||
 		save1 powersave "$i/scaling_governor"
 		rd x <"$i/cpuinfo_min_freq" && {
