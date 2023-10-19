@@ -41,50 +41,44 @@ rd(){
 }
 
 save1(){
-	[[ -e "$2" ]] || return 1
-	local f y=$1 x= r=1
-	shift
+	local f y=$2 cmp=$1 x= r=1
+	shift 2
 	for f in "${@}"; do
+		test -e "$f" &&
 		rd x <$f &&
 		x=${x#*'['} &&
 		x=${x%%']'*} &&
-		[[ "$x" != "$y" ]] && {
-		echo "$y" >$f && r=0 &&
-		$echo "$x -> $y => $f" &&
-		echo "echo '$x' >'$f'" || echo "error $x -> $y => $f" >&2
+#		test "$y" $cmp "$x" && {
+		[ "$y" $cmp "$x" -a "$x" != '<unsupported>' ] && {
+			echo "$y" >$f && r=0 &&
+			$echo "$x -> $y => $f" &&
+			echo "echo '$x' >'$f'" ||
+			echo "error $x -> $y => $f" >&2
 		}
 	done >>$save
 	return $r
 }
 
-save1g(){
-	[[ -e "$2" ]] || return 1
-	local f y=$1 x= r=1
-	shift
-	for f in "${@}"; do
-		rd x <$f &&
-		x=${x#*'['} &&
-		x=${x%%']'*} &&
-		[[ "$x" -gt "$y" ]] &&
-		echo "$y" >$f && r=0 &&
-		$echo "$x -> $y => $f" &&
-		echo "echo '$x' >'$f'"
-	done >>$save
-	return $r
+save1f(){
+	local y=$2 cmp=$1
+	shift 2
+	test -e "$y" && rd y <"$y" && save1 "$cmp" "$y" "${@}"
 }
 
 save1v(){
-	[[ -e "$2" ]] || return 1
-	local f y=$1 x= r=1
-	shift
+	local f y=$2 cmp=$1 x= r=1
+	shift 2
 	for f in "${@}"; do
+		test -e "$f" &&
 		rd x <$f &&
 		x=${x#*'['} &&
 		x=${x%%']'*} &&
-		[[ "$x" != "$y" ]] &&
-		echo "$y" >$f && r=0 &&
-		$echo "$x -> $y => $f" &&
-		echo "[[ \"\$(< '$f')\" == '$y' ]] && echo '$x' >'$f'"
+		test "$y" $cmp "$x" && {
+			echo "$y" >$f && r=0 &&
+			$echo "$x -> $y => $f" &&
+			echo "[[ \"\$(< '$f')\" == '$y' ]] && echo '$x' >'$f'" ||
+			echo "error $x -> $y => $f" >&2
+		}
 	done >>$save
 	return $r
 }
@@ -399,21 +393,6 @@ restore(){
     } 3>>$save.lock
 }
 
-_avail() {
-	[ -e "$1" ] && {
-		local x= i
-		read x <"$1"
-		x=" ${x//[\[\]]/ } "
-		shift
-		for i in "${@}"; do
-			[[ "$x" == *" $i "* ]] &&
-			    echo "$i" &&
-			    return 0
-		done
-	}
-	return 1
-}
-
 save(){
     _root
     fchk $save.lock
@@ -424,18 +403,18 @@ save(){
 	$force && touch $save.lock1
 	local f i x x1 x2 j ps=
 	echo '#' >>$save
-	save1v 0 /sys/class/leds/*/brightness
-	save1 N /sys/module/drm_kms_helper/parameters/poll
-	save1 1 /proc/sys/kernel/sched_energy_aware
-	save1 min_power /sys/class/scsi_host/*/link_power_management_policy
-	save1 powersupersave /sys/module/pcie_aspm/parameters/policy
-	save1 low-power /sys/firmware/acpi/platform_profile
+	save1v != 0 /sys/class/leds/*/brightness
+	save1 != N /sys/module/drm_kms_helper/parameters/poll
+	save1 != 1 /proc/sys/kernel/sched_energy_aware
+	save1 != min_power /sys/class/scsi_host/*/link_power_management_policy
+	save1 != powersupersave /sys/module/pcie_aspm/parameters/policy
+	save1 != low-power /sys/firmware/acpi/platform_profile
 	# safer, 3 for RH
-	save1g 2 /sys/module/ahci/parameters/mobile_lpm_policy
-	save1 1 /sys/kernel/rcu_normal
-	save1 0 /sys/kernel/rcu_expedited
-	save1 2 /sys/block/*/queue/rq_affinity
-	save1 1 /sys/class/powercap/intel-rapl*/enabled
+	save1 -gt 2 /sys/module/ahci/parameters/mobile_lpm_policy
+	save1 != 1 /sys/kernel/rcu_normal
+	save1 != 0 /sys/kernel/rcu_expedited
+	save1 != 2 /sys/block/*/queue/rq_affinity
+	save1 != 1 /sys/class/powercap/intel-rapl*/enabled
 	case "$(grep -c1 ^vendor_id /proc/cpuinfo)" in
 	*GenuineIntel)
 		# disable hw prefetching if equal
@@ -469,21 +448,18 @@ save(){
 	done
 	for i in /sys/devices/system/cpu/cpu*/cpufreq; do
 		! $active &&
-		save1 userspace "$i/scaling_governor" ||
-		save1 powersave "$i/scaling_governor"
-		rd x <"$i/cpuinfo_min_freq" && {
-			save1 "$x" "$i/scaling_max_freq"
-			#[ "$(< "$i/scaling_cur_freq")" = "$x" ] ||  echo "$x" >"$i/scaling_cur_freq"
-		}
+		save1 != userspace "$i/scaling_governor" ||
+		save1 != powersave "$i/scaling_governor"
+		save1f != "$i"/{cpuinfo_min,scaling_max}_freq "$i"/scaling_setspeed
 	done
-	save1 0 /sys/devices/system/cpu/cpufreq/boost
-	save1 power /sys/devices/system/cpu/cpu*/cpufreq/energy_performance_preference
-	save1 15 /sys/devices/system/cpu/cpu*/power/energy_perf_bias
+	save1 != 0 /sys/devices/system/cpu/cpufreq/boost
+	save1 != power /sys/devices/system/cpu/cpu*/cpufreq/energy_performance_preference
+	save1 != 15 /sys/devices/system/cpu/cpu*/power/energy_perf_bias
 	i=/sys/devices/system/cpu/intel_pstate
 	[ -e $i ] && {
-		save1 1 $i/no_turbo
-		! $active && 
-		rd x <$i/min_perf && save1 "$x" $i/max_perf_pct
+		save1 != 1 $i/no_turbo
+		$active ||
+		save1f != "$i"/{min,max}_perf_pct
 	}
 	echo "$ps" >>$save; ps=
 
@@ -492,7 +468,7 @@ save(){
 		rd x <"$i/max_brightness" &&
 #			rd x1 <"$i/actual_brightness" && [ "$x1" -gt "$x" ] &&
 			x=$[x*light/100] &&
-			save1g $x "$i/brightness"
+			save1 -lt $x "$i/brightness"
 	done
 
 	# cannot restore original state on HP250G
@@ -522,7 +498,7 @@ save(){
 _cpu_off(){
 	local i x=- n="$2"
 	[ "$[n-1]" -lt "$n" ] && x='' && for i in $c*/topology/$1; do
-			[ -e "$i" ] && x=$(< "$i") && [ -n "$x" -a "$x" -ge "$n" ] && [[ "$3" != *" $x "* ]] && save1 0 "${i%top*}online"
+			[ -e "$i" ] && x=$(< "$i") && [ -n "$x" -a "$x" -ge "$n" ] && [[ "$3" != *" $x "* ]] && save1 != 0 "${i%top*}online"
 	done
 	[ -n "$x" ]
 }
@@ -543,7 +519,7 @@ _cpu_off(){
 			x2=
 			for i in $c*/cache/index${cores#-}/shared_cpu_list; do
 				while [ -e "$i" ] && x=$(< "$i") && x1="${x##*[^0-9]}" && [ "$x" != "$x1" ] && [ "$x1" != "$x2" ]; do
-					save1 0 "$c$x1/online"
+					save1 != 0 "$c$x1/online"
 					x2=$x1
 				done
 			done
@@ -551,12 +527,12 @@ _cpu_off(){
 			# no kernel features? alt
 			for i in $c*/online; do
 				[ -e "$i" ] || break
-				[ "$cores" -gt 0 ] || save1 0 "$i"
+				[ "$cores" -gt 0 ] || save1 != 0 "$i"
 				cores=$[cores-1]
 			done
 		fi
 		[ "$threads" = 1 ] && for i in $c*/topology/thread_siblings_list; do
-			[ -e "$i" ] && x=$(< "$i") && [[ "$i" != "$c${x%%[^0-9]*}/"* ]] && save1 0 "${i%top*}online"
+			[ -e "$i" ] && x=$(< "$i") && [[ "$i" != "$c${x%%[^0-9]*}/"* ]] && save1 != 0 "${i%top*}online"
 		done
 		echo jiff >>$save
 		# single CPU must be balanced. fixme
