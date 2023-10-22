@@ -51,7 +51,7 @@ save1(){
 #		test "$y" $cmp "$x" && {
 		[ "$y" $cmp "$x" -a "$x" != '<unsupported>' ] && {
 			echo "$y" >$f && r=0 &&
-			$echo "$x -> $y => $f" &&
+			$echo "echo '$y' >$f # $x" &&
 			echo "echo '$x' >'$f'" ||
 			echo "error $x -> $y => $f" >&2
 		}
@@ -75,7 +75,7 @@ save1v(){
 		x=${x%%']'*} &&
 		test "$y" $cmp "$x" && {
 			echo "$y" >$f && r=0 &&
-			$echo "$x -> $y => $f" &&
+			$echo "echo '$y' >$f # $x" &&
 			echo "[[ \"\$(< '$f')\" == '$y' ]] && echo '$x' >'$f'" ||
 			echo "error $x -> $y => $f" >&2
 		}
@@ -393,6 +393,20 @@ restore(){
     } 3>>$save.lock
 }
 
+set_freq(){
+	echo "$1" |tee /sys/devices/system/cpu/cpu*/cpufreq/$2 &&
+	$echo "echo '$1' |tee /sys/devices/system/cpu/cpu*/cpufreq/$2"
+}
+
+_set_freq(){
+	echo "echo '$1' |tee /sys/devices/system/cpu/cpu*/cpufreq/$2 >/dev/null" >>$save
+}
+
+set_freq2(){
+	set_freq "$1" "$3" &&
+	_set_freq "$2" "$3"
+}
+
 save(){
     _root
     fchk $save.lock
@@ -401,7 +415,11 @@ save(){
 	wifi_save
 	fchk $save && return
 	$force && touch $save.lock1
-	local f i x x1 x2 j ps=
+	local f i x x1 x2 j ps= fr=
+	if ! $smp; then
+		set_freq(){ echo "$1" >"$fr/$2" && $echo "echo '$1' >'$fr/$2'";}
+		_set_freq(){ echo "echo '$1' >'$fr/$2'" >>$save;}
+	fi
 	echo '#' >>$save
 	save1v != 0 /sys/class/leds/*/brightness
 	save1 != N /sys/module/drm_kms_helper/parameters/poll
@@ -439,22 +457,47 @@ save(){
 		ps+="echo $x >'$i'
 "
 		for j in /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor; do
-			rd x <"$j" &&
+			rd x <"$j" || continue
+			if $smp; then
+				ps+="echo '$x' |tee /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor >/dev/null
+"
+				break
+			fi
 			ps+="echo '$x' >'$j'
 "
 		done
-		$echo "$act1 -> $act2 => $i"
-		echo $act2 >"$i"
+		echo $act2 >"$i" &&
+		$echo "echo '$act2' >$i # $act1"
 	done
-	for i in /sys/devices/system/cpu/cpu*/cpufreq; do
-		! $active &&
-		save1 != userspace "$i/scaling_governor" ||
-		save1 != powersave "$i/scaling_governor"
-		save1f != "$i"/{cpuinfo_min,scaling_max}_freq "$i"/scaling_setspeed
-	done
+	local min max gov pref
+	for fr in /sys/devices/system/cpu/cpu*/cpufreq; do
+		unset max
+		rd i <"$fr/scaling_governor"
+		rd min <"$fr"/scaling_min_freq &&
+		rd max <"$fr"/scaling_max_freq
+		rd pref <"$fr"/energy_performance_preference
+		[ -v i ] && {
+			! $active &&
+			gov=userspace && set_freq $gov scaling_governor || {
+				gov=powersave && set_freq $gov scaling_governor # || unset i
+			}
+		}
+		[ -v max ] && set_freq2 "$min" "$max" scaling_max_freq
+		[ -v i ] && _set_freq "$i" scaling_governor
+		[ -v pref ] && set_freq2 power "$pref" energy_performance_preference
+		$smp && [ -v i -o -v max -o -v pref ] && break
+	done &>/dev/null
 	save1 != 0 /sys/devices/system/cpu/cpufreq/boost
-	save1 != power /sys/devices/system/cpu/cpu*/cpufreq/energy_performance_preference
-	save1 != 15 /sys/devices/system/cpu/cpu*/power/energy_perf_bias
+	if $smp; then
+		for i in /sys/devices/system/cpu/cpu*/power/energy_perf_bias; do
+			[ -e "$i" ] && rd x <"$i" && [ "$x" != 15 ] || continue
+			echo 15 |tee /sys/devices/system/cpu/cpu*/power/energy_perf_bias >/dev/null &&
+			$echo "echo '$x' |tee /sys/devices/system/cpu/cpu*/power/energy_perf_bias >/dev/null"
+			break
+		done
+	else
+		save1 != 15 /sys/devices/system/cpu/cpu*/power/energy_perf_bias
+	fi
 	i=/sys/devices/system/cpu/intel_pstate
 	[ -e $i ] && {
 		save1 != 1 $i/no_turbo
@@ -482,7 +525,7 @@ save(){
 		    *)continue;;
 		esac
 		echo "$x" >$f &&
-		$echo "$x1 -> $x => $f" &&
+		$echo "echo '$x >$f # $x1" &&
 		echo "echo $x1 >$f" >>$save
 	done
 	###### add here, as next is cores off
@@ -555,6 +598,8 @@ lockpid=
 lockflag=
 phy=
 active=false
+smp=true
+[ -e /sys/devices/system/cpu/cpu4 ] && which tee &>/dev/null || smp=false
 
 while [ -n "$*" ]; do
 case "$1" in
@@ -604,6 +649,7 @@ iwmon)
 	exec stdbuf -i0 -o0 -e0 iwmon -ys --noies
 	exit 1
 ;;
+notsmp)smp=false;;
 active)active=true;;
 passive)active=false;;
 *)
@@ -628,6 +674,7 @@ opt is:
  wifi-first
  wifi-last
  active|passive - powersave on *_pstate, default passive
+ notsmp - not symmetric MP (no 'tee')
 cmd is:
  powersave|save|power|low
  performance|perf|restore|high
