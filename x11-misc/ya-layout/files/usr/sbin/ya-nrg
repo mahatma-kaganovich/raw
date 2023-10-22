@@ -40,6 +40,10 @@ rd(){
 	read $1 || [ -v $1 ]
 }
 
+_rd(){
+	[ -e "$2" ] && rd $1 <$2
+}
+
 save1(){
 	local f y=$2 cmp=$1 x= r=1
 	shift 2
@@ -379,7 +383,7 @@ restore(){
     {
 	flock -s 3
 	[ -e $save.lock1 ] && {
-		$force || return
+		$force || return 1
 		unlink $save.lock1
 	}
 	local f x i s b=false
@@ -391,6 +395,7 @@ restore(){
 	done
 	wifi_restore
     } 3>>$save.lock
+    return 0
 }
 
 set_freq(){
@@ -413,7 +418,7 @@ save(){
     {
 	flock 3
 	wifi_save
-	fchk $save && return
+	fchk $save && return 1
 	$force && touch $save.lock1
 	local f i x x1 x2 j ps= fr=
 	if ! $smp; then
@@ -474,6 +479,7 @@ save(){
 	for fr in /sys/devices/system/cpu/cpu*/cpufreq; do
 		unset max
 		rd i <"$fr/scaling_governor"
+		echo ==$i
 		[ -v i ] && {
 			! $active &&
 			gov=userspace && set_freq $gov scaling_governor || {
@@ -482,11 +488,11 @@ save(){
 		}
 		rd min <"$fr"/scaling_min_freq && rd max <"$fr"/scaling_max_freq &&
 			set_freq2 "$min" "$max" scaling_max_freq
-		rd pref <"$fr"/energy_performance_preference &&
+		_rd pref "$fr"/energy_performance_preference &&
 			set_freq2 power "$pref" energy_performance_preference
 		[ -v i ] && _set_freq "$i" scaling_governor
 		$smp && [ -v i -o -v max -o -v pref ] && break
-	done &>/dev/null
+	done >/dev/null
 	save1 != 0 /sys/devices/system/cpu/cpufreq/boost
 	if $smp; then
 		for i in /sys/devices/system/cpu/cpu*/power/energy_perf_bias; do
@@ -583,6 +589,7 @@ _cpu_off(){
 	}
 	###### DO NOT add here
     } 3>>$save.lock
+    return 0
 }
 
 umask 077
