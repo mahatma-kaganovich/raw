@@ -480,7 +480,7 @@ save(){
 				gov=powersave && set_freq $gov scaling_governor # || unset i
 			}
 		}
-		rd min <"$fr"/scaling_min_freq && rd max <"$fr"/scaling_min_freq &&
+		rd min <"$fr"/scaling_min_freq && rd max <"$fr"/scaling_max_freq &&
 			set_freq2 "$min" "$max" scaling_max_freq
 		rd pref <"$fr"/energy_performance_preference &&
 			set_freq2 power "$pref" energy_performance_preference
