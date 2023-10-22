@@ -456,10 +456,11 @@ save(){
 		    [[ "$x" == $act1 ]] || continue
 		ps+="echo $x >'$i'
 "
-		for j in /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor; do
-			rd x <"$j" || continue
+		f='/sys/devices/system/cpu/cpu*/cpufreq/scaling_governor'
+		for j in $f; do
+			[ -e "$j" ] && rd x <"$j" || continue
 			if $smp; then
-				ps+="echo '$x' |tee /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor >/dev/null
+				ps+="echo '$x' |tee $f >/dev/null
 "
 				break
 			fi
@@ -473,18 +474,17 @@ save(){
 	for fr in /sys/devices/system/cpu/cpu*/cpufreq; do
 		unset max
 		rd i <"$fr/scaling_governor"
-		rd min <"$fr"/scaling_min_freq &&
-		rd max <"$fr"/scaling_max_freq
-		rd pref <"$fr"/energy_performance_preference
 		[ -v i ] && {
 			! $active &&
 			gov=userspace && set_freq $gov scaling_governor || {
 				gov=powersave && set_freq $gov scaling_governor # || unset i
 			}
 		}
-		[ -v max ] && set_freq2 "$min" "$max" scaling_max_freq
+		rd min <"$fr"/scaling_min_freq && rd max <"$fr"/scaling_min_freq &&
+			set_freq2 "$min" "$max" scaling_max_freq
+		rd pref <"$fr"/energy_performance_preference &&
+			set_freq2 power "$pref" energy_performance_preference
 		[ -v i ] && _set_freq "$i" scaling_governor
-		[ -v pref ] && set_freq2 power "$pref" energy_performance_preference
 		$smp && [ -v i -o -v max -o -v pref ] && break
 	done &>/dev/null
 	save1 != 0 /sys/devices/system/cpu/cpufreq/boost
