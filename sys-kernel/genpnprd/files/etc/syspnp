@@ -1,5 +1,5 @@
 #!/bin/sh
-## pnp modules bootloader v0.28
+## pnp modules bootloader v0.29
 ## (c) Denis Kaganovich, under Anarchy license
 ## consume preprocessed /lib/modules/$KV/modules.alias
 
@@ -669,6 +669,11 @@ detect_root(){
 	[ -n "$NFSROOT" ] && [ -n "`ifconfig`" ] && {
 		detect_part "$NFSROOT" "$cmd_loop" "${NFSLIKE_FS:-auto}"
 	}
+	[ "$d" = false -a -n "$REAL_ROOT" -a ! -b "$REAL_ROOT" ] &&
+	    for i in `part_ "$REAL_ROOT"`; do
+		[ -b "$i" ] && REAL_ROOT="$i" && break
+	done
+
 }
 
 _ifaces(){
