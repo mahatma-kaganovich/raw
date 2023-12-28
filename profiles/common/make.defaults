@@ -8,7 +8,7 @@ INPUT_DEVICES="-* evdev"
 GRUB_PLATFORMS="pc efi-32 efi-64 coreboot"
 APACHE2_MODULES="$APACHE2_MODULES auth_digest proxy_http proxy access_compat remoteip cache_disk cache_socache proxy_fcgi dumpio slotmem_shm"
 LINGUAS="*"
-LDFLAGS="-Wl,-O1 -Wl,--as-needed -Wl,--hash-style=gnu -Wl,--sort-common -Wl,--sort-section=alignment -Wl,-z,pack-relative-relocs"
+LDFLAGS="-Wl,-O1 -Wl,--as-needed -Wl,--hash-style=gnu -Wl,--sort-common -Wl,--sort-section=alignment"
 EMERGE_DEFAULT_OPTS="$EMERGE_DEFAULT_OPTS --backtrack=5"
 RUBY_TARGETS="-* ruby27"
 # --enable-mobile-optimize broken in 65.0: --disable-synth-speechd --disable-webspeech --disable-webspeechtestbackend
