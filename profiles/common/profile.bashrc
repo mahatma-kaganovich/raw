@@ -1,5 +1,7 @@
 unset p f l
 
+[[ "$LDFLAGS" != *pack-relative-relocs* ]] && grep -sqw DT_RELR /usr/include/elf.h && export LDFLAGS="$LDFLAGS -Wl,-z,pack-relative-relocs"
+
 # sort out annihilated flags
 # becouse I can;
 #           don't inspect every "flags soring" in builds;
