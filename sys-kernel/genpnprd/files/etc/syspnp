@@ -1099,7 +1099,7 @@ load_hand_made0(){
 		cpufreq amd_pstate
 		echo passive >/sys/devices/system/cpu/amd_pstate/status
 		cpufreq powernow-k8
-		: ${gov:=schedutil conservative ondemand}
+		: ${gov:=_schedutil conservative ondemand}
 	;;
 	*AuthenticAMD*)
 		cpufreq cpufreq-nforce2
@@ -1119,7 +1119,7 @@ load_hand_made0(){
 	if grep -vsq "schedutil\|powersave\|userspace\|conservative\|ondemand\|performance" /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor; then
 		gov=
 	elif [ -z "$gov" ]; then
-		$onbatt && gov='conservative schedutil ondemand powersave' || gov='ondemand conservative performance'
+		$onbatt && gov='conservative _schedutil ondemand powersave' || gov='ondemand conservative performance'
 	fi
 	cpufreq_gov
 	rmmod freq_table >/dev/null 2>&1
