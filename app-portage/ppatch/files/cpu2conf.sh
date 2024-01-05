@@ -355,6 +355,7 @@ for i in $flags; do
 	sse|3dnowext)f1+=" $i mmxext";;
 	fma)f2+=" $i fma3";;
 	ace_en)f1+=" padlock";;
+	sha_ni)f1+=" ${i%_ni}";;
 	misalignsse)fv='';;
 	pclmulqdq)f1+=' pclmul';;&
 	*)
@@ -371,6 +372,12 @@ done
 i?86);;
 *)fv='';;
 esac
+
+i=$(cpuid2cpuflags)
+i1=${i%%:*}
+i=${i#*:}
+[ "$i" = "$i1" ] || echo "$i1=\"\$$i1$i\""
+
 # sse|387: automated by [current] gcc, both: sense mostly for -ffast-math
 [ "$fp" = both ] && ffm+=' -mfpmath=both' && fnfm+=' -mfpmath=sse'
 $lm && f1+=" 64-bit-bfd" || f1+=" -64-bit-bfd"
