@@ -390,8 +390,14 @@ seamonkey|firefox|thunderbird|spidermonkey)
 		! _iuse !clang && _filterLLD
 		! _iuse clang && _filterGOLD
 	}
-#	filterflag -mtls-dialect=gnu2 # vs. elf-hack
-	_isflag -mtls-dialect=gnu2 && export MOZILLA_CONFIG="$MOZILLA_CONFIG --disable-elf-hack"
+
+	#_isflag -mtls-dialect=gnu2 && export MOZILLA_CONFIG="$MOZILLA_CONFIG --disable-elf-hack"
+
+	filterflag -Wl,-z,pack-relative-relocs
+	#_isflag -Wl,-z,pack-relative-relocs &&
+	#    appendflag_ MOZILLA_CONFIG --disable-elf-hack &&
+	#    appendflag_ LDFLAGS -Wl,-z,now -Wl,-z,relr
+
 	_fnofastmath;filterflag -Ofast -ffast-math
 	#appendflag -fexcess-precision=standard -fno-allow-store-data-races -fno-cx-limited-range
 ;;&
@@ -450,6 +456,8 @@ _iuse !system-sqlite && _fnofastmath
 (_iuse gold || [[ "$LD" == *gold ]] || _isflag -fuse-ld=gold) && _filterGOLD
 (_iuse clang || [[ "$LD" == *lld ]] || _isflag -fuse-ld=lld) && _filterLLD
 
+#_iuse jumbo-build && appendflag -flarge-source-files
+
 #filter86_32 -fschedule-insns -fira-loop-pressure
 
 # clang too related from -flto, etc - filter twice
@@ -463,7 +471,7 @@ _iuse !system-sqlite && _fnofastmath
 seamonkey|firefox|thunderbird|spidermonkey)
 	# seamonkey still not here
 	for _i in $MOZILLA_CONFIG; do
-		"ac_add_options ${_i} # MOZILLA_CONFIG" >>"$S"/.mozconfig
+		echo "ac_add_options ${_i} # MOZILLA_CONFIG" >>"$S"/.mozconfig
 	done
 ;;
 esac
