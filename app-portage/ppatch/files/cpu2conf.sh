@@ -272,9 +272,11 @@ fsmall+=' -fno-show-column'
 # +max(orig_overall_size,ipa-cp-large-unit-insns)*ipa-cp-unit-growth/100+1
 # ipcp (<10) or ipa-cp (10+)
 fsmall+=" --param=ipa-cp-large-unit-insns=0 --param=ipcp-unit-growth=0 --param=ipa-cp-unit-growth=0"
+ffast+=" --param=ipa-cp-large-unit-insns=256 --param=ipcp-unit-growth=1 --param=ipa-cp-unit-growth=1"
 # vs. -fno-inline-functions
 # max(max_insns,large-unit-insns)*(100+inline-unit-growth)/100)
 fsmall+=" --param=large-unit-insns=0 --param=inline-unit-growth=0"
+ffast+=" --param=large-unit-insns=256 --param=inline-unit-growth=1"
 f6+=' -malign-data=cacheline'
 if i=`_smp1 'physical id' 'cpu cores' || _smp processor 1 || _smp 'ncpus active' 0`; then
 	if [ "$i" = 1 ]; then
