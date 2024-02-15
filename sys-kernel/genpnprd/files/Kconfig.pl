@@ -138,7 +138,6 @@ $ENV{KERNEL_CONFIG}||='
 	FRAMEBUFFER_CONSOLE_DEFERRED_TAKEOVER
 	DRM_AMDGPU_CIK
 	DVB_NET
-	NTFS3_64BIT_CLUSTER #bug
 	=SCTP_COOKIE_HMAC_.+
 	=MEDIA_CEC_RC CEC_CORE==!y;=.+_CEC CEC_CORE==!m;=.+_CEC
 	.+_PSTORE_DEFAULT_DISABLE
@@ -229,7 +228,7 @@ sub Kcload{
 		$s=~s/^\s*(?:def_)?bool(?:\s+\S*|$)/$dep_{$v1}=1;if($c eq 'menuconfig'){$menu{$v}=1}else{$bool{$v}=1};next/e;
 		$s=~s/^\s*select\s+(.*)$/push @{$select{preif($1)}},$v;next/e;
 		$s=~s/^\s*depends\s+on\s+(.*)$/push @{$depends{$v}},prelogic($1);next/e;
-		$s=~s/(?:If\s+(?:[a-z\s]*\s)?(?:unsure|doubts?)(?:\s+about\s+this)?,\s+s|S)ay\s+\'?([YN])\'?(?:\s+here)?\./${$1 eq 'Y'?'yes':'no'}{$v}=1;next/e;
+		$s=~s/(?:If\s+(?:[a-z\s]*\s)?(?:unsure|doubts?)(?:\s+about\s+this)?,\s+s|S|It\s+is\s+recommended\s+to\s+s)ay\s+\'?([YN])\'?(?:\s+here)?\./${$1 eq 'Y'?'yes':'no'}{$v}=1;next/e;
 		next if(!$ENV{SRCARCH});
 		$s=~s/^\s*option\s+env="(\w+)"/$env{$1}=1;next/e;
 		$s=~s/\$\((\w+)\)/exists($ENV{$1}) || print "ENV: $1\n";exists($ENV{$1})?$ENV{$1}:"\$($1)"/eg;
