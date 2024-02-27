@@ -147,6 +147,7 @@ $ENV{KERNEL_CONFIG}||='
 	#ubuntu,suse TASKS_RCU
 	#usb_mouse_fix HID
 	###beleave_last_binutils: X86_X32
+	###miscompile: -SCSI_QLA_ISCSI
 	###bugs: -TR -ECONET
 	###udev: -IDE
 	###cpio: -IKHEADERS
