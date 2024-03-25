@@ -177,7 +177,7 @@ _replace(){
 }
 
 conf_cpu(){
-local f0= f1= f2= f3= f4= f5= f6= ff= fsmall= ffast= ffm= fnm= fv= i j i1 j1 c c0 c1 lm=false fp=387 gccv m="`uname -m`" i fsec= ind= l2= x32=false base2= a=
+local f0= f1= f2= f3= f4= f5= f6= ff= fsmall= ffast= fbal= ffm= fnm= fv= i j i1 j1 c c0 c1 lm=false fp=387 gccv m="`uname -m`" i fsec= ind= l2= x32=false base2= a=
 _setflags flags cpucaps 'cpu family' model fpu vendor_id
 cmn=$(_gcc --help=common -v -Q)
 if i=$(echo "$cmn"|grep --max-count=1 "^Target: "); then
@@ -271,12 +271,12 @@ fsmall+=' -fno-show-column'
 # vs. -fno-ipa-cp-clone -fno-inline-functions
 # +max(orig_overall_size,ipa-cp-large-unit-insns)*ipa-cp-unit-growth/100+1
 # ipcp (<10) or ipa-cp (10+)
-#fsmall+=" --param=ipa-cp-large-unit-insns=0 --param=ipcp-unit-growth=0 --param=ipa-cp-unit-growth=0"
-fsmall=" --param=ipa-cp-large-unit-insns=256 --param=ipcp-unit-growth=1 --param=ipa-cp-unit-growth=1"
+fsmall+=" --param=ipa-cp-large-unit-insns=0 --param=ipcp-unit-growth=0 --param=ipa-cp-unit-growth=0"
+fbal=" --param=ipa-cp-large-unit-insns=256 --param=ipcp-unit-growth=1 --param=ipa-cp-unit-growth=1"
 # vs. -fno-inline-functions
 # max(max_insns,large-unit-insns)*(100+inline-unit-growth)/100)
-#fsmall+=" --param=large-unit-insns=0 --param=inline-unit-growth=0"
-fsmall+=" --param=large-unit-insns=256 --param=inline-unit-growth=1"
+fsmall+=" --param=large-unit-insns=0 --param=inline-unit-growth=0"
+fbal+=" --param=large-unit-insns=256 --param=inline-unit-growth=1"
 f6+=' -malign-data=cacheline'
 if i=`_smp1 'physical id' 'cpu cores' || _smp processor 1 || _smp 'ncpus active' 0`; then
 	if [ "$i" = 1 ]; then
@@ -383,7 +383,7 @@ i=${i#*:}
 # sse|387: automated by [current] gcc, both: sense mostly for -ffast-math
 [ "$fp" = both ] && ffm+=' -mfpmath=both' && fnfm+=' -mfpmath=sse'
 $lm && f1+=" 64-bit-bfd" || f1+=" -64-bit-bfd"
-for i in f3 ffast fsmall unroll f5+ fsec f6 ffm fnfm; do
+for i in f3 ffast fsmall fbal unroll f5+ fsec f6 ffm fnfm; do
 	case "$i" in
 	*+)	i=${i%+}
 		[ -n "${!i}" ] && declare $i="`lang=c++ _f ${!i}`"
@@ -495,6 +495,7 @@ echo "CFLAGS_NATIVE=\"$f0$fv\"
 CFLAGS_CPU=\"$f4$fv\"
 CFLAGS_M=\"$fm\"
 CFLAGS_FAST=\"\$CFLAGS_FAST$ffast$f6\"
+CFLAGS_BALANCED=\"\$CFLAGS_BALANCED$fbal\"
 CFLAGS_SMALL=\"\$CFLAGS_SMALL$fsmall\"
 CFLAGS_SECURE=\"$fsec\"
 CFLAGS_FAST_MATH=\"\$CFLAGS_FAST_MATH$ffm\"

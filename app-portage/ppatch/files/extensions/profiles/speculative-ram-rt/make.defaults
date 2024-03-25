@@ -1,4 +1,4 @@
-# conserver RAM (& cache) for code, not compiuler
+# conserve RAM (& cache) for code, not compiuler
 
 _FLAGS="-pipe $_FLAGS"
 CFLAGS="$CFLAGS -pipe"
