@@ -5,6 +5,7 @@ dev-lang/luajit lua52compat
 app-arch/zstd static-libs
 dev-lang/python sqlite
 sys-firmware/intel-microcode split-ucode monolithic
+sys-kernel/linux-firmware -initramfs
 sys-libs/gdbm berkdb
 dev-lang/perl berkdb
 mail-filter/spamassassin berkdb
