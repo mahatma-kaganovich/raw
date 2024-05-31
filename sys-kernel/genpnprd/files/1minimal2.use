@@ -29,6 +29,7 @@ use laptop && use soc && {
 use server || KERNEL_CONFIG+=" +IOSCHED_DEADLINE -IP_ADVANCED_ROUTER -TCP_CONG_ADVANCED -TCP_SIGPOOL -TCP_MD5SIG"
 
 #use server && KERNEL_CONFIG+=" -KEXEC -KEXEC_.+"
+use server && KERNEL_CONFIG+=" -KEXEC"
 #use speculative &&
     KERNEL_CONFIG+=" -CRASH_CORE -PROC_KCORE"
 
