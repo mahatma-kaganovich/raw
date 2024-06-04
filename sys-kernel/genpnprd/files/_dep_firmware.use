@@ -1,7 +1,6 @@
 _dep="
 firmware? (
 	alsa? ( sys-firmware/alsa-firmware )
-	bluetooth? ( sys-firmware/bluez-firmware )
 	v4l? ( sys-firmware/ivtv-firmware )
 	wifi? ( sys-firmware/zd1201-firmware sys-firmware/atmel-firmware sys-firmware/zd1211-firmware sys-firmware/ipw2200-firmware sys-firmware/ipw2100-firmware sys-firmware/b43-firmware sys-firmware/b43legacy-firmware )
 	wifi? ( net-wireless/wireless-regdb )
@@ -30,6 +29,7 @@ firmware? (
 
 #		X? ( x11-drivers/radeon-ucode )
 #		dri? ( x11-drivers/radeon-ucode )
+#	bluetooth? ( sys-firmware/bluez-firmware )
 
 
 DEPEND+="${_dep}"
