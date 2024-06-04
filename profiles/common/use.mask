@@ -6,7 +6,3 @@ openvg
 #-abi_x86_64
 #-abi_x86_x32
 #-multilib
-
-# unforce perfomance degradation
--default-znow
--default-stack-clash-protection
