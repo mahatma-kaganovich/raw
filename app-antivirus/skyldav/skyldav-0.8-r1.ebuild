@@ -40,7 +40,7 @@ RDEPEND=">=app-antivirus/clamav-0.97.8
 		x11-libs/gtk+:2
 	)"
 DEPEND="${RDEPEND}
-	sys-devel/autoconf-archive"
+	|| ( dev-build/autoconf-archive sys-devel/autoconf-archive )"
 
 ## autotools-utils.eclass settings
 DOCS=( AUTHORS NEWS README )
