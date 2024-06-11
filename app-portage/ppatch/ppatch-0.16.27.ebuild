@@ -3,7 +3,7 @@
 
 EAPI=6
 
-inherit raw
+inherit toolchain-funcs raw
 
 DESCRIPTION="Asyncronous patchshield for Gentoo"
 LICENSE="GPL-2"
