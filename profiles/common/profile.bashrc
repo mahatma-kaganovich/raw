@@ -1,7 +1,8 @@
 unset p f l
 
-[ "$EBUILD_PHASE" = setup ] &&
-[[ "$LDFLAGS" != *pack-relative-relocs* ]] && grep -sqw DT_RELR "$ROOT"/usr/include/elf.h && export LDFLAGS="$LDFLAGS -Wl,-z,pack-relative-relocs"
+### compat problems
+#[ "$EBUILD_PHASE" = setup ] &&
+#[[ "$LDFLAGS" != *pack-relative-relocs* ]] && grep -sqw DT_RELR "$ROOT"/usr/include/elf.h && export LDFLAGS="$LDFLAGS -Wl,-z,pack-relative-relocs"
 
 # sort out annihilated flags
 # becouse I can;
