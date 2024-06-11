@@ -3,7 +3,7 @@
 
 EAPI=6
 
-inherit eutils raw
+inherit raw
 
 DESCRIPTION="Asyncronous patchshield for Gentoo"
 LICENSE="GPL-2"

@@ -1,4 +1,4 @@
-inherit eutils
+#inherit eutils
 EXPORT_FUNCTIONS pkg_preinst pkg_postinst
 
 KEYWORDS="raw"
