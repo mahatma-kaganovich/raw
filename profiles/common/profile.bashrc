@@ -67,6 +67,8 @@ esac
 	export $i="${!i//-flto -fuse-linker-plugin/-flto=$l -fuse-linker-plugin}"
 done
 d="${TMPDIR}/bin"
+# 14
+[ "$PN" = gcc ] ||
 for i in ar strip nm ranlib objcopy objdump   strings size readelf dwp; do
 	i1=${i^^}
 	[ -v p ] && i2=${p}-${i} && which $i2 && export $i1=$i2 HOST_$i1=$i2 ${i1}_FOR_TARGET=$i2 ${i1}_FOR_BUILD=$i2
