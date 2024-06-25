@@ -361,8 +361,7 @@ wifi_restore(){
 wifi_sleep(){
     _root
     fchk $save.lock
-    {
-	flock 3
+    exec 3>>$save.lock && flock 3 && (exec 3>&-
 	if [ -s "$save" ]; then
 		wifi_save
 	else
@@ -370,7 +369,7 @@ wifi_sleep(){
 		$disable_roaming_scan && $disable_periodic_scan && wifi_save
 	fi
 	wifi_sync
-    } 3>>$save.lock
+    )
 }
 
 jiff(){
@@ -380,8 +379,7 @@ jiff(){
 restore(){
     _root
     fchk $save.lock
-    {
-	flock -s 3
+    exec 3>>$save.lock && flock -s 3 && (exec 3>&-
 	[ -e $save.lock1 ] && {
 		$force || return 1
 		unlink $save.lock1
@@ -394,7 +392,7 @@ restore(){
 		true >$s
 	done
 	wifi_restore
-    } 3>>$save.lock
+    )
     return 0
 }
 
@@ -415,8 +413,7 @@ set_freq2(){
 save(){
     _root
     fchk $save.lock
-    {
-	flock 3
+    exec 3>>$save.lock && flock 3 && (exec 3>&-
 	wifi_save
 	fchk $save && return 1
 	$force && touch $save.lock1
@@ -588,7 +585,7 @@ _cpu_off(){
 		#balance
 	}
 	###### DO NOT add here
-    } 3>>$save.lock
+    )
     return 0
 }
 
