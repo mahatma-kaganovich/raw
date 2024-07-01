@@ -358,14 +358,19 @@ wifi_restore(){
 }
 
 flk(){
-    _root
-    fchk $save.lock
-    exec 3>>$save.lock && flock "${@}" 3
+	_root
+	local f=$save.lock
+	fchk $f
+	exec 3>>$f && flock "${@}" 3 || die "file '$f' lock error"
+}
+
+fulk(){
+	exec 3>&-
 }
 
 # run async to screensaver (for example - if wifi disconnected [blank])
 wifi_sleep(){
-    flk && (exec 3>&-
+    flk;(fulk
 	if [ -s "$save" ]; then
 		wifi_save
 	else
@@ -373,7 +378,7 @@ wifi_sleep(){
 		$disable_roaming_scan && $disable_periodic_scan && wifi_save
 	fi
 	wifi_sync
-    )
+    );fulk
 }
 
 jiff(){
@@ -381,7 +386,7 @@ jiff(){
 }
 
 restore(){
-    flk -s && (exec 3>&-
+    flk -s;(fulk
 	[ -e $save.lock1 ] && {
 		$force || return 1
 		unlink $save.lock1
@@ -394,7 +399,7 @@ restore(){
 		true >$s
 	done
 	wifi_restore
-    )
+    );fulk
     return 0
 }
 
@@ -413,7 +418,7 @@ set_freq2(){
 }
 
 save(){
-    flk && (exec 3>&-
+    flk;(fulk
 	wifi_save
 	fchk $save && return 1
 	$force && touch $save.lock1
@@ -585,7 +590,7 @@ _cpu_off(){
 		#balance
 	}
 	###### DO NOT add here
-    )
+    );fulk
     return 0
 }
 
