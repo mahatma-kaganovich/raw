@@ -235,16 +235,18 @@ _flagsRUST(){
 	[ -n "$a" ] && appendflag_ 'RUSTFLAGS CARGO_RUSTCFLAGS MOZ_RUST_DEFAULT_FLAGS' $a
 }
 
+_filterclang(){
+_filterLLD
+CC=clang filter_cf CC LDFLAGS c
+CC=clang filter_cf CC CFLAGS c
+CXX=clang++ filter_cf CXX CXXFLAGS c++
+}
+
 _filtertst(){
 filter_cf CC LDFLAGS c
 filter_cf CC CFLAGS c
 filter_cf CXX CXXFLAGS c++
-_iuse clang && {
-	_filterLLD
-	CC=clang filter_cf CC LDFLAGS c
-	CC=clang filter_cf CC CFLAGS c
-	CXX=clang++ filter_cf CXX CXXFLAGS c++
-}
+_iuse clang && _filterclang
 }
 
 _iuse clang || [[ "$CC$CXX" == *clang* ]] && filterflag '-Wa,-mtune=*'
@@ -339,6 +341,7 @@ mariadb)
 #	_iuse rocksdb && _fnofastmath
 	_iuse jemalloc && replace1flag_ -Ofast '-Ofast -fsemantic-interposition'
 ;;& # just paranoid
+jemalloc)filterflag -Wl,-z,pack-relative-relocs;;& # lto?
 php)[[ "$PV" == 5.* ]] || filterflag '-flto*' -fdevirtualize-at-ltrans;;&
 # works over make.lto wrapper, but wrapper wrong for some other packets
 numactl|alsa-lib|elfutils|dhcdrop|lksctp-tools|mysql-connector-c)filterflag '-flto*' -fdevirtualize-at-ltrans;;&
@@ -434,6 +437,7 @@ dav1d)_fLTO_f -fPIC;;&
 pixman)_iuse abi_x86_32 && replace1flag_ -mfpmath=both -mfpmath=sse;;&
 clamav)filterflag -Wl,--no-eh-frame-hdr;;&
 mdadm)appendflag -fPIC;;&
+rocm-device-libs)_filterclang;;&
 esac
 
 case "$CATEGORY/$P" in

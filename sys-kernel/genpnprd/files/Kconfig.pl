@@ -218,7 +218,7 @@ sub Kcload{
 		$s=~s/^if\s+(.*)$/$c='if';push @if,prelogic($1);next/e;
 		$s=~s/^endif$/$c='endif';pop @if;next/e;
 		if(my ($i)=$s=~/^\s*(?:def_tristate|def_bool|default)\s+(.+)/){
-			if($prefer_kconfig || ! ($i=~/(?:^[\"a-z0-9]\S*|[\! ]EXPERT)$/)){
+			if($prefer_kconfig || ! ($i=~/(?:^[\"a-z0-9]\S*|[\! 	]EXPERT)$/)){
 				$undef{$v1}=undef;
 				#print "DEF: $v1 $i\n";
 			}
