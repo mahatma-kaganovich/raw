@@ -457,7 +457,9 @@ save(){
 	$active && act1=passive && act2=active
 	# must be ordered
 #	for i in /sys/devices/system/cpu/{intel,amd}_pstate/status; do
-	for i in /sys/devices/system/cpu/*_pstate/status; do
+#	for i in /sys/devices/system/cpu/*_pstate/status; do
+	# amd_pstate/status broken in 6.11
+	for i in /sys/devices/system/cpu/intel_pstate/status; do
 		[[ -e "$i" ]] &&
 		    rd x <"$i" &&
 		    [[ "$x" == $act1 ]] || continue

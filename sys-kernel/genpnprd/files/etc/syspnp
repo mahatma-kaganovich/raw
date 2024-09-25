@@ -1097,7 +1097,7 @@ load_hand_made0(){
 	*\ lm\ *AuthenticAMD*)
 		[ -e /lib/firmware/amd-ucode/microcode_amd.bin ] && mod microcode
 		cpufreq amd_pstate
-		echo passive >/sys/devices/system/cpu/amd_pstate/status
+		#echo passive >/sys/devices/system/cpu/amd_pstate/status
 		cpufreq powernow-k8
 		: ${gov:=_schedutil conservative ondemand}
 	;;
