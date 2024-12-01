@@ -3,7 +3,7 @@
 
 EAPI=7
 
-inherit eutils user autotools git-r3
+inherit eutils autotools git-r3
 
 IUSE=""
 
@@ -20,10 +20,10 @@ DEPEND="|| ( mail-filter/libmilter mail-mta/sendmail )
 	>=mail-filter/spamassassin-3.1.0"
 RDEPEND="${DEPEND}"
 
-pkg_setup() {
-	enewgroup milter
-	enewuser milter -1 -1 /var/lib/milter milter
-}
+#pkg_setup() {
+#	enewgroup milter
+#	enewuser milter -1 -1 /var/lib/milter milter
+#}
 
 src_prepare() {
 	epatch "${FILESDIR}"/${PN}-quarantine.patch
@@ -40,7 +40,7 @@ src_install() {
 	newconfd "${FILESDIR}"/spamass-milter.conf3 spamass-milter
 	dodir /var/lib/milter
 	keepdir /var/lib/milter
-	fowners milter:milter /var/lib/milter
+#	fowners milter:milter /var/lib/milter
 
 	dodoc AUTHORS NEWS README ChangeLog "${FILESDIR}/README.gentoo"
 }
