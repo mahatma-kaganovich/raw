@@ -1,3 +1,4 @@
+media-fonts/* nls
 net-misc/curl -gnutls
 app-antivirus/clamav metadata-analysis-api
 sys-devel/clang default-lld
