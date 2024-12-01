@@ -21,7 +21,7 @@ RDEPEND="${DEPEND}"
 
 PATCHES=(
         "${FILESDIR}"/${PN}-git.patch
-        "${FILESDIR}"/${PN}-quarantine.patch
+        "${FILESDIR}"/${PN}-quarantine1.patch
 )
 
 #pkg_setup() {

@@ -19,15 +19,14 @@ DEPEND="|| ( mail-filter/libmilter mail-mta/sendmail )
 	>=mail-filter/spamassassin-3.1.0"
 RDEPEND="${DEPEND}"
 
+PATCHES=(
+	"${FILESDIR}"/${PN}-gentoo-compat.patch
+)
+
 #pkg_setup() {
 #	enewgroup milter
 #	enewuser milter -1 -1 /var/lib/milter milter
 #}
-
-src_prepare() {
-	epatch "${FILESDIR}"/${PN}-gentoo-compat.patch
-	default
-}
 
 src_install() {
 	emake DESTDIR="${D}" install

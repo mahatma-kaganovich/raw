@@ -31,14 +31,17 @@ DEPEND="${RDEPEND}
 	!<media-libs/ming-0.4.0_rc2
 "
 
+PATCHES=(
+#	"${FILESDIR}"/${P}_general.patch
+	"${DISTDIR}"/swftools-poppler{,2,-0.32}.patch
+	"${FILESDIR}"/${P}_giflib.patch
+	"${FILESDIR}"/${P}_giflib5.patch
+	export CFLAGS="$CFLAGS `pkg-config --cflags poppler`"
+)
+
 S="${WORKDIR}/${PN}-${MY_PV}"
 
 src_prepare() {
-	epatch "${DISTDIR}"/swftools-poppler{,2,-0.32}.patch
-#	epatch "${FILESDIR}"/${P}_general.patch
-	epatch "${FILESDIR}"/${P}_giflib.patch
-	epatch "${FILESDIR}"/${P}_giflib5.patch
-	export CFLAGS="$CFLAGS `pkg-config --cflags poppler`"
 	export LDFLAGS="$LDFLAGS `pkg-config --libs poppler`"
 }
 

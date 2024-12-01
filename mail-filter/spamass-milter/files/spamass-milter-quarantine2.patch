@@ -1,6 +1,21 @@
---- a/spamass-milter.cpp	2022-08-31 03:37:24.995770049 +0300
-+++ b/spamass-milter.cpp	2022-09-01 08:00:56.474818413 +0300
-@@ -181,6 +181,7 @@ char **spamc_argv;
+This is another option of quarantine.
+More dangerous then external spam is internal -
+compromised logins. It rate your server out.
+So, quarantine for small time every outgoing mail
+for frequency analysis.
+
+Sorry, dont published analysis methods, but "nigerians"
+blind adopt to everything... So, this is strategic secret.
+
+And really now I use something somewherelse ;)
+
+PS This is "second version" (adopt - '-Q' -> '-q')
+
+Signed-off-by: Dzianis Kahanovich <mahatma@eu.by>
+
+--- a/spamass-milter.cpp.orig	2024-12-01 21:13:44.068963548 +0300
++++ b/spamass-milter.cpp	2024-12-01 21:38:37.989228219 +0300
+@@ -183,6 +183,7 @@ char **spamc_argv;
  bool flag_bucket = false;
  bool flag_bucket_only = false;
  char *spambucket;
@@ -8,34 +23,34 @@
  bool flag_full_email = false;		/* pass full email address to spamc */
  bool flag_expand = false;	/* alias/virtusertable expansion */
  bool warnedmacro = false;	/* have we logged that we couldn't fetch a macro? */
-@@ -193,7 +194,7 @@ int
+@@ -195,7 +196,7 @@ int
  main(int argc, char* argv[])
  {
     int c, err = 0;
--   const char *args = "aAfd:mMp:P:r:l:u:D:i:b:B:e:xS:R:c:C:g:T:";
-+   const char *args = "QaAfd:mMp:P:r:l:u:D:i:b:B:e:xS:R:c:C:g:T:";
+-   const char *args = "aAfd:mMp:P:r:l:u:D:i:b:B:e:xS:R:c:C:g:T:Q:";
++   const char *args = "qaAfd:mMp:P:r:l:u:D:i:b:B:e:xS:R:c:C:g:T:Q:";
     char *sock = NULL;
     char *group = NULL;
     bool dofork = false;
-@@ -303,6 +304,9 @@ main(int argc, char* argv[])
+@@ -308,6 +309,9 @@ main(int argc, char* argv[])
                  debug(D_MISC, "Parsing recipient address ignore list");
                  parse_addresslist(optarg, &ignoreaddrs);
                  break;
-+            case 'Q':
++            case 'q':
 +        	quarantine = true;
 +        	break;
              case '?':
                  err = 1;
                  break;
-@@ -357,6 +361,7 @@ main(int argc, char* argv[])
+@@ -370,6 +374,7 @@ main(int argc, char* argv[])
        cout << "   -A: Scan but only tag messages affected by -a, -T and -i, never reject or defer them." << endl;
        cout << "   -T: skip (ignore) checks if any recipient is in this address list" << endl;
        cout << "          example: -T foo@bar.com,spamlover@yourdomain.com" << endl;
-+      cout << "   -Q: quarantine from authenticated connection (sendmail feature hf*)" << endl;
++      cout << "   -q: quarantine from authenticated connection (sendmail feature hf*)" << endl;
        cout << "   -- spamc args: pass the remaining flags to spamc." << endl;
  
        exit(EX_USAGE);
-@@ -502,6 +507,11 @@ int
+@@ -515,6 +520,11 @@ int
  assassinate(SMFICTX* ctx, SpamAssassin* assassin)
  {
    struct context *sctx = (struct context*)smfi_getpriv(ctx);
@@ -47,7 +62,7 @@
    // find end of header (eol in last line of header)
    // and beginning of body
    string::size_type eoh1 = assassin->d().find("\n\n");
-@@ -881,6 +891,7 @@ mlfi_envfrom(SMFICTX* ctx, char** envfro
+@@ -909,6 +919,7 @@ mlfi_envfrom(SMFICTX* ctx, char** envfro
      if (auth_type) {
        debug(D_MISC, "auth_type=%s", auth_type);
        sctx->onlytag=true;

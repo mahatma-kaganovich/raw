@@ -20,13 +20,16 @@ DEPEND="|| ( mail-filter/libmilter mail-mta/sendmail )
 	>=mail-filter/spamassassin-3.1.0"
 RDEPEND="${DEPEND}"
 
+PATCHES=(
+	"${FILESDIR}"/${PN}-quarantine2.patch
+)
+
 #pkg_setup() {
 #	enewgroup milter
 #	enewuser milter -1 -1 /var/lib/milter milter
 #}
 
 src_prepare() {
-	epatch "${FILESDIR}"/${PN}-quarantine.patch
 	default
 	./autogen.sh
 #	elibtoolize
