@@ -1,14 +1,3 @@
-media-fonts/* nls
-media-fonts/font-adobe-100dpi nls
-media-fonts/font-adobe-75dpi nls
-media-fonts/font-adobe-utopia-100dpi nls
-media-fonts/font-adobe-utopia-75dpi nls
-media-fonts/font-bh-100dpi nls
-media-fonts/font-bh-75dpi nls
-media-fonts/font-bh-lucidatypewriter-100dpi nls
-media-fonts/font-bh-lucidatypewriter-75dpi nls
-media-fonts/font-misc-misc nls
-media-fonts/font-schumacher-misc nls
 net-misc/curl -gnutls
 app-antivirus/clamav metadata-analysis-api
 sys-devel/clang default-lld
