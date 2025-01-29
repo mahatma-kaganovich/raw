@@ -16,6 +16,7 @@ EMERGE_DEFAULT_OPTS="$EMERGE_DEFAULT_OPTS --backtrack=5"
 MOZILLA_CONFIG="--jitreport-granularity=0"
 PORTAGE_RSYNC_OPTS="$PORTAGE_RSYNC_OPTS --exclude=/metadata/md5-cache"
 RUSTFLAGS="$RUSTFLAGS -Cdebuginfo=0"
+PERL_FEATURES="ithreads"
 
 LANG=C
 LC_MESSAGES=C
