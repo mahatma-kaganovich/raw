@@ -254,7 +254,10 @@ kernel-2_src_configure() {
 		done
 		cflags="${cflags# }"
 
-		aflags="$cflags" # at least now
+		#aflags="$cflags" # at least now
+		#aflags=$(_filter_f cflags '-march=*')
+		aflags=$(_filter_f cflags '-m*')
+
 		ldflags="$(flags_nosp "$(extract_flags -Wl, ${LDFLAGS}) ${ldflags}")" #"
 	else
 		# only KBUILD_USER*FLAGS, but starting from 5.15 wrong
