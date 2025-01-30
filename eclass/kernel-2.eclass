@@ -829,6 +829,11 @@ kernel-2_src_install() {
 		# inherited
 		[[ -e "${S}" ]] || mv "${D}"/usr/src/linux* "${WORKDIR}" || mkdir -p "${S}"
 		[[ -n "$sym" ]] && dosym "$sym" /usr/src/linux-${SLOT}
+		# not required, but clean package
+		_split_usr && [ -e "${D}"/lib/modules ] && {
+			dodir /usr/lib
+			mv "${D}"/{,usr/}lib/modules
+		}
 	fi
 	_saved_src_install
 }
