@@ -33,7 +33,7 @@ IUSE="${IUSE} +build-kernel custom-cflags +pnp +compressed integrated
 	kernel-firmware +sources pnponly lzma xz lzo lz4 zstd
 	external-firmware xen +smp kernel-tools multitarget 64-bit-bfd thin
 	lvm device-mapper unionfs luks gpg iscsi e2fsprogs mdadm btrfs bcache dropbear xfs +keymap blkid
-	lguest acpi klibc +genkernel monolythe update-boot uml paranoid"
+	lguest acpi klibc +genkernel monolythe update-boot uml paranoid split-usr"
 DEPEND="${DEPEND}
 	!<app-portage/ppatch-0.08-r16
 	pnp? ( sys-kernel/genpnprd )
@@ -92,6 +92,11 @@ done
 fi
 
 BDIR="${WORKDIR}/build"
+
+_split_usr(){
+	# old install compat
+	use split-usr || [[ "$(readlink "${ROOT}"/lib)" != *usr/lib ]]
+}
 
 _CF1_(){
 	local i s='[ 	
@@ -615,7 +620,7 @@ kernel-2_src_compile() {
 	cd "${WORKDIR}"
 	local i
 	use sources && for i in build source; do
-		ln -s "../../../usr/src/linux-${KV_FULL}" "${r}/${i}"
+		ln -s "$(_split_usr || echo ../)../../../usr/src/linux-${KV_FULL}" "${r}/${i}"
 	done
     fi
 
@@ -808,7 +813,7 @@ kernel-2_src_install() {
 				sym="${sym:+$f}"
 				f1="/lib/modules/${REAL_KV}/kernel"
 				rm "${D}${f1}" -Rf
-				dosym "../../../usr/src/${f}" "${f1}"
+				dosym "$(_split_usr || echo ../)../../../usr/src/${f}" "${f1}"
 				rm "initrd-${REAL_KV}.img"
 				cd "${WORKDIR}"
 				keepdir /usr/src/"${f}"
