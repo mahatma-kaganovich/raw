@@ -315,7 +315,8 @@ gcc)
 # while found affected only mongodb - at least no connect from UniFi (exception)
 # looks like unwinding not required for anymore exclude debugging / verbose exceptions
 # ps ceph too...
-gcc|mongodb|mongo-tools|ceph|tigervnc)filterflag -fno-asynchronous-unwind-tables -Wl,--no-ld-generated-unwind-info -Wl,--no-eh-frame-hdr;;&
+# sleef - RTFM
+sleef|gcc|mongodb|mongo-tools|ceph|tigervnc)filterflag -fno-asynchronous-unwind-tables -Wl,--no-ld-generated-unwind-info -Wl,--no-eh-frame-hdr;;&
 libreoffice)
 	filterflag -Wl,--no-eh-frame-hdr
 	# gcc 12 x86_64?
