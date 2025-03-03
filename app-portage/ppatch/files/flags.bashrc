@@ -377,7 +377,9 @@ glibc)filterflag -fopenmp -fopenmp-simd;;&
 glibc)filterflag -fno-semantic-interposition;_isflag -Ofast && appendflag -fsemantic-interposition;;&
 # -Ofast / -ffast-math:
 # nodejs -> chromium
-duktape|coreutils|groff|glibc|mpg123|nodejs|fontforge|sqlite|postgresql*|goffice|db|protobuf|qtwebkit|qtwebengine|webkit-gtk|python|guile|chromium*|rrdtool)_fnofastmath;;&
+sleef|duktape|coreutils|groff|glibc|mpg123|nodejs|fontforge|sqlite|postgresql*|goffice|db|protobuf|qtwebkit|qtwebengine|webkit-gtk|python|guile|chromium*|rrdtool)
+    _fnofastmath
+;;&
 netsurf)_iuse duktape || _iuse javascript && _fnofastmath;;&
 systemd*)_fnofastmath;filterflag -Ofast -ffast-math;;&
 # sometimes somewere
