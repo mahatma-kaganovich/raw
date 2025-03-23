@@ -81,7 +81,7 @@ mail-mta/ssmtp gnutls
 mail-mta/ssmtp ssl gnutls
 media-gfx/ahoviewer ssl gnutls
 media-plugins/vdr-vdrmanager ssl
-media-video/ffmpeg openssl gnutls gcrypt -gmp
+media-video/ffmpeg openssl gnutls gcrypt
 media-video/obs-studio ssl
 media-video/vlc ssl
 media-video/vlc ssl gcrypt
