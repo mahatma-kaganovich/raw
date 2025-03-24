@@ -16,5 +16,7 @@ CFLAGS="$_FLAGS"
 FFLAGS="$_FLAGS"
 FCFLAGS="$_FLAGS"
 CXXFLAGS="$_FLAGS $_XFLAGS -fdeclone-ctor-dtor"
-LDFLAGS="$LDFLAGS -Wl,--strip-all -Wl,--no-ld-generated-unwind-info -Wl,--no-eh-frame-hdr"
+LDFLAGS="$LDFLAGS -Wl,--strip-debug -Wl,--no-ld-generated-unwind-info"
+# not effective runtime, some reduce elf size and need to be filtered
+#LDFLAGS="$LDFLAGS -Wl,--strip-all -Wl,--no-eh-frame-hdr"
 MAKEOPTS="-j$ncpu -s -Onone"
