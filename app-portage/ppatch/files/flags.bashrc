@@ -327,7 +327,7 @@ shadow)
 	replace1flag_ -O[sz] -O2
 	filterflag '--param=inline-unit-growth=*'
 ;;& # gcc 13?
-squid)filterflag -Wl,--no-ld-generated-unwind-info -Wl,--no-eh-frame-hdr;;&
+b2|squid)filterflag -Wl,--no-ld-generated-unwind-info -Wl,--no-eh-frame-hdr;;&
 gst-plugins-bad)filterflag -fopenmp;;&
 # libX11 1) not build lto 2) w/o lto - moz segfault
 doxygen|mongodb|libX11|llvm|clang)filterflag -fopenacc;;&
