@@ -1771,6 +1771,7 @@ kernel-2_src_prepare(){
 	# pnp
 #	use paranoid && return
 	use pnp || return
+	use paranoid && return
 	einfo "Fixing modules hardware info exports (forced mode, waiting for bugs!)"
 	sh "${SHARE}/modulesfix" "${S}" f
 }
