@@ -252,6 +252,8 @@ fnfm=' -O3 -Ofast -fno-fast-math'
 $x32 || f3+=' -mtls-dialect=gnu2'
 # gcc 14
 f3+=' -Wno-error=incompatible-pointer-types -Wno-error=implicit-function-declaration -Wno-error=int-conversion -Wno-error=implicit-int'
+# GCC 15
+#f3+=' -fzero-init-padding-bits=unions'
 f5='-fvisibility-inlines-hidden'
 # gcc 4.9 - -fno-lifetime-dse, gcc 6.3 - around some of projects(?) - keep 6.3 only safe
 # try to forget after years of upstream fixing
@@ -331,7 +333,7 @@ x86_*|i?86)
 	# for -fno-move-loop-invariants: as soon in -O1...
 	f3+=$(_f -fira-loop-pressure)
 	# -fschedule-insns is working (increasing registers range)
-	f3+=$(_f -flive-range-shrinkage -fsched-pressure -fschedule-insns -fsched-spec-load --param=sched-pressure-algorithm=2 -fira-region=all)
+	f3+=$(_f -flive-range-shrinkage -fsched-pressure -fschedule-insns -fsched-stalled-insns -fsched-spec-load --param=sched-pressure-algorithm=2 -fira-region=all)
 	# gnostic - don't know how to get universal default of defaults for GCC
 	# -mtune=x86-64 deprecated
 	base="-mtune=generic -march=${m//_/-}"
