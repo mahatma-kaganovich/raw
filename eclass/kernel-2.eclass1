@@ -1762,9 +1762,6 @@ kernel-2_src_prepare(){
 		sed -i -e "s/^\(CC_OPTION_CFLAGS .*\)$/\1$i/" scripts/Kbuild.include
 		touch "$TMPDIR/_cross"
 	fi
-	for i in $(extract_flags -std= ${CFLAGS}); do
-		sed -i -e "s:cc-option,-fcf-protection=none):cc-option,-fcf-protection=none) -std=$i:" arch/x86/Makefile
-	done
 	# broken in 5.17: -e '/KBUILD_CFLAGS += .*-mno-\(avx\|80387\|fp-ret-in-387\)/d' 
 	$reg && ! grep -Fq mgeneral-regs-only arch/x86/Makefile && sed -i -e 's:-mno-mmx -mno-sse$:-mgeneral-regs-only:' -e 's:-mno-sse -mno-mmx -mno-sse2 -mno-3dnow:-mgeneral-regs-only:' {arch/x86,arch/x86/boot/compressed,drivers/firmware/efi/libstub}/Makefile
 #	echo "CFLAGS_mdesc.o += -Wno-error=maybe-uninitialized" >>arch/sparc/kernel/Makefile
