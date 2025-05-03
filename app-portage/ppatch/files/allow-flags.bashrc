@@ -10,7 +10,7 @@ for i in ${!n}; do
     -fno-ident|-fdiagnostics-column-unit=*);;
     -flimit-function-alignment);;
     -flto*|-f*-lto-*|-f*-ltrans);;
-    -fzero-init-padding-bits=unions)[ "$PN" = gcc ] && continue;;
+    -fzero-init-padding-bits=unions|-std=*)[ "$PN" = gcc ] && continue;;
     *)for j in "${ALLOWED_FLAGS[@]}" ; do
         [[ "$i" == $j ]] && f+=" $i" && break
     done
