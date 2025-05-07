@@ -7,7 +7,8 @@ can copy it into own make.conf, removing "-Ofast -ffast-math"
 first (need to be filtered or -fno-fast-math for some packages).
 
 Althernate profile way (2do - main):
-/etc/portage/make.profile -> /usr/ppatch/profiles/{native,cpu}
-/etc/portage/make.profile.common -> /var/lib/layman/raw/profiles/common/{broken,other,fast,unroll}
-/etc/portage/make.profile.target -> /var/lib/layman/raw/profiles/targets/*
-/etc/portage/make.profile.gentoo -> /usr/portage/profiles/* (/usr/portage/profiles/default/linux/*/13.0)
+/etc/portage/make.profile -> /usr/ppatch/profiles/* (I prefer speculative-ram-rt)
+/etc/portage/make.profile.common -> /var/db/repos/raw/profiles/common/* (I prefer fast*)
+/etc/portage/make.profile.target -> /var/db/repos/raw/profiles/raw/profiles/targets/*
+/etc/portage/make.profile.gentoo -> /usr/portage/profiles/* (I prefer /var/db/repos/gentoo/profiles/default/linux/amd64/23.0/split-usr)
+

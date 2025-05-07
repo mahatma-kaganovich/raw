@@ -375,9 +375,10 @@ ceph)
 glibc)gccve 6. || filterflag -ftracer;;&
 glibc)filterflag -fopenmp -fopenmp-simd;;&
 glibc)filterflag -fno-semantic-interposition;_isflag -Ofast && appendflag -fsemantic-interposition;;&
+python|nodejs)filterflag -Ofast -ffast-math;;& # gcc 15
 # -Ofast / -ffast-math:
 # nodejs -> chromium
-sleef|duktape|coreutils|groff|glibc|mpg123|nodejs|fontforge|sqlite|postgresql*|goffice|db|protobuf|qtwebkit|qtwebengine|webkit-gtk|python|guile|chromium*|rrdtool)
+polkit|sleef|duktape|coreutils|groff|glibc|mpg123|nodejs|fontforge|sqlite|postgresql*|goffice|db|protobuf|qtwebkit|qtwebengine|webkit-gtk|python|guile|chromium*|rrdtool)
     _fnofastmath
 ;;&
 netsurf)_iuse duktape || _iuse javascript && _fnofastmath;;&

@@ -40,6 +40,7 @@ dev-vcs/git -perl
 dev-vcs/subversion -perl -extras
 dev-libs/boost -stacktrace -tools nls
 media-video/ffmpeg -gmp
+media-video/ffmpeg-compat -libilbc -librtmp
 # default don't want pam, but elogind
 x11-base/xorg-server suid -elogind
 #sys-auth/elogind pam
