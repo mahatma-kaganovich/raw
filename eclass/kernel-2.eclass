@@ -650,7 +650,7 @@ kernel-2_src_compile() {
 		mkdir -p "${TMPDIR}/overlay-rd/lib"
 		cp -an "$BDIR/lib/firmware" "${TMPDIR}/overlay-rd/lib"
 ue(){
-	use blkid || return
+	use $1 || return
 	shift
 	local i f
 	for i in "${@}"; do
