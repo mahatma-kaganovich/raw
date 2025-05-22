@@ -649,19 +649,31 @@ kernel-2_src_compile() {
 	if use !klibc && use !genkernel; then
 		mkdir -p "${TMPDIR}/overlay-rd/lib"
 		cp -an "$BDIR/lib/firmware" "${TMPDIR}/overlay-rd/lib"
+ue(){
+	use blkid || return
+	shift
+	local i f
+	for i in "${@}"; do
+		echo "$f"
+		[ -e "$f" ] ||
+		    for f in /usr/$i ${i#/usr} $(which {i##*/}); do
+			[ -e "$f" ] && echo "$f" && continue 2
+		done
+	done
+}
 		_genpnprd --IMAGE "initrd-${REAL_KV}.cpio" --STATIC true --FILES "/bin/busybox
-			$(use blkid && echo /sbin/blkid)
-			$(use mdadm && echo /sbin/mdadm /sbin/mdmon)
-			$(use device-mapper && echo /usr/sbin/dmraid)
-			$(use lvm && echo /sbin/lvm /sbin/dmsetup)
-			$(use unionfs && echo /sbin/unionfs)
-			$(use luks && echo /bin/cryptsetup)
-			$(use gpg && echo /sbin/gpg)
-			$(use iscsi && echo /usr/sbin/iscsistart)
-			$(use btrfs && echo /sbin/btrfs /sbin/btrfsck /sbin/mkfs.btrfs)
-			$(use bcache && echo /sbin/bcache)
-			$(use xfs && echo /sbin/xfs_repair /sbin/mkfs.xfs)
-			$(use dropbear && echo /usr/sbin/dropbear)
+			$(ue blkid /sbin/blkid)
+			$(ue mdadm /sbin/mdadm /sbin/mdmon)
+			$(ue device-mapper /usr/sbin/dmraid)
+			$(ue lvm /sbin/lvm /sbin/dmsetup)
+			$(ue unionfs /sbin/unionfs)
+			$(ue luks /bin/cryptsetup)
+			$(ue gpg /sbin/gpg)
+			$(ue iscsi /usr/sbin/iscsistart)
+			$(ue btrfs /sbin/btrfs /sbin/btrfsck /sbin/mkfs.btrfs)
+			$(ue bcache /sbin/bcache)
+			$(ue xfs /sbin/xfs_repair /sbin/mkfs.xfs)
+			$(ue dropbear /usr/sbin/dropbear)
 		" &&
 		mv initrd-"${REAL_KV}".{cpio,img} ||
 		die "genpnprd failed"
