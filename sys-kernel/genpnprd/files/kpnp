@@ -140,6 +140,7 @@ echo always >$d/shmem_enabled
 
 init(){
 local i='-o nosuid,nodev,noexec' l
+export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/opt/sbin:/opt/bin${PATH:+:$PATH}
 mount -t proc $i proc /proc && mount -t sysfs $i sys /sys || return
 KV
 BOOT=true

@@ -1,5 +1,5 @@
 #!/bin/sh
-## pnp modules bootloader v0.29
+## pnp modules bootloader v0.30
 ## (c) Denis Kaganovich, under Anarchy license
 ## consume preprocessed /lib/modules/$KV/modules.alias
 
@@ -423,7 +423,22 @@ echo defer+madvise >$d/defrag 2>/dev/null||echo defer >$d/defrag||return
 echo always >$d/shmem_enabled
 }
 
+_path(){
+	local p o v=$1
+	shift
+	o="${!v}"
+	p="$*"
+	p="${p// /:}"
+	[ "$o" = "${o#$p}" ] && export $v="$p${o:+:}$o"
+}
+
+_setpath(){
+	#_path PATH {/usr/local,/usr,,/opt}/{s,}bin
+	_path PATH {/usr/local,/usr,/opt,}/sbin {/usr/local,/usr,/opt,}/bin
+}
+
 pnp_options(){
+	_setpath
 	eval "set -- `cat /proc/cmdline` `[ -e /cmdline ]&&cat /cmdline`"
 	pnp_options(){ return;}
 	PARALLEL=0
@@ -832,7 +847,7 @@ resume(){
 
 mdadm(){
 	echo " # mdadm $*" >&2
-	/sbin/mdadm "${@}"
+	mdadm "${@}"
 }
 
 _wait4(){
@@ -912,7 +927,7 @@ detect_fs(){
 	    } 2>/dev/null | sed -e 's%^\(/dev/[^ ]*\):.* TYPE="swsuspend".*$%0susp:\1%' -e 's:^.* TYPE="\([^"]*\)".*$:\1:g'| sort -u ); do
 		case $i in
 		/dev/md*)
-			[ -x /sbin/mdadm ] || mknod "$i" b 9 "${i#/dev/md}"
+			whitch mdadm >/dev/null || mknod "$i" b 9 "${i#/dev/md}"
 			md=1
 		;;
 		linux_raid_member|mdraid) md=1 ;; # use right blkid
