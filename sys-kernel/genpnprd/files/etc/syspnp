@@ -845,10 +845,11 @@ resume(){
 	echo '0:0' >/sys/power/resume 2>/dev/null
 }
 
-mdadm(){
-	echo " # mdadm $*" >&2
-	mdadm "${@}"
-}
+#mdadm(){
+#	echo " # mdadm $*" >&2
+#	: ${mdadm:=$(which mdadm||echo mdadm not found >&2)}
+#	[ -n "$mdadm" ] &&  $mdadm "${@}"
+#}
 
 _wait4(){
 	[ -e "$1" ] && return 0
@@ -927,7 +928,7 @@ detect_fs(){
 	    } 2>/dev/null | sed -e 's%^\(/dev/[^ ]*\):.* TYPE="swsuspend".*$%0susp:\1%' -e 's:^.* TYPE="\([^"]*\)".*$:\1:g'| sort -u ); do
 		case $i in
 		/dev/md*)
-			whitch mdadm >/dev/null || mknod "$i" b 9 "${i#/dev/md}"
+			which mdadm >/dev/null || mknod "$i" b 9 "${i#/dev/md}"
 			md=1
 		;;
 		linux_raid_member|mdraid) md=1 ;; # use right blkid
