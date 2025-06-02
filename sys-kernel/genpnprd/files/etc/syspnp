@@ -424,17 +424,13 @@ echo always >$d/shmem_enabled
 }
 
 _path(){
-	local p o v=$1
-	shift
-	o="${!v}"
-	p="$*"
-	p="${p// /:}"
+	local o v=$1 p=$2
+	eval 'o=$v'
 	[ "$o" = "${o#$p}" ] && export $v="$p${o:+:}$o"
 }
 
 _setpath(){
-	#_path PATH {/usr/local,/usr,,/opt}/{s,}bin
-	_path PATH {/usr/local,/usr,/opt,}/sbin {/usr/local,/usr,/opt,}/bin
+	_path PATH /usr/local/sbin:/usr/sbin:/opt/sbin:/sbin:/usr/local/bin:/usr/bin:/opt/bin:/bin
 }
 
 pnp_options(){
@@ -847,8 +843,7 @@ resume(){
 
 #mdadm(){
 #	echo " # mdadm $*" >&2
-#	: ${mdadm:=$(which mdadm||echo mdadm not found >&2)}
-#	[ -n "$mdadm" ] &&  $mdadm "${@}"
+#	! mdadm:=$(which mdadm) && echo mdadm not found >&2 || $mdadm "${@}"
 #}
 
 _wait4(){
