@@ -33,7 +33,8 @@ use server && KERNEL_CONFIG+=" -KEXEC"
 #use speculative &&
     KERNEL_CONFIG+=" -CRASH_CORE -PROC_KCORE"
 
-use server && use !desktop && use !laptop && KERNEL_CONFIG+=" -USB_HID USB_KBD;+USB_HID USB_MOUSE;+USB_HID"
+# incompat. with IPMI console
+#use server && use !desktop && use !laptop && KERNEL_CONFIG+=" -USB_HID USB_KBD;+USB_HID USB_MOUSE;+USB_HID"
 #use server && ts+=" -IRQ_TIME_ACCOUNTING"
 use kvm || use lxc || KERNEL_CONFIG+=" -TASKSTATS"
 use lxc || KERNEL_CONFIG+=" -TASK_XACCT"
