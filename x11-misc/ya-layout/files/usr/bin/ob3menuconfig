@@ -1094,6 +1094,12 @@ sub{},'[Settings]'],
 },sub{},'[Qt]'],
 );
 
+sub unq{
+my %x;
+$x{$_}=undef for (@_);
+sort keys %x
+}
+
 my $b=[0,1];
 my $bb=['True','False'];
 my $tm=[1,3,5,10,15,30,40,60,90,120];
@@ -1115,7 +1121,10 @@ my %xrparam=(
 'Xft.core (Xft server-side)'=>$b,
 'Xft.embeddedbitmap'=>$b,
 'Xft.verticallayout'=>$b,
-'Xcursor.theme'=>['default',(map{substr($_,28)}glob('/usr/share/cursors/xorg-x11/*'))],
+'Xcursor.theme'=>['default',unq(
+	(map{substr($_,17,-8)}glob('/usr/share/icons/*/cursors')),
+	(map{substr($_,28)}glob('/usr/share/cursors/xorg-x11/*'))
+	)],
 'Xcursor.theme_core'=>$b,
 'Xcursor.size'=>[3..100],
 'xscreensaver.timeout'=>$tm,
