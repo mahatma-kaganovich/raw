@@ -353,7 +353,7 @@ glibc)filterflag -mfpmath=387 -Wl,--no-keep-memory;;&
 glibc)_isflag -fno-omit-frame-pointer && filterflag -f{,no-}omit-frame-pointer;;& # 2.23
 cdrdao|gcr|ufraw|_gdal|dosemu|soxr|flac|libgcrypt)filterflag2 '' '-flto*';;&
 boost)filter86_32 '-flto*' '-*-lto-*' -fuse-linker-plugin -fdevirtualize-at-ltrans;;&
-libsodium|elogind|perl|autofs|dovecot|pidgin-otr)_fLTO && appendflag_ LDFLAGS -fPIC;;&
+libsodium|elogind|perl|autofs|dovecot|pidgin-otr|libotr)_fLTO && appendflag_ LDFLAGS -fPIC;;&
 cmake)_fLTO && _isflag '-floop-*' '-fgraphite*' && filterflag -fipa-pta;;&
 # x86 gcc graphite ice
 gmp)filterflag -fno-move-loop-invariants;;&
@@ -413,7 +413,8 @@ seamonkey|thunderbird)appendflag_ CXXFLAGS -fno-fast-math;;&
 fltk)_isflag '-floop-*' '-fgraphite*' && filterflag -ftree-loop-distribution;; # -O2+
 freeglut)_isflag '-floop-*' '-fgraphite*' && appendflag -fno-ipa-cp-clone;;
 # 5.1
-gccxml|xemacs|devil|vtun|irda-utils|wmmon|bbrun|diffball|ldns|rp-l2tp)appendflag -std=gnu89;;
+gccxml|xemacs|devil|vtun|irda-utils|wmmon|bbrun|diffball|ldns|rp-l2tp|ftp|dosemu|unifont|dnrd|spacefm)appendflag -std=gnu89;;
+libprojectm)appendflag -std=c99;;& # c11
 sessreg|ldns)appendflag_ CPPFLAGS -P;;
 klibc)[[ "$MAKEOPTS" == *'-j '* || "$MAKEOPTS" == *-j ]] && export MAKEOPTS="$MAKEOPTS -j8";;
 sarg)filterflag -w;;
