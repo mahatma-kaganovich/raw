@@ -1,0 +1,106 @@
+Fix shorten path ($USER or root) from tint2-side.
+In my case "export HOSTNAME" was required.
+
+        <$USER|root>@[$HOSTNAME:[$HOME[/]]]path -> path
+        mc "["<$USER|root>"]"@[$HOSTNAME:[$HOME[/]]]path -> path
+
+        $USER -> path never starting from "/" (else - "~:/...")
+        root ->always from "/"
+
+--- a/src/taskbar/task.c	2022-03-24 12:49:12.000000000 +0300
++++ b/src/taskbar/task.c	2025-09-24 13:31:16.000000000 +0300
+@@ -253,11 +253,12 @@ gboolean task_update_title(Task *task)
+     if (!panel->g_task.has_text && !panel->g_task.tooltip_enabled && taskbar_sort_method != TASKBAR_SORT_TITLE)
+         return FALSE;
+ 
+-    char *name = get_property(task->win, server.atom [_NET_WM_VISIBLE_NAME], server.atom [UTF8_STRING], NULL);
++    Atom *natom, *tatom;
++    char *name = get_property(task->win, natom = server.atom [_NET_WM_VISIBLE_NAME], tatom = server.atom [UTF8_STRING], NULL);
+     if (!name || !name[0]) {
+-        name = get_property(task->win, server.atom [_NET_WM_NAME], server.atom [UTF8_STRING], NULL);
++        name = get_property(task->win, natom = server.atom [_NET_WM_NAME], tatom = server.atom [UTF8_STRING], NULL);
+         if (!name || !name[0])
+-            name = get_property(task->win, server.atom [WM_NAME], XA_STRING, NULL);
++            name = get_property(task->win, natom = server.atom [WM_NAME], tatom = XA_STRING, NULL);
+     }
+ 
+     char *title = name && name[0] ? name : "Untitled";
+@@ -270,9 +271,77 @@ gboolean task_update_title(Task *task)
+                 XFree( name);
+             return FALSE;
+         }
+-        free( task->title);
+     }
+ 
++
++//  if (...) goto nofix;
++
++    // to keep "~/"
++//#define FORCE_HOME_CHR
++    static char *user = NULL, *hostname = NULL, *home = NULL;
++    static int s1 = 0, s2 = 0, s3 = 0;
++    char ch = 0, ch1 = ':', *title2 = title;
++    if (!home) {
++        if ((user = getenv("USER"))) s1 = strlen(user);
++        if ((hostname = getenv("HOSTNAME"))) s2 = strlen(hostname);
++        if ((home = getenv("HOME"))) s3 = strlen(home);
++        else home = "";
++    }
++
++    if (!strncmp(title2,"mc ",3)) title2 += 3;
++    if (*title2 == '['){
++        title2++;
++        ch1 = ']';
++    }
++    if (s1 && strncmp(title2,user,s1 + 1) == '@') {
++        title2 += s1 + 1;
++        ch = '~';
++    } else if (!strncmp(title2,"root@",5)) {
++        title2 += 5;
++        ch = '/';
++    }
++    if (ch) {
++        if (s2 && strncmp(title2,hostname,s2 + 1) == ch1) {
++            title2 += s2 + 1;
++            if (ch1 == ']' && *title2 == ':') title2++;
++            int l;
++            if (ch == '~' && (
++#ifndef FORCE_HOME_CHR
++                       (title2[0] == '~' && title2[l = 1] == '/') ||
++#endif
++                       (s3 && (strncmp(title2,home,(l = s3) + 1) ? : '/') == '/')
++                       )) {
++                title2 += l;
++                ch = 0;
++#ifndef FORCE_HOME_CHR
++                if (*title2 == '/') title2++;
++#endif
++                if (*title2 == '/' || !*title2) *(--title2) = '~';
++            }
++            if (ch && *title2 != ch) {
++                *(--title2) = ':';
++                *(--title2) = ch;
++            }
++         } else {
++            title2--;
++            if (ch != '~') *(--title2) = ch;
++            if (ch1 == ']') *(--title2) = '[';
++        }
++    }
++    if (title != title2) {
++        if (task->title && strcmp(task->title, title) == 0)
++            return FALSE;
++        title = title2;
++        if (natom) {
++            int len = strlen(title) + 1;
++            XChangeProperty(server.display,task->win,natom,tatom,8,PropModeReplace,(unsigned char *)title,len);
++            if (natom == server.atom [_NET_WM_VISIBLE_NAME])
++                XChangeProperty(server.display,task->win,server.atom [_NET_WM_NAME],server.atom[UTF8_STRING],8,PropModeReplace,(unsigned char *)title,len);
++         }
++     }
++//nofix:
++    if (task->title) free(task->title);
++
+     task->title = strdup( title);
+     if (name)
+         XFree( name);
