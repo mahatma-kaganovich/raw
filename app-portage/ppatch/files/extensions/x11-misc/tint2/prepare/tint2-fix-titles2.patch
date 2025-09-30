@@ -8,8 +8,8 @@ In my case "export HOSTNAME" was required.
         root ->always from "/"
 
 --- a/src/taskbar/task.c	2022-03-24 12:49:12.000000000 +0300
-+++ b/src/taskbar/task.c	2025-09-24 13:31:16.000000000 +0300
-@@ -253,11 +253,12 @@ gboolean task_update_title(Task *task)
++++ b/src/taskbar/task.c	2025-09-30 11:20:38.000000000 +0300
+@@ -253,15 +253,82 @@ gboolean task_update_title(Task *task)
      if (!panel->g_task.has_text && !panel->g_task.tooltip_enabled && taskbar_sort_method != TASKBAR_SORT_TITLE)
          return FALSE;
  
@@ -25,12 +25,6 @@ In my case "export HOSTNAME" was required.
      }
  
      char *title = name && name[0] ? name : "Untitled";
-@@ -270,9 +271,77 @@ gboolean task_update_title(Task *task)
-                 XFree( name);
-             return FALSE;
-         }
--        free( task->title);
-     }
  
 +
 +//  if (...) goto nofix;
@@ -88,8 +82,6 @@ In my case "export HOSTNAME" was required.
 +        }
 +    }
 +    if (title != title2) {
-+        if (task->title && strcmp(task->title, title) == 0)
-+            return FALSE;
 +        title = title2;
 +        if (natom) {
 +            int len = strlen(title) + 1;
@@ -98,9 +90,8 @@ In my case "export HOSTNAME" was required.
 +                XChangeProperty(server.display,task->win,server.atom [_NET_WM_NAME],server.atom[UTF8_STRING],8,PropModeReplace,(unsigned char *)title,len);
 +         }
 +     }
-+//nofix:
-+    if (task->title) free(task->title);
 +
-     task->title = strdup( title);
-     if (name)
-         XFree( name);
++//nofix:
+     if (task->title) {
+         // check unecessary title change
+         if (strcmp( task->title, title) == 0)
