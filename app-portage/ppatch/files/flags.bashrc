@@ -449,6 +449,7 @@ rocm-device-libs)_filterclang;;&
 esac
 
 case "$CATEGORY/$P" in
+media-fonts/unifont*)appendflag -std=c11;;
 sys-devel/llvm-11*|sys-libs/libomp-11*)
 		filterflag '-flto*' '-*-lto-*' -fuse-linker-plugin -fdevirtualize-at-ltrans
 ;;

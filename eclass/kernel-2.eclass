@@ -2103,7 +2103,12 @@ mksquash(){
 		grep -q "^CONFIG_${i%:*}=y$" "$S/.config" && c+=" -Xbcj ${i#*:}" && break
 	done;;
 	esac
-	mksquashfs "${@}" $c -b 1m -all-root -no-recovery -no-exports -always-use-fragments -no-progress ${p:+-processors $p} || die "mksquashfs failed"
+	[ "$p" = 1 ] || p="$p 1"
+	# around some bugs - try 1 processor on failure
+	for i in $p; do
+		mksquashfs "${@}" $c -b 1m -all-root -no-recovery -no-exports -always-use-fragments -no-progress ${i:+-processors $i} && return
+	done
+	die "mksquashfs failed"
 }
 
 LICENSE(){
