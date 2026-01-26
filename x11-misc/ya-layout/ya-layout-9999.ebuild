@@ -27,7 +27,7 @@ RDEPEND=" ${DEPEND}
 	x11-apps/xmodmap
 	dhcp? (
 		net-misc/dhcpcd
-		net-dns/dnrd
+		|| ( net-dns/dnrd net-dns/unbound )
 	)
 	laptop? (
 		>=x11-misc/xkbd-0.8.17
