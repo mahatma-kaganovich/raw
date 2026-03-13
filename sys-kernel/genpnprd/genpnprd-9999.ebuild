@@ -9,6 +9,7 @@ HOMEPAGE="https://github.com/mahatma-kaganovich/raw"
 RDEPEND="|| ( sys-fs/cramfs sys-apps/util-linux[cramfs] )
 	sys-fs/squashfs-tools
 	app-misc/pax-utils
+	sys-libs/binutils-libs
 	sys-apps/grep[pcre]"
 #	|| ( <sys-libs/glibc-2.14 sys-libs/uclibc net-libs/libtirpc[static-libs] )"
 S="${FILESDIR}"

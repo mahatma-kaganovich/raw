@@ -34,6 +34,7 @@ IUSE="${IUSE} +build-kernel custom-cflags +pnp +compressed integrated
 	external-firmware xen +smp kernel-tools multitarget 64-bit-bfd thin
 	lvm device-mapper unionfs luks gpg iscsi e2fsprogs mdadm btrfs bcache dropbear xfs +keymap blkid
 	lguest acpi klibc +genkernel monolythe update-boot uml paranoid split-usr"
+# OBJTOOL: bfd.h - sys-libs/binutils-libs
 DEPEND="${DEPEND}
 	!<app-portage/ppatch-0.08-r16
 	pnp? ( sys-kernel/genpnprd )
@@ -44,6 +45,7 @@ DEPEND="${DEPEND}
 	zstd? ( app-arch/zstd )
 	build-kernel? (
 		app-arch/cpio
+		sys-libs/binutils-libs
 		compressed? ( sys-kernel/genpnprd )
 		kernel-firmware? ( !sys-kernel/linux-firmware )
 		klibc? ( sys-kernel/klibc-sources )
