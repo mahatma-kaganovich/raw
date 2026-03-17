@@ -334,6 +334,8 @@ x86_*|i?86)
 	f3+=$(_f -fira-loop-pressure)
 	# -fschedule-insns is working (increasing registers range)
 	f3+=$(_f -flive-range-shrinkage -fsched-pressure -fschedule-insns -fsched-stalled-insns -fsched-spec-load --param=sched-pressure-algorithm=2 -fira-region=all)
+	# implied by -funroll-loops/-O3+, force for filtered cases
+	f3+=$(_f -frename-registers)
 	# gnostic - don't know how to get universal default of defaults for GCC
 	# -mtune=x86-64 deprecated
 	base="-mtune=generic -march=${m//_/-}"
