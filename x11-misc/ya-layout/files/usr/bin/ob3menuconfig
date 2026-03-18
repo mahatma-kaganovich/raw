@@ -791,7 +791,7 @@ sub _xkbmap{
 		$kch{$c}||$ch{$c}||next;
 		$n++;
 		if($c eq 'option'){
-			print join(" -$c '",'','',@$v)."'";
+			print join(" -$c '",'',@$v)."'";
 		}else{
 			print " -$c '".join(',',@$v)."'";
 		}
