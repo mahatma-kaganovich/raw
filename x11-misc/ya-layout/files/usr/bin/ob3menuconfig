@@ -791,9 +791,9 @@ sub _xkbmap{
 		$kch{$c}||$ch{$c}||next;
 		$n++;
 		if($c eq 'option'){
-			print join(" -$c '",'',@$v)."'";
+			print map{" -$c '$_'"}@$v;
 		}else{
-			print " -$c '".join(',',@$v)."'";
+			print " -$c '",join(',',@$v),"'";
 		}
 	}
 	$n||print ' -';
@@ -923,7 +923,7 @@ sub setxkbmap{
 			$xx=$x;
 			$x=quotemeta($x);
 			$conf++;
-			print "<menu id='$MENU:$conf' label='".(grep(/^$x:/,@{$kb{'option'}})?'*':'').($xx eq $_?$t:$xx)."'>";
+			print "<menu id='$MENU:$conf' label='",(grep(/^$x:/,@{$kb{'option'}})?'*':''),($xx eq $_?$t:$xx),"'>";
 			next if($xx eq $_);
 		}
 		_xkbmap(['option'],exists($ko{$_})?($ko{$_}):($n,[$_]));
