@@ -50,7 +50,7 @@ src_prepare(){
 src_configure() {
 	econf \
 		$(use_enable minimal) \
-		$(use_enable xft)
+		$(use_enable xft) \
 		$(use_enable xpm) \
 		$(use_enable multitouch xi) \
 		$(use_enable evdev) \
