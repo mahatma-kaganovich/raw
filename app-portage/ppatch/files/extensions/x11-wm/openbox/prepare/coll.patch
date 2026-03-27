@@ -1,0 +1,16 @@
+based on
+https://github.com/mati75/openbox-debian/tree/master/debian/patches
+https://raw.githubusercontent.com/mati75/openbox-debian/refs/heads/master/debian/patches/Fix-collision-between-iterator-and-throw-away-argume.patch
+
+I am unsure about true "collision", but just fix.
+Really, values must be changed only on final iteration & break.
+
+--- a/openbox/screen.c	2014-11-05 18:19:42.000000000 +0300
++++ b/openbox/screen.c	2026-03-27 08:03:21.000000000 +0300
+@@ -1914,3 +1914,3 @@
+-        for (i = 0; i < ScreenCount(obt_display); ++i)
+-            if (i != ob_screen)
+-                if (XQueryPointer(obt_display, obt_root(i),
++        for (gint s = 0; s < ScreenCount(obt_display); ++s)
++            if (s != ob_screen)
++                if (XQueryPointer(obt_display, obt_root(s),
