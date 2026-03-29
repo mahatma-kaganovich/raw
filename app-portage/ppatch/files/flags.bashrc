@@ -386,7 +386,7 @@ polkit|sleef|duktape|coreutils|groff|glibc|mpg123|nodejs|fontforge|sqlite|postgr
     _fnofastmath
 ;;&
 netsurf)_iuse duktape || _iuse javascript && _fnofastmath;;&
-systemd*)_fnofastmath;filterflag -Ofast -ffast-math;;&
+elogind|systemd*)_fnofastmath;filterflag -Ofast -ffast-math;;&
 # sometimes somewere
 #libX11|wget)_isflag -Os && _fnofastmath -fno-unsafe-math-optimizations -fno-signed-zeros -fno-trapping-math -fassociative-math -freciprocal-math;;&
 chromium*)_iuse abi_x86_32 && filterflag -maccumulate-outgoing-args;;&

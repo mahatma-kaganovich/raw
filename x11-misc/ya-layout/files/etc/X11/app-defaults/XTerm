@@ -1,0 +1,20 @@
+*faceName: Monospace
+*faceNameDoublesize: Monospace:style=Bold
+*reverseVideo: true
+*selectToClipboard: true
+*jumpScroll: true
+*fastScroll: true
+*multiScroll: true
+*saveLines: 1000
+*scrollBar: true
+*rightScrollBar: true
+*locale: UTF-8
+!XTerm*menuLocale:
+*titleModes: 14
+!*allowC1Printable: true
+*localeFilter: /usr/bin/luit
+
+*metaSendsEscape: true
+*saveline: on
+*scrollTtyOutput: off
+*scrollKey: on

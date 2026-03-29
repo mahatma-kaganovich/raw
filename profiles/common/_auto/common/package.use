@@ -7,7 +7,7 @@ media-libs/waffle egl
 media-plugins/gst-plugins-gtk opengl egl -gles2
 media-plugins/gst-plugins-vaapi opengl egl -gles2
 media-video/mpv opengl egl
-net-libs/webkit-gtk 
+net-libs/webkit-gtk
 net-libs/webkit-gtk opengl egl
 app-admin/rsyslog ssl openssl gnutls gcrypt
 app-crypt/codecrypt cryptopp
