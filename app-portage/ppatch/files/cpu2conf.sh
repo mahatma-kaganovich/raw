@@ -125,6 +125,7 @@ flag_skip(){
 #	pragma_ok "${x}def __${M}__" "$*" 1 && pragma_ok "ndef __${M}__" "$* -m$m" 2
 }
 
+# LSD: loop stream detector
 max_unrolled(){
 	local n=$(($1-4))
 	# default 100 80
@@ -136,6 +137,16 @@ max_unrolled(){
 #	ffast+=" --param=prefetch-min-insn-to-mem-ratio=$(($1+1))" # make effect of data streaming reasonable solid, related to code streaming
 	# -fprefetch-loop-arrays default ON vs. -Os
 #	ffast+=" --param=min-insn-to-prefetch-ratio=$(($1+1))" # gcc 6: insn_to_prefetch_ratio = (unroll_factor * ninsns) / prefetch_count;
+}
+
+# ROB (never cpus), LSD
+max_unrolled2(){
+	local n=$(($1/16)) # rob
+	[ -n "$2" ] && {
+		local n2=$(($2-4)) # lsd
+		[ "$n" -gt "$n2" ] && n=$n2
+	}
+	fsmall+=" --param=max-unrolled-insns=$n --param=max-average-unrolled-insns=$((n*10/25))"
 }
 
 split_cache(){
@@ -205,7 +216,7 @@ esac
 case "$vendor_id" in
 GenuineIntel)
 	case "$cpu_family:  $flags  " in
-	6:*\ avx5124vnniw\ *|6:*\ avx512er\ *)a=k1om;;
+	6:*\ avx512_4vnniw\ *|6:*\ avx512er\ *)a=k1om;;
 	6:*\ sse4_2\ *)a=corei7;;
 	6:*\ ssse3\ *)a=core2;;
 	6:*)a=core;;
@@ -218,8 +229,11 @@ GenuineIntel)
 AuthenticAMD|HygonGenuine)
 	case "$cpu_family:  $flags  " in
 	22:*\ movbe\ *)a=btver2;;
+	20:*\ movbe\ *)a=btver1;;
+	*\ avx_vnni\ *)a=znver5;;
+	*\ avx512f\ *)a=znver4;;
 	*\ vaes\ *)a=znver3;;
-	*\ clvb\ *)a=znver2;;
+	*\ clwb\ *)a=znver2;;
 	*\ clzero\ *)a=znver1;;
 	*\ avx2\ *)a=bdver4;;
 	*\ xsaveopt\ *)a=bdver3;;
@@ -309,13 +323,26 @@ case "`cat /proc/cpuinfo|sed -e 's:$: :'`" in
 *spectre_v2*)fsec+=" $ind";;&
 *GenuineTMx86*)f3="${f3/cacheline/abi} -fno-align-functions -fno-align-jumps -fno-align-loops -fno-align-labels -mno-align-stringops";;&
 *CentaurHauls*)preferred_fp=auto;;& # bashmark: C7 better 387, nothing about Nano
+
+*AuthenticAMD*" avx_vnni "*) max_unrolled2 448 ;; # zen5
+*AuthenticAMD*" avx512f "*) max_unrolled2 320 ;; # zen4
+*AuthenticAMD*" vaes "*) max_unrolled2 256 ;; #  zen3
+*AuthenticAMD*" clwb "*) max_unrolled2 224 ;; #  zen2
+
 *AuthenticAMD*" sse "*|*AuthenticAMD*Athlon*) max_unrolled 99 ;;&
+
 # Core2 lsd: 18 instructions
 # Nehalem: lsd: 28 u-op
 # Sandy Bridge: lsd: 28 u-op, decoded instruction cache: 1500
 # Haswell: 2xSB + 2xLSD if HT disabled
 #*GenuineIntel* avx512f *)max_unrolled 28;; # knl
 #*GenuineIntel* adx *)max_unrolled 28;; # broadwell
+
+# ROB vs LSD: 32 vs 30. keep less. ignore HT
+# both: lsd=64 rob=512
+*GenuineIntel*" avx_vnni "*) max_unrolled2 512 64 ;; # no HT
+*GenuineIntel*" avx512"*|*GenuineIntel*" avx2 "*) max_unrolled2 512 32 ;; # /ht
+
 *GenuineIntel*" avx2 "*)max_unrolled 28;; # haswell 2do: double on !HT
 *GenuineIntel*" avx "*)max_unrolled 28;; # sandy bride
 #*GenuineIntel*" movbe "*);; # silvermont/bonnel

@@ -1414,7 +1414,7 @@ read KV </proc/sys/kernel/osrelease||KV=`uname -r`
 export KV
 _udevd || {
 	_settle(){ _settle1;}
-	_hotplug /sbin/mdev || $devfs || if $fast; then
+	_hotplug /sbin/mdev || $devfs || if ${cmd_fast:=false}; then
 		_settle(){ _settle1 /sbin/mdev -s block;}
 	else
 		_settle(){ mdev -s;}
