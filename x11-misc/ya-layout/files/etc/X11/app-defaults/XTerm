@@ -16,5 +16,5 @@
 
 *metaSendsEscape: true
 *saveline: on
-*scrollTtyOutput: off
+!*scrollTtyOutput: off
 *scrollKey: on
