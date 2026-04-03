@@ -10,6 +10,7 @@ for i in ${!n}; do
     -fno-ident|-fdiagnostics-column-unit=*);;
     -flimit-function-alignment);;
     -frename-registers);;
+    -fno-semantic-interposition)[ "$PN" = glibc ] && continue;;
     -flto*|-f*-lto-*|-f*-ltrans);;
     -fzero-init-padding-bits=unions|-std=*)[ "$PN" = gcc ] && continue;;
     *)for j in "${ALLOWED_FLAGS[@]}" ; do

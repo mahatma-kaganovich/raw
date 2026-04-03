@@ -377,7 +377,7 @@ glibc)gccve 6. || filterflag -ftracer;;&
 glibc)filterflag -fopenmp -fopenmp-simd;;&
 glibc)
 	#filterflag -fno-semantic-interposition;_isflag -Ofast && appendflag -fsemantic-interposition
-	filterflag -Ofast -fno-semantic-interposition -fsemantic-interposition 
+	filterflag -Ofast -fno-semantic-interposition -fsemantic-interposition
 ;;&
 python|nodejs)filterflag -Ofast -ffast-math;;& # gcc 15
 # -Ofast / -ffast-math:

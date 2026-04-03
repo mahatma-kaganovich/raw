@@ -1,0 +1,6 @@
+--- a/init.d/udev	2026-02-26 19:07:06.034280653 +0300
++++ b/init.d/udev	2025-05-06 20:52:04.000000000 +0300
+@@ -32,2 +32,3 @@
+ start_pre() {
++	local KV;KV=`uname -r` && [ -L "/lib/modules/$KV/kernel" ] && ! grep -qF " /usr/src/linux-$KV " /proc/mounts && mount -t squashfs -v -o ro,loop,noatime /usr/src/linux-"$KV"{.squashfs,} || true
+ 	# make sure devtmpfs is in the kernel
