@@ -15,7 +15,8 @@ _FLAGS="-fvect-cost-model=cheap -fsimd-cost-model=cheap $_FLAGS"
 CFLAGS="$_FLAGS"
 FFLAGS="$_FLAGS"
 FCFLAGS="$_FLAGS"
-CXXFLAGS="$_FLAGS $_XFLAGS -fdeclone-ctor-dtor"
+# surpize: -fdeclone-ctor-dtor grow code with -fno-semantic-interposition
+CXXFLAGS="$_FLAGS $_XFLAGS"
 LDFLAGS="$LDFLAGS -Wl,--strip-debug -Wl,--no-ld-generated-unwind-info"
 # not effective runtime, some reduce elf size and need to be filtered
 #LDFLAGS="$LDFLAGS -Wl,--strip-all -Wl,--no-eh-frame-hdr"
