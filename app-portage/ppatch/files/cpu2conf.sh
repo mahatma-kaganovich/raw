@@ -261,7 +261,7 @@ fsmall+=' -fno-asynchronous-unwind-tables'
 #	1) vs. some overfiltering
 #	2) for filtering again
 #	3) keep all in one point
-ffm=' -Ofast -ffast-math -fallow-store-data-races --param=allow-store-data-races=1'
+ffm=' -Ofast -ffast-math -fno-semantic-interposition -fallow-store-data-races --param=allow-store-data-races=1'
 fnfm=' -O3 -Ofast -fno-fast-math'
 $x32 || f3+=' -mtls-dialect=gnu2'
 # gcc 14
