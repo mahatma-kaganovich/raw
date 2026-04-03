@@ -324,11 +324,11 @@ case "`cat /proc/cpuinfo|sed -e 's:$: :'`" in
 *GenuineTMx86*)f3="${f3/cacheline/abi} -fno-align-functions -fno-align-jumps -fno-align-loops -fno-align-labels -mno-align-stringops";;&
 *CentaurHauls*)preferred_fp=auto;;& # bashmark: C7 better 387, nothing about Nano
 
-*AuthenticAMD*" avx_vnni "*) max_unrolled2 448 ;; # zen5
+*AuthenticAMD*" avx_vnni "*);; # zen5: ROB=448 vs good OpCache
 *AuthenticAMD*" avx512f "*) max_unrolled2 320 ;; # zen4
 *AuthenticAMD*" vaes "*) max_unrolled2 256 ;; #  zen3
 *AuthenticAMD*" clwb "*) max_unrolled2 224 ;; #  zen2
-
+*AuthenticAMD*" sse2 "*)fsmall+=' -fprefetch-loop-arrays';;& #  zen1: ROB=192 uneffective
 *AuthenticAMD*" sse "*|*AuthenticAMD*Athlon*) max_unrolled 99 ;;&
 
 # Core2 lsd: 18 instructions
@@ -338,17 +338,22 @@ case "`cat /proc/cpuinfo|sed -e 's:$: :'`" in
 #*GenuineIntel* avx512f *)max_unrolled 28;; # knl
 #*GenuineIntel* adx *)max_unrolled 28;; # broadwell
 
-# ROB vs LSD: 32 vs 30. keep less. ignore HT
-# both: lsd=64 rob=512
-*GenuineIntel*" avx_vnni "*) max_unrolled2 512 64 ;; # no HT
+*GenuineIntel*" avx_vnni "*)
+	# all cores no-HT or some (E-cores) exists = no unroll
+	# only ALL cores are HT = some unroll
+	grep -vsqF ',' /sys/devices/system/cpu/cpu*/topology/core_cpus_list ||
+		max_unrolled2 512 32 # ht lsd=64 rob=512
+;;
 *GenuineIntel*" avx512"*|*GenuineIntel*" avx2 "*) max_unrolled2 512 32 ;; # /ht
 
 *GenuineIntel*" avx2 "*)max_unrolled 28;; # haswell 2do: double on !HT
 *GenuineIntel*" avx "*)max_unrolled 28;; # sandy bride
 #*GenuineIntel*" movbe "*);; # silvermont/bonnel
-*GenuineIntel*" sse4_2 "*)max_unrolled 28;; # nehalem
-*GenuineIntel*" ssse3 "*)max_unrolled 18;; # core2
+
+#*GenuineIntel*" sse4_2 "*)max_unrolled 28;; # nehalem
+#*GenuineIntel*" ssse3 "*)max_unrolled 18;; # core2
 esac
+[[ "$fsmall" != *max-unrolled-insns* ]] && fsmall+=' -fno-unroll-loops'
 filter=break
 case "$m" in
 x86_*|i?86)
