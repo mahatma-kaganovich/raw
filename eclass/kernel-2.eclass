@@ -1277,6 +1277,7 @@ fi
 case "${march}" in
 native|:native|native:native)
 	einfo 'Found "-m{arch|cpu}=native" in CFLAGS, detecting CPU & arch hardware constants'
+	CF1 X86_NATIVE_CPU
 	while read i ; do
 		v="${i%%:*}"
 		v="${v//	}"
