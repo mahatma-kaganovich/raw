@@ -341,7 +341,7 @@ mariadb)_fLTO_f -fno-ipa-cp-clone;;&
 mariadb)
 #	CFLAGS_NO_FAST_MATH=-O3
 #	_iuse rocksdb && _fnofastmath
-	_iuse jemalloc && replace1flag_ -Ofast '-Ofast -fsemantic-interposition'
+#	_iuse jemalloc && replace1flag_ -Ofast '-Ofast -fsemantic-interposition'
 ;;& # just paranoid
 jemalloc)filterflag -Wl,-z,pack-relative-relocs;;& # lto?
 php)[[ "$PV" == 5.* ]] || filterflag '-flto*' -fdevirtualize-at-ltrans;;&
