@@ -246,6 +246,10 @@ kernel-2_src_configure() {
 #			test_cc $i && cflags+=" $i"
 #		done
 		[[ "$(gcc-version)" == 4.8 ]] && append-flags -fno-inline-functions
+		# objtool
+		(use x86 || use amd64) &&
+		    is-flagq -maccumulate-outgoing-args ||
+		    append-flags -fno-rename-registers
 		cflags="$(flags_nosp "$(_filter_f CFLAGS "-msse*" -mmmx -m3dnow -mavx "-mfpmath=*" '-flto*' '-*-lto-*' -fuse-linker-plugin -fdevirtualize-at-ltrans '-mindirect-branch*' '-mfunction-return=*' -fopenmp -fopenmp-simd -fopenacc -fgnu-tm) ${cflags}")" #"
 
 		# dedup
@@ -270,8 +274,6 @@ kernel-2_src_configure() {
 		# only KBUILD_USER*FLAGS, but starting from 5.15 wrong
 		# USE=custom-cflags still unstripped
 		strip-flags
-		# objtool failed without -maccumulate-outgoing-args
-		filter-flags -frename-registers
 	fi
 	use unionfs && KERNEL_UTILS_CFLAGS+=" -std=gnu89"
 	cfg_ '###CFLAGS:'
