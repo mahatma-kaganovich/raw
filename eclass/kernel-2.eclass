@@ -247,9 +247,9 @@ kernel-2_src_configure() {
 #		done
 		[[ "$(gcc-version)" == 4.8 ]] && append-flags -fno-inline-functions
 		# objtool
-		(use x86 || use amd64) &&
-		    is-flagq -maccumulate-outgoing-args ||
-		    append-flags -fno-rename-registers
+		if use x86 || use amd64; then
+			is-flagq -maccumulate-outgoing-args || append-flags -fno-rename-registers
+		fi
 		cflags="$(flags_nosp "$(_filter_f CFLAGS "-msse*" -mmmx -m3dnow -mavx "-mfpmath=*" '-flto*' '-*-lto-*' -fuse-linker-plugin -fdevirtualize-at-ltrans '-mindirect-branch*' '-mfunction-return=*' -fopenmp -fopenmp-simd -fopenacc -fgnu-tm) ${cflags}")" #"
 
 		# dedup
