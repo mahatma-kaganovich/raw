@@ -9,7 +9,7 @@ for i in ${!n}; do
     -fsched*|-fira-*|-flive-range-shrinkage);;
     -fno-ident|-fdiagnostics-column-unit=*);;
     -flimit-function-alignment);;
-    -frename-registers);;
+    -frename-registers|-fweb);;
     -fno-semantic-interposition)[ "$PN" = glibc ] && continue;;
     -flto*|-f*-lto-*|-f*-ltrans);;
     -fzero-init-padding-bits=unions|-std=*)[ "$PN" = gcc ] && continue;;

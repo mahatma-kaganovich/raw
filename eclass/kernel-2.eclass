@@ -270,6 +270,8 @@ kernel-2_src_configure() {
 		# only KBUILD_USER*FLAGS, but starting from 5.15 wrong
 		# USE=custom-cflags still unstripped
 		strip-flags
+		# objtool failed without -maccumulate-outgoing-args
+		filter-flags -frename-registers
 	fi
 	use unionfs && KERNEL_UTILS_CFLAGS+=" -std=gnu89"
 	cfg_ '###CFLAGS:'
