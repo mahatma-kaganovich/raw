@@ -261,7 +261,7 @@ fsmall+=' -fno-asynchronous-unwind-tables'
 #	1) vs. some overfiltering
 #	2) for filtering again
 #	3) keep all in one point
-ffm=' -Ofast -ffast-math -fno-semantic-interposition -fallow-store-data-races --param=allow-store-data-races=1'
+ffm=' -Ofast -ffast-math -fallow-store-data-races --param=allow-store-data-races=1'
 fnfm=' -O3 -Ofast -fno-fast-math'
 $x32 || f3+=' -mtls-dialect=gnu2'
 # gcc 14
@@ -368,6 +368,7 @@ x86_*|i?86)
 	f3+=$(_f -flive-range-shrinkage -fsched-pressure -fschedule-insns -fsched-stalled-insns -fsched-spec-load --param=sched-pressure-algorithm=2 -fira-region=all)
 	# implied by -funroll-loops/-O3+, force for filtered cases
 	f3+=$(_f -frename-registers -fweb)
+	f3+=$(_f -fno-semantic-interposition)
 	# gnostic - don't know how to get universal default of defaults for GCC
 	# -mtune=x86-64 deprecated
 	base="-mtune=generic -march=${m//_/-}"
