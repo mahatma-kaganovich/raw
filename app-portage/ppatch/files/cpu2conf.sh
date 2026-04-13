@@ -284,7 +284,7 @@ f5+=' -fpermissive -w'
 fsec+='  -ftrivial-auto-var-init=zero'
 ffast+=' -minline-stringops-dynamically'
 fsmall+=' -malign-data=abi -flimit-function-alignment -Wa,--reduce-memory-overheads -fvect-cost-model=cheap -fvect-cost-model=very-cheap -fsimd-cost-model=cheap -fsimd-cost-model=very-cheap -w'
-fsmall+=' -fno-move-loop-invariants'
+#fsmall+=' -fno-move-loop-invariants'
 fsmall+=' -fno-show-column'
 # vs. -fno-ipa-cp-clone -fno-inline-functions
 # +max(orig_overall_size,ipa-cp-large-unit-insns)*ipa-cp-unit-growth/100+1
