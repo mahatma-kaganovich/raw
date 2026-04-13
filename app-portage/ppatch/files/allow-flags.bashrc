@@ -11,6 +11,7 @@ for i in ${!n}; do
     -flimit-function-alignment);;
     -frename-registers|-fweb);;
     -fno-semantic-interposition)[ "$PN" = glibc ] && continue;;
+    -falign-*=*);;
     -flto*|-f*-lto-*|-f*-ltrans);;
     -fzero-init-padding-bits=unions|-std=*)[ "$PN" = gcc ] && continue;;
     *)for j in "${ALLOWED_FLAGS[@]}" ; do
