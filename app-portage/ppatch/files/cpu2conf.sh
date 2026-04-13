@@ -317,6 +317,7 @@ fi
 # 2do: patch over ssp patch to make default
 #(echo " $cmn"|grep -q 'disable-default-ssp') && f3+=' -fstack-protector-explicit'
 case "`cat /proc/cpuinfo|sed -e 's:$: :'`" in
+*" sse "*)f3+=' -falign-loops=32:15:16:7 -falign-functions=32:15:16:7 -falign-jumps=32:15:16:7';;&
 # core2: RTFM: says "most current", but I cannot count them
 # but IMHO all rare core2+ mostly known as "native"
 *GenuineIntel*" ssse3 "*)base2=`_f -mtune=intel`;;&
