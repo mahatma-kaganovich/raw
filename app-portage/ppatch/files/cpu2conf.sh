@@ -414,8 +414,16 @@ i?86);;
 *)fv='';;
 esac
 
+ccs(){
+	for i in /sys/devices/system/cpu/cpu*/cache/index*/type; do
+		[ "$(cat $i)" == Instruction ] && i=${i%/*} && [ "$(cat $i/level)" == 1 ] &&
+		    i=$(cat $i/coherency_line_size) && return 0
+	done
+	return 1
+}
+
 local cl=
-which getconf 2>/dev/null && i=$(getconf LEVEL1_ICACHE_LINESIZE) && {
+ccs || i=$(getconf LEVEL1_ICACHE_LINESIZE) && {
 	#cl='32:15:16:7'
 	[ "$i" -eq 8 ] && cl="8"
 	[ "$i" -lt 32 ] && [ "$i" -gt 8 ] && cl="$i:7"
