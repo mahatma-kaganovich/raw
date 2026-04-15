@@ -317,7 +317,6 @@ fi
 # 2do: patch over ssp patch to make default
 #(echo " $cmn"|grep -q 'disable-default-ssp') && f3+=' -fstack-protector-explicit'
 case "`cat /proc/cpuinfo|sed -e 's:$: :'`" in
-*" sse "*)f3+=' -falign-loops=32:15:16:7 -falign-functions=32:15:16:7 -falign-jumps=32:15:16:7';;&
 # core2: RTFM: says "most current", but I cannot count them
 # but IMHO all rare core2+ mostly known as "native"
 *GenuineIntel*" ssse3 "*)base2=`_f -mtune=intel`;;&
@@ -414,6 +413,17 @@ done
 i?86);;
 *)fv='';;
 esac
+
+local cl=
+which getconf 2>/dev/null && i=$(getconf LEVEL1_ICACHE_LINESIZE) && {
+	#cl='32:15:16:7'
+	[ "$i" -eq 8 ] && cl="8"
+	[ "$i" -lt 32 ] && [ "$i" -gt 8 ] && cl="$i:7"
+	[ "$i" -ge 32 ] && cl="$i:15:16:7" # or "$i:15"?
+	[ -n "$cl" ] &&
+	    f3+=" -falign-loops=$cl -falign-functions=$cl -falign-jumps=$cl" ||
+	    f3+=" -fno-align-loops -fno-align-functions -fno-align-jumps"
+}
 
 i=$(cpuid2cpuflags)
 i1=${i%%:*}
