@@ -248,7 +248,9 @@ AuthenticAMD|HygonGenuine)
 	esac
 ;;
 esac
-fsmall+=' --param=max-grow-copy-bb-insns=1 -fno-align-jumps'
+#fsmall+=' --param=max-grow-copy-bb-insns=1 -fno-align-jumps'
+# -falign-jumps= bounded instead
+fsmall+=' --param=max-grow-copy-bb-insns=1'
 ffast+=' -fdiagnostics-column-unit=byte'
 f0=`_f -m{tune,cpu,arch}=native ${a:+-Wa,-mtune=$a}`
 f3='-momit-leaf-frame-pointer -fsection-anchors'
