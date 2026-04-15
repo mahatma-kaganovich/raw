@@ -14,8 +14,9 @@ for i in {C,CXX,CPP,LD,F,FC,_}FLAGS; do
 	for i1 in ${!i}; do
 		d="${d// $i1 / }"
 		fy="${i1%=*}"
+		[ "$fy" != "$i1" ] && fy+='=' && fw="$fy*" || fw=
 		fn="$fy"
-		fw="$fy=*"
+		#fw="$fy=*"
 		case "$fy" in
 		-fuse-ld)
 			case "$C" in
@@ -23,20 +24,24 @@ for i in {C,CXX,CPP,LD,F,FC,_}FLAGS; do
 			esac
 			[ -z "$LD" ] && export LD="ld.${i1#*=}"
 		;;
-		-[fmW]no-*)fy="${fy:0:2}${fy:5}";fw="$fy=*";;
+		-[fmW]no-*)
+			fy="${fy:0:2}${fy:5}"
+			#fw="$fy=*"
+		;;
 		-[fmW]*)fn="${fy:0:2}no-${fy:2}";;
 #		-O*)fw="-O[^${i1:2:1}]*";;
 #		*)false;;
 		esac
-		[ "$fn" = "$i1" ] || d="${d// $fn / }"
-		[ "$fy" = "$i1" -o "$fy" = "$fn" ] || d="${d// $fy / }"
-		[[ "$d" == *' '$fw* ]] && {
+		if [ -z "$fw" ]; then
+			[ "$fn" = "$i1" ] || d="${d// $fn / }"
+			[ "$fy" = "$i1" -o "$fy" = "$fn" ] || d="${d// $fy / }"
+		elif [[ "$d" == *' '$fw* ]]; then
 			d2=' '
 			for i2 in $d; do
 				[[ "$i2" != $fw ]] && d2+="$i2 "
 			done
 			d="$d2"
-		}
+		fi
 		d+="$i1 "
 	done
 	d="${d% }"
