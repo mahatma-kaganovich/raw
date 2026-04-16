@@ -292,7 +292,7 @@ fsmall+=' -fno-show-column'
 # +max(orig_overall_size,ipa-cp-large-unit-insns)*ipa-cp-unit-growth/100+1
 # ipcp (<10) or ipa-cp (10+)
 fsmall+=" --param=ipa-cp-large-unit-insns=0 --param=ipcp-unit-growth=0 --param=ipa-cp-unit-growth=0"
-fbal=" --param=ipa-cp-large-unit-insns=256 --param=ipcp-unit-growth=1 --param=ipa-cp-unit-growth=1"
+fbal+=" --param=ipa-cp-large-unit-insns=256 --param=ipcp-unit-growth=1 --param=ipa-cp-unit-growth=1"
 # vs. -fno-inline-functions
 # max(max_insns,large-unit-insns)*(100+inline-unit-growth)/100)
 fsmall+=" --param=large-unit-insns=0 --param=inline-unit-growth=0"
@@ -356,7 +356,7 @@ case "`cat /proc/cpuinfo|sed -e 's:$: :'`" in
 #*GenuineIntel*" sse4_2 "*)max_unrolled 28;; # nehalem
 #*GenuineIntel*" ssse3 "*)max_unrolled 18;; # core2
 esac
-[[ "$fsmall" != *max-unrolled-insns* ]] && fsmall+=' -fno-unroll-loops'
+[[ "$fsmall" != *max-unrolled-insns* ]] && fsmall+=' -fno-unroll-loops' && fbal+=' -munroll-only-small-loops'
 filter=break
 case "$m" in
 x86_*|i?86)
