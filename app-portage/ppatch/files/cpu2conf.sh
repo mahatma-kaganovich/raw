@@ -424,7 +424,7 @@ ccs(){
 		Instruction|Unified)
 			i=${i%/*}
 			[ "$(cat $i/level)" == 1 ] &&
-			    r=$(cat $i/coherency_line_size) || continue
+			    i=$(cat $i/coherency_line_size) && r="$i" || continue
 		;;&
 		Instruction)break;;
 		esac
@@ -435,9 +435,12 @@ ccs(){
 
 local cl=
 ccs || i=$(getconf LEVEL1_ICACHE_LINESIZE) && {
-	[ "$i" -eq 8 ] && cl="8"
-	[ "$i" -lt 32 ] && [ "$i" -gt 8 ] && cl="$i:7"
-	[ "$i" -ge 32 ] && cl="$i:15:16:7" # or "$i:15"?
+	case "$i" in
+	8)cl=8;;
+	16)cl=16:7;;
+	32|64|128)cl="$i:15:16:7";;
+#	*)cl=16:7:8:3;;
+	esac
 	$nopl || cl=
 }
 [ -n "$cl" ] &&
