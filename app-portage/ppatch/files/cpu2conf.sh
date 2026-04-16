@@ -188,7 +188,7 @@ _replace(){
 }
 
 conf_cpu(){
-local f0= f1= f2= f3= f4= f5= f6= ff= fsmall= ffast= fbal= ffm= fnm= fv= i j i1 j1 c c0 c1 lm=false fp=387 gccv m="`uname -m`" i fsec= ind= l2= x32=false base2= a=
+local f0= f1= f2= f3= f4= f5= f6= ff= fsmall= ffast= fbal= ffm= fnm= fv= i j i1 j1 c c0 c1 lm=false fp=387 gccv m="`uname -m`" i fsec= ind= l2= x32=false base2= a= nopl=false
 _setflags flags cpucaps 'cpu family' model fpu vendor_id
 cmn=$(_gcc --help=common -v -Q)
 if i=$(echo "$cmn"|grep --max-count=1 "^Target: "); then
@@ -319,6 +319,7 @@ fi
 # 2do: patch over ssp patch to make default
 #(echo " $cmn"|grep -q 'disable-default-ssp') && f3+=' -fstack-protector-explicit'
 case "`cat /proc/cpuinfo|sed -e 's:$: :'`" in
+*" nopl "*)nopl=true;;&
 # core2: RTFM: says "most current", but I cannot count them
 # but IMHO all rare core2+ mostly known as "native"
 *GenuineIntel*" ssse3 "*)base2=`_f -mtune=intel`;;&
@@ -417,23 +418,31 @@ i?86);;
 esac
 
 ccs(){
+	local r=
 	for i in /sys/devices/system/cpu/cpu*/cache/index*/type; do
-		[ "$(cat $i)" == Instruction ] && i=${i%/*} && [ "$(cat $i/level)" == 1 ] &&
-		    i=$(cat $i/coherency_line_size) && return 0
+		case "$(cat $i)" in
+		Instruction|Unified)
+			i=${i%/*}
+			[ "$(cat $i/level)" == 1 ] &&
+			    r=$(cat $i/coherency_line_size) || continue
+		;;&
+		Instruction)break;;
+		esac
 	done
-	return 1
+	i="$r"
+	[ -n "$i" ]
 }
 
 local cl=
 ccs || i=$(getconf LEVEL1_ICACHE_LINESIZE) && {
-	#cl='32:15:16:7'
 	[ "$i" -eq 8 ] && cl="8"
 	[ "$i" -lt 32 ] && [ "$i" -gt 8 ] && cl="$i:7"
 	[ "$i" -ge 32 ] && cl="$i:15:16:7" # or "$i:15"?
-	[ -n "$cl" ] &&
-	    f3+=" -falign-loops=$cl -falign-functions=$cl -falign-jumps=$cl" ||
-	    f3+=" -fno-align-loops -fno-align-functions -fno-align-jumps"
+	$nopl || cl=
 }
+[ -n "$cl" ] &&
+	f3+=" -falign-loops=$cl -falign-functions=$cl -falign-jumps=$cl" ||
+	f3+=" -fno-align-loops -fno-align-functions -fno-align-jumps"
 
 i=$(cpuid2cpuflags)
 i1=${i%%:*}
