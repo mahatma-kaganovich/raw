@@ -1763,7 +1763,8 @@ kernel-2_src_prepare(){
 	if [ -e tools/objtool ] && use custom-cflags; then
 		local i=
 		[[ "${CFLAGS##*-O}" == [3f]* ]] && i+=' -O2'
-		[[ "$CFLAGS" == *-frename-registers* ]] && i+=' -fno-rename-registers'
+		[[ "$CFLAGS" == *-frename-registers* ]] || [[ "$CFLAGS" == *-funroll-loops* ]] &&
+		    i+=' -fno-rename-registers'
 		[ -n "$i" ] && echo "subdir-ccflags-y += $i" >>virt/kvm/Makefile.kvm
 	fi
 	# 2test more
