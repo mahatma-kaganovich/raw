@@ -247,9 +247,6 @@ kernel-2_src_configure() {
 #		done
 		[[ "$(gcc-version)" == 4.8 ]] && append-flags -fno-inline-functions
 		# objtool
-		if use x86 || use amd64; then
-			is-flagq -maccumulate-outgoing-args || append-flags -fno-rename-registers
-		fi
 		cflags="$(flags_nosp "$(_filter_f CFLAGS "-msse*" -mmmx -m3dnow -mavx "-mfpmath=*" '-flto*' '-*-lto-*' -fuse-linker-plugin -fdevirtualize-at-ltrans '-mindirect-branch*' '-mfunction-return=*' -fopenmp -fopenmp-simd -fopenacc -fgnu-tm) ${cflags}")" #"
 
 		# dedup
@@ -1763,6 +1760,12 @@ kernel-2_src_prepare(){
 #		sed -i -e 's:^s32 igb_phy_has_link:s32 noinline igb_phy_has_link:' drivers/net/ethernet/intel/igb/e1000_phy.c
 	fi;;
 	esac
+	if [ -e tools/objtool ] && use custom-cflags; then
+		local i=
+		[[ "${CFLAGS##*-O}" == [3f]* ]] && i+=' -O2'
+		[[ "$CFLAGS" == *-frename-registers* ]] && i+=' -fno-rename-registers'
+		[ -n "$i" ] && echo "subdir-ccflags-y += $i" >>virt/kvm/Makefile.kvm
+	fi
 	# 2test more
 	fno tracer drivers/media/radio/radio-aimslab.c
 	grep -q sysmacros arch/um/os-Linux/file.c || sed -i -e "s:^#include <sys/types\\.h>:#include <sys/sysmacros.h>\n#include <sys/types.h>:" arch/um/os-Linux/file.c
