@@ -379,8 +379,8 @@ x86_*|i?86)
 #	fsmall+=' -mstringop-strategy=rep_byte -finline-stringops -mno-align-stringops'
 	# vs. -O3 -msse
 	# in many cases it also "fast", but keep default / selectable
-	_c -Q -O3 --help=optimizers | grep -sq 'fvect-cost-model=.*dynamic$' && fv+=$(_f -fvect-cost-model=cheap)
-	_c -Q -O3 --help=optimizers | grep -sq 'fsimd-cost-model=.*\(unlimited\|dynamic\)$' && fv+=$(_f -fsimd-cost-model=cheap)
+	_c -Q -O3 --help=optimizers | grep -sq 'fvect-cost-model=.*dynamic$' && fv+=$(_f -fvect-cost-model=cheap -fvect-cost-model=very-cheap)
+	_c -Q -O3 --help=optimizers | grep -sq 'fsimd-cost-model=.*\(unlimited\|dynamic\)$' && fv+=$(_f -fsimd-cost-model=cheap -fsimd-cost-model=very-cheap)
 	# rare way, keep only in gcc patch
 #	[ -z "$fv" ] && fv=$(_f -mstackrealign)
 ;;
@@ -414,7 +414,7 @@ for i in $flags; do
 	esac
 done
 [ -n "$fv" ] && case "$m" in
-*)echo "CFLAGS_x86=\"-m32$fv\"";;&
+*)echo "CFLAGS_x86=\"\$CFLAGS_x86$fv\"";;&
 i?86);;
 *)fv='';;
 esac
@@ -533,7 +533,11 @@ i="${f4##*--param=l2-cache-size=}"
 	else
 		[ "$i" -gt 2 ] && i=2
 		i="rep_8byte:$[i*1024]:align,libcall:-1:align"
-		[ "$(getconf LONG_BIT)" = 32 ] && ! $x32 && i=${i//8byte/4byte}
+		[ "$(getconf LONG_BIT)" = 32 ] && ! $x32 && i=${i//8byte/4byte} || {
+			echo "CFLAGS_x86=\"\$CFLAGS_x86${i//8byte/4byte}\""
+			echo "CFLAGS_amd64=\"\$CFLAGS_amd64$i\""
+			echo "CFLAGS_x32=\"\$CFLAGS_x32$i\""
+		}
 	fi
 	[[ "$ffast" == *-minline-stringops-dynamically* ]] &&
 		ffast+="$(_f -mmemset-strategy=$i -mmemcpy-strategy=$i)"

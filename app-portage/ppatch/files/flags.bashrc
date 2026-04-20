@@ -471,6 +471,8 @@ _iuse !system-sqlite && _fnofastmath
 (_iuse gold || [[ "$LD" == *gold ]] || _isflag -fuse-ld=gold) && _filterGOLD
 (_iuse clang || [[ "$LD" == *lld ]] || _isflag -fuse-ld=lld) && _filterLLD
 
+_iuse multilib && [[ "$CFLAGS_x86" == *-mmemset-strategy* ]] && filterflag -mmemset-strategy=* -mmemcpy-strategy=*
+
 #_iuse jumbo-build && appendflag -flarge-source-files
 
 #filter86_32 -fschedule-insns -fira-loop-pressure
