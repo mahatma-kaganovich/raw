@@ -376,7 +376,7 @@ x86_*|i?86)
 	ffast+=' -maccumulate-outgoing-args -mno-push-args'
 	fsmall+=' -mno-accumulate-outgoing-args -mpush-args'
 	ffast+=' -minline-stringops-dynamically'
-	fsmall+=' -mstringop-strategy=rep_byte -finline-stringops -mno-align-stringops'
+#	fsmall+=' -mstringop-strategy=rep_byte -finline-stringops -mno-align-stringops'
 	# vs. -O3 -msse
 	# in many cases it also "fast", but keep default / selectable
 	_c -Q -O3 --help=optimizers | grep -sq 'fvect-cost-model=.*dynamic$' && fv+=$(_f -fvect-cost-model=cheap)
@@ -392,6 +392,7 @@ filter=continue
 for i in $flags; do
 	i1="$i"
 	case "$i" in
+#	erms)f3+=' -mmemcpy-strategy=rep_byte:-1:noalign -mmemset-strategy=rep_byte:-1:noalign';;&
 	sse)[ "$fpu" = yes ] && fp=both || fp=sse;;&
 	sse2)[ "$fpu" = yes ] && fp=$preferred_fp || fp=sse;;&
 	pni)f1+=' sse3';;
