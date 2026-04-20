@@ -188,7 +188,7 @@ _replace(){
 }
 
 conf_cpu(){
-local f0= f1= f2= f3= f4= f5= f6= ff= fsmall= ffast= fbal= ffm= fnm= fv= i j i1 j1 c c0 c1 lm=false fp=387 gccv m="`uname -m`" i fsec= ind= l2= x32=false base2= a= nopl=false
+local f0= f1= f2= f3= f4= f5= f6= ff= fsmall= ffast= fbal= ffm= fnm= fv= i j i1 j1 c c0 c1 lm=false fp=387 gccv m="`uname -m`" i fsec= ind= l2= x32=false base2= a= nopl=false erms=false
 _setflags flags cpucaps 'cpu family' model fpu vendor_id
 cmn=$(_gcc --help=common -v -Q)
 if i=$(echo "$cmn"|grep --max-count=1 "^Target: "); then
@@ -392,7 +392,8 @@ filter=continue
 for i in $flags; do
 	i1="$i"
 	case "$i" in
-#	erms)f3+=' -mmemcpy-strategy=rep_byte:-1:noalign -mmemset-strategy=rep_byte:-1:noalign';;&
+	erms)erms=true;;&
+	#fsrm);;& # Fast Short REP MOVSB
 	sse)[ "$fpu" = yes ] && fp=both || fp=sse;;&
 	sse2)[ "$fpu" = yes ] && fp=$preferred_fp || fp=sse;;&
 	pni)f1+=' sse3';;
@@ -521,7 +522,22 @@ fi
 i="${f4##*--param=l1-cache-size=}"
 [ "$i" != "$f4" ] && l1=$(split_cache "${i%% *}" true) && fsmall+="`_f --param=l1-cache-size=$l1`"
 i="${f4##*--param=l2-cache-size=}"
-[ "$i" != "$f4" ] && l2=$(split_cache "${i%% *}") && fsmall+="`_f --param=l2-cache-size=$l2`"
+[ "$i" != "$f4" ] && l2=$(split_cache "${i%% *}") && {
+	fsmall+="$(_f --param=l2-cache-size=$l2)"
+	# glibc starts avoid non-temporal store after 2/3 cache. this value usually less.
+	# accelerated by erms: <=2k: YES, 2k-512k: equal, else - poor
+	i=$l2
+	if $erms; then
+		[ "$i" -gt 512 ] && i=512
+		i="rep_byte:$[i*1024]:noalign,libcall:-1:noalign"
+	else
+		[ "$i" -gt 2 ] && i=2
+		i="rep_8byte:$[i*1024]:align,libcall:-1:align"
+		[ "$(getconf LONG_BIT)" = 32 ] && ! $x32 && i=${i//8byte/4byte}
+	fi
+	[[ "$ffast" == *-minline-stringops-dynamically* ]] &&
+		ffast+="$(_f -mmemset-strategy=$i -mmemcpy-strategy=$i)"
+}
 
 i1=
 c0=
