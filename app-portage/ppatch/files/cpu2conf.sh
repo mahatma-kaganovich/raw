@@ -248,9 +248,10 @@ AuthenticAMD|HygonGenuine)
 	esac
 ;;
 esac
-#fsmall+=' --param=max-grow-copy-bb-insns=1 -fno-align-jumps'
-# -falign-jumps= bounded instead
 fsmall+=' --param=max-grow-copy-bb-insns=1'
+# -falign-jumps= bounded instead?
+#fsmall+=' -fno-align-jumps'
+#ffast+=' -falign-jumps'
 ffast+=' -fdiagnostics-column-unit=byte'
 f0=`_f -m{tune,cpu,arch}=native ${a:+-Wa,-mtune=$a}`
 f3='-momit-leaf-frame-pointer -fsection-anchors'
@@ -284,7 +285,6 @@ f5+=' -fpermissive -w'
 #fsec+=' -fstack-clash-protection'
 # mix cxxflags here to simplify. it works
 fsec+='  -ftrivial-auto-var-init=zero'
-ffast+=' -minline-stringops-dynamically'
 fsmall+=' -malign-data=abi -flimit-function-alignment -Wa,--reduce-memory-overheads -fvect-cost-model=cheap -fvect-cost-model=very-cheap -fsimd-cost-model=cheap -fsimd-cost-model=very-cheap -w'
 #fsmall+=' -fno-move-loop-invariants'
 fsmall+=' -fno-show-column'
@@ -364,19 +364,19 @@ x86_*|i?86)
 	# "host" looks do nothing more, "loop" increase code size.
 	# try it first again if -fschedule-insns failed.
 	# 2be tested more.
-	#f3+=$(_f -fira-loop-pressure -fira-hoist-pressure)
+	#f3+=' -fira-loop-pressure -fira-hoist-pressure'
 	# for -fno-move-loop-invariants: as soon in -O1...
-	f3+=$(_f -fira-loop-pressure)
+	f3+=' -fira-loop-pressure'
 	# -fschedule-insns is working (increasing registers range)
-	f3+=$(_f -flive-range-shrinkage -fsched-pressure -fschedule-insns -fsched-stalled-insns -fsched-spec-load --param=sched-pressure-algorithm=2 -fira-region=all)
+	f3+=' -flive-range-shrinkage -fsched-pressure -fschedule-insns -fsched-stalled-insns -fsched-spec-load --param=sched-pressure-algorithm=2 -fira-region=all'
 	# implied by -funroll-loops/-O3+, force for filtered cases
-	f3+=$(_f -frename-registers -fweb)
-	f3+=$(_f -fno-semantic-interposition)
 	# gnostic - don't know how to get universal default of defaults for GCC
 	# -mtune=x86-64 deprecated
 	base="-mtune=generic -march=${m//_/-}"
 	ffast+=' -maccumulate-outgoing-args -mno-push-args'
 	fsmall+=' -mno-accumulate-outgoing-args -mpush-args'
+	ffast+=' -minline-stringops-dynamically'
+	fsmall+=' -mstringop-strategy=rep_byte -finline-stringops -mno-align-stringops'
 	# vs. -O3 -msse
 	# in many cases it also "fast", but keep default / selectable
 	_c -Q -O3 --help=optimizers | grep -sq 'fvect-cost-model=.*dynamic$' && fv+=$(_f -fvect-cost-model=cheap)
@@ -443,9 +443,14 @@ ccs || i=$(getconf LEVEL1_ICACHE_LINESIZE) && {
 	esac
 	$nopl || cl=
 }
+
+
 [ -n "$cl" ] &&
 	f3+=" -falign-loops=$cl -falign-functions=$cl -falign-jumps=$cl" ||
 	f3+=" -fno-align-loops -fno-align-functions -fno-align-jumps"
+f3+=' -fipa-reorder-for-locality'
+f3+=' -frename-registers -fweb'
+f3+=' -fno-semantic-interposition'
 
 i=$(cpuid2cpuflags)
 i1=${i%%:*}
