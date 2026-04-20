@@ -523,9 +523,10 @@ i="${f4##*--param=l1-cache-size=}"
 [ "$i" != "$f4" ] && l1=$(split_cache "${i%% *}" true) && fsmall+="`_f --param=l1-cache-size=$l1`"
 i="${f4##*--param=l2-cache-size=}"
 [ "$i" != "$f4" ] && l2=$(split_cache "${i%% *}") && {
-	fsmall+="$(_f --param=l2-cache-size=$l2)"
+    fsmall+="$(_f --param=l2-cache-size=$l2)"
 	# glibc starts avoid non-temporal store after 2/3 cache. this value usually less.
 	# accelerated by erms: <=2k: YES, 2k-512k: equal, else - poor
+    [[ "$ffast" == *-minline-stringops-dynamically* ]] && {
 	i=$l2
 	if $erms; then
 		[ "$i" -gt 512 ] && i=512
@@ -533,14 +534,14 @@ i="${f4##*--param=l2-cache-size=}"
 	else
 		[ "$i" -gt 2 ] && i=2
 		i="rep_8byte:$[i*1024]:align,libcall:-1:align"
-		[ "$(getconf LONG_BIT)" = 32 ] && ! $x32 && i=${i//8byte/4byte} || {
-			echo "CFLAGS_x86=\"\$CFLAGS_x86${i//8byte/4byte}\""
-			echo "CFLAGS_amd64=\"\$CFLAGS_amd64$i\""
-			echo "CFLAGS_x32=\"\$CFLAGS_x32$i\""
+		[ "$(getconf LONG_BIT)" = 32 ] && ! $x32 || {
+			echo "CFLAGS_x86=\"\$CFLAGS_x86$(_f -mmemset-strategy=${i//8byte/4byte} -mmemcpy-strategy=${i//8byte/4byte})"
+			echo "CFLAGS_amd64=\"\$CFLAGS_amd64$(_f -mmemset-strategy=$i -mmemcpy-strategy=$i)\""
+			echo "CFLAGS_x32=\"\$CFLAGS_x32$(_f -mmemset-strategy=$i -mmemcpy-strategy=$i)\""
 		}
 	fi
-	[[ "$ffast" == *-minline-stringops-dynamically* ]] &&
-		ffast+="$(_f -mmemset-strategy=$i -mmemcpy-strategy=$i)"
+	ffast+="$(_f -mmemset-strategy=$i -mmemcpy-strategy=$i)"
+    }
 }
 
 i1=
