@@ -471,7 +471,7 @@ _iuse !system-sqlite && _fnofastmath
 (_iuse gold || [[ "$LD" == *gold ]] || _isflag -fuse-ld=gold) && _filterGOLD
 (_iuse clang || [[ "$LD" == *lld ]] || _isflag -fuse-ld=lld) && _filterLLD
 
-_iuse multilib && filterflag -m*-strategy=*8byte*
+(_iuse abi_x86_32 || _iuse multilib) && filterflag -m*-strategy=*8byte*
 
 #_iuse jumbo-build && appendflag -flarge-source-files
 
