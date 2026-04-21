@@ -12,6 +12,7 @@ for i in ${!n}; do
     -frename-registers|-fweb);;
     -fno-semantic-interposition)[ "$PN" = glibc ] && continue;;
     -falign-*=*);;
+    *predictive-commoning*);;
     -fgcse*|-f*-cost-model=*);;
     -flto*|-f*-lto-*|-f*-ltrans);;
     -fzero-init-padding-bits=unions|-std=*)[ "$PN" = gcc ] && continue;;
