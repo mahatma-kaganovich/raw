@@ -1760,6 +1760,7 @@ kernel-2_src_prepare(){
 #		sed -i -e 's:^s32 igb_phy_has_link:s32 noinline igb_phy_has_link:' drivers/net/ethernet/intel/igb/e1000_phy.c
 	fi;;
 	esac
+	filter-flags '-m*-strategy=*:*'
 	if [ -e tools/objtool ] && use custom-cflags; then
 		local i=
 		[[ "${CFLAGS##*-O}" == [3f]* ]] && i+=' -O2'
