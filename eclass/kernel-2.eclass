@@ -246,8 +246,8 @@ kernel-2_src_configure() {
 #			test_cc $i && cflags+=" $i"
 #		done
 		[[ "$(gcc-version)" == 4.8 ]] && append-flags -fno-inline-functions
-		# objtool
-		cflags="$(flags_nosp "$(_filter_f CFLAGS "-msse*" -mmmx -m3dnow -mavx "-mfpmath=*" '-flto*' '-*-lto-*' -fuse-linker-plugin -fdevirtualize-at-ltrans '-mindirect-branch*' '-mfunction-return=*' -fopenmp -fopenmp-simd -fopenacc -fgnu-tm) ${cflags}")" #"
+		[ -e tools/objtool ] i+=' -m*-strategy=* -fno-predictive-commoning'
+		cflags="$(flags_nosp "$(_filter_f CFLAGS "-msse*" -mmmx -m3dnow -mavx "-mfpmath=*" '-flto*' '-*-lto-*' -fuse-linker-plugin -fdevirtualize-at-ltrans '-mindirect-branch*' '-mfunction-return=*' -fopenmp -fopenmp-simd -fopenacc -fgnu-tm $i) ${cflags}")" #"
 
 		# dedup
 		local i="$cflags"
@@ -1760,7 +1760,6 @@ kernel-2_src_prepare(){
 #		sed -i -e 's:^s32 igb_phy_has_link:s32 noinline igb_phy_has_link:' drivers/net/ethernet/intel/igb/e1000_phy.c
 	fi;;
 	esac
-	filter-flags '-m*-strategy=*'
 	if [ -e tools/objtool ] && use custom-cflags; then
 		local i=
 		[[ "${CFLAGS##*-O}" == [3f]* ]] && i+=' -O2'
