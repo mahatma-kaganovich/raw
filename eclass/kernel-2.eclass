@@ -246,6 +246,7 @@ kernel-2_src_configure() {
 #			test_cc $i && cflags+=" $i"
 #		done
 		[[ "$(gcc-version)" == 4.8 ]] && append-flags -fno-inline-functions
+		i=
 		[ -e tools/objtool ] i+=' -m*-strategy=* -fno-predictive-commoning'
 		cflags="$(flags_nosp "$(_filter_f CFLAGS "-msse*" -mmmx -m3dnow -mavx "-mfpmath=*" '-flto*' '-*-lto-*' -fuse-linker-plugin -fdevirtualize-at-ltrans '-mindirect-branch*' '-mfunction-return=*' -fopenmp -fopenmp-simd -fopenacc -fgnu-tm $i) ${cflags}")" #"
 
