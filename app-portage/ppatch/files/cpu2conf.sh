@@ -377,8 +377,8 @@ x86_*|i?86)
 	base="-mtune=generic -march=${m//_/-}"
 	ffast+=' -maccumulate-outgoing-args -mno-push-args'
 	fsmall+=' -mno-accumulate-outgoing-args -mpush-args'
-	ffast+=' -minline-stringops-dynamically -finline-stringops'
-#	fsmall+=' -mstringop-strategy=rep_byte -finline-stringops -mno-align-stringops'
+	ffast+=' -minline-stringops-dynamically'
+#	ffast+=' -finline-stringops'
 	# vs. -O3 -msse
 	# in many cases it also "fast", but keep default / selectable
 	_c -Q -O3 --help=optimizers | grep -sq 'fvect-cost-model=.*dynamic$' && fv+=$(_f -fvect-cost-model=cheap -fvect-cost-model=very-cheap)
