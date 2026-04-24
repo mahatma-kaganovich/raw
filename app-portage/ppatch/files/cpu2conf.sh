@@ -532,11 +532,11 @@ i="${f4##*--param=l2-cache-size=}"
 	i=$l2
 	if $erms; then
 		[ "$i" -gt 512 ] && i=512
-		i="rep_byte:$[i*1024]:noalign,libcall:-1:noalign"
-		$fsrm || i="unrolled_loop:64:noalign,$i"
+		i="rep_byte:$[i*1024]:noalign,libcall:-1:align"
+		$fsrm || i="unrolled_loop:128:noalign,$i"
 	else
 		[ "$i" -gt 2 ] && i=2
-		i="unrolled_loop:64:noalign,rep_8byte:$[i*1024]:align,libcall:-1:align"
+		i="unrolled_loop:32:noalign,rep_8byte:$[i*1024]:noalign,libcall:-1:align"
 		[ "$(getconf LONG_BIT)" = 32 ] && ! $x32 && i=${i//8byte/4byte} || {
 			#echo "CFLAGS_x86=\"\$CFLAGS_x86$(_f -mmemset-strategy=${i//8byte/4byte} -mmemcpy-strategy=${i//8byte/4byte})\""
 			echo "CFLAGS_amd64=\"\$CFLAGS_amd64$(_f -mmemset-strategy=$i -mmemcpy-strategy=$i)\""
