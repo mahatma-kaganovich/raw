@@ -27,3 +27,8 @@ done
 export $n="${f# }"
 done
 }
+
+filter-lto(){
+	filter-flags '-flto*' -fwhole-program-vtables '-fsanitize=cfi*'
+	append-flags $(test-flags-CC -fipa-reorder-for-locality)
+}
