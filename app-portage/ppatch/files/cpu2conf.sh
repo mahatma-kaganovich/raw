@@ -452,7 +452,7 @@ ccs || i=$(getconf LEVEL1_ICACHE_LINESIZE) && {
 [ -n "$cl" ] &&
 	f3+=" -falign-loops=$cl -falign-functions=$cl -falign-jumps=$cl" ||
 	f3+=" -fno-align-loops -fno-align-functions -fno-align-jumps"
-#f3+=' -fipa-reorder-for-locality' # ICE mariadb,qtbase
+f3+=' -fipa-reorder-for-locality' # +lto = ICE mariadb,qtbase
 f3+=' -frename-registers -fweb'
 f3+=' -fno-semantic-interposition'
 
