@@ -480,7 +480,9 @@ _iuse !system-sqlite && _fnofastmath
 # clang too related from -flto, etc - filter twice
 [ "$_test_f" = "$CFLAGS/$CXXFLAGS/$LDFLAGS" ] || _filtertst
 [[ " $CFLAGS " == *\ -flto[\ =]* ]] || _iuse lto && {
-	filterflag -Wa,--reduce-memory-overheads -fipa-reorder-for-locality
+	# gcc itself have cfg with -flto -fipa-reorder-for-locality
+	# do other filtering
+	filterflag -Wa,--reduce-memory-overheads # -fipa-reorder-for-locality
 }
 
 }
