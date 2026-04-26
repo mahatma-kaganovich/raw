@@ -29,7 +29,10 @@ done
 }
 
 filter-lto(){
+	case "$PN" in
+	mariadb)[[ " $USE " == *" columnstore "* ]] || return;;
+	esac
 	filter-flags '-flto*' -fwhole-program-vtables '-fsanitize=cfi*'
-	[[ " $USE " == " lto " ]] ||
+	[[ " $USE " == *" lto "* ]] ||
 	append-flags $(test-flags-CC -fipa-reorder-for-locality)
 }
