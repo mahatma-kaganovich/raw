@@ -30,5 +30,6 @@ done
 
 filter-lto(){
 	filter-flags '-flto*' -fwhole-program-vtables '-fsanitize=cfi*'
+	[[ " $USE " == " lto " ]] ||
 	append-flags $(test-flags-CC -fipa-reorder-for-locality)
 }
