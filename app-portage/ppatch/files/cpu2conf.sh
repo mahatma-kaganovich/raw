@@ -378,6 +378,7 @@ x86_*|i?86)
 	ffast+=' -maccumulate-outgoing-args -mno-push-args'
 	fsmall+=' -mno-accumulate-outgoing-args -mpush-args'
 	ffast+=' -minline-stringops-dynamically'
+	fbal+=' -mno-inline-stringops-dynamically'
 #	ffast+=' -finline-stringops'
 	# vs. -O3 -msse
 	# in many cases it also "fast", but keep default / selectable
