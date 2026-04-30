@@ -356,13 +356,13 @@ glibc)_isflag -fno-omit-frame-pointer && filterflag -f{,no-}omit-frame-pointer;;
 cdrdao|gcr|ufraw|_gdal|dosemu|soxr|flac|libgcrypt)filterflag2 '' '-flto*';;&
 boost)filter86_32 '-flto*' '-*-lto-*' -fuse-linker-plugin -fdevirtualize-at-ltrans;;&
 libsodium|elogind|perl|autofs|dovecot|pidgin-otr|libotr)_fLTO && appendflag_ LDFLAGS -fPIC;;&
-cmake)_fLTO && _isflag '-floop-*' '-fgraphite*' && filterflag -fipa-pta;;&
+#cmake)_fLTO && _isflag '-floop-*' '-fgraphite*' && filterflag -fipa-pta;;&
 # x86 gcc graphite ice
 gmp)filterflag -fno-move-loop-invariants;;&
 # mpg123 distortion on sse
 mjpegtools|gmp|mpg123)filterflag -floop-nest-optimize -floop-parallelize-all;;&
 bcrypt)_fLTO && appendflag -fno-loop-nest-optimize;;& # x86_32
-bash)filterflag -fipa-pta;;&
+#bash)filterflag -fipa-pta;;&
 ceph)
 #	_isflag -floop-nest-optimize && 
 	{ # prefer graphite vs. lto
