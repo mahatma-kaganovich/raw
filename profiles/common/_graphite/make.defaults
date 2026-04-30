@@ -1,2 +1,1 @@
 _FLAGS="$_FLAGS -floop-nest-optimize"
-_FLAGS="$_FLAGS -freschedule-modulo-scheduled-loops"
