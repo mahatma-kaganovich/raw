@@ -1,9 +1,9 @@
 # -O2 + all (conservative+optimized)
 
 USE="pgo"
-_FLAGS="-O2 -floop-interchange -floop-unroll-and-jam -fno-ident -floop-nest-optimize"
+_FLAGS="$_FLAGS -O2 -floop-interchange -floop-unroll-and-jam -fno-ident -floop-nest-optimize"
 
-_FLAGS="$_FLAGS -fbranch-target-load-optimize -fdelete-dead-exceptions"
+_FLAGS="$_FLAGS -fdelete-dead-exceptions"
 _FLAGS="$_FLAGS -fmodulo-sched -fmodulo-sched-allow-regmoves -freschedule-modulo-scheduled-loops"
 # keep here until new reasons to split
 _FLAGS="$_FLAGS -ftracer -fgcse-sm -fgcse-las -fvariable-expansion-in-unroller -fweb"
