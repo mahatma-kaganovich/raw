@@ -1,13 +1,3 @@
-# -O2 + all (conservative+optimized)
-
-USE="pgo"
-_FLAGS="$_FLAGS -O2 -floop-interchange -floop-unroll-and-jam -fno-ident -floop-nest-optimize"
-
-_FLAGS="$_FLAGS -fdelete-dead-exceptions"
-_FLAGS="$_FLAGS -fmodulo-sched -fmodulo-sched-allow-regmoves -freschedule-modulo-scheduled-loops"
-# keep here until new reasons to split
-_FLAGS="$_FLAGS -ftracer -fgcse-sm -fgcse-las -fvariable-expansion-in-unroller -fweb"
-
-CFLAGS_SMALL=" -fno-tracer$CFLAGS_SMALL"
-
-LDFLAGS="-Wl,-O1 -Wl,--as-needed -Wl,--hash-style=gnu -Wl,--sort-common -Wl,--sort-section=alignment"
+# safe2 + effective small from -O3/-Ofast
+_FLAGS="$_FLAGS -floop-unroll-and-jam -floop-interchange -floop-nest-optimize"
+_FLAGS="$_FLAGS -ffast-math -fno-semantic-interposition"
