@@ -29,6 +29,7 @@ if [[ ${ETYPE} == sources ]]; then
 # things like bcache, btrfs, xfs works without special inclusion,
 # but disaster recovering is good
 IUSE="${IUSE} +build-kernel custom-cflags +pnp +compressed integrated
+	unsafe-cflags
 	netboot custom-arch embed-hardware +blobs
 	kernel-firmware +sources pnponly lzma xz lzo lz4 zstd
 	external-firmware xen +smp kernel-tools multitarget 64-bit-bfd thin
@@ -196,14 +197,23 @@ mknod(){
 }
 
 _filter_f() {
-	local f x v=$1
+	local f x v=$1 x1
 	shift
+	echo -n "KERNEL_CFLAGS replace:" >&2
 	for f in ${!v} ; do
 		for x in "$@" ; do
-			[[ "$f" == $x ]] && continue 2
+			x1="${x#*/}"
+			[[ "$f" == $x1 ]] && {
+				echo -n " $f" >&2
+				[ "$x1" = "$x" ] && continue 2
+				f="${x%%/*}"
+				echo -n "/$f" >&2
+				f="${f//,/ }"
+			}
 		done
 		echo -n " $f"
 	done
+	echo >&2
 }
 
 test_cc(){
@@ -248,6 +258,7 @@ kernel-2_src_configure() {
 		[[ "$(gcc-version)" == 4.8 ]] && append-flags -fno-inline-functions
 		i=
 		[ -e tools/objtool ] && i+=' -m*-strategy=* -fno-predictive-commoning'
+		use !unsafe-cflags && i+=' -floop-* -Ofast/-O2,-fno-semantic-interposition,-fgcse-after-reload,-fipa-cp-clone -O3/-O2,-fgcse-after-reload,-fipa-cp-clone'
 		cflags="$(flags_nosp "$(_filter_f CFLAGS "-msse*" -mmmx -m3dnow -mavx "-mfpmath=*" '-flto*' '-*-lto-*' -fuse-linker-plugin -fdevirtualize-at-ltrans '-mindirect-branch*' '-mfunction-return=*' -fopenmp -fopenmp-simd -fopenacc -fgnu-tm $i) ${cflags}")" #"
 
 		# dedup
@@ -1767,6 +1778,7 @@ kernel-2_src_prepare(){
 		[[ "$CFLAGS" == *-frename-registers* ]] || [[ "$CFLAGS" == *-funroll-loops* ]] &&
 		    i+=' -fno-rename-registers'
 		[ -n "$i" ] && echo "subdir-ccflags-y += $i" >>virt/kvm/Makefile.kvm
+		echo "subdir-ccflags-y += -O2" >>drivers/platform/x86/intel/speed_select_if/Makefile
 	fi
 	# 2test more
 	fno tracer drivers/media/radio/radio-aimslab.c
