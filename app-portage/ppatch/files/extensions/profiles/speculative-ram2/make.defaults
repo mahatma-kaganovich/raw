@@ -1,0 +1,15 @@
+# speculative-ram without -Ofast -mfast-math. moved to profile.target
+
+_FLAGS="$_FLAGS$CFLAGS_NATIVE$CFLAGS_M$CFLAGS_SMALL$CFLAGS_FAST$CFLAGS_BALANCED"
+USE="speculative -ssp nossp nopie -sanitize -vtv -pie -pic -rsync-verify"
+USE="$USE -stackrealign"
+_FLAGS="-fvect-cost-model=very-cheap -fsimd-cost-model=very-cheap $_FLAGS"
+CFLAGS="$_FLAGS"
+FFLAGS="$_FLAGS"
+FCFLAGS="$_FLAGS"
+# surpize: -fdeclone-ctor-dtor grow code with -fno-semantic-interposition
+CXXFLAGS="$_FLAGS $_XFLAGS"
+LDFLAGS="$LDFLAGS -Wl,--strip-debug -Wl,--no-ld-generated-unwind-info"
+# not effective runtime, some reduce elf size and need to be filtered
+#LDFLAGS="$LDFLAGS -Wl,--strip-all -Wl,--no-eh-frame-hdr"
+MAKEOPTS="-j$ncpu -s -Onone"
