@@ -199,7 +199,7 @@ mknod(){
 _filter_f() {
 	local f x v=$1 x1
 	shift
-	echo -n "KERNEL_CFLAGS replace:" >&2
+	echo -n "KERNEL_CFLAGS replace ($v):" >&2
 	for f in ${!v} ; do
 		for x in "$@" ; do
 			x1="${x%%/*}"
@@ -209,6 +209,7 @@ _filter_f() {
 				f="${x#*/}"
 				echo -n "/$f" >&2
 				f="${f//,/ }"
+				break
 			}
 		done
 		echo -n " $f"
