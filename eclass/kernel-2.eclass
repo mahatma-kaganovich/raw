@@ -202,11 +202,11 @@ _filter_f() {
 	echo -n "KERNEL_CFLAGS replace:" >&2
 	for f in ${!v} ; do
 		for x in "$@" ; do
-			x1="${x#*/}"
+			x1="${x%%/*}"
 			[[ "$f" == $x1 ]] && {
 				echo -n " $f" >&2
 				[ "$x1" = "$x" ] && continue 2
-				f="${x%%/*}"
+				f="${x#*/}"
 				echo -n "/$f" >&2
 				f="${f//,/ }"
 			}
