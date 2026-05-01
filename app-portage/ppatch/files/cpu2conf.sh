@@ -455,7 +455,6 @@ ccs || i=$(getconf LEVEL1_ICACHE_LINESIZE) && {
 	f3+=" -fno-align-loops -fno-align-functions -fno-align-jumps"
 f3+=' -fipa-reorder-for-locality' # +lto = ICE mariadb,qtbase
 f3+=' -frename-registers -fweb'
-f3+=' -fno-semantic-interposition'
 
 i=$(cpuid2cpuflags)
 i1=${i%%:*}
