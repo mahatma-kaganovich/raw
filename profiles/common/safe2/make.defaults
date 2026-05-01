@@ -1,7 +1,7 @@
 # -O2 conservative+optimized
 
 USE="pgo"
-_FLAGS="$_FLAGS -O2 -fno-ident"
+_FLAGS="-O2 -fno-ident"
 
 _FLAGS="$_FLAGS -fdelete-dead-exceptions"
 _FLAGS="$_FLAGS -fmodulo-sched -fmodulo-sched-allow-regmoves -freschedule-modulo-scheduled-loops"
