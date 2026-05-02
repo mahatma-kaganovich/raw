@@ -1,3 +1,10 @@
 # safe2 + effective small from -O3/-Ofast
-_FLAGS="$_FLAGS -floop-unroll-and-jam -floop-interchange -floop-nest-optimize"
+
+_FLAGS="$_FLAGS -floop-nest-optimize"
+
+# from -O3
+_FLAGS="$_FLAGS -floop-interchange"
+CFLAGS_FAST="$CFLAGS_FAST -floop-unroll-and-jam -fversion-loops-for-strides -fpredictive-commoning"
+
+# from -Ofast
 _FLAGS="$_FLAGS -ffast-math -fno-semantic-interposition"
