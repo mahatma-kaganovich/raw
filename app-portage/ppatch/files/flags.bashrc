@@ -402,7 +402,7 @@ seamonkey|firefox|thunderbird|spidermonkey)
 		! _iuse !clang && _filterLLD
 		! _iuse clang && _filterGOLD
 	}
-	_iuse clang || _fLTO_f -fno-lto
+#	_iuse clang || _fLTO_f -fno-lto
 
 	#_isflag -mtls-dialect=gnu2 && export MOZILLA_CONFIG="$MOZILLA_CONFIG --disable-elf-hack"
 
