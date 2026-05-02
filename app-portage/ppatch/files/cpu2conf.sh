@@ -358,7 +358,7 @@ case "`cat /proc/cpuinfo|sed -e 's:$: :'`" in
 esac
 [[ "$fsmall" != *max-unrolled-insns* ]] && fsmall+=' -fno-unroll-loops' && fbal+=' -munroll-only-small-loops'
 # suitable only for wide unrolling
-fsmall+=' -fno-predictive-commoning'
+#fsmall+=' -fno-predictive-commoning'
 filter=break
 case "$m" in
 x86_*|i?86)
