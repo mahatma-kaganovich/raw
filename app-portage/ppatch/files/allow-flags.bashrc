@@ -12,7 +12,8 @@ for i in ${!n}; do
     -frename-registers|-fweb);;
     -fno-semantic-interposition)[ "$PN" = glibc ] && continue;;
     -falign-*=*);;
-    *predictive-commoning*);;
+    # -O3
+    *predictive-commoning*|*-floop-unroll-and-jam*|*-fversion-loops-for-strides*);;
     -fipa-reorder-for-locality|-fipa-pta);;
     -fgcse*|-f*-cost-model=*);;
     -flto*|-f*-lto-*|-f*-ltrans);;
