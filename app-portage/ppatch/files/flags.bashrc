@@ -283,6 +283,7 @@ inkscape|libreoffice|nodejs|clang|gnutls|gtk+|libvpx|mesa|busybox|ffmpeg)
 	_iuse static-libs || filterflag -ffat-lto-objects
 ;;&
 qtbase)_fLTO && _isflag -fipa-reorder-for-locality && appendflag -fno-ipa-cp-clone;;&
+ell)filterflag -fipa-reorder-for-locality;;&
 # developers choice. be safe
 mesa)_iuse cpu_flags_x86_sse2 && filterflag '-mfpmath=*';;&
 mesa)appendflag -fsigned-zeros;;& # v26/-fno-unsafe-math-optimizations
