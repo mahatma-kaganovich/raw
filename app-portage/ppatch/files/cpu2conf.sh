@@ -288,15 +288,25 @@ fsec+='  -ftrivial-auto-var-init=zero'
 fsmall+=' -malign-data=abi -flimit-function-alignment -Wa,--reduce-memory-overheads -fvect-cost-model=cheap -fvect-cost-model=very-cheap -fsimd-cost-model=cheap -fsimd-cost-model=very-cheap -w'
 #fsmall+=' -fno-move-loop-invariants'
 fsmall+=' -fno-show-column'
+
 # vs. -fno-ipa-cp-clone -fno-inline-functions
 # +max(orig_overall_size,ipa-cp-large-unit-insns)*ipa-cp-unit-growth/100+1
 # ipcp (<10) or ipa-cp (10+)
-fsmall+=" --param=ipa-cp-large-unit-insns=0 --param=ipcp-unit-growth=0 --param=ipa-cp-unit-growth=0"
-fbal+=" --param=ipa-cp-large-unit-insns=256 --param=ipcp-unit-growth=1 --param=ipa-cp-unit-growth=1"
+fsmall+=" --param=ipa-cp-min-profit=100"
+#fsmall+=" --param=ipa-cp-large-unit-insns=0 --param=ipcp-unit-growth=1 --param=ipa-cp-unit-growth=1"
+fsmall+=" --param=ipa-cp-large-unit-insns=256 --param=ipcp-unit-growth=2 --param=ipa-cp-unit-growth=2 --param=ipa-cp-value-list-size=2"
+#fbal+=" --param=ipa-cp-large-unit-insns=256 --param=ipcp-unit-growth=1 --param=ipa-cp-unit-growth=1"
+fbal+=" --param=ipa-cp-large-unit-insns=1000 --param=ipcp-unit-growth=10 --param=ipa-cp-unit-growth=10 --param=ipa-cp-value-list-size=4"
+
 # vs. -fno-inline-functions
 # max(max_insns,large-unit-insns)*(100+inline-unit-growth)/100)
+fsmall+=" --param=max-inline-recursive-depth=0 --param=max-inline-insns-single=16"
 fsmall+=" --param=large-unit-insns=0 --param=inline-unit-growth=0"
-fbal+=" --param=large-unit-insns=256 --param=inline-unit-growth=1"
+# bad with c++
+#fbal+=" --param=large-unit-insns=256 --param=inline-unit-growth=1"
+fbal+=" --param=large-unit-insns=1000 --param=inline-unit-growth=2"
+ffast+=" --param=large-unit-insns=1000 --param=inline-unit-growth=20"
+
 f6+=' -malign-data=cacheline'
 if i=`_smp1 'physical id' 'cpu cores' || _smp processor 1 || _smp 'ncpus active' 0`; then
 	if [ "$i" = 1 ]; then

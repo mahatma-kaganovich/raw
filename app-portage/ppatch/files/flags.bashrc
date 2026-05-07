@@ -321,7 +321,7 @@ gcc)
 # sleef - RTFM
 sleef|gcc|mongodb|mongo-tools|ceph|tigervnc)filterflag -fno-asynchronous-unwind-tables -Wl,--no-ld-generated-unwind-info -Wl,--no-eh-frame-hdr;;&
 libreoffice)
-	filterflag -Wl,--no-eh-frame-hdr
+	filterflag -Wl,--no-eh-frame-hdr -fno-asynchronous-unwind-tables
 	# gcc 12 x86_64?
 	replace1flag_ --param=inline-unit-growth=0 --param=inline-unit-growth=1
 	filterflag '--param=allow-store-data-races=*'
