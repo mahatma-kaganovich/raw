@@ -292,11 +292,12 @@ fsmall+=' -fno-show-column'
 # vs. -fno-ipa-cp-clone -fno-inline-functions
 # +max(orig_overall_size,ipa-cp-large-unit-insns)*ipa-cp-unit-growth/100+1
 # ipcp (<10) or ipa-cp (10+)
-fsmall+=" --param=ipa-cp-min-profit=100"
+fsmall+=" --param=ipa-cp-min-profit=100" # rare
+fsmall+=" --param=ipa-cp-max-recursive-depth=2"
 #fsmall+=" --param=ipa-cp-large-unit-insns=0 --param=ipcp-unit-growth=1 --param=ipa-cp-unit-growth=1"
-fsmall+=" --param=ipa-cp-large-unit-insns=256 --param=ipcp-unit-growth=2 --param=ipa-cp-unit-growth=2 --param=ipa-cp-value-list-size=2"
+fsmall+=" --param=ipa-cp-large-unit-insns=256 --param=ipcp-unit-growth=2 --param=ipa-cp-unit-growth=2 --param=ipa-cp-value-list-size=1 --param=ipa-cp-eval-threshold=800 --param=ipa-cp-loop-hint-bonus=0"
 #fbal+=" --param=ipa-cp-large-unit-insns=256 --param=ipcp-unit-growth=1 --param=ipa-cp-unit-growth=1"
-fbal+=" --param=ipa-cp-large-unit-insns=1000 --param=ipcp-unit-growth=10 --param=ipa-cp-unit-growth=10 --param=ipa-cp-value-list-size=4"
+fbal+=" --param=ipa-cp-large-unit-insns=1000 --param=ipcp-unit-growth=10 --param=ipa-cp-unit-growth=10 --param=ipa-cp-value-list-size=4 --param=ipa-cp-eval-threshold=600 --param=ipa-cp-loop-hint-bonus=30"
 
 # vs. -fno-inline-functions
 # max(max_insns,large-unit-insns)*(100+inline-unit-growth)/100)
