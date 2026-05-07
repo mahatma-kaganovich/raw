@@ -293,6 +293,7 @@ fsmall+=' -fno-show-column'
 # +max(orig_overall_size,ipa-cp-large-unit-insns)*ipa-cp-unit-growth/100+1
 # ipcp (<10) or ipa-cp (10+)
 fsmall+=" --param=ipa-cp-min-profit=100" # rare
+fsmall+=" --param=sra-max-propagations=16 --param=early-inlining-insns=12"
 fsmall+=" --param=ipa-cp-max-recursive-depth=2"
 #fsmall+=" --param=ipa-cp-large-unit-insns=0 --param=ipcp-unit-growth=1 --param=ipa-cp-unit-growth=1"
 fsmall+=" --param=ipa-cp-large-unit-insns=256 --param=ipcp-unit-growth=2 --param=ipa-cp-unit-growth=2 --param=ipa-cp-value-list-size=1 --param=ipa-cp-eval-threshold=800 --param=ipa-cp-loop-hint-bonus=0"
