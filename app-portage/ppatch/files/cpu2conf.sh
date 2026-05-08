@@ -296,9 +296,9 @@ fsmall+=" --param=ipa-cp-min-profit=100" # rare
 fsmall+=" --param=sra-max-propagations=16 --param=early-inlining-insns=12"
 fsmall+=" --param=ipa-cp-max-recursive-depth=2"
 #fsmall+=" --param=ipa-cp-large-unit-insns=0 --param=ipcp-unit-growth=1 --param=ipa-cp-unit-growth=1"
-fsmall+=" --param=ipa-cp-large-unit-insns=256 --param=ipcp-unit-growth=2 --param=ipa-cp-unit-growth=2 --param=ipa-cp-value-list-size=1 --param=ipa-cp-eval-threshold=800 --param=ipa-cp-loop-hint-bonus=0"
+fsmall+=" --param=ipa-cp-large-unit-insns=256 --param=ipcp-unit-growth=0 --param=ipa-cp-unit-growth=2 --param=ipa-cp-value-list-size=1 --param=ipa-cp-eval-threshold=800 --param=ipa-cp-loop-hint-bonus=0"
 #fbal+=" --param=ipa-cp-large-unit-insns=256 --param=ipcp-unit-growth=1 --param=ipa-cp-unit-growth=1"
-fbal+=" --param=ipa-cp-large-unit-insns=1000 --param=ipcp-unit-growth=10 --param=ipa-cp-unit-growth=10 --param=ipa-cp-value-list-size=4 --param=ipa-cp-eval-threshold=600 --param=ipa-cp-loop-hint-bonus=30"
+fbal+=" --param=ipa-cp-large-unit-insns=1000 --param=ipcp-unit-growth=8 --param=ipa-cp-unit-growth=10 --param=ipa-cp-value-list-size=4 --param=ipa-cp-eval-threshold=600 --param=ipa-cp-loop-hint-bonus=30"
 
 # vs. -fno-inline-functions
 # max(max_insns,large-unit-insns)*(100+inline-unit-growth)/100)
@@ -306,7 +306,7 @@ fsmall+=" --param=max-inline-recursive-depth=0 --param=max-inline-insns-single=1
 fsmall+=" --param=large-unit-insns=0 --param=inline-unit-growth=0"
 # bad with c++
 #fbal+=" --param=large-unit-insns=256 --param=inline-unit-growth=1"
-fbal+=" --param=large-unit-insns=1000 --param=inline-unit-growth=2"
+fbal+=" --param=large-unit-insns=1000 --param=inline-unit-growth=1"
 ffast+=" --param=large-unit-insns=1000 --param=inline-unit-growth=20"
 
 f6+=' -malign-data=cacheline'
