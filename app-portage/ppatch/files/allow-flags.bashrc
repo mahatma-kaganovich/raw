@@ -17,6 +17,7 @@ for i in ${!n}; do
     -fipa-reorder-for-locality|-fipa-pta);;
     -fgcse*|-f*-cost-model=*);;
     -flto*|-f*-lto-*|-f*-ltrans);;
+    -fno-plt);;
     -fzero-init-padding-bits=unions|-std=*)[ "$PN" = gcc ] && continue;;
     *)for j in "${ALLOWED_FLAGS[@]}" ; do
         [[ "$i" == $j ]] && f+=" $i" && break
