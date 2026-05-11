@@ -234,7 +234,7 @@ kernel-2_src_configure() {
 	cd "${S}"
 	cpu2K
 	use integrated || use thin && cfg_ '###integrated|thin:' FW_LOADER_COMPRESS
-	filter-flags '-fopenmp*' '-*parallelize*'
+	filter-flags '-fopenmp*' '-*parallelize*' -Wl,--no-ld-generated-unwind-info
 	# unsure "random" miscompulations on 5.9
 	replace-flags -malign-data=cacheline -malign-data=compat
 	: ${KERNEL_UTILS_CFLAGS:="${CFLAGS}"}
