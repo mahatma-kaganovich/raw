@@ -234,7 +234,7 @@ kernel-2_src_configure() {
 	cd "${S}"
 	cpu2K
 	use integrated || use thin && cfg_ '###integrated|thin:' FW_LOADER_COMPRESS
-	filter-flags '-fopenmp*' '-*parallelize*' -Wl,--no-ld-generated-unwind-info
+	filter-flags '-fopenmp*' '-*parallelize*'
 	# unsure "random" miscompulations on 5.9
 	replace-flags -malign-data=cacheline -malign-data=compat
 	: ${KERNEL_UTILS_CFLAGS:="${CFLAGS}"}
@@ -260,7 +260,7 @@ kernel-2_src_configure() {
 		i=
 		[ -e tools/objtool ] && i+=' -m*-strategy=* -fno-predictive-commoning'
 		use !unsafe-cflags && i+=' -floop-* -Ofast/-O2,-fno-semantic-interposition,-fgcse-after-reload,-fipa-cp-clone -O3/-O2,-fgcse-after-reload,-fipa-cp-clone'
-		cflags="$(flags_nosp "$(_filter_f CFLAGS "-msse*" -mmmx -m3dnow -mavx "-mfpmath=*" '-flto*' '-*-lto-*' -fuse-linker-plugin -fdevirtualize-at-ltrans '-mindirect-branch*' '-mfunction-return=*' -fopenmp -fopenmp-simd -fopenacc -fgnu-tm $i) ${cflags}")" #"
+		cflags="$(flags_nosp "$(_filter_f CFLAGS "-msse*" -mmmx -m3dnow -mavx "-mfpmath=*" '-flto*' '-*-lto-*' -fuse-linker-plugin -fdevirtualize-at-ltrans '-mindirect-branch*' '-mfunction-return=*' -fopenmp -fopenmp-simd -fopenacc -fgnu-tm -fno-plt $i) ${cflags}")" #"
 
 		# dedup
 		local i="$cflags"
