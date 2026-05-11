@@ -9,4 +9,4 @@ MAKEOPTS="-j2 -s"
 
 # some -O2
 _FLAGS="$_FLAGS -finline-small-functions -findirect-inlining"
-#LDFLAGS="-Wl,-O1 -Wl,--as-needed -Wl,--hash-style=gnu -Wl,--sort-common"
+#LDFLAGS="-Wl,-O1 -Wl,--as-needed -Wl,--hash-style=gnu"
