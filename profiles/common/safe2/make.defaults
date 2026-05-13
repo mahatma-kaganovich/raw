@@ -2,7 +2,6 @@
 
 USE="pgo"
 _FLAGS="$_FLAGS-O2 -fno-ident"
-#-flto-toplevel-asm-heuristics
 
 _FLAGS="$_FLAGS -fdelete-dead-exceptions"
 _FLAGS="$_FLAGS -fmodulo-sched -fmodulo-sched-allow-regmoves -freschedule-modulo-scheduled-loops"

@@ -1,6 +1,7 @@
 # safe2 + effective small from -O3/-Ofast
+# force gcc 16+
 
-_FLAGS="$_FLAGS -floop-nest-optimize -fno-plt"
+_FLAGS="$_FLAGS -floop-nest-optimize -fno-plt -flto-toplevel-asm-heuristics"
 
 # from -O3
 _FLAGS="$_FLAGS -floop-interchange"
