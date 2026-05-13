@@ -149,7 +149,13 @@ filter_cf(){
 #	echo 'int main(){}' |${!c} -x $3 $l-Werror - -w -pipe $i -o /dev/null && l+='-Werror '
 	[ -z "$v1" ] && {
 		for i in ${!v}; do
-			echo 'int main(){}' |${!c} -x $3 $l$v1 - -w -pipe $i -o /dev/null && v1+=" $i" || ff+=" $i"
+			if echo 'int main(){}' |${!c} -x $3 $l$v1 - -w -pipe $i -o /dev/null; then
+				v1+=" $i"
+			elif [[ "$i" == -flto=* ]] && echo 'int main(){}' |${!c} -x $3 $l$v1 - -w -pipe -flto -o /dev/null; then
+				v1+=" -flto"
+			else
+				ff+=" $i"
+			fi
 		done
 		[ -n "$ff" ] && {
 			echo "filtered $v ${!c}$ff"
@@ -429,7 +435,7 @@ criu)filterldflag;filterflag -maccumulate-outgoing-args '-flto=*';;
 ffmpeg|libav)_iuse abi_x86_32 && filterflag -fno-omit-frame-pointer;; # x86 mmx -Os
 ruby)filterflag -funroll-loops -fweb;;
 ghostscript-gpl)filterflag -mmitigate-rop;; # ????!
-compiler-rt)__clang=clang;filter_cf __clang CFLAGS c;filter_cf __clang CXXFLAGS c++;filter_cf __clang LDFLAGS c++;;
+#compiler-rt)__clang=clang;filter_cf __clang CFLAGS c;filter_cf __clang CXXFLAGS c++;filter_cf __clang LDFLAGS c++;;
 easystroke)appendflag_ CXXFLAGS -fno-ipa-cp-clone;appendflag_ LDFLAGS -lglib-2.0;;
 potrace)appendflag -fno-tree-slp-vectorize;;
 groff)filterflag -fisolate-erroneous-paths-attribute;;

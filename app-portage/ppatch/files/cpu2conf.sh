@@ -555,7 +555,7 @@ i="${f4##*--param=l2-cache-size=}"
 		ffast+="$(_f -mmemset-strategy=unrolled_loop:64:noalign,loop:$[i*2]:noalign,libcall:-1:align)"
 		ffast+="$(_f -mmemcpy-strategy=unrolled_loop:64:noalign,loop:$i:noalign,libcall:-1:align)"
 	else
-		i="unrolled_loop:32:noalign,rep_4byte:512:align,libcall:-1:align"
+		i="unrolled_loop:32:noalign,rep_4byte:512:noalign,libcall:-1:align"
 		ffast+="$(_f -mmemset-strategy=$i -mmemcpy-strategy=$i)"
 	fi
     }
