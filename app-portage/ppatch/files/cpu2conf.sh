@@ -189,6 +189,7 @@ _replace(){
 
 conf_cpu(){
 local f0= f1= f2= f3= f4= f5= f6= ff= fsmall= ffast= fbal= ffm= fnm= fv= i j i1 j1 c c0 c1 lm=false fp=387 gccv m="`uname -m`" i fsec= ind= l2= x32=false base2= a= nopl=false erms=false fsrm=false avx=false sse=false
+local x86=false al= al1=16:7 al2=16:7
 _setflags flags cpucaps 'cpu family' model fpu vendor_id
 cmn=$(_gcc --help=common -v -Q)
 if i=$(echo "$cmn"|grep --max-count=1 "^Target: "); then
@@ -331,7 +332,6 @@ fi
 # 2do: patch over ssp patch to make default
 #(echo " $cmn"|grep -q 'disable-default-ssp') && f3+=' -fstack-protector-explicit'
 case "`cat /proc/cpuinfo|sed -e 's:$: :'`" in
-*" nopl "*)nopl=true;;&
 # core2: RTFM: says "most current", but I cannot count them
 # but IMHO all rare core2+ mostly known as "native"
 *GenuineIntel*" ssse3 "*)base2=`_f -mtune=intel`;;&
@@ -374,6 +374,7 @@ esac
 filter=break
 case "$m" in
 x86_*|i?86)
+	x86=true
 	# first I think it helps to -fschedule-insns, but both slow down compile,
 	# "host" looks do nothing more, "loop" increase code size.
 	# try it first again if -fschedule-insns failed.
@@ -409,6 +410,8 @@ for i in $flags; do
 	case "$i" in
 	erms)erms=true;;
 	fsrm)fsrm=true;;
+	avx512f|avx_vnni)al1=32:7;al2=32:4;;
+	nopl)nopl=true;;
 	avx)avx=true;;
 	sse)[ "$fpu" = yes ] && fp=both || fp=sse;;&
 	sse2)[ "$fpu" = yes ] && fp=$preferred_fp || fp=sse;;&
@@ -451,21 +454,23 @@ ccs(){
 	[ -n "$i" ]
 }
 
-local cl=
-ccs || i=$(getconf LEVEL1_ICACHE_LINESIZE) && {
+$x86 && {
+    ccs || i=$(getconf LEVEL1_ICACHE_LINESIZE) && {
 	case "$i" in
-	8)cl=8;;
-	16)cl=16:7;;
-	32|64|128)cl="$i:15:16:7";;
-#	*)cl=16:7:8:3;;
+	8)al='-falign-functions=8 -falign-loops=8 -falign-jumps=8';;
+	16)al='-falign-functions=16:7 -falign-loops=16:7 -falign-jumps=16:7';;
+	32|64|128)
+		al="-falign-jumps=$al2 -falign-functions=$i:15"
+		[[ "$al1" == "$i:"* ]] || al+=":$al1"
+		al+=" -falign-loops=$i:15"
+		[[ "$al2" == "$i:"* ]] || al+=":$al2"
+	;;
+	*)al="-falign-functions=64:15:$al1 -falign-loops=64:15:$al2 -falign-jumps=$al2";;
 	esac
-	$nopl || cl=
+    }
+    $nopl || al=
+    f3+=" ${al:--fno-align-loops -fno-align-functions -fno-align-jumps}"
 }
-
-
-[ -n "$cl" ] &&
-	f3+=" -falign-loops=$cl -falign-functions=$cl -falign-jumps=$cl" ||
-	f3+=" -fno-align-loops -fno-align-functions -fno-align-jumps"
 f3+=' -fipa-reorder-for-locality' # +lto = ICE mariadb,qtbase,sudo,ell,icewm
 f3+=' -frename-registers -fweb'
 
