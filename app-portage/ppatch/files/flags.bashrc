@@ -288,6 +288,7 @@ libaio)_fLTO_f -fno-lto;;&
 inkscape|libreoffice|nodejs|clang|gnutls|gtk+|libvpx|mesa|busybox|ffmpeg)
 	_iuse static-libs || filterflag -ffat-lto-objects
 ;;&
+abseil-cpp)filterflag -fvisibility-inlines-hidden;;& # -> protobuf
 qtbase)
 	# -> kirigami
 	filterflag -ffast-math -Ofast
