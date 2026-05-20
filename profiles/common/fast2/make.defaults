@@ -1,6 +1,5 @@
 # safe2 + effective small from -O3/-Ofast
-# force gcc 16+, glibc 2.39+
-# while I dont find better place for -Wl,-z,mark-plt - only x86_64
+# force gcc 16+
 
 _FLAGS="$_FLAGS -floop-nest-optimize -flto-toplevel-asm-heuristics"
 
@@ -11,8 +10,5 @@ CFLAGS_FAST="$CFLAGS_FAST -floop-unroll-and-jam -fversion-loops-for-strides -fpr
 # from -Ofast
 _FLAGS="$_FLAGS -ffast-math -fno-semantic-interposition"
 
-# faster
-#_FLAGS="$_FLAGS -fno-plt"
-# OR -z,mark-plt - faster with env: GLIBC_TUNABLES=glibc.cpu.plt_rewrite=1
-# or Intel APX: GLIBC_TUNABLES=glibc.cpu.plt_rewrite=2
-LDFLAGS="$LDFLAGS -Wl,-z,now -Wl,-z,mark-plt -Wl,-z,relro -Wl,-z,pack-relative-relocs"
+# break some packages
+LDFLAGS="$LDFLAGS -Wl,-z,pack-relative-relocs"

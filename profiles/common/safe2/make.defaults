@@ -3,6 +3,7 @@
 USE="pgo"
 _FLAGS="$_FLAGS-O2 -fno-ident"
 
+_FLAGS="$_FLAGS -fno-plt"
 _FLAGS="$_FLAGS -fdelete-dead-exceptions"
 _FLAGS="$_FLAGS -fmodulo-sched -fmodulo-sched-allow-regmoves -freschedule-modulo-scheduled-loops"
 # keep here until new reasons to split
@@ -10,4 +11,4 @@ _FLAGS="$_FLAGS -ftracer -fgcse-sm -fgcse-las -fvariable-expansion-in-unroller -
 
 CFLAGS_SMALL=" -fno-tracer$CFLAGS_SMALL"
 
-LDFLAGS="-Wl,-O1 -Wl,--as-needed -Wl,--hash-style=gnu -Wl,--sort-common"
+LDFLAGS="-Wl,-O1 -Wl,--as-needed -Wl,--hash-style=gnu -Wl,--sort-common -Wl,-z,now"
