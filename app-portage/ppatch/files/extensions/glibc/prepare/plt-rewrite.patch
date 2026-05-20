@@ -1,0 +1,16 @@
+hardcode GLIBC_TUNABLES=glibc.cpu.plt_rewrite=2
+speedup -Wl,-z,mark-plt in price of security
+
+GLIBC_TUNABLES env filtered by sudo, etc and performace may be lost
+
+--- a/sysdeps/x86/dl-tunables.list	2026-01-23 23:54:00.000000000 +0300
++++ b/sysdeps/x86/dl-tunables.list	2026-05-20 13:16:19.000000000 +0300
+@@ -72,7 +72,8 @@ glibc {
+     plt_rewrite {
+       type: INT_32
+       minval: 0
+       maxval: 2
++      default: 2
+     }
+   }
+ }
