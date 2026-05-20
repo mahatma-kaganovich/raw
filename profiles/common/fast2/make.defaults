@@ -1,7 +1,7 @@
 # safe2 + effective small from -O3/-Ofast
-# force gcc 16+
+# force gcc 16+, glibc 2.42+
 
-_FLAGS="$_FLAGS -floop-nest-optimize -fno-plt -flto-toplevel-asm-heuristics"
+_FLAGS="$_FLAGS -floop-nest-optimize -flto-toplevel-asm-heuristics"
 
 # from -O3
 _FLAGS="$_FLAGS -floop-interchange"
@@ -9,3 +9,8 @@ CFLAGS_FAST="$CFLAGS_FAST -floop-unroll-and-jam -fversion-loops-for-strides -fpr
 
 # from -Ofast
 _FLAGS="$_FLAGS -ffast-math -fno-semantic-interposition"
+
+# faster
+#_FLAGS="$_FLAGS -fno-plt"
+# OR -z,mark-plt - faster with env: GLIBC_TUNABLES=glibc.cpu.plt_rewrite=1
+LDFLAGS="$LDFLAGS -Wl,-z,now -Wl,-z,mark-plt -Wl,-z,relro -Wl,-z,pack-relative-relocs"
