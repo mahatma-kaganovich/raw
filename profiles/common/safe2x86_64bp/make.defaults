@@ -10,5 +10,5 @@ _FLAGS="$_FLAGS -ftracer -fgcse-sm -fgcse-las -fvariable-expansion-in-unroller -
 
 CFLAGS_SMALL=" -fno-tracer$CFLAGS_SMALL"
 
-LDFLAGS="-Wl,-O1 -Wl,--as-needed -Wl,--hash-style=gnu -Wl,--sort-common -Wl,-z,now -Wl,-l,mark-plt"
+LDFLAGS="-Wl,-O1 -Wl,--as-needed -Wl,--hash-style=gnu -Wl,--sort-common -Wl,-z,now -Wl,-z,mark-plt"
 #LDFLAGS="$LDFLAGS -Wl,-z,pack-relative-relocs"
