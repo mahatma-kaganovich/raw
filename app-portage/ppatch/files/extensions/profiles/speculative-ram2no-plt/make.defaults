@@ -1,4 +1,10 @@
 # speculative-ram2 + -fno-plt
 
+
 _FLAGS="$_FLAGS -fno-plt"
+CFLAGS="$CFLAGS -fno-plt"
+CXXFLAGS="$CXXFLAGS -fno-plt"
+FFLAGS="$FFLAGS -fno-plt"
+FCFLAGS="$FCFLAGS -fno-plt"
+
 LDFLAGS="$LDFLAGS -Wl,-z,now"
