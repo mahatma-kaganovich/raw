@@ -1,0 +1,6 @@
+# speculative-ram2 + -z mark-plt (x86_64)
+
+LDFLAGS="$LDFLAGS -Wl,-z,now -Wl,-z,mark-plt"
+
+# add it to env.d or use glibc patch
+GLIBC_TUNABLES="glibc.cpu.plt_rewrite=2"
