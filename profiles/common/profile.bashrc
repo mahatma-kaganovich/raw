@@ -24,6 +24,7 @@ for i in {C,CXX,CPP,LD,F,FC,_}FLAGS; do
 			esac
 			[ -z "$LD" ] && export LD="ld.${i1#*=}"
 		;;
+		-Wno-error=*)fy="$i1";fn="$i1";fw='';;
 		-[fmW]no-*)
 			fy="${fy:0:2}${fy:5}"
 			#fw="$fy=*"
