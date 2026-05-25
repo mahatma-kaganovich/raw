@@ -269,7 +269,8 @@ ffm=' -Ofast -ffast-math -fallow-store-data-races --param=allow-store-data-races
 fnfm=' -O3 -Ofast -fno-fast-math'
 $x32 || f3+=' -mtls-dialect=gnu2'
 # gcc 14
-f3+=' -Wno-error=incompatible-pointer-types -Wno-error=implicit-function-declaration -Wno-error=int-conversion -Wno-error=implicit-int'
+# starts to miscompile net-dns/unbound
+#f3+=' -Wno-error=incompatible-pointer-types -Wno-error=implicit-function-declaration -Wno-error=int-conversion -Wno-error=implicit-int'
 # GCC 15
 f3+=' -fzero-init-padding-bits=unions'
 f5='-fvisibility-inlines-hidden'
