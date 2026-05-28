@@ -388,7 +388,8 @@ glibc)
 	#filterflag -fno-semantic-interposition;_isflag -Ofast && appendflag -fsemantic-interposition
 	filterflag -Ofast -fno-semantic-interposition -fsemantic-interposition
 ;;&
-qtbase|python|nodejs)filterflag -Ofast -ffast-math;;& # gcc 15, qtbase -> kirigami
+# llvm cannot compile -O1+
+llvm|qtbase|python|nodejs)filterflag -Ofast -ffast-math;;& # gcc 15, qtbase -> kirigami
 # -Ofast / -ffast-math:
 # nodejs -> chromium
 polkit|sleef|duktape|coreutils|groff|glibc|mpg123|nodejs|fontforge|sqlite|postgresql*|goffice|db|protobuf|qtwebkit|qtwebengine|webkit-gtk|python|guile|chromium*|rrdtool)
