@@ -260,7 +260,7 @@ kernel-2_src_configure() {
 		i=
 		[ -e tools/objtool ] && i+=' -m*-strategy=* -fno-predictive-commoning'
 		# empiric disable loop reordering & long unrolling
-		use !unsafe-cflags && i+=' -floop-nest-optimize -floop-interchange -Ofast/-O2,-fno-semantic-interposition,-fgcse-after-reload,-fipa-cp-clone -O3/-O2,-fgcse-after-reload,-fipa-cp-clone'
+		use !unsafe-cflags && i+=' -floop-nest-optimize -floop-interchange -ffast-math -Ofast/-O2,-fno-semantic-interposition,-fgcse-after-reload,-fipa-cp-clone -O3/-O2,-fgcse-after-reload,-fipa-cp-clone'
 		cflags="$(flags_nosp "$(_filter_f CFLAGS "-msse*" -mmmx -m3dnow -mavx "-mfpmath=*" '-flto*' '-*-lto-*' -fuse-linker-plugin -fdevirtualize-at-ltrans '-mindirect-branch*' '-mfunction-return=*' -fopenmp -fopenmp-simd -fopenacc -fgnu-tm -fno-plt $i) ${cflags}")" #"
 
 		# dedup
