@@ -548,22 +548,24 @@ i="${f4##*--param=l2-cache-size=}"
 	# glibc starts avoid non-temporal store after 2/3 cache. this value usually less.
 	# accelerated by erms: <=2k: YES, 2k-512k: equal, else - poor
     [[ "$ffast" == *inline-stringops* ]] && {
-	if $erms; then
-		i=$l2
-		[ "$i" -gt 512 ] && i=512
-		i="rep_byte:$[i*1024]:noalign,libcall:-1:align"
-		$fsrm &&
-		    i="unrolled_loop:64:noalign,$i" ||
-		    i="unrolled_loop:64:noalign,loop:128:noalign,$i"
+#	if $erms; then
+#		i=$l2
+#		[ "$i" -gt 512 ] && i=512
+#		i="rep_byte:$[i*1024]:noalign,libcall:-1:align"
+#		$fsrm &&
+#		    i="unrolled_loop:64:noalign,$i" ||
+#		    i="unrolled_loop:64:noalign,loop:128:noalign,$i"
+#		ffast+="$(_f -mmemset-strategy=$i -mmemcpy-strategy=$i)"
+#	elif $avx || [ "$fp" = sse ]; then
+#		$avx && i=512 || i=256
+#		ffast+="$(_f -mmemset-strategy=unrolled_loop:64:noalign,loop:$[i*2]:noalign,libcall:-1:align)"
+#		ffast+="$(_f -mmemcpy-strategy=unrolled_loop:64:noalign,loop:$i:noalign,libcall:-1:align)"
+#	else
+#		i="unrolled_loop:32:noalign,rep_4byte:512:noalign,libcall:-1:align"
+		# libcall faster/adaptive
+		i="unrolled_loop:256:noalign,libcall:-1:align"
 		ffast+="$(_f -mmemset-strategy=$i -mmemcpy-strategy=$i)"
-	elif $avx || [ "$fp" = sse ]; then
-		$avx && i=512 || i=256
-		ffast+="$(_f -mmemset-strategy=unrolled_loop:64:noalign,loop:$[i*2]:noalign,libcall:-1:align)"
-		ffast+="$(_f -mmemcpy-strategy=unrolled_loop:64:noalign,loop:$i:noalign,libcall:-1:align)"
-	else
-		i="unrolled_loop:32:noalign,rep_4byte:512:noalign,libcall:-1:align"
-		ffast+="$(_f -mmemset-strategy=$i -mmemcpy-strategy=$i)"
-	fi
+#	fi
     }
 }
 
