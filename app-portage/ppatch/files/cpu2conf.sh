@@ -553,19 +553,17 @@ i="${f4##*--param=l2-cache-size=}"
 #	i=128
 	i=$[i*1024]
 	if $erms; then
-		i="rep_byte:$i:noalign,libcall:-1:align"
-		fsmall+="$(_f -mmemset-strategy=$i -mmemcpy-strategy=$i)"
+		i1="rep_byte:$i:noalign,libcall:-1:align"
 		# fsrm no effect
-		#$fsrm && i="unrolled_loop:64:noalign,$i" ||
-			i="unrolled_loop:256:noalign,$i"
-		ffast+="$(_f -mmemset-strategy=$i -mmemcpy-strategy=$i)"
+		#$fsrm && i="unrolled_loop:64:noalign,$i1" ||
+			i="unrolled_loop:256:noalign,$i1"
 	else
 		#i1="loop:$i:noalign,libcall:-1:align"
 		i1="rep_8byte:$i:noalign,libcall:-1:align"
 		i="unrolled_loop:256:noalign,unrolled_loop:$i:align,libcall:-1:align"
-		ffast+="$(_f -mmemset-strategy=$i -mmemcpy-strategy=$i)"
-		fsmall+="$(_f -mmemset-strategy=$i1 -mmemcpy-strategy=$i1)"
 	fi
+	ffast+="$(_f -mmemset-strategy=$i -mmemcpy-strategy=$i)"
+	fsmall+="$(_f -mmemset-strategy=$i1 -mmemcpy-strategy=$i1)"
 #    }
 }
 
