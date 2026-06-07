@@ -560,11 +560,11 @@ i="${f4##*--param=l2-cache-size=}"
 			i="unrolled_loop:256:noalign,$i"
 		ffast+="$(_f -mmemset-strategy=$i -mmemcpy-strategy=$i)"
 	else
+		#i1="loop:$i:noalign,libcall:-1:align"
+		i1="rep_8byte:$i:noalign,libcall:-1:align"
 		i="unrolled_loop:256:noalign,unrolled_loop:$i:align,libcall:-1:align"
 		ffast+="$(_f -mmemset-strategy=$i -mmemcpy-strategy=$i)"
-		#i="loop:$i:noalign,libcall:-1:align"
-		i="rep_8byte:$i:noalign,libcall:-1:align"
-		fsmall+="$(_f -mmemset-strategy=$i -mmemcpy-strategy=$i)"
+		fsmall+="$(_f -mmemset-strategy=$i1 -mmemcpy-strategy=$i1)"
 	fi
 #    }
 }
