@@ -558,9 +558,9 @@ i="${f4##*--param=l2-cache-size=}"
 		#$fsrm && i="unrolled_loop:64:noalign,$i1" ||
 			i="unrolled_loop:256:noalign,$i1"
 	else
-		#i1="loop:$i:noalign,libcall:-1:align"
-		i1="rep_8byte:$i:noalign,libcall:-1:align"
 		i="unrolled_loop:256:noalign,unrolled_loop:$i:align,libcall:-1:align"
+		#i1=${i//unrolled_loop/loop}
+		i1=${i//unrolled_loop/rep_8byte}
 	fi
 	ffast+="$(_f -mmemset-strategy=$i -mmemcpy-strategy=$i)"
 	fsmall+="$(_f -mmemset-strategy=$i1 -mmemcpy-strategy=$i1)"
