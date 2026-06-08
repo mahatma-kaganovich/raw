@@ -1341,7 +1341,8 @@ native|:native|native:native)
 			mc=true
 		fi;;
 		xtopology|topoext|extapic)CF1 X86_X2APIC;;& # about znver2
-		tsc|pat|msr|mce|cmov|x2apic)CF1 X86_${i^^};;
+		tsc|pat|msr|mce|cmov|x2apic|fred)CF1 X86_${i^^};;
+		hfi)CF1 AMD_${i^^};;
 		mtrr)CF1 ${i^^};;
 		pae)CF1 X86_PAE $m64g;;
 		mp)CF1 SMP;; # ?
