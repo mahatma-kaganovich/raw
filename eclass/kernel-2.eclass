@@ -300,6 +300,13 @@ kernel-2_src_configure() {
 	[[ "$(cflg O)" == s ]] && cfg_ CC_OPTIMIZE_FOR_SIZE
 	cfg_ "
 "
+	if use rust; then
+		local clang_ok= clang_skip=
+		for i in ${cflags}; do
+			CC=clang test_cc -Werror=unused-arguments -Werror=unused-command-line-argument -Werror=ignored-optimization-argument $i && clang_ok+=" $i" || clang_skip+=" $i"
+		done
+		[ -n "$clang_skip" ] && sed -i -e "s/^\(bindgen_skip_c_flags *:= *\)/\1$clang_skip /" rust/Makefile
+	fi
 	if use !vanilla; then
 		[[ -n "${cflags}" ]] && sed -i -e "s/^\(KBUILD_CFLAGS.*-O.\)/\1 ${cflags}/g" Makefile
 		[[ -n "${aflags}" ]] && sed -i -e "s/^\(AFLAGS_[A-Z]*[	 ]*=\)$/\1 ${aflags}/" Makefile
