@@ -300,7 +300,7 @@ kernel-2_src_configure() {
 	[[ "$(cflg O)" == s ]] && cfg_ CC_OPTIMIZE_FOR_SIZE
 	cfg_ "
 "
-	if use vanilla; then
+	if use !vanilla; then
 		[[ -n "${cflags}" ]] && sed -i -e "s/^\(KBUILD_CFLAGS.*-O.\)/\1 ${cflags}/g" Makefile
 		[[ -n "${aflags}" ]] && sed -i -e "s/^\(AFLAGS_[A-Z]*[	 ]*=\)$/\1 ${aflags}/" Makefile
 		[[ -n "${ldflags}" ]] && sed -i -e "s/^\(LDFLAGS_[A-Z]*[	 ]*=\)$/\1 ${ldflags}/" Makefile
