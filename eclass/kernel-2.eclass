@@ -311,6 +311,13 @@ kernel-2_src_configure() {
 		[[ -n "${cflags}" ]] && sed -i -e "s/^\(KBUILD_CFLAGS.*-O.\)/\1 ${cflags}/g" Makefile
 		[[ -n "${aflags}" ]] && sed -i -e "s/^\(AFLAGS_[A-Z]*[	 ]*=\)$/\1 ${aflags}/" Makefile
 		[[ -n "${ldflags}" ]] && sed -i -e "s/^\(LDFLAGS_[A-Z]*[	 ]*=\)$/\1 ${ldflags}/" Makefile
+	elif use custom-cflags; then
+		[ -n "$cflags" ] && use rust &&
+		    ewarn "USE='custom-cflags rust vanilla' - bindgen_skip_c_flags is unchanged, possible errors"
+		[ -n "$cflags" ] && export KCFLAGS="$cflags"
+		[ -n "$aflags" ] && export KAFLAGS="$aflags"
+		[ -n "$CPPFLAGS" ] && export KCPPFLAGS="$CPPFLAGS"
+		# KRUSTFLAGS/KBUILD_RUSTFLAGS
 	fi
 	export comp=''
 	# kmake & genkernel
