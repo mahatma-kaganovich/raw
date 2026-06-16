@@ -303,7 +303,7 @@ kernel-2_src_configure() {
 	local clang_ok= clang_skip=
 	if use rust; then
 		for i in ${cflags}; do
-			CC=clang test_cc -Werror=unused-arguments -Werror=unused-command-line-argument -Werror=ignored-optimization-argument $i && clang_ok+=" $i" || clang_skip+=" $i"
+			CC=clang test_cc -Werror=unknown-warning-option -Werror=unused-arguments -Werror=unused-command-line-argument -Werror=ignored-optimization-argument $i && clang_ok+=" $i" || clang_skip+=" $i"
 		done
 	fi
 	if use !vanilla; then
