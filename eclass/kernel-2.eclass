@@ -29,7 +29,7 @@ if [[ ${ETYPE} == sources ]]; then
 # things like bcache, btrfs, xfs works without special inclusion,
 # but disaster recovering is good
 IUSE="${IUSE} +build-kernel custom-cflags +pnp +compressed integrated
-	unsafe-cflags
+	unsafe-cflags vanilla rust
 	netboot custom-arch embed-hardware +blobs
 	kernel-firmware +sources pnponly lzma xz lzo lz4 zstd
 	external-firmware xen +smp kernel-tools multitarget 64-bit-bfd thin
@@ -44,6 +44,13 @@ DEPEND="${DEPEND}
 	lzo? ( app-arch/lzop )
 	lz4? ( app-arch/lz4 )
 	zstd? ( app-arch/zstd )
+	rust? (
+		|| (
+			dev-lang/rust-bin[rust-src,rustfmt,clippy]
+			dev-lang/rust[rust-src,rustfmt,clippy]
+		)
+		dev-util/bindgen
+	)
 	build-kernel? (
 		app-arch/cpio
 		sys-libs/binutils-libs
@@ -293,9 +300,11 @@ kernel-2_src_configure() {
 	[[ "$(cflg O)" == s ]] && cfg_ CC_OPTIMIZE_FOR_SIZE
 	cfg_ "
 "
-	[[ -n "${cflags}" ]] && sed -i -e "s/^\(KBUILD_CFLAGS.*-O.\)/\1 ${cflags}/g" Makefile
-	[[ -n "${aflags}" ]] && sed -i -e "s/^\(AFLAGS_[A-Z]*[	 ]*=\)$/\1 ${aflags}/" Makefile
-	[[ -n "${ldflags}" ]] && sed -i -e "s/^\(LDFLAGS_[A-Z]*[	 ]*=\)$/\1 ${ldflags}/" Makefile
+	if use vanilla; then
+		[[ -n "${cflags}" ]] && sed -i -e "s/^\(KBUILD_CFLAGS.*-O.\)/\1 ${cflags}/g" Makefile
+		[[ -n "${aflags}" ]] && sed -i -e "s/^\(AFLAGS_[A-Z]*[	 ]*=\)$/\1 ${aflags}/" Makefile
+		[[ -n "${ldflags}" ]] && sed -i -e "s/^\(LDFLAGS_[A-Z]*[	 ]*=\)$/\1 ${ldflags}/" Makefile
+	fi
 	export comp=''
 	# kmake & genkernel
 	export MAKEOPTS+=" DEPMOD=$([[ -x /sbin/depmod ]] && echo /sbin/depmod || echo /usr/bin/depmod)"
@@ -1711,6 +1720,7 @@ kernel-2_src_prepare(){
 	local i reg=false
 	test_cc -mgeneral-regs-only && reg=true
 	to_overlay
+	use vanilla || return
 	einfo "Fixing compats"
 	echo "Supporting -mgeneral-regs-only: $reg"
 	# glibc 2.8+
