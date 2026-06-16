@@ -1720,7 +1720,7 @@ kernel-2_src_prepare(){
 	local i reg=false
 	test_cc -mgeneral-regs-only && reg=true
 	to_overlay
-	use vanilla || return
+	use vanilla && return
 	einfo "Fixing compats"
 	echo "Supporting -mgeneral-regs-only: $reg"
 	# glibc 2.8+
