@@ -1,4 +1,4 @@
-#!/sbin/runscript
+#!/sbin/openrc-run
 # Copyright 1999-2011 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
 # $Header: /var/cvsroot/gentoo-x86/mail-filter/spamass-milter/files/spamass-milter.rc4,v 1.1 2011/11/29 21:52:06 eras Exp $
@@ -41,7 +41,7 @@ start() {
 	done
 	echo $spamass_timeout
 	chown ${SOCKET_USER:-milter}:${SOCKET_GROUP:-milter} ${SOCKET} 1>/dev/null 2>&1
-	chmod ${SOCKET_MODE:-664} ${SOCKET} 1>/dev/null 2>&1
+	chmod ${SOCKET_MODE:-600} ${SOCKET} 1>/dev/null 2>&1
 }
 
 stop() {

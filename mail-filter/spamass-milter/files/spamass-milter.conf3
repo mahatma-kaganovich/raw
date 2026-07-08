@@ -14,7 +14,7 @@ SOCKET_USER="milter"
 SOCKET_GROUP="milter"
 
 # Permission for the socket
-SOCKET_MODE="664"
+SOCKET_MODE="600"
 
 # spamass-milter options
 OPTIONS=""
