@@ -1,0 +1,8 @@
+error: implicit declaration of function 'ap_lingering_close'
+
+--- a/modules/generators/mod_autoindex.c	2026-07-09 14:51:04.705604101 +0300
++++ a/modules/generators/mod_autoindex.c	2026-07-09 14:53:43.047664954 +0300
+@@ -38,2 +38,3 @@
+ #include "http_config.h"
++#include "http_connection.h"
+ #include "http_core.h"
