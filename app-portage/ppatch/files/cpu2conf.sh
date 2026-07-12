@@ -268,6 +268,7 @@ fsmall+=' -fno-asynchronous-unwind-tables'
 ffm=' -Ofast -ffast-math -fallow-store-data-races --param=allow-store-data-races=1'
 fnfm=' -O3 -Ofast -fno-fast-math'
 $x32 || f3+=' -mtls-dialect=gnu2'
+f3+=' -fpermissive'
 # gcc 14
 # starts to miscompile net-dns/unbound
 #f3+=' -Wno-error=incompatible-pointer-types -Wno-error=implicit-function-declaration -Wno-error=int-conversion -Wno-error=implicit-int'
@@ -278,7 +279,7 @@ f5='-fvisibility-inlines-hidden'
 # try to forget after years of upstream fixing
 #f5+=' -flifetime-dse=1'
 # gcc 6. oneshot clarification. must not affect legacy build
-f5+=' -fpermissive -w'
+#f5+=' -fpermissive -w'
 # try to remove. performance
 #f5+=' -fno-strict-aliasing'
 # break build of few things like ghostscript-gpl & mozillas, wantfix/wantest
