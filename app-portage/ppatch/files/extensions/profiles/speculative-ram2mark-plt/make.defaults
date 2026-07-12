@@ -4,3 +4,5 @@ LDFLAGS="$LDFLAGS -Wl,-z,now -Wl,-z,mark-plt"
 
 # add it to env.d or use glibc patch
 GLIBC_TUNABLES="glibc.cpu.plt_rewrite=2"
+
+USE="$USE default-znow"

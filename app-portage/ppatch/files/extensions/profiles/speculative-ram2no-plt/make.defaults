@@ -8,3 +8,5 @@ FFLAGS="$FFLAGS -fno-plt"
 FCFLAGS="$FCFLAGS -fno-plt"
 
 LDFLAGS="$LDFLAGS -Wl,-z,now"
+
+USE="$USE default-znow"
