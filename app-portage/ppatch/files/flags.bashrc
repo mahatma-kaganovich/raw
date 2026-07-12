@@ -306,7 +306,7 @@ gnustep-base|gnustep-back-cairo)_fLTO_f -flto-partition=1to1;;&
 dovecot)
 	filterflag -ffat-lto-objects # speedup build
 #	_isflag -fuse-linker-plugin && appendflag1 -fno-use-linker-plugin
-	_isflag -fuse-linker-plugin && appendflag1 -fno-strict-aliasing -flto-partition=one # or none
+	_isflag -fuse-linker-plugin && appendflag1 -fno-strict-aliasing # -flto-partition=one # or none
 	export with_libunwind=no
 	export enable_assert=no
 ;;&
