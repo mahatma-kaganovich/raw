@@ -90,14 +90,22 @@ PROVIDE="sources? ( virtual/linux-sources )
 #done | md5sum)"
 #IUSE="${IUSE} md5cfg:${USEKEY%% *}"
 
+# sys-apps/portage-3.0.81.2 DEPEND overprotected
+if false; then
 for i in "${SHARE}"/*.{-use,use}; do
 	[[ "${i##*/}" == *_dep_* ]] && . "$i"
 	i="${i##*[/:]}"
 	[[ "$i" == video_cards_* ]] || i="${i##*_}"
 	i="${i%.use}"
 	i="${i%.-use}"
-	IUSE+=" ${i#[0-9]}"
+	i=${i#[0-9]}
+	[[ *" $i "* == " $IUSE " ]] && continue
+	IUSE+=" $i"
+	#echo -n "$i "
 done
+else
+IUSE="$IUSE +acl +efi +hibernate +hpet +io-uring +iproute2 +iptables +netlink +quota +sof +sst +xattr X +alsa +atm +bluetooth +dri +dvb +ieee1394 +infiniband +inotify +jit +joystick +oss +pcmcia +sctp +sysvipc +usb +v4l +wifi +server bpf crda debug deprecated fbcon force-modules ipv6 lxc multilib nftables nls samba sanitize seccomp selinux smp speculative ssp staging video_cards_amdgpu video_cards_ast video_cards_exynos video_cards_freedreno video_cards_i810 video_cards_i915 video_cards_i965 video_cards_intel video_cards_iris video_cards_lima video_cards_mga video_cards_nouveau video_cards_omap video_cards_panfrost video_cards_qxl video_cards_r100 video_cards_r128 video_cards_r200 video_cards_r300 video_cards_r600 video_cards_radeon video_cards_radeonsi video_cards_tegra video_cards_vc4 video_cards_via video_cards_virgl video_cards_virtualbox video_cards_vivante video_cards_vmware +hugepages experimental iproute2 iptables +acl +efi +iproute2 minimal minimal2 systemd crda firmware nftables +server bcache btrfs cet debug deprecated desktop dvb fbcon force-modules ipv6 laptop lxc mpx multilib nfs nftables nls paranoid rt rust rt2 samba selinux soc speculative tmem unicode xfs bbr clamav experimental kvm nohz server2"
+fi
 
 fi
 

@@ -392,7 +392,7 @@ glibc)
 llvm|qtbase|python|nodejs)filterflag -Ofast -ffast-math;;& # gcc 15, qtbase -> kirigami
 # -Ofast / -ffast-math:
 # nodejs -> chromium
-polkit|sleef|duktape|coreutils|groff|glibc|mpg123|nodejs|fontforge|sqlite|postgresql*|goffice|db|protobuf|qtwebkit|qtwebengine|webkit-gtk|python|guile|chromium*|rrdtool)
+ggml|polkit|sleef|duktape|coreutils|groff|glibc|mpg123|nodejs|fontforge|sqlite|postgresql*|goffice|db|protobuf|qtwebkit|qtwebengine|webkit-gtk|python|guile|chromium*|rrdtool)
     _fnofastmath
 ;;&
 netsurf)_iuse duktape || _iuse javascript && _fnofastmath;;&
