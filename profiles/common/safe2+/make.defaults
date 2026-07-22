@@ -1,3 +1,4 @@
 _FLAGS="$_FLAGS -fipa-pta"
 # less compiler RAM
-_FLAGS="$_FLAGS --param=ggc-min-expand=10 --param=ggc-min-heapsize=32768"
+# can miscompile gcc (phase compare)
+#_FLAGS="$_FLAGS --param=ggc-min-expand=10 --param=ggc-min-heapsize=32768"
