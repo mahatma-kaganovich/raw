@@ -1419,6 +1419,7 @@ native|:native|native:native)
 	[[ "${siblings:-0}" -gt "${cpu_cores:-1}" ]] && smt=true && CF1 SMP
 #	grep -Fqs ',' /sys/devices/system/cpu/cpu*/topology/thread_siblings_list && smt=true && CF1 SMP
 	# ???
+	[ "$(sort -u /sys/devices/system/cpu/cpu*/cache/index3/id|wc -l)" = 1 ] && CF1 -SCHED_CACHE
 	[[ "$(grep "^siblings\s*:\|^cpu cores\s*:" /proc/cpuinfo|sort -u|wc -l)" -gt 2 ]] && smt=true && mc=true && CF1 SMP NUMA
 	[[ "${fpu}" != yes ]] && CF1 MATH_EMULATION
 
@@ -1837,6 +1838,9 @@ kernel-2_src_prepare(){
 	for i in $(extract_flags -std= ${CFLAGS}); do
 		sed -i -e "s:cc-option,-fcf-protection=none):cc-option,-fcf-protection=none) -std=$i:" arch/x86/Makefile
 	done
+
+	echo "OBJECT_FILES_NON_STANDARD := y" >>drivers/net/ethernet/mellanox/mlxfw/Makefile
+
 	# broken in 5.17: -e '/KBUILD_CFLAGS += .*-mno-\(avx\|80387\|fp-ret-in-387\)/d' 
 	$reg && ! grep -Fq mgeneral-regs-only arch/x86/Makefile && sed -i -e 's:-mno-mmx -mno-sse$:-mgeneral-regs-only:' -e 's:-mno-sse -mno-mmx -mno-sse2 -mno-3dnow:-mgeneral-regs-only:' {arch/x86,arch/x86/boot/compressed,drivers/firmware/efi/libstub}/Makefile
 #	echo "CFLAGS_mdesc.o += -Wno-error=maybe-uninitialized" >>arch/sparc/kernel/Makefile

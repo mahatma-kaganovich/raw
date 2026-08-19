@@ -433,7 +433,7 @@ gccxml|xemacs|devil|vtun|irda-utils|wmmon|bbrun|diffball|ldns|rp-l2tp|ftp|dosemu
 libprojectm)appendflag -std=c99;;& # c11
 sessreg|ldns)appendflag_ CPPFLAGS -P;;
 klibc)[[ "$MAKEOPTS" == *'-j '* || "$MAKEOPTS" == *-j ]] && export MAKEOPTS="$MAKEOPTS -j8";;
-sarg)filterflag -w;;
+sarg|unbound)filterflag -w;;
 criu)filterldflag;filterflag -maccumulate-outgoing-args '-flto=*';;
 ffmpeg|libav)_iuse abi_x86_32 && filterflag -fno-omit-frame-pointer;; # x86 mmx -Os
 ruby)filterflag -funroll-loops -fweb;;
