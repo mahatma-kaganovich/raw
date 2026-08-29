@@ -12,7 +12,8 @@ KEYWORDS="~x86 ~amd64"
 HOMEPAGE="http://smfs.sourceforge.net/${MY_PN}.html"
 SRC_URI="mirror://sourceforge/smfs/${MY_P}.tar.gz"
 DEPEND="mail-filter/smf-common
-	mail-mta/sendmail"
+	mail-mta/sendmail
+	mail-filter/libmilter"
 
 S="${WORKDIR}/${MY_P}"
 
