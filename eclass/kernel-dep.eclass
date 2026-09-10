@@ -1,3 +1,4 @@
+RDEPEND+=" wifi? ( net-wireless/wireless-regdb crda? ( net-wireless/crda ) ) "
 _dep="
 firmware? (
 	alsa? ( sys-firmware/alsa-firmware )
@@ -34,3 +35,4 @@ firmware? (
 
 DEPEND+="${_dep}"
 RDEPEND+="${_dep}"
+RDEPEND+=" nftables? ( net-firewall/nftables )"
