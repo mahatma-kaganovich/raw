@@ -1,6 +1,7 @@
 : ${EAPI:=1} # 3 or neutral
 # cat /usr/share/genpnprd/_dep_*use >kernel-dep.eclass
-inherit kernel-dep flag-o-matic global-compat
+[[ ${ETYPE} == sources ]] && kernel_dep=kernel-dep || kernel_dep=
+inherit $kernel_dep flag-o-matic global-compat
 [[ "${PV}" == 9999* ]] && KV_FULL="${PV}"
 # really newer work without, but check-robots want it
 [ -v PORTDIR ] || PORTDIR=${PORTAGE_ECLASS_LOCATIONS[-1]}
