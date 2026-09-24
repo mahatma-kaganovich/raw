@@ -132,6 +132,7 @@ sys-devel/binutils -cxx -gold
 dev-libs/efl -drm
 # elfutils
 sys-libs/zlib static-libs
+sys-libs/zlib-ng compat static-libs
 app-arch/bzip2 static-libs
 app-arch/xz-utils static-libs
 # sys-apps/util-linux[su,python] -> pam vs. sys-apps/shadow, sys-apps/util-linux[python] req4 catalyst
