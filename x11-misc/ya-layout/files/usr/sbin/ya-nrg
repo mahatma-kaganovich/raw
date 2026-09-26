@@ -201,6 +201,13 @@ _kill_iwd(){
 	killall -w iwd
 }
 
+_unbound(){
+	[ -n "$on$on1" ] &&
+	pgrep -x unbound -F /run/unbound.pid >/dev/null &&
+	grep -sq '^[ 	]*control-enable:.*yes' /etc/unbound/unbound.conf &&
+	unbound-control -q reload
+}
+
 # dhcpcd 8.1.1 sometimes idle 100%. control
 # todo? - on connect, but dhcp init will be slower
 _stop_dhcp(){
@@ -228,7 +235,9 @@ _start_dhcp(){
 		fi
 	done
 	$t && ! $r && wifi_save
+	_unbound
 }
+
 
 # iwd blacklist easy to block my phone, when I off/on ap,
 # so one-touch restart is required swiss knife
@@ -312,6 +321,7 @@ wifi_restart(){
 			sleep $j
 		done >/dev/null
 	}
+	$EnableNetworkConfiguration && _unbound
 }
 
 # poweroff no-carrier (if disable_periodic_scan=1)
