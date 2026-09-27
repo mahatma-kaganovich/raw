@@ -205,7 +205,7 @@ _unbound(){
 	[ -n "$on$on1" ] &&
 	pgrep -x unbound -F /run/unbound.pid >/dev/null &&
 	grep -sq '^[ 	]*control-enable:.*yes' /etc/unbound/unbound.conf &&
-	unbound-control -q reload
+	unbound-control -q reload && unbound-control -q flush_infra all
 }
 
 # dhcpcd 8.1.1 sometimes idle 100%. control

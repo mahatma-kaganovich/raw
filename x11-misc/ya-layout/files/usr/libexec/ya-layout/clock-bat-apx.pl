@@ -23,6 +23,7 @@ for(@ARGV){
 
 # failure may be slow [for bluetooth], refresh sometimes
 sub tm{
+	use integer;
 	$T=time();
 	$sec=$T%60;
 	$min=int($T/60);
@@ -153,15 +154,16 @@ while(1){
 		$x->{rate}=$r;
 		$x->{t}=$t;
 skip:
-		my $p=int($now/$x->{FULL});
-		$s.="$p%";
+		$s.=($now/$x->{FULL})."%";
 		if($r){
-			$r=int($now/60/$r);
+			$r=$now/$r;
+			use integer;
+			$r/=60;
 			$s.=$sp.sprintf("%02i:%02i",$r/60,$r%60);
 		}
 		push @res,$s;
 	};
 	print $TM."\n".join(',',@res)."\n";
-	sleep($wait=60-$sec);
-#	select(undef,undef,undef,$wait=60-$sec);
+	sleep(60-$sec);
+#	select(undef,undef,undef,60-$sec);
 }
