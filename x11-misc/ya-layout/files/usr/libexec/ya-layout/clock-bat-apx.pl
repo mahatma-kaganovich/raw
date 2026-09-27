@@ -26,7 +26,7 @@ sub tm{
 	use integer;
 	$T=time();
 	$sec=$T%60;
-	$min=int($T/60);
+	$min=$T/60;
 	return if($min==$min1); $min1=$min;
 	$TD=localtime($T);
 	$TD=~s/(\d\d:\d\d):\d\d */$TM=$1;''/e;
