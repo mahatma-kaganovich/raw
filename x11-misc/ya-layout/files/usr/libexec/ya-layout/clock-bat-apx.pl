@@ -7,8 +7,11 @@
 #
 # params: [<minutes/EWMA> {[<uevent device string>]}]
 # default: 5 POWER_SUPPLY_PRESENT=1
+# LANG=C - for minimal RAM
 #
 # 2do: deadline powersave/performance auto-tune
+
+eval('use POSIX qw(strftime);$posix=1;') if ($ENV{LANG} ne 'C');
 
 $SIG{HUP}=sub{1};
 $|=1;
@@ -20,7 +23,6 @@ for(@ARGV){
 	$SEL{$x}=$v;
 }
 
-
 # failure may be slow [for bluetooth], refresh sometimes
 sub tm{
 	use integer;
@@ -28,16 +30,18 @@ sub tm{
 	$sec=$T%60;
 	$min=$T/60;
 	return if($min==$min1); $min1=$min;
-	$TD=localtime($T);
-	$TD=~s/(\d\d:\d\d):\d\d */$TM=$1;''/e;
-
-#	use POSIX;
-#	($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst)=localtime($T);
-#	$TM=strftime('%X',$sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst);
-#	$TM=~s/:\d\d( .*)?$/$1/;
-#	return if($mday==$mday1); $mday1=$mday;
-#	$TD=strftime('%A %x',$sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst);
-#	utf8::encode($TD);
+	$day=$min/1440;
+	if ($posix) {
+		$TM=strftime('%H:%M',localtime($T));
+		#$day=$t[3];
+		return if($day==$day1); $day1=$day;
+		#$TD=strftime('%A %x',localtime($T));
+		$TD=strftime('%A %d %B %Y',localtime($T));
+		utf8::encode($TD);
+	} else {
+		$TD=localtime($T);
+		$TD=~s/(\d\d:\d\d):\d\d */$TM=$1;''/e;
+	}
 }
 
 sub dis{
@@ -108,11 +112,12 @@ while(1){
 			S=>$st,
 			RATE=>$r,
 		};
-		$md='';
+		#$day2=0;
 	}
-	if($md ne $TD){
+	if($day2 != $day){
+		$day2=$day;
 		@ss=sort map{defined($supp{$_})?$_:()} keys %supp;
-		print STDERR "\x1b[2J".join("\n ",$md=$TD,map{$supp{$_}->{NAME}}@ss);
+		print STDERR "\x1b[2J".join("\n ",$TD,map{$supp{$_}->{NAME}}@ss);
 	}
 	my @res;
 	for(@ss){
