@@ -154,7 +154,7 @@ while(1){
 		$x->{rate}=$r;
 		$x->{t}=$t;
 skip:
-		$s.=($now/$x->{FULL})."%";
+		$s.=int($now/$x->{FULL})."%";
 		if($r){
 			$r=$now/$r;
 			use integer;
