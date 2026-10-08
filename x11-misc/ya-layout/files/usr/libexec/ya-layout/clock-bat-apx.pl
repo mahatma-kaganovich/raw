@@ -27,7 +27,6 @@ for(@ARGV){
 sub tm{
 	use integer;
 	$T=time();
-	$sec=$T%60;
 	$min=$T/60;
 	return if($min==$min1); $min1=$min;
 	$day=$min/1440;
@@ -169,6 +168,6 @@ skip:
 		push @res,$s;
 	};
 	print $TM."\n".join(',',@res)."\n";
-	sleep(60-$sec);
-#	select(undef,undef,undef,60-$sec);
+	sleep(60-$T%60);
+#	select(undef,undef,undef,60-$T%60);
 }

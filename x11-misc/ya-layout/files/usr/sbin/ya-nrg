@@ -322,6 +322,12 @@ wifi_restart(){
 		done >/dev/null
 	}
 	$EnableNetworkConfiguration && _unbound
+#	[ "$(< /proc/sys/net/ipv4/tcp_congestion_control)" = bbr ] &&
+	[ "$(< /proc/sys/net/core/default_qdisc)" = fq ] &&
+	    for i in $on; do
+		[[ "$(tc qdisc ls dev eth0)" == *'qdisc fq '* ]] ||
+			tc qdisc replace dev $i root fq
+	done
 }
 
 # poweroff no-carrier (if disable_periodic_scan=1)
