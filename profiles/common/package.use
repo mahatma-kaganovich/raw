@@ -1,4 +1,5 @@
 net-misc/curl -gnutls
+net-misc/ntpsec local smear early
 app-antivirus/clamav metadata-analysis-api
 #sys-devel/clang default-lld
 llvm-runtimes/clang-runtime -compiler-rt
