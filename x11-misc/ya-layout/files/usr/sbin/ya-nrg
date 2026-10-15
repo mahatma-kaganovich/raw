@@ -324,8 +324,9 @@ wifi_restart(){
 	$EnableNetworkConfiguration && _unbound
 #	[ "$(< /proc/sys/net/ipv4/tcp_congestion_control)" = bbr ] &&
 	[ "$(< /proc/sys/net/core/default_qdisc)" = fq ] &&
-	    for i in $on; do
-		[[ "$(tc qdisc ls dev eth0)" == *'qdisc fq '* ]] ||
+	    for i in $on $off; do
+		j=$(tc qdisc ls dev eth0) &&
+		[[ "$j" == *'qdisc fq '* ]] ||
 			tc qdisc replace dev $i root fq
 	done
 }
