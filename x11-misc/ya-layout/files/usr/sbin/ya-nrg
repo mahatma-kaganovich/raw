@@ -202,23 +202,21 @@ _kill_iwd(){
 }
 
 _post_dhcp(){
-	local i j
+	local i=0 j
 
 	false &&
-	[ -z "$on" ] && for i in .1 .1 .1 .1 .1 .1 .1 .1 .1 0; do
+	while [ $[i++] -lt 50 ]; do
 		_iw_list
-		[ -n "$on" ] && {
-			[ "$1" = iwd ] || break
-			for j in $on; do
-				iwctl station "$j" show|grep "^[ \t]*IP" && break 2
-			done
-		}
-		sleep $i
+		for j in $on; do
+			[ "$(< /sys/class/net/$j/operstate)" = up ] &&
+				grep -q "^$j[ 	]" /proc/net/route && break 2
+		done
+		sleep .1
 	done
 
-#	[ "$(< /proc/sys/net/ipv4/tcp_congestion_control)" = bbr ] &&
+	[ "$(< /proc/sys/net/ipv4/tcp_congestion_control)" = bbr ] &&
 	[ "$(< /proc/sys/net/core/default_qdisc)" = fq ] &&
-	    for i in $on $off $off_; do
+	    for i in $on $off $off_ $on1 $off1; do
 	    #for i in $on; do
 		j=$(tc qdisc ls dev $i) && [[ "$j" != *'qdisc fq '* ]] &&
 			tc qdisc replace dev $i root fq
@@ -333,7 +331,7 @@ wifi_restart(){
 			}
 			for i in $off; do
 				$force || {
-					iwctl station "$i" show|grep "Scanning[ \t]*yes\|State[ \t]*connect" || [ $[scan++] -le 2 ] && continue
+					iwctl station "$i" show|grep "Scanning[ 	]*yes\|State[ 	]*connect" || [ $[scan++] -le 2 ] && continue
 					[ "$j" = 0 ] && x+=" $i" && continue
 				}
 				echo "$i force scan" >&2
