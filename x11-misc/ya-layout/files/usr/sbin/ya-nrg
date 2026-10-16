@@ -218,8 +218,11 @@ _post_dhcp(){
 	[ "$(< /proc/sys/net/core/default_qdisc)" = fq ] &&
 	    for i in $on $off $off_ $on1 $off1; do
 	    #for i in $on; do
-		j=$(tc qdisc ls dev $i) && [[ "$j" != *'qdisc fq '* ]] &&
-			tc qdisc replace dev $i root fq
+		j=$(tc qdisc ls dev $i) && [[ "$j" != *'qdisc fq '* ]] && {
+			ethtool -K $i tx-nocache-copy on rx-gro-list on rx-udp-gro-forwarding on
+			ip link set dev $i txqueuelen 100
+			tc qdisc replace dev $i root fq pacing
+		}
 	done
 
 	pgrep -x unbound -F /run/unbound.pid >/dev/null &&
