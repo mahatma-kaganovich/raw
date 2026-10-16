@@ -207,9 +207,9 @@ _post_dhcp(){
 	false &&
 	while [ $[i++] -lt 50 ]; do
 		_iw_list
-		for j in $on; do
+		for j in $on $on1; do
 			[ "$(< /sys/class/net/$j/operstate)" = up ] &&
-				grep -q "^$j[ 	]" /proc/net/route && break 2
+				[[ "$(< /proc/net/route)" == *$'\n'"$j"[\ \	]* ]] && break 2
 		done
 		sleep .1
 	done
@@ -217,7 +217,7 @@ _post_dhcp(){
 	[ "$(< /proc/sys/net/ipv4/tcp_congestion_control)" = bbr ] &&
 	[ "$(< /proc/sys/net/core/default_qdisc)" = fq ] &&
 	    for i in $on $off $off_ $on1 $off1; do
-	    #for i in $on; do
+	    #for i in $on $on1; do
 		j=$(tc qdisc ls dev $i) && [[ "$j" != *'qdisc fq '* ]] && {
 			ethtool -K $i tx-nocache-copy on rx-gro-list on rx-udp-gro-forwarding on
 			ip link set dev $i txqueuelen 100
@@ -225,8 +225,6 @@ _post_dhcp(){
 		}
 	done
 
-	pgrep -x unbound -F /run/unbound.pid >/dev/null &&
-	grep -sq '^[ 	]*control-enable:.*yes' /etc/unbound/unbound.conf &&
 	unbound-control -q reload && unbound-control -q flush_infra all
 }
 
