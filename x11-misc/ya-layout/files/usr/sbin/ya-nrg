@@ -201,8 +201,29 @@ _kill_iwd(){
 	killall -w iwd
 }
 
-_unbound(){
-	[ -n "$on$on1" ] &&
+_post_dhcp(){
+	local i j
+
+	false &&
+	[ -z "$on" ] && for i in .1 .1 .1 .1 .1 .1 .1 .1 .1 0; do
+		_iw_list
+		[ -n "$on" ] && {
+			[ "$1" = iwd ] || break
+			for j in $on; do
+				iwctl station "$j" show|grep "^[ \t]*IP" && break 2
+			done
+		}
+		sleep $i
+	done
+
+#	[ "$(< /proc/sys/net/ipv4/tcp_congestion_control)" = bbr ] &&
+	[ "$(< /proc/sys/net/core/default_qdisc)" = fq ] &&
+	    for i in $on $off $off_; do
+	    #for i in $on; do
+		j=$(tc qdisc ls dev $i) && [[ "$j" != *'qdisc fq '* ]] &&
+			tc qdisc replace dev $i root fq
+	done
+
 	pgrep -x unbound -F /run/unbound.pid >/dev/null &&
 	grep -sq '^[ 	]*control-enable:.*yes' /etc/unbound/unbound.conf &&
 	unbound-control -q reload && unbound-control -q flush_infra all
@@ -235,7 +256,7 @@ _start_dhcp(){
 		fi
 	done
 	$t && ! $r && wifi_save
-	_unbound
+	_post_dhcp
 }
 
 
@@ -273,6 +294,7 @@ wifi_restart(){
 		# on 3 - iface present only after iwd start
 		_iw_cfg
 		local dhcp=$EnableNetworkConfiguration
+		local scan=0
 		for j in 0 .1 .1 .1 .1 .1 .1 .1 .1 .1 .1 1 3 0; do
 			_iw_list
 			[ -z "$on$off" ] && sleep $j && continue
@@ -311,7 +333,7 @@ wifi_restart(){
 			}
 			for i in $off; do
 				$force || {
-					iwctl station "$i" show|grep "Scanning[ \t]*yes\|State[ \t]*connect" && continue
+					iwctl station "$i" show|grep "Scanning[ \t]*yes\|State[ \t]*connect" || [ $[scan++] -le 2 ] && continue
 					[ "$j" = 0 ] && x+=" $i" && continue
 				}
 				echo "$i force scan" >&2
@@ -321,13 +343,7 @@ wifi_restart(){
 			sleep $j
 		done >/dev/null
 	}
-	$EnableNetworkConfiguration && _unbound
-#	[ "$(< /proc/sys/net/ipv4/tcp_congestion_control)" = bbr ] &&
-	[ "$(< /proc/sys/net/core/default_qdisc)" = fq ] &&
-	    for i in $on $off; do
-		j=$(tc qdisc ls dev $i) && [[ "$j" != *'qdisc fq '* ]] &&
-			tc qdisc replace dev $i root fq
-	done
+	$EnableNetworkConfiguration && _post_dhcp iwd &
 }
 
 # poweroff no-carrier (if disable_periodic_scan=1)
